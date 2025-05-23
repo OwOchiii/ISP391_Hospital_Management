@@ -24,6 +24,17 @@ public interface AppointmentRepository extends JpaRepository<Appointment, Intege
     // Get an appointment by id and doctor id (for security)
     Appointment findByAppointmentIdAndDoctorId(Integer appointmentId, Integer doctorId);
 
+    //Get appointments by doctor id and status
+    List<Appointment> findByDoctorIdAndStatusOrderByDateTimeDesc(Integer doctorId, String status);
+
+
     // Get appointments by patient for a specific doctor
     List<Appointment> findByPatientIdAndDoctorIdOrderByDateTimeDesc(Integer patientId, Integer doctorId);
+
+    // In AppointmentRepository.java
+    @Query("SELECT a FROM Appointment a WHERE a.doctorId = :doctorId AND a.dateTime BETWEEN :startDate AND :endDate ORDER BY a.dateTime")
+    List<Appointment> findByDoctorIdAndDateTimeBetweenOrderByDateTime(
+            @Param("doctorId") Integer doctorId,
+            @Param("startDate") LocalDateTime startDate,
+            @Param("endDate") LocalDateTime endDate);
 }
