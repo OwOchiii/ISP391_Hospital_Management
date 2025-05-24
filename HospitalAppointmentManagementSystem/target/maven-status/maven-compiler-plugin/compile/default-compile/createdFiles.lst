@@ -1,0 +1,14 @@
+com\hospital\repository\PatientRepository.class
+com\hospital\model\Doctor.class
+com\hospital\model\Patient.class
+com\hospital\repository\DoctorRepository.class
+com\hospital\controller\DoctorController.class
+com\hospital\service\AppointmentService.class
+com\hospital\controller\AppointmentListController.class
+com\hospital\controller\BookAppointmentController.class
+com\hospital\repository\AppointmentRepository.class
+com\hospital\model\Appointment.class
+com\hospital\model\Specialty.class
+com\hospital\HospitalApplication.class
+com\hospital\controller\PatientDashboardController.class
+com\hospital\repository\SpecialtyRepository.class

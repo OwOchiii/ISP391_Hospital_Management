@@ -1,0 +1,17 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <title>Doctor Search Results</title>
+    <style>
+        ul { list-style-type: none; padding: 0; }
+        li { margin: 5px 0; }
+    </style>
+</head>
+<body>
+    <div th:fragment="doctorResults">
+        <ul>
+            <li th:each="doctor : ${doctors}" th:text="${doctor.doctorName} + ' (' + ${doctor.specialty.specialtyName} + ')'"></li>
+        </ul>
+    </div>
+</body>
+</html>

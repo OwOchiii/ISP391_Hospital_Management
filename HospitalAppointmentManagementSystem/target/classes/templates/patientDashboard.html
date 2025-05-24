@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <title>Patient Dashboard</title>
+    <style>
+        .search-bar { width: 50%; margin: 20px auto; }
+        .nav-buttons { text-align: center; margin: 20px; }
+        .button { margin: 0 10px; padding: 10px 20px; text-decoration: none; color: #fff; background-color: #007bff; border-radius: 5px; }
+    </style>
+</head>
+<body>
+<h1>Welcome, Patient</h1>
+<div class="search-bar">
+    <input type="text" id="searchBar" placeholder="Search Doctor/Specialties" onkeyup="searchDoctors()">
+</div>
+<div id="doctorResults"></div>
+<div class="nav-buttons">
+    <a th:href="@{/patient/book}" class="button">Book Appointment</a>
+    <a th:href="@{/patient/appointments}" class="button">Appointment List</a>
+    <a th:href="@{/patient/profile}" class="button">Patient Profile</a>
+    <a th:href="@{/patient/support}" class="button">Customer Support</a>
+    <a th:href="@{/patient/feedback}" class="button">Feedback</a>
+</div>
+<script>
+    function searchDoctors() {
+        let query = document.getElementById("searchBar").value;
+        if (query) {
+            fetch('/patient/search?query=' + encodeURIComponent(query))
+                .then(response => response.text())
+                .then(html => document.getElementById('doctorResults').innerHTML = html);
+        } else {
+            document.getElementById("doctorResults").innerHTML = '';
+        }
+    }
+</script>
+</body>
+</html>

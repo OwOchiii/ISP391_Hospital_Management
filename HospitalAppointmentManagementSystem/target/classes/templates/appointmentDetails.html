@@ -1,0 +1,11 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <title>Appointment Details</title>
+</head>
+<body>
+    <h1>Appointment Details</h1>
+    <p>Details for Appointment ID: <span th:text="${appointment.appointmentId}"></span></p>
+    <a th:href="@{/patient/appointments}">Back to Appointment List</a>
+</body>
+</html>

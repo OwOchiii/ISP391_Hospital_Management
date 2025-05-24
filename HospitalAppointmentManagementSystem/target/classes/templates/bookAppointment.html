@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <title>Book Appointment</title>
+    <style>
+        .form-container { width: 50%; margin: 20px auto; }
+        label { display: block; margin: 10px 0 5px; }
+        input, select, textarea { width: 100%; padding: 5px; margin-bottom: 10px; }
+        button { padding: 10px 20px; background-color: #007bff; color: #fff; border: none; border-radius: 5px; }
+        .time-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 5px; }
+        .time-grid button { padding: 5px; }
+        .selected { background-color: #28a745; color: #fff; }
+        .error { color: red; }
+    </style>
+</head>
+<body>
+<div class="form-container">
+    <h1>Book Appointment</h1>
+    <form th:action="@{/patient/book}" th:object="${appointment}" method="post">
+        <label>Specialty:</label>
+        <select id="specialtyId" th:field="*{specialtyId}" onchange="updateDoctors()" required>
+            <option value="">Select Specialty</option>
+            <option th:each="specialty : ${specialties}"
+                    th:value="${specialty.specialtyId}"
+                    th:text="${specialty.specialtyName}"
+                    th:selected="${appointment.specialtyId == specialty.specialtyId}"></option>
+        </select>
+        <span class="error" th:if="${#fields.hasErrors('specialtyId')}" th:errors="*{specialtyId}"></span>
+
+        <label>Doctor (Optional):</label>
+        <select id="doctorId" th:field="*{doctorId}">
+            <option value="">Select Doctor</option>
+        </select>
+
+        <label>Appointment Date:</label>
+        <input type="date" th:field="*{appointmentDate}" min="2025-05-24" required />
+        <span class="error" th:if="${#fields.hasErrors('appointmentDate')}" th:errors="*{appointmentDate}"></span>
+
+        <label>Appointment Time:</label>
+        <div class="time-grid" id="timeGrid">
+            <button type="button" onclick="selectTime('08:00:00', this)">08:00</button>
+            <button type="button" onclick="selectTime('08:30:00', this)">08:30</button>
+            <button type="button" onclick="selectTime('09:00:00', this)">09:00</button>
+            <button type="button" onclick="selectTime('09:30:00', this)">09:30</button>
+            <button type="button" onclick="selectTime('10:00:00', this)">10:00</button>
+            <button type="button" onclick="selectTime('10:30:00', this)">10:30</button>
+            <button type="button" onclick="selectTime('11:00:00', this)">11:00</button>
+            <button type="button" onclick="selectTime('11:30:00', this)">11:30</button>
+            <button type="button" onclick="selectTime('13:00:00', this)">13:00</button>
+            <button type="button" onclick="selectTime('13:30:00', this)">13:30</button>
+            <button type="button" onclick="selectTime('14:00:00', this)">14:00</button>
+            <button type="button" onclick="selectTime('14:30:00', this)">14:30</button>
+            <button type="button" onclick="selectTime('15:00:00', this)">15:00</button>
+            <button type="button" onclick="selectTime('15:30:00', this)">15:30</button>
+            <button type="button" onclick="selectTime('16:00:00', this)">16:00</button>
+            <button type="button" onclick="selectTime('16:30:00', this)">16:30</button>
+        </div>
+        <input type="hidden" id="appointmentTime" th:field="*{appointmentTime}" required />
+        <span class="error" th:if="${#fields.hasErrors('appointmentTime')}" th:errors="*{appointmentTime}"></span>
+
+        <label>Full Name:</label>
+        <input type="text" th:value="${patient.fullName}" name="fullName" readonly />
+
+        <label>Gender:</label>
+        <input type="radio" name="gender" value="M" th:checked="${patient.gender == 'M'}" /> Male
+        <input type="radio" name="gender" value="F" th:checked="${patient.gender == 'F'}" /> Female
+
+        <label>Birthdate:</label>
+        <input type="date" th:value="${#dates.format(patient.birthdate, 'yyyy-MM-dd')}" name="birthdate" readonly required />
+        <!-- Remove birthdate error checking since it's not part of Appointment -->
+        <!-- <span class="error" th:if="${#fields.hasErrors('birthdate')}" th:errors="*{birthdate}"></span> -->
+
+        <label>Phone Number:</label>
+        <input type="text" name="phoneNumber" th:value="${patient.phoneNumber}" />
+
+        <label>Email:</label>
+        <input type="email" name="email" th:value="${patient.email}" />
+
+        <label>Reason:</label>
+        <textarea th:field="*{reason}" required></textarea>
+        <span class="error" th:if="${#fields.hasErrors('reason')}" th:errors="*{reason}"></span>
+
+        <button type="submit">Send Information</button>
+    </form>
+    <a th:href="@{/patient/dashboard}">Back to Dashboard</a>
+</div>
+
+<script>
+    function updateDoctors() {
+        let specialtyId = document.getElementById("specialtyId").value;
+        if (specialtyId) {
+            fetch('/patient/doctors?specialtyId=' + specialtyId)
+                .then(response => response.json())
+                .then(data => {
+                    let doctorSelect = document.getElementById("doctorId");
+                    doctorSelect.innerHTML = '<option value="">Select Doctor</option>';
+                    data.forEach(doctor => {
+                        let option = document.createElement("option");
+                        option.value = doctor.doctorId;
+                        option.text = doctor.doctorName;
+                        doctorSelect.appendChild(option);
+                    });
+                });
+        }
+    }
+
+    function selectTime(time, button) {
+        document.getElementById("appointmentTime").value = time;
+        let buttons = document.querySelectorAll(".time-grid button");
+        buttons.forEach(btn => btn.classList.remove("selected"));
+        button.classList.add("selected");
+    }
+
+    // Set minimum date to today
+    document.addEventListener("DOMContentLoaded", function() {
+        let today = new Date().toISOString().split("T")[0];
+        document.querySelector('input[type="date"][th:field="*{appointmentDate}"]').setAttribute("min", today);
+    });
+</script>
+</body>
+</html>
