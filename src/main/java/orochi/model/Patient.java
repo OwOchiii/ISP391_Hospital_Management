@@ -44,4 +44,16 @@ public class Patient {
 
     @OneToMany(mappedBy = "patient")
     private List<Prescription> prescriptions;
+
+    public String getFullName() {
+        return user != null ? user.getFullName() : null;
+    }
+
+    // Add setter for compatibility with tests
+    public void setFullName(String fullName) {
+        if (user == null) {
+            user = new Users();
+        }
+        user.setFullName(fullName);
+    }
 }

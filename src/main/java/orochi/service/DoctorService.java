@@ -1,5 +1,6 @@
 package orochi.service;
 
+import lombok.Getter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -22,6 +23,7 @@ import java.util.Optional;
 public class DoctorService {
     private static final Logger logger = LoggerFactory.getLogger(DoctorService.class);
 
+    @Getter
     private final AppointmentRepository appointmentRepository;
     private final PatientRepository patientRepository;
 
@@ -157,4 +159,5 @@ public class DoctorService {
             return Collections.emptyList();
         }
     }
+
 }

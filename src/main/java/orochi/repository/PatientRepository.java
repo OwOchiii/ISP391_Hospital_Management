@@ -13,6 +13,7 @@ public interface PatientRepository extends JpaRepository<Patient, Integer> {
             "WHERE a.doctorId = :doctorId")
     List<Patient> findPatientsWithAppointmentsByDoctorId(@Param("doctorId") Integer doctorId);
 
-    List<Patient> findByFullNameContainingIgnoreCase(String name);
+    @Query("SELECT p FROM Patient p JOIN p.user u WHERE LOWER(u.fullName) LIKE LOWER(CONCAT('%', :name, '%'))")
+    List<Patient> findByFullNameContainingIgnoreCase(@Param("name") String name);
     // Additional custom methods if needed
 }
