@@ -26,6 +26,7 @@ repositories {
 dependencies {
     implementation("org.springframework.boot:spring-boot-starter-jdbc")
     implementation("org.springframework.boot:spring-boot-starter-thymeleaf")
+    implementation("nz.net.ultraq.thymeleaf:thymeleaf-layout-dialect")
     implementation("org.springframework.boot:spring-boot-starter-data-jpa")  // Add JPA support
     implementation("com.microsoft.sqlserver:mssql-jdbc")
     implementation("org.springframework.boot:spring-boot-starter-actuator")
