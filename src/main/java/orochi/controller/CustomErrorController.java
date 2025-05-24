@@ -35,7 +35,12 @@ public class CustomErrorController implements ErrorController {
 
         Object exception = request.getAttribute(RequestDispatcher.ERROR_EXCEPTION);
         if (exception instanceof Exception) {
-            model.addAttribute("exceptionMessage", ((Exception) exception).getMessage());
+            // Log the exception details for debugging purposes
+            System.err.println("Exception occurred: " + ((Exception) exception).getMessage());
+            ((Exception) exception).printStackTrace();
+
+            // Add a generic message to the model
+            model.addAttribute("exceptionMessage", "An error occurred. Please contact support if the issue persists.");
         }
 
         Object message = request.getAttribute(RequestDispatcher.ERROR_MESSAGE);
