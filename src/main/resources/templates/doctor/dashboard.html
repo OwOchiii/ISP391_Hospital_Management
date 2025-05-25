@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -105,7 +105,7 @@
             padding: 1rem 2rem;
             box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
             display: flex;
-            justify-content: between;
+            justify-content: space-between;
             align-items: center;
         }
 
@@ -127,7 +127,6 @@
             display: flex;
             align-items: center;
             gap: 1rem;
-            margin-left: auto;
         }
 
         .doctor-info {
@@ -247,7 +246,7 @@
             padding: 1.5rem;
             border-bottom: 1px solid #e5e7eb;
             display: flex;
-            justify-content: between;
+            justify-content: space-between;
             align-items: center;
         }
 
@@ -310,6 +309,7 @@
             margin-bottom: 0.75rem;
             background: var(--bg-light);
             transition: all 0.3s ease;
+            cursor: pointer;
         }
 
         .appointment-item:hover {
@@ -354,49 +354,6 @@
         .status-pending { background: #fef3c7; color: #92400e; }
         .status-completed { background: #dbeafe; color: #1e40af; }
 
-        .schedule-grid {
-            display: grid;
-            grid-template-columns: auto repeat(7, 1fr);
-            gap: 1px;
-            background: #e5e7eb;
-            border-radius: 10px;
-            overflow: hidden;
-        }
-
-        .schedule-header {
-            background: var(--primary-color);
-            color: white;
-            padding: 1rem 0.5rem;
-            text-align: center;
-            font-weight: 600;
-            font-size: 0.9rem;
-        }
-
-        .time-slot {
-            background: white;
-            padding: 0.75rem 0.5rem;
-            font-size: 0.8rem;
-            color: var(--text-light);
-            text-align: center;
-        }
-
-        .schedule-cell {
-            background: white;
-            padding: 0.5rem;
-            min-height: 60px;
-            position: relative;
-        }
-
-        .schedule-appointment {
-            background: linear-gradient(135deg, var(--accent-color), #0891b2);
-            color: white;
-            padding: 0.25rem 0.5rem;
-            border-radius: 5px;
-            font-size: 0.75rem;
-            margin-bottom: 0.25rem;
-            cursor: pointer;
-        }
-
         .empty-state {
             text-align: center;
             padding: 2rem;
@@ -407,6 +364,28 @@
             font-size: 3rem;
             margin-bottom: 1rem;
             opacity: 0.5;
+        }
+
+        .table-responsive {
+            border-radius: 10px;
+            overflow: hidden;
+        }
+
+        .table {
+            margin-bottom: 0;
+        }
+
+        .table th {
+            background: var(--bg-light);
+            border: none;
+            font-weight: 600;
+            color: var(--text-dark);
+        }
+
+        .table td {
+            border: none;
+            border-bottom: 1px solid #e5e7eb;
+            vertical-align: middle;
         }
 
         @media (max-width: 768px) {
@@ -430,22 +409,18 @@
                 padding: 1rem;
             }
 
-            .schedule-grid {
-                font-size: 0.8rem;
-            }
-
             .doctor-info span {
                 display: none;
+            }
+
+            .top-header {
+                padding: 1rem;
             }
         }
 
         @media (max-width: 576px) {
             .stats-grid {
                 grid-template-columns: 1fr;
-            }
-
-            .top-header {
-                padding: 1rem;
             }
         }
     </style>
@@ -462,33 +437,27 @@
 
     <nav class="sidebar-nav">
         <div class="nav-item">
-            <a href="#" class="nav-link active">
+            <a th:href="@{/doctor/dashboard(doctorId=${doctorId})}" class="nav-link active">
                 <i class="bi bi-speedometer2"></i>
                 Dashboard
             </a>
         </div>
         <div class="nav-item">
-            <a href="#" class="nav-link">
+            <a th:href="@{/doctor/appointments(doctorId=${doctorId})}" class="nav-link">
                 <i class="bi bi-calendar-check"></i>
-                Schedule
+                Appointments
             </a>
         </div>
         <div class="nav-item">
-            <a href="#" class="nav-link">
+            <a th:href="@{/doctor/patients(doctorId=${doctorId})}" class="nav-link">
                 <i class="bi bi-people"></i>
                 Patients
             </a>
         </div>
         <div class="nav-item">
-            <a href="#" class="nav-link">
-                <i class="bi bi-clipboard-pulse"></i>
-                Appointments
-            </a>
-        </div>
-        <div class="nav-item">
-            <a href="#" class="nav-link">
+            <a th:href="@{/doctor/medical-orders(doctorId=${doctorId})}" class="nav-link">
                 <i class="bi bi-prescription2"></i>
-                Prescriptions
+                Medical Orders
             </a>
         </div>
         <div class="nav-item">
@@ -504,7 +473,7 @@
             </a>
         </div>
         <div class="nav-item">
-            <a href="login.html" class="nav-link">
+            <a th:href="@{/auth/logout}" class="nav-link">
                 <i class="bi bi-box-arrow-right"></i>
                 Logout
             </a>
@@ -526,11 +495,11 @@
         <div class="header-right">
             <div class="doctor-info">
                 <div class="doctor-avatar">
-                    DR
+                    <span th:text="${doctorName != null ? #strings.substring(doctorName, 0, 2).toUpperCase() : 'DR'}">DR</span>
                 </div>
                 <div>
-                    <div class="fw-semibold">Dr. Sarah Johnson</div>
-                    <small class="text-muted">Cardiologist</small>
+                    <div class="fw-semibold" th:text="${doctorName != null ? doctorName : 'Doctor'}">Doctor</div>
+                    <small class="text-muted" th:text="${'ID: ' + doctorId}">ID: 123</small>
                 </div>
             </div>
         </div>
@@ -543,12 +512,14 @@
             <div class="welcome-content">
                 <div class="row align-items-center">
                     <div class="col-md-8">
-                        <h2 class="mb-2">Good Morning, Dr. Johnson!</h2>
-                        <p class="mb-0 lead">You have 8 appointments scheduled for today. Here's your overview.</p>
+                        <h2 class="mb-2" id="greeting">Good Morning, Doctor!</h2>
+                        <p class="mb-0 lead" th:text="|You have ${todayAppointments != null ? todayAppointments.size() : 0} appointments scheduled for today. Here's your overview.|">
+                            You have appointments scheduled for today. Here's your overview.
+                        </p>
                     </div>
                     <div class="col-md-4 text-md-end">
                         <div class="fs-1">
-                            <i class="bi bi-sun"></i>
+                            <i class="bi bi-sun" id="greeting-icon"></i>
                         </div>
                     </div>
                 </div>
@@ -562,7 +533,7 @@
                     <i class="bi bi-calendar-check"></i>
                 </div>
                 <div class="stat-info">
-                    <h3>8</h3>
+                    <h3 th:text="${todayAppointments != null ? todayAppointments.size() : 0}">0</h3>
                     <p>Today's Appointments</p>
                 </div>
             </div>
@@ -572,7 +543,7 @@
                     <i class="bi bi-people"></i>
                 </div>
                 <div class="stat-info">
-                    <h3>156</h3>
+                    <h3 th:text="${patientCount != null ? patientCount : 0}">0</h3>
                     <p>Total Patients</p>
                 </div>
             </div>
@@ -582,18 +553,18 @@
                     <i class="bi bi-clock"></i>
                 </div>
                 <div class="stat-info">
-                    <h3>3</h3>
-                    <p>Pending Appointments</p>
+                    <h3 th:text="${upcomingAppointments != null ? upcomingAppointments.size() : 0}">0</h3>
+                    <p>Upcoming Appointments</p>
                 </div>
             </div>
 
             <div class="stat-card">
                 <div class="stat-icon accent">
-                    <i class="bi bi-check-circle"></i>
+                    <i class="bi bi-clipboard-pulse"></i>
                 </div>
                 <div class="stat-info">
-                    <h3>5</h3>
-                    <p>Completed Today</p>
+                    <h3 th:text="${pendingOrders != null ? pendingOrders.size() : 0}">0</h3>
+                    <p>Pending Orders</p>
                 </div>
             </div>
         </div>
@@ -604,189 +575,164 @@
             <div class="dashboard-card">
                 <div class="card-header">
                     <h3 class="card-title">Today's Appointments</h3>
-                    <a href="#" class="btn-outline-custom">
+                    <a th:href="@{/doctor/appointments/today(doctorId=${doctorId})}" class="btn-outline-custom">
                         View All <i class="bi bi-arrow-right"></i>
                     </a>
                 </div>
                 <div class="card-body">
-                    <div class="appointment-item">
-                        <div class="appointment-time">09:00</div>
-                        <div class="appointment-info">
-                            <div class="patient-name">John Smith</div>
-                            <div class="appointment-type">Regular Checkup</div>
-                        </div>
-                        <div class="appointment-status status-confirmed">Confirmed</div>
+                    <div th:if="${todayAppointments == null || todayAppointments.isEmpty()}" class="empty-state">
+                        <i class="bi bi-calendar-x"></i>
+                        <p>No appointments scheduled for today</p>
                     </div>
 
-                    <div class="appointment-item">
-                        <div class="appointment-time">10:30</div>
-                        <div class="appointment-info">
-                            <div class="patient-name">Emily Davis</div>
-                            <div class="appointment-type">Follow-up</div>
+                    <div th:if="${todayAppointments != null && !todayAppointments.isEmpty()}">
+                        <div th:each="appointment : ${todayAppointments}"
+                             class="appointment-item"
+                             th:data-appointment-id="${appointment.appointmentId}"
+                             th:onclick="|navigateToAppointment(${appointment.appointmentId})|">
+                            <div class="appointment-time"
+                                 th:text="${appointment.dateTime != null ? #temporals.format(appointment.dateTime, 'HH:mm') : '00:00'}">
+                                00:00
+                            </div>
+                            <div class="appointment-info">
+                                <div class="patient-name"
+                                     th:text="${appointment.patient != null && appointment.patient.user != null ? appointment.patient.user.fullName : 'Unknown Patient'}">
+                                    Patient Name
+                                </div>
+                                <div class="appointment-type"
+                                     th:text="${appointment.description != null ? appointment.description : 'General Appointment'}">
+                                    Appointment Type
+                                </div>
+                            </div>
+                            <div th:class="'appointment-status ' +
+                                          (${appointment.status == 'Confirmed'} ? 'status-confirmed' :
+                                           ${appointment.status == 'Pending'} ? 'status-pending' : 'status-completed')"
+                                 th:text="${appointment.status != null ? appointment.status : 'Pending'}">
+                                Status
+                            </div>
                         </div>
-                        <div class="appointment-status status-confirmed">Confirmed</div>
-                    </div>
-
-                    <div class="appointment-item">
-                        <div class="appointment-time">11:15</div>
-                        <div class="appointment-info">
-                            <div class="patient-name">Michael Brown</div>
-                            <div class="appointment-type">Consultation</div>
-                        </div>
-                        <div class="appointment-status status-pending">Pending</div>
-                    </div>
-
-                    <div class="appointment-item">
-                        <div class="appointment-time">14:00</div>
-                        <div class="appointment-info">
-                            <div class="patient-name">Sarah Wilson</div>
-                            <div class="appointment-type">Emergency</div>
-                        </div>
-                        <div class="appointment-status status-confirmed">Confirmed</div>
-                    </div>
-
-                    <div class="appointment-item">
-                        <div class="appointment-time">15:30</div>
-                        <div class="appointment-info">
-                            <div class="patient-name">David Lee</div>
-                            <div class="appointment-type">Regular Checkup</div>
-                        </div>
-                        <div class="appointment-status status-confirmed">Confirmed</div>
                     </div>
                 </div>
             </div>
 
-            <!-- Weekly Schedule Overview -->
+            <!-- Upcoming Appointments -->
             <div class="dashboard-card">
                 <div class="card-header">
-                    <h3 class="card-title">This Week's Schedule</h3>
-                    <a href="#" class="btn-primary-custom">
-                        Full Schedule <i class="bi bi-calendar"></i>
+                    <h3 class="card-title">Upcoming Appointments</h3>
+                    <a th:href="@{/doctor/appointments/upcoming(doctorId=${doctorId})}" class="btn-outline-custom">
+                        View All <i class="bi bi-arrow-right"></i>
                     </a>
                 </div>
                 <div class="card-body">
-                    <div class="schedule-grid">
-                        <div class="schedule-header">Time</div>
-                        <div class="schedule-header">Mon</div>
-                        <div class="schedule-header">Tue</div>
-                        <div class="schedule-header">Wed</div>
-                        <div class="schedule-header">Thu</div>
-                        <div class="schedule-header">Fri</div>
-                        <div class="schedule-header">Sat</div>
-                        <div class="schedule-header">Sun</div>
+                    <div th:if="${upcomingAppointments == null || upcomingAppointments.isEmpty()}" class="empty-state">
+                        <i class="bi bi-calendar-x"></i>
+                        <p>No upcoming appointments scheduled</p>
+                    </div>
 
-                        <div class="time-slot">09:00</div>
-                        <div class="schedule-cell">
-                            <div class="schedule-appointment">J. Smith</div>
+                    <div th:if="${upcomingAppointments != null && !upcomingAppointments.isEmpty()}">
+                        <div th:each="appointment : ${upcomingAppointments}"
+                             class="appointment-item"
+                             th:data-appointment-id="${appointment.appointmentId}"
+                             th:onclick="|navigateToAppointment(${appointment.appointmentId})|">
+                            <div class="appointment-time"
+                                 th:text="${appointment.dateTime != null ? #temporals.format(appointment.dateTime, 'dd/MM') : 'TBD'}">
+                                Date
+                            </div>
+                            <div class="appointment-info">
+                                <div class="patient-name"
+                                     th:text="${appointment.patient != null && appointment.patient.user != null ? appointment.patient.user.fullName : 'Unknown Patient'}">
+                                    Patient Name
+                                </div>
+                                <div class="appointment-type">
+                                    <span th:text="${appointment.dateTime != null ? #temporals.format(appointment.dateTime, 'HH:mm') : 'TBD'}">Time</span> -
+                                    <span th:text="${appointment.description != null ? appointment.description : 'General Appointment'}">Appointment Description</span>
+                                </div>
+                            </div>
+                            <div th:class="'appointment-status ' +
+                                          (${appointment.status == 'Confirmed'} ? 'status-confirmed' :
+                                           ${appointment.status == 'Pending'} ? 'status-pending' : 'status-completed')"
+                                 th:text="${appointment.status != null ? appointment.status : 'Pending'}">
+                                Status
+                            </div>
                         </div>
-                        <div class="schedule-cell">
-                            <div class="schedule-appointment">M. Johnson</div>
-                        </div>
-                        <div class="schedule-cell">
-                            <div class="schedule-appointment">A. Wilson</div>
-                        </div>
-                        <div class="schedule-cell"></div>
-                        <div class="schedule-cell">
-                            <div class="schedule-appointment">R. Davis</div>
-                        </div>
-                        <div class="schedule-cell"></div>
-                        <div class="schedule-cell"></div>
-
-                        <div class="time-slot">10:00</div>
-                        <div class="schedule-cell">
-                            <div class="schedule-appointment">E. Davis</div>
-                        </div>
-                        <div class="schedule-cell"></div>
-                        <div class="schedule-cell">
-                            <div class="schedule-appointment">P. Brown</div>
-                        </div>
-                        <div class="schedule-cell">
-                            <div class="schedule-appointment">L. Taylor</div>
-                        </div>
-                        <div class="schedule-cell"></div>
-                        <div class="schedule-cell">
-                            <div class="schedule-appointment">K. White</div>
-                        </div>
-                        <div class="schedule-cell"></div>
-
-                        <div class="time-slot">11:00</div>
-                        <div class="schedule-cell">
-                            <div class="schedule-appointment">M. Brown</div>
-                        </div>
-                        <div class="schedule-cell">
-                            <div class="schedule-appointment">S. Garcia</div>
-                        </div>
-                        <div class="schedule-cell"></div>
-                        <div class="schedule-cell"></div>
-                        <div class="schedule-cell">
-                            <div class="schedule-appointment">T. Miller</div>
-                        </div>
-                        <div class="schedule-cell"></div>
-                        <div class="schedule-cell"></div>
-
-                        <div class="time-slot">14:00</div>
-                        <div class="schedule-cell">
-                            <div class="schedule-appointment">S. Wilson</div>
-                        </div>
-                        <div class="schedule-cell"></div>
-                        <div class="schedule-cell">
-                            <div class="schedule-appointment">C. Anderson</div>
-                        </div>
-                        <div class="schedule-cell">
-                            <div class="schedule-appointment">N. Thomas</div>
-                        </div>
-                        <div class="schedule-cell"></div>
-                        <div class="schedule-cell"></div>
-                        <div class="schedule-cell"></div>
-
-                        <div class="time-slot">15:00</div>
-                        <div class="schedule-cell">
-                            <div class="schedule-appointment">D. Lee</div>
-                        </div>
-                        <div class="schedule-cell">
-                            <div class="schedule-appointment">B. Martinez</div>
-                        </div>
-                        <div class="schedule-cell"></div>
-                        <div class="schedule-cell"></div>
-                        <div class="schedule-cell">
-                            <div class="schedule-appointment">H. Clark</div>
-                        </div>
-                        <div class="schedule-cell"></div>
-                        <div class="schedule-cell"></div>
                     </div>
                 </div>
             </div>
         </div>
 
-        <!-- Quick Actions -->
+        <!-- Pending Medical Orders -->
         <div class="dashboard-card">
+            <div class="card-header">
+                <h3 class="card-title">Pending Medical Orders</h3>
+                <a th:href="@{/doctor/medical-orders/status(doctorId=${doctorId}, status='Pending')}" class="btn-primary-custom">
+                    View All <i class="bi bi-arrow-right"></i>
+                </a>
+            </div>
+            <div class="card-body">
+                <div th:if="${pendingOrders == null || pendingOrders.isEmpty()}" class="empty-state">
+                    <i class="bi bi-clipboard-check"></i>
+                    <p>No pending medical orders</p>
+                </div>
+
+                <div class="table-responsive" th:if="${pendingOrders != null && !pendingOrders.isEmpty()}">
+                    <table class="table table-hover">
+                        <thead>
+                        <tr>
+                            <th>Order ID</th>
+                            <th>Type</th>
+                            <th>Status</th>
+                            <th>Order Date</th>
+                            <th>Action</th>
+                        </tr>
+                        </thead>
+                        <tbody>
+                        <tr th:each="order : ${pendingOrders}">
+                            <td th:text="${order.orderId != null ? order.orderId : 'N/A'}">123</td>
+                            <td th:text="${order.orderType != null ? order.orderType : 'N/A'}">Lab Test</td>
+                            <td th:text="${order.status != null ? order.status : 'Pending'}">Pending</td>
+                            <td th:text="${order.orderDate != null ? #dates.format(order.orderDate, 'dd MMM yyyy') : 'N/A'}">01 Jan 2023</td>
+                            <td>
+                                <a th:href="@{/doctor/medical-orders/{id}(id=${order.orderId}, doctorId=${doctorId})}"
+                                   class="btn btn-sm btn-outline-primary">
+                                    View
+                                </a>
+                            </td>
+                        </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- Quick Actions -->
+        <div class="dashboard-card mt-4">
             <div class="card-header">
                 <h3 class="card-title">Quick Actions</h3>
             </div>
             <div class="card-body">
                 <div class="row g-3">
                     <div class="col-md-3">
-                        <a href="#" class="btn-primary-custom w-100">
+                        <a th:href="@{/doctor/appointments/new(doctorId=${doctorId})}" class="btn-primary-custom w-100">
                             <i class="bi bi-plus-circle"></i>
                             New Appointment
                         </a>
                     </div>
                     <div class="col-md-3">
-                        <a href="#" class="btn-outline-custom w-100">
+                        <a th:href="@{/doctor/patients/new(doctorId=${doctorId})}" class="btn-outline-custom w-100">
                             <i class="bi bi-person-plus"></i>
                             Add Patient
                         </a>
                     </div>
                     <div class="col-md-3">
-                        <a href="#" class="btn-outline-custom w-100">
+                        <a th:href="@{/doctor/prescriptions/new(doctorId=${doctorId})}" class="btn-outline-custom w-100">
                             <i class="bi bi-prescription2"></i>
                             Write Prescription
                         </a>
                     </div>
                     <div class="col-md-3">
-                        <a href="#" class="btn-outline-custom w-100">
+                        <a th:href="@{/doctor/patients(doctorId=${doctorId})}" class="btn-outline-custom w-100">
                             <i class="bi bi-file-medical"></i>
-                            Medical Records
+                            Patient Records
                         </a>
                     </div>
                 </div>
@@ -798,7 +744,11 @@
 <!-- Bootstrap JS -->
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 
-<script>
+<script th:inline="javascript">
+    /*<![CDATA[*/
+    // Get doctor ID from Thymeleaf
+    const doctorId = /*[[${doctorId}]]*/ 0;
+
     // Sidebar toggle functionality
     function toggleSidebar() {
         const sidebar = document.getElementById('sidebar');
@@ -829,8 +779,8 @@
     // Update time-based greeting
     function updateGreeting() {
         const hour = new Date().getHours();
-        const greetingElement = document.querySelector('.welcome-section h2');
-        const iconElement = document.querySelector('.welcome-section .bi');
+        const greetingElement = document.getElementById('greeting');
+        const iconElement = document.getElementById('greeting-icon');
 
         let greeting, icon;
 
@@ -845,55 +795,23 @@
             icon = 'bi-moon';
         }
 
-        greetingElement.textContent = `${greeting}, Dr. Johnson!`;
-        iconElement.className = `bi ${icon}`;
+        if (greetingElement) {
+            greetingElement.textContent = `${greeting}, Doctor!`;
+        }
+        if (iconElement) {
+            iconElement.className = `bi ${icon}`;
+        }
     }
 
-    // Update current time
-    function updateCurrentTime() {
-        const now = new Date();
-        const timeString = now.toLocaleTimeString('en-US', {
-            hour: '2-digit',
-            minute: '2-digit',
-            hour12: false
-        });
-
-        // Highlight current time slot if exists
-        const currentTimeSlots = document.querySelectorAll('.appointment-time');
-        currentTimeSlots.forEach(slot => {
-            if (slot.textContent === timeString.substring(0, 5)) {
-                slot.style.background = 'var(--success-color)';
-            }
-        });
+    // Navigate to appointment details
+    function navigateToAppointment(appointmentId) {
+        if (appointmentId && doctorId) {
+            window.location.href = `/doctor/appointment/${appointmentId}?doctorId=${doctorId}`;
+        }
     }
 
     // Initialize
     updateGreeting();
-    updateCurrentTime();
-
-    // Update every minute
-    setInterval(updateCurrentTime, 60000);
-
-    // Appointment item click handlers
-    document.querySelectorAll('.appointment-item').forEach(item => {
-        item.addEventListener('click', function() {
-            const patientName = this.querySelector('.patient-name').textContent;
-            const appointmentTime = this.querySelector('.appointment-time').textContent;
-
-            // Here you would typically open a modal or navigate to appointment details
-            console.log(`Clicked appointment: ${patientName} at ${appointmentTime}`);
-        });
-    });
-
-    // Schedule appointment click handlers
-    document.querySelectorAll('.schedule-appointment').forEach(appointment => {
-        appointment.addEventListener('click', function() {
-            const patientName = this.textContent;
-
-            // Here you would typically open appointment details
-            console.log(`Clicked schedule appointment: ${patientName}`);
-        });
-    });
 
     // Navigation link handlers
     document.querySelectorAll('.nav-link').forEach(link => {
@@ -909,6 +827,7 @@
             this.classList.add('active');
         });
     });
+    /*]]>*/
 </script>
 </body>
 </html>

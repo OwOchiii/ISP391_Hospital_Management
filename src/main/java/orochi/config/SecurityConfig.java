@@ -11,6 +11,7 @@ import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.security.web.authentication.AuthenticationSuccessHandler;
 
 @Configuration
 @EnableWebSecurity
@@ -23,19 +24,28 @@ public class SecurityConfig {
     private PasswordEncoder passwordEncoder;
 
     @Bean
+    public AuthenticationSuccessHandler authenticationSuccessHandler() {
+        return new CustomAuthenticationSuccessHandler();
+    }
+
+    @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http
                 .authorizeHttpRequests(authorizeRequests ->
                         authorizeRequests
                                 .requestMatchers("/auth/**", "/css/**", "/js/**", "/images/**", "/").permitAll()
-                                .requestMatchers("/admin/**").hasRole("ADMIN")
+                                .requestMatchers("/admin/**").hasAuthority("ADMIN")
+                                .requestMatchers("/doctor/**").hasAuthority("DOCTOR")
+                                .requestMatchers("/receptionist/**").hasAuthority("RECEPTIONIST")
+                                .requestMatchers("/patient/**").hasAuthority("PATIENT")
                                 .anyRequest().authenticated()
                 )
+
                 .formLogin(formLogin ->
                         formLogin
                                 .loginPage("/auth/login")
-                                .loginProcessingUrl("/auth/process-login") // Spring Security will handle this URL
-                                .defaultSuccessUrl("/dashboard", true)
+                                .loginProcessingUrl("/auth/process-login")
+                                .successHandler(authenticationSuccessHandler()) // Use custom success handler
                                 .failureUrl("/auth/login?error=true")
                                 .permitAll()
                 )
@@ -56,5 +66,4 @@ public class SecurityConfig {
         auth.userDetailsService(userDetailsService)
                 .passwordEncoder(passwordEncoder);
     }
-
 }

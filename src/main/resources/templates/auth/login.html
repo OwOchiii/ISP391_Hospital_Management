@@ -501,49 +501,28 @@
 <script>
     // Form validation and submission
     document.getElementById('loginForm').addEventListener('submit', function(e) {
-        e.preventDefault();
-
         const form = this;
         const email = document.getElementById('email').value;
         const password = document.getElementById('password').value;
 
         // Reset previous validation states
         form.classList.remove('was-validated');
-        hideAlerts();
 
-        // Validate form
-        if (!form.checkValidity()) {
+        // Basic validation
+        if (!email || !password) {
+            e.preventDefault(); // Only prevent default if validation fails
             form.classList.add('was-validated');
-            return;
+            return false;
         }
 
         // Show loading state
-        showLoading(true);
+        const btnText = document.getElementById('loginBtnText');
+        const spinner = document.getElementById('loginSpinner');
+        btnText.textContent = 'Signing In...';
+        spinner.style.display = 'inline-block';
 
-        // Simulate API call
-        setTimeout(() => {
-            // Demo validation
-            if (email === 'patient@medicareplus.com' && password === 'patient123') {
-                showAlert('success', 'Login successful! Redirecting to patient dashboard...');
-                setTimeout(() => {
-                    window.location.href = 'patient-dashboard.html';
-                }, 2000);
-            } else if (email === 'doctor@medicareplus.com' && password === 'doctor123') {
-                showAlert('success', 'Login successful! Redirecting to doctor dashboard...');
-                setTimeout(() => {
-                    window.location.href = 'doctor-dashboard.html';
-                }, 2000);
-            } else if (email && password) {
-                showAlert('success', 'Login successful! Redirecting to dashboard...');
-                setTimeout(() => {
-                    window.location.href = 'dashboard.html';
-                }, 2000);
-            } else {
-                showAlert('error', 'Invalid email or password. Please try again.');
-            }
-
-            showLoading(false);
-        }, 1500);
+        // Let the form submit normally to  your Spring controller
+        return true;
     });
 
     // Toggle password visibility
