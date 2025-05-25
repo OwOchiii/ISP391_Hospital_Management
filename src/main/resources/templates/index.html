@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -219,12 +219,12 @@
             </ul>
 
             <div class="d-flex gap-2">
-                <button class="btn btn-outline-custom" data-bs-toggle="modal" data-bs-target="#loginModal">
+                <a th:href="@{/auth/login}" class="btn btn-outline-custom">
                     <i class="bi bi-box-arrow-in-right me-1"></i>Login
-                </button>
-                <button class="btn btn-primary-custom" data-bs-toggle="modal" data-bs-target="#registerModal">
+                </a>
+                <a th:href="@{/auth/register}" class="btn btn-primary-custom">
                     <i class="bi bi-person-plus me-1"></i>Register
-                </button>
+                </a>
             </div>
         </div>
     </div>
@@ -539,7 +539,7 @@
     </div>
 </footer>
 
-<!-- Login Modal -->
+<!-- Login Modal
 <div class="modal fade" id="loginModal" tabindex="-1">
     <div class="modal-dialog">
         <div class="modal-content">
@@ -549,20 +549,22 @@
             </div>
             <div class="modal-body">
                 <form>
-                    <div class="mb-3">
-                        <label for="loginEmail" class="form-label">Email address</label>
-                        <input type="email" class="form-control" id="loginEmail" required>
-                    </div>
-                    <div class="mb-3">
-                        <label for="loginPassword" class="form-label">Password</label>
-                        <input type="password" class="form-control" id="loginPassword" required>
-                    </div>
-                    <div class="mb-3 form-check">
-                        <input type="checkbox" class="form-check-input" id="rememberMe">
-                        <label class="form-check-label" for="rememberMe">Remember me</label>
-                    </div>
-                    <button type="submit" class="btn btn-primary-custom w-100">Login</button>
-                </form>
+                    <form th:action="@{/auth/login}" method="post">
+                        <div class="mb-3">
+                            <label for="loginEmail" class="form-label">Email address</label>
+                            <input type="email" class="form-control" id="loginEmail" name="username" required>
+                        </div>
+                        <div class="mb-3">
+                            <label for="loginPassword" class="form-label">Password</label>
+                            <input type="password" class="form-control" id="loginPassword" name="password" required>
+                        </div>
+                        <div class="mb-3 form-check">
+                            <input type="checkbox" class="form-check-input" id="rememberMe" name="remember-me">
+                            <label class="form-check-label" for="rememberMe">Remember me</label>
+                        </div>
+                        <button type="submit" class="btn btn-primary-custom w-100">Login</button>
+                    </form>
+
                 <div class="text-center mt-3">
                     <a href="#" class="text-decoration-none">Forgot your password?</a>
                 </div>
@@ -570,7 +572,7 @@
         </div>
     </div>
 </div>
-
+-->
 <!-- Register Modal -->
 <div class="modal fade" id="registerModal" tabindex="-1">
     <div class="modal-dialog">

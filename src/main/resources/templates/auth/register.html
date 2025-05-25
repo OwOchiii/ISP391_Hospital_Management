@@ -340,7 +340,7 @@
 <body>
 <!-- Back to Home -->
 <div class="back-to-home">
-    <a th:href="@{/index.html}">
+    <a th:href="@{/}">
         <i class="bi bi-arrow-left"></i>
         Back to Home
     </a>
@@ -409,14 +409,14 @@
                     </div>
 
                     <!-- Alert Messages -->
-                    <div id="successAlert" class="alert-custom alert-success-custom" style="display: none;">
-                        <i class="bi bi-check-circle me-2"></i>
-                        <span id="successMessage"></span>
+                    <div th:if="${errorMessage}" class="alert-custom alert-error-custom">
+                        <i class="bi bi-exclamation-circle me-2"></i>
+                        <span th:text="${errorMessage}"></span>
                     </div>
 
-                    <div id="errorAlert" class="alert-custom alert-error-custom" style="display: none;">
-                        <i class="bi bi-exclamation-circle me-2"></i>
-                        <span id="errorMessage"></span>
+                    <div th:if="${successMessage}" class="alert-custom alert-success-custom">
+                        <i class="bi bi-check-circle me-2"></i>
+                        <span th:text="${successMessage}"></span>
                     </div>
 
                     <!-- Registration Form -->
@@ -619,7 +619,7 @@
 
             // Phone validation
             const phone = document.getElementById('phoneNumber');
-            const phoneRegex = /^[\+]?[1-9][\d]{0,15}$/;
+            const phoneRegex = /^\+?[\d]{10,15}$/;
             if (!phoneRegex.test(phone.value.replace(/\s/g, ''))) {
                 phone.classList.add('is-invalid');
                 showAlert('error', 'Please enter a valid phone number.');
@@ -630,8 +630,9 @@
     }
 
     // Form submission
+    // Replace your existing form submission code with this:
     document.getElementById('registerForm').addEventListener('submit', function(e) {
-        e.preventDefault();
+        // Don't prevent default form submission completely
 
         const form = this;
         const password = document.getElementById('password').value;
@@ -644,45 +645,32 @@
 
         // Validate passwords
         if (password.length < 8) {
+            e.preventDefault(); // Prevent form submission on validation error
             document.getElementById('password').classList.add('is-invalid');
             showAlert('error', 'Password must be at least 8 characters long.');
             return;
         }
 
         if (password !== confirmPassword) {
+            e.preventDefault(); // Prevent form submission on validation error
             document.getElementById('confirmPassword').classList.add('is-invalid');
             showAlert('error', 'Passwords do not match.');
             return;
         }
 
         if (!agreeTerms) {
+            e.preventDefault(); // Prevent form submission on validation error
             document.getElementById('agreeTerms').classList.add('is-invalid');
             showAlert('error', 'You must agree to the terms and conditions.');
             return;
         }
 
-        // Show loading
+        // Show loading if all validation passes
         showLoading(true);
 
-        // Prepare data for submission (matching your database schema)
-        const formData = {
-            fullName: document.getElementById('fullName').value.trim(),
-            email: document.getElementById('email').value.trim(),
-            passwordHash: password, // This will be hashed on the backend
-            phoneNumber: document.getElementById('phoneNumber').value.trim()
-        };
-
-        console.log('Registration data:', formData);
-
-        // Simulate registration
-        setTimeout(() => {
-            showAlert('success', 'Account created successfully! Please check your email for verification.');
-            setTimeout(() => {
-                window.location.href = 'login.html';
-            }, 3000);
-            showLoading(false);
-        }, 2000);
+        // The form will now submit naturally to the server endpoint
     });
+
 
     // Password strength checker
     document.getElementById('password').addEventListener('input', function() {
@@ -815,7 +803,7 @@
                     this.classList.add('is-invalid');
                 }
             } else if (this.id === 'phoneNumber') {
-                const phoneRegex = /^[\+]?[1-9][\d]{0,15}$/;
+                const phoneRegex = /^[\+]?[\d]{10,15}$/;
                 if (phoneRegex.test(this.value.replace(/\s/g, '')) && this.value.trim()) {
                     this.classList.remove('is-invalid');
                     this.classList.add('is-valid');
@@ -834,4 +822,5 @@
 </script>
 </body>
 </html>
+
 

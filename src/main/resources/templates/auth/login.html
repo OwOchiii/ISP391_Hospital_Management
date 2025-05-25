@@ -327,7 +327,7 @@
 <body>
 <!-- Back to Home -->
 <div class="back-to-home">
-    <a th:href="@{/index.html}">
+    <a th:href="@{/}">
         <i class="bi bi-arrow-left"></i>
         Back to Home
     </a>
@@ -385,25 +385,43 @@
                         <p class="text-muted">Enter your credentials to access your account</p>
                     </div>
 
-                    <!-- Alert Messages (Hidden by default) -->
-                    <div id="successAlert" class="alert-custom alert-success-custom" style="display: none;">
-                        <i class="bi bi-check-circle me-2"></i>
-                        <span id="successMessage"></span>
+            <!-- Server Alert Messages -->
+            <div th:if="${successMessage}" class="alert-custom alert-success-custom">
+                <i class="bi bi-check-circle me-2"></i>
+                <span th:text="${successMessage}"></span>
+            </div>
+
+            <div th:if="${errorMessage}" class="alert-custom alert-error-custom">
+                <i class="bi bi-exclamation-circle me-2"></i>
+                <span th:text="${errorMessage}"></span>
+            </div>
+                    <!-- Social Login
+                    <div class="social-login">
+                        <a href="#" class="social-btn">
+                            <i class="bi bi-google"></i>
+                            Google
+                        </a>
+                        <a href="#" class="social-btn">
+                            <i class="bi bi-facebook"></i>
+                            Facebook
+                        </a>
                     </div>
 
-                    <div id="errorAlert" class="alert-custom alert-error-custom" style="display: none;">
-                        <i class="bi bi-exclamation-circle me-2"></i>
-                        <span id="errorMessage"></span>
+                    <div class="divider">
+                        <span>or continue with email</span>
                     </div>
-
+                    -->
                     <!-- Login Form -->
-                    <form id="loginForm" th:action="@{/auth/login}" method="post" novalidate>
+                    <form id="loginForm" th:action="@{/auth/process-login}" method="post" novalidate>
+                        <!-- CSRF Token -->
                         <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}" />
+                        
                         <div class="mb-3">
                             <label for="email" class="form-label">
                                 <i class="bi bi-envelope me-2"></i>Email Address
                             </label>
-                            <input type="email" class="form-control" id="email" name="email" required>
+                            <input type="email" class="form-control" id="email" name="username" required>
+                            <!-- Note: Spring Security's default parameter name is "username" -->
                             <div class="invalid-feedback">
                                 Please enter a valid email address.
                             </div>
@@ -448,4 +466,179 @@
                     </form>
 
                     <div class="text-center">
-                        <p class="text-muted
+                        <p class="text-muted mb-0">
+                            Don't have an account?
+                            <a th:href="@{/auth/register}" class="text-decoration-none fw-semibold">Sign up here</a>
+                        </p>
+                    </div>
+
+                    <!-- Quick Access for Demo
+                    <div class="mt-4 p-3 bg-light rounded-3">
+                        <h6 class="fw-semibold mb-2">Quick Demo Access:</h6>
+                        <div class="row g-2">
+                            <div class="col-6">
+                                <button type="button" class="btn btn-outline-custom btn-sm w-100" onclick="fillDemoPatient()">
+                                    Demo Patient
+                                </button>
+                            </div>
+                            <div class="col-6">
+                                <button type="button" class="btn btn-outline-custom btn-sm w-100" onclick="fillDemoDoctor()">
+                                    Demo Doctor
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                    -->
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Bootstrap JS -->
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+
+<script>
+    // Form validation and submission
+    document.getElementById('loginForm').addEventListener('submit', function(e) {
+        e.preventDefault();
+
+        const form = this;
+        const email = document.getElementById('email').value;
+        const password = document.getElementById('password').value;
+
+        // Reset previous validation states
+        form.classList.remove('was-validated');
+        hideAlerts();
+
+        // Validate form
+        if (!form.checkValidity()) {
+            form.classList.add('was-validated');
+            return;
+        }
+
+        // Show loading state
+        showLoading(true);
+
+        // Simulate API call
+        setTimeout(() => {
+            // Demo validation
+            if (email === 'patient@medicareplus.com' && password === 'patient123') {
+                showAlert('success', 'Login successful! Redirecting to patient dashboard...');
+                setTimeout(() => {
+                    window.location.href = 'patient-dashboard.html';
+                }, 2000);
+            } else if (email === 'doctor@medicareplus.com' && password === 'doctor123') {
+                showAlert('success', 'Login successful! Redirecting to doctor dashboard...');
+                setTimeout(() => {
+                    window.location.href = 'doctor-dashboard.html';
+                }, 2000);
+            } else if (email && password) {
+                showAlert('success', 'Login successful! Redirecting to dashboard...');
+                setTimeout(() => {
+                    window.location.href = 'dashboard.html';
+                }, 2000);
+            } else {
+                showAlert('error', 'Invalid email or password. Please try again.');
+            }
+
+            showLoading(false);
+        }, 1500);
+    });
+
+    // Toggle password visibility
+    function togglePassword() {
+        const passwordInput = document.getElementById('password');
+        const passwordIcon = document.getElementById('passwordIcon');
+
+        if (passwordInput.type === 'password') {
+            passwordInput.type = 'text';
+            passwordIcon.className = 'bi bi-eye-slash';
+        } else {
+            passwordInput.type = 'password';
+            passwordIcon.className = 'bi bi-eye';
+        }
+    }
+
+    // Show/hide loading state
+    function showLoading(show) {
+        const btnText = document.getElementById('loginBtnText');
+        const spinner = document.getElementById('loginSpinner');
+        const submitBtn = document.querySelector('button[type="submit"]');
+
+        if (show) {
+            btnText.textContent = 'Signing In...';
+            spinner.style.display = 'inline-block';
+            submitBtn.disabled = true;
+        } else {
+            btnText.textContent = 'Sign In';
+            spinner.style.display = 'none';
+            submitBtn.disabled = false;
+        }
+    }
+
+    // Show alert messages
+    function showAlert(type, message) {
+        hideAlerts();
+
+        const alertId = type === 'success' ? 'successAlert' : 'errorAlert';
+        const messageId = type === 'success' ? 'successMessage' : 'errorMessage';
+
+        document.getElementById(messageId).textContent = message;
+        document.getElementById(alertId).style.display = 'block';
+
+        // Auto hide after 5 seconds
+        setTimeout(hideAlerts, 5000);
+    }
+
+    // Hide all alerts
+    function hideAlerts() {
+        document.getElementById('successAlert').style.display = 'none';
+        document.getElementById('errorAlert').style.display = 'none';
+    }
+
+    // Demo account fillers
+    function fillDemoPatient() {
+        document.getElementById('email').value = 'patient@medicareplus.com';
+        document.getElementById('password').value = 'patient123';
+        showAlert('success', 'Demo patient credentials filled. Click Sign In to continue.');
+    }
+
+    function fillDemoDoctor() {
+        document.getElementById('email').value = 'doctor@medicareplus.com';
+        document.getElementById('password').value = 'doctor123';
+        showAlert('success', 'Demo doctor credentials filled. Click Sign In to continue.');
+    }
+
+    // Real-time validation feedback
+    document.getElementById('email').addEventListener('input', function() {
+        if (this.validity.valid) {
+            this.classList.remove('is-invalid');
+            this.classList.add('is-valid');
+        } else {
+            this.classList.remove('is-valid');
+            this.classList.add('is-invalid');
+        }
+    });
+
+    document.getElementById('password').addEventListener('input', function() {
+        if (this.value.length >= 6) {
+            this.classList.remove('is-invalid');
+            this.classList.add('is-valid');
+        } else {
+            this.classList.remove('is-valid');
+            this.classList.add('is-invalid');
+        }
+    });
+
+    // Social login handlers
+    document.querySelectorAll('.social-btn').forEach(btn => {
+        btn.addEventListener('click', function(e) {
+            e.preventDefault();
+            const provider = this.textContent.trim();
+            showAlert('success', `${provider} login integration would be implemented here.`);
+        });
+    });
+</script>
+</body>
+</html>
