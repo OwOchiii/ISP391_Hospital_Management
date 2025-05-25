@@ -3,16 +3,22 @@ package orochi.controller;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
 import orochi.model.Appointment;
+import orochi.model.Doctor;
 import orochi.model.MedicalOrder;
 import orochi.model.Patient;
+import orochi.repository.DoctorRepository;
 import orochi.repository.MedicalOrderRepository;
 import orochi.service.DoctorService;
+import orochi.security.CustomUserDetails;
 
 import java.time.LocalDate;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
@@ -26,17 +32,71 @@ public class DoctorController {
     private DoctorService doctorService;
 
     @Autowired
+    private DoctorRepository doctorRepository;
+
+    @Autowired
     private MedicalOrderRepository medicalOrderRepository;
 
     @GetMapping("/dashboard")
-    public String getDashboard(@RequestParam Integer doctorId, Model model) {
+    public String getDashboard(@RequestParam(required = false) Integer doctorId,
+                               Model model,
+                               Authentication authentication) {
         try {
+            // If doctorId is not provided, try to get it from the authentication
+            if (doctorId == null && authentication != null) {
+                logger.info("No doctorId provided, attempting to retrieve from authenticated user");
+
+                Object principal = authentication.getPrincipal();
+
+                if (principal instanceof CustomUserDetails) {
+                    orochi.security.CustomUserDetails userDetails = (orochi.security.CustomUserDetails) principal;
+                    doctorId = userDetails.getDoctorId();
+
+                    if (doctorId == null) {
+                        logger.error("No doctorId found in CustomUserDetails for user: {}", userDetails.getUsername());
+                        model.addAttribute("errorMessage", "Doctor ID is required. Please contact support.");
+                        return "error";
+                    }
+
+                    logger.info("Retrieved doctorId {} from authentication", doctorId);
+                } else {
+                    logger.error("Authentication principal is not of CustomUserDetails type: {}",
+                            principal != null ? principal.getClass().getName() : "null");
+                    model.addAttribute("errorMessage", "Authentication error. Please log in again.");
+                    return "error";
+                }
+            }
+
+
+            if (doctorId == null) {
+                logger.error("No doctorId provided and could not be determined from authentication");
+                model.addAttribute("errorMessage", "Doctor ID is required");
+                return "error";
+            }
+
             logger.info("Loading dashboard for doctor ID: {}", doctorId);
+            Doctor doctor = doctorRepository.findById(doctorId).orElse(null);
+// Make sure to initialize empty lists rather than null
+            model.addAttribute("doctorName", doctor.getUser().getFullName());
             List<Appointment> todayAppointments = doctorService.getTodayAppointments(doctorId);
+            if (todayAppointments == null) {
+                todayAppointments = new ArrayList<>();
+            }
+
             List<Appointment> upcomingAppointments = doctorService.getUpcomingAppointments(doctorId);
-            // Corrected method call to fetch pending orders by doctor ID and status
+            if (upcomingAppointments == null) {
+                upcomingAppointments = new ArrayList<>();
+            }
+
             List<MedicalOrder> pendingOrders = medicalOrderRepository.findByOrderByIdAndStatus(doctorId, "Pending");
+            if (pendingOrders == null) {
+                pendingOrders = new ArrayList<>();
+            }
+
             List<Patient> patients = doctorService.getPatientsWithAppointments(doctorId);
+            if (patients == null) {
+                patients = new ArrayList<>();
+            }
 
             model.addAttribute("todayAppointments", todayAppointments);
             model.addAttribute("upcomingAppointments", upcomingAppointments);
