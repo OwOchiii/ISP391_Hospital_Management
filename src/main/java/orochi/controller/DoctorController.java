@@ -3,6 +3,8 @@ package orochi.controller;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Controller;
@@ -15,12 +17,10 @@ import orochi.model.Patient;
 import orochi.repository.DoctorRepository;
 import orochi.repository.MedicalOrderRepository;
 import orochi.service.DoctorService;
-import orochi.security.CustomUserDetails;
+import orochi.config.CustomUserDetails;
 
 import java.time.LocalDate;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Optional;
+import java.util.*;
 
 @Controller
 @RequestMapping("/doctor")
@@ -49,7 +49,7 @@ public class DoctorController {
                 Object principal = authentication.getPrincipal();
 
                 if (principal instanceof CustomUserDetails) {
-                    orochi.security.CustomUserDetails userDetails = (orochi.security.CustomUserDetails) principal;
+                    orochi.config.CustomUserDetails userDetails = (orochi.config.CustomUserDetails) principal;
                     doctorId = userDetails.getDoctorId();
 
                     if (doctorId == null) {
@@ -114,14 +114,65 @@ public class DoctorController {
     }
 
     @GetMapping("/appointments")
-    public String getAllAppointments(@RequestParam Integer doctorId, Model model) {
+    public String getAllAppointments(
+            @RequestParam Integer doctorId,
+            @RequestParam(required = false) String filter,
+            @RequestParam(required = false) String search,
+            @RequestParam(required = false) String status,
+            @RequestParam(required = false) LocalDate dateFrom,
+            @RequestParam(required = false, defaultValue = "0") Integer page,
+            Model model) {
         try {
-            logger.info("Fetching all appointments for doctor ID: {}", doctorId);
-            List<Appointment> appointments = doctorService.getAppointments(doctorId);
+            logger.info("Fetching appointments for doctor ID: {}", doctorId);
+
+            // Set doctor name
+            Doctor doctor = doctorRepository.findById(doctorId).orElse(null);
+            if (doctor != null && doctor.getUser() != null) {
+                model.addAttribute("doctorName", doctor.getUser().getFullName());
+            }
+
+            // Get appointments based on filter
+            List<Appointment> appointments;
+            String filterTitle = "All Appointments";
+
+            if ("today".equals(filter)) {
+                appointments = doctorService.getTodayAppointments(doctorId);
+                filterTitle = "Today's Appointments";
+            } else if ("upcoming".equals(filter)) {
+                appointments = doctorService.getUpcomingAppointments(doctorId);
+                filterTitle = "Upcoming Appointments";
+            } else if ("priority".equals(filter)) {
+                // Implement priority filtering if needed
+                appointments = doctorService.getAppointments(doctorId);
+                filterTitle = "Priority Appointments";
+            } else if (status != null && !status.isEmpty()) {
+                appointments = doctorService.getAppointmentsByStatus(doctorId, status);
+                filterTitle = status + " Appointments";
+            } else {
+                appointments = doctorService.getAppointments(doctorId);
+            }
+
+            // Set all required template attributes
             model.addAttribute("appointments", appointments);
             model.addAttribute("doctorId", doctorId);
-            model.addAttribute("title", "All Appointments");
-            logger.debug("Retrieved {} appointments for doctor ID: {}", appointments.size(), doctorId);
+            model.addAttribute("title", filterTitle);
+            model.addAttribute("currentFilter", filter != null ? filter : "all");
+            model.addAttribute("currentFilterTitle", filterTitle);
+            model.addAttribute("searchTerm", search);
+            model.addAttribute("statusFilter", status);
+            model.addAttribute("dateFrom", dateFrom);
+
+            // Count metrics
+            model.addAttribute("allCount", doctorService.getAppointments(doctorId).size());
+            model.addAttribute("todayCount", doctorService.getTodayAppointments(doctorId).size());
+            model.addAttribute("upcomingCount", doctorService.getUpcomingAppointments(doctorId).size());
+            model.addAttribute("priorityCount", 0); // Implement if needed
+
+            // Pagination (simplified)
+            model.addAttribute("totalPages", 1);
+            model.addAttribute("currentPage", page);
+
+            logger.debug("Retrieved appointments for doctor ID: {}", doctorId);
             return "doctor/appointments";
         } catch (Exception e) {
             logger.error("Error fetching appointments for doctor ID: {}", doctorId, e);
@@ -129,6 +180,53 @@ public class DoctorController {
             return "error";
         }
     }
+
+    @PostMapping("/appointment/update-status")
+    @ResponseBody
+    public ResponseEntity<?> updateAppointmentStatus(
+            @RequestParam Integer appointmentId,
+            @RequestParam Integer doctorId,
+            @RequestParam String status) {
+        try {
+            logger.info("Updating status for appointment ID: {} to {} by doctor ID: {}",
+                    appointmentId, status, doctorId);
+
+            // Validate status value against the EXACT allowed values in the database constraint
+            Set<String> allowedStatuses = Set.of("Scheduled", "Completed", "Cancel");
+            if (!allowedStatuses.contains(status)) {
+                logger.warn("Invalid status value: {} for appointment ID: {}", status, appointmentId);
+                return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                        .body(Map.of("success", false,
+                                "message", "Invalid status value. Allowed values are: " +
+                                        String.join(", ", allowedStatuses)));
+            }
+
+            Optional<Appointment> appointmentOpt = doctorService.getAppointmentDetails(appointmentId, doctorId);
+
+            if (appointmentOpt.isEmpty()) {
+                logger.warn("Appointment not found or access denied for appointment ID: {} and doctor ID: {}",
+                        appointmentId, doctorId);
+                return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                        .body(Map.of("success", false, "message", "Appointment not found or access denied"));
+            }
+
+            Appointment appointment = appointmentOpt.get();
+            appointment.setStatus(status);
+            doctorService.getAppointmentRepository().save(appointment);
+
+            logger.info("Successfully updated appointment ID: {} status to: {}", appointmentId, status);
+            return ResponseEntity.ok(Map.of(
+                    "success", true,
+                    "message", "Appointment status updated successfully",
+                    "newStatus", status));
+        } catch (Exception e) {
+            logger.error("Error updating status for appointment ID: {} to {} by doctor ID: {}",
+                    appointmentId, status, doctorId, e);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(Map.of("success", false, "message", "Failed to update status: " + e.getMessage()));
+        }
+    }
+
 
     @GetMapping("/appointments/today")
     public String getTodayAppointments(@RequestParam Integer doctorId, Model model) {

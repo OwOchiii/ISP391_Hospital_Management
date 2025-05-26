@@ -353,6 +353,9 @@
         .status-confirmed { background: #dcfce7; color: #166534; }
         .status-pending { background: #fef3c7; color: #92400e; }
         .status-completed { background: #dbeafe; color: #1e40af; }
+        .status-scheduled { background: #e0e7ff; color: #3730a3; }
+        .status-cancelled { background: #fee2e2; color: #b91c1c; }
+
 
         .empty-state {
             text-align: center;
@@ -604,9 +607,8 @@
                                     Appointment Type
                                 </div>
                             </div>
-                            <div th:class="'appointment-status ' +
-                                          (${appointment.status == 'Confirmed'} ? 'status-confirmed' :
-                                           ${appointment.status == 'Pending'} ? 'status-pending' : 'status-completed')"
+                            <div th:class="'appointment-status status-' + ${appointment.status.toLowerCase()}"
+
                                  th:text="${appointment.status != null ? appointment.status : 'Pending'}">
                                 Status
                             </div>
@@ -648,9 +650,9 @@
                                     <span th:text="${appointment.description != null ? appointment.description : 'General Appointment'}">Appointment Description</span>
                                 </div>
                             </div>
-                            <div th:class="'appointment-status ' +
-                                          (${appointment.status == 'Confirmed'} ? 'status-confirmed' :
-                                           ${appointment.status == 'Pending'} ? 'status-pending' : 'status-completed')"
+                                            <div th:class="${'appointment-status ' +
+                              (appointment.status == 'Confirmed' ? 'status-confirmed' :
+                               (appointment.status == 'Pending' ? 'status-pending' : 'status-completed'))}"
                                  th:text="${appointment.status != null ? appointment.status : 'Pending'}">
                                 Status
                             </div>

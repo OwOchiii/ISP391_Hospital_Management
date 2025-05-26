@@ -6,7 +6,7 @@ import orochi.model.Users;
 import orochi.repository.DoctorRepository;
 import orochi.repository.PatientRepository;
 import orochi.repository.UserRepository;
-import orochi.security.CustomUserDetails;
+import orochi.config.CustomUserDetails;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
