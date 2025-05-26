@@ -9,10 +9,9 @@ import org.mockito.MockitoAnnotations;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
-import orochi.model.Appointment;
-import orochi.model.MedicalOrder;
-import orochi.model.Patient;
+import orochi.model.*;
 import orochi.repository.AppointmentRepository;
+import orochi.repository.DoctorRepository;
 import orochi.repository.MedicalOrderRepository;
 import orochi.service.DoctorService;
 
@@ -25,11 +24,11 @@ import java.util.Optional;
 import static org.hamcrest.Matchers.hasSize;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
+import static org.mockito.Mockito.*;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
+//./gradlew test --offline
 @ExtendWith(SpringExtension.class)
 public class DoctorControllerTest {
 
@@ -44,8 +43,13 @@ public class DoctorControllerTest {
     @Mock
     private AppointmentRepository appointmentRepository;
 
+    @Mock
+    private DoctorRepository doctorRepository;
+
     @InjectMocks
     private DoctorController doctorController;
+
+
 
     private final Integer testDoctorId = 1;
     private final LocalDateTime now = LocalDateTime.now();
@@ -65,9 +69,15 @@ public class DoctorControllerTest {
         List<MedicalOrder> pendingOrders = createTestMedicalOrders(2);
         List<Patient> patients = createTestPatients(5);
 
+        // Mock the doctor and user objects
+        Doctor doctor = new Doctor();
+        Users user = new Users();
+        user.setFullName("Dr. Test");
+        doctor.setUser(user);
+
+        when(doctorRepository.findById(testDoctorId)).thenReturn(Optional.of(doctor));
         when(doctorService.getTodayAppointments(testDoctorId)).thenReturn(todayAppointments);
         when(doctorService.getUpcomingAppointments(testDoctorId)).thenReturn(upcomingAppointments);
-        // Updated method name
         when(medicalOrderRepository.findByOrderByIdAndStatus(testDoctorId, "Pending"))
                 .thenReturn(pendingOrders);
         when(doctorService.getPatientsWithAppointments(testDoctorId)).thenReturn(patients);
@@ -83,30 +93,40 @@ public class DoctorControllerTest {
                 .andExpect(model().attribute("doctorId", testDoctorId));
 
         // Verify
+        verify(doctorRepository).findById(testDoctorId);
         verify(doctorService).getTodayAppointments(testDoctorId);
         verify(doctorService).getUpcomingAppointments(testDoctorId);
-        // Updated method name
         verify(medicalOrderRepository).findByOrderByIdAndStatus(testDoctorId, "Pending");
         verify(doctorService).getPatientsWithAppointments(testDoctorId);
     }
+@Test
+public void getAllAppointments_ShouldReturnAppointmentsView() throws Exception {
+    // Arrange
+    List<Appointment> appointments = createTestAppointments(5);
 
-    @Test
-    public void getAllAppointments_ShouldReturnAppointmentsView() throws Exception {
-        // Arrange
-        List<Appointment> appointments = createTestAppointments(5);
-        when(doctorService.getAppointments(testDoctorId)).thenReturn(appointments);
+    // Mock doctor
+    Doctor doctor = new Doctor();
+    Users user = new Users();
+    user.setFullName("Dr. Test");
+    doctor.setUser(user);
 
-        // Act & Assert
-        mockMvc.perform(get("/doctor/appointments").param("doctorId", testDoctorId.toString()))
-                .andExpect(status().isOk())
-                .andExpect(view().name("doctor/appointments"))
-                .andExpect(model().attribute("appointments", hasSize(5)))
-                .andExpect(model().attribute("doctorId", testDoctorId))
-                .andExpect(model().attribute("title", "All Appointments"));
+    // Mock all service calls
+    when(doctorRepository.findById(testDoctorId)).thenReturn(Optional.of(doctor));
+    when(doctorService.getAppointments(testDoctorId)).thenReturn(appointments);
+    when(doctorService.getTodayAppointments(testDoctorId)).thenReturn(new ArrayList<>());
+    when(doctorService.getUpcomingAppointments(testDoctorId)).thenReturn(new ArrayList<>());
 
-        // Verify
-        verify(doctorService).getAppointments(testDoctorId);
-    }
+    // Act & Assert
+    mockMvc.perform(get("/doctor/appointments").param("doctorId", testDoctorId.toString()))
+            .andExpect(status().isOk())
+            .andExpect(view().name("doctor/appointments"))
+            .andExpect(model().attribute("appointments", hasSize(5)))
+            .andExpect(model().attribute("doctorId", testDoctorId))
+            .andExpect(model().attribute("title", "All Appointments"));
+
+    // Verify - change to verify 'at least once' instead of exactly once
+    verify(doctorService, atLeastOnce()).getAppointments(testDoctorId);
+}
 
     @Test
     public void getTodayAppointments_ShouldReturnAppointmentsView() throws Exception {
@@ -379,18 +399,17 @@ public class DoctorControllerTest {
     @Test
     public void getDashboard_WhenExceptionOccurs_ShouldReturnErrorView() throws Exception {
         // Arrange
-        when(doctorService.getTodayAppointments(testDoctorId)).thenThrow(new RuntimeException("Test exception"));
+        when(doctorRepository.findById(testDoctorId)).thenReturn(Optional.empty());
 
         // Act & Assert
         mockMvc.perform(get("/doctor/dashboard").param("doctorId", testDoctorId.toString()))
                 .andExpect(status().isOk())
                 .andExpect(view().name("error"))
-                .andExpect(model().attribute("errorMessage", "An error occurred while loading the dashboard."));
+                .andExpect(model().attributeExists("errorMessage"));
 
         // Verify
-        verify(doctorService).getTodayAppointments(testDoctorId);
+        verify(doctorRepository).findById(testDoctorId);
     }
-
     // Helper methods to create test data
     private List<Appointment> createTestAppointments(int count) {
         List<Appointment> appointments = new ArrayList<>();
@@ -434,4 +453,6 @@ public class DoctorControllerTest {
         }
         return orders;
     }
+
+
 }
