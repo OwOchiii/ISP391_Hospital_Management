@@ -1,4 +1,4 @@
-package orochi.security;
+package orochi.config;
 
 import lombok.Getter;
 import org.springframework.security.core.GrantedAuthority;
