@@ -12,6 +12,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
+import java.util.Optional;
 
 @Service
 public class AppointmentService {
@@ -46,6 +47,11 @@ public class AppointmentService {
 
     public void saveAppointment(Appointment appointment) {
         appointmentRepository.save(appointment);
+    }
+
+    public Patient findPatientById(int id) {
+        Optional<Patient> patient = patientRepository.findById(id);
+        return patient.orElse(null);
     }
 
     public List<Doctor> searchDoctors(String query) {

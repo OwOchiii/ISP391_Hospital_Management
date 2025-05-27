@@ -29,7 +29,13 @@ public class BookAppointmentController {
         model.addAttribute("appointment", appointment);
         model.addAttribute("specialties", appointmentService.getAllSpecialties());
         // Hardcoded patient data for now
-        Patient patient = new Patient("John Doe", 'M', new java.util.Date(631152000000L), "1234567890", "john@example.com");
+        // Fetch or create patient with id = 1 for display
+        Patient patient = appointmentService.findPatientById(1);
+        if (patient == null) {
+            patient = new Patient("John Doe", 'M', new Date(631152000000L), "1234567890", "john@example.com");
+            patient.setPatientId(1);
+            patient = appointmentService.savePatient(patient);
+        }
         model.addAttribute("patient", patient);
         return "bookAppointment";
     }
@@ -49,11 +55,23 @@ public class BookAppointmentController {
             return "bookAppointment";
         }
 
-        Date birthdate = parseDate(birthdateStr);
-        Patient patient = new Patient(fullName, gender.charAt(0), birthdate, phoneNumber, email);
+        // Fetch or create patient with id = 1
+        Patient patient = appointmentService.findPatientById(1);
+        if (patient == null) {
+            patient = new Patient(fullName, gender.charAt(0), parseDate(birthdateStr), phoneNumber, email);
+            patient.setPatientId(1);
+        } else {
+            // Update existing patient's details
+            patient.setFullName(fullName);
+            patient.setGender(gender.charAt(0));
+            patient.setBirthdate(parseDate(birthdateStr));
+            patient.setPhoneNumber(phoneNumber);
+            patient.setEmail(email);
+        }
         patient = appointmentService.savePatient(patient);
+
         appointment.setPatient(patient);
-        appointment.setCreatedDate(new java.util.Date());
+        appointment.setCreatedDate(new Date());
         appointment.setStatus("Pending");
 
         // Fetch Specialty and Doctor from repositories

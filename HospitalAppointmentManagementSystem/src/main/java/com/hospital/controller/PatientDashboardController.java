@@ -31,4 +31,19 @@ public class PatientDashboardController {
         model.addAttribute("doctors", doctors);
         return "fragments/doctorSearchResults :: doctorResults";
     }
+
+    @GetMapping("/profile")
+    public String showProfile() {
+        return "blank"; // Redirect to blank page
+    }
+
+    @GetMapping("/support")
+    public String showSupport() {
+        return "blank"; // Redirect to blank page
+    }
+
+    @GetMapping("/feedback")
+    public String showFeedback() {
+        return "blank"; // Redirect to blank page
+    }
 }

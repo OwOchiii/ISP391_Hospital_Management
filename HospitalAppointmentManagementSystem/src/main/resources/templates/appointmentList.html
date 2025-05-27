@@ -14,24 +14,32 @@
 <table>
     <thead>
     <tr>
-        <th>Index</th>
+        <th>Appointment ID</th>
+        <th>Patient Name</th>
         <th>Specialty</th>
         <th>Doctor</th>
-        <th>Created Date</th>
-        <th>Approved Date</th>
+        <th>Date</th>
+        <th>Time</th>
+        <th>Reason</th>
         <th>Status</th>
-        <th>Action</th>
+        <th>Created Date</th>
+        <th>Actions</th>
     </tr>
     </thead>
     <tbody>
-    <tr th:each="app, iter : ${appointments}">
-        <td th:text="${iter.index + 1}"></td>
-        <td th:text="${app.specialty.specialtyName}"></td>
-        <td th:text="${app.doctor?.doctorName ?: '-'}"></td>
-        <td th:text="${app.createdDate}"></td>
-        <td th:text="${app.approvedDate ?: '-'}"></td>
-        <td th:text="${app.status}"></td>
-        <td><a th:href="@{/patient/appointments/details/{id}(id=${app.appointmentId})}" class="button">Details</a></td>
+    <tr th:each="appointment : ${appointments}">
+        <td th:text="${appointment.appointmentId}"></td>
+        <td th:text="${appointment.patient.fullName}"></td>
+        <td th:text="${appointment.specialty.specialtyName}"></td>
+        <td th:text="${appointment.doctor != null ? appointment.doctor.doctorName : 'N/A'}"></td>
+        <td th:text="${#dates.format(appointment.appointmentDate, 'yyyy-MM-dd')}"></td>
+        <td th:text="${appointment.appointmentTime}"></td>
+        <td th:text="${appointment.reason}"></td>
+        <td th:text="${appointment.status}"></td>
+        <td th:text="${#dates.format(appointment.createdDate, 'yyyy-MM-dd HH:mm:ss')}"></td>
+        <td>
+            <a th:href="@{/patient/appointment/details(id=${appointment.appointmentId})}">Details</a>
+        </td>
     </tr>
     </tbody>
 </table>

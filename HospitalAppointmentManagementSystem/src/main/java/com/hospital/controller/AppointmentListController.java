@@ -8,6 +8,7 @@ import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 
 import java.util.List;
 
@@ -20,14 +21,19 @@ public class AppointmentListController {
 
     @GetMapping("/appointments")
     public String showAppointmentList(Model model) {
-        int patientId = 3; // Hardcoded for now
+        int patientId = 1; // Hardcoded for now
         List<Appointment> appointments = appointmentService.getAppointmentsByPatient(patientId);
         model.addAttribute("appointments", appointments);
         return "appointmentList";
     }
 
-    @GetMapping("/appointments/details/{id}")
+    /*@GetMapping("/appointments/details/{id}")
     public String showAppointmentDetails(@PathVariable("id") int id) {
         return "appointmentDetails"; // Placeholder for Iteration 1
+    }*/
+    @GetMapping("/appointment/details")
+    public String showAppointmentDetails(@RequestParam("id") int appointmentId) {
+        // For now, redirect to blank page
+        return "blank";
     }
 }
