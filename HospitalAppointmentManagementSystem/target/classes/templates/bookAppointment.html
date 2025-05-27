@@ -10,6 +10,7 @@
         .time-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 5px; }
         .time-grid button { padding: 5px; }
         .selected { background-color: #28a745; color: #fff; }
+        .disabled { background-color: #d3d3d3; color: #666; cursor: not-allowed; }
         .error { color: red; }
     </style>
 </head>
@@ -33,7 +34,7 @@
         </select>
 
         <label>Appointment Date:</label>
-        <input type="date" th:field="*{appointmentDate}" min="2025-05-24" required />
+        <input type="date" id="appointmentDate" th:field="*{appointmentDate}" min="2025-05-27" required onchange="updateTimeSlots()" />
         <span class="error" th:if="${#fields.hasErrors('appointmentDate')}" th:errors="*{appointmentDate}"></span>
 
         <label>Appointment Time:</label>
@@ -67,8 +68,6 @@
 
         <label>Birthdate:</label>
         <input type="date" th:value="${#dates.format(patient.birthdate, 'yyyy-MM-dd')}" name="birthdate" readonly required />
-        <!-- Remove birthdate error checking since it's not part of Appointment -->
-        <!-- <span class="error" th:if="${#fields.hasErrors('birthdate')}" th:errors="*{birthdate}"></span> -->
 
         <label>Phone Number:</label>
         <input type="text" name="phoneNumber" th:value="${patient.phoneNumber}" />
@@ -105,16 +104,45 @@
     }
 
     function selectTime(time, button) {
-        document.getElementById("appointmentTime").value = time;
-        let buttons = document.querySelectorAll(".time-grid button");
-        buttons.forEach(btn => btn.classList.remove("selected"));
-        button.classList.add("selected");
+        // Only allow selection if the button is not disabled
+        if (!button.classList.contains("disabled")) {
+            document.getElementById("appointmentTime").value = time;
+            let buttons = document.querySelectorAll(".time-grid button");
+            buttons.forEach(btn => btn.classList.remove("selected"));
+            button.classList.add("selected");
+        }
+    }
+
+    function updateTimeSlots() {
+        let dateInput = document.getElementById("appointmentDate").value;
+        if (dateInput) {
+            // Reset the selected time when the date changes
+            document.getElementById("appointmentTime").value = "";
+            let buttons = document.querySelectorAll(".time-grid button");
+            buttons.forEach(btn => {
+                btn.classList.remove("selected");
+                btn.classList.remove("disabled");
+            });
+
+            // Fetch booked times for the selected date
+            fetch('/patient/booked-times?date=' + dateInput)
+                .then(response => response.json())
+                .then(bookedTimes => {
+                    buttons.forEach(button => {
+                        let time = button.getAttribute("onclick").match(/'([^']+)'/)[1];
+                        if (bookedTimes.includes(time)) {
+                            button.classList.add("disabled");
+                        }
+                    });
+                })
+                .catch(error => console.error('Error fetching booked times:', error));
+        }
     }
 
     // Set minimum date to today
     document.addEventListener("DOMContentLoaded", function() {
         let today = new Date().toISOString().split("T")[0];
-        document.querySelector('input[type="date"][th:field="*{appointmentDate}"]').setAttribute("min", today);
+        document.getElementById("appointmentDate").setAttribute("min", today);
     });
 </script>
 </body>

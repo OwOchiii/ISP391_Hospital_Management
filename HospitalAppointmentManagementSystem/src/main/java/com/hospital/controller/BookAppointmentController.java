@@ -15,6 +15,7 @@ import jakarta.validation.Valid;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.List;
+import java.util.stream.Collectors;
 
 @Controller
 @RequestMapping("/patient")
@@ -104,6 +105,22 @@ public class BookAppointmentController {
             return dateFormat.parse(dateStr);
         } catch (Exception e) {
             throw new IllegalArgumentException("Invalid date format for birthdate: " + dateStr, e);
+        }
+    }
+
+    // New endpoint to fetch booked times for a specific date
+    @GetMapping("/booked-times")
+    @ResponseBody
+    public List<String> getBookedTimes(@RequestParam("date") String dateStr) {
+        try {
+            SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd");
+            Date date = dateFormat.parse(dateStr);
+            List<Appointment> appointments = appointmentService.getAppointmentsByDate(date);
+            return appointments.stream()
+                    .map(appointment -> appointment.getAppointmentTime().toString())
+                    .collect(Collectors.toList());
+        } catch (Exception e) {
+            throw new IllegalArgumentException("Invalid date format: " + dateStr, e);
         }
     }
 }

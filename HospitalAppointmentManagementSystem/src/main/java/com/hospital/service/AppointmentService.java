@@ -11,6 +11,7 @@ import com.hospital.repository.SpecialtyRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import java.util.Date;
 import java.util.List;
 import java.util.Optional;
 
@@ -63,5 +64,10 @@ public class AppointmentService {
                     .filter(d -> d.getDoctorName().toLowerCase().contains(query.toLowerCase()))
                     .toList();
         }
+    }
+
+    // New method to fetch appointments by date
+    public List<Appointment> getAppointmentsByDate(Date date) {
+        return appointmentRepository.findByAppointmentDate(date);
     }
 }
