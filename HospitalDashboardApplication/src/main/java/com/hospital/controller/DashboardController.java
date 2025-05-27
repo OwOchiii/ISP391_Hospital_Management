@@ -67,7 +67,7 @@ public class DashboardController {
             logger.error("Appointment not found: id={}", id);
             return "error: Appointment not found";
         }
-        com.hospital.entity.Status status = statusRepository.findByName(statusName);
+        Status status = statusRepository.findByName(statusName);
         if (status == null) {
             logger.error("Status not found: name={}", statusName);
             return "error: Invalid status";
@@ -75,6 +75,12 @@ public class DashboardController {
         appointment.setStatus(status);
         appointmentRepository.save(appointment);
         logger.info("Appointment id={} updated to status={}", id, statusName);
+        // Cập nhật trạng thái cho patient liên quan
+        if (appointment.getPatient() != null) {
+            Patient patient = appointment.getPatient();
+            patient.setAppointmentStatus(statusName);
+            patientRepository.save(patient);
+        }
         return "success";
     }
 

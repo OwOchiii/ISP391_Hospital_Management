@@ -3,62 +3,83 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="_csrf" th:content="${_csrf.token}"/>
-    <meta name="_csrf_header" th:content="${_csrf.headerName}"/>
-    <title>Verify Appointments</title>
-    <link rel="stylesheet" th:href="@{/css/dashboard.css}">
+    <title>Hospital Dashboard</title>
+    <link rel="stylesheet" href="/css/dashboard.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
 </head>
 <body>
-    <div class="container">
-        <aside class="sidebar">
-            <h2>Hospital Dashboard</h2>
-            <ul class="nav-list">
-                <li><a href="/">Dashboard</a></li>
-                <li><a href="/appointments">Appointments</a></li>
-                <li><a href="/verify-appointments">Verify Appointments</a></li>
-            </ul>
-        </aside>
-        <main class="main-content">
-            <header class="header">
-                <h1>Verify Appointments</h1>
-            </header>
+<div class="dashboard-container">
+    <aside class="sidebar">
+        <div class="sidebar-header">
+            <h3>Hospital Dashboard</h3>
+        </div>
+        <nav class="nav-menu">
+            <div class="nav-item">
+                <a th:href="@{/dashboard}" class="nav-link"><i class="fas fa-home"></i> Dashboard</a>
+            </div>
+            <div class="nav-item">
+                <a th:href="@{/patients}" class="nav-link"><i class="fas fa-users"></i> Patients</a>
+            </div>
+            <div class="nav-item">
+                <a th:href="@{/appointments}" class="nav-link"><i class="fas fa-calendar-alt"></i> Appointments</a>
+            </div>
+            <div class="nav-item">
+                <a th:href="@{/appointments/verify}" class="nav-link active"><i class="fas fa-check-circle"></i> Verify Appointments</a>
+            </div>
+            <div class="nav-item">
+                <a th:href="@{/appointment-list}" class="nav-link"><i class="fas fa-list"></i> Appointment List</a>
+            </div>
+        </nav>
+        <button id="themeToggle" class="nav-link"><i class="fas fa-moon"></i></button>
+    </aside>
 
-            <section class="table-container">
-                <h2 class="section-title">Pending Appointments</h2>
-                <table class="table">
-                    <thead>
-                        <tr>
-                            <th>Patient</th>
-                            <th>Doctor</th>
-                            <th>Phone</th>
-                            <th>Date</th>
-                            <th>Time</th>
-                            <th>Department</th>
-                            <th>Status</th>
-                            <th>Actions</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        <tr th:each="appointment : ${pendingAppointments}" class="table-row">
-                            <td th:text="${appointment.patientName}"></td>
-                            <td th:text="${appointment.doctorName}"></td>
-                            <td th:text="${appointment.phone}"></td>
-                            <td th:text="${appointment.date}"></td>
-                            <td th:text="${appointment.time}"></td>
-                            <td th:text="${appointment.department}"></td>
-                            <td>
-                                <span class="status-badge" th:classappend="'status-' + ${appointment.status.toLowerCase()}" th:text="${appointment.status}"></span>
-                            </td>
-                            <td>
-                                <button class="action-btn btn-approve" th:data-id="${appointment.id}">Approve</button>
-                                <button class="action-btn btn-reject" th:data-id="${appointment.id}">Reject</button>
-                            </td>
-                        </tr>
-                    </tbody>
-                </table>
-            </section>
-        </main>
-    </div>
-    <script th:src="@{/js/dashboard.js}"></script>
+    <main class="main-content">
+        <header class="header">
+            <h1>Verify Appointments</h1>
+        </header>
+
+        <section class="table-card">
+            <div class="table-header">
+                <h2 class="table-title">Pending Appointments</h2>
+            </div>
+            <table class="custom-table">
+                <thead>
+                <tr class="table-row">
+                    <th>Patient</th>
+                    <th>Doctor</th>
+                    <th>Phone</th>
+                    <th>Date</th>
+                    <th>Time</th>
+                    <th>Department</th>
+                    <th>Status</th>
+                    <th>Actions</th>
+                </tr>
+                </thead>
+                <tbody>
+                <tr class="table-row" th:each="appointment : ${appointments}">
+                    <td th:text="${appointment.patient.name}"></td>
+                    <td th:text="${appointment.doctor.name}"></td>
+                    <td th:text="${appointment.patient.phone}"></td>
+                    <td th:text="${appointment.date}"></td>
+                    <td th:text="${appointment.time}"></td>
+                    <td th:text="${appointment.department}"></td>
+                    <td>
+                        <span class="status-badge" th:classappend="'status-' + ${appointment.status.name.toLowerCase()}" th:text="${appointment.status.name}"></span>
+                    </td>
+                    <td>
+                        <div class="action-buttons">
+                            <button class="action-btn btn-approve" th:attr="data-id=${appointment.id}"><i class="fas fa-check"></i> Approve</button>
+                            <button class="action-btn btn-reject" th:attr="data-id=${appointment.id}"><i class="fas fa-times"></i> Reject</button>
+                        </div>
+                    </td>
+                </tr>
+                </tbody>
+            </table>
+        </section>
+    </main>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.9.1/chart.min.js"></script>
+<script src="/js/dashboard.js"></script>
 </body>
 </html>

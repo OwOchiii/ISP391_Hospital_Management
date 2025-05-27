@@ -23,6 +23,14 @@ public class PatientController {
     public String listPatients(Model model) {
         logger.info("Accessing patients page");
         List<Patient> patients = patientRepository.findAll();
+        // Lấy trạng thái mới nhất từ appointments cho mỗi patient
+        for (Patient patient : patients) {
+            if (patient.getAppointments() != null && !patient.getAppointments().isEmpty()) {
+                patient.setAppointmentStatus(patient.getAppointments().get(0).getStatus().getName());
+            } else {
+                patient.setAppointmentStatus("N/A");
+            }
+        }
         model.addAttribute("patients", patients);
         return "patients";
     }

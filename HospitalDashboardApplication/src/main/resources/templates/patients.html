@@ -3,7 +3,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Patients - Hospital</title>
+    <meta name="_csrf" th:content="${_csrf.token}"/>
+    <meta name="_csrf_header" th:content="${_csrf.headerName}"/>
+    <title>Patients</title>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
@@ -148,6 +150,27 @@
             font-weight: 500;
         }
 
+        .search-bar {
+            margin-bottom: 20px;
+        }
+
+        .search-bar input {
+            padding: 10px;
+            width: 250px;
+            border: 1px solid rgba(0, 0, 0, 0.1);
+            border-radius: 8px;
+            background: var(--card-bg-light);
+            backdrop-filter: var(--backdrop-blur);
+            color: var(--text-light);
+            font-size: 0.9rem;
+        }
+
+        .dark-theme .search-bar input {
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            background: var(--card-bg-dark);
+            color: var(--text-dark);
+        }
+
         .table-container {
             background: var(--card-bg-light);
             backdrop-filter: var(--backdrop-blur);
@@ -159,6 +182,11 @@
 
         .dark-theme .table-container {
             background: var(--card-bg-dark);
+        }
+
+        .table-container h2 {
+            font-size: 1.4rem;
+            margin-bottom: 20px;
         }
 
         table {
@@ -192,6 +220,22 @@
 
         .dark-theme .table-row:hover {
             background: rgba(255, 255, 255, 0.05);
+        }
+
+        select {
+            padding: 5px;
+            border-radius: 8px;
+            border: 1px solid rgba(0, 0, 0, 0.1);
+            background: var(--card-bg-light);
+            color: var(--text-light);
+            font-size: 0.9rem;
+            cursor: pointer;
+        }
+
+        .dark-theme select {
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            background: var(--card-bg-dark);
+            color: var(--text-dark);
         }
 
         @media (max-width: 768px) {
@@ -246,42 +290,54 @@
                 <i class="fas fa-user-circle fa-2x"></i>
             </div>
         </header>
-        <section class="patient-list">
-            <h2>Patient List</h2>
-            <div class="table-container">
-                <table>
-                    <thead>
-                    <tr>
-                        <th>ID</th>
-                        <th>Name</th>
-                        <th>Email</th>
-                        <th>Phone</th>
-                    </tr>
-                    </thead>
-                    <tbody>
-                    <tr th:each="patient : ${patients}" class="table-row">
-                        <td th:text="${patient.id}">1</td>
-                        <td th:text="${patient.name ?: 'N/A'}">Name</td>
-                        <td th:text="${patient.email ?: 'N/A'}">Email</td>
-                        <td th:text="${patient.phone ?: 'N/A'}">Phone</td>
-                    </tr>
-                    </tbody>
-                </table>
+        <div class="table-container">
+            <div class="search-bar">
+                <input type="text" id="searchInput" placeholder="Search by Patient Name" onkeyup="searchTable()">
             </div>
-        </section>
+            <h2>Patient List</h2>
+            <table id="patientTable">
+                <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>Name</th>
+                    <th>Email</th>
+                    <th>Phone</th>
+                    <th>Status</th>
+                </tr>
+                </thead>
+                <tbody>
+                <tr th:each="patient : ${patients}" class="table-row">
+                    <td th:text="${patient.id} ?: 'N/A'">1</td>
+                    <td th:text="${patient.name} ?: 'N/A'">Name</td>
+                    <td th:text="${patient.email} ?: 'N/A'">Email</td>
+                    <td th:text="${patient.phone} ?: 'N/A'">Phone</td>
+                    <td th:text="${patient.appointmentStatus} ?: 'N/A'">N/A</td>
+                </tr>
+                </tbody>
+            </table>
+        </div>
     </main>
 </div>
 <script>
-    // Theme Toggle
-    document.addEventListener('DOMContentLoaded', function() {
-        const themeToggle = document.getElementById('themeToggle');
-        const body = document.body;
+    function searchTable() {
+        let input = document.getElementById("searchInput").value.toLowerCase();
+        let table = document.getElementById("patientTable");
+        let tr = table.getElementsByTagName("tr");
 
-        themeToggle.addEventListener('click', () => {
-            body.classList.toggle('dark-theme');
-            const isDarkTheme = body.classList.contains('dark-theme');
-            themeToggle.innerHTML = `<i class="fas ${isDarkTheme ? 'fa-sun' : 'fa-moon'}"></i>`;
-        });
+        for (let i = 1; i < tr.length; i++) {
+            let td = tr[i].getElementsByTagName("td")[1]; // Index 1 is the Name column
+            if (td) {
+                let text = td.textContent.toLowerCase();
+                tr[i].style.display = text.indexOf(input) > -1 ? "" : "none";
+            }
+        }
+    }
+
+    document.getElementById("themeToggle").addEventListener("click", function() {
+        document.body.classList.toggle("dark-theme");
+        const icon = this.querySelector("i");
+        icon.classList.toggle("fa-moon");
+        icon.classList.toggle("fa-sun");
     });
 </script>
 </body>

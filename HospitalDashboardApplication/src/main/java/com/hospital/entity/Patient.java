@@ -2,6 +2,8 @@ package com.hospital.entity;
 
 import jakarta.persistence.*;
 
+import java.util.List;
+
 @Entity
 @Table(name = "patients")
 public class Patient {
@@ -14,6 +16,9 @@ public class Patient {
 
     private String email;
     private String phone;
+
+    @OneToMany(mappedBy = "patient")
+    private List<Appointment> appointments;
 
     // Constructors
     public Patient() {}
@@ -36,4 +41,11 @@ public class Patient {
 
     public String getPhone() { return phone; }
     public void setPhone(String phone) { this.phone = phone; }
+
+    public List<Appointment> getAppointments() { return appointments; }
+    public void setAppointments(List<Appointment> appointments) { this.appointments = appointments; }
+    private String appointmentStatus;
+
+    public String getAppointmentStatus() { return appointmentStatus; }
+    public void setAppointmentStatus(String appointmentStatus) { this.appointmentStatus = appointmentStatus; }
 }
