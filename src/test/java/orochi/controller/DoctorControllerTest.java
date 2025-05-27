@@ -49,6 +49,8 @@ public class DoctorControllerTest {
     @InjectMocks
     private DoctorController doctorController;
 
+    @InjectMocks
+    private DoctorAppointmentController doctorAppointmentController;
 
 
     private final Integer testDoctorId = 1;
@@ -58,7 +60,7 @@ public class DoctorControllerTest {
     public void setup() {
         MockitoAnnotations.openMocks(this);
         when(doctorService.getAppointmentRepository()).thenReturn(appointmentRepository);
-        mockMvc = MockMvcBuilders.standaloneSetup(doctorController).build();
+        mockMvc = MockMvcBuilders.standaloneSetup(doctorController,doctorAppointmentController).build();
     }
 
     @Test
