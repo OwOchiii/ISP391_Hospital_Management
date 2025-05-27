@@ -52,7 +52,6 @@ public class DoctorControllerTest {
     @InjectMocks
     private DoctorAppointmentController doctorAppointmentController;
 
-
     private final Integer testDoctorId = 1;
     private final LocalDateTime now = LocalDateTime.now();
 
@@ -237,7 +236,7 @@ public void getAllAppointments_ShouldReturnAppointmentsView() throws Exception {
                 .thenReturn(medicalOrders);
 
         // Act & Assert
-        mockMvc.perform(get("/doctor/appointment/{appointmentId}", appointmentId)
+        mockMvc.perform(get("/doctor/appointments/{appointmentId}", appointmentId)
                         .param("doctorId", testDoctorId.toString()))
                 .andExpect(status().isOk())
                 .andExpect(view().name("doctor/appointment-details"))

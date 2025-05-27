@@ -44,7 +44,8 @@ public class DoctorAppointmentController {
             @RequestParam(required = false, defaultValue = "0") Integer page,
             Model model) {
         try {
-            logger.info("Fetching appointments for doctor ID: {}", doctorId);
+            logger.info("Fetching appointments for doctor ID: {} with filters: filter={}, search={}, status={}, dateFrom={}",
+                    doctorId, filter, search, status, dateFrom);
 
             // Set doctor name
             Doctor doctor = doctorRepository.findById(doctorId).orElse(null);
@@ -52,25 +53,65 @@ public class DoctorAppointmentController {
                 model.addAttribute("doctorName", doctor.getUser().getFullName());
             }
 
-            // Get appointments based on filter
+            // Get appointments based on filters
             List<Appointment> appointments;
             String filterTitle = "All Appointments";
 
+            // First, apply the main filter category
             if ("today".equals(filter)) {
                 appointments = doctorService.getTodayAppointments(doctorId);
                 filterTitle = "Today's Appointments";
             } else if ("upcoming".equals(filter)) {
                 appointments = doctorService.getUpcomingAppointments(doctorId);
                 filterTitle = "Upcoming Appointments";
-            } else if ("priority".equals(filter)) {
-                // Implement priority filtering if needed
-                appointments = doctorService.getAppointments(doctorId);
-                filterTitle = "Priority Appointments";
-            } else if (status != null && !status.isEmpty()) {
-                appointments = doctorService.getAppointmentsByStatus(doctorId, status);
-                filterTitle = status + " Appointments";
             } else {
                 appointments = doctorService.getAppointments(doctorId);
+            }
+
+            // Then apply additional filters one by one
+
+            // Search by patient name
+            if (search != null && !search.trim().isEmpty()) {
+                appointments = doctorService.searchAppointmentsByPatientName(doctorId, search.trim());
+                filterTitle = "Search Results: " + search;
+            }
+
+            // Filter by status
+            if (status != null && !status.isEmpty()) {
+                // If we already filtered by search, apply status filter to the results
+                if (search != null && !search.trim().isEmpty()) {
+                    final String statusFilter = status;
+                    appointments = appointments.stream()
+                            .filter(a -> statusFilter.equals(a.getStatus()))
+                            .toList();
+                } else {
+                    // Otherwise get appointments by status directly
+                    appointments = doctorService.getAppointmentsByStatus(doctorId, status);
+                }
+
+                // Update filter title
+                if (search != null && !search.trim().isEmpty()) {
+                    filterTitle += " - Status: " + status;
+                } else {
+                    filterTitle = status + " Appointments";
+                }
+            }
+
+            // Filter by date
+            if (dateFrom != null) {
+                final LocalDate filterDate = dateFrom;
+                appointments = appointments.stream()
+                        .filter(a -> a.getDateTime() != null &&
+                                a.getDateTime().toLocalDate().isEqual(filterDate))
+                        .toList();
+
+                // Update filter title
+                if ((search != null && !search.trim().isEmpty()) ||
+                        (status != null && !status.isEmpty())) {
+                    filterTitle += " - Date: " + dateFrom;
+                } else {
+                    filterTitle = "Appointments on " + dateFrom;
+                }
             }
 
             // Set all required template attributes
@@ -80,7 +121,7 @@ public class DoctorAppointmentController {
             model.addAttribute("currentFilter", filter != null ? filter : "all");
             model.addAttribute("currentFilterTitle", filterTitle);
             model.addAttribute("searchTerm", search);
-            model.addAttribute("statusFilter", status);
+            model.addAttribute("status", status);
             model.addAttribute("dateFrom", dateFrom);
 
             // Count metrics
@@ -93,7 +134,7 @@ public class DoctorAppointmentController {
             model.addAttribute("totalPages", 1);
             model.addAttribute("currentPage", page);
 
-            logger.debug("Retrieved appointments for doctor ID: {}", doctorId);
+            logger.debug("Retrieved {} appointments for doctor ID: {}", appointments.size(), doctorId);
             return "doctor/appointments";
         } catch (Exception e) {
             logger.error("Error fetching appointments for doctor ID: {}", doctorId, e);
@@ -149,35 +190,83 @@ public class DoctorAppointmentController {
     }
 
     @GetMapping("/today")
-    public String getTodayAppointments(@RequestParam Integer doctorId, Model model) {
+    public String getTodayAppointments(
+            @RequestParam("doctorId") Integer doctorId,
+            Model model,
+            @RequestParam(value = "page", defaultValue = "0") int page) {
         try {
             logger.info("Fetching today's appointments for doctor ID: {}", doctorId);
+
+            // Get doctor name
+            Doctor doctor = doctorRepository.findById(doctorId).orElse(null);
+            if (doctor != null && doctor.getUser() != null) {
+                model.addAttribute("doctorName", doctor.getUser().getFullName());
+            }
+
+            // Get today's appointments
             List<Appointment> appointments = doctorService.getTodayAppointments(doctorId);
+
+            // Set model attributes
             model.addAttribute("appointments", appointments);
             model.addAttribute("doctorId", doctorId);
             model.addAttribute("title", "Today's Appointments");
+            model.addAttribute("currentFilter", "today");
+            model.addAttribute("currentFilterTitle", "Today's Appointments");
+
+            // Count metrics - important to keep these
+            model.addAttribute("allCount", doctorService.getAppointments(doctorId).size());
+            model.addAttribute("todayCount", appointments.size());
+            model.addAttribute("upcomingCount", doctorService.getUpcomingAppointments(doctorId).size());
+
+            // Pagination
+            model.addAttribute("totalPages", 1);
+            model.addAttribute("currentPage", page);
+
             logger.debug("Retrieved {} today's appointments for doctor ID: {}", appointments.size(), doctorId);
             return "doctor/appointments";
         } catch (Exception e) {
             logger.error("Error fetching today's appointments for doctor ID: {}", doctorId, e);
-            model.addAttribute("errorMessage", "Failed to retrieve today's appointments: " + e.getMessage());
             return "error";
         }
     }
 
     @GetMapping("/upcoming")
-    public String getUpcomingAppointments(@RequestParam Integer doctorId, Model model) {
+    public String getUpcomingAppointments(
+            @RequestParam("doctorId") Integer doctorId,
+            Model model,
+            @RequestParam(value = "page", defaultValue = "0") int page) {
         try {
             logger.info("Fetching upcoming appointments for doctor ID: {}", doctorId);
+
+            // Get doctor name
+            Doctor doctor = doctorRepository.findById(doctorId).orElse(null);
+            if (doctor != null && doctor.getUser() != null) {
+                model.addAttribute("doctorName", doctor.getUser().getFullName());
+            }
+
+            // Get upcoming appointments
             List<Appointment> appointments = doctorService.getUpcomingAppointments(doctorId);
+
+            // Set model attributes
             model.addAttribute("appointments", appointments);
             model.addAttribute("doctorId", doctorId);
             model.addAttribute("title", "Upcoming Appointments");
+            model.addAttribute("currentFilter", "upcoming");
+            model.addAttribute("currentFilterTitle", "Upcoming Appointments");
+
+            // Count metrics - important to keep these
+            model.addAttribute("allCount", doctorService.getAppointments(doctorId).size());
+            model.addAttribute("todayCount", doctorService.getTodayAppointments(doctorId).size());
+            model.addAttribute("upcomingCount", appointments.size());
+
+            // Pagination
+            model.addAttribute("totalPages", 1);
+            model.addAttribute("currentPage", page);
+
             logger.debug("Retrieved {} upcoming appointments for doctor ID: {}", appointments.size(), doctorId);
             return "doctor/appointments";
         } catch (Exception e) {
             logger.error("Error fetching upcoming appointments for doctor ID: {}", doctorId, e);
-            model.addAttribute("errorMessage", "Failed to retrieve upcoming appointments: " + e.getMessage());
             return "error";
         }
     }
