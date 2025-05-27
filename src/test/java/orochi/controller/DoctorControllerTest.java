@@ -259,7 +259,7 @@ public void getAllAppointments_ShouldReturnAppointmentsView() throws Exception {
                 .thenReturn(Optional.empty());
 
         // Act & Assert
-        mockMvc.perform(get("/doctor/appointment/{appointmentId}", appointmentId)
+        mockMvc.perform(get("/doctor/appointments/{appointmentId}", appointmentId)
                         .param("doctorId", testDoctorId.toString()))
                 .andExpect(status().isOk())
                 .andExpect(view().name("error"))
