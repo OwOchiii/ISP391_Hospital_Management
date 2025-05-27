@@ -160,4 +160,14 @@ public class DoctorService {
         }
     }
 
+    public List<Appointment> searchAppointmentsByPatientName(Integer doctorId, String patientName) {
+        try {
+            logger.info("Searching appointments for doctor ID: {} with patient name containing: {}", doctorId, patientName);
+            return appointmentRepository.findByDoctorIdAndPatientUserFullNameContainingIgnoreCase(doctorId, patientName);
+        } catch (DataAccessException e) {
+            logger.error("Failed to search appointments for doctor ID: {} with patient name: {}", doctorId, patientName, e);
+            return Collections.emptyList();
+        }
+    }
+
 }

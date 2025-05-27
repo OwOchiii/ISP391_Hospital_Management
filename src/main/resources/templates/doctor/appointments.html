@@ -803,7 +803,7 @@
         const header = document.querySelector('meta[name="_csrf_header"]').getAttribute('content');
 
         // Make AJAX call to update status
-        fetch(`/doctor/appointment/update-status?appointmentId=${appointmentId}&doctorId=${doctorId}&status=${newStatus}`, {
+        fetch(`/doctor/appointments/update-status?appointmentId=${appointmentId}&doctorId=${doctorId}&status=${newStatus}`, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/x-www-form-urlencoded',
