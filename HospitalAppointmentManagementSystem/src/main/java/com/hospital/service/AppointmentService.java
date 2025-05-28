@@ -70,4 +70,9 @@ public class AppointmentService {
     public List<Appointment> getAppointmentsByDate(Date date) {
         return appointmentRepository.findByAppointmentDate(date);
     }
+
+    public Appointment getAppointmentById(int id) {
+        Optional<Appointment> appointment = appointmentRepository.findById(id);
+        return appointment.orElse(null);
+    }
 }

@@ -4,104 +4,298 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Patient Dashboard</title>
+    <!-- Bootstrap CSS -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Bootstrap Icons -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css">
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <style>
-        body {
-            padding-left: 250px;
-            background-color: #f8f9fa;
+        :root {
+            --primary-color: #2563eb;
+            --secondary-color: #1e40af;
+            --accent-color: #06b6d4;
+            --text-dark: #1f2937;
+            --text-light: #6b7280;
+            --bg-light: #f8fafc;
+            --success-color: #10b981;
+            --error-color: #ef4444;
+            --warning-color: #f59e0b;
+            --sidebar-width: 280px;
         }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            line-height: 1.6;
+            color: var(--text-dark);
+            background: var(--bg-light);
+        }
+
         .sidebar {
             position: fixed;
             top: 0;
             left: 0;
-            height: 100%;
-            width: 250px;
-            background-color: #2c3e50;
-            padding-top: 20px;
+            height: 100vh;
+            width: var(--sidebar-width);
+            background: linear-gradient(135deg, var(--primary-color) 0%, var(--secondary-color) 100%);
+            color: white;
+            z-index: 1000;
+            transition: transform 0.3s ease;
+            overflow-y: auto;
         }
-        .sidebar .nav-link {
-            color: #ffffff;
-            padding: 15px 20px;
-            transition: background-color 0.3s;
+
+        .sidebar.collapsed {
+            transform: translateX(-100%);
         }
-        .sidebar .nav-link:hover {
-            background-color: #34495e;
+
+        .sidebar-header {
+            padding: 1.5rem;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
         }
-        .content {
-            padding: 40px;
+
+        .brand-logo {
+            font-size: 1.5rem;
+            font-weight: 700;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            color: white;
+            text-decoration: none;
+        }
+
+        .sidebar-nav {
+            padding: 1rem 0;
+        }
+
+        .nav-item {
+            margin: 0.25rem 1rem;
+        }
+
+        .nav-link {
+            color: rgba(255, 255, 255, 0.8);
+            padding: 0.75rem 1rem;
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            text-decoration: none;
+            transition: all 0.3s ease;
+        }
+
+        .nav-link:hover,
+        .nav-link.active {
+            background: rgba(255, 255, 255, 0.1);
+            color: white;
+        }
+
+        .main-content {
+            margin-left: var(--sidebar-width);
             min-height: 100vh;
+            transition: margin-left 0.3s ease;
         }
+
+        .main-content.expanded {
+            margin-left: 0;
+        }
+
+        .top-header {
+            background: white;
+            padding: 1rem 2rem;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .header-left {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        .sidebar-toggle {
+            background: none;
+            border: none;
+            font-size: 1.2rem;
+            color: var(--text-dark);
+            cursor: pointer;
+        }
+
+        .content-area {
+            padding: 2rem;
+        }
+
+        .welcome-section {
+            background: linear-gradient(135deg, var(--primary-color) 0%, var(--secondary-color) 100%);
+            color: white;
+            padding: 2rem;
+            border-radius: 15px;
+            margin-bottom: 2rem;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .welcome-section::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><circle cx="50" cy="50" r="2" fill="rgba(255,255,255,0.1)"/></svg>');
+            opacity: 0.5;
+        }
+
+        .welcome-content {
+            position: relative;
+            z-index: 2;
+        }
+
         .search-bar {
             max-width: 500px;
             margin: 0 auto 10px;
         }
-        .welcome-header {
-            color: #2c3e50;
-            font-weight: 300;
+
+        .search-bar .input-group {
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+            border-radius: 8px;
         }
+
         #doctorResults {
             max-width: 500px;
             margin: 0 auto;
-            background-color: #ffffff;
-            border-radius: 5px;
-            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+            background: white;
+            border-radius: 10px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.08);
             padding: 15px;
             display: none;
         }
+
         #doctorResults ul {
             list-style-type: none;
             padding: 0;
             margin: 0;
         }
+
         #doctorResults li {
             padding: 10px 0;
-            border-bottom: 1px solid #e9ecef;
+            border-bottom: 1px solid #e5e7eb;
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            color: var(--text-dark);
+            transition: background 0.3s ease;
         }
+
+        #doctorResults li:hover {
+            background: #e0f2fe;
+        }
+
         #doctorResults li:last-child {
             border-bottom: none;
+        }
+
+        .btn-primary-custom {
+            background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+            border: none;
+            padding: 0.5rem 1rem;
+            border-radius: 8px;
+            color: white;
+            font-weight: 500;
+            transition: all 0.3s ease;
+        }
+
+        .btn-primary-custom:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(37, 99, 235, 0.3);
+            color: white;
+        }
+
+        @media (max-width: 768px) {
+            .sidebar {
+                transform: translateX(-100%);
+            }
+
+            .main-content {
+                margin-left: 0;
+            }
+
+            .content-area {
+                padding: 1rem;
+            }
+
+            .top-header {
+                padding: 1rem;
+            }
         }
     </style>
 </head>
 <body>
 <!-- Sidebar Navigation -->
-<nav class="sidebar">
-    <div class="text-center mb-4">
-        <h4 class="text-white">Patient Dashboard</h4>
+<nav class="sidebar" id="sidebar">
+    <div class="sidebar-header">
+        <a href="#" class="brand-logo">
+            <i class="bi bi-hospital"></i>
+            Patient Dashboard
+        </a>
     </div>
-    <ul class="nav flex-column">
-        <li class="nav-item">
-            <a th:href="@{/patient/book}" class="nav-link">Book Appointment</a>
-        </li>
-        <li class="nav-item">
-            <a th:href="@{/patient/appointments}" class="nav-link">Appointment List</a>
-        </li>
-        <li class="nav-item">
-            <a th:href="@{/patient/profile}" class="nav-link">Patient Profile</a>
-        </li>
-        <li class="nav-item">
-            <a th:href="@{/patient/support}" class="nav-link">Customer Support</a>
-        </li>
-        <li class="nav-item">
-            <a th:href="@{/patient/feedback}" class="nav-link">Feedback</a>
-        </li>
-    </ul>
+    <div class="sidebar-nav">
+        <ul class="nav flex-column">
+            <li class="nav-item">
+                <a th:href="@{/patient/book}" class="nav-link"><i class="bi bi-calendar-plus"></i> Book Appointment</a>
+            </li>
+            <li class="nav-item">
+                <a th:href="@{/patient/appointments}" class="nav-link"><i class="bi bi-calendar-check"></i> Appointment List</a>
+            </li>
+            <li class="nav-item">
+                <a th:href="@{/patient/profile}" class="nav-link"><i class="bi bi-person"></i> Patient Profile</a>
+            </li>
+            <li class="nav-item">
+                <a th:href="@{/patient/support}" class="nav-link"><i class="bi bi-headset"></i> Customer Support</a>
+            </li>
+            <li class="nav-item">
+                <a th:href="@{/patient/feedback}" class="nav-link"><i class="bi bi-chat-left-text"></i> Feedback</a>
+            </li>
+        </ul>
+    </div>
 </nav>
 
 <!-- Main Content -->
-<div class="content">
-    <h1 class="welcome-header mb-4">Welcome, Patient</h1>
-    <div class="search-bar">
-        <div class="input-group">
-            <input type="text" id="searchBar" class="form-control" placeholder="Search Doctor/Specialties" onkeyup="searchDoctors()">
-            <button class="btn btn-primary" type="button" onclick="searchDoctors()">Search</button>
-            <button onclick="window.location.href='/patient/doctor-search'">Doctor Search</button>
+<div class="main-content" id="main-content">
+    <div class="top-header">
+        <div class="header-left">
+            <button class="sidebar-toggle" onclick="toggleSidebar()">
+                <i class="bi bi-list"></i>
+            </button>
+            <h4 class="mb-0">Patient Dashboard</h4>
         </div>
     </div>
-    <div id="doctorResults" class="card">
-        <div th:fragment="doctorResults">
-            <ul>
-                <li th:each="doctor : ${doctors}" th:text="${doctor.doctorName} + ' (' + ${doctor.specialty.specialtyName} + ')'"></li>
-            </ul>
+    <div class="content-area">
+        <div class="welcome-section">
+            <div class="welcome-content">
+                <h1 class="mb-0">Welcome, Patient</h1>
+            </div>
+        </div>
+        <div class="search-bar">
+            <div class="input-group">
+                <input type="text" id="searchBar" class="form-control" placeholder="Search Doctor/Specialties" onkeyup="searchDoctors()">
+                <button class="btn btn-primary-custom" type="button" onclick="searchDoctors()">
+                    <i class="bi bi-search"></i> Search
+                </button>
+                <a th:href="@{/patient/doctor-search}" class="btn btn-primary-custom">
+                    <i class="bi bi-person"></i> Doctor Search
+                </a>
+            </div>
+        </div>
+        <div id="doctorResults">
+            <div th:fragment="doctorResults">
+                <ul>
+                    <li th:each="doctor : ${doctors}">
+                        <i class="bi bi-person-circle"></i>
+                        <span th:text="${doctor.doctorName} + ' (' + ${doctor.specialty.specialtyName} + ')'"></span>
+                    </li>
+                </ul>
+            </div>
         </div>
     </div>
 </div>
@@ -122,6 +316,13 @@
             resultsDiv.innerHTML = '';
             resultsDiv.style.display = 'none';
         }
+    }
+
+    function toggleSidebar() {
+        const sidebar = document.getElementById('sidebar');
+        const mainContent = document.getElementById('main-content');
+        sidebar.classList.toggle('collapsed');
+        mainContent.classList.toggle('expanded');
     }
 </script>
 </body>

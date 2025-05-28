@@ -9,6 +9,7 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 
@@ -20,6 +21,7 @@ public class AppointmentListController {
     private AppointmentService appointmentService;
 
     @GetMapping("/appointments")
+    @Transactional
     public String showAppointmentList(Model model) {
         int patientId = 1; // Hardcoded for now
         List<Appointment> appointments = appointmentService.getAppointmentsByPatient(patientId);
@@ -31,9 +33,22 @@ public class AppointmentListController {
     public String showAppointmentDetails(@PathVariable("id") int id) {
         return "appointmentDetails"; // Placeholder for Iteration 1
     }*/
-    @GetMapping("/appointment/details")
+    /*@GetMapping("/appointment/details")
     public String showAppointmentDetails(@RequestParam("id") int appointmentId) {
         // For now, redirect to blank page
         return "blank";
+    }*/
+
+    @GetMapping("/appointment/details")
+    @Transactional
+    public String showAppointmentDetails(@RequestParam("id") int appointmentId, Model model) {
+        // Fetch the appointment by ID
+        Appointment appointment = appointmentService.getAppointmentById(appointmentId);
+        if (appointment == null) {
+            // Handle case where appointment is not found
+            return "redirect:/patient/appointments?error=AppointmentNotFound";
+        }
+        model.addAttribute("appointment", appointment);
+        return "appointmentDetails"; // Redirect to the new details page
     }
 }

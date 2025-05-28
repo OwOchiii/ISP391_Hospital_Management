@@ -1,21 +1,294 @@
 <!DOCTYPE html>
-<html xmlns:th="http://www.thymeleaf.org">
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
 <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Patient Profile</title>
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Bootstrap Icons -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css">
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <style>
-        .container { width: 80%; margin: 20px auto; }
+        :root {
+            --primary-color: #2563eb;
+            --secondary-color: #1e40af;
+            --accent-color: #06b6d4;
+            --text-dark: #1f2937;
+            --text-light: #6b7280;
+            --bg-light: #f8fafc;
+            --success-color: #10b981;
+            --error-color: #ef4444;
+            --warning-color: #f59e0b;
+            --sidebar-width: 280px;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            line-height: 1.6;
+            color: var(--text-dark);
+            background: var(--bg-light);
+        }
+
+        .sidebar {
+            position: fixed;
+            top: 0;
+            left: 0;
+            height: 100vh;
+            width: var(--sidebar-width);
+            background: linear-gradient(135deg, var(--primary-color) 0%, var(--secondary-color) 100%);
+            color: white;
+            z-index: 1000;
+            transition: transform 0.3s ease;
+            overflow-y: auto;
+        }
+
+        .sidebar.collapsed {
+            transform: translateX(-100%);
+        }
+
+        .sidebar-header {
+            padding: 1.5rem;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .brand-logo {
+            font-size: 1.5rem;
+            font-weight: 700;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            color: white;
+            text-decoration: none;
+        }
+
+        .sidebar-nav {
+            padding: 1rem 0;
+        }
+
+        .nav-item {
+            margin: 0.25rem 1rem;
+        }
+
+        .nav-link {
+            color: rgba(255, 255, 255, 0.8);
+            padding: 0.75rem 1rem;
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            text-decoration: none;
+            transition: all 0.3s ease;
+        }
+
+        .nav-link:hover,
+        .nav-link.active {
+            background: rgba(255, 255, 255, 0.1);
+            color: white;
+        }
+
+        .main-content {
+            margin-left: var(--sidebar-width);
+            min-height: 100vh;
+            transition: margin-left 0.3s ease;
+        }
+
+        .main-content.expanded {
+            margin-left: 0;
+        }
+
+        .top-header {
+            background: white;
+            padding: 1rem 2rem;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .header-left {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        .sidebar-toggle {
+            background: none;
+            border: none;
+            font-size: 1.2rem;
+            color: var(--text-dark);
+            cursor: pointer;
+        }
+
+        .content-area {
+            padding: 2rem;
+            max-width: 800px;
+            margin: 0 auto;
+        }
+
+        .section {
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.08);
+            padding: 1.5rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .section h2 {
+            font-size: 1.25rem;
+            font-weight: 600;
+            color: var(--text-dark);
+            margin-bottom: 1rem;
+        }
+
+        .section p {
+            margin: 0.5rem 0;
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            color: var(--text-dark);
+        }
+
+        .section p i {
+            color: var(--primary-color);
+        }
+
+        .btn-primary-custom {
+            background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+            border: none;
+            padding: 0.75rem 1.5rem;
+            border-radius: 8px;
+            color: white;
+            font-weight: 500;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            transition: all 0.3s ease;
+        }
+
+        .btn-primary-custom:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(37, 99, 235, 0.3);
+            color: white;
+        }
+
+        .btn-outline-custom {
+            border: 2px solid var(--primary-color);
+            color: var(--primary-color);
+            padding: 0.75rem 1.5rem;
+            border-radius: 8px;
+            background: transparent;
+            font-weight: 500;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            transition: all 0.3s ease;
+        }
+
+        .btn-outline-custom:hover {
+            background: var(--primary-color);
+            color: white;
+        }
+
+        @media (max-width: 768px) {
+            .sidebar {
+                transform: translateX(-100%);
+            }
+
+            .main-content {
+                margin-left: 0;
+            }
+
+            .content-area {
+                padding: 1rem;
+            }
+
+            .top-header {
+                padding: 1rem;
+            }
+        }
     </style>
 </head>
 <body>
-<div class="container">
-    <h1>Patient Profile</h1>
-    <p>This is a temporary hardcoded profile page.</p>
-    <p>Full Name: John Doe</p>
-    <p>Gender: Male</p>
-    <p>Birthdate: 1990-01-01</p>
-    <p>Phone Number: 1234567890</p>
-    <p>Email: john@example.com</p>
-    <a th:href="@{/patient/dashboard}">Back to Dashboard</a>
+<!-- Sidebar Navigation -->
+<nav class="sidebar" id="sidebar">
+    <div class="sidebar-header">
+        <a href="#" class="brand-logo">
+            <i class="bi bi-hospital"></i>
+            Patient Dashboard
+        </a>
+    </div>
+    <div class="sidebar-nav">
+        <ul class="nav flex-column">
+            <li class="nav-item">
+                <a th:href="@{/patient/book}" class="nav-link"><i class="bi bi-calendar-plus"></i> Book Appointment</a>
+            </li>
+            <li class="nav-item">
+                <a th:href="@{/patient/appointments}" class="nav-link"><i class="bi bi-calendar-check"></i> Appointment List</a>
+            </li>
+            <li class="nav-item">
+                <a th:href="@{/patient/profile}" class="nav-link active"><i class="bi bi-person"></i> Patient Profile</a>
+            </li>
+            <li class="nav-item">
+                <a th:href="@{/patient/support}" class="nav-link"><i class="bi bi-headset"></i> Customer Support</a>
+            </li>
+            <li class="nav-item">
+                <a th:href="@{/patient/feedback}" class="nav-link"><i class="bi bi-chat-left-text"></i> Feedback</a>
+            </li>
+        </ul>
+    </div>
+</nav>
+
+<!-- Main Content -->
+<div class="main-content" id="main-content">
+    <div class="top-header">
+        <div class="header-left">
+            <button class="sidebar-toggle" onclick="toggleSidebar()">
+                <i class="bi bi-list"></i>
+            </button>
+            <h4 class="mb-0">Patient Profile</h4>
+        </div>
+    </div>
+    <div class="content-area">
+        <div class="section">
+            <h2>Personal Information</h2>
+            <p><i class="bi bi-person"></i> <strong>Full Name:</strong> John Doe</p>
+            <p><i class="bi bi-gender-ambiguous"></i> <strong>Gender:</strong> Male</p>
+            <p><i class="bi bi-calendar"></i> <strong>Date of Birth:</strong> January 1, 1990 (Age: 35)</p>
+            <p><i class="bi bi-card-text"></i> <strong>Patient ID:</strong> 1</p>
+            <p><i class="bi bi-telephone"></i> <strong>Phone Number:</strong> 123-456-7890</p>
+            <p><i class="bi bi-envelope"></i> <strong>Email:</strong> john.doe@example.com</p>
+            <p><i class="bi bi-geo-alt"></i> <strong>Address:</strong> 123 Health Street, City, Country</p>
+        </div>
+        <div class="section">
+            <h2>Medical Information</h2>
+            <p><i class="bi bi-droplet"></i> <strong>Blood Type:</strong> A+</p>
+            <p><i class="bi bi-exclamation-triangle"></i> <strong>Allergies:</strong> Penicillin</p>
+            <p><i class="bi bi-person-badge"></i> <strong>Primary Doctor:</strong> Dr. Smith (Cardiology)</p>
+            <p><i class="bi bi-calendar-check"></i> <strong>Last Visit:</strong> May 15, 2025</p>
+        </div>
+        <div class="section">
+            <h2>Actions</h2>
+            <a th:href="@{/patient/dashboard}" class="btn btn-outline-custom">
+                <i class="bi bi-arrow-left"></i> Back to Dashboard
+            </a>
+            <a th:href="@{/patient/edit-profile}" class="btn btn-primary-custom" style="margin-left: 10px;">
+                <i class="bi bi-pencil"></i> Edit Profile
+            </a>
+        </div>
+    </div>
 </div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+<script>
+    function toggleSidebar() {
+        const sidebar = document.getElementById('sidebar');
+        const mainContent = document.getElementById('main-content');
+        sidebar.classList.toggle('collapsed');
+        mainContent.classList.toggle('expanded');
+    }
+</script>
 </body>
 </html>

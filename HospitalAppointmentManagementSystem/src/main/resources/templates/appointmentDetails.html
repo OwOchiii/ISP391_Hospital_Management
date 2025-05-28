@@ -1,11 +1,294 @@
 <!DOCTYPE html>
-<html xmlns="http://www.w3.org/1999/xhtml" xmlns:th="http://www.thymeleaf.org">
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
 <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Appointment Details</title>
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Bootstrap Icons -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css">
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary-color: #2563eb;
+            --secondary-color: #1e40af;
+            --accent-color: #06b6d4;
+            --text-dark: #1f2937;
+            --text-light: #6b7280;
+            --bg-light: #f8fafc;
+            --success-color: #10b981;
+            --error-color: #ef4444;
+            --warning-color: #f59e0b;
+            --sidebar-width: 280px;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            line-height: 1.6;
+            color: var(--text-dark);
+            background: var(--bg-light);
+        }
+
+        .sidebar {
+            position: fixed;
+            top: 0;
+            left: 0;
+            height: 100vh;
+            width: var(--sidebar-width);
+            background: linear-gradient(135deg, var(--primary-color) 0%, var(--secondary-color) 100%);
+            color: white;
+            z-index: 1000;
+            transition: transform 0.3s ease;
+            overflow-y: auto;
+        }
+
+        .sidebar.collapsed {
+            transform: translateX(-100%);
+        }
+
+        .sidebar-header {
+            padding: 1.5rem;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .brand-logo {
+            font-size: 1.5rem;
+            font-weight: 700;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            color: white;
+            text-decoration: none;
+        }
+
+        .sidebar-nav {
+            padding: 1rem 0;
+        }
+
+        .nav-item {
+            margin: 0.25rem 1rem;
+        }
+
+        .nav-link {
+            color: rgba(255, 255, 255, 0.8);
+            padding: 0.75rem 1rem;
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            text-decoration: none;
+            transition: all 0.3s ease;
+        }
+
+        .nav-link:hover,
+        .nav-link.active {
+            background: rgba(255, 255, 255, 0.1);
+            color: white;
+        }
+
+        .main-content {
+            margin-left: var(--sidebar-width);
+            min-height: 100vh;
+            transition: margin-left 0.3s ease;
+        }
+
+        .main-content.expanded {
+            margin-left: 0;
+        }
+
+        .top-header {
+            background: white;
+            padding: 1rem 2rem;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .header-left {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        .sidebar-toggle {
+            background: none;
+            border: none;
+            font-size: 1.2rem;
+            color: var(--text-dark);
+            cursor: pointer;
+        }
+
+        .content-area {
+            padding: 2rem;
+            max-width: 800px;
+            margin: 0 auto;
+        }
+
+        .section {
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.08);
+            padding: 1.5rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .section h1 {
+            font-size: 1.5rem;
+            font-weight: 600;
+            color: var(--text-dark);
+            margin-bottom: 1.5rem;
+        }
+
+        .section h2 {
+            font-size: 1.25rem;
+            font-weight: 600;
+            color: var(--text-dark);
+            margin-bottom: 1rem;
+        }
+
+        .section p {
+            margin: 0.5rem 0;
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            color: var(--text-dark);
+        }
+
+        .section p i {
+            color: var(--primary-color);
+        }
+
+        .status-confirmed { background: #dcfce7; color: #166534; padding: 0.25rem 0.75rem; border-radius: 20px; font-size: 0.8rem; font-weight: 500; }
+        .status-pending { background: #fef3c7; color: #92400e; padding: 0.25rem 0.75rem; border-radius: 20px; font-size: 0.8rem; font-weight: 500; }
+        .status-completed { background: #dbeafe; color: #1e40af; padding: 0.25rem 0.75rem; border-radius: 20px; font-size: 0.8rem; font-weight: 500; }
+        .status-scheduled { background: #e0e7ff; color: #3730a3; padding: 0.25rem 0.75rem; border-radius: 20px; font-size: 0.8rem; font-weight: 500; }
+        .status-cancelled { background: #fee2e2; color: #b91c1c; padding: 0.25rem 0.75rem; border-radius: 20px; font-size: 0.8rem; font-weight: 500; }
+
+        .btn-outline-custom {
+            border: 2px solid var(--primary-color);
+            color: var(--primary-color);
+            padding: 0.75rem 1.5rem;
+            border-radius: 8px;
+            background: transparent;
+            font-weight: 500;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            transition: all 0.3s ease;
+        }
+
+        .btn-outline-custom:hover {
+            background: var(--primary-color);
+            color: white;
+        }
+
+        @media (max-width: 768px) {
+            .sidebar {
+                transform: translateX(-100%);
+            }
+
+            .main-content {
+                margin-left: 0;
+            }
+
+            .content-area {
+                padding: 1rem;
+            }
+
+            .top-header {
+                padding: 1rem;
+            }
+        }
+    </style>
 </head>
 <body>
-    <h1>Appointment Details</h1>
-    <p>Details for Appointment ID: <span th:text="${appointment.appointmentId}"></span></p>
-    <a th:href="@{/patient/appointments}">Back to Appointment List</a>
+<!-- Sidebar Navigation -->
+<nav class="sidebar" id="sidebar">
+    <div class="sidebar-header">
+        <a href="#" class="brand-logo">
+            <i class="bi bi-hospital"></i>
+            Patient Dashboard
+        </a>
+    </div>
+    <div class="sidebar-nav">
+        <ul class="nav flex-column">
+            <li class="nav-item">
+                <a th:href="@{/patient/book}" class="nav-link"><i class="bi bi-calendar-plus"></i> Book Appointment</a>
+            </li>
+            <li class="nav-item">
+                <a th:href="@{/patient/appointments}" class="nav-link active"><i class="bi bi-calendar-check"></i> Appointment List</a>
+            </li>
+            <li class="nav-item">
+                <a th:href="@{/patient/profile}" class="nav-link"><i class="bi bi-person"></i> Patient Profile</a>
+            </li>
+            <li class="nav-item">
+                <a th:href="@{/patient/support}" class="nav-link"><i class="bi bi-headset"></i> Customer Support</a>
+            </li>
+            <li class="nav-item">
+                <a th:href="@{/patient/feedback}" class="nav-link"><i class="bi bi-chat-left-text"></i> Feedback</a>
+            </li>
+        </ul>
+    </div>
+</nav>
+
+<!-- Main Content -->
+<div class="main-content" id="main-content">
+    <div class="top-header">
+        <div class="header-left">
+            <button class="sidebar-toggle" onclick="toggleSidebar()">
+                <i class="bi bi-list"></i>
+            </button>
+            <h4 class="mb-0">Appointment Details</h4>
+        </div>
+        <div class="header-right">
+            <a th:href="@{/patient/appointments}" class="btn btn-outline-custom">
+                <i class="bi bi-arrow-left"></i> Back to Appointment List
+            </a>
+        </div>
+    </div>
+    <div class="content-area">
+        <div class="section">
+            <h1>Appointment Details</h1>
+            <h2>Appointment Information</h2>
+            <p><i class="bi bi-card-text"></i> <strong>Appointment ID:</strong> <span th:text="${appointment.appointmentId}"></span></p>
+            <p><i class="bi bi-person"></i> <strong>Patient Name:</strong> <span th:text="${appointment.patient.fullName}"></span></p>
+            <p><i class="bi bi-gender-ambiguous"></i> <strong>Gender:</strong> <span th:text="${appointment.patient.gender}"></span></p>
+            <p><i class="bi bi-calendar"></i> <strong>Birthdate:</strong> <span th:text="${#dates.format(appointment.patient.birthdate, 'yyyy-MM-dd')}"></span></p>
+            <p><i class="bi bi-telephone"></i> <strong>Phone Number:</strong> <span th:text="${appointment.patient.phoneNumber}"></span></p>
+            <p><i class="bi bi-envelope"></i> <strong>Email:</strong> <span th:text="${appointment.patient.email}"></span></p>
+            <p><i class="bi bi-stethoscope"></i> <strong>Specialty:</strong> <span th:text="${appointment.specialty.specialtyName}"></span></p>
+            <p><i class="bi bi-person-badge"></i> <strong>Doctor:</strong> <span th:text="${appointment.doctor != null ? appointment.doctor.doctorName : 'N/A'}"></span></p>
+            <p><i class="bi bi-calendar"></i> <strong>Date:</strong> <span th:text="${#dates.format(appointment.appointmentDate, 'yyyy-MM-dd')}"></span></p>
+            <p><i class="bi bi-clock"></i> <strong>Time:</strong> <span th:text="${appointment.appointmentTime}"></span></p>
+            <p><i class="bi bi-file-text"></i> <strong>Reason:</strong> <span th:text="${appointment.reason}"></span></p>
+            <p><i class="bi bi-info-circle"></i> <strong>Status:</strong>
+                <span th:class="'status-' + ${appointment.status.toLowerCase()}">
+                        <span th:text="${appointment.status}"></span>
+                    </span>
+            </p>
+            <p><i class="bi bi-calendar-plus"></i> <strong>Created Date:</strong> <span th:text="${#dates.format(appointment.createdDate, 'yyyy-MM-dd HH:mm:ss')}"></span></p>
+            <p th:if="${appointment.approvedDate}"><i class="bi bi-check-circle"></i> <strong>Approved Date:</strong> <span th:text="${#dates.format(appointment.approvedDate, 'yyyy-MM-dd HH:mm:ss')}"></span></p>
+        </div>
+        <div class="section">
+            <a th:href="@{/patient/appointments}" class="btn btn-outline-custom">
+                <i class="bi bi-arrow-left"></i> Back to Appointment List
+            </a>
+        </div>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+<script>
+    function toggleSidebar() {
+        const sidebar = document.getElementById('sidebar');
+        const mainContent = document.getElementById('main-content');
+        sidebar.classList.toggle('collapsed');
+        mainContent.classList.toggle('expanded');
+    }
+</script>
 </body>
 </html>
