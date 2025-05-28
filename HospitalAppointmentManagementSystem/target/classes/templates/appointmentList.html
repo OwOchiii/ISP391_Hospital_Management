@@ -295,7 +295,6 @@
                         <th>Doctor</th>
                         <th>Date</th>
                         <th>Time</th>
-                        <th>Reason</th>
                         <th>Status</th>
                         <th>Created Date</th>
                         <th>Actions</th>
@@ -309,7 +308,6 @@
                         <td th:text="${appointment.doctor != null ? appointment.doctor.doctorName : 'N/A'}"></td>
                         <td th:text="${#dates.format(appointment.appointmentDate, 'yyyy-MM-dd')}"></td>
                         <td th:text="${appointment.appointmentTime}"></td>
-                        <td th:text="${appointment.reason}"></td>
                         <td>
                                     <span th:class="'status-' + ${appointment.status.toLowerCase()}">
                                         <span th:text="${appointment.status}"></span>

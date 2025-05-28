@@ -152,13 +152,29 @@
         .section p {
             margin: 0.5rem 0;
             display: flex;
-            align-items: center;
+            align-items: flex-start;
             gap: 0.75rem;
             color: var(--text-dark);
+            max-width: 100%;
+            word-break: break-all;
         }
 
         .section p i {
             color: var(--primary-color);
+            flex-shrink: 0;
+        }
+
+        .section p strong {
+            flex-shrink: 0;
+            margin-right: 0.5rem;
+        }
+
+        .reason-text {
+            white-space: pre-wrap;
+            overflow-wrap: break-word;
+            word-break: break-all;
+            max-width: 100%;
+            flex: 1;
         }
 
         .status-confirmed { background: #dcfce7; color: #166534; padding: 0.25rem 0.75rem; border-radius: 20px; font-size: 0.8rem; font-weight: 500; }
@@ -256,15 +272,13 @@
             <h2>Appointment Information</h2>
             <p><i class="bi bi-card-text"></i> <strong>Appointment ID:</strong> <span th:text="${appointment.appointmentId}"></span></p>
             <p><i class="bi bi-person"></i> <strong>Patient Name:</strong> <span th:text="${appointment.patient.fullName}"></span></p>
-            <p><i class="bi bi-gender-ambiguous"></i> <strong>Gender:</strong> <span th:text="${appointment.patient.gender}"></span></p>
-            <p><i class="bi bi-calendar"></i> <strong>Birthdate:</strong> <span th:text="${#dates.format(appointment.patient.birthdate, 'yyyy-MM-dd')}"></span></p>
-            <p><i class="bi bi-telephone"></i> <strong>Phone Number:</strong> <span th:text="${appointment.patient.phoneNumber}"></span></p>
-            <p><i class="bi bi-envelope"></i> <strong>Email:</strong> <span th:text="${appointment.patient.email}"></span></p>
+            <p><i class="bi bi-telephone"></i> <strong>Phone Number:</strong> <span th:text="${appointment.phoneNumber}"></span></p>
+            <p><i class="bi bi-envelope"></i> <strong>Email:</strong> <span th:text="${appointment.email}"></span></p>
             <p><i class="bi bi-stethoscope"></i> <strong>Specialty:</strong> <span th:text="${appointment.specialty.specialtyName}"></span></p>
             <p><i class="bi bi-person-badge"></i> <strong>Doctor:</strong> <span th:text="${appointment.doctor != null ? appointment.doctor.doctorName : 'N/A'}"></span></p>
             <p><i class="bi bi-calendar"></i> <strong>Date:</strong> <span th:text="${#dates.format(appointment.appointmentDate, 'yyyy-MM-dd')}"></span></p>
             <p><i class="bi bi-clock"></i> <strong>Time:</strong> <span th:text="${appointment.appointmentTime}"></span></p>
-            <p><i class="bi bi-file-text"></i> <strong>Reason:</strong> <span th:text="${appointment.reason}"></span></p>
+            <p><i class="bi bi-file-text"></i> <strong>Reason:</strong> <span th:class="'reason-text'" th:text="${appointment.reason}"></span></p>
             <p><i class="bi bi-info-circle"></i> <strong>Status:</strong>
                 <span th:class="'status-' + ${appointment.status.toLowerCase()}">
                         <span th:text="${appointment.status}"></span>

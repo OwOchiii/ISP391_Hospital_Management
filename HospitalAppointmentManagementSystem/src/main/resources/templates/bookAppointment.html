@@ -300,25 +300,25 @@
     <div class="sidebar-header">
         <a href="#" class="brand-logo">
             <i class="bi bi-hospital"></i>
-            Patient Dashboard
+            <span>Patient Dashboard</span>
         </a>
     </div>
     <div class="sidebar-nav">
         <ul class="nav flex-column">
             <li class="nav-item">
-                <a th:href="@{/patient/book}" class="nav-link active"><i class="bi bi-calendar-plus"></i> Book Appointment</a>
+                <a th:href="@{/patient/book}" class="nav-link active"><i class="bi bi-calendar-plus"></i> <span>Book Appointment</span></a>
             </li>
             <li class="nav-item">
-                <a th:href="@{/patient/appointments}" class="nav-link"><i class="bi bi-calendar-check"></i> Appointment List</a>
+                <a th:href="@{/patient/appointments}" class="nav-link"><i class="bi bi-calendar-check"></i> <span>Appointment List</span></a>
             </li>
             <li class="nav-item">
-                <a th:href="@{/patient/profile}" class="nav-link"><i class="bi bi-person"></i> Patient Profile</a>
+                <a th:href="@{/patient/profile}" class="nav-link"><i class="bi bi-person"></i> <span>Patient Profile</span></a>
             </li>
             <li class="nav-item">
-                <a th:href="@{/patient/support}" class="nav-link"><i class="bi bi-headset"></i> Customer Support</a>
+                <a th:href="@{/patient/support}" class="nav-link"><i class="bi bi-headset"></i> <span>Customer Support</span></a>
             </li>
             <li class="nav-item">
-                <a th:href="@{/patient/feedback}" class="nav-link"><i class="bi bi-chat-left-text"></i> Feedback</a>
+                <a th:href="@{/patient/feedback}" class="nav-link"><i class="bi bi-chat-left-text"></i> <span>Feedback</span></a>
             </li>
         </ul>
     </div>
@@ -356,10 +356,11 @@
                 </div>
 
                 <div class="mb-3">
-                    <label for="doctorId" class="form-label">Doctor (Optional)</label>
-                    <select id="doctorId" th:field="*{doctorId}" class="form-select">
+                    <label for="doctorId" class="form-label">Doctor</label>
+                    <select id="doctorId" th:field="*{doctorId}" class="form-select" required>
                         <option value="">Select Doctor</option>
                     </select>
+                    <span class="error" th:if="${#fields.hasErrors('doctorId')}" th:errors="*{doctorId}"></span>
                 </div>
 
                 <div class="mb-3">
@@ -398,37 +399,18 @@
                 </div>
 
                 <div class="mb-3">
-                    <label class="form-label">Gender</label>
-                    <div class="d-flex gap-3">
-                        <div class="form-check">
-                            <input class="form-check-input" type="radio" name="gender" value="M" th:checked="${patient.gender == 'M'}" id="genderMale" />
-                            <label class="form-check-label" for="genderMale">Male</label>
-                        </div>
-                        <div class="form-check">
-                            <input class="form-check-input" type="radio" name="gender" value="F" th:checked="${patient.gender == 'F'}" id="genderFemale" />
-                            <label class="form-check-label" for="genderFemale">Female</label>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="mb-3">
-                    <label for="birthdate" class="form-label">Birthdate</label>
-                    <input type="date" id="birthdate" th:value="${#dates.format(patient.birthdate, 'yyyy-MM-dd')}" name="birthdate" class="form-control" readonly required />
-                </div>
-
-                <div class="mb-3">
                     <label for="phoneNumber" class="form-label">Phone Number</label>
-                    <input type="text" id="phoneNumber" name="phoneNumber" th:value="${patient.phoneNumber}" class="form-control" />
+                    <input type="text" id="phoneNumber" name="phoneNumber" th:value="${patient.phoneNumber}" class="form-control" required />
                 </div>
 
                 <div class="mb-3">
                     <label for="email" class="form-label">Email</label>
-                    <input type="email" id="email" name="email" th:value="${patient.email}" class="form-control" />
+                    <input type="email" id="email" name="email" th:value="${patient.email}" class="form-control" required />
                 </div>
 
                 <div class="mb-3">
-                    <label for="reason" class="form-label">Reason</label>
-                    <textarea id="reason" th:field="*{reason}" class="form-control" rows="4" required></textarea>
+                    <label for="reason" class="form-label">Reason (max 500 characters)</label>
+                    <textarea id="reason" th:field="*{reason}" class="form-control" rows="4" maxlength="500" required></textarea>
                     <span class="error" th:if="${#fields.hasErrors('reason')}" th:errors="*{reason}"></span>
                 </div>
 
@@ -507,10 +489,23 @@
     }
 
     function showConfirmation() {
-        if (document.getElementById("appointmentTime").value === "") {
+        const specialtyId = document.getElementById("specialtyId").value;
+        const doctorId = document.getElementById("doctorId").value;
+        const appointmentTime = document.getElementById("appointmentTime").value;
+
+        if (!specialtyId) {
+            alert("Please select a specialty before submitting.");
+            return;
+        }
+        if (!doctorId) {
+            alert("Please select a doctor before submitting.");
+            return;
+        }
+        if (!appointmentTime) {
             alert("Please select an appointment time before submitting.");
             return;
         }
+
         document.getElementById("confirmationDialog").classList.add("active");
     }
 

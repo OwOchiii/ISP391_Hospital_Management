@@ -2,6 +2,8 @@ package com.hospital.model;
 
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Size;
+
 import java.sql.Time;
 import java.util.Date;
 
@@ -34,6 +36,7 @@ public class Appointment {
 
     @Column(name = "reason")
     @NotNull(message = "Reason is required")
+    @Size(max = 500, message = "Reason must not exceed 500 characters")
     private String reason;
 
     @Column(name = "status")
@@ -44,6 +47,13 @@ public class Appointment {
 
     @Column(name = "approved_date")
     private Date approvedDate;
+
+    // New fields for appointment-specific contact info
+    @Column(name = "phone_number")
+    private String phoneNumber;
+
+    @Column(name = "email")
+    private String email;
 
     // Constructors
     public Appointment() {}
@@ -78,6 +88,12 @@ public class Appointment {
     public void setCreatedDate(Date createdDate) { this.createdDate = createdDate; }
     public Date getApprovedDate() { return approvedDate; }
     public void setApprovedDate(Date approvedDate) { this.approvedDate = approvedDate; }
+
+    // Getters and Setters for new fields
+    public String getPhoneNumber() { return phoneNumber; }
+    public void setPhoneNumber(String phoneNumber) { this.phoneNumber = phoneNumber; }
+    public String getEmail() { return email; }
+    public void setEmail(String email) { this.email = email; }
 
     // Helper methods for form binding
     public Integer getSpecialtyId() {
