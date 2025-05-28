@@ -79,4 +79,4 @@ Use the credentials provided by your team lead or check the database for existin
 
 For more information, contact the project team lead though discord (_owochi_).
 
-P.S: Never checked for Maven wrapper so it's very likely have too much of the error. Just stick to gradle 
+Note: The Maven wrapper has not been thoroughly tested and may cause errors. It is recommended to use Gradle for building and running the project.
