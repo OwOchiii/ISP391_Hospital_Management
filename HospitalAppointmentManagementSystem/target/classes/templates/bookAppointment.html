@@ -12,12 +12,14 @@
         .selected { background-color: #28a745; color: #fff; }
         .disabled { background-color: #d3d3d3; color: #666; cursor: not-allowed; }
         .error { color: red; }
+        .confirmation { display: none; position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); background: #fff; padding: 20px; border: 1px solid #000; z-index: 1000; }
+        .confirmation.active { display: block; }
     </style>
 </head>
 <body>
 <div class="form-container">
     <h1>Book Appointment</h1>
-    <form th:action="@{/patient/book}" th:object="${appointment}" method="post">
+    <form th:action="@{/patient/book}" th:object="${appointment}" method="post" id="appointmentForm">
         <label>Specialty:</label>
         <select id="specialtyId" th:field="*{specialtyId}" onchange="updateDoctors()" required>
             <option value="">Select Specialty</option>
@@ -34,7 +36,7 @@
         </select>
 
         <label>Appointment Date:</label>
-        <input type="date" id="appointmentDate" th:field="*{appointmentDate}" min="2025-05-27" required onchange="updateTimeSlots()" />
+        <input type="date" id="appointmentDate" th:field="*{appointmentDate}" min="2025-05-28" required onchange="updateTimeSlots()" />
         <span class="error" th:if="${#fields.hasErrors('appointmentDate')}" th:errors="*{appointmentDate}"></span>
 
         <label>Appointment Time:</label>
@@ -57,7 +59,8 @@
             <button type="button" onclick="selectTime('16:30:00', this)">16:30</button>
         </div>
         <input type="hidden" id="appointmentTime" th:field="*{appointmentTime}" required />
-        <span class="error" th:if="${#fields.hasErrors('appointmentTime')}" th:errors="*{appointmentTime}"></span>
+        <!--<span class="error" th:if="${#fields.hasErrors('appointmentTime')}" th:errors="*{appointmentTime}"></span>-->
+        <span class="error" th:if="${error}" th:text="${error}"></span>
 
         <label>Full Name:</label>
         <input type="text" th:value="${patient.fullName}" name="fullName" readonly />
@@ -79,9 +82,16 @@
         <textarea th:field="*{reason}" required></textarea>
         <span class="error" th:if="${#fields.hasErrors('reason')}" th:errors="*{reason}"></span>
 
-        <button type="submit">Send Information</button>
+        <button type="button" onclick="showConfirmation()">Send Information</button>
     </form>
     <a th:href="@{/patient/dashboard}">Back to Dashboard</a>
+
+    <!-- Confirmation Dialog -->
+    <div class="confirmation" id="confirmationDialog">
+        <p>Please confirm to proceed with your appointment booking.</p>
+        <button onclick="confirmBooking(true)">Yes</button>
+        <button onclick="confirmBooking(false)">No</button>
+    </div>
 </div>
 
 <script>
@@ -104,7 +114,6 @@
     }
 
     function selectTime(time, button) {
-        // Only allow selection if the button is not disabled
         if (!button.classList.contains("disabled")) {
             document.getElementById("appointmentTime").value = time;
             let buttons = document.querySelectorAll(".time-grid button");
@@ -116,7 +125,6 @@
     function updateTimeSlots() {
         let dateInput = document.getElementById("appointmentDate").value;
         if (dateInput) {
-            // Reset the selected time when the date changes
             document.getElementById("appointmentTime").value = "";
             let buttons = document.querySelectorAll(".time-grid button");
             buttons.forEach(btn => {
@@ -124,7 +132,6 @@
                 btn.classList.remove("disabled");
             });
 
-            // Fetch booked times for the selected date
             fetch('/patient/booked-times?date=' + dateInput)
                 .then(response => response.json())
                 .then(bookedTimes => {
@@ -139,7 +146,23 @@
         }
     }
 
-    // Set minimum date to today
+    function showConfirmation() {
+        if (document.getElementById("appointmentTime").value === "") {
+            alert("Please select an appointment time before submitting.");
+            return;
+        }
+        document.getElementById("confirmationDialog").classList.add("active");
+    }
+
+    function confirmBooking(confirm) {
+        let dialog = document.getElementById("confirmationDialog");
+        dialog.classList.remove("active");
+        if (confirm) {
+            document.getElementById("appointmentForm").submit();
+        }
+        // Nếu chọn "No", ở lại form với dữ liệu đã điền
+    }
+
     document.addEventListener("DOMContentLoaded", function() {
         let today = new Date().toISOString().split("T")[0];
         document.getElementById("appointmentDate").setAttribute("min", today);
