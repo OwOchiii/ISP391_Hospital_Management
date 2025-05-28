@@ -34,16 +34,21 @@ public class PatientDashboardController {
 
     @GetMapping("/profile")
     public String showProfile() {
-        return "blank"; // Redirect to blank page
+        return "profile";
     }
 
     @GetMapping("/support")
     public String showSupport() {
-        return "blank"; // Redirect to blank page
+        return "support";
     }
 
     @GetMapping("/feedback")
     public String showFeedback() {
-        return "blank"; // Redirect to blank page
+        return "feedback";
+    }
+
+    @GetMapping("/doctor-search")
+    public String showDoctorSearch() {
+        return "doctorSearch"; // Redirect to hardcoded doctor search page
     }
 }

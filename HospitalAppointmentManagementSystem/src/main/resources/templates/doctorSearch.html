@@ -1,0 +1,23 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+  <title>Doctor Search</title>
+  <style>
+    .container { width: 80%; margin: 20px auto; }
+  </style>
+</head>
+<body>
+<div class="container">
+  <h1>Doctor Search</h1>
+  <p>This is a temporary hardcoded Doctor Search page.</p>
+  <p>Search for doctors by specialty or name: [Temporary Search Form]</p>
+  <p>Sample Doctors:</p>
+  <ul>
+    <li>Dr. Smith - Cardiology</li>
+    <li>Dr. Johnson - Neurology</li>
+    <li>Dr. Brown - Orthopedics</li>
+  </ul>
+  <a th:href="@{/patient/dashboard}">Back to Dashboard</a>
+</div>
+</body>
+</html>

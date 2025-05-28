@@ -1,0 +1,21 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <title>Patient Profile</title>
+    <style>
+        .container { width: 80%; margin: 20px auto; }
+    </style>
+</head>
+<body>
+<div class="container">
+    <h1>Patient Profile</h1>
+    <p>This is a temporary hardcoded profile page.</p>
+    <p>Full Name: John Doe</p>
+    <p>Gender: Male</p>
+    <p>Birthdate: 1990-01-01</p>
+    <p>Phone Number: 1234567890</p>
+    <p>Email: john@example.com</p>
+    <a th:href="@{/patient/dashboard}">Back to Dashboard</a>
+</div>
+</body>
+</html>
