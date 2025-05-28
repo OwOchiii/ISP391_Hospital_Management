@@ -464,6 +464,12 @@
             </a>
         </div>
         <div class="nav-item">
+            <a th:href="@{/doctor/schedule(doctorId=${doctorId})}" class="nav-link">
+                <i class="bi bi-calendar-week"></i>
+                View Schedule
+            </a>
+        </div>
+        <div class="nav-item">
             <a href="#" class="nav-link">
                 <i class="bi bi-chat-dots"></i>
                 Messages
@@ -714,21 +720,21 @@
             <div class="card-body">
                 <div class="row g-3">
                     <div class="col-md-3">
-                        <a th:href="@{/doctor/appointments/new(doctorId=${doctorId})}" class="btn-primary-custom w-100">
-                            <i class="bi bi-plus-circle"></i>
-                            New Appointment
-                        </a>
-                    </div>
-                    <div class="col-md-3">
-                        <a th:href="@{/doctor/patients/new(doctorId=${doctorId})}" class="btn-outline-custom w-100">
-                            <i class="bi bi-person-plus"></i>
-                            Add Patient
+                        <a th:href="@{/doctor/medical-orders/new(doctorId=${doctorId})}" class="btn-primary-custom w-100">
+                            <i class="bi bi-file-earmark-medical"></i>
+                            Request Medical Order
                         </a>
                     </div>
                     <div class="col-md-3">
                         <a th:href="@{/doctor/prescriptions/new(doctorId=${doctorId})}" class="btn-outline-custom w-100">
                             <i class="bi bi-prescription2"></i>
                             Write Prescription
+                        </a>
+                    </div>
+                    <div class="col-md-3">
+                        <a th:href="@{/doctor/appointments/new(doctorId=${doctorId})}" class="btn-outline-custom w-100">
+                            <i class="bi bi-calendar-plus"></i>
+                            Schedule Appointment
                         </a>
                     </div>
                     <div class="col-md-3">

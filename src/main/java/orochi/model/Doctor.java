@@ -14,15 +14,17 @@ import java.util.List;
 public class Doctor {
 
     @Id
-    @Column(name = "UserID")
+    @Column(name = "DoctorID")
+    private Integer doctorId;
+
+    @Column(name = "UserID", unique = true, nullable = false)
     private Integer userId;
 
     @Column(name = "BioDescription", columnDefinition = "varchar(max)")
     private String bioDescription;
 
     @OneToOne
-    @MapsId
-    @JoinColumn(name = "UserID")
+    @JoinColumn(name = "UserID", insertable = false, updatable = false)
     private Users user;
 
     @OneToMany(mappedBy = "doctor")
@@ -49,8 +51,9 @@ public class Doctor {
     @ManyToMany
     @JoinTable(
         name = "DoctorSpecialization",
-        joinColumns = @JoinColumn(name = "UserID"),
+        joinColumns = @JoinColumn(name = "DoctorID"),
         inverseJoinColumns = @JoinColumn(name = "SpecID")
     )
     private List<Specialization> specializations;
 }
+

@@ -59,7 +59,7 @@ public class CustomUserDetailsService implements UserDetailsService {
         if ("DOCTOR".equals(authority)) {
             Optional<Doctor> doctor = doctorRepository.findByUserId(user.getUserId());
             if (doctor.isPresent()) {
-                doctorId = doctor.get().getUserId();
+                doctorId = doctor.get().getDoctorId(); // Changed from getUserId() to getDoctorId()
                 logger.info("Found doctorId {} for user {}", doctorId, email);
             } else {
                 logger.warn("No doctor record found for user {} with ID {}", email, user.getUserId());
@@ -86,3 +86,4 @@ public class CustomUserDetailsService implements UserDetailsService {
         );
     }
 }
+

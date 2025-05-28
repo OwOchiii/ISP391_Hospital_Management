@@ -12,8 +12,8 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 public class DoctorSpecializationId implements java.io.Serializable {
 
-    @Column(name = "UserID")
-    private Integer userId;
+    @Column(name = "DoctorID")
+    private Integer doctorId;
 
     @Column(name = "SpecID")
     private Integer specId;

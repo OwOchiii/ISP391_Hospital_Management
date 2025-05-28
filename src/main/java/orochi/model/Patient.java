@@ -16,8 +16,12 @@ import java.util.List;
 public class Patient {
 
     @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "PatientID")
     private Integer patientId;
+
+    @Column(name = "UserID", nullable = false, unique = true)
+    private Integer userId;
 
     @Column(name = "dateOfBirth")
     private LocalDate dateOfBirth;
@@ -32,8 +36,7 @@ public class Patient {
     private String description;
 
     @OneToOne
-    @JoinColumn(name = "PatientID")
-    @MapsId
+    @JoinColumn(name = "UserID", insertable = false, updatable = false)
     private Users user;
 
     @OneToMany(mappedBy = "patient")
@@ -47,13 +50,5 @@ public class Patient {
 
     public String getFullName() {
         return user != null ? user.getFullName() : null;
-    }
-
-    // Add setter for compatibility with tests
-    public void setFullName(String fullName) {
-        if (user == null) {
-            user = new Users();
-        }
-        user.setFullName(fullName);
     }
 }

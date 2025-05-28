@@ -249,6 +249,26 @@
             position: relative;
         }
 
+        .requirement {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            margin-bottom: 0.25rem;
+            transition: all 0.3s ease;
+        }
+
+        .requirement.met {
+            color: var(--success-color);
+        }
+
+        .requirement.unmet {
+            color: var(--text-light);
+        }
+
+        .requirement i {
+            font-size: 0.8rem;
+        }
+
         .password-toggle-btn {
             position: absolute;
             right: 1rem;
@@ -483,6 +503,31 @@
                                     </div>
                                     <small class="text-muted" id="strengthText">Password strength: Weak</small>
                                 </div>
+
+                                <!-- Password requirements indicators -->
+                                <div class="strength-requirements mt-2">
+                                    <div class="requirement unmet" id="req-length">
+                                        <i class="bi bi-circle"></i>
+                                        At least 8 characters
+                                    </div>
+                                    <div class="requirement unmet" id="req-uppercase">
+                                        <i class="bi bi-circle"></i>
+                                        One uppercase letter
+                                    </div>
+                                    <div class="requirement unmet" id="req-lowercase">
+                                        <i class="bi bi-circle"></i>
+                                        One lowercase letter
+                                    </div>
+                                    <div class="requirement unmet" id="req-number">
+                                        <i class="bi bi-circle"></i>
+                                        One number
+                                    </div>
+                                    <div class="requirement unmet" id="req-special">
+                                        <i class="bi bi-circle"></i>
+                                        One special character
+                                    </div>
+                                </div>
+
                                 <div class="invalid-feedback">
                                     Password must be at least 8 characters long.
                                 </div>
@@ -506,11 +551,13 @@
                             <div class="mb-3">
                                 <div class="form-check">
                                     <input class="form-check-input" type="checkbox" id="agreeTerms" name="agreeTerms" required>
-                                    <label class="form-check-label" for="agreeTerms">
+                                    <label class="form-check-label fw-bold text-primary" for="agreeTerms">
+                                        <i class="bi bi-shield-check me-1"></i>
                                         I agree to the <a href="#" class="text-decoration-none">Terms of Service</a> and <a href="#" class="text-decoration-none">Privacy Policy</a>
                                     </label>
                                     <div class="invalid-feedback">
-                                        You must agree to the terms and conditions.
+                                        <i class="bi bi-exclamation-triangle-fill me-1"></i>
+                                        You must agree to the terms and conditions to create an account.
                                     </div>
                                 </div>
                             </div>
@@ -631,86 +678,168 @@
 
     // Form submission
     // Replace your existing form submission code with this:
+    // Form submission
+    // Form submission
     document.getElementById('registerForm').addEventListener('submit', function(e) {
-        // Don't prevent default form submission completely
+        e.preventDefault(); // Always prevent default initially to validate
 
         const form = this;
         const password = document.getElementById('password').value;
         const confirmPassword = document.getElementById('confirmPassword').value;
         const agreeTerms = document.getElementById('agreeTerms').checked;
 
-        // Reset validation
-        form.classList.remove('was-validated');
-        hideAlerts();
+        // Clear existing alerts
+        const existingAlerts = document.querySelectorAll('.alert-custom');
+        existingAlerts.forEach(alert => alert.remove());
 
-        // Validate passwords
-        if (password.length < 8) {
-            e.preventDefault(); // Prevent form submission on validation error
-            document.getElementById('password').classList.add('is-invalid');
-            showAlert('error', 'Password must be at least 8 characters long.');
-            return;
-        }
+        // Create alert container if needed
+        const formContainer = document.querySelector('.register-right');
 
-        if (password !== confirmPassword) {
-            e.preventDefault(); // Prevent form submission on validation error
-            document.getElementById('confirmPassword').classList.add('is-invalid');
-            showAlert('error', 'Passwords do not match.');
-            return;
-        }
-
+        // Validate terms agreement
         if (!agreeTerms) {
-            e.preventDefault(); // Prevent form submission on validation error
             document.getElementById('agreeTerms').classList.add('is-invalid');
-            showAlert('error', 'You must agree to the terms and conditions.');
+
+            // Create and add error alert
+            const alertDiv = document.createElement('div');
+            alertDiv.className = 'alert-custom alert-error-custom';
+            alertDiv.innerHTML = '<i class="bi bi-exclamation-circle me-2"></i>You must agree to the terms and conditions to continue.';
+            formContainer.insertBefore(alertDiv, form);
+
             return;
         }
 
-        // Show loading if all validation passes
-        showLoading(true);
+        // Check password requirements
+        const requirements = {
+            length: password.length >= 8,
+            uppercase: /[A-Z]/.test(password),
+            lowercase: /[a-z]/.test(password),
+            number: /\d/.test(password),
+            special: /[!@#$%^&*(),.?":{}|<>]/.test(password)
+        };
 
-        // The form will now submit naturally to the server endpoint
+        const metRequirements = Object.values(requirements).filter(Boolean).length;
+
+        // Password validation - require at least 3 requirements
+        if (metRequirements < 3) {
+            document.getElementById('password').classList.add('is-invalid');
+
+            // Create and add error alert
+            const alertDiv = document.createElement('div');
+            alertDiv.className = 'alert-custom alert-error-custom';
+            alertDiv.innerHTML = '<i class="bi bi-exclamation-circle me-2"></i>Password does not meet minimum security requirements.';
+            formContainer.insertBefore(alertDiv, form);
+
+            return;
+        }
+
+        // Check if passwords match
+        if (password !== confirmPassword) {
+            document.getElementById('confirmPassword').classList.add('is-invalid');
+
+            // Create and add error alert
+            const alertDiv = document.createElement('div');
+            alertDiv.className = 'alert-custom alert-error-custom';
+            alertDiv.innerHTML = '<i class="bi bi-exclamation-circle me-2"></i>Passwords do not match.';
+            formContainer.insertBefore(alertDiv, form);
+
+            return;
+        }
+
+        // Check if all required fields are filled
+        const requiredFields = ['fullName', 'email', 'phoneNumber'];
+        let allFieldsValid = true;
+
+        for (const fieldId of requiredFields) {
+            const field = document.getElementById(fieldId);
+            if (!field.value.trim()) {
+                field.classList.add('is-invalid');
+                allFieldsValid = false;
+            }
+        }
+
+        if (!allFieldsValid) {
+            // Create and add error alert
+            const alertDiv = document.createElement('div');
+            alertDiv.className = 'alert-custom alert-error-custom';
+            alertDiv.innerHTML = '<i class="bi bi-exclamation-circle me-2"></i>Please fill in all required fields.';
+            formContainer.insertBefore(alertDiv, form);
+
+            return;
+        }
+
+        // Show loading state
+        const btnText = document.getElementById('registerBtnText');
+        const spinner = document.querySelector('button[type="submit"] .spinner-border') ||
+            document.createElement('span');
+
+        if (!spinner.classList.contains('spinner-border')) {
+            spinner.className = 'spinner-border spinner-border-sm ms-2';
+            document.querySelector('button[type="submit"]').appendChild(spinner);
+        }
+
+        btnText.textContent = 'Creating Account...';
+        document.querySelector('button[type="submit"]').disabled = true;
+
+        // Submit the form
+        form.submit();
     });
 
-
+    // Password strength checker
     // Password strength checker
     document.getElementById('password').addEventListener('input', function() {
         const password = this.value;
         const strengthFill = document.getElementById('strengthFill');
         const strengthText = document.getElementById('strengthText');
 
-        let strength = 0;
-        let strengthLabel = 'Weak';
+        // Check individual requirements
+        const requirements = {
+            length: password.length >= 8,
+            uppercase: /[A-Z]/.test(password),
+            lowercase: /[a-z]/.test(password),
+            number: /\d/.test(password),
+            special: /[!@#$%^&*(),.?":{}|<>]/.test(password)
+        };
+
+        // Update requirement indicators
+        Object.keys(requirements).forEach(req => {
+            const element = document.getElementById(`req-${req}`);
+            const icon = element.querySelector('i');
+
+            if (requirements[req]) {
+                element.classList.remove('unmet');
+                element.classList.add('met');
+                icon.className = 'bi bi-check-circle';
+            } else {
+                element.classList.remove('met');
+                element.classList.add('unmet');
+                icon.className = 'bi bi-circle';
+            }
+        });
+
+        // Calculate strength based on met requirements
+        const metRequirements = Object.values(requirements).filter(Boolean).length;
         let strengthClass = 'strength-weak';
+        let strengthLabel = 'Weak';
 
-        if (password.length >= 8) strength++;
-        if (/[a-z]/.test(password)) strength++;
-        if (/[A-Z]/.test(password)) strength++;
-        if (/[0-9]/.test(password)) strength++;
-        if (/[^A-Za-z0-9]/.test(password)) strength++;
-
-        switch (strength) {
-            case 0:
-            case 1:
-                strengthLabel = 'Weak';
-                strengthClass = 'strength-weak';
-                break;
-            case 2:
-                strengthLabel = 'Fair';
-                strengthClass = 'strength-fair';
-                break;
-            case 3:
-            case 4:
-                strengthLabel = 'Good';
-                strengthClass = 'strength-good';
-                break;
-            case 5:
-                strengthLabel = 'Strong';
-                strengthClass = 'strength-strong';
-                break;
+        if (metRequirements < 2) {
+            strengthClass = 'strength-weak';
+            strengthLabel = 'Weak';
+        } else if (metRequirements < 4) {
+            strengthClass = 'strength-fair';
+            strengthLabel = 'Fair';
+        } else if (metRequirements < 5) {
+            strengthClass = 'strength-good';
+            strengthLabel = 'Good';
+        } else {
+            strengthClass = 'strength-strong';
+            strengthLabel = 'Strong';
         }
 
         strengthFill.className = `strength-fill ${strengthClass}`;
         strengthText.textContent = `Password strength: ${strengthLabel}`;
+
+        // Return whether password meets minimum requirements
+        return metRequirements >= 3; // Consider password valid if at least 3 requirements are met
     });
 
     // Password confirmation validation
@@ -757,6 +886,8 @@
         }
     }
 
+
+
     // Show alert messages
     function showAlert(type, message) {
         hideAlerts();
@@ -773,8 +904,17 @@
 
     // Hide all alerts
     function hideAlerts() {
-        document.getElementById('successAlert').style.display = 'none';
-        document.getElementById('errorAlert').style.display = 'none';
+        const successAlert = document.getElementById('successAlert');
+        const errorAlert = document.getElementById('errorAlert');
+
+        if (successAlert) successAlert.style.display = 'none';
+        if (errorAlert) errorAlert.style.display = 'none';
+
+        // Clear any existing alert messages from the page
+        const existingAlerts = document.querySelectorAll('.alert-custom');
+        existingAlerts.forEach(alert => {
+            alert.style.display = 'none';
+        });
     }
 
     // Fill demo data

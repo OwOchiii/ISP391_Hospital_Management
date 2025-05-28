@@ -10,6 +10,7 @@ import org.springframework.transaction.annotation.Transactional;
 import orochi.model.Appointment;
 import orochi.model.Patient;
 import orochi.repository.AppointmentRepository;
+import orochi.repository.DoctorRepository;
 import orochi.repository.PatientRepository;
 
 import java.time.LocalDate;
@@ -26,12 +27,15 @@ public class DoctorService {
     @Getter
     private final AppointmentRepository appointmentRepository;
     private final PatientRepository patientRepository;
+    private final DoctorRepository doctorRepository;
 
     @Autowired
     public DoctorService(AppointmentRepository appointmentRepository,
-                         PatientRepository patientRepository) {
+                         PatientRepository patientRepository,
+                         DoctorRepository doctorRepository) {
         this.appointmentRepository = appointmentRepository;
         this.patientRepository = patientRepository;
+        this.doctorRepository = doctorRepository;
     }
 
     /**
@@ -170,4 +174,45 @@ public class DoctorService {
         }
     }
 
+    /**
+     * Get the count of active doctors in the system
+     * @return the number of active doctors
+     */
+    public Integer getActiveDoctors() {
+        try {
+            // Count all doctors in the Doctor table
+            return Math.toIntExact(doctorRepository.count());
+        } catch (Exception e) {
+            logger.error("Error getting active doctors count", e);
+            return 0;
+        }
+    }
+
+    /**
+     * Get the count of doctors who are currently online (have a schedule now)
+     * @return the number of online doctors
+     */
+    public Integer getOnlineDoctors() {
+        try {
+            // For now, since we don't have a ScheduleRepository yet, we'll return a placeholder value
+            // In a real implementation, you would query the Schedule table to find doctors with
+            // current date matching ScheduleDate and current time between startTime and endTime
+            return 5; // Placeholder value
+
+            /*
+             * The real implementation would be something like:
+             *
+             * LocalDate today = LocalDate.now();
+             * LocalTime currentTime = LocalTime.now();
+             *
+             * return Math.toIntExact(scheduleRepository.countByScheduleDateAndStartTimeBeforeAndEndTimeAfter(
+             *     today, currentTime, currentTime));
+             */
+        } catch (Exception e) {
+            logger.error("Error getting online doctors count", e);
+            return 0;
+        }
+    }
+
 }
+

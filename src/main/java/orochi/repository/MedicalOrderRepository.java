@@ -13,11 +13,11 @@ public interface MedicalOrderRepository extends JpaRepository<MedicalOrder, Inte
     List<MedicalOrder> findByAppointmentIdOrderByOrderDate(Integer appointmentId);
 
     // Find orders created by a specific doctor with a particular status
-    @Query("SELECT m FROM MedicalOrder m WHERE m.orderById = :doctorId AND m.status = :status ORDER BY m.orderDate")
-    List<MedicalOrder> findByOrderByIdAndStatus(@Param("doctorId") Integer doctorId, @Param("status") String status);
+    @Query("SELECT m FROM MedicalOrder m WHERE m.doctorId = :doctorId AND m.status = :status ORDER BY m.orderDate")
+    List<MedicalOrder> findByDoctorIdAndStatus(@Param("doctorId") Integer doctorId, @Param("status") String status);
 
     // Find all orders for a specific doctor
-    @Query("SELECT m FROM MedicalOrder m WHERE m.orderById = :doctorId ORDER BY m.orderDate")
-    List<MedicalOrder> findByOrderById(@Param("doctorId") Integer doctorId);
-
+    @Query("SELECT m FROM MedicalOrder m WHERE m.doctorId = :doctorId ORDER BY m.orderDate")
+    List<MedicalOrder> findByDoctorId(@Param("doctorId") Integer doctorId);
 }
+
