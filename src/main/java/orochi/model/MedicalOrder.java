@@ -20,11 +20,11 @@ public class MedicalOrder {
     @JoinColumn(name = "AppointmentID", insertable = false, updatable = false)
     private Appointment appointment;
 
-    @Column(name = "OrderByID", nullable = false)
-    private Integer orderById;
+    @Column(name = "DoctorID", nullable = false)
+    private Integer doctorId;
 
     @ManyToOne
-    @JoinColumn(name = "OrderByID", insertable = false, updatable = false)
+    @JoinColumn(name = "DoctorID", insertable = false, updatable = false)
     private Doctor orderBy;
 
     @Column(name = "OrderType", nullable = false)
@@ -39,7 +39,6 @@ public class MedicalOrder {
     @Column(name = "AssignedToDeptID")
     private Integer assignedToDeptId;
 
-    // This is the field that needs to match the mappedBy in Department
     @ManyToOne
     @JoinColumn(name = "AssignedToDeptID", insertable = false, updatable = false)
     private Department assignedToDepartment;

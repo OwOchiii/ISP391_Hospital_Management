@@ -20,3 +20,4 @@ public interface DoctorRepository extends JpaRepository<Doctor, Integer> {
     @Query("SELECT d FROM Doctor d JOIN d.user u WHERE LOWER(u.fullName) LIKE LOWER(CONCAT('%', :name, '%'))")
     Optional<Doctor> findByUserFullNameContainingIgnoreCase(@Param("name") String name);
 }
+

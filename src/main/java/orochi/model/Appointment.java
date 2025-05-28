@@ -20,8 +20,6 @@ public class Appointment {
     @Column(name = "AppointmentID")
     private Integer appointmentId;
 
-    @Column(name = "WaitID")
-    private Integer waitId;
 
     @Column(name = "DoctorID", nullable = false)
     private Integer doctorId;
@@ -53,9 +51,6 @@ public class Appointment {
     @JoinColumn(name = "RoomID", insertable = false, updatable = false)
     private Room room;
 
-    @ManyToOne
-    @JoinColumn(name = "WaitID", insertable = false, updatable = false)
-    private WaitingList waitingList;
 
     @OneToMany(mappedBy = "appointment")
     private List<Transaction> transactions;

@@ -76,7 +76,14 @@ public class DoctorController {
 
             logger.info("Loading dashboard for doctor ID: {}", doctorId);
             Doctor doctor = doctorRepository.findById(doctorId).orElse(null);
-// Make sure to initialize empty lists rather than null
+
+            // Check if doctor is null before accessing its properties
+            if (doctor == null) {
+                logger.error("Doctor not found for ID: {}", doctorId);
+                model.addAttribute("errorMessage", "Doctor not found");
+                return "error";
+            }
+
             model.addAttribute("doctorName", doctor.getUser().getFullName());
             List<Appointment> todayAppointments = doctorService.getTodayAppointments(doctorId);
             if (todayAppointments == null) {
@@ -88,7 +95,7 @@ public class DoctorController {
                 upcomingAppointments = new ArrayList<>();
             }
 
-            List<MedicalOrder> pendingOrders = medicalOrderRepository.findByOrderByIdAndStatus(doctorId, "Pending");
+            List<MedicalOrder> pendingOrders = medicalOrderRepository.findByDoctorIdAndStatus(doctorId, "Pending");
             if (pendingOrders == null) {
                 pendingOrders = new ArrayList<>();
             }
@@ -189,7 +196,7 @@ public class DoctorController {
     public String getDoctorMedicalOrders(@RequestParam Integer doctorId, Model model) {
         try {
             logger.info("Fetching all medical orders for doctor ID: {}", doctorId);
-            List<MedicalOrder> orders = medicalOrderRepository.findByOrderById(doctorId);
+            List<MedicalOrder> orders = medicalOrderRepository.findByDoctorId(doctorId);
             model.addAttribute("medicalOrders", orders);
             model.addAttribute("doctorId", doctorId);
             model.addAttribute("title", "All Medical Orders");
@@ -210,7 +217,7 @@ public class DoctorController {
             Model model) {
         try {
             logger.info("Fetching medical orders for doctor ID: {} with status: {}", doctorId, status);
-            List<MedicalOrder> orders = medicalOrderRepository.findByOrderByIdAndStatus(doctorId, status);
+            List<MedicalOrder> orders = medicalOrderRepository.findByDoctorIdAndStatus(doctorId, status);
             model.addAttribute("medicalOrders", orders);
             model.addAttribute("doctorId", doctorId);
             model.addAttribute("selectedStatus", status);

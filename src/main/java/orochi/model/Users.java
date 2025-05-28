@@ -5,6 +5,8 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.time.LocalDateTime;
+
 @Entity
 @Table(name = "Users")
 @Data
@@ -44,4 +46,14 @@ public class Users {
 
     @OneToOne(mappedBy = "user")
     private Doctor doctor;
+
+
+    @Column(name = "created_at", nullable = false, updatable = false)
+    private LocalDateTime createdAt;
+
+    // Optional: Use JPA's @PrePersist to set the timestamp automatically
+    @PrePersist
+    protected void onCreate() {
+        this.createdAt = LocalDateTime.now();
+    }
 }

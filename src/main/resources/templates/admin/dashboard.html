@@ -1,0 +1,1287 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Dashboard - MediCare Plus</title>
+
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Bootstrap Icons -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css">
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+
+    <style>
+        :root {
+            --admin-primary: #7c3aed;
+            --admin-secondary: #5b21b6;
+            --admin-accent: #a855f7;
+            --admin-light: #f3e8ff;
+            --admin-dark: #4c1d95;
+            --text-dark: #1f2937;
+            --text-light: #6b7280;
+            --text-muted: #9ca3af;
+            --bg-light: #fafbfc;
+            --bg-white: #ffffff;
+            --success-color: #059669;
+            --warning-color: #d97706;
+            --error-color: #dc2626;
+            --info-color: #0284c7;
+            --sidebar-width: 300px;
+            --header-height: 70px;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            line-height: 1.6;
+            color: var(--text-dark);
+            background: var(--bg-light);
+            overflow-x: hidden;
+        }
+
+        /* Sidebar Styles */
+        .admin-sidebar {
+            position: fixed;
+            top: 0;
+            left: 0;
+            height: 100vh;
+            width: var(--sidebar-width);
+            background: linear-gradient(180deg, var(--admin-primary) 0%, var(--admin-secondary) 100%);
+            color: white;
+            z-index: 1000;
+            transition: transform 0.3s ease;
+            overflow-y: auto;
+            box-shadow: 4px 0 20px rgba(124, 58, 237, 0.15);
+        }
+
+        .admin-sidebar.collapsed {
+            transform: translateX(-100%);
+        }
+
+        .sidebar-header {
+            padding: 1.5rem;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            background: rgba(255, 255, 255, 0.05);
+        }
+
+        .admin-brand {
+            font-size: 1.5rem;
+            font-weight: 800;
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            color: white;
+            text-decoration: none;
+        }
+
+        .admin-brand i {
+            font-size: 2rem;
+            background: linear-gradient(45deg, #fbbf24, #f59e0b);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .sidebar-nav {
+            padding: 1.5rem 0;
+        }
+
+        .nav-section {
+            margin-bottom: 2rem;
+        }
+
+        .nav-section-title {
+            font-size: 0.75rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            color: rgba(255, 255, 255, 0.6);
+            padding: 0 1.5rem;
+            margin-bottom: 0.75rem;
+        }
+
+        .nav-item {
+            margin: 0.25rem 1rem;
+        }
+
+        .nav-link {
+            color: rgba(255, 255, 255, 0.8);
+            padding: 0.875rem 1.25rem;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            gap: 0.875rem;
+            text-decoration: none;
+            font-weight: 500;
+            transition: all 0.3s ease;
+            position: relative;
+        }
+
+        .nav-link:hover {
+            background: rgba(255, 255, 255, 0.1);
+            color: white;
+            transform: translateX(4px);
+        }
+
+        .nav-link.active {
+            background: rgba(255, 255, 255, 0.15);
+            color: white;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+        }
+
+        .nav-link.active::before {
+            content: '';
+            position: absolute;
+            left: 0;
+            top: 50%;
+            transform: translateY(-50%);
+            width: 4px;
+            height: 24px;
+            background: #fbbf24;
+            border-radius: 0 4px 4px 0;
+        }
+
+        .nav-link i {
+            font-size: 1.125rem;
+            width: 20px;
+            text-align: center;
+        }
+
+        /* Main Content */
+        .main-content {
+            margin-left: var(--sidebar-width);
+            min-height: 100vh;
+            transition: margin-left 0.3s ease;
+        }
+
+        .main-content.expanded {
+            margin-left: 0;
+        }
+
+        /* Top Header */
+        .admin-header {
+            background: var(--bg-white);
+            height: var(--header-height);
+            padding: 0 2rem;
+            box-shadow: 0 2px 20px rgba(0, 0, 0, 0.08);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            position: sticky;
+            top: 0;
+            z-index: 999;
+        }
+
+        .header-left {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        .sidebar-toggle {
+            background: none;
+            border: none;
+            font-size: 1.25rem;
+            color: var(--text-dark);
+            cursor: pointer;
+            padding: 0.5rem;
+            border-radius: 8px;
+            transition: all 0.3s ease;
+        }
+
+        .sidebar-toggle:hover {
+            background: var(--admin-light);
+            color: var(--admin-primary);
+        }
+
+        .page-title {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: var(--text-dark);
+            margin: 0;
+        }
+
+        .header-right {
+            display: flex;
+            align-items: center;
+            gap: 1.5rem;
+        }
+
+        .header-actions {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        .notification-btn {
+            position: relative;
+            background: none;
+            border: none;
+            font-size: 1.25rem;
+            color: var(--text-light);
+            cursor: pointer;
+            padding: 0.5rem;
+            border-radius: 8px;
+            transition: all 0.3s ease;
+        }
+
+        .notification-btn:hover {
+            background: var(--admin-light);
+            color: var(--admin-primary);
+        }
+
+        .notification-badge {
+            position: absolute;
+            top: 0.25rem;
+            right: 0.25rem;
+            width: 8px;
+            height: 8px;
+            background: var(--error-color);
+            border-radius: 50%;
+        }
+
+        .admin-info {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            padding: 0.5rem;
+            border-radius: 12px;
+            transition: all 0.3s ease;
+            cursor: pointer;
+        }
+
+        .admin-info:hover {
+            background: var(--admin-light);
+        }
+
+        .admin-avatar {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, var(--admin-primary), var(--admin-accent));
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: 700;
+            font-size: 0.875rem;
+        }
+
+        .admin-details {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .admin-name {
+            font-weight: 600;
+            color: var(--text-dark);
+            font-size: 0.875rem;
+        }
+
+        .admin-role {
+            font-size: 0.75rem;
+            color: var(--text-muted);
+        }
+
+        /* Content Area */
+        .content-area {
+            padding: 2rem;
+        }
+
+        /* Welcome Section */
+        .welcome-section {
+            background: linear-gradient(135deg, var(--admin-primary) 0%, var(--admin-secondary) 100%);
+            color: white;
+            padding: 2.5rem;
+            border-radius: 20px;
+            margin-bottom: 2rem;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .welcome-section::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            right: -20%;
+            width: 300px;
+            height: 300px;
+            background: radial-gradient(circle, rgba(255, 255, 255, 0.1) 0%, transparent 70%);
+            border-radius: 50%;
+        }
+
+        .welcome-content {
+            position: relative;
+            z-index: 2;
+        }
+
+        .welcome-title {
+            font-size: 2rem;
+            font-weight: 800;
+            margin-bottom: 0.5rem;
+        }
+
+        .welcome-subtitle {
+            font-size: 1.125rem;
+            opacity: 0.9;
+            margin-bottom: 0;
+        }
+
+        /* Stats Grid */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 1.5rem;
+            margin-bottom: 2rem;
+        }
+
+        .stat-card {
+            background: var(--bg-white);
+            padding: 2rem;
+            border-radius: 16px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+            display: flex;
+            align-items: center;
+            gap: 1.5rem;
+            transition: all 0.3s ease;
+            border: 1px solid rgba(124, 58, 237, 0.1);
+        }
+
+        .stat-card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 8px 30px rgba(124, 58, 237, 0.15);
+        }
+
+        .stat-icon {
+            width: 60px;
+            height: 60px;
+            border-radius: 16px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5rem;
+            color: white;
+            flex-shrink: 0;
+        }
+
+        .stat-icon.users { background: linear-gradient(135deg, #3b82f6, #1d4ed8); }
+        .stat-icon.appointments { background: linear-gradient(135deg, #10b981, #059669); }
+        .stat-icon.revenue { background: linear-gradient(135deg, #f59e0b, #d97706); }
+        .stat-icon.doctors { background: linear-gradient(135deg, #8b5cf6, #7c3aed); }
+        .stat-icon.rooms { background: linear-gradient(135deg, #06b6d4, #0891b2); }
+        .stat-icon.prescriptions { background: linear-gradient(135deg, #ef4444, #dc2626); }
+
+        .stat-info {
+            flex: 1;
+        }
+
+        .stat-value {
+            font-size: 2rem;
+            font-weight: 800;
+            color: var(--text-dark);
+            margin-bottom: 0.25rem;
+        }
+
+        .stat-label {
+            color: var(--text-light);
+            font-weight: 500;
+            margin-bottom: 0.5rem;
+        }
+
+        .stat-change {
+            font-size: 0.875rem;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 0.25rem;
+        }
+
+        .stat-change.positive {
+            color: var(--success-color);
+        }
+
+        .stat-change.negative {
+            color: var(--error-color);
+        }
+
+        /* Management Grid */
+        .management-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+            gap: 2rem;
+            margin-bottom: 2rem;
+        }
+
+        .management-card {
+            background: var(--bg-white);
+            border-radius: 16px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+            overflow: hidden;
+            transition: all 0.3s ease;
+            border: 1px solid rgba(124, 58, 237, 0.1);
+        }
+
+        .management-card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 8px 30px rgba(124, 58, 237, 0.15);
+        }
+
+        .card-header {
+            padding: 1.5rem;
+            border-bottom: 1px solid #f1f5f9;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: linear-gradient(135deg, var(--admin-light), rgba(168, 85, 247, 0.05));
+        }
+
+        .card-title {
+            font-size: 1.125rem;
+            font-weight: 700;
+            margin: 0;
+            color: var(--text-dark);
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .card-title i {
+            color: var(--admin-primary);
+        }
+
+        .card-body {
+            padding: 1.5rem;
+        }
+
+        .management-summary {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 1rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .summary-item {
+            text-align: center;
+            padding: 1rem;
+            background: var(--bg-light);
+            border-radius: 12px;
+        }
+
+        .summary-value {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: var(--admin-primary);
+            margin-bottom: 0.25rem;
+        }
+
+        .summary-label {
+            font-size: 0.875rem;
+            color: var(--text-light);
+            font-weight: 500;
+        }
+
+        .card-actions {
+            display: flex;
+            gap: 0.75rem;
+        }
+
+        .btn-admin-primary {
+            background: linear-gradient(135deg, var(--admin-primary), var(--admin-secondary));
+            border: none;
+            padding: 0.75rem 1.5rem;
+            border-radius: 10px;
+            color: white;
+            font-weight: 600;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            transition: all 0.3s ease;
+            font-size: 0.875rem;
+        }
+
+        .btn-admin-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(124, 58, 237, 0.3);
+            color: white;
+        }
+
+        .btn-admin-outline {
+            border: 2px solid var(--admin-primary);
+            color: var(--admin-primary);
+            padding: 0.75rem 1.5rem;
+            border-radius: 10px;
+            background: transparent;
+            font-weight: 600;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            transition: all 0.3s ease;
+            font-size: 0.875rem;
+        }
+
+        .btn-admin-outline:hover {
+            background: var(--admin-primary);
+            color: white;
+        }
+
+        /* Quick Actions */
+        .quick-actions {
+            background: var(--bg-white);
+            border-radius: 16px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+            padding: 2rem;
+            border: 1px solid rgba(124, 58, 237, 0.1);
+        }
+
+        .quick-actions-title {
+            font-size: 1.25rem;
+            font-weight: 700;
+            margin-bottom: 1.5rem;
+            color: var(--text-dark);
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .quick-actions-title i {
+            color: var(--admin-primary);
+        }
+
+        .actions-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1rem;
+        }
+
+        .action-item {
+            padding: 1.5rem;
+            border: 2px solid #f1f5f9;
+            border-radius: 12px;
+            text-align: center;
+            transition: all 0.3s ease;
+            text-decoration: none;
+            color: var(--text-dark);
+        }
+
+        .action-item:hover {
+            border-color: var(--admin-primary);
+            background: var(--admin-light);
+            transform: translateY(-2px);
+            color: var(--text-dark);
+        }
+
+        .action-icon {
+            font-size: 2rem;
+            color: var(--admin-primary);
+            margin-bottom: 0.75rem;
+        }
+
+        .action-title {
+            font-weight: 600;
+            margin-bottom: 0.25rem;
+        }
+
+        .action-description {
+            font-size: 0.875rem;
+            color: var(--text-light);
+        }
+
+        /* Responsive Design */
+        @media (max-width: 1200px) {
+            .management-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .admin-sidebar {
+                transform: translateX(-100%);
+            }
+
+            .main-content {
+                margin-left: 0;
+            }
+
+            .content-area {
+                padding: 1rem;
+            }
+
+            .stats-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .admin-header {
+                padding: 0 1rem;
+            }
+
+            .admin-details {
+                display: none;
+            }
+
+            .welcome-title {
+                font-size: 1.5rem;
+            }
+
+            .welcome-subtitle {
+                font-size: 1rem;
+            }
+
+            .actions-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+
+        @media (max-width: 576px) {
+            .actions-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .management-summary {
+                grid-template-columns: 1fr;
+            }
+
+            .card-actions {
+                flex-direction: column;
+            }
+        }
+    </style>
+</head>
+<body>
+<!-- Admin Sidebar -->
+<div class="admin-sidebar" id="adminSidebar">
+    <div class="sidebar-header">
+        <a href="#" class="admin-brand">
+            <i class="bi bi-shield-check"></i>
+            <div>
+                <div>MediCare Plus</div>
+                <small style="font-size: 0.75rem; font-weight: 400; opacity: 0.8;">Admin Panel</small>
+            </div>
+        </a>
+    </div>
+
+    <nav class="sidebar-nav">
+        <div class="nav-section">
+            <div class="nav-section-title">Dashboard</div>
+            <div class="nav-item">
+                <a th:href="@{/admin/dashboard(adminId=${adminId})}" class="nav-link active">
+                    <i class="bi bi-speedometer2"></i>
+                    Overview
+                </a>
+            </div>
+        </div>
+
+        <div class="nav-section">
+            <div class="nav-section-title">User Management</div>
+            <div class="nav-item">
+                <a th:href="@{/admin/users(adminId=${adminId})}" class="nav-link">
+                    <i class="bi bi-people"></i>
+                    Account Management
+                </a>
+            </div>
+            <div class="nav-item">
+                <a th:href="@{/admin/doctors(adminId=${adminId})}" class="nav-link">
+                    <i class="bi bi-person-badge"></i>
+                    Doctor Management
+                </a>
+            </div>
+        </div>
+
+        <div class="nav-section">
+            <div class="nav-section-title">Operations</div>
+            <div class="nav-item">
+                <a th:href="@{/admin/appointments(adminId=${adminId})}" class="nav-link">
+                    <i class="bi bi-calendar-check"></i>
+                    Appointment Management
+                </a>
+            </div>
+            <div class="nav-item">
+                <a th:href="@{/admin/rooms(adminId=${adminId})}" class="nav-link">
+                    <i class="bi bi-door-open"></i>
+                    Room Management
+                </a>
+            </div>
+            <div class="nav-item">
+                <a th:href="@{/admin/schedules(adminId=${adminId})}" class="nav-link">
+                    <i class="bi bi-calendar3"></i>
+                    Schedule Management
+                </a>
+            </div>
+        </div>
+
+        <div class="nav-section">
+            <div class="nav-section-title">Medical Services</div>
+            <div class="nav-item">
+                <a th:href="@{/admin/prescriptions(adminId=${adminId})}" class="nav-link">
+                    <i class="bi bi-prescription2"></i>
+                    Prescription Management
+                </a>
+            </div>
+            <div class="nav-item">
+                <a th:href="@{/admin/medical-orders(adminId=${adminId})}" class="nav-link">
+                    <i class="bi bi-clipboard-pulse"></i>
+                    Medical Order Management
+                </a>
+            </div>
+            <div class="nav-item">
+                <a th:href="@{/admin/services(adminId=${adminId})}" class="nav-link">
+                    <i class="bi bi-heart-pulse"></i>
+                    Service Management
+                </a>
+            </div>
+            <div class="nav-item">
+                <a th:href="@{/admin/specialties(adminId=${adminId})}" class="nav-link">
+                    <i class="bi bi-award"></i>
+                    Specialties Management
+                </a>
+            </div>
+        </div>
+
+        <div class="nav-section">
+            <div class="nav-section-title">Analytics & Content</div>
+            <div class="nav-item">
+                <a th:href="@{/admin/statistics/revenue(adminId=${adminId})}" class="nav-link">
+                    <i class="bi bi-graph-up"></i>
+                    Revenue Statistics
+                </a>
+            </div>
+            <div class="nav-item">
+                <a th:href="@{/admin/statistics/appointments(adminId=${adminId})}" class="nav-link">
+                    <i class="bi bi-bar-chart"></i>
+                    Appointment Statistics
+                </a>
+            </div>
+            <div class="nav-item">
+                <a th:href="@{/admin/news(adminId=${adminId})}" class="nav-link">
+                    <i class="bi bi-newspaper"></i>
+                    News Management
+                </a>
+            </div>
+        </div>
+
+        <div class="nav-section">
+            <div class="nav-section-title">System</div>
+            <div class="nav-item">
+                <a href="#" class="nav-link">
+                    <i class="bi bi-gear"></i>
+                    Settings
+                </a>
+            </div>
+            <div class="nav-item">
+                <a th:href="@{/auth/logout}" class="nav-link">
+                    <i class="bi bi-box-arrow-right"></i>
+                    Logout
+                </a>
+            </div>
+        </div>
+    </nav>
+</div>
+
+<!-- Main Content -->
+<div class="main-content" id="mainContent">
+    <!-- Admin Header -->
+    <div class="admin-header">
+        <div class="header-left">
+            <button class="sidebar-toggle" onclick="toggleSidebar()">
+                <i class="bi bi-list"></i>
+            </button>
+            <h1 class="page-title">Admin Dashboard</h1>
+        </div>
+
+        <div class="header-right">
+            <div class="header-actions">
+                <button class="notification-btn">
+                    <i class="bi bi-bell"></i>
+                    <div class="notification-badge"></div>
+                </button>
+                <button class="notification-btn">
+                    <i class="bi bi-envelope"></i>
+                </button>
+            </div>
+
+            <div class="admin-info">
+                <div class="admin-avatar">
+                    <span th:text="${adminName != null ? #strings.substring(adminName, 0, 2).toUpperCase() : 'AD'}">AD</span>
+                </div>
+                <div class="admin-details">
+                    <div class="admin-name" th:text="${adminName != null ? adminName : 'Administrator'}">Administrator</div>
+                    <div class="admin-role">System Admin</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Content Area -->
+    <div class="content-area">
+        <!-- Welcome Section -->
+        <div class="welcome-section">
+            <div class="welcome-content">
+                <div class="row align-items-center">
+                    <div class="col-md-8">
+                        <h2 class="welcome-title" id="welcomeGreeting">Good Morning, Administrator!</h2>
+                        <p class="welcome-subtitle">Here's what's happening at MediCare Plus today</p>
+                    </div>
+                    <div class="col-md-4 text-md-end">
+                        <div style="font-size: 4rem; opacity: 0.3;">
+                            <i class="bi bi-shield-check"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Stats Grid -->
+        <div class="stats-grid">
+            <div class="stat-card">
+                <div class="stat-icon users">
+                    <i class="bi bi-people"></i>
+                </div>
+                <div class="stat-info">
+                    <div class="stat-value" th:text="${totalUsers != null ? totalUsers : '0'}">1,247</div>
+                    <div class="stat-label">Total Users</div>
+                    <div class="stat-change positive">
+                        <i class="bi bi-arrow-up"></i>
+                        <span th:text="${userGrowth != null ? userGrowth + '%' : '+12%'}">+12%</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="stat-card">
+                <div class="stat-icon appointments">
+                    <i class="bi bi-calendar-check"></i>
+                </div>
+                <div class="stat-info">
+                    <div class="stat-value" th:text="${totalAppointments != null ? totalAppointments : '0'}">856</div>
+                    <div class="stat-label">Total Appointments</div>
+                    <div class="stat-change positive">
+                        <i class="bi bi-arrow-up"></i>
+                        <span th:text="${appointmentGrowth != null ? appointmentGrowth + '%' : '+8%'}">+8%</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="stat-card">
+                <div class="stat-icon revenue">
+                    <i class="bi bi-currency-dollar"></i>
+                </div>
+                <div class="stat-info">
+                    <div class="stat-value" th:text="${totalRevenue != null ? '$' + totalRevenue : '$0'}">$45,230</div>
+                    <div class="stat-label">Monthly Revenue</div>
+                    <div class="stat-change positive">
+                        <i class="bi bi-arrow-up"></i>
+                        <span th:text="${revenueGrowth != null ? revenueGrowth + '%' : '+15%'}">+15%</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="stat-card">
+                <div class="stat-icon doctors">
+                    <i class="bi bi-person-badge"></i>
+                </div>
+                <div class="stat-info">
+                    <div class="stat-value" th:text="${totalDoctors != null ? totalDoctors : '0'}">42</div>
+                    <div class="stat-label">Active Doctors</div>
+                    <div class="stat-change positive">
+                        <i class="bi bi-arrow-up"></i>
+                        <span th:text="${doctorGrowth != null ? doctorGrowth + '%' : '+5%'}">+5%</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="stat-card">
+                <div class="stat-icon rooms">
+                    <i class="bi bi-door-open"></i>
+                </div>
+                <div class="stat-info">
+                    <div class="stat-value" th:text="${totalRooms != null ? totalRooms : '0'}">28</div>
+                    <div class="stat-label">Available Rooms</div>
+                    <div class="stat-change">
+                        <i class="bi bi-dash"></i>
+                        <span>Stable</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="stat-card">
+                <div class="stat-icon prescriptions">
+                    <i class="bi bi-prescription2"></i>
+                </div>
+                <div class="stat-info">
+                    <div class="stat-value" th:text="${totalPrescriptions != null ? totalPrescriptions : '0'}">324</div>
+                    <div class="stat-label">Prescriptions Issued</div>
+                    <div class="stat-change positive">
+                        <i class="bi bi-arrow-up"></i>
+                        <span th:text="${prescriptionGrowth != null ? prescriptionGrowth + '%' : '+18%'}">+18%</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Management Grid -->
+        <div class="management-grid">
+            <!-- User Management -->
+            <div class="management-card">
+                <div class="card-header">
+                    <h3 class="card-title">
+                        <i class="bi bi-people"></i>
+                        User Management
+                    </h3>
+                </div>
+                <div class="card-body">
+                    <div class="management-summary">
+                        <div class="summary-item">
+                            <div class="summary-value" th:text="${activeUsers != null ? activeUsers : '0'}">1,180</div>
+                            <div class="summary-label">Active Users</div>
+                        </div>
+                        <div class="summary-item">
+                            <div class="summary-value" th:text="${newUsersToday != null ? newUsersToday : '0'}">23</div>
+                            <div class="summary-label">New Today</div>
+                        </div>
+                    </div>
+                    <div class="card-actions">
+                        <a th:href="@{/admin/users(adminId=${adminId})}" class="btn-admin-primary">
+                            <i class="bi bi-eye"></i>
+                            View All
+                        </a>
+                        <a th:href="@{/admin/users/new(adminId=${adminId})}" class="btn-admin-outline">
+                            <i class="bi bi-plus"></i>
+                            Add User
+                        </a>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Appointment Management -->
+            <div class="management-card">
+                <div class="card-header">
+                    <h3 class="card-title">
+                        <i class="bi bi-calendar-check"></i>
+                        Appointment Management
+                    </h3>
+                </div>
+                <div class="card-body">
+                    <div class="management-summary">
+                        <div class="summary-item">
+                            <div class="summary-value" th:text="${todayAppointments != null ? todayAppointments : '0'}">47</div>
+                            <div class="summary-label">Today</div>
+                        </div>
+                        <div class="summary-item">
+                            <div class="summary-value" th:text="${pendingAppointments != null ? pendingAppointments : '0'}">12</div>
+                            <div class="summary-label">Pending</div>
+                        </div>
+                    </div>
+                    <div class="card-actions">
+                        <a th:href="@{/admin/appointments(adminId=${adminId})}" class="btn-admin-primary">
+                            <i class="bi bi-eye"></i>
+                            View All
+                        </a>
+                        <a th:href="@{/admin/appointments/schedule(adminId=${adminId})}" class="btn-admin-outline">
+                            <i class="bi bi-plus"></i>
+                            Schedule
+                        </a>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Doctor Management -->
+            <div class="management-card">
+                <div class="card-header">
+                    <h3 class="card-title">
+                        <i class="bi bi-person-badge"></i>
+                        Doctor Management
+                    </h3>
+                </div>
+                <div class="card-body">
+                    <div class="management-summary">
+                        <div class="summary-item">
+                            <div class="summary-value" th:text="${onlineDoctors != null ? onlineDoctors : '0'}">38</div>
+                            <div class="summary-label">Online</div>
+                        </div>
+                        <div class="summary-item">
+                            <div class="summary-value" th:text="${busyDoctors != null ? busyDoctors : '0'}">15</div>
+                            <div class="summary-label">Busy</div>
+                        </div>
+                    </div>
+                    <div class="card-actions">
+                        <a th:href="@{/admin/doctors(adminId=${adminId})}" class="btn-admin-primary">
+                            <i class="bi bi-eye"></i>
+                            View All
+                        </a>
+                        <a th:href="@{/admin/doctors/new(adminId=${adminId})}" class="btn-admin-outline">
+                            <i class="bi bi-plus"></i>
+                            Add Doctor
+                        </a>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Room Management -->
+            <div class="management-card">
+                <div class="card-header">
+                    <h3 class="card-title">
+                        <i class="bi bi-door-open"></i>
+                        Room Management
+                    </h3>
+                </div>
+                <div class="card-body">
+                    <div class="management-summary">
+                        <div class="summary-item">
+                            <div class="summary-value" th:text="${availableRooms != null ? availableRooms : '0'}">22</div>
+                            <div class="summary-label">Available</div>
+                        </div>
+                        <div class="summary-item">
+                            <div class="summary-value" th:text="${occupiedRooms != null ? occupiedRooms : '0'}">6</div>
+                            <div class="summary-label">Occupied</div>
+                        </div>
+                    </div>
+                    <div class="card-actions">
+                        <a th:href="@{/admin/rooms(adminId=${adminId})}" class="btn-admin-primary">
+                            <i class="bi bi-eye"></i>
+                            View All
+                        </a>
+                        <a th:href="@{/admin/rooms/new(adminId=${adminId})}" class="btn-admin-outline">
+                            <i class="bi bi-plus"></i>
+                            Add Room
+                        </a>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Medical Orders -->
+            <div class="management-card">
+                <div class="card-header">
+                    <h3 class="card-title">
+                        <i class="bi bi-clipboard-pulse"></i>
+                        Medical Orders
+                    </h3>
+                </div>
+                <div class="card-body">
+                    <div class="management-summary">
+                        <div class="summary-item">
+                            <div class="summary-value" th:text="${pendingOrders != null ? pendingOrders : '0'}">18</div>
+                            <div class="summary-label">Pending</div>
+                        </div>
+                        <div class="summary-item">
+                            <div class="summary-value" th:text="${completedOrders != null ? completedOrders : '0'}">156</div>
+                            <div class="summary-label">Completed</div>
+                        </div>
+                    </div>
+                    <div class="card-actions">
+                        <a th:href="@{/admin/medical-orders(adminId=${adminId})}" class="btn-admin-primary">
+                            <i class="bi bi-eye"></i>
+                            View All
+                        </a>
+                        <a th:href="@{/admin/medical-orders/reports(adminId=${adminId})}" class="btn-admin-outline">
+                            <i class="bi bi-file-text"></i>
+                            Reports
+                        </a>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Revenue Statistics -->
+            <div class="management-card">
+                <div class="card-header">
+                    <h3 class="card-title">
+                        <i class="bi bi-graph-up"></i>
+                        Revenue Overview
+                    </h3>
+                </div>
+                <div class="card-body">
+                    <div class="management-summary">
+                        <div class="summary-item">
+                            <div class="summary-value" th:text="${monthlyRevenue != null ? '$' + monthlyRevenue : '$0'}">$45,230</div>
+                            <div class="summary-label">This Month</div>
+                        </div>
+                        <div class="summary-item">
+                            <div class="summary-value" th:text="${yearlyRevenue != null ? '$' + yearlyRevenue : '$0'}">$485,670</div>
+                            <div class="summary-label">This Year</div>
+                        </div>
+                    </div>
+                    <div class="card-actions">
+                        <a th:href="@{/admin/statistics/revenue(adminId=${adminId})}" class="btn-admin-primary">
+                            <i class="bi bi-eye"></i>
+                            View Details
+                        </a>
+                        <a th:href="@{/admin/reports/revenue(adminId=${adminId})}" class="btn-admin-outline">
+                            <i class="bi bi-download"></i>
+                            Export
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Quick Actions -->
+        <div class="quick-actions">
+            <h3 class="quick-actions-title">
+                <i class="bi bi-lightning"></i>
+                Quick Actions
+            </h3>
+            <div class="actions-grid">
+                <a th:href="@{/admin/users/new(adminId=${adminId})}" class="action-item">
+                    <div class="action-icon">
+                        <i class="bi bi-person-plus"></i>
+                    </div>
+                    <div class="action-title">Add New User</div>
+                    <div class="action-description">Register a new user account</div>
+                </a>
+
+                <a th:href="@{/admin/appointments/schedule(adminId=${adminId})}" class="action-item">
+                    <div class="action-icon">
+                        <i class="bi bi-calendar-plus"></i>
+                    </div>
+                    <div class="action-title">Schedule Appointment</div>
+                    <div class="action-description">Book a new appointment</div>
+                </a>
+
+                <a th:href="@{/admin/doctors/new(adminId=${adminId})}" class="action-item">
+                    <div class="action-icon">
+                        <i class="bi bi-person-badge"></i>
+                    </div>
+                    <div class="action-title">Add Doctor</div>
+                    <div class="action-description">Register a new doctor</div>
+                </a>
+
+                <a th:href="@{/admin/rooms/new(adminId=${adminId})}" class="action-item">
+                    <div class="action-icon">
+                        <i class="bi bi-door-open"></i>
+                    </div>
+                    <div class="action-title">Add Room</div>
+                    <div class="action-description">Register a new room</div>
+                </a>
+
+                <a th:href="@{/admin/services/new(adminId=${adminId})}" class="action-item">
+                    <div class="action-icon">
+                        <i class="bi bi-heart-pulse"></i>
+                    </div>
+                    <div class="action-title">Add Service</div>
+                    <div class="action-description">Create a new medical service</div>
+                </a>
+
+                <a th:href="@{/admin/reports(adminId=${adminId})}" class="action-item">
+                    <div class="action-icon">
+                        <i class="bi bi-file-earmark-text"></i>
+                    </div>
+                    <div class="action-title">Generate Report</div>
+                    <div class="action-description">Create system reports</div>
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Bootstrap JS -->
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+
+<script th:inline="javascript">
+    /*<![CDATA[*/
+    // Get admin ID from Thymeleaf
+    const adminId = /*[[${adminId}]]*/ 0;
+
+    // Sidebar toggle functionality
+    function toggleSidebar() {
+        const sidebar = document.getElementById('adminSidebar');
+        const mainContent = document.getElementById('mainContent');
+
+        sidebar.classList.toggle('collapsed');
+        mainContent.classList.toggle('expanded');
+    }
+
+    // Auto-hide sidebar on mobile
+    function checkScreenSize() {
+        const sidebar = document.getElementById('adminSidebar');
+        const mainContent = document.getElementById('mainContent');
+
+        if (window.innerWidth <= 768) {
+            sidebar.classList.add('collapsed');
+            mainContent.classList.add('expanded');
+        } else {
+            sidebar.classList.remove('collapsed');
+            mainContent.classList.remove('expanded');
+        }
+    }
+
+    // Update time-based greeting
+    function updateGreeting() {
+        const hour = new Date().getHours();
+        const greetingElement = document.getElementById('welcomeGreeting');
+
+        let greeting;
+
+        if (hour < 12) {
+            greeting = 'Good Morning, Administrator!';
+        } else if (hour < 17) {
+            greeting = 'Good Afternoon, Administrator!';
+        } else {
+            greeting = 'Good Evening, Administrator!';
+        }
+
+        if (greetingElement) {
+            greetingElement.textContent = greeting;
+        }
+    }
+
+    // Initialize
+    updateGreeting();
+    checkScreenSize();
+
+    // Event listeners
+    window.addEventListener('load', checkScreenSize);
+    window.addEventListener('resize', checkScreenSize);
+
+    // Navigation link handlers
+    document.querySelectorAll('.nav-link').forEach(link => {
+        link.addEventListener('click', function(e) {
+            if (this.getAttribute('href') === '#') {
+                e.preventDefault();
+            }
+
+            // Remove active class from all links
+            document.querySelectorAll('.nav-link').forEach(l => l.classList.remove('active'));
+
+            // Add active class to clicked link
+            this.classList.add('active');
+        });
+    });
+
+    // Stat card animations
+    const observerOptions = {
+        threshold: 0.1,
+        rootMargin: '0px 0px -50px 0px'
+    };
+
+    const observer = new IntersectionObserver((entries) => {
+        entries.forEach(entry => {
+            if (entry.isIntersecting) {
+                entry.target.style.opacity = '1';
+                entry.target.style.transform = 'translateY(0)';
+            }
+        });
+    }, observerOptions);
+
+    // Observe stat cards for animation
+    document.querySelectorAll('.stat-card, .management-card').forEach(card => {
+        card.style.opacity = '0';
+        card.style.transform = 'translateY(20px)';
+        card.style.transition = 'opacity 0.6s ease, transform 0.6s ease';
+        observer.observe(card);
+    });
+
+    // Auto-refresh data every 5 minutes
+    setInterval(() => {
+        // You can implement auto-refresh logic here
+        console.log('Auto-refreshing dashboard data...');
+    }, 300000);
+    /*]]>*/
+</script>
+</body>
+</html>

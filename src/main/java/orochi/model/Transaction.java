@@ -23,8 +23,6 @@ public class Transaction {
     @Column(name = "AppointmentID")
     private Integer appointmentId;
 
-    @Column(name = "WaitID")
-    private Integer waitId;
 
     @Column(name = "UserID", nullable = false)
     private Integer userId;
@@ -48,9 +46,6 @@ public class Transaction {
     @JoinColumn(name = "AppointmentID", insertable = false, updatable = false)
     private Appointment appointment;
 
-    @ManyToOne
-    @JoinColumn(name = "WaitID", insertable = false, updatable = false)
-    private WaitingList waitingList;
 
     @ManyToOne
     @JoinColumn(name = "UserID", insertable = false, updatable = false)

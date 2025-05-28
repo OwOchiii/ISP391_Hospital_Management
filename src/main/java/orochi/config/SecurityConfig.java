@@ -7,6 +7,7 @@ import org.springframework.security.config.annotation.authentication.builders.Au
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.annotation.web.configurers.LogoutConfigurer;
+import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -33,19 +34,18 @@ public class SecurityConfig {
         http
                 .authorizeHttpRequests(authorizeRequests ->
                         authorizeRequests
-                                .requestMatchers("/auth/**", "/css/**", "/js/**", "/images/**", "/").permitAll()
+                                .requestMatchers("/auth/**","/auth/reset-password", "/css/**", "/js/**", "/images/**", "/").permitAll()
                                 .requestMatchers("/admin/**").hasAuthority("ADMIN")
                                 .requestMatchers("/doctor/**").hasAuthority("DOCTOR")
                                 .requestMatchers("/receptionist/**").hasAuthority("RECEPTIONIST")
                                 .requestMatchers("/patient/**").hasAuthority("PATIENT")
                                 .anyRequest().authenticated()
                 )
-
                 .formLogin(formLogin ->
                         formLogin
                                 .loginPage("/auth/login")
                                 .loginProcessingUrl("/auth/process-login")
-                                .successHandler(authenticationSuccessHandler()) // Use custom success handler
+                                .successHandler(authenticationSuccessHandler())
                                 .failureUrl("/auth/login?error=true")
                                 .permitAll()
                 )
@@ -56,6 +56,17 @@ public class SecurityConfig {
                                 .invalidateHttpSession(true)
                                 .deleteCookies("JSESSIONID")
                                 .permitAll()
+                )
+                .sessionManagement(session -> session
+                        .sessionCreationPolicy(SessionCreationPolicy.IF_REQUIRED)
+                        .invalidSessionUrl("/auth/login?expired=true")
+                        .maximumSessions(1)
+                        .expiredUrl("/auth/login?expired=true")
+                )
+                .rememberMe(rememberMe -> rememberMe
+                        .key("uniqueAndSecretKey")
+                        .tokenValiditySeconds(86400) // 1 day
+                        .rememberMeParameter("remember-me")
                 );
 
         return http.build();

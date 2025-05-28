@@ -16,8 +16,8 @@ public class DoctorSpecialization {
     private DoctorSpecializationId id;
 
     @ManyToOne
-    @MapsId("userId")
-    @JoinColumn(name = "UserID")
+    @MapsId("doctorId")
+    @JoinColumn(name = "DoctorID")
     private Doctor doctor;
 
     @ManyToOne
