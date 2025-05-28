@@ -569,3 +569,26 @@ BEGIN
         END
 END;
 GO
+
+-- Add email and phone number fields to Appointment table
+ALTER TABLE [Appointment]
+    ADD [Email] varchar(255) NULL,
+        [PhoneNumber] varchar(20) NULL;
+GO
+
+-- Add comment explaining the purpose of these fields
+EXEC sp_addextendedproperty
+     @name = N'Column_Description',
+     @value = 'Optional contact email for appointment notifications',
+     @level0type = N'Schema', @level0name = 'dbo',
+     @level1type = N'Table',  @level1name = 'Appointment',
+     @level2type = N'Column', @level2name = 'Email';
+GO
+
+EXEC sp_addextendedproperty
+     @name = N'Column_Description',
+     @value = 'Optional contact phone number for appointment notifications',
+     @level0type = N'Schema', @level0name = 'dbo',
+     @level1type = N'Table',  @level1name = 'Appointment',
+     @level2type = N'Column', @level2name = 'PhoneNumber';
+GO
