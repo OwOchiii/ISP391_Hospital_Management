@@ -1,0 +1,841 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Doctor Dashboard - MediCare Plus</title>
+
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Bootstrap Icons -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css">
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+
+    <style>
+        :root {
+            --primary-color: #2563eb;
+            --secondary-color: #1e40af;
+            --accent-color: #06b6d4;
+            --text-dark: #1f2937;
+            --text-light: #6b7280;
+            --bg-light: #f8fafc;
+            --success-color: #10b981;
+            --error-color: #ef4444;
+            --warning-color: #f59e0b;
+            --sidebar-width: 280px;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            line-height: 1.6;
+            color: var(--text-dark);
+            background: var(--bg-light);
+        }
+
+        .sidebar {
+            position: fixed;
+            top: 0;
+            left: 0;
+            height: 100vh;
+            width: var(--sidebar-width);
+            background: linear-gradient(135deg, var(--primary-color) 0%, var(--secondary-color) 100%);
+            color: white;
+            z-index: 1000;
+            transition: transform 0.3s ease;
+            overflow-y: auto;
+        }
+
+        .sidebar.collapsed {
+            transform: translateX(-100%);
+        }
+
+        .sidebar-header {
+            padding: 1.5rem;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .brand-logo {
+            font-size: 1.5rem;
+            font-weight: 700;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            color: white;
+            text-decoration: none;
+        }
+
+        .sidebar-nav {
+            padding: 1rem 0;
+        }
+
+        .nav-item {
+            margin: 0.25rem 1rem;
+        }
+
+        .nav-link {
+            color: rgba(255, 255, 255, 0.8);
+            padding: 0.75rem 1rem;
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            text-decoration: none;
+            transition: all 0.3s ease;
+        }
+
+        .nav-link:hover,
+        .nav-link.active {
+            background: rgba(255, 255, 255, 0.1);
+            color: white;
+        }
+
+        .main-content {
+            margin-left: var(--sidebar-width);
+            min-height: 100vh;
+            transition: margin-left 0.3s ease;
+        }
+
+        .main-content.expanded {
+            margin-left: 0;
+        }
+
+        .top-header {
+            background: white;
+            padding: 1rem 2rem;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .header-left {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        .sidebar-toggle {
+            background: none;
+            border: none;
+            font-size: 1.2rem;
+            color: var(--text-dark);
+            cursor: pointer;
+        }
+
+        .header-right {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        .doctor-info {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+
+        .doctor-avatar {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, var(--primary-color), var(--accent-color));
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: 600;
+        }
+
+        .content-area {
+            padding: 2rem;
+        }
+
+        .welcome-section {
+            background: linear-gradient(135deg, var(--primary-color) 0%, var(--secondary-color) 100%);
+            color: white;
+            padding: 2rem;
+            border-radius: 15px;
+            margin-bottom: 2rem;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .welcome-section::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><circle cx="50" cy="50" r="2" fill="rgba(255,255,255,0.1)"/></svg>');
+            opacity: 0.5;
+        }
+
+        .welcome-content {
+            position: relative;
+            z-index: 2;
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1.5rem;
+            margin-bottom: 2rem;
+        }
+
+        .stat-card {
+            background: white;
+            padding: 1.5rem;
+            border-radius: 15px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.08);
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            transition: transform 0.3s ease;
+        }
+
+        .stat-card:hover {
+            transform: translateY(-5px);
+        }
+
+        .stat-icon {
+            width: 50px;
+            height: 50px;
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5rem;
+            color: white;
+        }
+
+        .stat-icon.primary { background: linear-gradient(135deg, var(--primary-color), var(--secondary-color)); }
+        .stat-icon.success { background: linear-gradient(135deg, var(--success-color), #059669); }
+        .stat-icon.warning { background: linear-gradient(135deg, var(--warning-color), #d97706); }
+        .stat-icon.accent { background: linear-gradient(135deg, var(--accent-color), #0891b2); }
+
+        .stat-info h3 {
+            margin: 0;
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: var(--text-dark);
+        }
+
+        .stat-info p {
+            margin: 0;
+            color: var(--text-light);
+            font-size: 0.9rem;
+        }
+
+        .dashboard-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 2rem;
+            margin-bottom: 2rem;
+        }
+
+        .dashboard-card {
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.08);
+            overflow: hidden;
+        }
+
+        .card-header {
+            padding: 1.5rem;
+            border-bottom: 1px solid #e5e7eb;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .card-title {
+            font-size: 1.25rem;
+            font-weight: 600;
+            margin: 0;
+            color: var(--text-dark);
+        }
+
+        .card-body {
+            padding: 1.5rem;
+        }
+
+        .btn-primary-custom {
+            background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+            border: none;
+            padding: 0.5rem 1rem;
+            border-radius: 8px;
+            color: white;
+            font-weight: 500;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            transition: all 0.3s ease;
+        }
+
+        .btn-primary-custom:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(37, 99, 235, 0.3);
+            color: white;
+        }
+
+        .btn-outline-custom {
+            border: 2px solid var(--primary-color);
+            color: var(--primary-color);
+            padding: 0.5rem 1rem;
+            border-radius: 8px;
+            background: transparent;
+            font-weight: 500;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            transition: all 0.3s ease;
+        }
+
+        .btn-outline-custom:hover {
+            background: var(--primary-color);
+            color: white;
+        }
+
+        .appointment-item {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            padding: 1rem;
+            border-radius: 10px;
+            margin-bottom: 0.75rem;
+            background: var(--bg-light);
+            transition: all 0.3s ease;
+            cursor: pointer;
+        }
+
+        .appointment-item:hover {
+            background: #e0f2fe;
+            transform: translateX(5px);
+        }
+
+        .appointment-time {
+            background: var(--primary-color);
+            color: white;
+            padding: 0.5rem;
+            border-radius: 8px;
+            font-weight: 600;
+            font-size: 0.9rem;
+            min-width: 80px;
+            text-align: center;
+        }
+
+        .appointment-info {
+            flex: 1;
+        }
+
+        .patient-name {
+            font-weight: 600;
+            color: var(--text-dark);
+            margin-bottom: 0.25rem;
+        }
+
+        .appointment-type {
+            color: var(--text-light);
+            font-size: 0.9rem;
+        }
+
+        .appointment-status {
+            padding: 0.25rem 0.75rem;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            font-weight: 500;
+        }
+
+        .status-confirmed { background: #dcfce7; color: #166534; }
+        .status-pending { background: #fef3c7; color: #92400e; }
+        .status-completed { background: #dbeafe; color: #1e40af; }
+        .status-scheduled { background: #e0e7ff; color: #3730a3; }
+        .status-cancelled { background: #fee2e2; color: #b91c1c; }
+
+
+        .empty-state {
+            text-align: center;
+            padding: 2rem;
+            color: var(--text-light);
+        }
+
+        .empty-state i {
+            font-size: 3rem;
+            margin-bottom: 1rem;
+            opacity: 0.5;
+        }
+
+        .table-responsive {
+            border-radius: 10px;
+            overflow: hidden;
+        }
+
+        .table {
+            margin-bottom: 0;
+        }
+
+        .table th {
+            background: var(--bg-light);
+            border: none;
+            font-weight: 600;
+            color: var(--text-dark);
+        }
+
+        .table td {
+            border: none;
+            border-bottom: 1px solid #e5e7eb;
+            vertical-align: middle;
+        }
+
+        @media (max-width: 768px) {
+            .sidebar {
+                transform: translateX(-100%);
+            }
+
+            .main-content {
+                margin-left: 0;
+            }
+
+            .dashboard-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .stats-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+
+            .content-area {
+                padding: 1rem;
+            }
+
+            .doctor-info span {
+                display: none;
+            }
+
+            .top-header {
+                padding: 1rem;
+            }
+        }
+
+        @media (max-width: 576px) {
+            .stats-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+<!-- Sidebar -->
+<div class="sidebar" id="sidebar">
+    <div class="sidebar-header">
+        <a href="#" class="brand-logo">
+            <i class="bi bi-heart-pulse"></i>
+            MediCare Plus
+        </a>
+    </div>
+
+    <nav class="sidebar-nav">
+        <div class="nav-item">
+            <a th:href="@{/doctor/dashboard(doctorId=${doctorId})}" class="nav-link active">
+                <i class="bi bi-speedometer2"></i>
+                Dashboard
+            </a>
+        </div>
+        <div class="nav-item">
+            <a th:href="@{/doctor/appointments(doctorId=${doctorId})}" class="nav-link">
+                <i class="bi bi-calendar-check"></i>
+                Appointments
+            </a>
+        </div>
+        <div class="nav-item">
+            <a th:href="@{/doctor/patients(doctorId=${doctorId})}" class="nav-link">
+                <i class="bi bi-people"></i>
+                Patients
+            </a>
+        </div>
+        <div class="nav-item">
+            <a th:href="@{/doctor/medical-orders(doctorId=${doctorId})}" class="nav-link">
+                <i class="bi bi-prescription2"></i>
+                Medical Orders
+            </a>
+        </div>
+        <div class="nav-item">
+            <a th:href="@{/doctor/schedule(doctorId=${doctorId})}" class="nav-link">
+                <i class="bi bi-calendar-week"></i>
+                View Schedule
+            </a>
+        </div>
+        <div class="nav-item">
+            <a href="#" class="nav-link">
+                <i class="bi bi-chat-dots"></i>
+                Messages
+            </a>
+        </div>
+        <div class="nav-item">
+            <a href="#" class="nav-link">
+                <i class="bi bi-gear"></i>
+                Settings
+            </a>
+        </div>
+        <div class="nav-item">
+            <a th:href="@{/auth/logout}" class="nav-link">
+                <i class="bi bi-box-arrow-right"></i>
+                Logout
+            </a>
+        </div>
+    </nav>
+</div>
+
+<!-- Main Content -->
+<div class="main-content" id="mainContent">
+    <!-- Top Header -->
+    <div class="top-header">
+        <div class="header-left">
+            <button class="sidebar-toggle" onclick="toggleSidebar()">
+                <i class="bi bi-list"></i>
+            </button>
+            <h4 class="mb-0">Dashboard</h4>
+        </div>
+
+        <div class="header-right">
+            <div class="doctor-info">
+                <div class="doctor-avatar">
+                    <span th:text="${doctorName != null ? #strings.substring(doctorName, 0, 2).toUpperCase() : 'DR'}">DR</span>
+                </div>
+                <div>
+                    <div class="fw-semibold" th:text="${doctorName != null ? doctorName : 'Doctor'}">Doctor</div>
+                    <small class="text-muted" th:text="${'ID: ' + doctorId}">ID: 123</small>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Content Area -->
+    <div class="content-area">
+        <!-- Welcome Section -->
+        <div class="welcome-section">
+            <div class="welcome-content">
+                <div class="row align-items-center">
+                    <div class="col-md-8">
+                        <h2 class="mb-2" id="greeting">Good Morning, Doctor!</h2>
+                        <p class="mb-0 lead" th:text="|You have ${todayAppointments != null ? todayAppointments.size() : 0} appointments scheduled for today. Here's your overview.|">
+                            You have appointments scheduled for today. Here's your overview.
+                        </p>
+                    </div>
+                    <div class="col-md-4 text-md-end">
+                        <div class="fs-1">
+                            <i class="bi bi-sun" id="greeting-icon"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Stats Grid -->
+        <div class="stats-grid">
+            <div class="stat-card">
+                <div class="stat-icon primary">
+                    <i class="bi bi-calendar-check"></i>
+                </div>
+                <div class="stat-info">
+                    <h3 th:text="${todayAppointments != null ? todayAppointments.size() : 0}">0</h3>
+                    <p>Today's Appointments</p>
+                </div>
+            </div>
+
+            <div class="stat-card">
+                <div class="stat-icon success">
+                    <i class="bi bi-people"></i>
+                </div>
+                <div class="stat-info">
+                    <h3 th:text="${patientCount != null ? patientCount : 0}">0</h3>
+                    <p>Total Patients</p>
+                </div>
+            </div>
+
+            <div class="stat-card">
+                <div class="stat-icon warning">
+                    <i class="bi bi-clock"></i>
+                </div>
+                <div class="stat-info">
+                    <h3 th:text="${upcomingAppointments != null ? upcomingAppointments.size() : 0}">0</h3>
+                    <p>Upcoming Appointments</p>
+                </div>
+            </div>
+
+            <div class="stat-card">
+                <div class="stat-icon accent">
+                    <i class="bi bi-clipboard-pulse"></i>
+                </div>
+                <div class="stat-info">
+                    <h3 th:text="${pendingOrders != null ? pendingOrders.size() : 0}">0</h3>
+                    <p>Pending Orders</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Dashboard Grid -->
+        <div class="dashboard-grid">
+            <!-- Today's Appointments -->
+            <div class="dashboard-card">
+                <div class="card-header">
+                    <h3 class="card-title">Today's Appointments</h3>
+                    <a th:href="@{/doctor/appointments/today(doctorId=${doctorId})}" class="btn-outline-custom">
+                        View All <i class="bi bi-arrow-right"></i>
+                    </a>
+                </div>
+                <div class="card-body">
+                    <div th:if="${todayAppointments == null || todayAppointments.isEmpty()}" class="empty-state">
+                        <i class="bi bi-calendar-x"></i>
+                        <p>No appointments scheduled for today</p>
+                    </div>
+
+                    <div th:if="${todayAppointments != null && !todayAppointments.isEmpty()}">
+                        <div th:each="appointment : ${todayAppointments}"
+                             class="appointment-item"
+                             th:data-appointment-id="${appointment.appointmentId}"
+                             th:onclick="|navigateToAppointment(${appointment.appointmentId})|">
+                            <div class="appointment-time"
+                                 th:text="${appointment.dateTime != null ? #temporals.format(appointment.dateTime, 'HH:mm') : '00:00'}">
+                                00:00
+                            </div>
+                            <div class="appointment-info">
+                                <div class="patient-name"
+                                     th:text="${appointment.patient != null && appointment.patient.user != null ? appointment.patient.user.fullName : 'Unknown Patient'}">
+                                    Patient Name
+                                </div>
+                                <div class="appointment-type"
+                                     th:text="${appointment.description != null ? appointment.description : 'General Appointment'}">
+                                    Appointment Type
+                                </div>
+                            </div>
+                            <div th:class="'appointment-status status-' + ${appointment.status.toLowerCase()}"
+
+                                 th:text="${appointment.status != null ? appointment.status : 'Pending'}">
+                                Status
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Upcoming Appointments -->
+            <div class="dashboard-card">
+                <div class="card-header">
+                    <h3 class="card-title">Upcoming Appointments</h3>
+                    <a th:href="@{/doctor/appointments/upcoming(doctorId=${doctorId})}" class="btn-outline-custom">
+                        View All <i class="bi bi-arrow-right"></i>
+                    </a>
+                </div>
+                <div class="card-body">
+                    <div th:if="${upcomingAppointments == null || upcomingAppointments.isEmpty()}" class="empty-state">
+                        <i class="bi bi-calendar-x"></i>
+                        <p>No upcoming appointments scheduled</p>
+                    </div>
+
+                    <div th:if="${upcomingAppointments != null && !upcomingAppointments.isEmpty()}">
+                        <div th:each="appointment : ${upcomingAppointments}"
+                             class="appointment-item"
+                             th:data-appointment-id="${appointment.appointmentId}"
+                             th:onclick="|navigateToAppointment(${appointment.appointmentId})|">
+                            <div class="appointment-time"
+                                 th:text="${appointment.dateTime != null ? #temporals.format(appointment.dateTime, 'dd/MM') : 'TBD'}">
+                                Date
+                            </div>
+                            <div class="appointment-info">
+                                <div class="patient-name"
+                                     th:text="${appointment.patient != null && appointment.patient.user != null ? appointment.patient.user.fullName : 'Unknown Patient'}">
+                                    Patient Name
+                                </div>
+                                <div class="appointment-type">
+                                    <span th:text="${appointment.dateTime != null ? #temporals.format(appointment.dateTime, 'HH:mm') : 'TBD'}">Time</span> -
+                                    <span th:text="${appointment.description != null ? appointment.description : 'General Appointment'}">Appointment Description</span>
+                                </div>
+                            </div>
+                                            <div th:class="${'appointment-status ' +
+                              (appointment.status == 'Confirmed' ? 'status-confirmed' :
+                               (appointment.status == 'Pending' ? 'status-pending' : 'status-completed'))}"
+                                 th:text="${appointment.status != null ? appointment.status : 'Pending'}">
+                                Status
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Pending Medical Orders -->
+        <div class="dashboard-card">
+            <div class="card-header">
+                <h3 class="card-title">Pending Medical Orders</h3>
+                <a th:href="@{/doctor/medical-orders/status(doctorId=${doctorId}, status='Pending')}" class="btn-primary-custom">
+                    View All <i class="bi bi-arrow-right"></i>
+                </a>
+            </div>
+            <div class="card-body">
+                <div th:if="${pendingOrders == null || pendingOrders.isEmpty()}" class="empty-state">
+                    <i class="bi bi-clipboard-check"></i>
+                    <p>No pending medical orders</p>
+                </div>
+
+                <div class="table-responsive" th:if="${pendingOrders != null && !pendingOrders.isEmpty()}">
+                    <table class="table table-hover">
+                        <thead>
+                        <tr>
+                            <th>Order ID</th>
+                            <th>Type</th>
+                            <th>Status</th>
+                            <th>Order Date</th>
+                            <th>Action</th>
+                        </tr>
+                        </thead>
+                        <tbody>
+                        <tr th:each="order : ${pendingOrders}">
+                            <td th:text="${order.orderId != null ? order.orderId : 'N/A'}">123</td>
+                            <td th:text="${order.orderType != null ? order.orderType : 'N/A'}">Lab Test</td>
+                            <td th:text="${order.status != null ? order.status : 'Pending'}">Pending</td>
+                            <td th:text="${order.orderDate != null ? #dates.format(order.orderDate, 'dd MMM yyyy') : 'N/A'}">01 Jan 2023</td>
+                            <td>
+                                <a th:href="@{/doctor/medical-orders/{id}(id=${order.orderId}, doctorId=${doctorId})}"
+                                   class="btn btn-sm btn-outline-primary">
+                                    View
+                                </a>
+                            </td>
+                        </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- Quick Actions -->
+        <div class="dashboard-card mt-4">
+            <div class="card-header">
+                <h3 class="card-title">Quick Actions</h3>
+            </div>
+            <div class="card-body">
+                <div class="row g-3">
+                    <div class="col-md-3">
+                        <a th:href="@{/doctor/medical-orders/new(doctorId=${doctorId})}" class="btn-primary-custom w-100">
+                            <i class="bi bi-file-earmark-medical"></i>
+                            Request Medical Order
+                        </a>
+                    </div>
+                    <div class="col-md-3">
+                        <a th:href="@{/doctor/prescriptions/new(doctorId=${doctorId})}" class="btn-outline-custom w-100">
+                            <i class="bi bi-prescription2"></i>
+                            Write Prescription
+                        </a>
+                    </div>
+                    <div class="col-md-3">
+                        <a th:href="@{/doctor/appointments/new(doctorId=${doctorId})}" class="btn-outline-custom w-100">
+                            <i class="bi bi-calendar-plus"></i>
+                            Schedule Appointment
+                        </a>
+                    </div>
+                    <div class="col-md-3">
+                        <a th:href="@{/doctor/patients(doctorId=${doctorId})}" class="btn-outline-custom w-100">
+                            <i class="bi bi-file-medical"></i>
+                            Patient Records
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Bootstrap JS -->
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+
+<script th:inline="javascript">
+    /*<![CDATA[*/
+    // Get doctor ID from Thymeleaf
+    const doctorId = /*[[${doctorId}]]*/ 0;
+
+    // Sidebar toggle functionality
+    function toggleSidebar() {
+        const sidebar = document.getElementById('sidebar');
+        const mainContent = document.getElementById('mainContent');
+
+        sidebar.classList.toggle('collapsed');
+        mainContent.classList.toggle('expanded');
+    }
+
+    // Auto-hide sidebar on mobile
+    function checkScreenSize() {
+        const sidebar = document.getElementById('sidebar');
+        const mainContent = document.getElementById('mainContent');
+
+        if (window.innerWidth <= 768) {
+            sidebar.classList.add('collapsed');
+            mainContent.classList.add('expanded');
+        } else {
+            sidebar.classList.remove('collapsed');
+            mainContent.classList.remove('expanded');
+        }
+    }
+
+    // Check screen size on load and resize
+    window.addEventListener('load', checkScreenSize);
+    window.addEventListener('resize', checkScreenSize);
+
+    // Update time-based greeting
+    function updateGreeting() {
+        const hour = new Date().getHours();
+        const greetingElement = document.getElementById('greeting');
+        const iconElement = document.getElementById('greeting-icon');
+
+        let greeting, icon;
+
+        if (hour < 12) {
+            greeting = 'Good Morning';
+            icon = 'bi-sun';
+        } else if (hour < 17) {
+            greeting = 'Good Afternoon';
+            icon = 'bi-sun';
+        } else {
+            greeting = 'Good Evening';
+            icon = 'bi-moon';
+        }
+
+        if (greetingElement) {
+            greetingElement.textContent = `${greeting}, Doctor!`;
+        }
+        if (iconElement) {
+            iconElement.className = `bi ${icon}`;
+        }
+    }
+
+    // Navigate to appointment details
+    function navigateToAppointment(appointmentId) {
+        if (appointmentId && doctorId) {
+            window.location.href = `/doctor/appointment/${appointmentId}?doctorId=${doctorId}`;
+        }
+    }
+
+    // Initialize
+    updateGreeting();
+
+    // Navigation link handlers
+    document.querySelectorAll('.nav-link').forEach(link => {
+        link.addEventListener('click', function(e) {
+            if (this.getAttribute('href') === '#') {
+                e.preventDefault();
+            }
+
+            // Remove active class from all links
+            document.querySelectorAll('.nav-link').forEach(l => l.classList.remove('active'));
+
+            // Add active class to clicked link
+            this.classList.add('active');
+        });
+    });
+    /*]]>*/
+</script>
+</body>
+</html>

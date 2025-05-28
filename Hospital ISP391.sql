@@ -5,7 +5,8 @@ CREATE TABLE [Users] (
   [PasswordHash] varchar(255) NULL,
   [PhoneNumber] varchar(20) UNIQUE NULL,
   [RoleID] int NOT NULL,
-  [IsGuest] bit NOT NULL DEFAULT 0
+  [IsGuest] bit NOT NULL DEFAULT 0,
+  [created_at] DATETIME2 NOT NULL DEFAULT GETDATE()
 )
 GO
 
@@ -14,6 +15,16 @@ CREATE TABLE [Role] (
   [RoleName]    varchar(255) NOT NULL,
   [Description] varchar(max) NULL,
   [Permission] varchar(max) NULL
+)
+GO
+
+CREATE TABLE [Patient] (
+  [PatientID] int PRIMARY KEY IDENTITY(1,1),
+  [UserID] int NOT NULL UNIQUE,
+  [dateOfBirth] date NULL,
+  [gender] varchar(10) NULL CHECK (gender IN ('Male', 'Female', 'Other')),
+  [address] varchar(255) NULL,
+  [description] varchar(max) NULL
 )
 GO
 
@@ -29,25 +40,17 @@ CREATE TABLE [PatientContact] (
 )
 GO
 
-CREATE TABLE [Patient] (
-  [PatientID] int PRIMARY KEY,
-  [dateOfBirth] date NULL,
-  [gender] varchar(10) NULL CHECK (gender IN ('Male', 'Female', 'Other')),
-  [address] varchar(255) NULL,
-  [description] varchar(max) NULL
-)
-GO
-
 CREATE TABLE [Doctor] (
-  [UserID] int PRIMARY KEY,
+  [DoctorID] int PRIMARY KEY IDENTITY(1,1),
+  [UserID] int NOT NULL UNIQUE,
   [BioDescription] varchar(max) NULL
 )
 GO
 
 CREATE TABLE [DoctorSpecialization] (
-  [UserID] int NOT NULL,
+  [DoctorID] int NOT NULL,
   [SpecID] int NOT NULL,
-  PRIMARY KEY ([UserID], [SpecID])
+  PRIMARY KEY ([DoctorID], [SpecID])
 )
 GO
 
@@ -79,7 +82,6 @@ GO
 
 CREATE TABLE [Appointment] (
   [AppointmentID] int PRIMARY KEY IDENTITY(1,1),
-  [WaitID] int NULL,
   [DoctorID] int NOT NULL,
   [PatientID] int NOT NULL,
   [RoomID] int NULL,
@@ -89,20 +91,9 @@ CREATE TABLE [Appointment] (
 )
 GO
 
-CREATE TABLE [WaitingList] (
-  [WaitID] int PRIMARY KEY IDENTITY(1,1),
-  [UserID] int NOT NULL,
-  [Status] varchar(20) NOT NULL CHECK (Status IN ('Waiting', 'Called', 'Missed', 'Cancelled')) DEFAULT 'Waiting',
-  [Comment] varchar(255) NULL,
-  [CalledAt] datetime NULL,
-  [CreateAt] datetime NOT NULL DEFAULT GETDATE()
-)
-GO
-
 CREATE TABLE [Transaction] (
   [TransactionID]     int PRIMARY KEY IDENTITY(1,1),
   [AppointmentID]     int          NULL,
-  [WaitID]            int          NULL,
   [UserID]            int          NOT NULL,
   [Method]            varchar(20)  NOT NULL CHECK (Method IN ('Cash', 'Banking')),
   [TimeOfPayment]     datetime     NOT NULL,
@@ -146,7 +137,7 @@ GO
 CREATE TABLE [MedicalOrder] (
   [OrderID]          int PRIMARY KEY IDENTITY(1,1),
   [AppointmentID]    int          NOT NULL,
-  [OrderByID]        int          NOT NULL,
+  [DoctorID]         int          NOT NULL,
   [OrderType]        varchar(50)  NOT NULL,
   [Description]      varchar(max) NULL,
   [Status]           varchar(50)  NOT NULL DEFAULT 'Pending',
@@ -238,90 +229,74 @@ CREATE TABLE [MedicineInventory] (
 )
 GO
 
--- Foreign key relationships (with corrections)
+CREATE TABLE [PasswordResetToken] (
+  [TokenID] int PRIMARY KEY IDENTITY(1,1),
+  [UserID] int NOT NULL,
+  [Token] varchar(255) NOT NULL,
+  [ExpiryDate] datetime NOT NULL,
+  [CreatedAt] datetime NOT NULL DEFAULT GETDATE(),
+  [IsUsed] bit NOT NULL DEFAULT 0,
+  CONSTRAINT UC_UserID UNIQUE ([UserID])
+)
+GO
+
+-- Foreign key relationships
 
 ALTER TABLE [Users] ADD FOREIGN KEY ([RoleID]) REFERENCES [Role] ([RoleID])
 GO
 
-ALTER TABLE [PatientContact] ADD FOREIGN KEY ([PatientID]) REFERENCES [Patient] ([PatientID])
-GO
-
-ALTER TABLE [Room] ADD FOREIGN KEY ([DepartmentID]) REFERENCES [Department] ([DepartmentID])
-GO
-
-ALTER TABLE [Prescription] ADD FOREIGN KEY ([AppointmentID]) REFERENCES [Appointment] ([AppointmentID])
-GO
-
-ALTER TABLE [Prescription] ADD FOREIGN KEY ([PatientID]) REFERENCES [Patient] ([PatientID])
-GO
-
-ALTER TABLE [Prescription] ADD FOREIGN KEY ([DoctorID]) REFERENCES [Doctor] ([UserID])
-GO
-
-ALTER TABLE [Medicine] ADD FOREIGN KEY ([PrescriptionID]) REFERENCES [Prescription] ([PrescriptionID])
-GO
-
-ALTER TABLE [Medicine] ADD FOREIGN KEY ([InventoryID]) REFERENCES [MedicineInventory] ([InventoryID])
-GO
-
-ALTER TABLE [AuditLog] ADD FOREIGN KEY ([UserID]) REFERENCES [Users] ([UserID])
-GO
-
-ALTER TABLE [Patient] ADD FOREIGN KEY ([PatientID]) REFERENCES [Users] ([UserID])
+ALTER TABLE [Patient] ADD FOREIGN KEY ([UserID]) REFERENCES [Users] ([UserID])
 GO
 
 ALTER TABLE [Doctor] ADD FOREIGN KEY ([UserID]) REFERENCES [Users] ([UserID])
 GO
 
-ALTER TABLE [Department] ADD FOREIGN KEY ([HeadDoctorID]) REFERENCES [Doctor] ([UserID])
+ALTER TABLE [PatientContact] ADD FOREIGN KEY ([PatientID]) REFERENCES [Patient] ([PatientID])
 GO
 
-ALTER TABLE [DoctorEducation] ADD FOREIGN KEY ([DoctorID]) REFERENCES [Doctor] ([UserID])
+ALTER TABLE [DoctorSpecialization] ADD FOREIGN KEY ([DoctorID]) REFERENCES [Doctor] ([DoctorID])
 GO
 
 ALTER TABLE [DoctorSpecialization] ADD FOREIGN KEY ([SpecID]) REFERENCES [Specialization] ([SpecID])
 GO
 
-ALTER TABLE [DoctorSpecialization] ADD FOREIGN KEY ([UserID]) REFERENCES [Doctor] ([UserID])
+ALTER TABLE [DoctorEducation] ADD FOREIGN KEY ([DoctorID]) REFERENCES [Doctor] ([DoctorID])
 GO
 
-ALTER TABLE [Appointment] ADD FOREIGN KEY ([DoctorID]) REFERENCES [Doctor] ([UserID])
+ALTER TABLE [Department] ADD FOREIGN KEY ([HeadDoctorID]) REFERENCES [Doctor] ([DoctorID])
 GO
 
-ALTER TABLE [Appointment] ADD FOREIGN KEY ([WaitID]) REFERENCES [WaitingList] ([WaitID])
+ALTER TABLE [Room] ADD FOREIGN KEY ([DepartmentID]) REFERENCES [Department] ([DepartmentID])
 GO
 
 ALTER TABLE [Service] ADD FOREIGN KEY ([SpecID]) REFERENCES [Specialization] ([SpecID])
 GO
 
-ALTER TABLE [Transaction] ADD FOREIGN KEY ([AppointmentID]) REFERENCES [Appointment] ([AppointmentID])
+ALTER TABLE [Schedule] ADD FOREIGN KEY ([DoctorID]) REFERENCES [Doctor] ([DoctorID])
 GO
 
-ALTER TABLE [Transaction] ADD FOREIGN KEY ([WaitID]) REFERENCES [WaitingList] ([WaitID])
+ALTER TABLE [Schedule] ADD FOREIGN KEY ([RoomID]) REFERENCES [Room] ([RoomID])
 GO
 
-ALTER TABLE [Transaction] ADD FOREIGN KEY ([UserID]) REFERENCES [Users] ([UserID])
+ALTER TABLE [Appointment] ADD FOREIGN KEY ([DoctorID]) REFERENCES [Doctor] ([DoctorID])
 GO
 
-ALTER TABLE [Transaction] ADD FOREIGN KEY ([ProcessedByUserID]) REFERENCES [Users] ([UserID])
+ALTER TABLE [Appointment] ADD FOREIGN KEY ([PatientID]) REFERENCES [Patient] ([PatientID])
 GO
 
-ALTER TABLE [Schedule] ADD FOREIGN KEY ([DoctorID]) REFERENCES [Doctor] ([UserID])
-GO
-
-ALTER TABLE [Notification] ADD FOREIGN KEY ([UserID]) REFERENCES [Users] ([UserID])
+ALTER TABLE [Appointment] ADD FOREIGN KEY ([RoomID]) REFERENCES [Room] ([RoomID])
 GO
 
 ALTER TABLE [MedicalResult] ADD FOREIGN KEY ([AppointmentID]) REFERENCES [Appointment] ([AppointmentID])
 GO
 
-ALTER TABLE [MedicalResult] ADD FOREIGN KEY ([DoctorID]) REFERENCES [Doctor] ([UserID])
+ALTER TABLE [MedicalResult] ADD FOREIGN KEY ([DoctorID]) REFERENCES [Doctor] ([DoctorID])
 GO
 
 ALTER TABLE [MedicalOrder] ADD FOREIGN KEY ([AppointmentID]) REFERENCES [Appointment] ([AppointmentID])
 GO
 
-ALTER TABLE [MedicalOrder] ADD FOREIGN KEY ([OrderByID]) REFERENCES [Doctor] ([UserID])
+ALTER TABLE [MedicalOrder] ADD FOREIGN KEY ([DoctorID]) REFERENCES [Doctor] ([DoctorID])
 GO
 
 ALTER TABLE [MedicalOrder] ADD FOREIGN KEY ([resultID]) REFERENCES [MedicalResult] ([ResultID])
@@ -330,25 +305,49 @@ GO
 ALTER TABLE [MedicalOrder] ADD FOREIGN KEY ([AssignedToDeptID]) REFERENCES [Department] ([DepartmentID])
 GO
 
-ALTER TABLE [Receipt] ADD FOREIGN KEY ([IssuerID]) REFERENCES [Users] ([UserID])
+ALTER TABLE [Prescription] ADD FOREIGN KEY ([AppointmentID]) REFERENCES [Appointment] ([AppointmentID])
+GO
+
+ALTER TABLE [Prescription] ADD FOREIGN KEY ([PatientID]) REFERENCES [Patient] ([PatientID])
+GO
+
+ALTER TABLE [Prescription] ADD FOREIGN KEY ([DoctorID]) REFERENCES [Doctor] ([DoctorID])
+GO
+
+ALTER TABLE [Medicine] ADD FOREIGN KEY ([PrescriptionID]) REFERENCES [Prescription] ([PrescriptionID])
+GO
+
+ALTER TABLE [Medicine] ADD FOREIGN KEY ([InventoryID]) REFERENCES [MedicineInventory] ([InventoryID])
+GO
+
+ALTER TABLE [Transaction] ADD FOREIGN KEY ([AppointmentID]) REFERENCES [Appointment] ([AppointmentID])
+GO
+
+ALTER TABLE [Transaction] ADD FOREIGN KEY ([UserID]) REFERENCES [Users] ([UserID])
+GO
+
+ALTER TABLE [Transaction] ADD FOREIGN KEY ([ProcessedByUserID]) REFERENCES [Users] ([UserID])
 GO
 
 ALTER TABLE [Receipt] ADD FOREIGN KEY ([TransactionID]) REFERENCES [Transaction] ([TransactionID])
 GO
 
-ALTER TABLE [WaitingList] ADD FOREIGN KEY ([UserID]) REFERENCES [Patient] ([PatientID])
+ALTER TABLE [Receipt] ADD FOREIGN KEY ([IssuerID]) REFERENCES [Users] ([UserID])
 GO
 
-ALTER TABLE [Appointment] ADD FOREIGN KEY ([PatientID]) REFERENCES [Patient] ([PatientID])
+ALTER TABLE [Notification] ADD FOREIGN KEY ([UserID]) REFERENCES [Users] ([UserID])
 GO
 
-ALTER TABLE [Schedule] ADD FOREIGN KEY ([RoomID]) REFERENCES [Room] ([RoomID])
+ALTER TABLE [AuditLog] ADD FOREIGN KEY ([UserID]) REFERENCES [Users] ([UserID])
 GO
 
-ALTER TABLE [Appointment] ADD FOREIGN KEY ([RoomID]) REFERENCES [Room] ([RoomID])
+ALTER TABLE [PasswordResetToken] ADD FOREIGN KEY ([UserID]) REFERENCES [Users] ([UserID])
 GO
 
--- Keep your extended properties
+CREATE INDEX [IX_PasswordResetToken_Token] ON [PasswordResetToken] ([Token])
+GO
+
+-- Extended properties
 EXEC sp_addextendedproperty
      @name = N'Column_Description',
      @value = 'Nullable if on site registration',
@@ -364,4 +363,209 @@ EXEC sp_addextendedproperty
      @level1type = N'Table',  @level1name = 'Users',
      @level2type = N'Column', @level2name = 'PasswordHash';
 GO
--- Add other sp_addextendedproperty statements as in original script
+
+-- Add roles
+INSERT INTO [Role] ([RoleName], [Description], [Permission])
+VALUES
+    ('ADMIN', 'System administrator with full access to all features', 'full_access'),
+    ('DOCTOR', 'Medical professional who can manage appointments and patient records', 'patient_management,appointment_management,prescription_management'),
+    ('RECEPTIONIST', 'Front desk staff who manage scheduling and basic patient information', 'appointment_scheduling,patient_registration'),
+    ('PATIENT', 'Registered user who can book appointments and view their medical records', 'appointment_booking,view_own_records');
+GO
+
+-- Create improved trigger for user creation
+CREATE TRIGGER trg_AddPatientOnUserCreation
+    ON [Users]
+    AFTER INSERT
+    AS
+BEGIN
+    SET NOCOUNT ON;
+
+    DECLARE @RoleIDForPatient INT = (SELECT [RoleID] FROM [Role] WHERE [RoleName] = 'PATIENT');
+
+    -- Insert into Patient table for new users with PATIENT role
+    INSERT INTO [Patient] ([UserID], [dateOfBirth], [gender], [address], [description])
+    SELECT i.[UserID], NULL, NULL, NULL, NULL
+    FROM inserted i
+    WHERE i.[RoleID] = @RoleIDForPatient;
+END;
+GO
+
+-- Create improved trigger for role changes
+CREATE TRIGGER trg_ManageUserRoleChanges
+    ON [Users]
+    AFTER UPDATE
+    AS
+BEGIN
+    SET NOCOUNT ON;
+
+    IF UPDATE(RoleID) -- Only execute if RoleID was updated
+        BEGIN
+            DECLARE @RoleIDForPatient INT = (SELECT [RoleID] FROM [Role] WHERE [RoleName] = 'PATIENT');
+            DECLARE @RoleIDForDoctor INT = (SELECT [RoleID] FROM [Role] WHERE [RoleName] = 'DOCTOR');
+
+            -- Process each updated row individually to avoid conflicts
+            DECLARE @UserID INT, @NewRoleID INT, @OldRoleID INT
+            DECLARE user_cursor CURSOR FOR
+                SELECT i.[UserID], i.[RoleID], d.[RoleID]
+                FROM inserted i
+                         INNER JOIN deleted d ON i.[UserID] = d.[UserID]
+                WHERE i.[RoleID] <> d.[RoleID]; -- Only process rows where role actually changed
+
+            OPEN user_cursor
+            FETCH NEXT FROM user_cursor INTO @UserID, @NewRoleID, @OldRoleID
+
+            WHILE @@FETCH_STATUS = 0
+                BEGIN
+                    -- Check if changing TO doctor role
+                    IF @NewRoleID = @RoleIDForDoctor
+                        BEGIN
+                            -- First, safely remove from Patient if exists
+                            IF EXISTS (SELECT 1 FROM [Patient] WHERE [UserID] = @UserID)
+                                BEGIN
+                                    -- Check if patient has any dependencies
+                                    IF EXISTS (
+                                        SELECT 1 FROM [Appointment] a
+                                                          INNER JOIN [Patient] p ON a.[PatientID] = p.[PatientID]
+                                        WHERE p.[UserID] = @UserID
+                                    ) OR EXISTS (
+                                        SELECT 1 FROM [Prescription] pr
+                                                          INNER JOIN [Patient] p ON pr.[PatientID] = p.[PatientID]
+                                        WHERE p.[UserID] = @UserID
+                                    )
+                                        BEGIN
+                                            RAISERROR('Cannot change role: User has existing patient records.', 16, 1);
+                                            ROLLBACK TRANSACTION;
+                                            CLOSE user_cursor;
+                                            DEALLOCATE user_cursor;
+                                            RETURN;
+                                        END
+                                    ELSE
+                                        BEGIN
+                                            DELETE FROM [Patient] WHERE [UserID] = @UserID;
+                                        END
+                                END
+
+                            -- Then add to Doctor
+                            IF NOT EXISTS (SELECT 1 FROM [Doctor] WHERE [UserID] = @UserID)
+                                BEGIN
+                                    INSERT INTO [Doctor] ([UserID], [BioDescription])
+                                    VALUES (@UserID, NULL);
+                                END
+                        END
+
+                        -- Check if changing TO patient role
+                    ELSE IF @NewRoleID = @RoleIDForPatient
+                        BEGIN
+                            -- First, safely remove from Doctor if exists
+                            IF EXISTS (SELECT 1 FROM [Doctor] WHERE [UserID] = @UserID)
+                                BEGIN
+                                    -- Check if doctor has any dependencies
+                                    IF EXISTS (
+                                        SELECT 1 FROM [Appointment] a
+                                                          INNER JOIN [Doctor] d ON a.[DoctorID] = d.[DoctorID]
+                                        WHERE d.[UserID] = @UserID
+                                    ) OR EXISTS (
+                                        SELECT 1 FROM [MedicalResult] mr
+                                                          INNER JOIN [Doctor] d ON mr.[DoctorID] = d.[DoctorID]
+                                        WHERE d.[UserID] = @UserID
+                                    ) OR EXISTS (
+                                        SELECT 1 FROM [MedicalOrder] mo
+                                                          INNER JOIN [Doctor] d ON mo.[DoctorID] = d.[DoctorID]
+                                        WHERE d.[UserID] = @UserID
+                                    ) OR EXISTS (
+                                        SELECT 1 FROM [Schedule] s
+                                                          INNER JOIN [Doctor] d ON s.[DoctorID] = d.[DoctorID]
+                                        WHERE d.[UserID] = @UserID
+                                    )
+                                        BEGIN
+                                            RAISERROR('Cannot change role: User has existing doctor records.', 16, 1);
+                                            ROLLBACK TRANSACTION;
+                                            CLOSE user_cursor;
+                                            DEALLOCATE user_cursor;
+                                            RETURN;
+                                        END
+                                    ELSE
+                                        BEGIN
+                                            DELETE FROM [Doctor] WHERE [UserID] = @UserID;
+                                        END
+                                END
+
+                            -- Then add to Patient
+                            IF NOT EXISTS (SELECT 1 FROM [Patient] WHERE [UserID] = @UserID)
+                                BEGIN
+                                    INSERT INTO [Patient] ([UserID], [dateOfBirth], [gender], [address], [description])
+                                    VALUES (@UserID, NULL, NULL, NULL, NULL);
+                                END
+                        END
+
+                        -- If changing to any other role (ADMIN, RECEPTIONIST, etc.)
+                    ELSE
+                        BEGIN
+                            -- Check if in Patient table and can be safely removed
+                            IF EXISTS (SELECT 1 FROM [Patient] WHERE [UserID] = @UserID)
+                                BEGIN
+                                    IF EXISTS (
+                                        SELECT 1 FROM [Appointment] a
+                                                          INNER JOIN [Patient] p ON a.[PatientID] = p.[PatientID]
+                                        WHERE p.[UserID] = @UserID
+                                    ) OR EXISTS (
+                                        SELECT 1 FROM [Prescription] pr
+                                                          INNER JOIN [Patient] p ON pr.[PatientID] = p.[PatientID]
+                                        WHERE p.[UserID] = @UserID
+                                    )
+                                        BEGIN
+                                            RAISERROR('Cannot change role: User has existing patient records.', 16, 1);
+                                            ROLLBACK TRANSACTION;
+                                            CLOSE user_cursor;
+                                            DEALLOCATE user_cursor;
+                                            RETURN;
+                                        END
+                                    ELSE
+                                        BEGIN
+                                            DELETE FROM [Patient] WHERE [UserID] = @UserID;
+                                        END
+                                END
+
+                            -- Check if in Doctor table and can be safely removed
+                            IF EXISTS (SELECT 1 FROM [Doctor] WHERE [UserID] = @UserID)
+                                BEGIN
+                                    IF EXISTS (
+                                        SELECT 1 FROM [Appointment] a
+                                                          INNER JOIN [Doctor] d ON a.[DoctorID] = d.[DoctorID]
+                                        WHERE d.[UserID] = @UserID
+                                    ) OR EXISTS (
+                                        SELECT 1 FROM [MedicalResult] mr
+                                                          INNER JOIN [Doctor] d ON mr.[DoctorID] = d.[DoctorID]
+                                        WHERE d.[UserID] = @UserID
+                                    ) OR EXISTS (
+                                        SELECT 1 FROM [MedicalOrder] mo
+                                                          INNER JOIN [Doctor] d ON mo.[DoctorID] = d.[DoctorID]
+                                        WHERE d.[UserID] = @UserID
+                                    ) OR EXISTS (
+                                        SELECT 1 FROM [Schedule] s
+                                                          INNER JOIN [Doctor] d ON s.[DoctorID] = d.[DoctorID]
+                                        WHERE d.[UserID] = @UserID
+                                    )
+                                        BEGIN
+                                            RAISERROR('Cannot change role: User has existing doctor records.', 16, 1);
+                                            ROLLBACK TRANSACTION;
+                                            CLOSE user_cursor;
+                                            DEALLOCATE user_cursor;
+                                            RETURN;
+                                        END
+                                    ELSE
+                                        BEGIN
+                                            DELETE FROM [Doctor] WHERE [UserID] = @UserID;
+                                        END
+                                END
+                        END
+
+                    FETCH NEXT FROM user_cursor INTO @UserID, @NewRoleID, @OldRoleID
+                END
+
+            CLOSE user_cursor
+            DEALLOCATE user_cursor
+        END
+END;
+GO

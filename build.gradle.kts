@@ -2,6 +2,7 @@ plugins {
     java
     id("org.springframework.boot") version "3.4.5"
     id("io.spring.dependency-management") version "1.1.7"
+    id("maven-publish")
 }
 
 group = "Orochi"
@@ -19,13 +20,22 @@ configurations {
     }
 }
 
+tasks.register<JavaExec>("runClass") {
+    classpath = sourceSets.main.get().runtimeClasspath
+    mainClass.set(project.findProperty("mainClass") as String?)
+    jvmArgs = listOf("-Xms512m", "-Xmx1024m")
+}
+
 repositories {
     mavenCentral()
 }
 
+
 dependencies {
+    implementation("org.springframework.boot:spring-boot-starter-security")
     implementation("org.springframework.boot:spring-boot-starter-jdbc")
     implementation("org.springframework.boot:spring-boot-starter-thymeleaf")
+    implementation("nz.net.ultraq.thymeleaf:thymeleaf-layout-dialect")
     implementation("org.springframework.boot:spring-boot-starter-data-jpa")  // Add JPA support
     implementation("com.microsoft.sqlserver:mssql-jdbc")
     implementation("org.springframework.boot:spring-boot-starter-actuator")
@@ -36,8 +46,37 @@ dependencies {
     testImplementation("org.springframework.security:spring-security-test")
     testRuntimeOnly("org.junit.platform:junit-platform-launcher")
     implementation("org.springframework.boot:spring-boot-starter-web")
+    implementation("org.springframework.boot:spring-boot-starter-mail")
+    implementation("io.mailtrap:mailtrap-java:1.0.0")
 }
 
 tasks.withType<Test> {
     useJUnitPlatform()
+}
+
+// Add this to your existing build.gradle.kts
+tasks.register("syncPomFromGradle") {
+    description = "Updates the pom.xml file from Gradle dependencies"
+    group = "build"
+
+    doLast {
+        println("Syncing pom.xml with Gradle dependencies...")
+        // This is a placeholder for actual implementation
+        // In a real implementation, you'd need to parse the dependencies
+        // and generate the pom.xml content
+    }
+}
+
+// Optional - add a task to notify about Maven builds
+tasks.register("mavenBuild") {
+    description = "Information about Maven builds"
+    group = "help"
+
+    doLast {
+        println("""
+            Maven build is available via 'mvn' command.
+            The pom.xml file must be kept in sync with build.gradle.kts.
+            Run './gradlew syncPomFromGradle' after changing dependencies.
+        """.trimIndent())
+    }
 }
