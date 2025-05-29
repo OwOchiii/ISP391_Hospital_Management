@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Register - MediCare Plus</title>
+    <script src="https://www.google.com/recaptcha/api.js" async defer></script>
 
     <!-- Bootstrap CSS -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
@@ -571,6 +572,10 @@
                                 </div>
                             </div>
 
+                            <div class="form-group">
+                                <div class="g-recaptcha" th:data-sitekey="${captchaSiteKey}"></div>
+                            </div>
+
                             <div class="d-flex gap-2">
                                 <button type="button" class="btn btn-outline-custom" onclick="prevStep(2)">
                                     <i class="bi bi-arrow-left me-2"></i>Back
@@ -603,6 +608,21 @@
 
 <script>
     let currentStep = 1;
+
+    function onCaptchaSuccess(token) {
+        document.querySelector('input[name="g-recaptcha-response"]').value = token;
+        console.log('CAPTCHA verified successfully');
+    }
+
+    function onCaptchaExpired() {
+        document.querySelector('input[name="g-recaptcha-response"]').value = '';
+        console.log('CAPTCHA verification expired');
+    }
+
+    function onCaptchaError() {
+        document.querySelector('input[name="g-recaptcha-response"]').value = '';
+        console.log('CAPTCHA verification error');
+    }
 
     // Step navigation
     function nextStep(step) {
@@ -680,33 +700,52 @@
     // Replace your existing form submission code with this:
     // Form submission
     // Form submission
+    // Form submission
     document.getElementById('registerForm').addEventListener('submit', function(e) {
-        e.preventDefault(); // Always prevent default initially to validate
-
-        const form = this;
-        const password = document.getElementById('password').value;
-        const confirmPassword = document.getElementById('confirmPassword').value;
-        const agreeTerms = document.getElementById('agreeTerms').checked;
+        e.preventDefault(); // Always prevent default to validate first
 
         // Clear existing alerts
         const existingAlerts = document.querySelectorAll('.alert-custom');
         existingAlerts.forEach(alert => alert.remove());
 
-        // Create alert container if needed
-        const formContainer = document.querySelector('.register-right');
+        // Form validation flags
+        let isValid = true;
+        let errorMessage = '';
 
-        // Validate terms agreement
-        if (!agreeTerms) {
-            document.getElementById('agreeTerms').classList.add('is-invalid');
-
-            // Create and add error alert
-            const alertDiv = document.createElement('div');
-            alertDiv.className = 'alert-custom alert-error-custom';
-            alertDiv.innerHTML = '<i class="bi bi-exclamation-circle me-2"></i>You must agree to the terms and conditions to continue.';
-            formContainer.insertBefore(alertDiv, form);
-
-            return;
+        // Validate all required fields across both steps
+        const requiredFields = ['fullName', 'email', 'phoneNumber', 'password', 'confirmPassword'];
+        for (const fieldId of requiredFields) {
+            const field = document.getElementById(fieldId);
+            if (!field.value.trim()) {
+                field.classList.add('is-invalid');
+                isValid = false;
+                errorMessage = 'Please fill in all required fields.';
+            } else {
+                field.classList.remove('is-invalid');
+            }
         }
+
+        // Email validation
+        const email = document.getElementById('email');
+        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+        if (email.value.trim() && !emailRegex.test(email.value)) {
+            email.classList.add('is-invalid');
+            isValid = false;
+            errorMessage = 'Please enter a valid email address.';
+        }
+
+        // Phone validation
+        const phone = document.getElementById('phoneNumber');
+        const phoneRegex = /^\+?[\d]{10,15}$/;
+        if (phone.value.trim() && !phoneRegex.test(phone.value.replace(/\s/g, ''))) {
+            phone.classList.add('is-invalid');
+            isValid = false;
+            errorMessage = 'Please enter a valid phone number.';
+        }
+
+        // Password validation
+        const password = document.getElementById('password').value;
+        const confirmPassword = document.getElementById('confirmPassword').value;
 
         // Check password requirements
         const requirements = {
@@ -719,128 +758,52 @@
 
         const metRequirements = Object.values(requirements).filter(Boolean).length;
 
-        // Password validation - require at least 3 requirements
+        // Password strength - require at least 3 requirements
         if (metRequirements < 3) {
             document.getElementById('password').classList.add('is-invalid');
-
-            // Create and add error alert
-            const alertDiv = document.createElement('div');
-            alertDiv.className = 'alert-custom alert-error-custom';
-            alertDiv.innerHTML = '<i class="bi bi-exclamation-circle me-2"></i>Password does not meet minimum security requirements.';
-            formContainer.insertBefore(alertDiv, form);
-
-            return;
+            isValid = false;
+            errorMessage = 'Password does not meet minimum security requirements.';
         }
 
         // Check if passwords match
         if (password !== confirmPassword) {
             document.getElementById('confirmPassword').classList.add('is-invalid');
-
-            // Create and add error alert
-            const alertDiv = document.createElement('div');
-            alertDiv.className = 'alert-custom alert-error-custom';
-            alertDiv.innerHTML = '<i class="bi bi-exclamation-circle me-2"></i>Passwords do not match.';
-            formContainer.insertBefore(alertDiv, form);
-
-            return;
+            isValid = false;
+            errorMessage = 'Passwords do not match.';
         }
 
-        // Check if all required fields are filled
-        const requiredFields = ['fullName', 'email', 'phoneNumber'];
-        let allFieldsValid = true;
-
-        for (const fieldId of requiredFields) {
-            const field = document.getElementById(fieldId);
-            if (!field.value.trim()) {
-                field.classList.add('is-invalid');
-                allFieldsValid = false;
-            }
+        // Terms agreement validation
+        const agreeTerms = document.getElementById('agreeTerms').checked;
+        if (!agreeTerms) {
+            document.getElementById('agreeTerms').classList.add('is-invalid');
+            isValid = false;
+            errorMessage = 'You must agree to the terms and conditions to continue.';
         }
 
-        if (!allFieldsValid) {
-            // Create and add error alert
+        // If validation fails, show error and return
+        if (!isValid) {
+            // Create and display error alert
+            const formContainer = document.querySelector('.register-right');
             const alertDiv = document.createElement('div');
             alertDiv.className = 'alert-custom alert-error-custom';
-            alertDiv.innerHTML = '<i class="bi bi-exclamation-circle me-2"></i>Please fill in all required fields.';
-            formContainer.insertBefore(alertDiv, form);
-
+            alertDiv.innerHTML = `<i class="bi bi-exclamation-circle me-2"></i>${errorMessage}`;
+            formContainer.insertBefore(alertDiv, this);
             return;
         }
 
         // Show loading state
         const btnText = document.getElementById('registerBtnText');
-        const spinner = document.querySelector('button[type="submit"] .spinner-border') ||
-            document.createElement('span');
-
-        if (!spinner.classList.contains('spinner-border')) {
-            spinner.className = 'spinner-border spinner-border-sm ms-2';
-            document.querySelector('button[type="submit"]').appendChild(spinner);
-        }
+        const submitBtn = document.querySelector('button[type="submit"]');
+        const spinner = document.getElementById('registerSpinner');
 
         btnText.textContent = 'Creating Account...';
-        document.querySelector('button[type="submit"]').disabled = true;
+        spinner.style.display = 'inline-block';
+        submitBtn.disabled = true;
 
-        // Submit the form
-        form.submit();
+        // If all validation passes, submit the form
+        this.submit();
     });
 
-    // Password strength checker
-    // Password strength checker
-    document.getElementById('password').addEventListener('input', function() {
-        const password = this.value;
-        const strengthFill = document.getElementById('strengthFill');
-        const strengthText = document.getElementById('strengthText');
-
-        // Check individual requirements
-        const requirements = {
-            length: password.length >= 8,
-            uppercase: /[A-Z]/.test(password),
-            lowercase: /[a-z]/.test(password),
-            number: /\d/.test(password),
-            special: /[!@#$%^&*(),.?":{}|<>]/.test(password)
-        };
-
-        // Update requirement indicators
-        Object.keys(requirements).forEach(req => {
-            const element = document.getElementById(`req-${req}`);
-            const icon = element.querySelector('i');
-
-            if (requirements[req]) {
-                element.classList.remove('unmet');
-                element.classList.add('met');
-                icon.className = 'bi bi-check-circle';
-            } else {
-                element.classList.remove('met');
-                element.classList.add('unmet');
-                icon.className = 'bi bi-circle';
-            }
-        });
-
-        // Calculate strength based on met requirements
-        const metRequirements = Object.values(requirements).filter(Boolean).length;
-        let strengthClass = 'strength-weak';
-        let strengthLabel = 'Weak';
-
-        if (metRequirements < 2) {
-            strengthClass = 'strength-weak';
-            strengthLabel = 'Weak';
-        } else if (metRequirements < 4) {
-            strengthClass = 'strength-fair';
-            strengthLabel = 'Fair';
-        } else if (metRequirements < 5) {
-            strengthClass = 'strength-good';
-            strengthLabel = 'Good';
-        } else {
-            strengthClass = 'strength-strong';
-            strengthLabel = 'Strong';
-        }
-
-        strengthFill.className = `strength-fill ${strengthClass}`;
-        strengthText.textContent = `Password strength: ${strengthLabel}`;
-
-        // Return whether password meets minimum requirements
-        return metRequirements >= 3; // Consider password valid if at least 3 requirements are met
-    });
 
     // Password confirmation validation
     document.getElementById('confirmPassword').addEventListener('input', function() {
@@ -960,7 +923,9 @@
         });
     });
 </script>
+<script src="/js/register-tests.js"></script>
 </body>
 </html>
+
 
 

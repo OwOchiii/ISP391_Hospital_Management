@@ -482,10 +482,13 @@
             </a>
         </div>
         <div class="nav-item">
-            <a th:href="@{/auth/logout}" class="nav-link">
-                <i class="bi bi-box-arrow-right"></i>
-                Logout
-            </a>
+            <form th:action="@{/auth/logout}" method="post">
+                <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}" />
+                <button type="submit" class="nav-link w-100 text-start border-0 bg-transparent">
+                    <i class="bi bi-box-arrow-right"></i>
+                    Logout
+                </button>
+            </form>
         </div>
     </nav>
 </div>
