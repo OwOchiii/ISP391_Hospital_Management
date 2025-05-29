@@ -9,7 +9,7 @@
     <!-- Bootstrap Icons -->
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css">
     <!-- Google Fonts -->
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <style>
         :root {
             --primary-color: #2563eb;
@@ -123,18 +123,19 @@
 
         .content-area {
             padding: 2rem;
-            max-width: 700px;
+            max-width: 800px;
             margin: 0 auto;
         }
 
-        .form-container {
+        .section {
             background: white;
             border-radius: 15px;
             box-shadow: 0 5px 15px rgba(0, 0, 0, 0.08);
-            padding: 2rem;
+            padding: 1.5rem;
+            margin-bottom: 1.5rem;
         }
 
-        .form-container h1 {
+        .section h1 {
             font-size: 1.5rem;
             font-weight: 600;
             color: var(--text-dark);
@@ -144,59 +145,60 @@
         .form-label {
             font-weight: 500;
             color: var(--text-dark);
-            margin-bottom: 0.5rem;
+        }
+
+        .required-asterisk {
+            color: var(--error-color);
         }
 
         .form-control, .form-select {
             border-radius: 8px;
-            border: 1px solid #e5e7eb;
-            padding: 0.75rem;
-            font-size: 0.9rem;
-            transition: all 0.3s ease;
+            border: 1px solid #d1d5db;
+            transition: border-color 0.3s ease;
         }
 
         .form-control:focus, .form-select:focus {
             border-color: var(--primary-color);
-            box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+            box-shadow: 0 0 0 0.2rem rgba(37, 99, 235, 0.1);
         }
 
         .time-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(80px, 1fr));
+            grid-template-columns: repeat(4, 1fr);
             gap: 0.5rem;
-            margin-bottom: 1.5rem;
+            margin-top: 0.5rem;
         }
 
         .time-grid button {
             padding: 0.5rem;
+            border: 1px solid #d1d5db;
             border-radius: 8px;
-            font-size: 0.9rem;
-            font-weight: 500;
-            transition: all 0.3s ease;
-            border: 1px solid #e5e7eb;
-            background: var(--bg-light);
+            background: white;
             color: var(--text-dark);
+            font-size: 0.9rem;
+            transition: all 0.3s ease;
         }
 
-        .time-grid button:hover {
+        .time-grid button:hover:not(.disabled) {
             background: #e0f2fe;
+            border-color: var(--primary-color);
         }
 
-        .time-grid .selected {
-            background: linear-gradient(135deg, var(--success-color), #059669);
+        .time-grid button.selected {
+            background: var(--success-color);
             color: white;
             border-color: var(--success-color);
         }
 
-        .time-grid .disabled {
+        .time-grid button.disabled {
             background: #e5e7eb;
-            color: var(--text-light);
+            color: #9ca3af;
             cursor: not-allowed;
         }
 
         .error {
             color: var(--error-color);
-            font-size: 0.85rem;
+            font-size: 0.875rem;
             margin-top: 0.25rem;
             display: block;
         }
@@ -227,7 +229,6 @@
             border-radius: 8px;
             background: transparent;
             font-weight: 500;
-            text-decoration: none;
             display: inline-flex;
             align-items: center;
             gap: 0.5rem;
@@ -239,6 +240,22 @@
             color: white;
         }
 
+        .reset-btn {
+            margin-left: 0.5rem;
+            font-size: 0.875rem;
+            padding: 0.25rem 0.75rem;
+            border-radius: 8px;
+            border: 1px solid #d1d5db;
+            background: white;
+            color: var(--text-dark);
+            transition: all 0.3s ease;
+        }
+
+        .reset-btn:hover {
+            background: #e0f2fe;
+            border-color: var(--primary-color);
+        }
+
         .confirmation {
             display: none;
             position: fixed;
@@ -246,9 +263,9 @@
             left: 50%;
             transform: translate(-50%, -50%);
             background: white;
-            padding: 2rem;
+            padding: 1.5rem;
             border-radius: 15px;
-            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
             z-index: 1000;
             max-width: 400px;
             text-align: center;
@@ -260,14 +277,6 @@
 
         .confirmation p {
             margin-bottom: 1.5rem;
-            color: var(--text-dark);
-        }
-
-        .form-check-input {
-            margin-right: 0.5rem;
-        }
-
-        .form-check-label {
             color: var(--text-dark);
         }
 
@@ -289,7 +298,11 @@
             }
 
             .time-grid {
-                grid-template-columns: repeat(auto-fit, minmax(70px, 1fr));
+                grid-template-columns: repeat(2, 1fr);
+            }
+
+            .form-container {
+                width: 100%;
             }
         }
     </style>
@@ -300,25 +313,25 @@
     <div class="sidebar-header">
         <a href="#" class="brand-logo">
             <i class="bi bi-hospital"></i>
-            <span>Patient Dashboard</span>
+            Patient Dashboard
         </a>
     </div>
     <div class="sidebar-nav">
         <ul class="nav flex-column">
             <li class="nav-item">
-                <a th:href="@{/patient/book}" class="nav-link active"><i class="bi bi-calendar-plus"></i> <span>Book Appointment</span></a>
+                <a th:href="@{/patient/book}" class="nav-link active"><i class="bi bi-calendar-plus"></i> Book Appointment</a>
             </li>
             <li class="nav-item">
-                <a th:href="@{/patient/appointments}" class="nav-link"><i class="bi bi-calendar-check"></i> <span>Appointment List</span></a>
+                <a th:href="@{/patient/appointments}" class="nav-link"><i class="bi bi-calendar-check"></i> Appointment List</a>
             </li>
             <li class="nav-item">
-                <a th:href="@{/patient/profile}" class="nav-link"><i class="bi bi-person"></i> <span>Patient Profile</span></a>
+                <a th:href="@{/patient/profile}" class="nav-link"><i class="bi bi-person"></i> Patient Profile</a>
             </li>
             <li class="nav-item">
-                <a th:href="@{/patient/support}" class="nav-link"><i class="bi bi-headset"></i> <span>Customer Support</span></a>
+                <a th:href="@{/patient/support}" class="nav-link"><i class="bi bi-headset"></i> Customer Support</a>
             </li>
             <li class="nav-item">
-                <a th:href="@{/patient/feedback}" class="nav-link"><i class="bi bi-chat-left-text"></i> <span>Feedback</span></a>
+                <a th:href="@{/patient/feedback}" class="nav-link"><i class="bi bi-chat-left-text"></i> Feedback</a>
             </li>
         </ul>
     </div>
@@ -340,11 +353,11 @@
         </div>
     </div>
     <div class="content-area">
-        <div class="form-container">
+        <div class="section">
             <h1>Book Appointment</h1>
             <form th:action="@{/patient/book}" th:object="${appointment}" method="post" id="appointmentForm">
                 <div class="mb-3">
-                    <label for="specialtyId" class="form-label">Specialty</label>
+                    <label for="specialtyId" class="form-label">Specialty <span class="required-asterisk">*</span></label>
                     <select id="specialtyId" th:field="*{specialtyId}" class="form-select" onchange="updateDoctors()" required>
                         <option value="">Select Specialty</option>
                         <option th:each="specialty : ${specialties}"
@@ -356,7 +369,7 @@
                 </div>
 
                 <div class="mb-3">
-                    <label for="doctorId" class="form-label">Doctor</label>
+                    <label for="doctorId" class="form-label">Doctor <span class="required-asterisk">*</span></label>
                     <select id="doctorId" th:field="*{doctorId}" class="form-select" required>
                         <option value="">Select Doctor</option>
                     </select>
@@ -364,13 +377,13 @@
                 </div>
 
                 <div class="mb-3">
-                    <label for="appointmentDate" class="form-label">Appointment Date</label>
-                    <input type="date" id="appointmentDate" th:field="*{appointmentDate}" class="form-control" min="2025-05-28" required onchange="updateTimeSlots()" />
+                    <label for="appointmentDate" class="form-label">Appointment Date <span class="required-asterisk">*</span></label>
+                    <input type="date" id="appointmentDate" th:field="*{appointmentDate}" class="form-control" required onchange="updateTimeSlots()" />
                     <span class="error" th:if="${#fields.hasErrors('appointmentDate')}" th:errors="*{appointmentDate}"></span>
                 </div>
 
                 <div class="mb-3">
-                    <label class="form-label">Appointment Time</label>
+                    <label class="form-label">Appointment Time <span class="required-asterisk">*</span></label>
                     <div class="time-grid" id="timeGrid">
                         <button type="button" onclick="selectTime('08:00:00', this)">08:00</button>
                         <button type="button" onclick="selectTime('08:30:00', this)">08:30</button>
@@ -399,18 +412,24 @@
                 </div>
 
                 <div class="mb-3">
-                    <label for="phoneNumber" class="form-label">Phone Number</label>
-                    <input type="text" id="phoneNumber" name="phoneNumber" th:value="${patient.phoneNumber}" class="form-control" required />
+                    <label for="phoneNumber" class="form-label">Phone Number <span class="required-asterisk">*</span></label>
+                    <div class="d-flex align-items-center">
+                        <input type="text" id="phoneNumber" name="phoneNumber" th:value="${patient.phoneNumber}" class="form-control" required />
+                        <button type="button" class="reset-btn" onclick="resetPhoneNumber()">Reset</button>
+                    </div>
                 </div>
 
                 <div class="mb-3">
-                    <label for="email" class="form-label">Email</label>
-                    <input type="email" id="email" name="email" th:value="${patient.email}" class="form-control" required />
+                    <label for="email" class="form-label">Email <span class="required-asterisk">*</span></label>
+                    <div class="d-flex align-items-center">
+                        <input type="email" id="email" name="email" th:value="${patient.email}" class="form-control" required />
+                        <button type="button" class="reset-btn" onclick="resetEmail()">Reset</button>
+                    </div>
                 </div>
 
                 <div class="mb-3">
                     <label for="reason" class="form-label">Reason (max 500 characters)</label>
-                    <textarea id="reason" th:field="*{reason}" class="form-control" rows="4" maxlength="500" required></textarea>
+                    <textarea id="reason" th:field="*{reason}" class="form-control" rows="4" maxlength="500"></textarea>
                     <span class="error" th:if="${#fields.hasErrors('reason')}" th:errors="*{reason}"></span>
                 </div>
 
@@ -437,6 +456,10 @@
 
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
 <script>
+    // Store initial values for Phone Number and Email
+    const initialPhoneNumber = document.getElementById("phoneNumber").value;
+    const initialEmail = document.getElementById("email").value;
+
     function updateDoctors() {
         let specialtyId = document.getElementById("specialtyId").value;
         if (specialtyId) {
@@ -488,11 +511,41 @@
         }
     }
 
+    function resetPhoneNumber() {
+        document.getElementById("phoneNumber").value = initialPhoneNumber;
+    }
+
+    function resetEmail() {
+        document.getElementById("email").value = initialEmail;
+    }
+
     function showConfirmation() {
         const specialtyId = document.getElementById("specialtyId").value;
         const doctorId = document.getElementById("doctorId").value;
         const appointmentTime = document.getElementById("appointmentTime").value;
 
+        // Get and trim Phone Number and Email (remove all spaces)
+        let phoneNumber = document.getElementById("phoneNumber").value;
+        let email = document.getElementById("email").value;
+        phoneNumber = phoneNumber.replace(/\s+/g, '');
+        email = email.replace(/\s+/g, '');
+
+        // Get and process Reason
+        let reason = document.getElementById("reason").value;
+        // Check if reason is empty or contains only spaces
+        if (!reason || reason.trim() === '') {
+            reason = ''; // Set to empty string if only spaces or empty
+        } else {
+            // Trim leading/trailing spaces and normalize inner spaces to single space
+            reason = reason.trim().replace(/\s+/g, ' ');
+        }
+
+        // Update the form fields with processed values
+        document.getElementById("phoneNumber").value = phoneNumber;
+        document.getElementById("email").value = email;
+        document.getElementById("reason").value = reason;
+
+        // Validate Specialty, Doctor, and Appointment Time
         if (!specialtyId) {
             alert("Please select a specialty before submitting.");
             return;
@@ -503,6 +556,28 @@
         }
         if (!appointmentTime) {
             alert("Please select an appointment time before submitting.");
+            return;
+        }
+
+        // Validate Phone Number (must start with 0 and be 10 or 12 digits)
+        if (!phoneNumber) {
+            alert("Phone Number cannot be empty.");
+            return;
+        }
+        const phoneRegex = /^0\d{9}$|^0\d{11}$/;
+        if (!phoneRegex.test(phoneNumber)) {
+            alert("Phone Number must start with 0 and be either 10 or 12 digits long.");
+            return;
+        }
+
+        // Validate Email format
+        if (!email) {
+            alert("Email cannot be empty.");
+            return;
+        }
+        const emailRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
+        if (!emailRegex.test(email)) {
+            alert("Please enter a valid email address (e.g., user@domain.com).");
             return;
         }
 
@@ -525,8 +600,12 @@
     }
 
     document.addEventListener("DOMContentLoaded", function() {
-        let today = new Date().toISOString().split("T")[0];
-        document.getElementById("appointmentDate").setAttribute("min", today);
+        // Dynamically set the minimum date to tomorrow
+        const today = new Date();
+        const tomorrow = new Date(today);
+        tomorrow.setDate(today.getDate() + 1);
+        const tomorrowISOString = tomorrow.toISOString().split("T")[0];
+        document.getElementById("appointmentDate").setAttribute("min", tomorrowISOString);
     });
 </script>
 </body>
