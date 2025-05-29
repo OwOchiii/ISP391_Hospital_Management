@@ -20,7 +20,6 @@ public class Appointment {
     @Column(name = "AppointmentID")
     private Integer appointmentId;
 
-
     @Column(name = "DoctorID", nullable = false)
     private Integer doctorId;
 
@@ -39,6 +38,12 @@ public class Appointment {
     @Column(name = "Status", nullable = false, columnDefinition = "varchar(20) DEFAULT 'Scheduled'")
     private String status;
 
+    @Column(name = "Email")
+    private String email;
+
+    @Column(name = "PhoneNumber")
+    private String phoneNumber;
+
     @ManyToOne
     @JoinColumn(name = "DoctorID", insertable = false, updatable = false)
     private Doctor doctor;
@@ -50,7 +55,6 @@ public class Appointment {
     @ManyToOne
     @JoinColumn(name = "RoomID", insertable = false, updatable = false)
     private Room room;
-
 
     @OneToMany(mappedBy = "appointment")
     private List<Transaction> transactions;

@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+  <meta charset="UTF-8">
+  <title>Patient Dashboard</title>
+  <style>
+    body { font-family: Arial, sans-serif; margin: 20px; }
+    h1 { color: #333; }
+    ul { list-style-type: none; padding: 0; }
+    li { margin: 10px 0; }
+    a { text-decoration: none; color: #007bff; }
+    a:hover { text-decoration: underline; }
+  </style>
+</head>
+<body>
+<h1>Welcome to Patient Dashboard</h1>
+<p>Hello, Patient!</p>
+<h2>Available Features</h2>
+<ul>
+  <li><a href="/patient/search-doctor">Search for Doctor/Specialties</a></li>
+  <li><a href="/patient/book-appointment">Book Appointment</a></li>
+  <li><a href="/patient/appointment-list">Appointment List</a></li>
+  <li><a href="/patient/profile">Patient Profile</a></li>
+  <li><a href="/patient/customer-support">Customer Support</a></li>
+  <li><a href="/patient/feedback">Feedback</a></li>
+</ul>
+<a href="/auth/logout">Logout</a>
+</body>
+</html>
