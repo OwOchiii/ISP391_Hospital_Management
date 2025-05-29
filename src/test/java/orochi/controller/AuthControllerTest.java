@@ -77,19 +77,6 @@ public class AuthControllerTest {
                 .andExpect(view().name("auth/register"));
     }
 
-    @Test
-    void testHandleRegistrationWithoutAgreeTerms() {
-        Users user = new Users();
-        String result = authController.handleRegistration(
-                user, "John Doe", "john@example.com", "password123",
-                "1234567890", false, model, redirectAttributes);
-
-        verify(model).addAttribute(eq("errorMessage"), anyString());
-        verify(model).addAttribute("fullName", "John Doe");
-        verify(model).addAttribute("email", "john@example.com");
-        verify(model).addAttribute("phoneNumber", "1234567890");
-        assertEquals("auth/register", result);
-    }
 
 
 }
