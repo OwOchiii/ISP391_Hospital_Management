@@ -1,0 +1,1054 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Appointment Details - MediCare Plus</title>
+
+    <!-- CSRF Tokens for Ajax Requests -->
+    <meta name="_csrf" th:content="${_csrf.token}"/>
+    <meta name="_csrf_header" th:content="${_csrf.headerName}"/>
+
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Bootstrap Icons -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css">
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+
+    <style>
+        :root {
+            --primary-color: #2563eb;
+            --secondary-color: #1e40af;
+            --accent-color: #06b6d4;
+            --text-dark: #1f2937;
+            --text-light: #6b7280;
+            --text-muted: #9ca3af;
+            --bg-light: #f8fafc;
+            --bg-white: #ffffff;
+            --success-color: #10b981;
+            --warning-color: #f59e0b;
+            --error-color: #ef4444;
+            --info-color: #3b82f6;
+            --border-color: #e5e7eb;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            line-height: 1.6;
+            color: var(--text-dark);
+            background: var(--bg-light);
+        }
+
+        /* Header */
+        .page-header {
+            background: var(--bg-white);
+            padding: 2rem 0;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+            margin-bottom: 2rem;
+        }
+
+        .header-content {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 1rem;
+        }
+
+        .page-title {
+            font-size: 2rem;
+            font-weight: 700;
+            color: var(--text-dark);
+            margin: 0;
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+
+        .page-title i {
+            color: var(--primary-color);
+        }
+
+        .breadcrumb-nav {
+            background: none;
+            padding: 0;
+            margin: 0;
+        }
+
+        .breadcrumb {
+            background: none;
+            padding: 0;
+            margin: 0;
+        }
+
+        .breadcrumb-item a {
+            color: var(--primary-color);
+            text-decoration: none;
+        }
+
+        .breadcrumb-item.active {
+            color: var(--text-muted);
+        }
+
+        /* Return to Dashboard Link */
+        .return-to-dashboard {
+            display: flex;
+            align-items: center;
+            color: var(--primary-color);
+            font-weight: 600;
+            text-decoration: none;
+            margin-bottom: 1rem;
+            transition: all 0.2s ease;
+        }
+
+        .return-to-dashboard:hover {
+            color: var(--secondary-color);
+            transform: translateX(-3px);
+        }
+
+        .return-to-dashboard i {
+            margin-right: 0.5rem;
+        }
+
+        /* Status Badge */
+        .status-badge {
+            padding: 0.5rem 1rem;
+            border-radius: 20px;
+            font-weight: 600;
+            font-size: 0.875rem;
+            text-transform: uppercase;
+            letter-spacing: 0.025em;
+        }
+
+        .status-pending { background: #fef3c7; color: #92400e; }
+        .status-scheduled { background: #dbeafe; color: #1e40af; }
+        .status-completed { background: #d1fae5; color: #065f46; }
+        .status-cancelled { background: #fee2e2; color: #991b1b; }
+
+        /* Main Content */
+        .appointment-container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 0 1rem;
+        }
+
+        .appointment-grid {
+            display: grid;
+            grid-template-columns: 1fr 350px;
+            gap: 2rem;
+        }
+
+        /* Main Content Card */
+        .main-content-card {
+            background: var(--bg-white);
+            border-radius: 16px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+            overflow: hidden;
+        }
+
+        /* Sidebar */
+        .appointment-sidebar {
+            display: flex;
+            flex-direction: column;
+            gap: 1.5rem;
+        }
+
+        .sidebar-card {
+            background: var(--bg-white);
+            border-radius: 16px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+            padding: 1.5rem;
+        }
+
+        .sidebar-card h5 {
+            font-weight: 700;
+            margin-bottom: 1rem;
+            color: var(--text-dark);
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .sidebar-card h5 i {
+            color: var(--primary-color);
+        }
+
+        /* Tabs */
+        .nav-tabs {
+            border-bottom: 2px solid var(--border-color);
+            margin-bottom: 0;
+        }
+
+        .nav-tabs .nav-link {
+            border: none;
+            border-bottom: 3px solid transparent;
+            color: var(--text-light);
+            font-weight: 600;
+            padding: 1rem 1.5rem;
+            transition: all 0.3s ease;
+        }
+
+        .nav-tabs .nav-link:hover {
+            border-color: transparent;
+            color: var(--primary-color);
+        }
+
+        .nav-tabs .nav-link.active {
+            background: none;
+            border-color: var(--primary-color);
+            color: var(--primary-color);
+        }
+
+        .tab-content {
+            padding: 2rem;
+        }
+
+        /* Info Grid */
+        .info-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 1.5rem;
+            margin-bottom: 2rem;
+        }
+
+        .info-item {
+            padding: 1.25rem;
+            background: var(--bg-light);
+            border-radius: 12px;
+            border-left: 4px solid var(--primary-color);
+        }
+
+        .info-label {
+            font-size: 0.875rem;
+            font-weight: 600;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 0.025em;
+            margin-bottom: 0.5rem;
+        }
+
+        .info-value {
+            font-size: 1.125rem;
+            font-weight: 600;
+            color: var(--text-dark);
+        }
+
+        /* Form Elements */
+        .form-group {
+            margin-bottom: 1.5rem;
+        }
+
+        .form-label {
+            font-weight: 600;
+            color: var(--text-dark);
+            margin-bottom: 0.5rem;
+        }
+
+        .form-control, .form-select {
+            border: 2px solid var(--border-color);
+            border-radius: 8px;
+            padding: 0.75rem;
+            transition: all 0.3s ease;
+        }
+
+        .form-control:focus, .form-select:focus {
+            border-color: var(--primary-color);
+            box-shadow: 0 0 0 0.2rem rgba(37, 99, 235, 0.25);
+        }
+
+        /* Buttons */
+        .btn-primary-custom {
+            background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+            border: none;
+            padding: 0.75rem 1.5rem;
+            border-radius: 8px;
+            color: white;
+            font-weight: 600;
+            transition: all 0.3s ease;
+        }
+
+        .btn-primary-custom:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(37, 99, 235, 0.3);
+            color: white;
+        }
+
+        .btn-outline-primary-custom {
+            border: 2px solid var(--primary-color);
+            color: var(--primary-color);
+            background: transparent;
+            padding: 0.75rem 1.5rem;
+            border-radius: 8px;
+            font-weight: 600;
+            transition: all 0.3s ease;
+        }
+
+        .btn-outline-primary-custom:hover {
+            background: var(--primary-color);
+            color: white;
+            transform: translateY(-2px);
+        }
+
+        .btn-success-custom {
+            background: linear-gradient(135deg, var(--success-color), #059669);
+            border: none;
+            color: white;
+        }
+
+        .btn-warning-custom {
+            background: linear-gradient(135deg, var(--warning-color), #d97706);
+            border: none;
+            color: white;
+        }
+
+        .btn-danger-custom {
+            background: linear-gradient(135deg, var(--error-color), #dc2626);
+            border: none;
+            color: white;
+        }
+
+        /* Action Buttons Grid */
+        .action-buttons {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1rem;
+            margin-top: 2rem;
+        }
+
+        .action-btn {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+            padding: 1rem;
+            border-radius: 12px;
+            text-decoration: none;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            border: none;
+            cursor: pointer;
+        }
+
+        .action-btn:hover {
+            transform: translateY(-2px);
+            text-decoration: none;
+        }
+
+        /* Medical History */
+        .medical-history {
+            background: var(--bg-light);
+            border-radius: 12px;
+            padding: 1.5rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .medical-history h6 {
+            font-weight: 700;
+            margin-bottom: 1rem;
+            color: var(--text-dark);
+        }
+
+        .history-item {
+            padding: 0.75rem;
+            background: var(--bg-white);
+            border-radius: 8px;
+            margin-bottom: 0.75rem;
+            border-left: 4px solid var(--info-color);
+        }
+
+        .history-date {
+            font-size: 0.875rem;
+            color: var(--text-muted);
+            font-weight: 600;
+        }
+
+        .history-content {
+            margin-top: 0.25rem;
+            color: var(--text-dark);
+        }
+
+        /* Vitals Display */
+        .vitals-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 1rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .vital-item {
+            text-align: center;
+            padding: 1rem;
+            background: var(--bg-light);
+            border-radius: 12px;
+            border: 2px solid var(--border-color);
+        }
+
+        .vital-value {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: var(--primary-color);
+            margin-bottom: 0.25rem;
+        }
+
+        .vital-label {
+            font-size: 0.875rem;
+            color: var(--text-muted);
+            font-weight: 600;
+        }
+
+        /* Notes Section */
+        .notes-section {
+            background: var(--bg-light);
+            border-radius: 12px;
+            padding: 1.5rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .note-item {
+            background: var(--bg-white);
+            border-radius: 8px;
+            padding: 1rem;
+            margin-bottom: 1rem;
+            border-left: 4px solid var(--accent-color);
+        }
+
+        .note-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 0.5rem;
+        }
+
+        .note-author {
+            font-weight: 600;
+            color: var(--text-dark);
+        }
+
+        .note-timestamp {
+            font-size: 0.875rem;
+            color: var(--text-muted);
+        }
+
+        .note-content {
+            color: var(--text-dark);
+            line-height: 1.6;
+        }
+
+        /* Alert Messages */
+        .alert-custom {
+            border: none;
+            border-radius: 12px;
+            padding: 1rem 1.25rem;
+            margin-bottom: 1.5rem;
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+
+        .alert-success-custom {
+            background: rgba(16, 185, 129, 0.1);
+            color: var(--success-color);
+            border-left: 4px solid var(--success-color);
+        }
+
+        .alert-warning-custom {
+            background: rgba(245, 158, 11, 0.1);
+            color: var(--warning-color);
+            border-left: 4px solid var(--warning-color);
+        }
+
+        .alert-info-custom {
+            background: rgba(59, 130, 246, 0.1);
+            color: var(--info-color);
+            border-left: 4px solid var(--info-color);
+        }
+
+        /* Medical Order Modal */
+        .modal-content {
+            border-radius: 16px;
+            border: none;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.15);
+        }
+
+        .modal-header {
+            border-bottom: 2px solid var(--border-color);
+            padding: 1.5rem;
+        }
+
+        .modal-title {
+            font-weight: 700;
+            color: var(--text-dark);
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .modal-title i {
+            color: var(--primary-color);
+        }
+
+        .modal-body {
+            padding: 1.5rem;
+        }
+
+        .modal-footer {
+            border-top: 2px solid var(--border-color);
+            padding: 1.25rem 1.5rem;
+        }
+
+        /* Responsive Design */
+        @media (max-width: 1200px) {
+            .appointment-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .appointment-sidebar {
+                order: -1;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .header-content {
+                flex-direction: column;
+                align-items: flex-start;
+            }
+
+            .page-title {
+                font-size: 1.5rem;
+            }
+
+            .info-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .vitals-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+
+            .action-buttons {
+                grid-template-columns: 1fr;
+            }
+
+            .tab-content {
+                padding: 1rem;
+            }
+        }
+
+        @media (max-width: 576px) {
+            .vitals-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .appointment-container {
+                padding: 0 0.5rem;
+            }
+        }
+
+        /* Animation */
+        .main-content-card, .sidebar-card {
+            animation: fadeInUp 0.6s ease-out;
+        }
+
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+    </style>
+</head>
+<body>
+<!-- Page Header -->
+<div class="page-header">
+    <div class="container-fluid">
+        <div class="header-content">
+            <div>
+                <!-- Return to Dashboard Link -->
+                <a href="/doctor/dashboard" class="return-to-dashboard">
+                    <i class="bi bi-arrow-left"></i> Return to Dashboard
+                </a>
+
+                <h1 class="page-title">
+                    <i class="bi bi-calendar-check"></i>
+                    Appointment Details
+                </h1>
+                <nav class="breadcrumb-nav">
+                    <ol class="breadcrumb">
+                        <li class="breadcrumb-item"><a th:href="@{/doctor/dashboard}">Dashboard</a></li>
+                        <li class="breadcrumb-item"><a th:href="@{/doctor/appointments}">Appointments</a></li>
+                        <li class="breadcrumb-item active">Appointment Details</li>
+                    </ol>
+                </nav>
+            </div>
+            <div>
+                <span class="status-badge"
+                      th:classappend="${appointment?.status == 'PENDING' ? 'status-pending' :
+                                     appointment?.status == 'SCHEDULED' ? 'status-scheduled' :
+                                     appointment?.status == 'COMPLETED' ? 'status-completed' : 'status-cancelled'}"
+                      th:text="${appointment?.status ?: 'PENDING'}">SCHEDULED</span>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Main Content -->
+<div class="appointment-container">
+    <!-- Success/Error Messages -->
+    <div th:if="${successMessage}" class="alert-custom alert-success-custom">
+        <i class="bi bi-check-circle"></i>
+        <span th:text="${successMessage}">Appointment updated successfully!</span>
+    </div>
+
+    <div th:if="${errorMessage}" class="alert-custom alert-warning-custom">
+        <i class="bi bi-exclamation-triangle"></i>
+        <span th:text="${errorMessage}">An error occurred while updating the appointment.</span>
+    </div>
+
+    <div class="appointment-grid">
+        <!-- Main Content -->
+        <div class="main-content-card">
+            <!-- Tabs Navigation -->
+            <ul class="nav nav-tabs" id="appointmentTabs" role="tablist">
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link active" id="overview-tab" data-bs-toggle="tab" data-bs-target="#overview" type="button" role="tab">
+                        <i class="bi bi-info-circle me-2"></i>Overview
+                    </button>
+                </li>
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link" id="notes-tab" data-bs-toggle="tab" data-bs-target="#notes" type="button" role="tab">
+                        <i class="bi bi-journal-text me-2"></i>Notes
+                    </button>
+                </li>
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link" id="medical-tab" data-bs-toggle="tab" data-bs-target="#medical" type="button" role="tab">
+                        <i class="bi bi-clipboard2-pulse me-2"></i>Medical Info
+                    </button>
+                </li>
+            </ul>
+
+            <!-- Tab Content -->
+            <div class="tab-content" id="appointmentTabContent">
+                <!-- Overview Tab -->
+                <div class="tab-pane fade show active" id="overview" role="tabpanel" aria-labelledby="overview-tab">
+                    <div class="info-grid">
+                        <div class="info-item">
+                            <div class="info-label">Appointment Date</div>
+                            <div class="info-value" th:text="${#temporals.format(appointment?.dateTime, 'MMMM d, yyyy')}">June 15, 2023</div>
+                        </div>
+                        <div class="info-item">
+                            <div class="info-label">Appointment Time</div>
+                            <div class="info-value" th:text="${#temporals.format(appointment?.dateTime, 'h:mm a')}">10:30 AM</div>
+                        </div>
+                        <div class="info-item">
+                            <div class="info-label">Doctor</div>
+                            <div class="info-value" th:text="${doctorName ?: 'Dr. John Smith'}">Dr. John Smith</div>
+                        </div>
+                        <div class="info-item">
+                            <div class="info-label">Patient</div>
+                            <div class="info-value" th:text="${patientName ?: 'Jane Doe'}">Jane Doe</div>
+                        </div>
+                        <div class="info-item">
+                            <div class="info-label">Room</div>
+                            <div class="info-value" th:text="${roomNumber ?: 'Examination Room 3'}">Examination Room 3</div>
+                        </div>
+                        <div class="info-item">
+                            <div class="info-label">Contact Email</div>
+                            <div class="info-value" th:text="${appointment?.email ?: 'patient@example.com'}">patient@example.com</div>
+                        </div>
+                        <div class="info-item">
+                            <div class="info-label">Contact Phone</div>
+                            <div class="info-value" th:text="${appointment?.phoneNumber ?: '+1 (555) 123-4567'}">+1 (555) 123-4567</div>
+                        </div>
+                    </div>
+
+                    <!-- Description Section (Merged from reason for visit and symptoms) -->
+                    <div class="form-group">
+                        <label for="description" class="form-label">Description (Reason for Visit & Symptoms)</label>
+                        <textarea id="description" class="form-control" rows="5" th:text="${appointment?.description}" placeholder="Enter description, reason for visit, and reported symptoms"></textarea>
+                    </div>
+
+                    <!-- Action Buttons - Added Create Medical Order button -->
+                    <div class="action-buttons">
+                        <button class="action-btn btn-primary-custom" id="createMedicalOrder" data-bs-toggle="modal" data-bs-target="#medicalOrderModal">
+                            <i class="bi bi-clipboard-plus"></i> Create Medical Order
+                        </button>
+                        <button class="action-btn btn-success-custom" id="completeAppointment">
+                            <i class="bi bi-check-circle"></i> Mark as Completed
+                        </button>
+                        <button class="action-btn btn-danger-custom" id="cancelAppointment">
+                            <i class="bi bi-x-circle"></i> Cancel Appointment
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Notes Tab -->
+                <div class="tab-pane fade" id="notes" role="tabpanel" aria-labelledby="notes-tab">
+                    <div class="form-group">
+                        <label for="doctorNotes" class="form-label">Doctor's Notes</label>
+                        <textarea id="doctorNotes" class="form-control" rows="8" placeholder="Enter detailed notes about the appointment"></textarea>
+                    </div>
+
+                    <button class="btn btn-primary-custom mt-3">
+                        <i class="bi bi-save me-2"></i> Save Notes
+                    </button>
+
+                    <div class="notes-section mt-4">
+                        <h6><i class="bi bi-card-text me-2"></i>Previous Notes</h6>
+
+                        <!-- Example of existing notes (can be populated dynamically) -->
+                        <div class="note-item">
+                            <div class="note-header">
+                                <span class="note-author">Dr. John Smith</span>
+                                <span class="note-timestamp">June 10, 2023 at 11:45 AM</span>
+                            </div>
+                            <div class="note-content">
+                                Patient reported mild improvements after starting new medication. Recommended continuing current treatment plan with follow-up in 2 weeks.
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Medical Info Tab -->
+                <div class="tab-pane fade" id="medical" role="tabpanel" aria-labelledby="medical-tab">
+                    <div class="vitals-grid">
+                        <div class="vital-item">
+                            <div class="vital-value">120/80</div>
+                            <div class="vital-label">Blood Pressure</div>
+                        </div>
+                        <div class="vital-item">
+                            <div class="vital-value">72</div>
+                            <div class="vital-label">Heart Rate (bpm)</div>
+                        </div>
+                        <div class="vital-item">
+                            <div class="vital-value">98.6°F</div>
+                            <div class="vital-label">Temperature</div>
+                        </div>
+                        <div class="vital-item">
+                            <div class="vital-value">18</div>
+                            <div class="vital-label">Respiration Rate</div>
+                        </div>
+                        <div class="vital-item">
+                            <div class="vital-value">98%</div>
+                            <div class="vital-label">Oxygen Saturation</div>
+                        </div>
+                    </div>
+
+                    <div class="medical-history">
+                        <h6><i class="bi bi-clock-history me-2"></i>Medical History</h6>
+
+                        <div class="history-item">
+                            <div class="history-date">May 23, 2023</div>
+                            <div class="history-content">Annual physical examination. All vitals within normal range.</div>
+                        </div>
+
+                        <div class="history-item">
+                            <div class="history-date">February 12, 2023</div>
+                            <div class="history-content">Treated for seasonal influenza. Prescribed bed rest and antiviral medication.</div>
+                        </div>
+
+                        <div class="history-item">
+                            <div class="history-date">October 5, 2022</div>
+                            <div class="history-content">Routine vaccination. No adverse reactions observed.</div>
+                        </div>
+                    </div>
+
+                    <div class="medical-history mt-4">
+                        <h6><i class="bi bi-list-check me-2"></i>Medical Orders</h6>
+
+                        <div th:if="${medicalOrders != null and not medicalOrders.empty}">
+                            <div class="history-item" th:each="order : ${medicalOrders}">
+                                <div class="history-date">
+                                    <span th:text="${#dates.format(order.orderDate, 'MMM d, yyyy')}">May 23, 2023</span>
+                                    <span class="badge rounded-pill ms-2"
+                                          th:classappend="${order.status == 'PENDING' ? 'bg-warning' :
+                                    (order.status == 'IN_PROGRESS' ? 'bg-info' :
+                                    (order.status == 'COMPLETED' ? 'bg-success' : 'bg-danger'))}"
+                                          th:text="${order.status}">PENDING</span>
+                                </div>
+                                <div class="history-content">
+                                    <strong th:text="${order.orderType}">LABORATORY</strong>:
+                                    <span th:text="${order.description}">Complete blood count and metabolic panel</span>
+                                </div>
+                                <div class="mt-2">
+                                    <!-- Button to update status -->
+                                    <div class="dropdown d-inline-block">
+                                        <button class="btn btn-sm btn-outline-secondary dropdown-toggle"
+                                                type="button"
+                                                data-bs-toggle="dropdown"
+                                                aria-expanded="false">
+                                            <i class="bi bi-pencil"></i> Update Status
+                                        </button>
+                                        <ul class="dropdown-menu">
+                                            <li><a class="dropdown-item update-order-status"
+                                                   href="#"
+                                                   th:data-order-id="${order.orderId}"
+                                                   th:data-appointment-id="${appointment.appointmentId}"
+                                                   th:data-doctor-id="${doctorId}"
+                                                   data-status="PENDING">Pending</a></li>
+                                            <li><a class="dropdown-item update-order-status"
+                                                   href="#"
+                                                   th:data-order-id="${order.orderId}"
+                                                   th:data-appointment-id="${appointment.appointmentId}"
+                                                   th:data-doctor-id="${doctorId}"
+                                                   data-status="IN_PROGRESS">In Progress</a></li>
+                                            <li><a class="dropdown-item update-order-status"
+                                                   href="#"
+                                                   th:data-order-id="${order.orderId}"
+                                                   th:data-appointment-id="${appointment.appointmentId}"
+                                                   th:data-doctor-id="${doctorId}"
+                                                   data-status="COMPLETED">Completed</a></li>
+                                            <li><a class="dropdown-item update-order-status"
+                                                   href="#"
+                                                   th:data-order-id="${order.orderId}"
+                                                   th:data-appointment-id="${appointment.appointmentId}"
+                                                   th:data-doctor-id="${doctorId}"
+                                                   data-status="CANCELLED">Cancelled</a></li>
+                                        </ul>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div th:if="${medicalOrders == null or medicalOrders.empty}" class="alert alert-info">
+                            <i class="bi bi-info-circle me-2"></i> No medical orders have been created for this appointment yet.
+                        </div>
+
+                        <button class="btn btn-primary-custom mt-3" data-bs-toggle="modal" data-bs-target="#medicalOrderModal">
+                            <i class="bi bi-clipboard-plus me-2"></i> Create New Medical Order
+                        </button>
+                    </div>
+
+
+
+                    <button class="btn btn-primary-custom">
+                        <i class="bi bi-file-earmark-medical me-2"></i> Create Medical Report
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Sidebar -->
+        <div class="appointment-sidebar">
+            <div class="sidebar-card">
+                <h5><i class="bi bi-person"></i> Patient Information</h5>
+
+                <div class="mb-3">
+                    <div class="text-muted small mb-1">Full Name</div>
+                    <div class="fw-semibold" th:text="${patientName ?: 'Jane Doe'}">Jane Doe</div>
+                </div>
+
+                <div class="mb-3">
+                    <div class="text-muted small mb-1">Date of Birth</div>
+                    <div class="fw-semibold" th:text="${patientDOB ?: 'January 15, 1985'}">January 15, 1985</div>
+                </div>
+
+                <div class="mb-3">
+                    <div class="text-muted small mb-1">Gender</div>
+                    <div class="fw-semibold" th:text="${patientGender ?: 'Female'}">Female</div>
+                </div>
+
+                <div class="mb-3">
+                    <div class="text-muted small mb-1">Contact Number</div>
+                    <div class="fw-semibold" th:text="${patientPhone ?: '+1 (555) 123-4567'}">+1 (555) 123-4567</div>
+                </div>
+
+                <div>
+                    <div class="text-muted small mb-1">Email Address</div>
+                    <div class="fw-semibold" th:text="${patientEmail ?: 'jane.doe@example.com'}">jane.doe@example.com</div>
+                </div>
+
+                <a href="#" class="btn btn-outline-primary-custom w-100 mt-3">
+                    <i class="bi bi-person-lines-fill me-2"></i> View Full Profile
+                </a>
+            </div>
+
+            <div class="sidebar-card">
+                <h5><i class="bi bi-clock-history"></i> Appointment History</h5>
+
+                <div class="mb-3">
+                    <div class="text-muted small mb-1">Previous Visit</div>
+                    <div class="fw-semibold">May 23, 2023</div>
+                    <div class="small text-muted">Annual physical examination</div>
+                </div>
+
+                <div>
+                    <div class="text-muted small mb-1">Next Scheduled</div>
+                    <div class="fw-semibold">No upcoming appointments</div>
+                </div>
+
+                <a href="#" class="btn btn-outline-primary-custom w-100 mt-3">
+                    <i class="bi bi-calendar3 me-2"></i> View All Appointments
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Medical Order Modal -->
+<div class="modal fade" id="medicalOrderModal" tabindex="-1" aria-labelledby="medicalOrderModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="medicalOrderModalLabel">
+                    <i class="bi bi-clipboard-plus me-2"></i> Create New Medical Order
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form th:action="@{/doctor/appointments/{appointmentId}/orders/create(appointmentId=${appointment.appointmentId})}" method="post">
+                <div class="modal-body">
+                    <input type="hidden" name="doctorId" th:value="${doctorId}">
+
+                    <div class="form-group mb-3">
+                        <label for="orderType" class="form-label">Order Type</label>
+                        <select id="orderType" name="orderType" class="form-select" required>
+                            <option value="">Select Order Type</option>
+                            <option value="LABORATORY">Laboratory</option>
+                            <option value="RADIOLOGY">Radiology</option>
+                            <option value="MEDICATION">Medication</option>
+                            <option value="PROCEDURE">Procedure</option>
+                            <option value="CONSULTATION">Consultation</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group mb-3">
+                        <label for="description" class="form-label">Description</label>
+                        <textarea id="description" name="description" class="form-control" rows="3" required></textarea>
+                    </div>
+
+                    <div class="form-group mb-3">
+                        <label for="status" class="form-label">Status</label>
+                        <select id="status" name="status" class="form-select" required>
+                            <option value="PENDING">Pending</option>
+                            <option value="IN_PROGRESS">In Progress</option>
+                            <option value="COMPLETED">Completed</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group mb-3">
+                        <label for="assignedToDeptId" class="form-label">Assign to Department (Optional)</label>
+                        <select id="assignedToDeptId" name="assignedToDeptId" class="form-select">
+                            <option value="">Select Department</option>
+                            <option value="1">Laboratory</option>
+                            <option value="2">Radiology</option>
+                            <option value="3">Pharmacy</option>
+                            <option value="4">Physical Therapy</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-primary-custom">Create Order</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+</body>
+<script src="/js/doctor-notes.js"></script>
+
+<!-- Bootstrap JS Bundle with Popper -->
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+<script>
+    // Simple confirmation dialogs for appointment actions
+    document.getElementById('completeAppointment').addEventListener('click', function() {
+        if (confirm('Are you sure you want to mark this appointment as completed?')) {
+            // Submit form or AJAX request to update appointment status
+            alert('Appointment marked as completed!');
+        }
+    });
+
+    document.getElementById('cancelAppointment').addEventListener('click', function() {
+        if (confirm('Are you sure you want to cancel this appointment?')) {
+            // Submit form or AJAX request to cancel appointment
+            alert('Appointment cancelled!');
+        }
+    });
+
+    // Set default values for the medical order form
+    document.addEventListener('DOMContentLoaded', function() {
+        // Set today's date as default
+        const today = new Date().toISOString().split('T')[0];
+
+        // Pre-select PENDING status
+        const statusSelect = document.getElementById('orderStatus');
+        if (statusSelect) {
+            statusSelect.value = 'PENDING';
+        }
+    });
+
+    document.addEventListener('DOMContentLoaded', function() {
+        // Get CSRF token
+        const token = document.querySelector('meta[name="_csrf"]').getAttribute('content');
+        const header = document.querySelector('meta[name="_csrf_header"]').getAttribute('content');
+
+        // Add event listeners to all status update links
+        document.querySelectorAll('.update-order-status').forEach(function(link) {
+            link.addEventListener('click', function(e) {
+                e.preventDefault();
+
+                const orderId = this.getAttribute('data-order-id');
+                const appointmentId = this.getAttribute('data-appointment-id');
+                const doctorId = this.getAttribute('data-doctor-id');
+                const status = this.getAttribute('data-status');
+
+                updateOrderStatus(appointmentId, orderId, doctorId, status);
+            });
+        });
+
+        function updateOrderStatus(appointmentId, orderId, doctorId, status) {
+            // Create form data
+            const formData = new FormData();
+            formData.append('doctorId', doctorId);
+            formData.append('status', status);
+
+            // Send AJAX request
+            fetch(`/doctor/appointments/${appointmentId}/orders/${orderId}/update-status`, {
+                method: 'POST',
+                headers: {
+                    [header]: token
+                },
+                body: formData
+            })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        // Show success alert
+                        const alertDiv = document.createElement('div');
+                        alertDiv.className = 'alert-custom alert-success-custom';
+                        alertDiv.innerHTML = `<i class="bi bi-check-circle"></i> ${data.message}`;
+
+                        // Insert at the top of the main content
+                        const mainContent = document.querySelector('.main-content-card');
+                        mainContent.insertBefore(alertDiv, mainContent.firstChild);
+
+                        // Auto-dismiss after 3 seconds
+                        setTimeout(() => {
+                            alertDiv.remove();
+                        }, 3000);
+
+                        // Reload the page to show updated status
+                        setTimeout(() => {
+                            window.location.reload();
+                        }, 1000);
+                    } else {
+                        // Show error alert
+                        alert('Error: ' + data.message);
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    alert('An error occurred while updating the status.');
+                });
+        }
+    });
+
+</script>
+
+</body>
+</html>
+

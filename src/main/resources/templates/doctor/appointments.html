@@ -375,7 +375,7 @@
         .status-scheduled { background: #e0e7ff; color: #3730a3; }
         .status-completed { background: #dbeafe; color: #1e40af; }
         .status-cancel, .status-cancelled { background: #fee2e2; color: #b91c1c; }
-
+        .status-pending { background: #f3f4f6; color: #4b5563; }
 
         .form-control {
             border: 2px solid #e5e7eb;
@@ -597,6 +597,7 @@
                         <label class="form-label">Status</label>
                         <select class="form-control" name="status">
                             <option value="">All Status</option>
+                            <option value="Pending" th:selected="${status == 'Pending'}">Pending</option>
                             <option value="Scheduled" th:selected="${status == 'Scheduled'}">Scheduled</option>
                             <option value="Completed" th:selected="${status == 'Completed'}">Completed</option>
                             <option value="Cancel" th:selected="${status == 'Cancel'}">Cancelled</option>
@@ -697,6 +698,7 @@
                                         th:data-appointment-id="${appointment.appointmentId}"
                                         th:data-original-value="${appointment.status}"
                                         onchange="updateAppointmentStatus(this)">
+                                    <option value="Pending" th:selected="${appointment.status == 'Pending'}">Pending</option>
                                     <option value="Scheduled" th:selected="${appointment.status == 'Scheduled'}">Scheduled</option>
                                     <option value="Completed" th:selected="${appointment.status == 'Completed'}">Completed</option>
                                     <option value="Cancel" th:selected="${appointment.status == 'Cancel'}">Cancelled</option>
@@ -704,7 +706,7 @@
                             </div>
 
                             <div class="d-flex gap-2">
-                                <a th:href="@{/doctor/appointment/{id}(id=${appointment.appointmentId}, doctorId=${doctorId})}"
+                                <a th:href="@{/doctor/appointments/{id}(id=${appointment.appointmentId}, doctorId=${doctorId})}"
                                    class="btn-outline-custom btn-sm">
                                     <i class="bi bi-eye"></i>
                                     View Details
@@ -817,16 +819,22 @@
                     showAlert('success', data.message);
 
                     // Update the status badge UI to match the selected value
-                    const statusBadge = appointmentCard.querySelector('.status-badge');
-                    if (statusBadge) {
-                        // Map "Cancel" to "cancelled" for CSS class purposes if needed
-                        const cssStatus = newStatus.toLowerCase() === 'cancel' ? 'cancelled' : newStatus.toLowerCase();
-                        statusBadge.className = `status-badge status-${cssStatus}`;
+                        const statusBadge = appointmentCard.querySelector('.status-badge');
+                        if (statusBadge) {
+                            // Remove old status classes
+                            statusBadge.classList.forEach(cls => {
+                                if (cls.startsWith('status-') && cls !== 'status-badge') {
+                                    statusBadge.classList.remove(cls);
+                                }
+                            });
 
-                        // Display "Cancelled" for "Cancel" status (if you want better user display)
-                        const displayStatus = newStatus === 'Cancel' ? 'Cancelled' : newStatus;
-                        statusBadge.textContent = displayStatus;
-                    }
+                            // Add the new status class
+                            const cssStatus = newStatus.toLowerCase() === 'cancel' ? 'cancelled' : newStatus.toLowerCase();
+                            statusBadge.classList.add(`status-${cssStatus}`);
+
+                            // Display status text (format nicely for display)
+                            statusBadge.textContent = newStatus;
+                        }
 
                     // Update the original value attribute
                     selectElement.setAttribute('data-original-value', newStatus);
