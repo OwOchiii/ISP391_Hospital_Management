@@ -8,6 +8,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 import orochi.model.Appointment;
 import orochi.model.Doctor;
 import orochi.model.MedicalOrder;
@@ -128,7 +129,6 @@ public class DoctorAppointmentController {
             model.addAttribute("allCount", doctorService.getAppointments(doctorId).size());
             model.addAttribute("todayCount", doctorService.getTodayAppointments(doctorId).size());
             model.addAttribute("upcomingCount", doctorService.getUpcomingAppointments(doctorId).size());
-            model.addAttribute("priorityCount", 0); // Implement if needed
 
             // Pagination (simplified)
             model.addAttribute("totalPages", 1);
@@ -154,7 +154,7 @@ public class DoctorAppointmentController {
                     appointmentId, status, doctorId);
 
             // Validate status value against the EXACT allowed values in the database constraint
-            Set<String> allowedStatuses = Set.of("Scheduled", "Completed", "Cancel");
+            Set<String> allowedStatuses = Set.of("Scheduled", "Completed", "Cancel","Pending");
             if (!allowedStatuses.contains(status)) {
                 logger.warn("Invalid status value: {} for appointment ID: {}", status, appointmentId);
                 return ResponseEntity.status(HttpStatus.BAD_REQUEST)
@@ -344,4 +344,111 @@ public class DoctorAppointmentController {
             return "error";
         }
     }
+
+    @PostMapping("/{appointmentId}/orders/create")
+    public String createMedicalOrder(
+            @PathVariable Integer appointmentId,
+            @RequestParam Integer doctorId,
+            @RequestParam String orderType,
+            @RequestParam String description,
+            @RequestParam String status,
+            @RequestParam(required = false) Integer assignedToDeptId,
+            RedirectAttributes redirectAttributes) {
+
+        try {
+            logger.info("Creating medical order for appointment ID: {} by doctor ID: {}", appointmentId, doctorId);
+
+            // Verify the appointment exists and belongs to this doctor
+            Optional<Appointment> appointmentOpt = doctorService.getAppointmentDetails(appointmentId, doctorId);
+            if (appointmentOpt.isEmpty()) {
+                logger.warn("Attempt to create order for non-existent or unauthorized appointment ID: {} by doctor ID: {}",
+                        appointmentId, doctorId);
+                redirectAttributes.addFlashAttribute("errorMessage",
+                        "Appointment not found or you don't have permission to create orders for it.");
+                return "redirect:/doctor/appointments";
+            }
+
+            // Create the medical order
+            MedicalOrder medicalOrder = new MedicalOrder();
+            medicalOrder.setAppointmentId(appointmentId);
+            medicalOrder.setDoctorId(doctorId);
+            medicalOrder.setOrderType(orderType);
+            medicalOrder.setDescription(description);
+            medicalOrder.setStatus(status);
+            medicalOrder.setAssignedToDeptId(assignedToDeptId);
+            medicalOrder.setOrderDate(new java.sql.Date(System.currentTimeMillis()));
+
+            // Save the order
+            medicalOrderRepository.save(medicalOrder);
+            logger.info("Successfully created medical order ID: {} for appointment ID: {}",
+                    medicalOrder.getOrderId(), appointmentId);
+
+            // Add success message
+            redirectAttributes.addFlashAttribute("successMessage",
+                    "Medical order created successfully.");
+
+            // Redirect back to the appointment details
+            return "redirect:/doctor/appointments/" + appointmentId + "?doctorId=" + doctorId;
+
+        } catch (Exception e) {
+            logger.error("Error creating medical order for appointment ID: {} by doctor ID: {}",
+                    appointmentId, doctorId, e);
+            redirectAttributes.addFlashAttribute("errorMessage",
+                    "Failed to create medical order: " + e.getMessage());
+            return "redirect:/doctor/appointments/" + appointmentId + "?doctorId=" + doctorId;
+        }
+    }
+
+    @PostMapping("/{appointmentId}/orders/{orderId}/update-status")
+    @ResponseBody
+    public ResponseEntity<?> updateOrderStatus(
+            @PathVariable Integer appointmentId,
+            @PathVariable Integer orderId,
+            @RequestParam Integer doctorId,
+            @RequestParam String status) {
+
+        try {
+            logger.info("Updating status of medical order ID: {} to {} by doctor ID: {}",
+                    orderId, status, doctorId);
+
+            Optional<MedicalOrder> orderOpt = medicalOrderRepository.findById(orderId);
+
+            if (orderOpt.isPresent()) {
+                MedicalOrder order = orderOpt.get();
+
+                // Check if this doctor has permission to update this order
+                if (!order.getDoctorId().equals(doctorId)) {
+                    logger.warn("Doctor ID: {} attempted to update order ID: {} belonging to another doctor",
+                            doctorId, orderId);
+                    return ResponseEntity.status(HttpStatus.FORBIDDEN)
+                            .body(Map.of("success", false,
+                                    "message", "You don't have permission to update this medical order."));
+                }
+
+                // Update the status
+                order.setStatus(status);
+                medicalOrderRepository.save(order);
+
+                logger.info("Successfully updated status of medical order ID: {} to {}", orderId, status);
+                return ResponseEntity.ok(Map.of(
+                        "success", true,
+                        "message", "Order status updated successfully",
+                        "newStatus", status));
+
+            } else {
+                logger.warn("Medical order not found for ID: {}", orderId);
+                return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                        .body(Map.of("success", false,
+                                "message", "Medical order not found"));
+            }
+
+        } catch (Exception e) {
+            logger.error("Error updating status of medical order ID: {} to {} by doctor ID: {}",
+                    orderId, status, doctorId, e);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(Map.of("success", false,
+                            "message", "Failed to update order status: " + e.getMessage()));
+        }
+    }
+
 }

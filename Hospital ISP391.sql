@@ -87,7 +87,7 @@ CREATE TABLE [Appointment] (
   [RoomID] int NULL,
   [Description] varchar(255) NULL,
   [DateTime] datetime NOT NULL,
-  [Status] varchar(20) NOT NULL CHECK (Status IN ('Scheduled', 'Completed', 'Cancel')) DEFAULT 'Scheduled'
+  [Status] varchar(20) NOT NULL CHECK (Status IN ('Scheduled', 'Completed', 'Cancel')) DEFAULT 'Scheduled',
   [Email] varchar(255) NULL,
   [PhoneNumber] varchar (20) NULL
 )
@@ -594,3 +594,43 @@ EXEC sp_addextendedproperty
      @level1type = N'Table',  @level1name = 'Appointment',
      @level2type = N'Column', @level2name = 'PhoneNumber';
 GO
+
+ALTER TABLE [Appointment] DROP CONSTRAINT [CK__Appointme__Statu__4F7CD00D];
+
+-- Step 2: Add the updated CHECK constraint (Check your own constraint name and replace it if necessary)
+ALTER TABLE [Appointment] ADD CONSTRAINT [CK__Appointme__Statu__4F7CD00D]
+    CHECK (Status IN ('Scheduled', 'Completed', 'Cancel', 'Pending'));
+
+-- Add DoctorNotes table to store notes for appointments
+CREATE TABLE [DoctorNotes] (
+                               [NoteID] int PRIMARY KEY IDENTITY(1,1),
+                               [AppointmentID] int NOT NULL,
+                               [DoctorID] int NOT NULL,
+                               [NoteContent] varchar(max) NOT NULL,
+                               [CreatedAt] datetime NOT NULL DEFAULT GETDATE(),
+                               [UpdatedAt] datetime NULL
+)
+GO
+
+-- Add foreign key constraints
+ALTER TABLE [DoctorNotes] ADD FOREIGN KEY ([AppointmentID]) REFERENCES [Appointment] ([AppointmentID])
+GO
+
+ALTER TABLE [DoctorNotes] ADD FOREIGN KEY ([DoctorID]) REFERENCES [Doctor] ([DoctorID])
+GO
+
+-- Add index for faster queries
+CREATE INDEX [IX_DoctorNotes_AppointmentID] ON [DoctorNotes] ([AppointmentID])
+GO
+
+-- Add description
+EXEC sp_addextendedproperty
+     @name = N'Table_Description',
+     @value = 'Stores doctor notes for patient appointments',
+     @level0type = N'Schema', @level0name = 'dbo',
+     @level1type = N'Table',  @level1name = 'DoctorNotes'
+GO
+
+-- Sample data (optional, for testing)
+-- INSERT INTO [DoctorNotes] ([AppointmentID], [DoctorID], [NoteContent])
+-- VALUES (1, 1, 'Patient reported mild improvements after starting new medication. Recommended continuing current treatment plan with follow-up in 2 weeks.');
