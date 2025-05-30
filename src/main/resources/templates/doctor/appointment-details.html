@@ -497,6 +497,13 @@
             padding: 1.25rem 1.5rem;
         }
 
+        .btn-info-custom {
+            background: linear-gradient(135deg, var(--info-color), #2563eb);
+            border: none;
+            color: white;
+        }
+
+
         /* Responsive Design */
         @media (max-width: 1200px) {
             .appointment-grid {
@@ -825,9 +832,11 @@
 
 
 
-                    <button class="btn btn-primary-custom">
-                        <i class="bi bi-file-earmark-medical me-2"></i> Create Medical Report
-                    </button>
+                    <a th:href="@{/medical-results/generate-report/{appointmentId}(appointmentId=${appointment.appointmentId},doctorId=${doctorId})}"
+                       class="action-btn btn-info-custom">
+                        <i class="bi bi-file-earmark-medical"></i> Generate Medical Report
+                    </a>
+
                 </div>
             </div>
         </div>
@@ -945,9 +954,12 @@
                     <button type="submit" class="btn btn-primary-custom">Create Order</button>
                 </div>
             </form>
+
         </div>
     </div>
 </div>
+
+
 </body>
 <script src="/js/doctor-notes.js"></script>
 <script src="/js/medical-orders.js"></script>
@@ -1065,6 +1077,14 @@
 
 </body>
 </html>
+
+
+
+
+
+
+
+
 
 
 
