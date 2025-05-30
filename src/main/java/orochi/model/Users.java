@@ -47,13 +47,19 @@ public class Users {
     @OneToOne(mappedBy = "user")
     private Doctor doctor;
 
-
     @Column(name = "created_at", nullable = false, updatable = false)
     private LocalDateTime createdAt;
+
+    @Column(name = "Status", nullable = false, columnDefinition = "varchar(10) DEFAULT 'Active'")
+    private String status = "Active";
 
     // Optional: Use JPA's @PrePersist to set the timestamp automatically
     @PrePersist
     protected void onCreate() {
         this.createdAt = LocalDateTime.now();
+        if (this.status == null) {
+            this.status = "Active";
+        }
     }
 }
+
