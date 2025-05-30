@@ -6,7 +6,6 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import java.time.LocalDateTime;
-import java.util.List;
 
 @Entity
 @Table(name = "MedicalResult")
@@ -23,8 +22,16 @@ public class MedicalResult {
     @Column(name = "AppointmentID", nullable = false)
     private Integer appointmentId;
 
+    @ManyToOne
+    @JoinColumn(name = "AppointmentID", insertable = false, updatable = false)
+    private Appointment appointment;
+
     @Column(name = "DoctorID", nullable = false)
     private Integer doctorId;
+
+    @ManyToOne
+    @JoinColumn(name = "DoctorID", insertable = false, updatable = false)
+    private Doctor doctor;
 
     @Column(name = "ResultDate", nullable = false)
     private LocalDateTime resultDate;
@@ -38,14 +45,13 @@ public class MedicalResult {
     @Column(name = "Status", nullable = false)
     private String status;
 
-    @ManyToOne
-    @JoinColumn(name = "AppointmentID", insertable = false, updatable = false)
-    private Appointment appointment;
-
-    @ManyToOne
-    @JoinColumn(name = "DoctorID", insertable = false, updatable = false)
-    private Doctor doctor;
-
     @OneToMany(mappedBy = "medicalResult")
-    private List<MedicalOrder> medicalOrders;
+    private java.util.List<MedicalOrder> orders;
+
+    @PrePersist
+    protected void onCreate() {
+        if (resultDate == null) {
+            resultDate = LocalDateTime.now();
+        }
+    }
 }
