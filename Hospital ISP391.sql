@@ -634,3 +634,74 @@ GO
 -- Sample data (optional, for testing)
 -- INSERT INTO [DoctorNotes] ([AppointmentID], [DoctorID], [NoteContent])
 -- VALUES (1, 1, 'Patient reported mild improvements after starting new medication. Recommended continuing current treatment plan with follow-up in 2 weeks.');
+
+
+-- Updated trigger that allows role changes but keeps associated records
+CREATE OR ALTER TRIGGER trg_ManageUserRoleChanges
+    ON [Users]
+    AFTER UPDATE
+    AS
+BEGIN
+    SET NOCOUNT ON;
+
+    IF UPDATE(RoleID) -- Only execute if RoleID was updated
+        BEGIN
+            DECLARE @RoleIDForPatient INT = (SELECT [RoleID] FROM [Role] WHERE [RoleName] = 'PATIENT');
+            DECLARE @RoleIDForDoctor INT = (SELECT [RoleID] FROM [Role] WHERE [RoleName] = 'DOCTOR');
+
+            -- Process each updated row individually
+            DECLARE @UserID INT, @NewRoleID INT, @OldRoleID INT
+            DECLARE user_cursor CURSOR FOR
+                SELECT i.[UserID], i.[RoleID], d.[RoleID]
+                FROM inserted i
+                         INNER JOIN deleted d ON i.[UserID] = d.[UserID]
+                WHERE i.[RoleID] <> d.[RoleID]; -- Only process rows where role actually changed
+
+            OPEN user_cursor
+            FETCH NEXT FROM user_cursor INTO @UserID, @NewRoleID, @OldRoleID
+
+            WHILE @@FETCH_STATUS = 0
+                BEGIN
+                    -- Check if changing TO doctor role
+                    IF @NewRoleID = @RoleIDForDoctor AND @OldRoleID = @RoleIDForPatient
+                        BEGIN
+                            -- Keep the Patient record but also add Doctor record
+                            IF NOT EXISTS (SELECT 1 FROM [Doctor] WHERE [UserID] = @UserID)
+                                BEGIN
+                                    INSERT INTO [Doctor] ([UserID], [BioDescription])
+                                    VALUES (@UserID, NULL);
+                                END
+                        END
+                        -- Check if changing TO patient role
+                    ELSE IF @NewRoleID = @RoleIDForPatient AND @OldRoleID = @RoleIDForDoctor
+                        BEGIN
+                            -- Keep the Doctor record but also add Patient record
+                            IF NOT EXISTS (SELECT 1 FROM [Patient] WHERE [UserID] = @UserID)
+                                BEGIN
+                                    INSERT INTO [Patient] ([UserID], [dateOfBirth], [gender], [address], [description])
+                                    VALUES (@UserID, NULL, NULL, NULL, NULL);
+                                END
+                        END
+                        -- If changing to any other role, just keep existing records
+                    ELSE
+                        BEGIN
+                            -- Make sure appropriate role-specific record exists
+                            IF @NewRoleID = @RoleIDForPatient AND NOT EXISTS (SELECT 1 FROM [Patient] WHERE [UserID] = @UserID)
+                                BEGIN
+                                    INSERT INTO [Patient] ([UserID], [dateOfBirth], [gender], [address], [description])
+                                    VALUES (@UserID, NULL, NULL, NULL, NULL);
+                                END
+                            ELSE IF @NewRoleID = @RoleIDForDoctor AND NOT EXISTS (SELECT 1 FROM [Doctor] WHERE [UserID] = @UserID)
+                                BEGIN
+                                    INSERT INTO [Doctor] ([UserID], [BioDescription])
+                                    VALUES (@UserID, NULL);
+                                END
+                        END
+
+                    FETCH NEXT FROM user_cursor INTO @UserID, @NewRoleID, @OldRoleID
+                END
+
+            CLOSE user_cursor
+            DEALLOCATE user_cursor
+        END
+END;
