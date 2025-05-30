@@ -160,7 +160,7 @@
         <div class="info-grid">
             <div class="info-item">
                 <span class="info-label">Appointment Date:</span>
-                <span th:text="${#dates.format(appointment.dateTime, 'MMMM d, yyyy - HH:mm')}">May 25, 2023 - 10:00</span>
+                <span th:text="${#temporals.format(appointment.dateTime, 'MMMM d, yyyy - HH:mm')}">May 25, 2023 - 10:00</span>
             </div>
             <div class="info-item">
                 <span class="info-label">Doctor:</span>
