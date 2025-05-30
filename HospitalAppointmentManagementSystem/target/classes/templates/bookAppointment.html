@@ -600,13 +600,17 @@
     }
 
     document.addEventListener("DOMContentLoaded", function() {
-        // Dynamically set the minimum date to tomorrow
-        const today = new Date();
-        const tomorrow = new Date(today);
-        tomorrow.setDate(today.getDate() + 1);
-        const tomorrowISOString = tomorrow.toISOString().split("T")[0];
-        document.getElementById("appointmentDate").setAttribute("min", tomorrowISOString);
-    });
+    // Dynamically set the minimum date to tomorrow and maximum date to 7 days from tomorrow
+    const today = new Date();
+    const tomorrow = new Date(today);
+    tomorrow.setDate(today.getDate() + 1);
+    const maxDate = new Date(tomorrow);
+    maxDate.setDate(tomorrow.getDate() + 7);
+    const tomorrowISOString = tomorrow.toISOString().split("T")[0];
+    const maxDateISOString = maxDate.toISOString().split("T")[0];
+    document.getElementById("appointmentDate").setAttribute("min", tomorrowISOString);
+    document.getElementById("appointmentDate").setAttribute("max", maxDateISOString);
+});
 </script>
 </body>
 </html>
