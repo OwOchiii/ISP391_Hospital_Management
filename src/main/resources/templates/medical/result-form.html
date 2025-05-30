@@ -309,6 +309,18 @@
 
             <div class="form-group">
                 <label class="form-label">Attach Result File (Optional)</label>
+                <!-- Display existing file if available -->
+                <div th:if="${result != null && result.fileUrl != null}" class="mb-3">
+                    <div class="d-flex align-items-center p-3 bg-light rounded border">
+                        <i class="bi bi-file-earmark-pdf text-danger me-2" style="font-size: 1.5rem;"></i>
+                        <div class="flex-grow-1">
+                            <span>Existing file attached</span>
+                        </div>
+                        <a th:href="${result.fileUrl}" class="btn btn-sm btn-primary" target="_blank">
+                            <i class="bi bi-eye me-1"></i> View File
+                        </a>
+                    </div>
+                </div>
                 <div class="file-upload-container">
                     <i class="bi bi-cloud-upload upload-icon"></i>
                     <div class="upload-text">Drag and drop file here</div>
