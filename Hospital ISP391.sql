@@ -705,3 +705,6 @@ BEGIN
             DEALLOCATE user_cursor
         END
 END;
+
+ALTER TABLE [Users]
+ADD [Status] VARCHAR(10) DEFAULT 'Active' CHECK ([Status] IN ('Active', 'Inactive', 'Suspended')) NOT NULL;
