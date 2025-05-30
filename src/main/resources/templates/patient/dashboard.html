@@ -584,12 +584,13 @@
     </div>
 
     <div class="nav-section-title">System</div>
-    <div class="nav-item">
-      <a href="/auth/logout" class="nav-link">
+    <form th:action="@{/auth/logout}" method="post">
+      <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}" />
+      <button type="submit" class="nav-link w-100 text-start border-0 bg-transparent">
         <i class="bi bi-box-arrow-right"></i>
         Logout
-      </a>
-    </div>
+      </button>
+    </form>
   </nav>
 </div>
 
@@ -744,16 +745,19 @@
     </div>
 
     <!-- Logout Section -->
-    <div class="logout-section">
-      <h4 style="margin-bottom: 1rem; color: var(--text-dark);">Session Management</h4>
-      <p style="color: var(--text-light); margin-bottom: 1.5rem;">
-        For your security, please log out when you're finished using the patient portal.
-      </p>
-      <a href="/auth/logout" class="logout-btn">
+    <h4 style="margin-bottom: 1rem; color: var(--text-dark);">Session Management</h4>
+    <p style="color: var(--text-light); margin-bottom: 1.5rem;">
+      For your security, please log out when you're finished using the patient portal.
+    </p>
+
+    <form th:action="@{/auth/logout}" method="post">
+      <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}" />
+      <button type="submit" class="logout-btn">
         <i class="bi bi-box-arrow-right"></i>
         Logout Securely
-      </a>
-    </div>
+      </button>
+    </form>
+  </div>
   </div>
 </div>
 
