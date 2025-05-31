@@ -830,6 +830,44 @@
                         </button>
                     </div>
 
+                    <div class="medical-history mt-4">
+                        <h6><i class="bi bi-clipboard-data me-2"></i>Medical Results</h6>
+
+                        <div th:if="${results != null and not results.empty}">
+                            <div class="history-item" th:each="result : ${results}">
+                                <div class="history-date">
+                                    <span th:text="${#temporals.format(result.resultDate, 'MMM d, yyyy')}">May 23, 2023</span>
+                                    <span class="badge rounded-pill ms-2"
+                                          th:classappend="${result.status == 'PENDING' ? 'bg-warning' :
+                                (result.status == 'IN_PROGRESS' ? 'bg-info' :
+                                (result.status == 'COMPLETED' ? 'bg-success' : 'bg-danger'))}"
+                                          th:text="${result.status}">PENDING</span>
+                                </div>
+                                <div class="history-content">
+                                    <span th:text="${result.description}">Blood test results showing normal values</span>
+                                </div>
+                                <div class="mt-2" th:if="${result.fileUrl != null}">
+                                    <a th:href="@{/download/medical-results/{filename}(filename=${result.fileUrl})}"
+                                       class="btn btn-sm btn-outline-primary">
+                                        <i class="bi bi-download"></i> Download File
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div th:if="${results == null or results.empty}" class="alert alert-info">
+                            <i class="bi bi-info-circle me-2"></i> No medical results have been added for this appointment yet.
+                        </div>
+
+                        <a th:href="@{/medical-results/appointment/{appointmentId}(appointmentId=${appointment.appointmentId},doctorId=${doctorId})}"
+                           class="btn btn-primary-custom mt-3">
+                            <i class="bi bi-plus-circle me-2"></i> View All Results
+                        </a>
+
+                        <button class="btn btn-primary-custom mt-3 ms-2" data-bs-toggle="modal" data-bs-target="#medicalResultModal">
+                            <i class="bi bi-plus-circle me-2"></i> Add Medical Result
+                        </button>
+                    </div>
 
 
                     <a th:href="@{/medical-results/generate-report/{appointmentId}(appointmentId=${appointment.appointmentId},doctorId=${doctorId})}"
@@ -840,6 +878,53 @@
                 </div>
             </div>
         </div>
+
+        <div class="modal fade" id="medicalResultModal" tabindex="-1" aria-labelledby="medicalResultModalLabel" aria-hidden="true">
+            <div class="modal-dialog modal-lg">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title" id="medicalResultModalLabel">
+                            <i class="bi bi-clipboard-data"></i> Add Medical Result
+                        </h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <div class="modal-body">
+                        <form th:action="@{/doctor/appointments/{appointmentId}/medical-result/submit(appointmentId=${appointment.appointmentId})}" method="post" enctype="multipart/form-data">
+                            <input type="hidden" name="appointmentId" th:value="${appointment.appointmentId}">
+                            <input type="hidden" name="doctorId" th:value="${doctorId}">
+
+                            <div class="form-group mb-3">
+                                <label for="resultDescription" class="form-label">Result Description</label>
+                                <textarea id="resultDescription" name="description" class="form-control" rows="4" required></textarea>
+                            </div>
+
+                            <div class="form-group mb-3">
+                                <label for="resultFile" class="form-label">Upload Result File (optional)</label>
+                                <input type="file" id="resultFile" name="resultFile" class="form-control">
+                            </div>
+
+                            <div class="form-group mb-3">
+                                <label for="resultStatus" class="form-label">Result Status</label>
+                                <select id="resultStatus" name="status" class="form-select" required>
+                                    <option value="PENDING">Pending</option>
+                                    <option value="IN_PROGRESS">In Progress</option>
+                                    <option value="COMPLETED">Completed</option>
+                                    <option value="CANCELLED">Cancelled</option>
+                                </select>
+                            </div>
+
+                            <div class="text-end">
+                                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                                <button type="submit" class="btn btn-primary-custom">
+                                    <i class="bi bi-save"></i> Save Result
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+
 
         <!-- Sidebar -->
         <div class="appointment-sidebar">
@@ -899,65 +984,54 @@
 </div>
 
 <!-- Medical Order Modal -->
-<div class="modal fade" id="medicalOrderModal" tabindex="-1" aria-labelledby="medicalOrderModalLabel" aria-hidden="true">
+<div class="modal fade" id="medicalResultModal" tabindex="-1" aria-labelledby="medicalResultModalLabel" aria-hidden="true">
     <div class="modal-dialog modal-lg">
         <div class="modal-content">
             <div class="modal-header">
-                <h5 class="modal-title" id="medicalOrderModalLabel">
-                    <i class="bi bi-clipboard-plus me-2"></i> Create New Medical Order
+                <h5 class="modal-title" id="medicalResultModalLabel">
+                    <i class="bi bi-clipboard-data"></i> Add Medical Result
                 </h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
-            <form th:action="@{/doctor/appointments/{appointmentId}/orders/create(appointmentId=${appointment.appointmentId})}" method="post">
-                <div class="modal-body">
+            <div class="modal-body">
+                <form th:action="@{/doctor/appointments/{appointmentId}/medical-result/submit(appointmentId=${appointment.appointmentId})}"
+                      method="post"
+                      enctype="multipart/form-data">
                     <input type="hidden" name="doctorId" th:value="${doctorId}">
 
                     <div class="form-group mb-3">
-                        <label for="orderType" class="form-label">Order Type</label>
-                        <select id="orderType" name="orderType" class="form-select" required>
-                            <option value="">Select Order Type</option>
-                            <option value="LABORATORY">Laboratory</option>
-                            <option value="RADIOLOGY">Radiology</option>
-                            <option value="MEDICATION">Medication</option>
-                            <option value="PROCEDURE">Procedure</option>
-                            <option value="CONSULTATION">Consultation</option>
-                        </select>
+                        <label for="description" class="form-label">Result Description</label>
+                        <textarea id="description" name="description" class="form-control" rows="4" required></textarea>
                     </div>
 
                     <div class="form-group mb-3">
-                        <label for="description" class="form-label">Description</label>
-                        <textarea id="description" name="description" class="form-control" rows="3" required></textarea>
+                        <label for="fileUrl" class="form-label">File URL (if available)</label>
+                        <input type="text" id="fileUrl" name="fileUrl" class="form-control">
+                        <small class="text-muted">Enter the URL if you have an external file to reference</small>
                     </div>
 
                     <div class="form-group mb-3">
-                        <label for="status" class="form-label">Status</label>
+                        <label for="status" class="form-label">Result Status</label>
                         <select id="status" name="status" class="form-select" required>
                             <option value="PENDING">Pending</option>
                             <option value="IN_PROGRESS">In Progress</option>
                             <option value="COMPLETED">Completed</option>
+                            <option value="CANCELLED">Cancelled</option>
                         </select>
                     </div>
 
-                    <div class="form-group mb-3">
-                        <label for="assignedToDeptId" class="form-label">Assign to Department (Optional)</label>
-                        <select id="assignedToDeptId" name="assignedToDeptId" class="form-select">
-                            <option value="">Select Department</option>
-                            <option value="1">Laboratory</option>
-                            <option value="2">Radiology</option>
-                            <option value="3">Pharmacy</option>
-                            <option value="4">Physical Therapy</option>
-                        </select>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                        <button type="submit" class="btn btn-primary-custom">
+                            <i class="bi bi-save"></i> Save Result
+                        </button>
                     </div>
-                </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-                    <button type="submit" class="btn btn-primary-custom">Create Order</button>
-                </div>
-            </form>
-
+                </form>
+            </div>
         </div>
     </div>
 </div>
+
 
 
 </body>
@@ -1077,6 +1151,10 @@
 
 </body>
 </html>
+
+
+
+
 
 
 
