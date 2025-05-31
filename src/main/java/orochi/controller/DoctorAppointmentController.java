@@ -8,16 +8,18 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
-import orochi.model.Appointment;
-import orochi.model.Doctor;
-import orochi.model.MedicalOrder;
-import orochi.model.Patient;
+import orochi.model.*;
 import orochi.repository.DoctorRepository;
 import orochi.repository.MedicalOrderRepository;
+import orochi.repository.MedicalResultRepository;
 import orochi.service.DoctorService;
+import orochi.service.FileStorageService;
 
+import java.io.IOException;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.*;
 
 @Controller
@@ -34,6 +36,12 @@ public class DoctorAppointmentController {
 
     @Autowired
     private DoctorRepository doctorRepository;
+
+    @Autowired
+    private MedicalResultRepository medicalResultRepository;
+
+    @Autowired
+    private FileStorageService fileStorageService;
 
     @GetMapping("")
     public String getAllAppointments(
@@ -325,11 +333,13 @@ public class DoctorAppointmentController {
             if (appointment.isPresent()) {
                 Optional<Patient> patient = doctorService.getPatientDetails(appointment.get().getPatientId());
                 List<MedicalOrder> medicalOrders = medicalOrderRepository.findByAppointmentIdOrderByOrderDate(appointmentId);
+                List<MedicalResult> results = medicalResultRepository.findByAppointmentIdOrderByResultDateDesc(appointmentId);
 
                 model.addAttribute("appointment", appointment.get());
                 model.addAttribute("patient", patient.orElse(null));
                 model.addAttribute("medicalOrders", medicalOrders);
                 model.addAttribute("doctorId", doctorId);
+                model.addAttribute("results", results);
 
                 logger.debug("Successfully retrieved appointment details for appointment ID: {}", appointmentId);
                 return "doctor/appointment-details";
@@ -451,4 +461,69 @@ public class DoctorAppointmentController {
         }
     }
 
+    @PostMapping("/{appointmentId}/medical-result/submit")
+    public String submitMedicalResult(
+            @PathVariable Integer appointmentId,
+            @RequestParam Integer doctorId,
+            @RequestParam String description,
+            @RequestParam(required = false) MultipartFile resultFile,
+            @RequestParam String status,
+            RedirectAttributes redirectAttributes) {
+
+        try {
+            logger.info("Submitting medical result for appointment ID: {} by doctor ID: {}", appointmentId, doctorId);
+
+            // Verify the appointment exists and belongs to this doctor
+            Optional<Appointment> appointmentOpt = doctorService.getAppointmentDetails(appointmentId, doctorId);
+            if (appointmentOpt.isEmpty()) {
+                logger.warn("Attempt to submit result for non-existent or unauthorized appointment ID: {} by doctor ID: {}",
+                        appointmentId, doctorId);
+                redirectAttributes.addFlashAttribute("errorMessage",
+                        "Appointment not found or you don't have permission to submit results for it.");
+                return "redirect:/doctor/appointments";
+            }
+
+            // Create the medical result
+            MedicalResult medicalResult = new MedicalResult();
+            medicalResult.setAppointmentId(appointmentId);
+            medicalResult.setDoctorId(doctorId);
+            medicalResult.setDescription(description);
+            medicalResult.setStatus(status);
+            medicalResult.setResultDate(LocalDateTime.now());
+
+            // Handle file upload if provided
+            if (resultFile != null && !resultFile.isEmpty()) {
+                try {
+                    String fileUrl = fileStorageService.storeFile(resultFile, "medical-results");
+                    medicalResult.setFileUrl(fileUrl);
+                    logger.info("File uploaded successfully for appointment ID: {}, file URL: {}",
+                            appointmentId, fileUrl);
+                } catch (IOException e) {
+                    logger.error("Failed to upload file for appointment ID: {}", appointmentId, e);
+                    redirectAttributes.addFlashAttribute("warningMessage",
+                            "Medical result was saved but file upload failed: " + e.getMessage());
+                    // Continue with saving the result even if file upload fails
+                }
+            }
+
+            // Save the result
+            medicalResultRepository.save(medicalResult);
+            logger.info("Successfully created medical result ID: {} for appointment ID: {}",
+                    medicalResult.getResultId(), appointmentId);
+
+            // Add success message
+            redirectAttributes.addFlashAttribute("successMessage",
+                    "Medical result submitted successfully.");
+
+            // Redirect back to the appointment details
+            return "redirect:/doctor/appointments/" + appointmentId + "?doctorId=" + doctorId;
+
+        } catch (Exception e) {
+            logger.error("Error submitting medical result for appointment ID: {} by doctor ID: {}",
+                    appointmentId, doctorId, e);
+            redirectAttributes.addFlashAttribute("errorMessage",
+                    "Failed to submit medical result: " + e.getMessage());
+            return "redirect:/doctor/appointments/" + appointmentId + "?doctorId=" + doctorId;
+        }
+    }
 }
