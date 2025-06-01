@@ -464,13 +464,13 @@
 
     <nav class="sidebar-nav">
         <div class="nav-item">
-            <a th:href="@{/doctor/dashboard(doctorId=${doctorId})}" class="nav-link">
+            <a th:href="@{/doctor/dashboard(doctorId=${doctorId})}" class="nav-link active">
                 <i class="bi bi-speedometer2"></i>
                 Dashboard
             </a>
         </div>
         <div class="nav-item">
-            <a th:href="@{/doctor/appointments(doctorId=${doctorId})}" class="nav-link active">
+            <a th:href="@{/doctor/appointments(doctorId=${doctorId})}" class="nav-link">
                 <i class="bi bi-calendar-check"></i>
                 Appointments
             </a>
@@ -488,6 +488,12 @@
             </a>
         </div>
         <div class="nav-item">
+            <a th:href="@{/doctor/schedule(doctorId=${doctorId})}" class="nav-link">
+                <i class="bi bi-calendar-week"></i>
+                View Schedule
+            </a>
+        </div>
+        <div class="nav-item">
             <a href="#" class="nav-link">
                 <i class="bi bi-chat-dots"></i>
                 Messages
@@ -500,10 +506,13 @@
             </a>
         </div>
         <div class="nav-item">
-            <a th:href="@{/auth/logout}" class="nav-link">
-                <i class="bi bi-box-arrow-right"></i>
-                Logout
-            </a>
+            <form th:action="@{/auth/logout}" method="post">
+                <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}" />
+                <button type="submit" class="nav-link w-100 text-start border-0 bg-transparent">
+                    <i class="bi bi-box-arrow-right"></i>
+                    Logout
+                </button>
+            </form>
         </div>
     </nav>
 </div>
