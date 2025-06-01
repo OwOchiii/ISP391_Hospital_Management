@@ -3,6 +3,10 @@ package orochi.controller;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
@@ -325,6 +329,10 @@ public class DoctorAppointmentController {
     public String getAppointmentDetails(
             @PathVariable Integer appointmentId,
             @RequestParam Integer doctorId,
+            @RequestParam(defaultValue = "0") Integer orderPage,
+            @RequestParam(defaultValue = "5") Integer orderSize,
+            @RequestParam(defaultValue = "0") Integer resultPage,
+            @RequestParam(defaultValue = "5") Integer resultSize,
             Model model) {
         try {
             logger.info("Fetching details for appointment ID: {} for doctor ID: {}", appointmentId, doctorId);
@@ -332,14 +340,31 @@ public class DoctorAppointmentController {
 
             if (appointment.isPresent()) {
                 Optional<Patient> patient = doctorService.getPatientDetails(appointment.get().getPatientId());
-                List<MedicalOrder> medicalOrders = medicalOrderRepository.findByAppointmentIdOrderByOrderDate(appointmentId);
-                List<MedicalResult> results = medicalResultRepository.findByAppointmentIdOrderByResultDateDesc(appointmentId);
+
+                // Create Pageable objects for pagination
+                Pageable orderPageable = PageRequest.of(orderPage, orderSize, Sort.by(Sort.Direction.DESC, "orderDate"));
+                Pageable resultPageable = PageRequest.of(resultPage, resultSize, Sort.by(Sort.Direction.DESC, "resultDate"));
+
+                // Get paginated medical orders and results
+                Page<MedicalOrder> medicalOrdersPage = medicalOrderRepository.findByAppointmentId(appointmentId, orderPageable);
+                Page<MedicalResult> resultsPage = medicalResultRepository.findByAppointmentId(appointmentId, resultPageable);
 
                 model.addAttribute("appointment", appointment.get());
                 model.addAttribute("patient", patient.orElse(null));
-                model.addAttribute("medicalOrders", medicalOrders);
+                model.addAttribute("medicalOrders", medicalOrdersPage.getContent());
                 model.addAttribute("doctorId", doctorId);
-                model.addAttribute("results", results);
+                model.addAttribute("results", resultsPage.getContent());
+
+                // Add pagination information to the model
+                model.addAttribute("orderCurrentPage", orderPage);
+                model.addAttribute("orderTotalPages", medicalOrdersPage.getTotalPages());
+                model.addAttribute("orderTotalItems", medicalOrdersPage.getTotalElements());
+                model.addAttribute("orderSize", orderSize);
+
+                model.addAttribute("resultCurrentPage", resultPage);
+                model.addAttribute("resultTotalPages", resultsPage.getTotalPages());
+                model.addAttribute("resultTotalItems", resultsPage.getTotalElements());
+                model.addAttribute("resultSize", resultSize);
 
                 logger.debug("Successfully retrieved appointment details for appointment ID: {}", appointmentId);
                 return "doctor/appointment-details";
