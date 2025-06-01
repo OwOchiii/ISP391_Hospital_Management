@@ -708,3 +708,5 @@ END;
 
 ALTER TABLE [Users]
 ADD [Status] VARCHAR(10) DEFAULT 'Active' CHECK ([Status] IN ('Active', 'Inactive', 'Suspended')) NOT NULL;
+
+ALTER TABLE [Patient] DROP COLUMN [address];

@@ -29,9 +29,6 @@ public class Patient {
     @Column(name = "gender")
     private String gender;
 
-    @Column(name = "address")
-    private String address;
-
     @Column(name = "description", length = Integer.MAX_VALUE)
     private String description;
 
