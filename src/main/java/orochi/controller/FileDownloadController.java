@@ -97,6 +97,37 @@ public class FileDownloadController {
     }
 
     /**
+     * Download a medical result file directly by filename
+     * @param filename The name of the file to download
+     * @param inline If true, view the file inline; if false (default), download the file
+     */
+    @GetMapping("/medical-results/{filename:.+}")
+    @ResponseBody
+    public ResponseEntity<Resource> downloadMedicalResultByFileName(
+            @PathVariable String filename,
+            @RequestParam(required = false, defaultValue = "false") boolean inline) {
+        try {
+            logger.info("Requested medical result file: {}", filename);
+
+            // If the filename contains a full URL, extract just the filename part
+            if (filename.contains("http://") || filename.contains("https://")) {
+                // Extract the path part after the last slash in the URL
+                String[] parts = filename.split("/");
+                filename = parts[parts.length - 1];
+                logger.info("Extracted filename from full URL: {}", filename);
+            } else if (filename.contains("/")) {
+                filename = filename.substring(filename.lastIndexOf("/") + 1);
+                logger.info("Extracted filename from path: {}", filename);
+            }
+
+            return serveFile(filename, inline);
+        } catch (Exception e) {
+            logger.error("Error serving medical result file: {}", filename, e);
+            return ResponseEntity.internalServerError().build();
+        }
+    }
+
+    /**
      * Helper method to serve a file from the medical-results directory
      * @param fileName The name of the file to serve
      * @param inline Whether to display the file inline or as an attachment

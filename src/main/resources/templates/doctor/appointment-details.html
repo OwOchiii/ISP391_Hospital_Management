@@ -768,13 +768,44 @@
                         <h6><i class="bi bi-list-check me-2"></i>Medical Orders</h6>
 
                         <div th:if="${medicalOrders != null and not medicalOrders.empty}">
+                            <div class="d-flex justify-content-between align-items-center mb-3">
+                                <div>
+                <span>Showing
+                    <span th:text="${(orderCurrentPage * orderSize) + 1}">1</span>-<span
+                            th:text="${(orderCurrentPage * orderSize) + medicalOrders.size()}">5</span>
+                    of <span th:text="${orderTotalItems}">10</span> orders
+                </span>
+                                </div>
+                                <div>
+                                    <nav aria-label="Medical orders pagination">
+                                        <ul class="pagination pagination-sm">
+                                            <li class="page-item" th:classappend="${orderCurrentPage == 0 ? 'disabled' : ''}">
+                                                <a class="page-link" th:href="@{/doctor/appointments/{id}(id=${appointment.appointmentId},doctorId=${doctorId},orderPage=${orderCurrentPage - 1},resultPage=${resultCurrentPage})}">
+                                                    <i class="bi bi-chevron-left"></i>
+                                                </a>
+                                            </li>
+                                            <li class="page-item" th:each="i : ${#numbers.sequence(0, orderTotalPages - 1)}"
+                                                th:classappend="${orderCurrentPage == i ? 'active' : ''}">
+                                                <a class="page-link" th:href="@{/doctor/appointments/{id}(id=${appointment.appointmentId},doctorId=${doctorId},orderPage=${i},resultPage=${resultCurrentPage})}"
+                                                   th:text="${i + 1}">1</a>
+                                            </li>
+                                            <li class="page-item" th:classappend="${orderCurrentPage >= orderTotalPages - 1 ? 'disabled' : ''}">
+                                                <a class="page-link" th:href="@{/doctor/appointments/{id}(id=${appointment.appointmentId},doctorId=${doctorId},orderPage=${orderCurrentPage + 1},resultPage=${resultCurrentPage})}">
+                                                    <i class="bi bi-chevron-right"></i>
+                                                </a>
+                                            </li>
+                                        </ul>
+                                    </nav>
+                                </div>
+                            </div>
+
                             <div class="history-item" th:each="order : ${medicalOrders}">
                                 <div class="history-date">
                                     <span th:text="${#dates.format(order.orderDate, 'MMM d, yyyy')}">May 23, 2023</span>
                                     <span class="badge rounded-pill ms-2"
                                           th:classappend="${order.status == 'PENDING' ? 'bg-warning' :
-                                    (order.status == 'IN_PROGRESS' ? 'bg-info' :
-                                    (order.status == 'COMPLETED' ? 'bg-success' : 'bg-danger'))}"
+                (order.status == 'IN_PROGRESS' ? 'bg-info' :
+                (order.status == 'COMPLETED' ? 'bg-success' : 'bg-danger'))}"
                                           th:text="${order.status}">PENDING</span>
                                 </div>
                                 <div class="history-content">
@@ -830,24 +861,59 @@
                         </button>
                     </div>
 
+
+
+
                     <div class="medical-history mt-4">
                         <h6><i class="bi bi-clipboard-data me-2"></i>Medical Results</h6>
 
                         <div th:if="${results != null and not results.empty}">
+                            <div class="d-flex justify-content-between align-items-center mb-3">
+                                <div>
+                <span>Showing
+                    <span th:text="${(resultCurrentPage * resultSize) + 1}">1</span>-<span
+                            th:text="${(resultCurrentPage * resultSize) + results.size()}">5</span>
+                    of <span th:text="${resultTotalItems}">10</span> results
+                </span>
+                                </div>
+                                <div>
+                                    <nav aria-label="Medical results pagination">
+                                        <ul class="pagination pagination-sm">
+                                            <li class="page-item" th:classappend="${resultCurrentPage == 0 ? 'disabled' : ''}">
+                                                <a class="page-link" th:href="@{/doctor/appointments/{id}(id=${appointment.appointmentId},doctorId=${doctorId},resultPage=${resultCurrentPage - 1},orderPage=${orderCurrentPage})}">
+                                                    <i class="bi bi-chevron-left"></i>
+                                                </a>
+                                            </li>
+                                            <li class="page-item" th:each="i : ${#numbers.sequence(0, resultTotalPages - 1)}"
+                                                th:classappend="${resultCurrentPage == i ? 'active' : ''}">
+                                                <a class="page-link" th:href="@{/doctor/appointments/{id}(id=${appointment.appointmentId},doctorId=${doctorId},resultPage=${i},orderPage=${orderCurrentPage})}"
+                                                   th:text="${i + 1}">1</a>
+                                            </li>
+                                            <li class="page-item" th:classappend="${resultCurrentPage >= resultTotalPages - 1 ? 'disabled' : ''}">
+                                                <a class="page-link" th:href="@{/doctor/appointments/{id}(id=${appointment.appointmentId},doctorId=${doctorId},resultPage=${resultCurrentPage + 1},orderPage=${orderCurrentPage})}">
+                                                    <i class="bi bi-chevron-right"></i>
+                                                </a>
+                                            </li>
+                                        </ul>
+                                    </nav>
+                                </div>
+                            </div>
+
+
                             <div class="history-item" th:each="result : ${results}">
                                 <div class="history-date">
                                     <span th:text="${#temporals.format(result.resultDate, 'MMM d, yyyy')}">May 23, 2023</span>
                                     <span class="badge rounded-pill ms-2"
                                           th:classappend="${result.status == 'PENDING' ? 'bg-warning' :
-                                (result.status == 'IN_PROGRESS' ? 'bg-info' :
-                                (result.status == 'COMPLETED' ? 'bg-success' : 'bg-danger'))}"
+                (result.status == 'IN_PROGRESS' ? 'bg-info' :
+                (result.status == 'COMPLETED' ? 'bg-success' : 'bg-danger'))}"
                                           th:text="${result.status}">PENDING</span>
                                 </div>
                                 <div class="history-content">
                                     <span th:text="${result.description}">Blood test results showing normal values</span>
                                 </div>
                                 <div class="mt-2" th:if="${result.fileUrl != null}">
-                                    <a th:href="@{/download/medical-results/{filename}(filename=${result.fileUrl})}"
+                                    <a th:href="@{/download/medical-results/{filename}(filename=${result.fileUrl != null ? result.fileUrl.substring(result.fileUrl.lastIndexOf('/') + 1) : ''})}"
                                        class="btn btn-sm btn-outline-primary">
                                         <i class="bi bi-download"></i> Download File
                                     </a>
@@ -859,15 +925,13 @@
                             <i class="bi bi-info-circle me-2"></i> No medical results have been added for this appointment yet.
                         </div>
 
-                        <a th:href="@{/medical-results/appointment/{appointmentId}(appointmentId=${appointment.appointmentId},doctorId=${doctorId})}"
-                           class="btn btn-primary-custom mt-3">
-                            <i class="bi bi-plus-circle me-2"></i> View All Results
-                        </a>
-
-                        <button class="btn btn-primary-custom mt-3 ms-2" data-bs-toggle="modal" data-bs-target="#medicalResultModal">
+                        <button class="btn btn-primary-custom mt-3" data-bs-toggle="modal" data-bs-target="#medicalResultModal">
                             <i class="bi bi-plus-circle me-2"></i> Add Medical Result
                         </button>
                     </div>
+
+
+
 
 
                     <a th:href="@{/medical-results/generate-report/{appointmentId}(appointmentId=${appointment.appointmentId},doctorId=${doctorId})}"
@@ -1149,7 +1213,6 @@
     }
 </script>
 
-</body>
 </html>
 
 
