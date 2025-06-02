@@ -39,9 +39,6 @@ public class SecurityConfig {
                                 .requestMatchers("/doctor/**").hasAuthority("DOCTOR")
                                 .requestMatchers("/receptionist/**").hasAuthority("RECEPTIONIST")
                                 .requestMatchers("/patient/**").hasAuthority("PATIENT")
-                                .requestMatchers("/api/patient/details", "/api/specializations", "/api/doctors", "/api/booked-times").authenticated()
-                                .requestMatchers("/api/appointments").hasRole("PATIENT")
-                                .requestMatchers("/patient/**").hasRole("PATIENT")
                                 .anyRequest().authenticated()
                 )
                 .formLogin(formLogin ->

@@ -6,7 +6,6 @@ import org.springframework.data.repository.query.Param;
 import orochi.model.Patient;
 
 import java.util.List;
-import java.util.Optional;
 
 public interface PatientRepository extends JpaRepository<Patient, Integer> {
     // Basic CRUD operations provided by JpaRepository
@@ -17,6 +16,4 @@ public interface PatientRepository extends JpaRepository<Patient, Integer> {
     @Query("SELECT p FROM Patient p JOIN p.user u WHERE LOWER(u.fullName) LIKE LOWER(CONCAT('%', :name, '%'))")
     List<Patient> findByFullNameContainingIgnoreCase(@Param("name") String name);
     // Additional custom methods if needed
-
-    Optional<Patient> findByUserId(Integer userId);
 }

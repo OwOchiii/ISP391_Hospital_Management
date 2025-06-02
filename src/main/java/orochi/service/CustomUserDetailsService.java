@@ -65,7 +65,7 @@ public class CustomUserDetailsService implements UserDetailsService {
                 logger.warn("No doctor record found for user {} with ID {}", email, user.getUserId());
             }
         } else if ("PATIENT".equals(authority)) {
-            Optional<Patient> patient = patientRepository.findByUserId(user.getUserId());
+            Optional<Patient> patient = patientRepository.findById(user.getUserId());
             if (patient.isPresent()) {
                 patientId = patient.get().getPatientId();
                 logger.info("Found patientId {} for user {}", patientId, email);
