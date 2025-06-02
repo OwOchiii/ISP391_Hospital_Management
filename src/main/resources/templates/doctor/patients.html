@@ -831,7 +831,9 @@
             <div class="d-flex justify-content-between align-items-center flex-wrap gap-3">
                 <div class="search-container">
                     <i class="bi bi-search search-icon"></i>
-                    <input type="text" class="search-input" placeholder="Search patients by name, ID, or phone..." id="searchInput">
+                    <input type="text" class="search-input" placeholder="Search patients by name, ID, or phone..."
+                           id="searchInput" name="name">
+                    <input type="hidden" name="doctorId" th:value="${doctorId}">
                 </div>
 
                 <div class="d-flex gap-2">
@@ -1083,7 +1085,8 @@
 
 <!-- Bootstrap JS -->
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-
+<!-- Add this just before the closing body tag -->
+<script th:src="@{/js/patients.js}"></script>
 <script th:inline="javascript">
     /*<![CDATA[*/
     // Sidebar toggle functionality
@@ -1107,6 +1110,13 @@
             sidebar.classList.remove('collapsed');
             mainContent.classList.remove('expanded');
         }
+    }
+
+    function performSearch(event) {
+        event.preventDefault();
+        const searchTerm = document.getElementById('searchInput').value.toLowerCase();
+        clientSideSearch(searchTerm);
+        return false;
     }
 
     document.addEventListener('DOMContentLoaded', function() {
@@ -1232,6 +1242,61 @@
     function exportPatients() {
         // Export functionality
         window.location.href = '/doctor/patients/export?doctorId=' + /*[[${doctorId}]]*/ '123';
+    }
+
+    // Search functionality
+    const searchInput = document.getElementById('searchInput');
+    const searchForm = document.getElementById('searchForm');
+    const patientsContainer = document.getElementById('patientsContainer');
+    const emptyState = document.getElementById('emptyState');
+
+    searchInput.addEventListener('input', function() {
+        const searchTerm = this.value.toLowerCase();
+
+        // Only do client-side filtering for short queries
+        if (searchTerm.length > 0 && searchTerm.length < 3) {
+            clientSideSearch(searchTerm);
+        }
+    });
+
+    searchInput.addEventListener('keydown', function(e) {
+        if (e.key === 'Enter') {
+            e.preventDefault();
+            if (this.value.length >= 3) {
+                searchForm.submit();
+            } else {
+                clientSideSearch(this.value.toLowerCase());
+            }
+        }
+    });
+
+    function clientSideSearch(searchTerm) {
+        const patientCards = patientsContainer.querySelectorAll('.patient-card');
+        let visibleCount = 0;
+
+        patientCards.forEach(card => {
+            const patientName = card.querySelector('.patient-name').textContent.toLowerCase();
+            const patientId = card.querySelector('.patient-id').textContent.toLowerCase();
+            const phoneNumber = card.querySelector('.detail-value').textContent.toLowerCase();
+
+            if (patientName.includes(searchTerm) ||
+                patientId.includes(searchTerm) ||
+                phoneNumber.includes(searchTerm)) {
+                card.style.display = 'block';
+                visibleCount++;
+            } else {
+                card.style.display = 'none';
+            }
+        });
+
+        // Show/hide empty state
+        if (visibleCount === 0 && searchTerm !== '') {
+            emptyState.style.display = 'block';
+            patientsContainer.style.display = 'none';
+        } else {
+            emptyState.style.display = 'none';
+            patientsContainer.style.display = 'grid';
+        }
     }
     /*]]>*/
 </script>
