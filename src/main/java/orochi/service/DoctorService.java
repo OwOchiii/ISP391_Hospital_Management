@@ -303,4 +303,28 @@ public class DoctorService {
             return 0;
         }
     }
+
+    public Page<Patient> findByDoctorAndStatus(Integer doctorId, String status, int page, int size) {
+        PageRequest pageRequest = PageRequest.of(page, size);
+        if (status.equalsIgnoreCase("active")) {
+            return patientRepository.findByDoctorIdAndStatus(doctorId, "ACTIVE", pageRequest);
+        } else if (status.equalsIgnoreCase("new")) {
+            return patientRepository.findByDoctorIdAndStatus(doctorId, "NEW", pageRequest);
+        } else if (status.equalsIgnoreCase("inactive")) {
+            return patientRepository.findByDoctorIdAndStatus(doctorId, "INACTIVE", pageRequest);
+        }
+        return findByDoctor(doctorId, page, size);
+    }
+
+    public Page<Patient> findAllPatientsByStatus(String status, int page, int size) {
+        PageRequest pageRequest = PageRequest.of(page, size);
+        if (status.equalsIgnoreCase("active")) {
+            return patientRepository.findByStatus("ACTIVE", pageRequest);
+        } else if (status.equalsIgnoreCase("new")) {
+            return patientRepository.findByStatus("NEW", pageRequest);
+        } else if (status.equalsIgnoreCase("inactive")) {
+            return patientRepository.findByStatus("INACTIVE", pageRequest);
+        }
+        return findAllPatients(page, size);
+    }
 }

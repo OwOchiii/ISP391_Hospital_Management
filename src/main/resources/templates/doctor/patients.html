@@ -802,12 +802,6 @@
                         </ol>
                     </nav>
                 </div>
-                <div>
-                    <a th:href="@{/doctor/patients/new(doctorId=${doctorId})}" class="btn-primary-custom">
-                        <i class="bi bi-plus-circle"></i>
-                        Add New Patient
-                    </a>
-                </div>
             </div>
         </div>
 
@@ -815,19 +809,19 @@
         <div class="controls-section">
             <!-- Filter Tabs -->
             <div class="filter-tabs">
-                <a href="#" class="filter-tab active" data-filter="all">
+                <a th:href="@{/doctor/patients(doctorId=${doctorId}, status='all')}" class="filter-tab" th:classappend="${param.status == null || param.status == 'all' ? 'active' : ''}">
                     <i class="bi bi-people me-2"></i>All Patients
                     <span class="badge bg-primary ms-2" th:text="${totalPatients ?: '0'}">24</span>
                 </a>
-                <a href="#" class="filter-tab" data-filter="active">
+                <a th:href="@{/doctor/patients(doctorId=${doctorId}, status='active')}" class="filter-tab" th:classappend="${param.status == 'active' ? 'active' : ''}">
                     <i class="bi bi-person-check me-2"></i>Active
                     <span class="badge bg-success ms-2" th:text="${activePatients ?: '0'}">18</span>
                 </a>
-                <a href="#" class="filter-tab" data-filter="new">
+                <a th:href="@{/doctor/patients(doctorId=${doctorId}, status='new')}" class="filter-tab" th:classappend="${param.status == 'new' ? 'active' : ''}">
                     <i class="bi bi-person-plus me-2"></i>New Patients
                     <span class="badge bg-info ms-2" th:text="${newPatients ?: '0'}">3</span>
                 </a>
-                <a href="#" class="filter-tab" data-filter="inactive">
+                <a th:href="@{/doctor/patients(doctorId=${doctorId}, status='inactive')}" class="filter-tab" th:classappend="${param.status == 'inactive' ? 'active' : ''}">
                     <i class="bi bi-person-x me-2"></i>Inactive
                     <span class="badge bg-warning ms-2" th:text="${inactivePatients ?: '0'}">3</span>
                 </a>
@@ -1154,18 +1148,24 @@
         });
 
         // Filter tabs functionality
+// Filter tabs functionality
         const filterTabs = document.querySelectorAll('.filter-tab');
         filterTabs.forEach(tab => {
             tab.addEventListener('click', function(e) {
-                e.preventDefault();
+                // Don't prevent default if we want the link to actually navigate
+                // e.preventDefault();
 
                 // Update active tab
                 filterTabs.forEach(t => t.classList.remove('active'));
                 this.classList.add('active');
 
-                // Filter patients
-                const filter = this.getAttribute('data-filter');
-                filterPatients(filter);
+                // If we want to do client-side filtering as well:
+                const filter = this.getAttribute('data-filter') || this.href.split('status=')[1];
+                if (filter) {
+                    // Only do client-side filtering if we're not changing pages
+                    e.preventDefault();
+                    filterPatients(filter);
+                }
             });
         });
 

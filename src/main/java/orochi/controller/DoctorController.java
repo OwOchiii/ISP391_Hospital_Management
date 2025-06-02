@@ -129,6 +129,7 @@ public class DoctorController {
             @RequestParam(required = false) Integer doctorId,
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int size,
+            @RequestParam(required = false) String status,
             Model model,
             Authentication authentication) {
         try {
@@ -149,9 +150,18 @@ public class DoctorController {
             // Get paginated patients - either for specific doctor or all patients
             Page<Patient> patientsPage;
             if (doctorId != null) {
-                patientsPage = doctorService.findByDoctor(doctorId, page, size);
+                // Apply status filter if provided
+                if (status != null && !status.equals("all")) {
+                    patientsPage = doctorService.findByDoctorAndStatus(doctorId, status, page, size);
+                } else {
+                    patientsPage = doctorService.findByDoctor(doctorId, page, size);
+                }
             } else {
-                patientsPage = doctorService.findAllPatients(page, size);
+                if (status != null && !status.equals("all")) {
+                    patientsPage = doctorService.findAllPatientsByStatus(status, page, size);
+                } else {
+                    patientsPage = doctorService.findAllPatients(page, size);
+                }
             }
 
             // Process patients to enrich with derived data
@@ -255,7 +265,7 @@ public class DoctorController {
             model.addAttribute("newPatients", newCount);
             model.addAttribute("inactivePatients", inactiveCount);
             model.addAttribute("doctorId", doctorId);
-
+            model.addAttribute("selectedStatus", status != null ? status : "all");
             // Get doctor name if doctorId is provided
             if (doctorId != null) {
                 Doctor doctor = doctorRepository.findById(doctorId).orElse(null);
