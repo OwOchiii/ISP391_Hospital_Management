@@ -7,6 +7,7 @@ import orochi.model.Appointment;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Optional;
 
 public interface AppointmentRepository extends JpaRepository<Appointment, Integer> {
 
@@ -27,7 +28,6 @@ public interface AppointmentRepository extends JpaRepository<Appointment, Intege
     //Get appointments by doctor id and status
     List<Appointment> findByDoctorIdAndStatusOrderByDateTimeDesc(Integer doctorId, String status);
 
-
     // Get appointments by patient for a specific doctor
     List<Appointment> findByPatientIdAndDoctorIdOrderByDateTimeDesc(Integer patientId, Integer doctorId);
 
@@ -42,4 +42,25 @@ public interface AppointmentRepository extends JpaRepository<Appointment, Intege
 
     List<Appointment> findByPatientIdAndDateTimeAfterOrderByDateTime(Integer patientId, LocalDateTime now);
     List<Appointment> findByPatientIdOrderByDateTimeDesc(Integer patientId);
+
+    // Count appointments for a patient with a specific doctor
+    Long countByPatientIdAndDoctorId(Integer patientId, Integer doctorId);
+
+    // Count upcoming appointments for a patient with a specific doctor
+    Long countByPatientIdAndDoctorIdAndDateTimeAfter(Integer patientId, Integer doctorId, LocalDateTime dateTime);
+
+    // Find the most recent appointment for a patient with a specific doctor
+    Optional<Appointment> findTopByPatientIdAndDoctorIdAndDateTimeBeforeOrderByDateTimeDesc(
+            Integer patientId, Integer doctorId, LocalDateTime dateTime);
+
+    // Count all appointments for a patient (regardless of doctor)
+    Long countByPatientId(Integer patientId);
+
+    // Count upcoming appointments for a patient (regardless of doctor)
+    Long countByPatientIdAndDateTimeAfter(Integer patientId, LocalDateTime dateTime);
+
+    // Find the most recent appointment for a patient (regardless of doctor)
+    Optional<Appointment> findTopByPatientIdAndDateTimeBeforeOrderByDateTimeDesc(
+            Integer patientId, LocalDateTime dateTime);
 }
+
