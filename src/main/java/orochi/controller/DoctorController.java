@@ -3,6 +3,7 @@ package orochi.controller;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
@@ -105,6 +106,8 @@ public class DoctorController {
                 patients = new ArrayList<>();
             }
 
+
+
             model.addAttribute("todayAppointments", todayAppointments);
             model.addAttribute("upcomingAppointments", upcomingAppointments);
             model.addAttribute("pendingOrders", pendingOrders);
@@ -122,17 +125,157 @@ public class DoctorController {
 
 
     @GetMapping("/patients")
-    public String getPatientsWithAppointments(@RequestParam Integer doctorId, Model model) {
+    public String getPatientsWithAppointments(
+            @RequestParam(required = false) Integer doctorId,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size,
+            Model model,
+            Authentication authentication) {
         try {
-            logger.info("Fetching patients with appointments for doctor ID: {}", doctorId);
-            List<Patient> patients = doctorService.getPatientsWithAppointments(doctorId);
-            model.addAttribute("patients", patients);
+            // If doctorId is not provided, try to get it from the authentication
+            if (doctorId == null && authentication != null) {
+                logger.info("No doctorId provided, attempting to retrieve from authenticated user");
+                Object principal = authentication.getPrincipal();
+                if (principal instanceof CustomUserDetails) {
+                    CustomUserDetails userDetails = (CustomUserDetails) principal;
+                    doctorId = userDetails.getDoctorId();
+                    logger.info("Retrieved doctorId {} from authentication", doctorId);
+                }
+            }
+
+            logger.info("Fetching paginated patients with appointments for doctor ID: {}, page: {}, size: {}",
+                    doctorId, page, size);
+
+            // Get paginated patients - either for specific doctor or all patients
+            Page<Patient> patientsPage;
+            if (doctorId != null) {
+                patientsPage = doctorService.findByDoctor(doctorId, page, size);
+            } else {
+                patientsPage = doctorService.findAllPatients(page, size);
+            }
+
+            // Process patients to enrich with derived data
+            int activeCount = 0;
+            int newCount = 0;
+            int inactiveCount = 0;
+
+            for (Patient patient : patientsPage.getContent()) {
+                // Calculate age if date of birth is available
+                if (patient.getDateOfBirth() != null) {
+                    int age = java.time.Period.between(
+                            patient.getDateOfBirth(),
+                            java.time.LocalDate.now()
+                    ).getYears();
+                    patient.setAge(age);
+                }
+
+                // Set status based on user's status if available
+                if (patient.getUser() != null && patient.getUser().getStatus() != null) {
+                    patient.setStatus(patient.getUser().getStatus().toUpperCase());
+                } else {
+                    patient.setStatus("ACTIVE");
+                }
+
+                // Count by status (for the current page)
+                switch(patient.getStatus()) {
+                    case "ACTIVE":
+                        activeCount++;
+                        break;
+                    case "NEW":
+                        newCount++;
+                        break;
+                    case "INACTIVE":
+                        inactiveCount++;
+                        break;
+                }
+
+                // Set total appointments
+                if (doctorId != null) {
+                    Long totalAppointments = doctorService.getAppointmentRepository()
+                            .countByPatientIdAndDoctorId(patient.getPatientId(), doctorId);
+                    patient.setTotalAppointments(totalAppointments != null ? totalAppointments.intValue() : 0);
+
+                    // Set upcoming appointments
+                    java.time.LocalDateTime now = java.time.LocalDateTime.now();
+                    Long upcomingAppointments = doctorService.getAppointmentRepository()
+                            .countByPatientIdAndDoctorIdAndDateTimeAfter(patient.getPatientId(), doctorId, now);
+                    patient.setUpcomingAppointments(upcomingAppointments != null ? upcomingAppointments.intValue() : 0);
+
+                    // Calculate last visit
+                    java.util.Optional<Appointment> lastAppointment = doctorService.getAppointmentRepository()
+                            .findTopByPatientIdAndDoctorIdAndDateTimeBeforeOrderByDateTimeDesc(
+                                    patient.getPatientId(), doctorId, now);
+                    if (lastAppointment.isPresent()) {
+                        long daysBetween = java.time.temporal.ChronoUnit.DAYS.between(
+                                lastAppointment.get().getDateTime().toLocalDate(),
+                                java.time.LocalDate.now());
+                        patient.setLastVisit(daysBetween == 0 ? "Today" :
+                                (daysBetween == 1 ? "Yesterday" :
+                                        daysBetween + " days ago"));
+                    } else {
+                        patient.setLastVisit("Never");
+                    }
+                } else {
+                    // Set total appointments across all doctors
+                    Long totalAppointments = doctorService.getAppointmentRepository()
+                            .countByPatientId(patient.getPatientId());
+                    patient.setTotalAppointments(totalAppointments != null ? totalAppointments.intValue() : 0);
+
+                    // Set upcoming appointments across all doctors
+                    java.time.LocalDateTime now = java.time.LocalDateTime.now();
+                    Long upcomingAppointments = doctorService.getAppointmentRepository()
+                            .countByPatientIdAndDateTimeAfter(patient.getPatientId(), now);
+                    patient.setUpcomingAppointments(upcomingAppointments != null ? upcomingAppointments.intValue() : 0);
+
+                    // Calculate last visit across all doctors
+                    java.util.Optional<Appointment> lastAppointment = doctorService.getAppointmentRepository()
+                            .findTopByPatientIdAndDateTimeBeforeOrderByDateTimeDesc(
+                                    patient.getPatientId(), now);
+                    if (lastAppointment.isPresent()) {
+                        long daysBetween = java.time.temporal.ChronoUnit.DAYS.between(
+                                lastAppointment.get().getDateTime().toLocalDate(),
+                                java.time.LocalDate.now());
+                        patient.setLastVisit(daysBetween == 0 ? "Today" :
+                                (daysBetween == 1 ? "Yesterday" :
+                                        daysBetween + " days ago"));
+                    } else {
+                        patient.setLastVisit("Never");
+                    }
+                }
+            }
+
+            model.addAttribute("patients", patientsPage.getContent());
+            model.addAttribute("currentPage", page);
+            model.addAttribute("totalPages", patientsPage.getTotalPages());
+            model.addAttribute("pageSize", size);
+
+            // Use in-memory counts for this page
+            model.addAttribute("totalPatients", patientsPage.getTotalElements());
+            model.addAttribute("activePatients", activeCount);
+            model.addAttribute("newPatients", newCount);
+            model.addAttribute("inactivePatients", inactiveCount);
             model.addAttribute("doctorId", doctorId);
 
-            logger.debug("Retrieved {} patients with appointments for doctor ID: {}", patients.size(), doctorId);
+            // Get doctor name if doctorId is provided
+            if (doctorId != null) {
+                Doctor doctor = doctorRepository.findById(doctorId).orElse(null);
+                if (doctor != null && doctor.getUser() != null) {
+                    model.addAttribute("doctorName", doctor.getUser().getFullName());
+                } else {
+                    model.addAttribute("doctorName", "Unknown Doctor");
+                }
+            } else {
+                model.addAttribute("doctorName", "All Doctors");
+            }
+
+            // Add the page object for pagination
+            model.addAttribute("page", patientsPage);
+
+            logger.debug("Retrieved {} patients (page {} of {})",
+                    patientsPage.getContent().size(), page + 1, patientsPage.getTotalPages());
             return "doctor/patients";
         } catch (Exception e) {
-            logger.error("Error fetching patients with appointments for doctor ID: {}", doctorId, e);
+            logger.error("Error fetching paginated patients", e);
             model.addAttribute("errorMessage", "Failed to retrieve patients: " + e.getMessage());
             return "error";
         }
@@ -141,22 +284,35 @@ public class DoctorController {
     @GetMapping("/patient/{patientId}")
     public String getPatientDetails(
             @PathVariable Integer patientId,
-            @RequestParam Integer doctorId,
+            @RequestParam(required = false) Integer doctorId,
             Model model) {
         try {
-            logger.info("Fetching details for patient ID: {} for doctor ID: {}", patientId, doctorId);
+            logger.info("Fetching details for patient ID: {} (doctor ID: {})", patientId, doctorId);
             Optional<Patient> patient = doctorService.getPatientDetails(patientId);
 
             if (patient.isPresent()) {
-                List<Appointment> appointmentHistory = doctorService.getAppointmentRepository()
-                    .findByPatientIdAndDoctorIdOrderByDateTimeDesc(patientId, doctorId);
-
+                // Add patient to model
                 model.addAttribute("patient", patient.get());
-                model.addAttribute("appointmentHistory", appointmentHistory);
+
+                // Get appointment history only if doctorId is provided
+                if (doctorId != null) {
+                    List<Appointment> appointmentHistory = doctorService.getAppointmentRepository()
+                        .findByPatientIdAndDoctorIdOrderByDateTimeDesc(patientId, doctorId);
+                    model.addAttribute("appointmentHistory", appointmentHistory);
+                    logger.debug("Retrieved {} appointments for patient ID: {} with doctor ID: {}",
+                        appointmentHistory.size(), patientId, doctorId);
+                } else {
+                    // Get all appointments for this patient regardless of doctor
+                    List<Appointment> allAppointments = doctorService.getAppointmentRepository()
+                        .findByPatientIdOrderByDateTimeDesc(patientId);
+                    model.addAttribute("appointmentHistory", allAppointments);
+                    logger.debug("Retrieved {} appointments for patient ID: {} (all doctors)",
+                        allAppointments.size(), patientId);
+                }
+
                 model.addAttribute("doctorId", doctorId);
 
-                logger.debug("Successfully retrieved patient details for patient ID: {} with {} appointments",
-                    patientId, appointmentHistory.size());
+                logger.debug("Successfully retrieved patient details for patient ID: {}", patientId);
                 return "doctor/patient-details";
             } else {
                 logger.warn("Patient not found for ID: {}", patientId);

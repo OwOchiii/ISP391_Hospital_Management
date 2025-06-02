@@ -5,6 +5,9 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.dao.DataAccessException;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import orochi.model.Appointment;
@@ -214,5 +217,90 @@ public class DoctorService {
         }
     }
 
-}
+    /**
+     * Get patients with appointments for a doctor with pagination
+     * @param doctorId The doctor's ID
+     * @param page Page number (0-based)
+     * @param size Number of items per page
+     * @return Page of patients
+     */
+    public Page<Patient> findByDoctor(Integer doctorId, int page, int size) {
+        try {
+            logger.info("Fetching paginated patients for doctor ID: {}, page: {}, size: {}", doctorId, page, size);
+            Pageable pageable = PageRequest.of(page, size);
+            return patientRepository.findPatientsWithAppointmentsByDoctorIdPaginated(doctorId, pageable);
+        } catch (DataAccessException e) {
+            logger.error("Failed to fetch paginated patients for doctor ID: {}", doctorId, e);
+            return Page.empty();
+        }
+    }
 
+    /**
+     * Find all patients with pagination
+     */
+    public Page<Patient> findAllPatients(int page, int size) {
+        try {
+            logger.info("Fetching all patients with pagination, page: {}, size: {}", page, size);
+            return patientRepository.findAll(PageRequest.of(page, size));
+        } catch (DataAccessException e) {
+            logger.error("Failed to fetch all patients with pagination", e);
+            return Page.empty();
+        }
+    }
+
+    /**
+     * Get total count of patients for a doctor
+     * @return Total patient count
+     */
+    public long getTotalCount() {
+        try {
+            logger.info("Getting total patient count");
+            return patientRepository.count();
+        } catch (DataAccessException e) {
+            logger.error("Failed to get total patient count", e);
+            return 0;
+        }
+    }
+
+    /**
+     * Get count of active patients
+     * @return Active patient count
+     */
+    public long getActiveCount() {
+        try {
+            logger.info("Getting active patient count");
+            return patientRepository.countByUserStatus("Active");
+        } catch (DataAccessException e) {
+            logger.error("Failed to get active patient count", e);
+            return 0;
+        }
+    }
+
+    /**
+     * Get count of new patients
+     * @return New patient count
+     */
+    public long getNewCount() {
+        try {
+            logger.info("Getting new patient count");
+            return patientRepository.countByUserStatus("New");
+        } catch (DataAccessException e) {
+            logger.error("Failed to get new patient count", e);
+            return 0;
+        }
+    }
+
+    /**
+     * Get count of inactive patients
+     * @return Inactive patient count
+     */
+    public long getInactiveCount() {
+        try {
+            logger.info("Getting inactive patient count");
+            return patientRepository.countByUserStatus("Inactive");
+        } catch (DataAccessException e) {
+            logger.error("Failed to get inactive patient count", e);
+            return 0;
+        }
+    }
+}

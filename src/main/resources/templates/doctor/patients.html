@@ -1,0 +1,1243 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Patient List - MediCare Plus</title>
+
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Bootstrap Icons -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css">
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+
+    <style>
+        :root {
+            --primary-color: #2563eb;
+            --secondary-color: #1e40af;
+            --accent-color: #06b6d4;
+            --text-dark: #1f2937;
+            --text-light: #6b7280;
+            --text-muted: #9ca3af;
+            --bg-light: #f8fafc;
+            --bg-white: #ffffff;
+            --success-color: #10b981;
+            --warning-color: #f59e0b;
+            --error-color: #ef4444;
+            --info-color: #3b82f6;
+            --border-color: #e5e7eb;
+            --sidebar-width: 280px;
+            --header-height: 70px;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            line-height: 1.6;
+            color: var(--text-dark);
+            background: var(--bg-light);
+            overflow-x: hidden;
+        }
+
+        /* Sidebar Styles */
+        .sidebar {
+            position: fixed;
+            top: 0;
+            left: 0;
+            height: 100vh;
+            width: var(--sidebar-width);
+            background: linear-gradient(180deg, var(--primary-color) 0%, var(--secondary-color) 100%);
+            color: white;
+            z-index: 1000;
+            transition: transform 0.3s ease;
+            overflow-y: auto;
+            box-shadow: 4px 0 20px rgba(37, 99, 235, 0.15);
+        }
+
+        .sidebar.collapsed {
+            transform: translateX(-100%);
+        }
+
+        .sidebar-header {
+            padding: 1.5rem;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            background: rgba(255, 255, 255, 0.05);
+        }
+
+        .brand-logo {
+            font-size: 1.5rem;
+            font-weight: 700;
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            color: white;
+            text-decoration: none;
+        }
+
+        .brand-logo i {
+            font-size: 2rem;
+            background: linear-gradient(45deg, #34d399, #10b981);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .sidebar-nav {
+            padding: 1.5rem 0;
+        }
+
+        .nav-item {
+            margin: 0.25rem 1rem;
+        }
+
+        .nav-link {
+            color: rgba(255, 255, 255, 0.8);
+            padding: 0.875rem 1.25rem;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            gap: 0.875rem;
+            text-decoration: none;
+            font-weight: 500;
+            transition: all 0.3s ease;
+            position: relative;
+        }
+
+        .nav-link:hover {
+            background: rgba(255, 255, 255, 0.1);
+            color: white;
+            transform: translateX(4px);
+        }
+
+        .nav-link.active {
+            background: rgba(255, 255, 255, 0.15);
+            color: white;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+        }
+
+        .nav-link.active::before {
+            content: '';
+            position: absolute;
+            left: 0;
+            top: 50%;
+            transform: translateY(-50%);
+            width: 4px;
+            height: 24px;
+            background: #34d399;
+            border-radius: 0 4px 4px 0;
+        }
+
+        .nav-link i {
+            font-size: 1.125rem;
+            width: 20px;
+            text-align: center;
+        }
+
+        /* Main Content */
+        .main-content {
+            margin-left: var(--sidebar-width);
+            min-height: 100vh;
+            transition: margin-left 0.3s ease;
+        }
+
+        .main-content.expanded {
+            margin-left: 0;
+        }
+
+        /* Top Header */
+        .top-header {
+            background: var(--bg-white);
+            height: var(--header-height);
+            padding: 0 2rem;
+            box-shadow: 0 2px 20px rgba(0, 0, 0, 0.08);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            position: sticky;
+            top: 0;
+            z-index: 999;
+        }
+
+        .header-left {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        .sidebar-toggle {
+            background: none;
+            border: none;
+            font-size: 1.25rem;
+            color: var(--text-dark);
+            cursor: pointer;
+            padding: 0.5rem;
+            border-radius: 8px;
+            transition: all 0.3s ease;
+        }
+
+        .sidebar-toggle:hover {
+            background: var(--bg-light);
+            color: var(--primary-color);
+        }
+
+        .header-right {
+            display: flex;
+            align-items: center;
+            gap: 1.5rem;
+        }
+
+        .doctor-info {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            padding: 0.5rem;
+            border-radius: 12px;
+            transition: all 0.3s ease;
+            cursor: pointer;
+        }
+
+        .doctor-info:hover {
+            background: var(--bg-light);
+        }
+
+        .doctor-avatar {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, var(--primary-color), var(--accent-color));
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: 700;
+            font-size: 0.875rem;
+        }
+
+        /* Page Content */
+        .page-content {
+            padding: 2rem;
+        }
+
+        .page-header {
+            margin-bottom: 2rem;
+        }
+
+        .page-title {
+            font-size: 2rem;
+            font-weight: 700;
+            color: var(--text-dark);
+            margin-bottom: 0.5rem;
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+
+        .page-title i {
+            color: var(--primary-color);
+        }
+
+        .breadcrumb {
+            background: none;
+            padding: 0;
+            margin: 0;
+        }
+
+        .breadcrumb-item a {
+            color: var(--primary-color);
+            text-decoration: none;
+        }
+
+        .breadcrumb-item.active {
+            color: var(--text-muted);
+        }
+
+        /* Controls Section */
+        .controls-section {
+            background: var(--bg-white);
+            border-radius: 16px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+            padding: 2rem;
+            margin-bottom: 2rem;
+        }
+
+        .search-container {
+            position: relative;
+            flex: 1;
+            max-width: 400px;
+        }
+
+        .search-input {
+            border: 2px solid var(--border-color);
+            border-radius: 12px;
+            padding: 0.875rem 1rem 0.875rem 3rem;
+            font-size: 1rem;
+            transition: all 0.3s ease;
+            width: 100%;
+        }
+
+        .search-input:focus {
+            border-color: var(--primary-color);
+            box-shadow: 0 0 0 0.2rem rgba(37, 99, 235, 0.25);
+        }
+
+        .search-icon {
+            position: absolute;
+            left: 1rem;
+            top: 50%;
+            transform: translateY(-50%);
+            color: var(--text-light);
+            z-index: 3;
+        }
+
+        .filter-tabs {
+            display: flex;
+            gap: 0.5rem;
+            margin-bottom: 1.5rem;
+            flex-wrap: wrap;
+        }
+
+        .filter-tab {
+            padding: 0.75rem 1.5rem;
+            border: 2px solid var(--border-color);
+            background: var(--bg-white);
+            color: var(--text-light);
+            border-radius: 25px;
+            text-decoration: none;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            cursor: pointer;
+        }
+
+        .filter-tab:hover {
+            border-color: var(--primary-color);
+            color: var(--primary-color);
+            text-decoration: none;
+        }
+
+        .filter-tab.active {
+            background: var(--primary-color);
+            border-color: var(--primary-color);
+            color: white;
+        }
+
+        .advanced-filters {
+            display: none;
+            margin-top: 1.5rem;
+            padding-top: 1.5rem;
+            border-top: 1px solid var(--border-color);
+        }
+
+        .advanced-filters.show {
+            display: block;
+        }
+
+        .filter-group {
+            display: flex;
+            gap: 1rem;
+            flex-wrap: wrap;
+            align-items: end;
+        }
+
+        .filter-item {
+            flex: 1;
+            min-width: 200px;
+        }
+
+        .form-label {
+            font-weight: 600;
+            color: var(--text-dark);
+            margin-bottom: 0.5rem;
+        }
+
+        .form-control, .form-select {
+            border: 2px solid var(--border-color);
+            border-radius: 8px;
+            padding: 0.75rem;
+            transition: all 0.3s ease;
+        }
+
+        .form-control:focus, .form-select:focus {
+            border-color: var(--primary-color);
+            box-shadow: 0 0 0 0.2rem rgba(37, 99, 235, 0.25);
+        }
+
+        /* Patient Cards */
+        .patients-container {
+            display: grid;
+            gap: 1.5rem;
+        }
+
+        .patient-card {
+            background: var(--bg-white);
+            border-radius: 16px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+            padding: 2rem;
+            transition: all 0.3s ease;
+            border: 1px solid transparent;
+        }
+
+        .patient-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 30px rgba(0, 0, 0, 0.12);
+            border-color: var(--primary-color);
+        }
+
+        .patient-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 1.5rem;
+        }
+
+        .patient-info {
+            flex: 1;
+        }
+
+        .patient-name {
+            font-size: 1.25rem;
+            font-weight: 700;
+            color: var(--text-dark);
+            margin-bottom: 0.5rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .patient-id {
+            font-size: 0.875rem;
+            color: var(--text-muted);
+            font-weight: 500;
+        }
+
+        .patient-avatar {
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, var(--primary-color), var(--accent-color));
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: 700;
+            font-size: 1.25rem;
+            margin-left: 1rem;
+        }
+
+        .patient-details {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .detail-item {
+            display: flex;
+            flex-direction: column;
+            gap: 0.25rem;
+        }
+
+        .detail-label {
+            font-size: 0.875rem;
+            font-weight: 600;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 0.025em;
+        }
+
+        .detail-value {
+            font-size: 1rem;
+            font-weight: 500;
+            color: var(--text-dark);
+        }
+
+        .patient-description {
+            background: var(--bg-light);
+            padding: 1rem;
+            border-radius: 8px;
+            border-left: 4px solid var(--info-color);
+            margin-bottom: 1.5rem;
+        }
+
+        .patient-description h6 {
+            font-weight: 600;
+            margin-bottom: 0.5rem;
+            color: var(--text-dark);
+        }
+
+        .patient-description p {
+            margin: 0;
+            color: var(--text-light);
+            line-height: 1.5;
+        }
+
+        .patient-stats {
+            display: flex;
+            gap: 1rem;
+            margin-bottom: 1.5rem;
+            flex-wrap: wrap;
+        }
+
+        .stat-item {
+            background: var(--bg-light);
+            padding: 0.75rem 1rem;
+            border-radius: 8px;
+            text-align: center;
+            flex: 1;
+            min-width: 120px;
+        }
+
+        .stat-value {
+            font-size: 1.25rem;
+            font-weight: 700;
+            color: var(--primary-color);
+            margin-bottom: 0.25rem;
+        }
+
+        .stat-label {
+            font-size: 0.75rem;
+            color: var(--text-muted);
+            font-weight: 600;
+            text-transform: uppercase;
+        }
+
+        .patient-actions {
+            display: flex;
+            gap: 0.75rem;
+            flex-wrap: wrap;
+        }
+
+        .btn-primary-custom {
+            background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+            border: none;
+            padding: 0.75rem 1.5rem;
+            border-radius: 8px;
+            color: white;
+            font-weight: 600;
+            text-decoration: none;
+            transition: all 0.3s ease;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .btn-primary-custom:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(37, 99, 235, 0.3);
+            color: white;
+            text-decoration: none;
+        }
+
+        .btn-outline-primary-custom {
+            border: 2px solid var(--primary-color);
+            color: var(--primary-color);
+            background: transparent;
+            padding: 0.75rem 1.5rem;
+            border-radius: 8px;
+            font-weight: 600;
+            text-decoration: none;
+            transition: all 0.3s ease;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .btn-outline-primary-custom:hover {
+            background: var(--primary-color);
+            color: white;
+            transform: translateY(-2px);
+            text-decoration: none;
+        }
+
+        .btn-sm {
+            padding: 0.5rem 1rem;
+            font-size: 0.875rem;
+        }
+
+        /* Status Badges */
+        .status-badge {
+            padding: 0.5rem 1rem;
+            border-radius: 20px;
+            font-weight: 600;
+            font-size: 0.75rem;
+            text-transform: uppercase;
+            letter-spacing: 0.025em;
+        }
+
+        .status-active { background: #d1fae5; color: #065f46; }
+        .status-inactive { background: #fee2e2; color: #991b1b; }
+        .status-new { background: #dbeafe; color: #1e40af; }
+
+        /* Gender Icons */
+        .gender-icon {
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.75rem;
+            color: white;
+            margin-left: 0.5rem;
+        }
+
+        .gender-male { background: #3b82f6; }
+        .gender-female { background: #ec4899; }
+        .gender-other { background: #8b5cf6; }
+
+        /* Empty State */
+        .empty-state {
+            text-align: center;
+            padding: 4rem 2rem;
+            background: var(--bg-white);
+            border-radius: 16px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+        }
+
+        .empty-state i {
+            font-size: 4rem;
+            color: var(--text-muted);
+            margin-bottom: 1rem;
+        }
+
+        .empty-state h3 {
+            color: var(--text-dark);
+            margin-bottom: 0.5rem;
+        }
+
+        .empty-state p {
+            color: var(--text-light);
+            margin-bottom: 2rem;
+        }
+
+        /* Responsive Design */
+        @media (max-width: 768px) {
+            .sidebar {
+                transform: translateX(-100%);
+            }
+
+            .main-content {
+                margin-left: 0;
+            }
+
+            .page-content {
+                padding: 1rem;
+            }
+
+            .controls-section {
+                padding: 1.5rem;
+            }
+
+            .filter-tabs {
+                justify-content: center;
+            }
+
+            .filter-group {
+                flex-direction: column;
+            }
+
+            .filter-item {
+                min-width: auto;
+            }
+
+            .patient-card {
+                padding: 1.5rem;
+            }
+
+            .patient-header {
+                flex-direction: column;
+                gap: 1rem;
+            }
+
+            .patient-avatar {
+                margin-left: 0;
+                align-self: center;
+            }
+
+            .patient-details {
+                grid-template-columns: 1fr;
+            }
+
+            .patient-stats {
+                flex-direction: column;
+            }
+
+            .patient-actions {
+                justify-content: center;
+            }
+
+            .top-header {
+                padding: 0 1rem;
+            }
+
+            .doctor-info > div {
+                display: none;
+            }
+        }
+
+        /* Animation */
+        .patients-container {
+            animation: fadeInUp 0.6s ease-out;
+        }
+
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+    </style>
+</head>
+<body>
+<!-- Sidebar -->
+<div class="sidebar" id="sidebar">
+    <div class="sidebar-header">
+        <a href="#" class="brand-logo">
+            <i class="bi bi-heart-pulse"></i>
+            MediCare Plus
+        </a>
+    </div>
+
+    <nav class="sidebar-nav">
+        <div class="nav-item">
+            <a th:href="@{/doctor/dashboard(doctorId=${doctorId})}" class="nav-link">
+                <i class="bi bi-speedometer2"></i>
+                Dashboard
+            </a>
+        </div>
+        <div class="nav-item">
+            <a th:href="@{/doctor/appointments(doctorId=${doctorId})}" class="nav-link">
+                <i class="bi bi-calendar-check"></i>
+                Appointments
+            </a>
+        </div>
+        <div class="nav-item">
+            <a th:href="@{/doctor/patients(doctorId=${doctorId})}" class="nav-link active">
+                <i class="bi bi-people"></i>
+                Patients
+            </a>
+        </div>
+        <div class="nav-item">
+            <a th:href="@{/doctor/medical-orders(doctorId=${doctorId})}" class="nav-link">
+                <i class="bi bi-prescription2"></i>
+                Medical Orders
+            </a>
+        </div>
+        <div class="nav-item">
+            <a th:href="@{/doctor/schedule(doctorId=${doctorId})}" class="nav-link">
+                <i class="bi bi-calendar-week"></i>
+                View Schedule
+            </a>
+        </div>
+        <div class="nav-item">
+            <a href="#" class="nav-link">
+                <i class="bi bi-chat-dots"></i>
+                Messages
+            </a>
+        </div>
+        <div class="nav-item">
+            <a href="#" class="nav-link">
+                <i class="bi bi-gear"></i>
+                Settings
+            </a>
+        </div>
+        <div class="nav-item">
+            <form th:action="@{/auth/logout}" method="post">
+                <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}" />
+                <button type="submit" class="nav-link w-100 text-start border-0 bg-transparent">
+                    <i class="bi bi-box-arrow-right"></i>
+                    Logout
+                </button>
+            </form>
+        </div>
+    </nav>
+</div>
+
+<div class="main-content" id="mainContent">
+    <!-- Top Header -->
+    <div class="top-header">
+        <div class="header-left">
+            <button class="sidebar-toggle" onclick="toggleSidebar()">
+                <i class="bi bi-list"></i>
+            </button>
+            <h4 class="mb-0">Patient List</h4>
+        </div>
+
+        <div class="header-right">
+            <div class="doctor-info">
+                <div class="doctor-avatar">
+                    <span th:text="${doctorName != null ? #strings.substring(doctorName, 0, 2).toUpperCase() : 'DR'}">DR</span>
+                </div>
+                <div>
+                    <div class="fw-semibold" th:text="${doctorName != null ? doctorName : 'Doctor'}">Doctor</div>
+                    <small class="text-muted" th:text="${'ID: ' + doctorId}">ID: 123</small>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Page Content -->
+    <div class="page-content">
+        <!-- Page Header -->
+        <div class="page-header">
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <h1 class="page-title">
+                        <i class="bi bi-people"></i>
+                        Patient Management
+                    </h1>
+                    <nav>
+                        <ol class="breadcrumb">
+                            <li class="breadcrumb-item"><a th:href="@{/doctor/dashboard(doctorId=${doctorId})}">Dashboard</a></li>
+                            <li class="breadcrumb-item active">Patients</li>
+                        </ol>
+                    </nav>
+                </div>
+                <div>
+                    <a th:href="@{/doctor/patients/new(doctorId=${doctorId})}" class="btn-primary-custom">
+                        <i class="bi bi-plus-circle"></i>
+                        Add New Patient
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        <!-- Controls Section -->
+        <div class="controls-section">
+            <!-- Filter Tabs -->
+            <div class="filter-tabs">
+                <a href="#" class="filter-tab active" data-filter="all">
+                    <i class="bi bi-people me-2"></i>All Patients
+                    <span class="badge bg-primary ms-2" th:text="${totalPatients ?: '0'}">24</span>
+                </a>
+                <a href="#" class="filter-tab" data-filter="active">
+                    <i class="bi bi-person-check me-2"></i>Active
+                    <span class="badge bg-success ms-2" th:text="${activePatients ?: '0'}">18</span>
+                </a>
+                <a href="#" class="filter-tab" data-filter="new">
+                    <i class="bi bi-person-plus me-2"></i>New Patients
+                    <span class="badge bg-info ms-2" th:text="${newPatients ?: '0'}">3</span>
+                </a>
+                <a href="#" class="filter-tab" data-filter="inactive">
+                    <i class="bi bi-person-x me-2"></i>Inactive
+                    <span class="badge bg-warning ms-2" th:text="${inactivePatients ?: '0'}">3</span>
+                </a>
+            </div>
+
+            <!-- Search and Basic Controls -->
+            <div class="d-flex justify-content-between align-items-center flex-wrap gap-3">
+                <div class="search-container">
+                    <i class="bi bi-search search-icon"></i>
+                    <input type="text" class="search-input" placeholder="Search patients by name, ID, or phone..." id="searchInput">
+                </div>
+
+                <div class="d-flex gap-2">
+                    <button class="btn-outline-primary-custom btn-sm" onclick="toggleAdvancedFilters()">
+                        <i class="bi bi-funnel"></i>
+                        Advanced Filters
+                    </button>
+                    <button class="btn-outline-primary-custom btn-sm" onclick="exportPatients()">
+                        <i class="bi bi-download"></i>
+                        Export
+                    </button>
+                </div>
+            </div>
+
+            <!-- Advanced Filters -->
+            <div class="advanced-filters" id="advancedFilters">
+                <div class="filter-group">
+                    <div class="filter-item">
+                        <label class="form-label">Gender</label>
+                        <select class="form-select" id="genderFilter">
+                            <option value="">All Genders</option>
+                            <option value="Male">Male</option>
+                            <option value="Female">Female</option>
+                            <option value="Other">Other</option>
+                        </select>
+                    </div>
+                    <div class="filter-item">
+                        <label class="form-label">Age Range</label>
+                        <select class="form-select" id="ageFilter">
+                            <option value="">All Ages</option>
+                            <option value="0-18">0-18 years</option>
+                            <option value="19-35">19-35 years</option>
+                            <option value="36-50">36-50 years</option>
+                            <option value="51-65">51-65 years</option>
+                            <option value="65+">65+ years</option>
+                        </select>
+                    </div>
+                    <div class="filter-item">
+                        <label class="form-label">Last Visit</label>
+                        <select class="form-select" id="lastVisitFilter">
+                            <option value="">Any Time</option>
+                            <option value="week">Last Week</option>
+                            <option value="month">Last Month</option>
+                            <option value="3months">Last 3 Months</option>
+                            <option value="6months">Last 6 Months</option>
+                            <option value="year">Last Year</option>
+                        </select>
+                    </div>
+                    <div class="filter-item">
+                        <button class="btn-primary-custom" onclick="applyFilters()">
+                            <i class="bi bi-check"></i>
+                            Apply Filters
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Patients List -->
+        <div class="patients-container" id="patientsContainer">
+            <!-- Patient Card Template -->
+            <div class="patient-card" th:each="patient : ${patients}">
+                <div class="patient-header">
+                    <div class="patient-info">
+                        <div class="patient-name">
+                            <span th:text="${patient.user?.fullName ?: 'Unknown Patient'}">John Doe</span>
+                            <span class="gender-icon"
+                                  th:classappend="${patient.gender == 'Male' ? 'gender-male' :
+                                                     patient.gender == 'Female' ? 'gender-female' : 'gender-other'}"
+                                  th:text="${patient.gender == 'Male' ? '♂' :
+                                               patient.gender == 'Female' ? '♀' : '⚧'}">♂</span>
+                            <span class="status-badge"
+                                  th:classappend="${patient.status == 'ACTIVE' ? 'status-active' :
+                                                     patient.status == 'NEW' ? 'status-new' : 'status-inactive'}"
+                                  th:text="${patient.status ?: 'ACTIVE'}">ACTIVE</span>
+                        </div>
+                        <div class="patient-id">Patient ID: <span th:text="${'P' + patient.getPatientId()}">P001234</span></div>
+                    </div>
+                    <div class="patient-avatar">
+                        <span th:text="${patient.user?.fullName != null ? #strings.substring(patient.user.fullName, 0, 2).toUpperCase() : 'PT'}">JD</span>
+                    </div>
+                </div>
+
+                <div class="patient-details">
+                    <div class="detail-item">
+                        <span class="detail-label">Date of Birth</span>
+                        <span class="detail-value" th:text="${patient.dateOfBirth != null ? #dates.format(patient.dateOfBirth, 'MMM dd, yyyy') : 'Not provided'}">Jan 15, 1985</span>
+                    </div>
+                    <div class="detail-item">
+                        <span class="detail-label">Age</span>
+                        <span class="detail-value" th:text="${patient.age ?: 'N/A'}">38 years</span>
+                    </div>
+                    <div class="detail-item">
+                        <span class="detail-label">Phone</span>
+                        <span class="detail-value" th:text="${patient.user?.phoneNumber ?: 'Not provided'}">+1 (555) 123-4567</span>
+                    </div>
+                    <div class="detail-item">
+                        <span class="detail-label">Email</span>
+                        <span class="detail-value" th:text="${patient.user?.email ?: 'Not provided'}">john.doe@email.com</span>
+                    </div>
+                </div>
+
+                <div class="patient-description" th:if="${patient.description != null and !#strings.isEmpty(patient.description)}">
+                    <h6><i class="bi bi-clipboard-pulse me-2"></i>Medical Summary</h6>
+                    <p th:text="${patient.description}">Patient has a history of hypertension and diabetes. Currently on medication for blood pressure control. Regular monitoring required.</p>
+                </div>
+
+                <div class="patient-stats">
+                    <div class="stat-item">
+                        <div class="stat-value" th:text="${patient.totalAppointments ?: '0'}">12</div>
+                        <div class="stat-label">Total Visits</div>
+                    </div>
+                    <div class="stat-item">
+                        <div class="stat-value" th:text="${patient.upcomingAppointments ?: '0'}">2</div>
+                        <div class="stat-label">Upcoming</div>
+                    </div>
+                    <div class="stat-item">
+                        <div class="stat-value" th:text="${patient.lastVisit ?: 'Never'}">2 days ago</div>
+                        <div class="stat-label">Last Visit</div>
+                    </div>
+                </div>
+
+                <div class="patient-actions">
+                    <a th:href="@{/doctor/patients/{id}(id=${patient.patientId}, doctorId=${doctorId})}" class="btn-primary-custom btn-sm">
+                        <i class="bi bi-eye"></i>
+                        View Details
+                    </a>
+                    <a th:href="@{/doctor/appointments/new(patientId=${patient.patientId}, doctorId=${doctorId})}" class="btn-outline-primary-custom btn-sm">
+                        <i class="bi bi-calendar-plus"></i>
+                        Schedule
+                    </a>
+                    <a th:href="@{/doctor/patients/{id}/history(id=${patient.patientId}, doctorId=${doctorId})}" class="btn-outline-primary-custom btn-sm">
+                        <i class="bi bi-clock-history"></i>
+                        History
+                    </a>
+                </div>
+            </div>
+
+            <!-- Default patient if none exist -->
+            <div th:if="${#lists.isEmpty(patients)}" class="patient-card">
+                <div class="patient-header">
+                    <div class="patient-info">
+                        <div class="patient-name">
+                            Sarah Johnson
+                            <span class="gender-icon gender-female">♀</span>
+                            <span class="status-badge status-active">ACTIVE</span>
+                        </div>
+                        <div class="patient-id">Patient ID: P001234</div>
+                    </div>
+                    <div class="patient-avatar">SJ</div>
+                </div>
+
+                <div class="patient-details">
+                    <div class="detail-item">
+                        <span class="detail-label">Date of Birth</span>
+                        <span class="detail-value">Mar 22, 1990</span>
+                    </div>
+                    <div class="detail-item">
+                        <span class="detail-label">Age</span>
+                        <span class="detail-value">33 years</span>
+                    </div>
+                    <div class="detail-item">
+                        <span class="detail-label">Phone</span>
+                        <span class="detail-value">+1 (555) 234-5678</span>
+                    </div>
+                    <div class="detail-item">
+                        <span class="detail-label">Email</span>
+                        <span class="detail-value">sarah.johnson@email.com</span>
+                    </div>
+                </div>
+
+                <div class="patient-description">
+                    <h6><i class="bi bi-clipboard-pulse me-2"></i>Medical Summary</h6>
+                    <p>Regular patient for annual checkups. No significant medical history. Maintains healthy lifestyle.</p>
+                </div>
+
+                <div class="patient-stats">
+                    <div class="stat-item">
+                        <div class="stat-value">8</div>
+                        <div class="stat-label">Total Visits</div>
+                    </div>
+                    <div class="stat-item">
+                        <div class="stat-value">1</div>
+                        <div class="stat-label">Upcoming</div>
+                    </div>
+                    <div class="stat-item">
+                        <div class="stat-value">1 week ago</div>
+                        <div class="stat-label">Last Visit</div>
+                    </div>
+                </div>
+
+                <div class="patient-actions">
+                    <a href="#" class="btn-primary-custom btn-sm">
+                        <i class="bi bi-eye"></i>
+                        View Details
+                    </a>
+                    <a href="#" class="btn-outline-primary-custom btn-sm">
+                        <i class="bi bi-calendar-plus"></i>
+                        Schedule
+                    </a>
+                    <a href="#" class="btn-outline-primary-custom btn-sm">
+                        <i class="bi bi-clock-history"></i>
+                        History
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        <!-- Pagination Section -->
+        <div class="d-flex justify-content-between align-items-center mt-4">
+            <div>
+                <span class="text-muted">Showing <span th:text="${#lists.isEmpty(patients) ? 0 : (page.number * page.size) + 1}">1</span> to <span th:text="${#lists.isEmpty(patients) ? 0 : (page.number * page.size) + patients.size()}">10</span> of <span th:text="${page.totalElements}">24</span> patients</span>
+            </div>
+
+            <nav aria-label="Page navigation" th:if="${page.totalPages > 1}">
+                <ul class="pagination">
+                    <li class="page-item" th:classappend="${page.first ? 'disabled' : ''}">
+                        <a class="page-link" th:href="@{/doctor/patients(doctorId=${doctorId}, page=${page.number - 1})}" aria-label="Previous">
+                            <span aria-hidden="true">&laquo;</span>
+                        </a>
+                    </li>
+
+                    <li class="page-item" th:each="i : ${#numbers.sequence(0, page.totalPages - 1)}"
+                        th:classappend="${page.number == i ? 'active' : ''}">
+                        <a class="page-link" th:href="@{/doctor/patients(doctorId=${doctorId}, page=${i})}" th:text="${i + 1}">1</a>
+                    </li>
+
+                    <li class="page-item" th:classappend="${page.last ? 'disabled' : ''}">
+                        <a class="page-link" th:href="@{/doctor/patients(doctorId=${doctorId}, page=${page.number + 1})}" aria-label="Next">
+                            <span aria-hidden="true">&raquo;</span>
+                        </a>
+                    </li>
+                </ul>
+            </nav>
+        </div>
+
+        <!-- Empty State -->
+        <div class="empty-state" id="emptyState" style="display: none;">
+            <i class="bi bi-people"></i>
+            <h3>No Patients Found</h3>
+            <p>No patients match your current search criteria. Try adjusting your filters or search terms.</p>
+            <a th:href="@{/doctor/patients/new(doctorId=${doctorId})}" class="btn-primary-custom">
+                <i class="bi bi-plus-circle"></i>
+                Add First Patient
+            </a>
+        </div>
+    </div>
+</div>
+
+<!-- Bootstrap JS -->
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+
+<script th:inline="javascript">
+    /*<![CDATA[*/
+    // Sidebar toggle functionality
+    function toggleSidebar() {
+        const sidebar = document.getElementById('sidebar');
+        const mainContent = document.getElementById('mainContent');
+
+        sidebar.classList.toggle('collapsed');
+        mainContent.classList.toggle('expanded');
+    }
+
+    // Auto-hide sidebar on mobile
+    function checkScreenSize() {
+        const sidebar = document.getElementById('sidebar');
+        const mainContent = document.getElementById('mainContent');
+
+        if (window.innerWidth <= 768) {
+            sidebar.classList.add('collapsed');
+            mainContent.classList.add('expanded');
+        } else {
+            sidebar.classList.remove('collapsed');
+            mainContent.classList.remove('expanded');
+        }
+    }
+
+    document.addEventListener('DOMContentLoaded', function() {
+        checkScreenSize();
+
+        // Search functionality
+        const searchInput = document.getElementById('searchInput');
+        const patientsContainer = document.getElementById('patientsContainer');
+        const emptyState = document.getElementById('emptyState');
+
+        searchInput.addEventListener('input', function() {
+            const searchTerm = this.value.toLowerCase();
+            const patientCards = patientsContainer.querySelectorAll('.patient-card');
+            let visibleCount = 0;
+
+            patientCards.forEach(card => {
+                const patientName = card.querySelector('.patient-name').textContent.toLowerCase();
+                const patientId = card.querySelector('.patient-id').textContent.toLowerCase();
+                const phoneNumber = card.querySelector('.detail-value').textContent.toLowerCase();
+
+                if (patientName.includes(searchTerm) ||
+                    patientId.includes(searchTerm) ||
+                    phoneNumber.includes(searchTerm)) {
+                    card.style.display = 'block';
+                    visibleCount++;
+                } else {
+                    card.style.display = 'none';
+                }
+            });
+
+            // Show/hide empty state
+            if (visibleCount === 0 && searchTerm !== '') {
+                emptyState.style.display = 'block';
+                patientsContainer.style.display = 'none';
+            } else {
+                emptyState.style.display = 'none';
+                patientsContainer.style.display = 'grid';
+            }
+        });
+
+        // Filter tabs functionality
+        const filterTabs = document.querySelectorAll('.filter-tab');
+        filterTabs.forEach(tab => {
+            tab.addEventListener('click', function(e) {
+                e.preventDefault();
+
+                // Update active tab
+                filterTabs.forEach(t => t.classList.remove('active'));
+                this.classList.add('active');
+
+                // Filter patients
+                const filter = this.getAttribute('data-filter');
+                filterPatients(filter);
+            });
+        });
+
+        function filterPatients(filter) {
+            const patientCards = patientsContainer.querySelectorAll('.patient-card');
+            let visibleCount = 0;
+
+            patientCards.forEach(card => {
+                const statusBadge = card.querySelector('.status-badge');
+                const status = statusBadge ? statusBadge.textContent.toLowerCase() : 'active';
+
+                let shouldShow = false;
+
+                switch(filter) {
+                    case 'all':
+                        shouldShow = true;
+                        break;
+                    case 'active':
+                        shouldShow = status === 'active';
+                        break;
+                    case 'new':
+                        shouldShow = status === 'new';
+                        break;
+                    case 'inactive':
+                        shouldShow = status === 'inactive';
+                        break;
+                }
+
+                if (shouldShow) {
+                    card.style.display = 'block';
+                    visibleCount++;
+                } else {
+                    card.style.display = 'none';
+                }
+            });
+
+            // Show/hide empty state
+            if (visibleCount === 0) {
+                emptyState.style.display = 'block';
+                patientsContainer.style.display = 'none';
+            } else {
+                emptyState.style.display = 'none';
+                patientsContainer.style.display = 'grid';
+            }
+        }
+    });
+
+    window.addEventListener('resize', checkScreenSize);
+
+    function toggleAdvancedFilters() {
+        const advancedFilters = document.getElementById('advancedFilters');
+        advancedFilters.classList.toggle('show');
+    }
+
+    function applyFilters() {
+        const gender = document.getElementById('genderFilter').value;
+        const age = document.getElementById('ageFilter').value;
+        const lastVisit = document.getElementById('lastVisitFilter').value;
+
+        // Apply filters logic here
+        console.log('Applying filters:', { gender, age, lastVisit });
+    }
+
+    function exportPatients() {
+        // Export functionality
+        window.location.href = '/doctor/patients/export?doctorId=' + /*[[${doctorId}]]*/ '123';
+    }
+    /*]]>*/
+</script>
+</body>
+</html>
+
+
+
+
