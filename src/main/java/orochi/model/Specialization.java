@@ -1,6 +1,5 @@
 package orochi.model;
 
-import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Data;
@@ -30,10 +29,8 @@ public class Specialization {
     private BigDecimal price;
 
     @ManyToMany(mappedBy = "specializations")
-    @JsonIgnore
     private List<Doctor> doctors;
 
     @OneToMany(mappedBy = "specialization")
-    @JsonIgnore
     private List<Service> services;
 }

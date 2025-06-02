@@ -22,7 +22,7 @@ import orochi.config.CustomUserDetails;
 import java.time.LocalDate;
 import java.util.*;
 
-@Controller(value = "mainDoctorController")
+@Controller
 @RequestMapping("/doctor")
 public class DoctorController {
 
