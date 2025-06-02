@@ -1,5 +1,6 @@
 package orochi.model;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Data;
@@ -13,7 +14,6 @@ import java.time.LocalDateTime;
 @NoArgsConstructor
 @AllArgsConstructor
 public class Users {
-
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "UserID")
@@ -39,19 +39,20 @@ public class Users {
 
     @ManyToOne
     @JoinColumn(name = "RoleID", insertable = false, updatable = false)
+    @JsonIgnore
     private Role role;
 
     @OneToOne(mappedBy = "user")
+    @JsonIgnore
     private Patient patient;
 
     @OneToOne(mappedBy = "user")
+    @JsonIgnore
     private Doctor doctor;
-
 
     @Column(name = "created_at", nullable = false, updatable = false)
     private LocalDateTime createdAt;
 
-    // Optional: Use JPA's @PrePersist to set the timestamp automatically
     @PrePersist
     protected void onCreate() {
         this.createdAt = LocalDateTime.now();

@@ -39,4 +39,6 @@ public interface AppointmentRepository extends JpaRepository<Appointment, Intege
             @Param("endDate") LocalDateTime endDate);
 
     List<Appointment> findByDoctorIdAndPatientUserFullNameContainingIgnoreCase(Integer doctorId, String fullName);
+
+    List<Appointment> findByDoctorIdAndDateTimeBetween(Integer doctorId, LocalDateTime start, LocalDateTime end);
 }
