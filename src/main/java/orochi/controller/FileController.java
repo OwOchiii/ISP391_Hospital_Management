@@ -68,9 +68,6 @@ public class FileController {
         } catch (MalformedURLException e) {
             logger.error("Malformed URL", e);
             return ResponseEntity.badRequest().build();
-        } catch (IOException e) {
-            logger.error("IO Exception", e);
-            return ResponseEntity.internalServerError().build();
         }
     }
 }

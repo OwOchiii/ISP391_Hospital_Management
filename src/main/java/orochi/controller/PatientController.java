@@ -25,7 +25,7 @@ import java.util.List;
 import java.util.Optional;
 
 @Controller
-@RequestMapping("/patient")
+@RequestMapping("/patient-legacy")
 public class PatientController {
 
     private static final Logger logger = LoggerFactory.getLogger(PatientController.class);
@@ -114,20 +114,6 @@ public class PatientController {
         }
     }
 
-    @GetMapping("/book-appointment")
-    public String bookAppointment(Model model) {
-        try {
-            Integer patientId = getCurrentPatientId();
-            if (patientId != null) {
-                model.addAttribute("patientId", patientId);
-            }
-            return "patient/book-appointment";
-        } catch (Exception e) {
-            logger.error("Error loading book appointment page", e);
-            model.addAttribute("errorMessage", "An error occurred: " + e.getMessage());
-            return "error";
-        }
-    }
 
     @GetMapping("/appointment-list")
     public String appointmentList(Model model) {

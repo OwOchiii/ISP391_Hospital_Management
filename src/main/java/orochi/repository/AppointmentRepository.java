@@ -1,5 +1,7 @@
 package orochi.repository;
 
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -62,5 +64,10 @@ public interface AppointmentRepository extends JpaRepository<Appointment, Intege
     // Find the most recent appointment for a patient (regardless of doctor)
     Optional<Appointment> findTopByPatientIdAndDateTimeBeforeOrderByDateTimeDesc(
             Integer patientId, LocalDateTime dateTime);
+
+    Page<Appointment> findByPatientIdAndDateTimeBefore(
+            Integer patientId,
+            LocalDateTime dateTime,
+            Pageable pageable);
 }
 

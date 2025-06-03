@@ -675,8 +675,8 @@
 
                     <!-- Description Section (Merged from reason for visit and symptoms) -->
                     <div class="form-group">
-                        <label for="description" class="form-label">Description (Reason for Visit & Symptoms)</label>
-                        <textarea id="description" class="form-control" rows="5" th:text="${appointment?.description}" placeholder="Enter description, reason for visit, and reported symptoms"></textarea>
+                        <label for="appointmentDescription" class="form-label">Description (Reason for Visit & Symptoms)</label>
+                        <textarea id="appointmentDescription" class="form-control" rows="5" th:text="${appointment?.description}" placeholder="Enter description, reason for visit, and reported symptoms"></textarea>
                     </div>
 
                     <!-- Action Buttons - Added Create Medical Order button -->
@@ -748,19 +748,17 @@
                     <div class="medical-history">
                         <h6><i class="bi bi-clock-history me-2"></i>Medical History</h6>
 
-                        <div class="history-item">
-                            <div class="history-date">May 23, 2023</div>
-                            <div class="history-content">Annual physical examination. All vitals within normal range.</div>
+                        <!-- Display actual appointment history dynamically -->
+                        <div th:if="${patientAppointmentHistory != null and not patientAppointmentHistory.empty}">
+                            <div class="history-item" th:each="historyItem : ${patientAppointmentHistory}">
+                                <div class="history-date" th:text="${#temporals.format(historyItem.dateTime, 'MMMM d, yyyy')}">May 23, 2023</div>
+                                <div class="history-content" th:text="${historyItem.description}">Appointment description will appear here</div>
+                            </div>
                         </div>
 
-                        <div class="history-item">
-                            <div class="history-date">February 12, 2023</div>
-                            <div class="history-content">Treated for seasonal influenza. Prescribed bed rest and antiviral medication.</div>
-                        </div>
-
-                        <div class="history-item">
-                            <div class="history-date">October 5, 2022</div>
-                            <div class="history-content">Routine vaccination. No adverse reactions observed.</div>
+                        <!-- Show this when no history is available -->
+                        <div th:if="${patientAppointmentHistory == null or patientAppointmentHistory.empty}" class="alert alert-info">
+                            <i class="bi bi-info-circle me-2"></i> No previous appointment history is available for this patient.
                         </div>
                     </div>
 
@@ -804,8 +802,8 @@
                                     <span th:text="${#dates.format(order.orderDate, 'MMM d, yyyy')}">May 23, 2023</span>
                                     <span class="badge rounded-pill ms-2"
                                           th:classappend="${order.status == 'PENDING' ? 'bg-warning' :
-                (order.status == 'IN_PROGRESS' ? 'bg-info' :
-                (order.status == 'COMPLETED' ? 'bg-success' : 'bg-danger'))}"
+                       (order.status == 'IN_PROGRESS' ? 'bg-info' :
+                       (order.status == 'COMPLETED' ? 'bg-success' : 'bg-danger'))}"
                                           th:text="${order.status}">PENDING</span>
                                 </div>
                                 <div class="history-content">
@@ -925,13 +923,85 @@
                             <i class="bi bi-info-circle me-2"></i> No medical results have been added for this appointment yet.
                         </div>
 
-                        <button class="btn btn-primary-custom mt-3" data-bs-toggle="modal" data-bs-target="#medicalResultModal">
+                        <button class="btn btn-primary-custom mt-3" data-bs-toggle="modal" data-bs-target="#addMedicalResultModal">
                             <i class="bi bi-plus-circle me-2"></i> Add Medical Result
                         </button>
                     </div>
 
 
+                    <div class="medical-history mt-4">
+                        <h6><i class="bi bi-capsule me-2"></i>Prescriptions</h6>
 
+                        <!-- Display prescriptions if they exist -->
+                        <div th:if="${prescriptions != null and not prescriptions.empty}">
+                            <div class="history-item" th:each="prescription : ${prescriptions}">
+                                <div class="history-date">
+                                    <span th:text="${#temporals.format(prescription.prescriptionDate, 'MMM d, yyyy')}">May 23, 2023</span>
+                                </div>
+                                <div class="history-content">
+                                    <strong>Prescription #<span th:text="${prescription.prescriptionId}">123</span></strong>
+                                    <p th:text="${prescription.notes}">General notes about the prescription</p>
+
+                                    <!-- Medicines in this prescription -->
+                                    <div class="mt-2 mb-2">
+                                        <strong>Medications:</strong>
+                                        <ul class="list-group mt-1">
+                                            <li class="list-group-item" th:each="medicine : ${prescription.medicines}">
+                                                <div class="d-flex justify-content-between align-items-top">
+                                                    <div>
+                                                        <strong th:text="${medicine.inventory.medicineName}">Medicine Name</strong>
+                                                        <div class="text-muted small" th:text="${medicine.inventory.genericName}">Generic Name</div>
+                                                        <div>Dosage: <span th:text="${medicine.dosage}">10mg</span></div>
+                                                        <div>Frequency: <span th:text="${medicine.frequency}">Twice daily</span></div>
+                                                        <div>Duration: <span th:text="${medicine.duration}">7 days</span></div>
+                                                        <div class="mt-1 text-muted" th:text="${medicine.instructions}">Take with food</div>
+                                                    </div>
+                                                    <div>
+                                                        <button class="btn btn-sm btn-outline-primary edit-medicine"
+                                                                th:data-medicine-id="${medicine.medicationId}"
+                                                                th:data-prescription-id="${prescription.prescriptionId}">
+                                                            <i class="bi bi-pencil"></i>
+                                                        </button>
+                                                        <button class="btn btn-sm btn-outline-danger delete-medicine"
+                                                                th:data-medicine-id="${medicine.medicationId}"
+                                                                th:data-prescription-id="${prescription.prescriptionId}">
+                                                            <i class="bi bi-trash"></i>
+                                                        </button>
+                                                    </div>
+                                                </div>
+                                            </li>
+                                        </ul>
+                                    </div>
+
+                                    <div class="mt-2">
+                                        <button class="btn btn-sm btn-outline-primary add-medicine"
+                                                th:data-prescription-id="${prescription.prescriptionId}"
+                                                data-bs-toggle="modal" data-bs-target="#addMedicineModal">
+                                            <i class="bi bi-plus-circle"></i> Add Medication
+                                        </button>
+                                        <button class="btn btn-sm btn-outline-secondary edit-prescription"
+                                                th:data-prescription-id="${prescription.prescriptionId}"
+                                                th:data-notes="${prescription.notes}">
+                                            <i class="bi bi-pencil"></i> Edit Notes
+                                        </button>
+                                        <button class="btn btn-sm btn-outline-danger delete-prescription"
+                                                th:data-prescription-id="${prescription.prescriptionId}">
+                                            <i class="bi bi-trash"></i> Delete
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Show this when no prescriptions are available -->
+                        <div th:if="${prescriptions == null or prescriptions.empty}" class="alert alert-info">
+                            <i class="bi bi-info-circle me-2"></i> No prescriptions have been created for this appointment yet.
+                        </div>
+
+                        <button class="btn btn-primary-custom mt-3" data-bs-toggle="modal" data-bs-target="#createPrescriptionModal">
+                            <i class="bi bi-plus-circle me-2"></i> Create New Prescription
+                        </button>
+                    </div>
 
 
                     <a th:href="@{/medical-results/generate-report/{appointmentId}(appointmentId=${appointment.appointmentId},doctorId=${doctorId})}"
@@ -943,11 +1013,11 @@
             </div>
         </div>
 
-        <div class="modal fade" id="medicalResultModal" tabindex="-1" aria-labelledby="medicalResultModalLabel" aria-hidden="true">
+        <div class="modal fade" id="addMedicalResultModal" tabindex="-1" aria-labelledby="medicalResultModalLabel" aria-hidden="true">
             <div class="modal-dialog modal-lg">
                 <div class="modal-content">
                     <div class="modal-header">
-                        <h5 class="modal-title" id="medicalResultModalLabel">
+                        <h5 class="modal-title" id="addMedicalResultModalLabel">
                             <i class="bi bi-clipboard-data"></i> Add Medical Result
                         </h5>
                         <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
@@ -1096,7 +1166,131 @@
     </div>
 </div>
 
+<!-- Create Prescription Modal -->
+<div class="modal fade" id="createPrescriptionModal" tabindex="-1" aria-labelledby="createPrescriptionModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="createPrescriptionModalLabel">
+                    <i class="bi bi-capsule"></i> Create New Prescription
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <form id="prescriptionForm">
+                    <input type="hidden" id="appointmentId" name="appointmentId" th:value="${appointment.appointmentId}">
+                    <input type="hidden" id="patientId" name="patientId" th:value="${appointment.patientId}">
+                    <input type="hidden" id="doctorId" name="doctorId" th:value="${doctorId}">
 
+                    <div class="form-group mb-3">
+                        <label for="prescriptionNotes" class="form-label">Prescription Notes</label>
+                        <textarea id="prescriptionNotes" name="notes" class="form-control" rows="3" placeholder="Enter general notes for this prescription"></textarea>
+                    </div>
+
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                        <button type="button" id="savePrescriptionBtn" class="btn btn-primary-custom">
+                            <i class="bi bi-save"></i> Create Prescription
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Edit Prescription Notes Modal -->
+<div class="modal fade" id="editPrescriptionNotesModal" tabindex="-1" aria-labelledby="editPrescriptionNotesModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="editPrescriptionNotesModalLabel">
+                    <i class="bi bi-pencil"></i> Edit Prescription Notes
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <form id="editPrescriptionForm">
+                    <input type="hidden" id="editPrescriptionId" name="prescriptionId">
+
+                    <div class="form-group mb-3">
+                        <label for="editPrescriptionNotes" class="form-label">Prescription Notes</label>
+                        <textarea id="editPrescriptionNotes" name="notes" class="form-control" rows="3"></textarea>
+                    </div>
+
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                        <button type="button" id="updatePrescriptionNotesBtn" class="btn btn-primary-custom">
+                            <i class="bi bi-save"></i> Update Notes
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="addMedicineModal" tabindex="-1" aria-labelledby="addMedicineModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="addMedicineModalLabel">
+                    <i class="bi bi-capsule"></i> Add Medication
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <form id="medicineForm">
+                    <input type="hidden" id="medicineId" name="medicineId">
+                    <input type="hidden" id="medicinePrescriptionId" name="prescriptionId">
+
+                    <div class="form-group mb-3">
+                        <label for="medicineSelect" class="form-label">Medication</label>
+                        <select id="medicineSelect" name="inventoryId" class="form-select" required>
+                            <option value="">Select medication</option>
+                            <option th:each="medicine : ${medicineInventory}"
+                                    th:value="${medicine.inventoryId}"
+                                    th:text="${medicine.medicineName + ' (' + medicine.genericName + ')'}">
+                                Medicine Name (Generic Name)
+                            </option>
+                        </select>
+                    </div>
+
+                    <div class="form-group mb-3">
+                        <label for="medicineDosage" class="form-label">Dosage</label>
+                        <input type="text" id="medicineDosage" name="dosage" class="form-control"
+                               placeholder="e.g., 500mg" required>
+                    </div>
+
+                    <div class="form-group mb-3">
+                        <label for="medicineFrequency" class="form-label">Frequency</label>
+                        <input type="text" id="medicineFrequency" name="frequency" class="form-control"
+                               placeholder="e.g., Twice daily" required>
+                    </div>
+
+                    <div class="form-group mb-3">
+                        <label for="medicineDuration" class="form-label">Duration</label>
+                        <input type="text" id="medicineDuration" name="duration" class="form-control"
+                               placeholder="e.g., 7 days" required>
+                    </div>
+
+                    <div class="form-group mb-3">
+                        <label for="medicineInstructions" class="form-label">Instructions</label>
+                        <textarea id="medicineInstructions" name="instructions" class="form-control" rows="3"
+                                  placeholder="Special instructions, e.g., Take with food"></textarea>
+                    </div>
+
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                        <button type="button" id="saveMedicineBtn" class="btn btn-primary-custom">
+                            <i class="bi bi-save"></i> Save Medication
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
 
 </body>
 <script src="/js/doctor-notes.js"></script>
@@ -1211,21 +1405,324 @@
         const doctorId = urlParams.get('doctorId');
         return doctorId ? parseInt(doctorId) : null;
     }
+
+    // Prescription and Medicine Management
+    document.addEventListener('DOMContentLoaded', function() {
+        // Create Prescription
+        document.getElementById('savePrescriptionBtn').addEventListener('click', function() {
+            const appointmentId = document.getElementById('appointmentId').value;
+            const patientId = document.getElementById('patientId').value;
+            const doctorId = document.getElementById('doctorId').value;
+            const notes = document.getElementById('prescriptionNotes').value;
+
+            // Get CSRF token
+            const token = document.querySelector('meta[name="_csrf"]').getAttribute('content');
+            const header = document.querySelector('meta[name="_csrf_header"]').getAttribute('content');
+
+            // Create form data
+            const formData = new FormData();
+            formData.append('appointmentId', appointmentId);
+            formData.append('patientId', patientId);
+            formData.append('doctorId', doctorId);
+            formData.append('notes', notes);
+
+            fetch('/doctor/prescriptions/create', {
+                method: 'POST',
+                headers: {
+                    [header]: token
+                },
+                body: formData
+            })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        // Close modal
+                        const modal = bootstrap.Modal.getInstance(document.getElementById('createPrescriptionModal'));
+                        modal.hide();
+
+                        // Show success message and reload
+                        showAlert('success', data.message);
+                        setTimeout(() => {
+                            window.location.reload();
+                        }, 1500);
+                    } else {
+                        showAlert('error', data.message);
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    showAlert('error', 'An error occurred while creating the prescription.');
+                });
+        });
+
+        // Add Medicine to Prescription
+        document.querySelectorAll('.add-medicine').forEach(button => {
+            button.addEventListener('click', function() {
+                const prescriptionId = this.getAttribute('data-prescription-id');
+                document.getElementById('medicinePrescriptionId').value = prescriptionId;
+                document.getElementById('medicineId').value = ''; // Clear ID for new medicine
+
+                // Reset form
+                document.getElementById('medicineForm').reset();
+                document.getElementById('addMedicineModalLabel').textContent = 'Add Medication to Prescription';
+            });
+        });
+
+        // Edit Medicine
+        document.querySelectorAll('.edit-medicine').forEach(button => {
+            button.addEventListener('click', function() {
+                const medicineId = this.getAttribute('data-medicine-id');
+                const prescriptionId = this.getAttribute('data-prescription-id');
+
+                // Get medicine details
+                fetch(`/doctor/prescriptions/medicine/${medicineId}`)
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.success) {
+                            const medicine = data.medicine;
+
+                            // Populate form
+                            document.getElementById('medicineId').value = medicine.medicationId;
+                            document.getElementById('medicinePrescriptionId').value = prescriptionId;
+                            document.getElementById('medicineSelect').value = medicine.inventoryId;
+                            document.getElementById('medicineDosage').value = medicine.dosage;
+                            document.getElementById('medicineFrequency').value = medicine.frequency;
+                            document.getElementById('medicineDuration').value = medicine.duration;
+                            document.getElementById('medicineInstructions').value = medicine.instructions;
+
+                            // Update modal title
+                            document.getElementById('addMedicineModalLabel').textContent = 'Edit Medication';
+
+                            // Show modal
+                            const modal = new bootstrap.Modal(document.getElementById('addMedicineModal'));
+                            modal.show();
+                        } else {
+                            showAlert('error', data.message);
+                        }
+                    })
+                    .catch(error => {
+                        console.error('Error:', error);
+                        showAlert('error', 'An error occurred while fetching medicine details.');
+                    });
+            });
+        });
+
+        // Save Medicine
+        document.getElementById('saveMedicineBtn').addEventListener('click', function() {
+            const medicineId = document.getElementById('medicineId').value;
+            const prescriptionId = document.getElementById('medicinePrescriptionId').value;
+            const inventoryId = document.getElementById('medicineSelect').value;
+            const dosage = document.getElementById('medicineDosage').value;
+            const frequency = document.getElementById('medicineFrequency').value;
+            const duration = document.getElementById('medicineDuration').value;
+            const instructions = document.getElementById('medicineInstructions').value;
+
+            // Validate form
+            if (!inventoryId || !dosage || !frequency || !duration) {
+                showAlert('error', 'Please fill in all required fields.');
+                return;
+            }
+
+            // Get CSRF token
+            const token = document.querySelector('meta[name="_csrf"]').getAttribute('content');
+            const header = document.querySelector('meta[name="_csrf_header"]').getAttribute('content');
+
+            // Create form data
+            const formData = new FormData();
+            formData.append('prescriptionId', prescriptionId);
+            formData.append('inventoryId', inventoryId);
+            formData.append('dosage', dosage);
+            formData.append('frequency', frequency);
+            formData.append('duration', duration);
+            formData.append('instructions', instructions);
+
+            // Determine if creating or updating
+            const url = medicineId ?
+                `/doctor/prescriptions/medicine/update/${medicineId}` :
+                '/doctor/prescriptions/medicine/add';
+
+            fetch(url, {
+                method: 'POST',
+                headers: {
+                    [header]: token
+                },
+                body: formData
+            })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        // Close modal
+                        const modal = bootstrap.Modal.getInstance(document.getElementById('addMedicineModal'));
+                        modal.hide();
+
+                        // Show success message and reload
+                        showAlert('success', data.message);
+                        setTimeout(() => {
+                            window.location.reload();
+                        }, 1500);
+                    } else {
+                        showAlert('error', data.message);
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    showAlert('error', 'An error occurred while saving the medication.');
+                });
+        });
+
+        // Delete Medicine
+        document.querySelectorAll('.delete-medicine').forEach(button => {
+            button.addEventListener('click', function() {
+                if (confirm('Are you sure you want to remove this medication from the prescription?')) {
+                    const medicineId = this.getAttribute('data-medicine-id');
+
+                    // Get CSRF token
+                    const token = document.querySelector('meta[name="_csrf"]').getAttribute('content');
+                    const header = document.querySelector('meta[name="_csrf_header"]').getAttribute('content');
+
+                    fetch(`/doctor/prescriptions/medicine/delete/${medicineId}`, {
+                        method: 'POST',
+                        headers: {
+                            [header]: token
+                        }
+                    })
+                        .then(response => response.json())
+                        .then(data => {
+                            if (data.success) {
+                                showAlert('success', data.message);
+                                setTimeout(() => {
+                                    window.location.reload();
+                                }, 1500);
+                            } else {
+                                showAlert('error', data.message);
+                            }
+                        })
+                        .catch(error => {
+                            console.error('Error:', error);
+                            showAlert('error', 'An error occurred while deleting the medication.');
+                        });
+                }
+            });
+        });
+
+        // Edit Prescription Notes
+        document.querySelectorAll('.edit-prescription').forEach(button => {
+            button.addEventListener('click', function() {
+                const prescriptionId = this.getAttribute('data-prescription-id');
+                const notes = this.getAttribute('data-notes');
+
+                document.getElementById('editPrescriptionId').value = prescriptionId;
+                document.getElementById('editPrescriptionNotes').value = notes;
+
+                const modal = new bootstrap.Modal(document.getElementById('editPrescriptionNotesModal'));
+                modal.show();
+            });
+        });
+
+        // Update Prescription Notes
+        document.getElementById('updatePrescriptionNotesBtn').addEventListener('click', function() {
+            const prescriptionId = document.getElementById('editPrescriptionId').value;
+            const notes = document.getElementById('editPrescriptionNotes').value;
+
+            // Get CSRF token
+            const token = document.querySelector('meta[name="_csrf"]').getAttribute('content');
+            const header = document.querySelector('meta[name="_csrf_header"]').getAttribute('content');
+
+            // Create form data
+            const formData = new FormData();
+            formData.append('prescriptionId', prescriptionId);
+            formData.append('notes', notes);
+
+            fetch('/doctor/prescriptions/update-notes', {
+                method: 'POST',
+                headers: {
+                    [header]: token
+                },
+                body: formData
+            })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        // Close modal
+                        const modal = bootstrap.Modal.getInstance(document.getElementById('editPrescriptionNotesModal'));
+                        modal.hide();
+
+                        // Show success message and reload
+                        showAlert('success', data.message);
+                        setTimeout(() => {
+                            window.location.reload();
+                        }, 1500);
+                    } else {
+                        showAlert('error', data.message);
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    showAlert('error', 'An error occurred while updating the prescription notes.');
+                });
+        });
+
+        // Delete Prescription
+        document.querySelectorAll('.delete-prescription').forEach(button => {
+            button.addEventListener('click', function() {
+                if (confirm('Are you sure you want to delete this prescription? This will also remove all medications associated with it.')) {
+                    const prescriptionId = this.getAttribute('data-prescription-id');
+
+                    // Get CSRF token
+                    const token = document.querySelector('meta[name="_csrf"]').getAttribute('content');
+                    const header = document.querySelector('meta[name="_csrf_header"]').getAttribute('content');
+
+                    // Use fetch with JSON instead of FormData
+                    fetch(`/doctor/prescriptions/delete/${prescriptionId}`, {
+                        method: 'POST',
+                        headers: {
+                            [header]: token,
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify({}) // Empty JSON object
+                    })
+                    .then(response => {
+                        if (!response.ok) {
+                            throw new Error('Network response was not ok');
+                        }
+                        return response.json();
+                    })
+                    .then(data => {
+                        if (data.success) {
+                            showAlert('success', data.message);
+                            setTimeout(() => {
+                                window.location.reload();
+                            }, 1500);
+                        } else {
+                            showAlert('error', data.message || 'An error occurred');
+                        }
+                    })
+                    .catch(error => {
+                        console.error('Error:', error);
+                        showAlert('error', 'An error occurred while deleting the prescription.');
+                    });
+                }
+            });
+        });
+
+        // Helper function to show alerts
+        function showAlert(type, message) {
+            const alertDiv = document.createElement('div');
+            alertDiv.className = `alert-custom ${type === 'success' ? 'alert-success-custom' : 'alert-warning-custom'}`;
+            alertDiv.innerHTML = `<i class="bi ${type === 'success' ? 'bi-check-circle' : 'bi-exclamation-triangle'}"></i> ${message}`;
+
+            // Insert at the top of the main content
+            const container = document.querySelector('.appointment-container');
+            container.insertBefore(alertDiv, container.firstChild);
+
+            // Auto remove after 5 seconds
+            setTimeout(() => {
+                alertDiv.remove();
+            }, 5000);
+        }
+    });
 </script>
 
 </html>
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 
