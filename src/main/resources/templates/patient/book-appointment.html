@@ -17,6 +17,11 @@
       --primary-color: #2563eb;
       --secondary-color: #1e40af;
       --accent-color: #06b6d4;
+      --patient-primary: #059669;
+      --patient-secondary: #047857;
+      --patient-accent: #10b981;
+      --patient-light: #ecfdf5;
+      --patient-dark: #064e3b;
       --text-dark: #1f2937;
       --text-light: #6b7280;
       --text-muted: #9ca3af;
@@ -45,22 +50,22 @@
       overflow-x: hidden;
     }
 
-    /* Sidebar Styles */
-    .sidebar {
+    /* Patient Sidebar Styles */
+    .patient-sidebar {
       position: fixed;
       top: 0;
       left: 0;
       height: 100vh;
       width: var(--sidebar-width);
-      background: linear-gradient(180deg, var(--success-color) 0%, #059669 100%);
+      background: linear-gradient(180deg, var(--patient-primary) 0%, var(--patient-secondary) 100%);
       color: white;
       z-index: 1000;
       transition: transform 0.3s ease;
       overflow-y: auto;
-      box-shadow: 4px 0 20px rgba(16, 185, 129, 0.15);
+      box-shadow: 4px 0 20px rgba(5, 150, 105, 0.15);
     }
 
-    .sidebar.collapsed {
+    .patient-sidebar.collapsed {
       transform: translateX(-100%);
     }
 
@@ -70,26 +75,61 @@
       background: rgba(255, 255, 255, 0.05);
     }
 
-    .brand-logo {
-      font-size: 1.5rem;
-      font-weight: 700;
+    .patient-brand {
       display: flex;
       align-items: center;
       gap: 0.75rem;
       color: white;
       text-decoration: none;
+      transition: all 0.3s ease;
     }
 
-    .brand-logo i {
+    .patient-brand:hover {
+      color: white;
+      text-decoration: none;
+      transform: translateX(2px);
+    }
+
+    .patient-brand i {
       font-size: 2rem;
+      color: #34d399;
       background: linear-gradient(45deg, #34d399, #10b981);
       -webkit-background-clip: text;
       -webkit-text-fill-color: transparent;
       background-clip: text;
+      filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.1));
+    }
+
+    .patient-brand > div > div:first-child {
+      font-size: 1.5rem;
+      font-weight: 700;
+      line-height: 1.2;
+    }
+
+    .patient-brand small {
+      font-size: 0.75rem;
+      font-weight: 400;
+      opacity: 0.8;
+      color: #a7f3d0;
     }
 
     .sidebar-nav {
       padding: 1.5rem 0;
+    }
+
+    .nav-section-title {
+      font-size: 0.75rem;
+      font-weight: 700;
+      color: rgba(255, 255, 255, 0.6);
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      margin: 1.5rem 1rem 0.75rem 1rem;
+      padding-bottom: 0.5rem;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    }
+
+    .nav-section-title:first-child {
+      margin-top: 0;
     }
 
     .nav-item {
@@ -107,12 +147,17 @@
       font-weight: 500;
       transition: all 0.3s ease;
       position: relative;
+      border: none;
+      background: transparent;
+      width: 100%;
+      text-align: left;
     }
 
     .nav-link:hover {
       background: rgba(255, 255, 255, 0.1);
       color: white;
       transform: translateX(4px);
+      text-decoration: none;
     }
 
     .nav-link.active {
@@ -137,6 +182,7 @@
       font-size: 1.125rem;
       width: 20px;
       text-align: center;
+      flex-shrink: 0;
     }
 
     /* Main Content */
@@ -183,7 +229,7 @@
 
     .sidebar-toggle:hover {
       background: var(--bg-light);
-      color: var(--primary-color);
+      color: var(--success-color);
     }
 
     .header-right {
@@ -571,7 +617,7 @@
 
     /* Responsive Design */
     @media (max-width: 768px) {
-      .sidebar {
+      .patient-sidebar {
         transform: translateX(-100%);
       }
 
@@ -648,19 +694,30 @@
   </style>
 </head>
 <body>
-<!-- Sidebar Navigation -->
-<nav class="sidebar" id="sidebar">
+<!-- Patient Sidebar Navigation -->
+<div class="patient-sidebar" id="sidebar">
   <div class="sidebar-header">
-    <a href="#" class="brand-logo">
+    <a href="#" class="patient-brand">
       <i class="bi bi-heart-pulse"></i>
-      MediCare Plus
+      <div>
+        <div>MediCare Plus</div>
+        <small>Patient Portal</small>
+      </div>
     </a>
   </div>
-  <div class="sidebar-nav">
+  <nav class="sidebar-nav">
+    <div class="nav-section-title">Dashboard</div>
     <div class="nav-item">
       <a th:href="@{/patient/dashboard(patientId=${patientId})}" class="nav-link">
         <i class="bi bi-speedometer2"></i>
         Dashboard
+      </a>
+    </div>
+    <div class="nav-section-title">Medical Services</div>
+    <div class="nav-item">
+      <a th:href="@{/patient/search-doctor(patientId=${patientId})}" class="nav-link">
+        <i class="bi bi-search"></i>
+        Search Doctors
       </a>
     </div>
     <div class="nav-item">
@@ -670,29 +727,32 @@
       </a>
     </div>
     <div class="nav-item">
-      <a th:href="@{/patient/appointments(patientId=${patientId})}" class="nav-link">
+      <a th:href="@{/patient/appointment-list(patientId=${patientId})}" class="nav-link">
         <i class="bi bi-calendar-check"></i>
         My Appointments
       </a>
     </div>
-    <div class="nav-item">
-      <a th:href="@{/patient/medical-records(patientId=${patientId})}" class="nav-link">
-        <i class="bi bi-file-medical"></i>
-        Medical Records
-      </a>
-    </div>
+    <div class="nav-section-title">Account</div>
     <div class="nav-item">
       <a th:href="@{/patient/profile(patientId=${patientId})}" class="nav-link">
         <i class="bi bi-person"></i>
         My Profile
       </a>
     </div>
+    <div class="nav-section-title">Support</div>
     <div class="nav-item">
-      <a th:href="@{/patient/support(patientId=${patientId})}" class="nav-link">
+      <a th:href="@{/patient/customer-support(patientId=${patientId})}" class="nav-link">
         <i class="bi bi-headset"></i>
-        Support
+        Customer Support
       </a>
     </div>
+    <div class="nav-item">
+      <a th:href="@{/patient/feedback(patientId=${patientId})}" class="nav-link">
+        <i class="bi bi-chat-square-text"></i>
+        Feedback
+      </a>
+    </div>
+    <div class="nav-section-title">System</div>
     <div class="nav-item">
       <form th:action="@{/auth/logout}" method="post">
         <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}" />
@@ -702,8 +762,8 @@
         </button>
       </form>
     </div>
-  </div>
-</nav>
+  </nav>
+</div>
 
 <div class="main-content" id="mainContent">
   <!-- Top Header -->

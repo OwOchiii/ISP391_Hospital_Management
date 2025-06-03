@@ -182,7 +182,7 @@ public class PatientAppointmentController {
                             formatTimeForDisplay(appointmentForm.getAppointmentTime()));
 
             // Redirect to the same page to avoid form resubmission
-            return "redirect:/patient/book-appointment?patientId=" + appointmentForm.getPatientId();
+            return "redirect:/patient/appointment-list";
 
         } catch (Exception e) {
             // Handle any errors
