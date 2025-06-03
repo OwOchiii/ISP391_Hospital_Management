@@ -124,9 +124,41 @@ public class PatientDashboardController {
                 return "error";
             }
 
+            // Get patient info
+            Optional<Patient> patientOpt = patientRepository.findById(patientId);
+            if (patientOpt.isPresent()) {
+                Patient patient = patientOpt.get();
+                model.addAttribute("patientName", patient.getUser().getFullName());
+            }
+
+            // Get all appointments for the patient
             List<Appointment> appointments = appointmentRepository.findByPatientIdOrderByDateTimeDesc(patientId);
+
+            // Count appointments by status
+            long scheduledCount = appointments.stream()
+                    .filter(a -> "Scheduled".equals(a.getStatus()))
+                    .count();
+
+            long pendingCount = appointments.stream()
+                    .filter(a -> "Pending".equals(a.getStatus()))
+                    .count();
+
+            long completedCount = appointments.stream()
+                    .filter(a -> "Completed".equals(a.getStatus()))
+                    .count();
+
+            long cancelledCount = appointments.stream()
+                    .filter(a -> "Cancel".equals(a.getStatus()))
+                    .count();
+
+            // Add attributes to model
             model.addAttribute("appointments", appointments);
             model.addAttribute("patientId", patientId);
+            model.addAttribute("totalAppointments", appointments.size());
+            model.addAttribute("scheduledAppointments", scheduledCount);
+            model.addAttribute("pendingAppointments", pendingCount);
+            model.addAttribute("completedAppointments", completedCount);
+            model.addAttribute("cancelledAppointments", cancelledCount);
 
             return "patient/appointment-list";
         } catch (Exception e) {
