@@ -9,6 +9,7 @@ import org.springframework.data.repository.query.Param;
 import orochi.model.Patient;
 
 import java.util.List;
+import java.util.Optional;
 
 public interface PatientRepository extends JpaRepository<Patient, Integer> {
     // Basic CRUD operations provided by JpaRepository
@@ -37,5 +38,7 @@ public interface PatientRepository extends JpaRepository<Patient, Integer> {
     // Find all patients with a specific status
     @Query("SELECT p FROM Patient p JOIN p.user u WHERE UPPER(u.status) = UPPER(:status)")
     Page<Patient> findByStatus(@Param("status") String status, Pageable pageable);
+
+    Optional<Patient> findByUserId(Integer userId);
 }
 

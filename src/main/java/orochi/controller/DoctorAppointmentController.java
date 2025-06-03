@@ -15,9 +15,7 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 import orochi.model.*;
-import orochi.repository.DoctorRepository;
-import orochi.repository.MedicalOrderRepository;
-import orochi.repository.MedicalResultRepository;
+import orochi.repository.*;
 import orochi.service.DoctorService;
 import orochi.service.FileStorageService;
 
@@ -46,6 +44,15 @@ public class DoctorAppointmentController {
 
     @Autowired
     private FileStorageService fileStorageService;
+
+    @Autowired
+    private AppointmentRepository appointmentRepository;
+
+    @Autowired
+    private PrescriptionRepository prescriptionRepository;
+
+    @Autowired
+    private MedicineInventoryRepository medicineInventoryRepository;
 
     @GetMapping("")
     public String getAllAppointments(
@@ -341,6 +348,24 @@ public class DoctorAppointmentController {
             if (appointment.isPresent()) {
                 Optional<Patient> patient = doctorService.getPatientDetails(appointment.get().getPatientId());
 
+
+                // Get patient's prescription history for this appointment
+                List<Prescription> prescriptions = prescriptionRepository.findByAppointmentId(appointmentId);
+                model.addAttribute("prescriptions", prescriptions);
+
+                // Get available medicines for the dropdown
+                List<MedicineInventory> medicineInventory = medicineInventoryRepository.findByCurrentStockGreaterThan(0);
+                model.addAttribute("medicineInventory", medicineInventory);
+
+                if (patient.isPresent()) {
+                    List<Appointment> patientAppointmentHistory = appointmentRepository.findByPatientIdAndDateTimeBefore(
+                            appointment.get().getPatientId(),
+                            appointment.get().getDateTime(),
+                            PageRequest.of(0, 10, Sort.by(Sort.Direction.DESC, "dateTime"))
+                    ).getContent();
+
+                    model.addAttribute("patientAppointmentHistory", patientAppointmentHistory);
+                }
                 // Create Pageable objects for pagination
                 Pageable orderPageable = PageRequest.of(orderPage, orderSize, Sort.by(Sort.Direction.DESC, "orderDate"));
                 Pageable resultPageable = PageRequest.of(resultPage, resultSize, Sort.by(Sort.Direction.DESC, "resultDate"));

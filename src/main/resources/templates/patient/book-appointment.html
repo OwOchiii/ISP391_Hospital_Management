@@ -1075,10 +1075,17 @@
     const specialtyId = document.getElementById('specialtyId').value;
     const doctorSelect = document.getElementById('doctorId');
     const doctorInfo = document.getElementById('doctorInfoDisplay');
+    const dateInput = document.getElementById('appointmentDate').value;
 
     // Reset doctor selection
     doctorSelect.innerHTML = '<option value="">Choose a Doctor</option>';
     doctorInfo.classList.remove('show');
+
+    // Reset all time slots when specialty changes
+    document.querySelectorAll('.time-slot').forEach(slot => {
+      slot.classList.remove('selected', 'disabled');
+    });
+    document.getElementById('appointmentTime').value = '';
 
     if (specialtyId) {
       doctorSelect.classList.add('loading');
@@ -1095,6 +1102,11 @@
                   doctorSelect.appendChild(option);
                 });
                 doctorSelect.classList.remove('loading');
+
+                // If date is already selected, update time slots when doctor changes
+                if (dateInput) {
+                  // We don't call updateTimeSlots() directly since the doctor hasn't been selected yet
+                }
               })
               .catch(error => {
                 console.error('Error fetching doctors:', error);
@@ -1103,11 +1115,12 @@
     }
   }
 
-  // Show doctor information
+  // Modify showDoctorInfo to trigger updateTimeSlots if date is already selected
   function showDoctorInfo() {
     const doctorSelect = document.getElementById('doctorId');
     const selectedOption = doctorSelect.options[doctorSelect.selectedIndex];
     const doctorInfo = document.getElementById('doctorInfoDisplay');
+    const dateInput = document.getElementById('appointmentDate').value;
 
     if (selectedOption.value) {
       const doctorName = selectedOption.getAttribute('data-name');
@@ -1121,6 +1134,11 @@
       document.getElementById('doctorAvatar').textContent = doctorName.substring(0, 2).toUpperCase();
 
       doctorInfo.classList.add('show');
+
+      // If date is already selected, update time slots when doctor changes
+      if (dateInput) {
+        updateTimeSlots();
+      }
     } else {
       doctorInfo.classList.remove('show');
     }
@@ -1130,17 +1148,21 @@
   function updateTimeSlots() {
     const dateInput = document.getElementById('appointmentDate').value;
     const doctorId = document.getElementById('doctorId').value;
+    const timeSlots = document.querySelectorAll('.time-slot');
+
+    // Reset all time slots
+    timeSlots.forEach(slot => {
+      slot.classList.remove('selected', 'disabled');
+    });
+    document.getElementById('appointmentTime').value = '';
+
+    if (!doctorId) {
+      alert('Please select a doctor before choosing a date');
+      document.getElementById('appointmentDate').value = '';
+      return;
+    }
 
     if (dateInput && doctorId) {
-      const timeSlots = document.querySelectorAll('.time-slot');
-
-      // Reset all time slots
-      timeSlots.forEach(slot => {
-        slot.classList.remove('selected', 'disabled');
-      });
-
-      document.getElementById('appointmentTime').value = '';
-
       // Fetch doctor availability for the selected date and doctor
       fetch(`/patient/api/doctor-availability?date=${dateInput}&doctorId=${doctorId}`)
               .then(response => response.json())
@@ -1150,7 +1172,6 @@
 
                 timeSlots.forEach(slot => {
                   const time = slot.getAttribute('data-time');
-                  // Mark slot as disabled if it's either directly booked or within the buffer period of a booked slot
                   if (bookedTimes.includes(time)) {
                     slot.classList.add('disabled');
                     slot.title = "This time slot is already booked";
