@@ -55,6 +55,20 @@
             border-bottom: 1px solid rgba(255, 255, 255, 0.1);
         }
 
+        .sidebar-nav {
+            padding: 1.5rem 0;
+        }
+
+        .nav-section-title {
+            padding: 0.75rem 1.5rem;
+            font-size: 0.75rem;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            color: rgba(255, 255, 255, 0.6);
+            font-weight: 600;
+        }
+
+
         .brand-logo {
             font-size: 1.5rem;
             font-weight: 700;
@@ -150,6 +164,8 @@
         .content-area {
             padding: 2rem;
         }
+
+
 
         .welcome-section {
             background: linear-gradient(135deg, var(--primary-color) 0%, var(--secondary-color) 100%);
@@ -434,61 +450,79 @@
     <div class="sidebar-header">
         <a href="#" class="brand-logo">
             <i class="bi bi-heart-pulse"></i>
-            MediCare Plus
+            <div>
+                <div>MediCare Plus</div>
+                <small style="font-size: 0.75rem; font-weight: 400; opacity: 0.8;">Doctor Portal</small>
+            </div>
         </a>
     </div>
 
     <nav class="sidebar-nav">
-        <div class="nav-item">
-            <a th:href="@{/doctor/dashboard(doctorId=${doctorId})}" class="nav-link active">
-                <i class="bi bi-speedometer2"></i>
-                Dashboard
-            </a>
+        <div class="nav-section">
+            <div class="nav-section-title">Dashboard</div>
+            <div class="nav-item">
+                <a th:href="@{/doctor/dashboard(doctorId=${doctorId})}" class="nav-link active">
+                    <i class="bi bi-speedometer2"></i>
+                    Dashboard
+                </a>
+            </div>
         </div>
-        <div class="nav-item">
-            <a th:href="@{/doctor/appointments(doctorId=${doctorId})}" class="nav-link">
-                <i class="bi bi-calendar-check"></i>
-                Appointments
-            </a>
+
+        <div class="nav-section">
+            <div class="nav-section-title">Patient Care</div>
+            <div class="nav-item">
+                <a th:href="@{/doctor/appointments(doctorId=${doctorId})}" class="nav-link">
+                    <i class="bi bi-calendar-check"></i>
+                    Appointments
+                </a>
+            </div>
+            <div class="nav-item">
+                <a th:href="@{/doctor/patients(doctorId=${doctorId})}" class="nav-link">
+                    <i class="bi bi-people"></i>
+                    Patients
+                </a>
+            </div>
+            <div class="nav-item">
+                <a th:href="@{/doctor/medical-orders(doctorId=${doctorId})}" class="nav-link">
+                    <i class="bi bi-prescription2"></i>
+                    Medical Orders
+                </a>
+            </div>
         </div>
-        <div class="nav-item">
-            <a th:href="@{/doctor/patients(doctorId=${doctorId})}" class="nav-link">
-                <i class="bi bi-people"></i>
-                Patients
-            </a>
+
+        <div class="nav-section">
+            <div class="nav-section-title">Management</div>
+            <div class="nav-item">
+                <a th:href="@{/doctor/schedule(doctorId=${doctorId})}" class="nav-link">
+                    <i class="bi bi-calendar-week"></i>
+                    View Schedule
+                </a>
+            </div>
+            <div class="nav-item">
+                <a href="#" class="nav-link">
+                    <i class="bi bi-chat-dots"></i>
+                    Messages
+                </a>
+            </div>
         </div>
-        <div class="nav-item">
-            <a th:href="@{/doctor/medical-orders(doctorId=${doctorId})}" class="nav-link">
-                <i class="bi bi-prescription2"></i>
-                Medical Orders
-            </a>
-        </div>
-        <div class="nav-item">
-            <a th:href="@{/doctor/schedule(doctorId=${doctorId})}" class="nav-link">
-                <i class="bi bi-calendar-week"></i>
-                View Schedule
-            </a>
-        </div>
-        <div class="nav-item">
-            <a href="#" class="nav-link">
-                <i class="bi bi-chat-dots"></i>
-                Messages
-            </a>
-        </div>
-        <div class="nav-item">
-            <a href="#" class="nav-link">
-                <i class="bi bi-gear"></i>
-                Settings
-            </a>
-        </div>
-        <div class="nav-item">
-            <form th:action="@{/auth/logout}" method="post">
-                <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}" />
-                <button type="submit" class="nav-link w-100 text-start border-0 bg-transparent">
-                    <i class="bi bi-box-arrow-right"></i>
-                    Logout
-                </button>
-            </form>
+
+        <div class="nav-section">
+            <div class="nav-section-title">System</div>
+            <div class="nav-item">
+                <a href="#" class="nav-link">
+                    <i class="bi bi-gear"></i>
+                    Settings
+                </a>
+            </div>
+            <div class="nav-item">
+                <form th:action="@{/auth/logout}" method="post">
+                    <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}" />
+                    <button type="submit" class="nav-link w-100 text-start border-0 bg-transparent">
+                        <i class="bi bi-box-arrow-right"></i>
+                        Logout
+                    </button>
+                </form>
+            </div>
         </div>
     </nav>
 </div>
@@ -524,7 +558,7 @@
             <div class="welcome-content">
                 <div class="row align-items-center">
                     <div class="col-md-8">
-                        <h2 class="mb-2" id="greeting">Good Morning, Doctor!</h2>
+                        <h2 class="mb-2" id="greeting">Good Day, Doctor!</h2>
                         <p class="mb-0 lead" th:text="|You have ${todayAppointments != null ? todayAppointments.size() : 0} appointments scheduled for today. Here's your overview.|">
                             You have appointments scheduled for today. Here's your overview.
                         </p>
