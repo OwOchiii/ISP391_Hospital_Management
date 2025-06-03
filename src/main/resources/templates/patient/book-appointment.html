@@ -2,17 +2,1264 @@
 <html lang="en" xmlns:th="http://www.thymeleaf.org">
 <head>
   <meta charset="UTF-8">
-  <title>Book Appointment</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Book Appointment - MediCare Plus</title>
+
+  <!-- Bootstrap CSS -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+  <!-- Bootstrap Icons -->
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css">
+  <!-- Google Fonts -->
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+
   <style>
-    body { font-family: Arial, sans-serif; margin: 20px; }
-    h1 { color: #333; }
-    a { text-decoration: none; color: #007bff; }
-    a:hover { text-decoration: underline; }
+    :root {
+      --primary-color: #2563eb;
+      --secondary-color: #1e40af;
+      --accent-color: #06b6d4;
+      --text-dark: #1f2937;
+      --text-light: #6b7280;
+      --text-muted: #9ca3af;
+      --bg-light: #f8fafc;
+      --bg-white: #ffffff;
+      --success-color: #10b981;
+      --warning-color: #f59e0b;
+      --error-color: #ef4444;
+      --info-color: #3b82f6;
+      --border-color: #e5e7eb;
+      --sidebar-width: 280px;
+      --header-height: 70px;
+    }
+
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: 'Inter', sans-serif;
+      line-height: 1.6;
+      color: var(--text-dark);
+      background: var(--bg-light);
+      overflow-x: hidden;
+    }
+
+    /* Sidebar Styles */
+    .sidebar {
+      position: fixed;
+      top: 0;
+      left: 0;
+      height: 100vh;
+      width: var(--sidebar-width);
+      background: linear-gradient(180deg, var(--success-color) 0%, #059669 100%);
+      color: white;
+      z-index: 1000;
+      transition: transform 0.3s ease;
+      overflow-y: auto;
+      box-shadow: 4px 0 20px rgba(16, 185, 129, 0.15);
+    }
+
+    .sidebar.collapsed {
+      transform: translateX(-100%);
+    }
+
+    .sidebar-header {
+      padding: 1.5rem;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+      background: rgba(255, 255, 255, 0.05);
+    }
+
+    .brand-logo {
+      font-size: 1.5rem;
+      font-weight: 700;
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      color: white;
+      text-decoration: none;
+    }
+
+    .brand-logo i {
+      font-size: 2rem;
+      background: linear-gradient(45deg, #34d399, #10b981);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+
+    .sidebar-nav {
+      padding: 1.5rem 0;
+    }
+
+    .nav-item {
+      margin: 0.25rem 1rem;
+    }
+
+    .nav-link {
+      color: rgba(255, 255, 255, 0.8);
+      padding: 0.875rem 1.25rem;
+      border-radius: 12px;
+      display: flex;
+      align-items: center;
+      gap: 0.875rem;
+      text-decoration: none;
+      font-weight: 500;
+      transition: all 0.3s ease;
+      position: relative;
+    }
+
+    .nav-link:hover {
+      background: rgba(255, 255, 255, 0.1);
+      color: white;
+      transform: translateX(4px);
+    }
+
+    .nav-link.active {
+      background: rgba(255, 255, 255, 0.15);
+      color: white;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    }
+
+    .nav-link.active::before {
+      content: '';
+      position: absolute;
+      left: 0;
+      top: 50%;
+      transform: translateY(-50%);
+      width: 4px;
+      height: 24px;
+      background: #34d399;
+      border-radius: 0 4px 4px 0;
+    }
+
+    .nav-link i {
+      font-size: 1.125rem;
+      width: 20px;
+      text-align: center;
+    }
+
+    /* Main Content */
+    .main-content {
+      margin-left: var(--sidebar-width);
+      min-height: 100vh;
+      transition: margin-left 0.3s ease;
+    }
+
+    .main-content.expanded {
+      margin-left: 0;
+    }
+
+    /* Top Header */
+    .top-header {
+      background: var(--bg-white);
+      height: var(--header-height);
+      padding: 0 2rem;
+      box-shadow: 0 2px 20px rgba(0, 0, 0, 0.08);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      position: sticky;
+      top: 0;
+      z-index: 999;
+    }
+
+    .header-left {
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+    }
+
+    .sidebar-toggle {
+      background: none;
+      border: none;
+      font-size: 1.25rem;
+      color: var(--text-dark);
+      cursor: pointer;
+      padding: 0.5rem;
+      border-radius: 8px;
+      transition: all 0.3s ease;
+    }
+
+    .sidebar-toggle:hover {
+      background: var(--bg-light);
+      color: var(--primary-color);
+    }
+
+    .header-right {
+      display: flex;
+      align-items: center;
+      gap: 1.5rem;
+    }
+
+    .patient-info {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      padding: 0.5rem;
+      border-radius: 12px;
+      transition: all 0.3s ease;
+      cursor: pointer;
+    }
+
+    .patient-info:hover {
+      background: var(--bg-light);
+    }
+
+    .patient-avatar {
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, var(--success-color), var(--accent-color));
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: white;
+      font-weight: 700;
+      font-size: 0.875rem;
+    }
+
+    /* Page Content */
+    .page-content {
+      padding: 2rem;
+      max-width: 900px;
+      margin: 0 auto;
+    }
+
+    .page-header {
+      margin-bottom: 2rem;
+    }
+
+    .page-title {
+      font-size: 2rem;
+      font-weight: 700;
+      color: var(--text-dark);
+      margin-bottom: 0.5rem;
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+    }
+
+    .page-title i {
+      color: var(--success-color);
+    }
+
+    .breadcrumb {
+      background: none;
+      padding: 0;
+      margin: 0;
+    }
+
+    .breadcrumb-item a {
+      color: var(--success-color);
+      text-decoration: none;
+    }
+
+    .breadcrumb-item.active {
+      color: var(--text-muted);
+    }
+
+    /* Form Section */
+    .form-section {
+      background: var(--bg-white);
+      border-radius: 16px;
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+      padding: 2rem;
+      margin-bottom: 2rem;
+    }
+
+    .section-title {
+      font-size: 1.5rem;
+      font-weight: 600;
+      color: var(--text-dark);
+      margin-bottom: 1.5rem;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    .section-title i {
+      color: var(--success-color);
+    }
+
+    .form-label {
+      font-weight: 600;
+      color: var(--text-dark);
+      margin-bottom: 0.5rem;
+      display: flex;
+      align-items: center;
+      gap: 0.25rem;
+    }
+
+    .required-asterisk {
+      color: var(--error-color);
+      font-weight: 700;
+    }
+
+    .form-control, .form-select {
+      border: 2px solid var(--border-color);
+      border-radius: 12px;
+      padding: 0.875rem 1rem;
+      font-size: 1rem;
+      transition: all 0.3s ease;
+      background: var(--bg-white);
+    }
+
+    .form-control:focus, .form-select:focus {
+      border-color: var(--success-color);
+      box-shadow: 0 0 0 0.2rem rgba(16, 185, 129, 0.25);
+      background: var(--bg-white);
+    }
+
+    .form-control:read-only {
+      background: var(--bg-light);
+      color: var(--text-muted);
+    }
+
+    /* Time Grid */
+    .time-selection {
+      margin-top: 1rem;
+    }
+
+    .time-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(100px, 1fr));
+      gap: 0.75rem;
+      margin-top: 1rem;
+    }
+
+    .time-slot {
+      padding: 0.875rem 1rem;
+      border: 2px solid var(--border-color);
+      border-radius: 12px;
+      background: var(--bg-white);
+      color: var(--text-dark);
+      font-weight: 500;
+      text-align: center;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      position: relative;
+    }
+
+    .time-slot:hover:not(.disabled) {
+      border-color: var(--success-color);
+      background: rgba(16, 185, 129, 0.1);
+      transform: translateY(-2px);
+    }
+
+    .time-slot.selected {
+      background: var(--success-color);
+      border-color: var(--success-color);
+      color: white;
+      box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);
+    }
+
+    .time-slot.disabled {
+      background: #f3f4f6;
+      border-color: #d1d5db;
+      color: #9ca3af;
+      cursor: not-allowed;
+    }
+
+    .time-slot.disabled::after {
+      content: '✕';
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      color: var(--error-color);
+      font-weight: 700;
+    }
+
+    /* Contact Info Section */
+    .contact-field {
+      position: relative;
+    }
+
+    .reset-btn {
+      position: absolute;
+      right: 0.75rem;
+      top: 50%;
+      transform: translateY(-50%);
+      background: none;
+      border: none;
+      color: var(--text-light);
+      font-size: 0.875rem;
+      cursor: pointer;
+      padding: 0.25rem 0.5rem;
+      border-radius: 6px;
+      transition: all 0.3s ease;
+    }
+
+    .reset-btn:hover {
+      background: var(--bg-light);
+      color: var(--success-color);
+    }
+
+    /* Error Messages */
+    .error-message {
+      color: var(--error-color);
+      font-size: 0.875rem;
+      margin-top: 0.5rem;
+      display: flex;
+      align-items: center;
+      gap: 0.25rem;
+    }
+
+    .error-message i {
+      font-size: 1rem;
+    }
+
+    /* Buttons */
+    .btn-primary-custom {
+      background: linear-gradient(135deg, var(--success-color), #059669);
+      border: none;
+      padding: 1rem 2rem;
+      border-radius: 12px;
+      color: white;
+      font-weight: 600;
+      font-size: 1.1rem;
+      text-decoration: none;
+      transition: all 0.3s ease;
+      display: inline-flex;
+      align-items: center;
+      gap: 0.75rem;
+      cursor: pointer;
+    }
+
+    .btn-primary-custom:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 8px 25px rgba(16, 185, 129, 0.3);
+      color: white;
+    }
+
+    .btn-outline-custom {
+      border: 2px solid var(--success-color);
+      color: var(--success-color);
+      background: transparent;
+      padding: 0.75rem 1.5rem;
+      border-radius: 12px;
+      font-weight: 600;
+      text-decoration: none;
+      transition: all 0.3s ease;
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    .btn-outline-custom:hover {
+      background: var(--success-color);
+      color: white;
+      transform: translateY(-2px);
+      text-decoration: none;
+    }
+
+    /* Confirmation Modal */
+    .confirmation-overlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0, 0, 0, 0.5);
+      z-index: 2000;
+      display: none;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .confirmation-overlay.active {
+      display: flex;
+    }
+
+    .confirmation-dialog {
+      background: var(--bg-white);
+      border-radius: 20px;
+      padding: 2rem;
+      max-width: 500px;
+      width: 90%;
+      box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+      text-align: center;
+      animation: slideIn 0.3s ease-out;
+    }
+
+    @keyframes slideIn {
+      from {
+        opacity: 0;
+        transform: translateY(-30px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    .confirmation-icon {
+      width: 80px;
+      height: 80px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, var(--success-color), #059669);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin: 0 auto 1.5rem;
+      color: white;
+      font-size: 2rem;
+    }
+
+    .confirmation-title {
+      font-size: 1.5rem;
+      font-weight: 700;
+      color: var(--text-dark);
+      margin-bottom: 1rem;
+    }
+
+    .confirmation-message {
+      color: var(--text-light);
+      margin-bottom: 2rem;
+      line-height: 1.6;
+    }
+
+    .confirmation-actions {
+      display: flex;
+      gap: 1rem;
+      justify-content: center;
+    }
+
+    /* Doctor Info Display */
+    .doctor-info-display {
+      background: var(--bg-light);
+      border-radius: 12px;
+      padding: 1rem;
+      margin-top: 0.5rem;
+      display: none;
+    }
+
+    .doctor-info-display.show {
+      display: block;
+    }
+
+    .doctor-card {
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+    }
+
+    .doctor-avatar {
+      width: 50px;
+      height: 50px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, var(--primary-color), var(--accent-color));
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: white;
+      font-weight: 700;
+    }
+
+    .doctor-details h6 {
+      margin: 0;
+      font-weight: 600;
+      color: var(--text-dark);
+    }
+
+    .doctor-details p {
+      margin: 0;
+      font-size: 0.875rem;
+      color: var(--text-light);
+    }
+
+    /* Responsive Design */
+    @media (max-width: 768px) {
+      .sidebar {
+        transform: translateX(-100%);
+      }
+
+      .main-content {
+        margin-left: 0;
+      }
+
+      .page-content {
+        padding: 1rem;
+      }
+
+      .form-section {
+        padding: 1.5rem;
+      }
+
+      .top-header {
+        padding: 0 1rem;
+      }
+
+      .patient-info > div {
+        display: none;
+      }
+
+      .time-grid {
+        grid-template-columns: repeat(2, 1fr);
+      }
+
+      .confirmation-actions {
+        flex-direction: column;
+      }
+
+      .page-title {
+        font-size: 1.5rem;
+      }
+    }
+
+    /* Loading States */
+    .loading {
+      opacity: 0.6;
+      pointer-events: none;
+    }
+
+    .spinner {
+      display: inline-block;
+      width: 20px;
+      height: 20px;
+      border: 2px solid #f3f3f3;
+      border-top: 2px solid var(--success-color);
+      border-radius: 50%;
+      animation: spin 1s linear infinite;
+    }
+
+    @keyframes spin {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
+
+    /* Success Message */
+    .success-message {
+      background: #d1fae5;
+      border: 1px solid #a7f3d0;
+      border-radius: 12px;
+      padding: 1rem;
+      margin-bottom: 1rem;
+      color: #065f46;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    .success-message i {
+      color: var(--success-color);
+    }
   </style>
 </head>
 <body>
-<h1>Book Appointment</h1>
-<p>This is a placeholder for the Book Appointment functionality.</p>
-<a href="/patient/dashboard">Back to Dashboard</a>
+<!-- Sidebar Navigation -->
+<nav class="sidebar" id="sidebar">
+  <div class="sidebar-header">
+    <a href="#" class="brand-logo">
+      <i class="bi bi-heart-pulse"></i>
+      MediCare Plus
+    </a>
+  </div>
+  <div class="sidebar-nav">
+    <div class="nav-item">
+      <a th:href="@{/patient/dashboard(patientId=${patientId})}" class="nav-link">
+        <i class="bi bi-speedometer2"></i>
+        Dashboard
+      </a>
+    </div>
+    <div class="nav-item">
+      <a th:href="@{/patient/book-appointment(patientId=${patientId})}" class="nav-link active">
+        <i class="bi bi-calendar-plus"></i>
+        Book Appointment
+      </a>
+    </div>
+    <div class="nav-item">
+      <a th:href="@{/patient/appointments(patientId=${patientId})}" class="nav-link">
+        <i class="bi bi-calendar-check"></i>
+        My Appointments
+      </a>
+    </div>
+    <div class="nav-item">
+      <a th:href="@{/patient/medical-records(patientId=${patientId})}" class="nav-link">
+        <i class="bi bi-file-medical"></i>
+        Medical Records
+      </a>
+    </div>
+    <div class="nav-item">
+      <a th:href="@{/patient/profile(patientId=${patientId})}" class="nav-link">
+        <i class="bi bi-person"></i>
+        My Profile
+      </a>
+    </div>
+    <div class="nav-item">
+      <a th:href="@{/patient/support(patientId=${patientId})}" class="nav-link">
+        <i class="bi bi-headset"></i>
+        Support
+      </a>
+    </div>
+    <div class="nav-item">
+      <form th:action="@{/auth/logout}" method="post">
+        <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}" />
+        <button type="submit" class="nav-link w-100 text-start border-0 bg-transparent">
+          <i class="bi bi-box-arrow-right"></i>
+          Logout
+        </button>
+      </form>
+    </div>
+  </div>
+</nav>
+
+<div class="main-content" id="mainContent">
+  <!-- Top Header -->
+  <div class="top-header">
+    <div class="header-left">
+      <button class="sidebar-toggle" onclick="toggleSidebar()">
+        <i class="bi bi-list"></i>
+      </button>
+      <h4 class="mb-0">Book Appointment</h4>
+    </div>
+
+    <div class="header-right">
+      <a th:href="@{/patient/dashboard(patientId=${patientId})}" class="btn-outline-custom">
+        <i class="bi bi-arrow-left"></i>
+        Back to Dashboard
+      </a>
+      <div class="patient-info">
+        <div class="patient-avatar">
+          <span th:text="${patientName != null ? #strings.substring(patientName, 0, 2).toUpperCase() : 'PT'}">PT</span>
+        </div>
+        <div>
+          <div class="fw-semibold" th:text="${patientName != null ? patientName : 'Patient'}">Patient</div>
+          <small class="text-muted" th:text="${'ID: ' + patientId}">ID: 123</small>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Page Content -->
+  <div class="page-content">
+    <!-- Page Header -->
+    <div class="page-header">
+      <h1 class="page-title">
+        <i class="bi bi-calendar-plus"></i>
+        Book New Appointment
+      </h1>
+      <nav>
+        <ol class="breadcrumb">
+          <li class="breadcrumb-item"><a th:href="@{/patient/dashboard(patientId=${patientId})}">Dashboard</a></li>
+          <li class="breadcrumb-item active">Book Appointment</li>
+        </ol>
+      </nav>
+    </div>
+
+    <!-- Success Message -->
+    <div th:if="${successMessage}" class="success-message">
+      <i class="bi bi-check-circle-fill"></i>
+      <span th:text="${successMessage}">Appointment booked successfully!</span>
+    </div>
+
+    <!-- Appointment Form -->
+    <div class="form-section">
+      <h2 class="section-title">
+        <i class="bi bi-clipboard2-pulse"></i>
+        Appointment Details
+      </h2>
+
+      <form th:action="@{/patient/book-appointment}" th:object="${appointmentForm}" method="post" id="appointmentForm">
+        <input type="hidden" th:field="*{patientId}" th:value="${patientId}" />
+
+        <div class="row">
+          <!-- Specialty Selection -->
+          <div class="col-md-6 mb-3">
+            <label for="specialtyId" class="form-label">
+              Medical Specialty <span class="required-asterisk">*</span>
+            </label>
+            <select id="specialtyId" th:field="*{specialtyId}" class="form-select" onchange="updateDoctors()" required>
+              <option value="">Select Medical Specialty</option>
+              <option th:each="specialty : ${specialties}"
+                      th:value="${specialty.specId}"
+                      th:text="${specialty.specName + ' - $' + specialty.price}"
+                      th:data-price="${specialty.price}"
+                      th:selected="${appointmentForm.specialtyId == specialty.specId}">
+                Cardiology - $150
+              </option>
+            </select>
+            <div th:if="${#fields.hasErrors('specialtyId')}" class="error-message">
+              <i class="bi bi-exclamation-circle"></i>
+              <span th:errors="*{specialtyId}">Specialty is required</span>
+            </div>
+          </div>
+
+          <!-- Doctor Selection -->
+          <div class="col-md-6 mb-3">
+            <label for="doctorId" class="form-label">
+              Select Doctor <span class="required-asterisk">*</span>
+            </label>
+            <select id="doctorId" th:field="*{doctorId}" class="form-select" onchange="showDoctorInfo()" required>
+              <option value="">Choose a Doctor</option>
+            </select>
+            <div th:if="${#fields.hasErrors('doctorId')}" class="error-message">
+              <i class="bi bi-exclamation-circle"></i>
+              <span th:errors="*{doctorId}">Doctor selection is required</span>
+            </div>
+
+            <!-- Doctor Info Display -->
+            <div class="doctor-info-display" id="doctorInfoDisplay">
+              <div class="doctor-card">
+                <div class="doctor-avatar" id="doctorAvatar">DR</div>
+                <div class="doctor-details">
+                  <h6 id="doctorName">Dr. John Smith</h6>
+                  <p id="doctorSpecialty">Cardiologist</p>
+                  <p id="doctorBio">Experienced cardiologist with 15+ years of practice</p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="row">
+          <!-- Appointment Date -->
+          <div class="col-md-6 mb-3">
+            <label for="appointmentDate" class="form-label">
+              Appointment Date <span class="required-asterisk">*</span>
+            </label>
+            <input type="date" id="appointmentDate" th:field="*{appointmentDate}"
+                   class="form-control" required onchange="updateTimeSlots()" />
+            <div th:if="${#fields.hasErrors('appointmentDate')}" class="error-message">
+              <i class="bi bi-exclamation-circle"></i>
+              <span th:errors="*{appointmentDate}">Date is required</span>
+            </div>
+          </div>
+
+
+        </div>
+
+        <!-- Time Selection -->
+        <div class="mb-4">
+          <label class="form-label">
+            Appointment Time <span class="required-asterisk">*</span>
+          </label>
+          <div class="time-selection">
+            <div class="time-grid" id="timeGrid">
+              <button type="button" class="time-slot" onclick="selectTime('08:00:00', this)" data-time="08:00:00">08:00 AM</button>
+              <button type="button" class="time-slot" onclick="selectTime('08:30:00', this)" data-time="08:30:00">08:30 AM</button>
+              <button type="button" class="time-slot" onclick="selectTime('09:00:00', this)" data-time="09:00:00">09:00 AM</button>
+              <button type="button" class="time-slot" onclick="selectTime('09:30:00', this)" data-time="09:30:00">09:30 AM</button>
+              <button type="button" class="time-slot" onclick="selectTime('10:00:00', this)" data-time="10:00:00">10:00 AM</button>
+              <button type="button" class="time-slot" onclick="selectTime('10:30:00', this)" data-time="10:30:00">10:30 AM</button>
+              <button type="button" class="time-slot" onclick="selectTime('11:00:00', this)" data-time="11:00:00">11:00 AM</button>
+              <button type="button" class="time-slot" onclick="selectTime('11:30:00', this)" data-time="11:30:00">11:30 AM</button>
+              <button type="button" class="time-slot" onclick="selectTime('14:00:00', this)" data-time="14:00:00">02:00 PM</button>
+              <button type="button" class="time-slot" onclick="selectTime('14:30:00', this)" data-time="14:30:00">02:30 PM</button>
+              <button type="button" class="time-slot" onclick="selectTime('15:00:00', this)" data-time="15:00:00">03:00 PM</button>
+              <button type="button" class="time-slot" onclick="selectTime('15:30:00', this)" data-time="15:30:00">03:30 PM</button>
+              <button type="button" class="time-slot" onclick="selectTime('16:00:00', this)" data-time="16:00:00">04:00 PM</button>
+              <button type="button" class="time-slot" onclick="selectTime('16:30:00', this)" data-time="16:30:00">04:30 PM</button>
+              <button type="button" class="time-slot" onclick="selectTime('17:00:00', this)" data-time="17:00:00">05:00 PM</button>
+              <button type="button" class="time-slot" onclick="selectTime('17:30:00', this)" data-time="17:30:00">05:30 PM</button>
+            </div>
+            <input type="hidden" id="appointmentTime" th:field="*{appointmentTime}" required />
+            <div th:if="${#fields.hasErrors('appointmentTime')}" class="error-message">
+              <i class="bi bi-exclamation-circle"></i>
+              <span th:errors="*{appointmentTime}">Time selection is required</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Contact Information -->
+        <h3 class="section-title">
+          <i class="bi bi-person-lines-fill"></i>
+          Contact Information
+        </h3>
+
+        <div class="row">
+          <!-- Full Name -->
+          <div class="col-md-6 mb-3">
+            <label for="fullName" class="form-label">Full Name</label>
+            <input type="text" id="fullName" th:value="${patient.user?.fullName}"
+                   name="fullName" class="form-control" readonly />
+          </div>
+
+          <!-- Phone Number -->
+          <div class="col-md-6 mb-3">
+            <label for="phoneNumber" class="form-label">
+              Phone Number <span class="required-asterisk">*</span>
+            </label>
+            <div class="contact-field">
+              <input type="tel" id="phoneNumber" th:field="*{phoneNumber}"
+                     th:value="${patient.user?.phoneNumber}" class="form-control"
+                     placeholder="0123456789" required />
+              <button type="button" class="reset-btn" onclick="resetPhoneNumber()">
+                <i class="bi bi-arrow-clockwise"></i>
+              </button>
+            </div>
+            <div th:if="${#fields.hasErrors('phoneNumber')}" class="error-message">
+              <i class="bi bi-exclamation-circle"></i>
+              <span th:errors="*{phoneNumber}">Valid phone number is required</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="row">
+          <!-- Email -->
+          <div class="col-md-6 mb-3">
+            <label for="email" class="form-label">
+              Email Address <span class="required-asterisk">*</span>
+            </label>
+            <div class="contact-field">
+              <input type="email" id="email" th:field="*{email}"
+                     th:value="${patient.user?.email}" class="form-control"
+                     placeholder="patient@example.com" maxlength="50" required />
+              <button type="button" class="reset-btn" onclick="resetEmail()">
+                <i class="bi bi-arrow-clockwise"></i>
+              </button>
+            </div>
+            <div th:if="${#fields.hasErrors('email')}" class="error-message">
+              <i class="bi bi-exclamation-circle"></i>
+              <span th:errors="*{email}">Valid email address is required</span>
+            </div>
+          </div>
+
+          <!-- Emergency Contact -->
+          <div class="col-md-6 mb-3">
+            <label for="emergencyContact" class="form-label">Emergency Contact (Optional)</label>
+            <input type="tel" id="emergencyContact" th:field="*{emergencyContact}"
+                   class="form-control" placeholder="Emergency contact number" />
+          </div>
+        </div>
+
+        <!-- Description/Reason -->
+        <div class="mb-4">
+          <label for="description" class="form-label">
+            Reason for Visit / Symptoms (Optional)
+          </label>
+          <textarea id="description" th:field="*{description}" class="form-control"
+                    rows="4" maxlength="250" placeholder="Please describe your symptoms or reason for the appointment..."
+                    style="resize: none;" oninput="autoResize(this)"></textarea>
+          <small class="text-muted">Maximum 250 characters</small>
+          <div th:if="${#fields.hasErrors('description')}" class="error-message">
+            <i class="bi bi-exclamation-circle"></i>
+            <span th:errors="*{description}">Description is too long</span>
+          </div>
+        </div>
+
+        <!-- Submit Button -->
+        <div class="text-center">
+          <button type="button" class="btn-primary-custom" onclick="showConfirmation()">
+            <i class="bi bi-calendar-check"></i>
+            Book Appointment
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<!-- Confirmation Modal -->
+<div class="confirmation-overlay" id="confirmationOverlay">
+  <div class="confirmation-dialog">
+    <div class="confirmation-icon">
+      <i class="bi bi-calendar-check"></i>
+    </div>
+    <h3 class="confirmation-title">Confirm Appointment</h3>
+    <p class="confirmation-message">
+      Please review your appointment details and confirm to proceed with the booking.
+    </p>
+    <div class="confirmation-actions">
+      <button class="btn-primary-custom" onclick="confirmBooking(true)">
+        <i class="bi bi-check-circle"></i>
+        Confirm Booking
+      </button>
+      <button class="btn-outline-custom" onclick="confirmBooking(false)">
+        <i class="bi bi-x-circle"></i>
+        Cancel
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- Bootstrap JS -->
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+
+<script th:inline="javascript">
+  /*<![CDATA[*/
+  // Store initial values
+  const initialPhoneNumber = /*[[${patient.user?.phoneNumber}]]*/ '';
+  const initialEmail = /*[[${patient.user?.email}]]*/ '';
+  const patientId = /*[[${patientId}]]*/ '';
+
+  // Sidebar toggle functionality
+  function toggleSidebar() {
+    const sidebar = document.getElementById('sidebar');
+    const mainContent = document.getElementById('mainContent');
+
+    sidebar.classList.toggle('collapsed');
+    mainContent.classList.toggle('expanded');
+  }
+
+  // Auto-hide sidebar on mobile
+  function checkScreenSize() {
+    const sidebar = document.getElementById('sidebar');
+    const mainContent = document.getElementById('mainContent');
+
+    if (window.innerWidth <= 768) {
+      sidebar.classList.add('collapsed');
+      mainContent.classList.add('expanded');
+    } else {
+      sidebar.classList.remove('collapsed');
+      mainContent.classList.remove('expanded');
+    }
+  }
+
+  // Update doctors based on specialty selection
+  function updateDoctors() {
+    const specialtyId = document.getElementById('specialtyId').value;
+    const doctorSelect = document.getElementById('doctorId');
+    const doctorInfo = document.getElementById('doctorInfoDisplay');
+
+    // Reset doctor selection
+    doctorSelect.innerHTML = '<option value="">Choose a Doctor</option>';
+    doctorInfo.classList.remove('show');
+
+    if (specialtyId) {
+      doctorSelect.classList.add('loading');
+
+      fetch(`/patient/api/doctors-by-specialty?specialtyId=${specialtyId}`)
+              .then(response => response.json())
+              .then(doctors => {
+                doctors.forEach(doctor => {
+
+                  const option = document.createElement('option');
+                  option.value = doctor.doctorId;
+                  option.text = `Dr. ${doctor.fullName}`;
+                  option.setAttribute('data-bio', doctor.bioDescription || 'Experienced medical professional');
+                  option.setAttribute('data-name', doctor.fullName);
+                  doctorSelect.appendChild(option);
+                });
+                doctorSelect.classList.remove('loading');
+              })
+              .catch(error => {
+                console.error('Error fetching doctors:', error);
+                doctorSelect.classList.remove('loading');
+              });
+    }
+  }
+
+  // Show doctor information
+  function showDoctorInfo() {
+    const doctorSelect = document.getElementById('doctorId');
+    const selectedOption = doctorSelect.options[doctorSelect.selectedIndex];
+    const doctorInfo = document.getElementById('doctorInfoDisplay');
+
+    if (selectedOption.value) {
+      const doctorName = selectedOption.getAttribute('data-name');
+      const doctorBio = selectedOption.getAttribute('data-bio');
+      const specialtySelect = document.getElementById('specialtyId');
+      const specialtyName = specialtySelect.options[specialtySelect.selectedIndex].text.split(' - ')[0];
+
+      document.getElementById('doctorName').textContent = `Dr. ${doctorName}`;
+      document.getElementById('doctorSpecialty').textContent = specialtyName;
+      document.getElementById('doctorBio').textContent = doctorBio;
+      document.getElementById('doctorAvatar').textContent = doctorName.substring(0, 2).toUpperCase();
+
+      doctorInfo.classList.add('show');
+    } else {
+      doctorInfo.classList.remove('show');
+    }
+  }
+
+  // Update available time slots
+  function updateTimeSlots() {
+    const dateInput = document.getElementById('appointmentDate').value;
+    const doctorId = document.getElementById('doctorId').value;
+
+    if (dateInput && doctorId) {
+      const timeSlots = document.querySelectorAll('.time-slot');
+
+      // Reset all time slots
+      timeSlots.forEach(slot => {
+        slot.classList.remove('selected', 'disabled');
+      });
+
+      document.getElementById('appointmentTime').value = '';
+
+      // Fetch doctor availability for the selected date and doctor
+      fetch(`/patient/api/doctor-availability?date=${dateInput}&doctorId=${doctorId}`)
+              .then(response => response.json())
+              .then(availability => {
+                const bookedTimes = availability.bookedTimes || [];
+                const unavailableTimes = availability.unavailableTimes || [];
+
+                timeSlots.forEach(slot => {
+                  const time = slot.getAttribute('data-time');
+                  // Mark slot as disabled if it's either directly booked or within the buffer period of a booked slot
+                  if (bookedTimes.includes(time)) {
+                    slot.classList.add('disabled');
+                    slot.title = "This time slot is already booked";
+                  } else if (unavailableTimes.includes(time)) {
+                    slot.classList.add('disabled');
+                    slot.title = "Doctor is occupied at this time";
+                  } else {
+                    slot.title = "Available";
+                  }
+                });
+              })
+              .catch(error => {
+                console.error('Error fetching doctor availability:', error);
+              });
+    }
+  }
+
+  // Select time slot
+  function selectTime(time, button) {
+    if (!button.classList.contains('disabled')) {
+      // Remove selection from all buttons
+      document.querySelectorAll('.time-slot').forEach(btn => {
+        btn.classList.remove('selected');
+      });
+
+      // Select current button
+      button.classList.add('selected');
+      document.getElementById('appointmentTime').value = time;
+    }
+  }
+
+  // Reset contact information
+  function resetPhoneNumber() {
+    document.getElementById('phoneNumber').value = initialPhoneNumber;
+  }
+
+  function resetEmail() {
+    document.getElementById('email').value = initialEmail;
+  }
+
+  // Trim and clean input fields on blur
+function cleanInputOnBlur(id, isStrict = false) {
+  const element = document.getElementById(id);
+  if (!element) return;
+
+  element.addEventListener('blur', () => {
+    let value = element.value.trim();
+
+    if (isStrict) {
+      // Remove all spaces for strict fields (phone/email)
+      value = value.replace(/\s+/g, '');
+    } else {
+      // Normalize spacing between words (one space only)
+      value = value.replace(/\s+/g, ' ');
+    }
+
+    element.value = value;
+  });
+}
+
+// Apply trimming logic to input fields
+cleanInputOnBlur('phoneNumber', true); // strict: no space at all
+cleanInputOnBlur('email', true);       // strict: no space at all
+cleanInputOnBlur('description', false); // normalize spaces
+
+// Show confirmation dialog
+function showConfirmation() {
+  const specialtyId = document.getElementById('specialtyId').value;
+  const doctorId = document.getElementById('doctorId').value;
+  const appointmentDate = document.getElementById('appointmentDate').value;
+  const appointmentTime = document.getElementById('appointmentTime').value;
+  const phoneNumber = document.getElementById('phoneNumber').value.trim();
+  const email = document.getElementById('email').value.trim();
+  let description = document.getElementById('description').value.trim();
+
+  // Basic validation
+  if (!specialtyId) {
+    alert('Please select a medical specialty.');
+    return;
+  }
+  if (!doctorId) {
+    alert('Please select a doctor.');
+    return;
+  }
+  if (!appointmentDate) {
+    alert('Please select an appointment date.');
+    return;
+  }
+  if (!appointmentTime) {
+    alert('Please select an appointment time.');
+    return;
+  }
+  if (!phoneNumber) {
+    alert('Phone number is required.');
+    return;
+  }
+  if (!email) {
+    alert('Email address is required.');
+    return;
+  }
+
+  // Phone number validation: must start with 0 and be 10 or 12 digits long
+  const phoneRegex = /^0\d{9}$|^0\d{11}$/;
+  if (!phoneRegex.test(phoneNumber)) {
+    alert('Phone number must start with 0 and be either 10 or 12 digits long, with no spaces.');
+    return;
+  }
+
+  // Email validation
+  const emailRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
+  if (!emailRegex.test(email)) {
+    alert('Please enter a valid email address.');
+    return;
+  }
+
+  // Normalize description if it contains only spaces or is empty
+  description = description.replace(/\s+/g, ' ').trim();
+  document.getElementById('description').value = description === '' ? '' : description;
+
+  // Show confirmation dialog
+  document.getElementById('confirmationOverlay').classList.add('active');
+}
+
+// Confirm booking
+function confirmBooking(confirm) {
+  const overlay = document.getElementById('confirmationOverlay');
+  overlay.classList.remove('active');
+
+  if (confirm) {
+    // Clean up form data before submission
+    const phoneNumber = document.getElementById('phoneNumber').value.replace(/\s+/g, '');
+    const email = document.getElementById('email').value.replace(/\s+/g, '');
+    let description = document.getElementById('description').value.trim().replace(/\s+/g, ' ');
+
+    if (description === '') {
+      description = '';
+    }
+
+    document.getElementById('phoneNumber').value = phoneNumber;
+    document.getElementById('email').value = email;
+    document.getElementById('description').value = description;
+
+    // Submit the form
+    document.getElementById('appointmentForm').submit();
+  }
+}
+
+
+  // Initialize page
+  document.addEventListener('DOMContentLoaded', function() {
+    checkScreenSize();
+
+    // Set date constraints (tomorrow to 7 days from tomorrow)
+    const today = new Date();
+    const tomorrow = new Date(today);
+    tomorrow.setDate(today.getDate() + 1);
+    const maxDate = new Date(tomorrow);
+    maxDate.setDate(tomorrow.getDate() + 7);
+
+    const dateInput = document.getElementById('appointmentDate');
+    dateInput.setAttribute('min', tomorrow.toISOString().split('T')[0]);
+    dateInput.setAttribute('max', maxDate.toISOString().split('T')[0]);
+  });
+
+  window.addEventListener('resize', checkScreenSize);
+
+  function autoResize(textarea) {
+  textarea.style.height = 'auto';
+  textarea.style.height = textarea.scrollHeight + 'px';
+}
+  /*]]>*/
+</script>
 </body>
 </html>

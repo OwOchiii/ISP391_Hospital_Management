@@ -1,5 +1,6 @@
 package orochi.model;
 
+import com.fasterxml.jackson.annotation.*;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Data;
@@ -12,6 +13,7 @@ import java.util.List;
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
+@JsonIdentityInfo(generator = ObjectIdGenerators.PropertyGenerator.class, property = "specId")
 public class Specialization {
 
     @Id
@@ -29,8 +31,10 @@ public class Specialization {
     private BigDecimal price;
 
     @ManyToMany(mappedBy = "specializations")
+    @JsonIgnore
     private List<Doctor> doctors;
 
     @OneToMany(mappedBy = "specialization")
+    @JsonIgnore
     private List<Service> services;
 }
