@@ -761,6 +761,17 @@
     // Get doctor ID from Thymeleaf
     const doctorId = /*[[${doctorId}]]*/ 0;
 
+    document.addEventListener('DOMContentLoaded', function() {
+        // Set appointments tab as active
+        const currentPath = window.location.pathname;
+        if (currentPath.includes('/appointments')) {
+            document.querySelectorAll('.nav-link').forEach(link => {
+                link.classList.remove('active');
+            });
+            document.querySelector('.nav-link[href*="appointments"]').classList.add('active');
+        }
+    });
+
     // Sidebar toggle functionality
     function toggleSidebar() {
         const sidebar = document.getElementById('sidebar');
