@@ -326,8 +326,8 @@
                 </div>
                 <div th:if="${result.fileUrl != null}" class="mt-2">
                     <span class="fw-semibold">Attached File:</span>
-                    <a th:href="@{'/download?fileUrl=' + ${result.fileUrl}}" target="_blank" class="text-primary">
-                        <i class="bi bi-file-earmark-arrow-down me-1"></i>View Attachment
+                    <a th:href="@{/download/medical-results/{filename}(filename=${result.fileUrl != null ? result.fileUrl.substring(result.fileUrl.lastIndexOf('/') + 1) : ''})}" target="_blank" class="text-primary">
+                        <i class="bi bi-file-earmark-arrow-down me-1"></i>Download Attachment
                     </a>
                 </div>
             </div>
