@@ -3,6 +3,9 @@ package orochi.controller;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Controller;
@@ -264,13 +267,73 @@ public class PatientDashboardController {
             model.addAttribute("userId", userId);
             model.addAttribute("patientId", patientId);
             model.addAttribute("patientName", patientOpt.get().getUser().getFullName());
-            return "redirect:/patient/dashboard";
+            return "redirect:/patient/feedback";
         } catch (Exception e) {
             logger.error("Error submitting feedback", e);
             model.addAttribute("errorMessage", "Failed to submit feedback: " + e.getMessage());
             model.addAttribute("description", description); // Preserve user input
             return "error";
         }
+    }
+
+    @GetMapping("/my-feedback")
+    public String myFeedback(
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "5") int size,
+            @RequestParam(required = false) String fromDate,
+            @RequestParam(required = false) String toDate,
+            Model model) {
+        try{
+            Integer patientId = getCurrentPatientId();
+            Optional<Patient> patientOpt = patientRepository.findById(patientId);
+            Patient patient = patientOpt.orElseThrow(() -> new Exception("Patient not found"));
+            Integer userId = patient.getUser().getUserId();
+
+            // Get patient info
+            model.addAttribute("userId", userId);
+            model.addAttribute("patientId", patientId);
+            model.addAttribute("patientName", patient.getUser() != null ? patient.getUser().getFullName() : "Patient");
+
+            Pageable pageable = PageRequest.of(page, size);
+            Page<Feedback> feedbackPage;
+
+            // Trim date strings to handle whitespace
+            String fromDateTrimmed = (fromDate != null) ? fromDate.trim() : null;
+            String toDateTrimmed = (toDate != null) ? toDate.trim() : null;
+
+            if (fromDateTrimmed != null && !fromDateTrimmed.isEmpty() && toDateTrimmed != null && !toDateTrimmed.isEmpty()) {
+                LocalDateTime start = LocalDateTime.parse(fromDateTrimmed + "T00:00:00");
+                LocalDateTime end = LocalDateTime.parse(toDateTrimmed + "T23:59:59");
+                feedbackPage = feedbackService.getFeedbackByUserIdAndDateRange(userId, start, end, pageable);
+            } else if (fromDateTrimmed != null && !fromDateTrimmed.isEmpty()) {
+                LocalDateTime start = LocalDateTime.parse(fromDateTrimmed + "T00:00:00");
+                feedbackPage = feedbackService.getFeedbackByUserIdAndDateRange(userId, start, LocalDateTime.now(), pageable);
+            } else if (toDateTrimmed != null && !toDateTrimmed.isEmpty()) {
+                LocalDateTime end = LocalDateTime.parse(toDateTrimmed + "T23:59:59");
+                feedbackPage = feedbackService.getFeedbackByUserIdAndDateRange(userId, LocalDateTime.of(1900, 1, 1, 0, 0), end, pageable);
+            } else {
+                feedbackPage = feedbackService.getFeedbackByUserId(userId, pageable);
+            }
+
+            model.addAttribute("feedbacks", feedbackPage.getContent());
+            model.addAttribute("currentPage", page);
+            model.addAttribute("totalPages", feedbackPage.getTotalPages());
+            model.addAttribute("size", size);
+            model.addAttribute("fromDate", fromDate);
+            model.addAttribute("toDate", toDate);
+            return "patient/my-feedback";
+        }
+        catch(Exception e){
+            logger.error("Error fetching feedback", e);
+            model.addAttribute("errorMessage", "Failed to fetch feedback: " + e.getMessage());
+            return "error";
+        }
+    }
+
+    @PostMapping("/delete-feedback")
+    public String deleteFeedback(@RequestParam("feedbackId") Integer feedbackId) {
+        feedbackService.deleteFeedback(feedbackId);
+        return "redirect:/patient/my-feedback";
     }
 
     private Integer getCurrentPatientId() {
