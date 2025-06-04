@@ -18,4 +18,18 @@ public interface PatientRepository extends JpaRepository<Patient, Integer> {
     List<Patient> findByFullNameContainingIgnoreCase(@Param("name") String name);
     // Additional custom methods if needed
     Optional<Patient> findByUserId(Integer userId);
+
+    @Query("""
+        SELECT p FROM Patient p JOIN p.user u
+        WHERE (:search IS NULL
+               OR LOWER(u.fullName) LIKE LOWER(CONCAT('%', :search, '%'))
+               OR LOWER(u.email)    LIKE LOWER(CONCAT('%', :search, '%')))
+          AND (:statusFilter IS NULL OR u.status = :statusFilter)
+        ORDER BY p.patientId
+        """)
+    List<Patient> searchPatients(
+            @Param("search") String search,
+            @Param("statusFilter") String statusFilter
+    );
+
 }
