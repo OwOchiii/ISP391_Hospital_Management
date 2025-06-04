@@ -37,6 +37,9 @@ public class Users {
     @Column(name = "IsGuest", nullable = false, columnDefinition = "bit default 0")
     private boolean isGuest;
 
+    @Column(name = "Status", nullable = false)
+    private String status;
+
     @ManyToOne
     @JoinColumn(name = "RoleID", insertable = false, updatable = false)
     private Role role;
@@ -47,7 +50,6 @@ public class Users {
     @OneToOne(mappedBy = "user")
     private Doctor doctor;
 
-
     @Column(name = "created_at", nullable = false, updatable = false)
     private LocalDateTime createdAt;
 
@@ -56,4 +58,6 @@ public class Users {
     protected void onCreate() {
         this.createdAt = LocalDateTime.now();
     }
+
+
 }
