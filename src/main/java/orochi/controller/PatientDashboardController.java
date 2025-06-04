@@ -8,15 +8,15 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
-import orochi.model.Appointment;
-import orochi.model.MedicalOrder;
-import orochi.model.Patient;
-import orochi.model.Prescription;
+import org.springframework.web.bind.annotation.RequestParam;
+import orochi.model.*;
 import orochi.repository.AppointmentRepository;
 import orochi.repository.MedicalOrderRepository;
 import orochi.repository.PatientRepository;
 import orochi.config.CustomUserDetails;
+import orochi.service.FeedbackService;
 import orochi.service.PatientService;
 
 import java.time.LocalDateTime;
@@ -41,6 +41,9 @@ public class PatientDashboardController {
 
     @Autowired
     private PatientService patientService;
+
+    @Autowired
+    private FeedbackService feedbackService;
 
     @GetMapping("/dashboard")
     public String dashboard(Model model) {
@@ -209,13 +212,63 @@ public class PatientDashboardController {
     public String feedback(Model model) {
         try {
             Integer patientId = getCurrentPatientId();
-            if (patientId != null) {
-                model.addAttribute("patientId", patientId);
+            if (patientId == null) {
+                model.addAttribute("errorMessage", "Patient ID is required");
+                return "error";
             }
+
+            // Get patient info
+            Optional<Patient> patientOpt = patientRepository.findById(patientId);
+            Patient patient = patientOpt.orElseThrow(() -> new Exception("Patient not found"));
+            model.addAttribute("userId", patient.getUser().getUserId());
+            model.addAttribute("patientId", patientId);
+            model.addAttribute("patientName", patient.getUser() != null ? patient.getUser().getFullName() : "Patient");
+
             return "patient/feedback";
         } catch (Exception e) {
             logger.error("Error loading feedback page", e);
             model.addAttribute("errorMessage", "An error occurred: " + e.getMessage());
+            return "error";
+        }
+    }
+
+    @PostMapping("/feedback")
+    public String submitFeedback(@RequestParam("description") String description, Model model) {
+        try {
+            Integer patientId = getCurrentPatientId();
+            if (patientId == null) {
+                model.addAttribute("errorMessage", "Patient ID is required");
+                return "error";
+            }
+
+            // Get userId from patient
+            Optional<Patient> patientOpt = patientRepository.findById(patientId);
+            if (!patientOpt.isPresent()) {
+                model.addAttribute("errorMessage", "Patient not found");
+                return "error";
+            }
+            Integer userId = patientOpt.get().getUser().getUserId();
+
+            // Trim and normalize spaces, limit to 250 characters
+            String trimmedDescription = description.trim().replaceAll("\\s+", " ");
+            if (trimmedDescription.length() > 250) {
+                trimmedDescription = trimmedDescription.substring(0, 250);
+            }
+
+            Feedback feedback = new Feedback();
+            feedback.setUserId(userId);
+            feedback.setDescription(trimmedDescription);
+
+            feedbackService.saveFeedback(feedback);
+            model.addAttribute("successMessage", "Feedback submitted successfully");
+            model.addAttribute("userId", userId);
+            model.addAttribute("patientId", patientId);
+            model.addAttribute("patientName", patientOpt.get().getUser().getFullName());
+            return "redirect:/patient/dashboard";
+        } catch (Exception e) {
+            logger.error("Error submitting feedback", e);
+            model.addAttribute("errorMessage", "Failed to submit feedback: " + e.getMessage());
+            model.addAttribute("description", description); // Preserve user input
             return "error";
         }
     }
