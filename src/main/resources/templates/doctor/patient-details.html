@@ -900,27 +900,32 @@
       </div>
 
       <!-- Appointment Filters -->
+
       <div class="appointment-filters">
-        <button class="filter-btn active" data-filter="all">
+        <a class="filter-btn" th:classappend="${filter == 'all' ? 'active' : ''}"
+           th:href="@{/doctor/patients/{id}(id=${patient.patientId}, doctorId=${doctorId}, filter='all')}">
           <i class="bi bi-calendar-check"></i>
           All Appointments
-          <span class="badge bg-primary ms-2" th:text="${#lists.size(appointments)}">12</span>
-        </button>
-        <button class="filter-btn" data-filter="upcoming">
+          <span class="badge bg-primary ms-2" th:text="${totalCount}">12</span>
+        </a>
+        <a class="filter-btn" th:classappend="${filter == 'upcoming' ? 'active' : ''}"
+           th:href="@{/doctor/patients/{id}(id=${patient.patientId}, doctorId=${doctorId}, filter='upcoming')}">
           <i class="bi bi-clock"></i>
           Upcoming
           <span class="badge bg-info ms-2" th:text="${upcomingCount ?: '0'}">3</span>
-        </button>
-        <button class="filter-btn" data-filter="completed">
+        </a>
+        <a class="filter-btn" th:classappend="${filter == 'completed' ? 'active' : ''}"
+           th:href="@{/doctor/patients/{id}(id=${patient.patientId}, doctorId=${doctorId}, filter='completed')}">
           <i class="bi bi-check-circle"></i>
           Completed
           <span class="badge bg-success ms-2" th:text="${completedCount ?: '0'}">8</span>
-        </button>
-        <button class="filter-btn" data-filter="cancelled">
+        </a>
+        <a class="filter-btn" th:classappend="${filter == 'cancelled' ? 'active' : ''}"
+           th:href="@{/doctor/patients/{id}(id=${patient.patientId}, doctorId=${doctorId}, filter='cancelled')}">
           <i class="bi bi-x-circle"></i>
           Cancelled
           <span class="badge bg-danger ms-2" th:text="${cancelledCount ?: '0'}">1</span>
-        </button>
+        </a>
       </div>
 
       <!-- Appointments List -->
@@ -928,7 +933,8 @@
         <div th:each="appointment : ${appointments}"
              class="appointment-card"
              th:classappend="${appointment.status.toLowerCase()}"
-             th:data-status="${appointment.status.toLowerCase()}">
+             th:data-status="${appointment.status.toLowerCase()}"
+             th:data-datetime="${appointment.dateTime}">
 
           <div class="appointment-header">
             <div class="appointment-date">
@@ -963,6 +969,34 @@
             <h6>Appointment Notes</h6>
             <p th:text="${appointment.description}">Regular checkup and consultation for ongoing treatment plan.</p>
           </div>
+
+          <div class="mt-3 text-end">
+            <a th:href="@{/doctor/appointments/{id}(id=${appointment.appointmentId}, doctorId=${doctorId})}"
+               class="btn btn-sm btn-primary">
+              <i class="bi bi-eye"></i> View Details
+            </a>
+          </div>
+        </div>
+
+        <!-- Pagination -->
+        <div th:if="${totalPages > 1}" class="pagination-container d-flex justify-content-center mt-4">
+          <nav aria-label="Appointments pagination">
+            <ul class="pagination">
+              <li class="page-item" th:classappend="${currentPage == 0 ? 'disabled' : ''}">
+                <a class="page-link" th:href="@{/doctor/patients/{id}(id=${patient.patientId}, doctorId=${doctorId}, filter=${filter}, page=${currentPage - 1})}" aria-label="Previous">
+                  <span aria-hidden="true">&laquo;</span>
+                </a>
+              </li>
+              <li class="page-item" th:each="i : ${#numbers.sequence(0, totalPages - 1)}" th:classappend="${i == currentPage ? 'active' : ''}">
+                <a class="page-link" th:href="@{/doctor/patients/{id}(id=${patient.patientId}, doctorId=${doctorId}, filter=${filter}, page=${i})}" th:text="${i + 1}"></a>
+              </li>
+              <li class="page-item" th:classappend="${currentPage == totalPages - 1 ? 'disabled' : ''}">
+                <a class="page-link" th:href="@{/doctor/patients/{id}(id=${patient.patientId}, doctorId=${doctorId}, filter=${filter}, page=${currentPage + 1})}" aria-label="Next">
+                  <span aria-hidden="true">&raquo;</span>
+                </a>
+              </li>
+            </ul>
+          </nav>
         </div>
 
         <!-- Default appointments if none exist -->
@@ -1042,7 +1076,8 @@
     function filterAppointments(filter) {
       appointmentCards.forEach(card => {
         const status = card.getAttribute('data-status');
-        const appointmentDate = new Date(card.querySelector('.appointment-date span').textContent);
+        const appointmentDateStr = card.getAttribute('data-datetime');
+        const appointmentDate = new Date(appointmentDateStr);
         const now = new Date();
 
         let shouldShow = false;
@@ -1052,7 +1087,7 @@
             shouldShow = true;
             break;
           case 'upcoming':
-            shouldShow = (status === 'scheduled' || status === 'pending') && appointmentDate >= now;
+            shouldShow = (status === 'scheduled' || status === 'pending') && appointmentDate > now;
             break;
           case 'completed':
             shouldShow = status === 'completed';
@@ -1062,18 +1097,69 @@
             break;
         }
 
-        card.style.display = shouldShow ? 'block' : 'none';
+        // Just mark visible/hidden but don't actually change display yet
+        card.dataset.filtered = shouldShow ? 'true' : 'false';
       });
+
+      // Reset pagination with the filtered set
+      setupPaginationAfterFilter();
+    }
+  }
+
+  function setupPaginationAfterFilter() {
+    // Remove old pagination if it exists
+    const oldPagination = document.querySelector('.pagination-container');
+    if (oldPagination) {
+      oldPagination.remove();
+    }
+
+    // Count visible cards after filtering
+    const filteredCards = Array.from(document.querySelectorAll('.appointment-card')).filter(
+            card => card.dataset.filtered === 'true'
+    );
+
+    if (filteredCards.length === 0) {
+      // Show empty state if no cards match filter
+      const emptyState = document.createElement('div');
+      emptyState.className = 'empty-state';
+      emptyState.innerHTML = `
+      <i class="bi bi-calendar-x"></i>
+      <p>No appointments found matching the selected filter.</p>
+    `;
+
+      // Remove any existing empty state
+      const existingEmptyState = document.querySelector('#appointmentsList .empty-state:not([th\\:if])');
+      if (existingEmptyState) {
+        existingEmptyState.remove();
+      }
+
+      document.getElementById('appointmentsList').appendChild(emptyState);
+
+      // Hide all appointment cards
+      document.querySelectorAll('.appointment-card').forEach(card => {
+        card.style.display = 'none';
+      });
+    } else {
+      // Remove any manually added empty state
+      const existingEmptyState = document.querySelector('#appointmentsList .empty-state:not([th\\:if])');
+      if (existingEmptyState) {
+        existingEmptyState.remove();
+      }
+
+      // Set up pagination with filtered cards
+      setupPagination();
     }
   }
 
   // Initialize page
   document.addEventListener('DOMContentLoaded', function() {
-    checkScreenSize();
     initializeFilters();
-  });
+    setupPagination();
 
-  window.addEventListener('resize', checkScreenSize);
+    // Initial page check
+    checkScreenSize();
+    window.addEventListener('resize', checkScreenSize);
+  });
 
   // Navigation link handlers
   document.querySelectorAll('.nav-link').forEach(link => {
@@ -1090,6 +1176,113 @@
     });
   });
   /*]]>*/
+
+  function setupPagination() {
+    const appointmentsPerPage = 5;
+    const appointmentCards = document.querySelectorAll('.appointment-card');
+    const totalAppointments = appointmentCards.length;
+    const totalPages = Math.ceil(totalAppointments / appointmentsPerPage);
+
+    // Create pagination container if we have more than one page
+    if (totalPages > 1) {
+      const paginationContainer = document.createElement('div');
+      paginationContainer.className = 'pagination-container d-flex justify-content-center mt-4';
+      paginationContainer.innerHTML = `
+      <nav aria-label="Appointments pagination">
+        <ul class="pagination"></ul>
+      </nav>
+    `;
+
+      const paginationList = paginationContainer.querySelector('.pagination');
+
+      // Add prev button
+      paginationList.innerHTML += `
+      <li class="page-item" id="prev-page">
+        <a class="page-link" href="#" aria-label="Previous">
+          <span aria-hidden="true">&laquo;</span>
+        </a>
+      </li>
+    `;
+
+      // Add page numbers
+      for (let i = 1; i <= totalPages; i++) {
+        paginationList.innerHTML += `
+        <li class="page-item ${i === 1 ? 'active' : ''}">
+          <a class="page-link" href="#" data-page="${i}">${i}</a>
+        </li>
+      `;
+      }
+
+      // Add next button
+      paginationList.innerHTML += `
+      <li class="page-item" id="next-page">
+        <a class="page-link" href="#" aria-label="Next">
+          <span aria-hidden="true">&raquo;</span>
+        </a>
+      </li>
+    `;
+
+      // Append pagination to appointments section
+      document.getElementById('appointmentsList').after(paginationContainer);
+
+      // Set up click handlers for pagination
+      const pageLinks = document.querySelectorAll('.page-link');
+      pageLinks.forEach(link => {
+        link.addEventListener('click', function(e) {
+          e.preventDefault();
+          const pageNum = this.getAttribute('data-page');
+          if (pageNum) {
+            goToPage(parseInt(pageNum));
+          } else if (this.getAttribute('aria-label') === 'Previous') {
+            const activePage = document.querySelector('.pagination .active');
+            const prevPage = parseInt(activePage.querySelector('.page-link').getAttribute('data-page')) - 1;
+            if (prevPage >= 1) goToPage(prevPage);
+          } else if (this.getAttribute('aria-label') === 'Next') {
+            const activePage = document.querySelector('.pagination .active');
+            const nextPage = parseInt(activePage.querySelector('.page-link').getAttribute('data-page')) + 1;
+            if (nextPage <= totalPages) goToPage(nextPage);
+          }
+        });
+      });
+
+      // Initial page load
+      goToPage(1);
+    }
+
+    function goToPage(pageNum) {
+      // Hide all appointments
+      appointmentCards.forEach(card => {
+        card.style.display = 'none';
+      });
+
+      // Show only appointments for current page
+      const startIndex = (pageNum - 1) * appointmentsPerPage;
+      const endIndex = Math.min(startIndex + appointmentsPerPage, totalAppointments);
+
+      for (let i = startIndex; i < endIndex; i++) {
+        if (appointmentCards[i]) {
+          appointmentCards[i].style.display = 'block';
+        }
+      }
+
+      // Update active page in pagination
+      document.querySelectorAll('.pagination .page-item').forEach(item => {
+        item.classList.remove('active');
+      });
+
+      const pageLinks = document.querySelectorAll('.pagination .page-link[data-page]');
+      pageLinks.forEach(link => {
+        if (parseInt(link.getAttribute('data-page')) === pageNum) {
+          link.parentElement.classList.add('active');
+        }
+      });
+
+      // Update disabled state for prev/next buttons
+      document.getElementById('prev-page').classList.toggle('disabled', pageNum === 1);
+      document.getElementById('next-page').classList.toggle('disabled', pageNum === totalPages);
+    }
+  }
 </script>
 </body>
 </html>
+

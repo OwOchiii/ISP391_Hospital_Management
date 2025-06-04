@@ -1111,7 +1111,7 @@
                     <div class="fw-semibold" th:text="${patientEmail ?: 'jane.doe@example.com'}">jane.doe@example.com</div>
                 </div>
 
-                <a href="#" class="btn btn-outline-primary-custom w-100 mt-3">
+                <a th:href="@{/doctor/patients/{patientId}(patientId=${appointment.patientId}, doctorId=${doctorId})}" class="btn btn-outline-primary-custom w-100 mt-3">
                     <i class="bi bi-person-lines-fill me-2"></i> View Full Profile
                 </a>
             </div>
@@ -1745,5 +1745,4 @@
 </script>
 
 </html>
-
 

@@ -69,5 +69,41 @@ public interface AppointmentRepository extends JpaRepository<Appointment, Intege
             Integer patientId,
             LocalDateTime dateTime,
             Pageable pageable);
+
+    // In AppointmentRepository.java, add these methods:
+
+    // For doctor-specific appointments
+    Page<Appointment> findByPatientIdAndDoctorIdAndDateTimeAfterOrderByDateTimeAsc(
+        Integer patientId, Integer doctorId, LocalDateTime dateTime, Pageable pageable);
+
+    Page<Appointment> findByPatientIdAndDoctorIdAndStatusOrderByDateTimeDesc(
+        Integer patientId, Integer doctorId, String status, Pageable pageable);
+
+    Page<Appointment> findByPatientIdAndDoctorIdAndStatusInOrderByDateTimeDesc(
+        Integer patientId, Integer doctorId, List<String> statuses, Pageable pageable);
+
+    Page<Appointment> findByPatientIdAndDoctorIdOrderByDateTimeDesc(
+        Integer patientId, Integer doctorId, Pageable pageable);
+
+    // For patient-specific appointments (across all doctors)
+    Page<Appointment> findByPatientIdAndDateTimeAfterOrderByDateTimeAsc(
+        Integer patientId, LocalDateTime dateTime, Pageable pageable);
+
+    Page<Appointment> findByPatientIdAndStatusOrderByDateTimeDesc(
+        Integer patientId, String status, Pageable pageable);
+
+    Page<Appointment> findByPatientIdAndStatusInOrderByDateTimeDesc(
+        Integer patientId, List<String> statuses, Pageable pageable);
+
+    // For counting appointments
+    Long countByPatientIdAndStatus(Integer patientId, String status);
+
+    Long countByPatientIdAndStatusIn(Integer patientId, List<String> statuses);
+    Page<Appointment> findByPatientId(Integer patientId, Pageable pageable);
+    Page<Appointment> findByPatientIdAndDoctorId(Integer patientId, Integer doctorId, Pageable pageable);
+
+    <T> Page<Appointment> findByPatientIdAndDoctorId(Integer patientId, Integer doctorId, List<T> list, Pageable pageable);
 }
+
+
 

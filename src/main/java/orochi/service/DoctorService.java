@@ -12,9 +12,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import orochi.model.Appointment;
 import orochi.model.Patient;
-import orochi.repository.AppointmentRepository;
-import orochi.repository.DoctorRepository;
-import orochi.repository.PatientRepository;
+import orochi.repository.*;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -31,14 +29,23 @@ public class DoctorService {
     private final AppointmentRepository appointmentRepository;
     private final PatientRepository patientRepository;
     private final DoctorRepository doctorRepository;
+    @Getter
+    private final MedicalOrderRepository medicalOrderRepository;
+    @Getter
+    private final PrescriptionRepository prescriptionRepository;
+    @Getter
+    private final PatientContactRepository patientContactRepository;
 
     @Autowired
     public DoctorService(AppointmentRepository appointmentRepository,
                          PatientRepository patientRepository,
-                         DoctorRepository doctorRepository) {
+                         DoctorRepository doctorRepository, MedicalOrderRepository medicalOrderRepository, PrescriptionRepository prescriptionRepository, PatientContactRepository patientContactRepository) {
         this.appointmentRepository = appointmentRepository;
         this.patientRepository = patientRepository;
         this.doctorRepository = doctorRepository;
+        this.medicalOrderRepository = medicalOrderRepository;
+        this.prescriptionRepository = prescriptionRepository;
+        this.patientContactRepository = patientContactRepository;
     }
 
     /**
@@ -327,4 +334,5 @@ public class DoctorService {
         }
         return findAllPatients(page, size);
     }
+
 }
