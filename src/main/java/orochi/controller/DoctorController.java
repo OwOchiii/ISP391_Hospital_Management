@@ -11,10 +11,7 @@ import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
-import orochi.model.Appointment;
-import orochi.model.Doctor;
-import orochi.model.MedicalOrder;
-import orochi.model.Patient;
+import orochi.model.*;
 import orochi.repository.DoctorRepository;
 import orochi.repository.MedicalOrderRepository;
 import orochi.service.DoctorService;
@@ -291,50 +288,163 @@ public class DoctorController {
         }
     }
 
-    @GetMapping("/patient/{patientId}")
+    @GetMapping("/patients/{patientId}")
     public String getPatientDetails(
             @PathVariable Integer patientId,
             @RequestParam(required = false) Integer doctorId,
-            Model model) {
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "2") int size,
+            @RequestParam(defaultValue = "all") String filter,
+            Model model,
+            Authentication authentication) {
         try {
-            logger.info("Fetching details for patient ID: {} (doctor ID: {})", patientId, doctorId);
-            Optional<Patient> patient = doctorService.getPatientDetails(patientId);
+            logger.info("Fetching details for patient ID: {}", patientId);
 
-            if (patient.isPresent()) {
-                // Add patient to model
-                model.addAttribute("patient", patient.get());
-
-                // Get appointment history only if doctorId is provided
-                if (doctorId != null) {
-                    List<Appointment> appointmentHistory = doctorService.getAppointmentRepository()
-                        .findByPatientIdAndDoctorIdOrderByDateTimeDesc(patientId, doctorId);
-                    model.addAttribute("appointmentHistory", appointmentHistory);
-                    logger.debug("Retrieved {} appointments for patient ID: {} with doctor ID: {}",
-                        appointmentHistory.size(), patientId, doctorId);
-                } else {
-                    // Get all appointments for this patient regardless of doctor
-                    List<Appointment> allAppointments = doctorService.getAppointmentRepository()
-                        .findByPatientIdOrderByDateTimeDesc(patientId);
-                    model.addAttribute("appointmentHistory", allAppointments);
-                    logger.debug("Retrieved {} appointments for patient ID: {} (all doctors)",
-                        allAppointments.size(), patientId);
+            // If doctorId is not provided, try to get it from authentication
+            if (doctorId == null && authentication != null) {
+                Object principal = authentication.getPrincipal();
+                if (principal instanceof CustomUserDetails) {
+                    CustomUserDetails userDetails = (CustomUserDetails) principal;
+                    doctorId = userDetails.getDoctorId();
+                    logger.info("Retrieved doctorId {} from authentication", doctorId);
                 }
+            }
 
-                model.addAttribute("doctorId", doctorId);
+            // Fetch patient details
+            Optional<Patient> patientOpt = doctorService.getPatientDetails(patientId);
 
-                logger.debug("Successfully retrieved patient details for patient ID: {}", patientId);
-                return "doctor/patient-details";
-            } else {
+            if (patientOpt.isEmpty()) {
                 logger.warn("Patient not found for ID: {}", patientId);
                 model.addAttribute("errorMessage", "Patient not found.");
                 return "error";
             }
+
+            Patient patient = patientOpt.get();
+            model.addAttribute("patient", patient);
+
+            // Calculate age if date of birth is available
+            if (patient.getDateOfBirth() != null) {
+                int age = java.time.Period.between(
+                        patient.getDateOfBirth(),
+                        java.time.LocalDate.now()
+                ).getYears();
+                model.addAttribute("patientAge", age);
+            }
+
+            // Fetch patient contact information
+            List<PatientContact> patientContacts = doctorService.getPatientContactRepository()
+                    .findByPatientIdOrderByContactIdAsc(patientId);
+            model.addAttribute("patientContacts", patientContacts);
+
+            // Set status based on user's status if available
+            if (patient.getUser() != null && patient.getUser().getStatus() != null) {
+                patient.setStatus(patient.getUser().getStatus().toUpperCase());
+            } else {
+                patient.setStatus("ACTIVE");
+            }
+
+            // Get paginated appointment history with filtering
+            Page<Appointment> appointmentsPage;
+            java.time.LocalDateTime now = java.time.LocalDateTime.now();
+
+            // Create two versions of pageable - one with sort and one without
+            org.springframework.data.domain.Pageable pageableWithSort =
+                    org.springframework.data.domain.PageRequest.of(page, size,
+                            org.springframework.data.domain.Sort.by("dateTime").descending());
+
+            org.springframework.data.domain.Pageable pageableNoSort =
+                    org.springframework.data.domain.PageRequest.of(page, size);
+
+            if (doctorId != null) {
+                // Get appointments for this patient with the current doctor
+                if ("upcoming".equals(filter)) {
+                    // Use pageable without sort for methods that already have ordering in their name
+                    // The method already orders by dateTime ASC (future dates first)
+                    appointmentsPage = doctorService.getAppointmentRepository()
+                            .findByPatientIdAndDoctorIdAndDateTimeAfterOrderByDateTimeAsc(
+                                    patientId, doctorId, now, pageableNoSort);
+                } else if ("completed".equals(filter)) {
+                    appointmentsPage = doctorService.getAppointmentRepository()
+                            .findByPatientIdAndDoctorIdAndStatusOrderByDateTimeDesc(
+                                    patientId, doctorId, "Completed", pageableNoSort);
+                } else if ("cancelled".equals(filter)) {
+                    appointmentsPage = doctorService.getAppointmentRepository()
+                            .findByPatientIdAndDoctorIdAndStatusInOrderByDateTimeDesc(
+                                    patientId, doctorId,
+                                    java.util.Arrays.asList("Cancel", "Cancelled"), pageableNoSort);
+                } else {
+                    // Use pageable with sort for methods that don't specify ordering
+                    appointmentsPage = doctorService.getAppointmentRepository()
+                            .findByPatientIdAndDoctorId(patientId, doctorId, pageableWithSort);
+                }
+                model.addAttribute("isCurrentDoctor", true);
+
+                // Get the doctor information
+                Doctor doctor = doctorRepository.findById(doctorId).orElse(null);
+                if (doctor != null && doctor.getUser() != null) {
+                    model.addAttribute("doctorName", doctor.getUser().getFullName());
+                }
+            } else {
+                // Get all appointments for this patient regardless of doctor
+                if ("upcoming".equals(filter)) {
+                    appointmentsPage = doctorService.getAppointmentRepository()
+                            .findByPatientIdAndDateTimeAfterOrderByDateTimeAsc(
+                                    patientId, now, pageableNoSort);
+                } else if ("completed".equals(filter)) {
+                    appointmentsPage = doctorService.getAppointmentRepository()
+                            .findByPatientIdAndStatusOrderByDateTimeDesc(
+                                    patientId, "Completed", pageableNoSort);
+                } else if ("cancelled".equals(filter)) {
+                    appointmentsPage = doctorService.getAppointmentRepository()
+                            .findByPatientIdAndStatusInOrderByDateTimeDesc(
+                                    patientId,
+                                    java.util.Arrays.asList("Cancel", "Cancelled"), pageableNoSort);
+                } else {
+                    appointmentsPage = doctorService.getAppointmentRepository()
+                            .findByPatientId(patientId, pageableWithSort);
+                }
+                model.addAttribute("isCurrentDoctor", false);
+            }
+
+            // Add appointment statistics
+            long completedCount = doctorService.getAppointmentRepository()
+                    .countByPatientIdAndStatus(patientId, "Completed");
+            long upcomingCount = doctorService.getAppointmentRepository()
+                    .countByPatientIdAndDateTimeAfter(patientId, now);
+            long cancelledCount = doctorService.getAppointmentRepository()
+                    .countByPatientIdAndStatusIn(patientId, java.util.Arrays.asList("Cancel", "Cancelled"));
+
+            // Calculate total appointments count (regardless of filter)
+            long totalCount;
+            if (doctorId != null) {
+                totalCount = doctorService.getAppointmentRepository()
+                        .countByPatientIdAndDoctorId(patientId, doctorId);
+            } else {
+                totalCount = doctorService.getAppointmentRepository()
+                        .countByPatientId(patientId);
+            }
+
+            model.addAttribute("appointments", appointmentsPage.getContent());
+            model.addAttribute("page", appointmentsPage);
+            model.addAttribute("currentPage", page);
+            model.addAttribute("totalPages", appointmentsPage.getTotalPages());
+            model.addAttribute("filter", filter);
+            model.addAttribute("completedCount", completedCount);
+            model.addAttribute("upcomingCount", upcomingCount);
+            model.addAttribute("cancelledCount", cancelledCount);
+            model.addAttribute("totalCount", totalCount);
+            model.addAttribute("doctorId", doctorId);
+
+            logger.debug("Successfully retrieved patient details for patient ID: {}", patientId);
+            return "doctor/patient-details";
         } catch (Exception e) {
-            logger.error("Error fetching patient details for patient ID: {} and doctor ID: {}", patientId, doctorId, e);
+            logger.error("Error fetching patient details for patient ID: {}", patientId, e);
             model.addAttribute("errorMessage", "Failed to retrieve patient details: " + e.getMessage());
             return "error";
         }
     }
+
+
 
     @GetMapping("/patients/search")
     public String searchPatients(

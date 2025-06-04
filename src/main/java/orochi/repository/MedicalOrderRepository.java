@@ -32,4 +32,6 @@ public interface MedicalOrderRepository extends JpaRepository<MedicalOrder, Inte
     // Paginated version
     @Query("SELECT m FROM MedicalOrder m WHERE m.doctorId = :doctorId")
     Page<MedicalOrder> findByDoctorId(@Param("doctorId") Integer doctorId, Pageable pageable);
+
+    List<MedicalOrder> findByAppointmentPatientIdOrderByOrderDateDesc(Integer patientId);
 }
