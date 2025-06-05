@@ -604,7 +604,7 @@
       background: linear-gradient(135deg, var(--patient-primary), var(--patient-secondary));
       border: none;
       padding: 0.75rem 1.5rem;
-      border-radius: 8px;
+      border-radius: 12px;
       color: white;
       font-weight: 600;
       text-decoration: none;
@@ -627,7 +627,7 @@
       color: var(--patient-primary);
       background: transparent;
       padding: 0.75rem 1.5rem;
-      border-radius: 8px;
+      border-radius: 12px;
       font-weight: 600;
       text-decoration: none;
       transition: all 0.3s ease;
@@ -640,7 +640,7 @@
     .btn-outline-custom:hover {
       background: var(--patient-primary);
       color: white;
-      transform: translateY(-2px);
+      transform: none;
       text-decoration: none;
     }
 
@@ -649,7 +649,7 @@
       color: var(--warning-color);
       background: transparent;
       padding: 0.75rem 1.5rem;
-      border-radius: 8px;
+      border-radius: 12px;
       font-weight: 600;
       text-decoration: none;
       transition: all 0.3s ease;
@@ -662,7 +662,7 @@
     .btn-warning-custom:hover {
       background: var(--warning-color);
       color: white;
-      transform: translateY(-2px);
+      transform: none;
       text-decoration: none;
     }
 
@@ -671,7 +671,7 @@
       color: var(--error-color);
       background: transparent;
       padding: 0.75rem 1.5rem;
-      border-radius: 8px;
+      border-radius: 12px;
       font-weight: 600;
       text-decoration: none;
       transition: all 0.3s ease;
@@ -684,7 +684,7 @@
     .btn-danger-custom:hover {
       background: var(--error-color);
       color: white;
-      transform: translateY(-2px);
+      transform: none;
       text-decoration: none;
     }
 
@@ -730,7 +730,7 @@
       color: var(--text-dark);
       padding: 0.75rem 1rem;
       margin: 0 0.25rem;
-      border-radius: 8px;
+      border-radius: 12px;
       font-weight: 600;
     }
 
@@ -742,6 +742,7 @@
     .pagination .page-item.active .page-link {
       background: var(--patient-primary);
       border-color: var(--patient-primary);
+      color: white;
     }
 
     /* Success Message */
@@ -829,7 +830,7 @@
       }
     }
 
-    /* Confirmation Modal */
+    /* Update Modal */
     .modal-overlay {
       position: fixed;
       top: 0;
@@ -888,10 +889,6 @@
       background: linear-gradient(135deg, var(--warning-color), #d97706);
     }
 
-    .modal-icon.danger {
-      background: linear-gradient(135deg, var(--error-color), #dc2626);
-    }
-
     .modal-title {
       font-size: 1.5rem;
       font-weight: 700;
@@ -912,10 +909,6 @@
     }
 
     .modal-actions button {
-      pointer-events: auto;
-    }
-
-    .modal-overlay {
       pointer-events: auto;
     }
   </style>
@@ -956,7 +949,7 @@
       </a>
     </div>
     <div class="nav-item">
-      <a th:href="@{/patient/appointments(patientId=${patientId})}" class="nav-link active">
+      <a th:href="@{/patient/appointment-list(patientId=${patientId})}" class="nav-link active">
         <i class="bi bi-calendar-check"></i>
         My Appointments
       </a>
@@ -1113,15 +1106,15 @@
             <div class="appointment-id">Appointment ID: <span th:text="${'APT' + appointment.appointmentId}">APT001234</span></div>
           </div>
           <div class="appointment-status">
-                            <span class="status-badge"
-                                  th:classappend="${appointment.status == 'Scheduled' ? 'status-scheduled' :
-                                                 appointment.status == 'Pending' ? 'status-pending' :
-                                                 appointment.status == 'Completed' ? 'status-completed' : 'status-cancelled'}">
-                                <i class="bi" th:classappend="${appointment.status == 'Scheduled' ? 'bi-clock' :
-                                                              appointment.status == 'Pending' ? 'bi-hourglass-split' :
-                                                              appointment.status == 'Completed' ? 'bi-check-circle' : 'bi-x-circle'}"></i>
-                                <span th:text="${appointment.status ?: 'Scheduled'}">Scheduled</span>
-                            </span>
+            <span class="status-badge"
+                  th:classappend="${appointment.status == 'Scheduled' ? 'status-scheduled' :
+                                   appointment.status == 'Pending' ? 'status-pending' :
+                                   appointment.status == 'Completed' ? 'status-completed' : 'status-cancelled'}">
+              <i class="bi" th:classappend="${appointment.status == 'Scheduled' ? 'bi-clock' :
+                                             appointment.status == 'Pending' ? 'bi-hourglass-split' :
+                                             appointment.status == 'Completed' ? 'bi-check-circle' : 'bi-x-circle'}"></i>
+              <span th:text="${appointment.status ?: 'Scheduled'}">Scheduled</span>
+            </span>
           </div>
         </div>
 
@@ -1175,7 +1168,7 @@
         <div class="appointment-actions">
           <!-- Actions based on status -->
           <div th:if="${appointment.status == 'Scheduled'}">
-            <a th:href="@{/patient/appointments/{id}/details(id=${appointment.appointmentId}, patientId=${patientId})}"
+            <a th:href="@{/patient/appointment-list/{id}/details(id=${appointment.appointmentId}, patientId=${patientId})}"
                class="btn-primary-custom btn-sm">
               <i class="bi bi-eye"></i>
               View Details
@@ -1185,20 +1178,20 @@
               <i class="bi bi-pencil"></i>
               Update
             </button>
-            <button class="btn-danger-custom btn-sm"
-                    th:onclick="'showCancelModal(' + ${appointment.appointmentId} + ')'">
+            <a th:href="@{/patient/appointment-list/{id}/cancel(id=${appointment.appointmentId}, patientId=${patientId})}"
+               class="btn-danger-custom btn-sm">
               <i class="bi bi-x-circle"></i>
               Cancel
-            </button>
+            </a>
           </div>
 
           <div th:if="${appointment.status == 'Completed'}">
-            <a th:href="@{/patient/appointments/{id}/details(id=${appointment.appointmentId}, patientId=${patientId})}"
+            <a th:href="@{/patient/appointment-list/{id}/details(id=${appointment.appointmentId}, patientId=${patientId})}"
                class="btn-primary-custom btn-sm">
               <i class="bi bi-eye"></i>
               View Details
             </a>
-            <a th:href="@{/patient/appointments/{id}/report(id=${appointment.appointmentId}, patientId=${patientId})}"
+            <a th:href="@{/patient/appointment-list/{id}/report(id=${appointment.appointmentId}, patientId=${patientId})}"
                class="btn-outline-custom btn-sm">
               <i class="bi bi-file-medical"></i>
               Medical Report
@@ -1211,7 +1204,7 @@
           </div>
 
           <div th:if="${appointment.status == 'Cancel' || appointment.status == 'Cancelled'}">
-            <a th:href="@{/patient/appointments/{id}/details(id=${appointment.appointmentId}, patientId=${patientId})}"
+            <a th:href="@{/patient/appointment-list/{id}/details(id=${appointment.appointmentId}, patientId=${patientId})}"
                class="btn-outline-custom btn-sm">
               <i class="bi bi-eye"></i>
               View Details
@@ -1235,10 +1228,10 @@
               <div class="appointment-id">Appointment ID: APT001234</div>
             </div>
             <div class="appointment-status">
-                                <span class="status-badge status-scheduled">
-                                    <i class="bi bi-clock"></i>
-                                    Scheduled
-                                </span>
+              <span class="status-badge status-scheduled">
+                <i class="bi bi-clock"></i>
+                Scheduled
+              </span>
             </div>
           </div>
 
@@ -1247,7 +1240,7 @@
               <i class="bi bi-calendar-event"></i>
             </div>
             <div class="datetime-info">
-              <h6>Monday, June 15, 2024</h6>
+              <h6>Monday, June 15, 2025</h6>
               <p>2:30 PM</p>
             </div>
           </div>
@@ -1292,14 +1285,14 @@
               <i class="bi bi-eye"></i>
               View Details
             </a>
-            <button class="btn-warning-custom btn-sm" th:onclick="'showUpdateModal(' + ${appointment.appointmentId} + ')'">
+            <button class="btn-warning-custom btn-sm" onclick="showUpdateModal(1)">
               <i class="bi bi-pencil"></i>
               Update
             </button>
-            <button class="btn-danger-custom btn-sm" onclick="showCancelModal(1)">
+            <a th:href="@{/patient/appointment-list/1/cancel(patientId=${patientId})}" class="btn-danger-custom btn-sm">
               <i class="bi bi-x-circle"></i>
               Cancel
-            </button>
+            </a>
           </div>
         </div>
 
@@ -1311,10 +1304,10 @@
               <div class="appointment-id">Appointment ID: APT001235</div>
             </div>
             <div class="appointment-status">
-                                <span class="status-badge status-completed">
-                                    <i class="bi bi-check-circle"></i>
-                                    Completed
-                                </span>
+              <span class="status-badge status-completed">
+                <i class="bi bi-check-circle"></i>
+                Completed
+              </span>
             </div>
           </div>
 
@@ -1323,7 +1316,7 @@
               <i class="bi bi-calendar-event"></i>
             </div>
             <div class="datetime-info">
-              <h6>Friday, June 10, 2024</h6>
+              <h6>Friday, June 10, 2025</h6>
               <p>10:00 AM</p>
             </div>
           </div>
@@ -1397,47 +1390,24 @@
       <nav>
         <ul class="pagination">
           <li class="page-item" th:classappend="${currentPage == 0 ? 'disabled' : ''}">
-            <a class="page-link" th:href="@{/patient/appointments(page=${currentPage - 1}, size=${pageSize}, patientId=${patientId})}">
+            <a class="page-link" th:href="@{/patient/appointment-list(page=${currentPage - 1}, size=${pageSize}, patientId=${patientId})}">
               <i class="bi bi-chevron-left"></i>
             </a>
           </li>
 
           <li class="page-item" th:each="pageNum : ${#numbers.sequence(0, totalPages - 1)}"
               th:classappend="${pageNum == currentPage ? 'active' : ''}">
-            <a class="page-link" th:href="@{/patient/appointments(page=${pageNum}, size=${pageSize}, patientId=${patientId})}"
+            <a class="page-link" th:href="@{/patient/appointment-list(page=${pageNum}, size=${pageSize}, patientId=${patientId})}"
                th:text="${pageNum + 1}">1</a>
           </li>
 
           <li class="page-item" th:classappend="${currentPage == totalPages - 1 ? 'disabled' : ''}">
-            <a class="page-link" th:href="@{/patient/appointments(page=${currentPage + 1}, size=${pageSize}, patientId=${patientId})}">
+            <a class="page-link" th:href="@{/patient/appointment-list(page=${currentPage + 1}, size=${pageSize}, patientId=${patientId})}">
               <i class="bi bi-chevron-right"></i>
             </a>
           </li>
         </ul>
       </nav>
-    </div>
-  </div>
-</div>
-
-<!-- Cancel Appointment Modal -->
-<div class="modal-overlay" id="cancelModal">
-  <div class="modal-dialog">
-    <div class="modal-icon danger">
-      <i class="bi bi-x-circle"></i>
-    </div>
-    <h3 class="modal-title">Cancel Appointment</h3>
-    <p class="modal-message">
-      Are you sure you want to cancel this appointment? This action cannot be undone.
-    </p>
-    <div class="modal-actions">
-      <button class="btn-danger-custom" onclick="confirmCancel()">
-        <i class="bi bi-x-circle"></i>
-        Cancel Appointment
-      </button>
-      <button class="btn-outline-custom" onclick="closeModal('cancelModal')">
-        <i class="bi bi-check-circle"></i>
-        Keep Appointment
-      </button>
     </div>
   </div>
 </div>
@@ -1530,8 +1500,8 @@
         const appointmentId = card.querySelector('.appointment-id').textContent.toLowerCase();
         const specialty = card.querySelector('.detail-value').textContent.toLowerCase();
         const matchesSearch = doctorName.includes(searchTerm) ||
-                            appointmentId.includes(searchTerm) ||
-                            specialty.includes(searchTerm);
+                              appointmentId.includes(searchTerm) ||
+                              specialty.includes(searchTerm);
 
         // Filter criteria
         const statusBadge = card.querySelector('.status-badge');
@@ -1580,13 +1550,6 @@
   }
 
   // Modal functions
-  function showCancelModal(appointmentId) {
-    console.log('Opening cancel modal for appointment ID:', appointmentId);
-    currentAppointmentId = appointmentId;
-    const cancelModal = document.getElementById('cancelModal');
-    cancelModal.classList.add('active');
-  }
-
   function showUpdateModal(appointmentId) {
     console.log('Opening update modal for appointment ID:', appointmentId);
     currentAppointmentId = appointmentId;
@@ -1604,34 +1567,6 @@
     const modal = document.getElementById(modalId);
     modal.classList.remove('active');
     currentAppointmentId = null;
-  }
-
-  function confirmCancel() {
-    console.log('Confirming cancel for appointment ID:', currentAppointmentId);
-    if (currentAppointmentId) {
-      const form = document.createElement('form');
-      form.method = 'POST';
-      form.action = `/patient/appointments/${currentAppointmentId}/cancel`;
-
-      const csrfToken = document.querySelector('meta[name="_csrf"]');
-      if (csrfToken) {
-        const csrfInput = document.createElement('input');
-        csrfInput.type = 'hidden';
-        csrfInput.name = '_csrf';
-        csrfInput.value = csrfToken.getAttribute('content');
-        form.appendChild(csrfInput);
-      }
-
-      const patientIdInput = document.createElement('input');
-      patientIdInput.type = 'hidden';
-      patientIdInput.name = 'patientId';
-      patientIdInput.value = patientId;
-      form.appendChild(patientIdInput);
-
-      document.body.appendChild(form);
-      form.submit();
-    }
-    closeModal('cancelModal');
   }
 
   function confirmUpdate() {

@@ -32,7 +32,7 @@ public interface AppointmentRepository extends JpaRepository<Appointment, Intege
     List<Appointment> findByPatientIdAndDoctorIdOrderByDateTimeDesc(Integer patientId, Integer doctorId);
 
     // In AppointmentRepository.java
-    @Query("SELECT a FROM Appointment a WHERE a.doctorId = :doctorId AND a.dateTime BETWEEN :startDate AND :endDate ORDER BY a.dateTime")
+    @Query("SELECT a FROM Appointment a WHERE a.doctorId = :doctorId AND a.dateTime BETWEEN :startDate AND :endDate AND a.status != 'Cancel' ORDER BY a.dateTime")
     List<Appointment> findByDoctorIdAndDateTimeBetweenOrderByDateTime(
             @Param("doctorId") Integer doctorId,
             @Param("startDate") LocalDateTime startDate,
