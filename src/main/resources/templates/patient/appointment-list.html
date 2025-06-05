@@ -856,6 +856,9 @@
       box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
       text-align: center;
       animation: slideIn 0.3s ease-out;
+      position: relative;
+      z-index: 2100;
+      pointer-events: auto;
     }
 
     @keyframes slideIn {
@@ -906,6 +909,14 @@
       display: flex;
       gap: 1rem;
       justify-content: center;
+    }
+
+    .modal-actions button {
+      pointer-events: auto;
+    }
+
+    .modal-overlay {
+      pointer-events: auto;
     }
   </style>
 </head>
@@ -1170,9 +1181,9 @@
               View Details
             </a>
             <button class="btn-warning-custom btn-sm"
-                    th:onclick="'showRescheduleModal(' + ${appointment.appointmentId} + ')'">
-              <i class="bi bi-calendar-x"></i>
-              Reschedule
+                    th:onclick="'showUpdateModal(' + ${appointment.appointmentId} + ')'">
+              <i class="bi bi-pencil"></i>
+              Update
             </button>
             <button class="btn-danger-custom btn-sm"
                     th:onclick="'showCancelModal(' + ${appointment.appointmentId} + ')'">
@@ -1281,9 +1292,9 @@
               <i class="bi bi-eye"></i>
               View Details
             </a>
-            <button class="btn-warning-custom btn-sm" onclick="showRescheduleModal(1)">
-              <i class="bi bi-calendar-x"></i>
-              Reschedule
+            <button class="btn-warning-custom btn-sm" th:onclick="'showUpdateModal(' + ${appointment.appointmentId} + ')'">
+              <i class="bi bi-pencil"></i>
+              Update
             </button>
             <button class="btn-danger-custom btn-sm" onclick="showCancelModal(1)">
               <i class="bi bi-x-circle"></i>
@@ -1420,33 +1431,33 @@
     </p>
     <div class="modal-actions">
       <button class="btn-danger-custom" onclick="confirmCancel()">
-        <i class="bi bi-check-circle"></i>
-        Yes, Cancel
+        <i class="bi bi-x-circle"></i>
+        Cancel Appointment
       </button>
       <button class="btn-outline-custom" onclick="closeModal('cancelModal')">
-        <i class="bi bi-x-circle"></i>
+        <i class="bi bi-check-circle"></i>
         Keep Appointment
       </button>
     </div>
   </div>
 </div>
 
-<!-- Reschedule Appointment Modal -->
-<div class="modal-overlay" id="rescheduleModal">
+<!-- Update Appointment Modal -->
+<div class="modal-overlay" id="updateModal">
   <div class="modal-dialog">
     <div class="modal-icon warning">
-      <i class="bi bi-calendar-x"></i>
+      <i class="bi bi-pencil"></i>
     </div>
-    <h3 class="modal-title">Reschedule Appointment</h3>
+    <h3 class="modal-title">Update Appointment</h3>
     <p class="modal-message">
-      You will be redirected to the booking page to select a new date and time for your appointment.
+      You will be redirected to the update page to modify your appointment details.
     </p>
     <div class="modal-actions">
-      <button class="btn-warning-custom" onclick="confirmReschedule()">
+      <button class="btn-warning-custom" onclick="confirmUpdate()">
         <i class="bi bi-check-circle"></i>
         Continue
       </button>
-      <button class="btn-outline-custom" onclick="closeModal('rescheduleModal')">
+      <button class="btn-outline-custom" onclick="closeModal('updateModal')">
         <i class="bi bi-x-circle"></i>
         Cancel
       </button>
@@ -1486,112 +1497,118 @@
   }
 
   function initializeSearchAndFilters() {
-  const searchInput = document.getElementById('searchInput');
-  const filterTabs = document.querySelectorAll('.filter-tab');
-  const appointmentsContainer = document.getElementById('appointmentsContainer');
-  const emptyState = document.getElementById('emptyState');
-  let activeFilter = 'all';
+    const searchInput = document.getElementById('searchInput');
+    const filterTabs = document.querySelectorAll('.filter-tab');
+    const appointmentsContainer = document.getElementById('appointmentsContainer');
+    const emptyState = document.getElementById('emptyState');
+    let activeFilter = 'all';
 
-  // Update filter tabs
-  filterTabs.forEach(tab => {
-    tab.addEventListener('click', function(e) {
-      e.preventDefault();
-      filterTabs.forEach(t => t.classList.remove('active'));
-      this.classList.add('active');
-      activeFilter = this.getAttribute('data-filter');
+    // Update filter tabs
+    filterTabs.forEach(tab => {
+      tab.addEventListener('click', function(e) {
+        e.preventDefault();
+        filterTabs.forEach(t => t.classList.remove('active'));
+        this.classList.add('active');
+        activeFilter = this.getAttribute('data-filter');
+        updateAppointments();
+      });
+    });
+
+    // Update on search input, including spaces
+    searchInput.addEventListener('input', function() {
       updateAppointments();
     });
-  });
 
-  // Update on search input, including spaces
-  searchInput.addEventListener('input', function() {
-    updateAppointments();
-  });
+    function updateAppointments() {
+      const searchTerm = searchInput.value.toLowerCase().trim();
+      const appointmentCards = appointmentsContainer.querySelectorAll('.appointment-card');
+      let visibleCount = 0;
 
-  function updateAppointments() {
-    const searchTerm = searchInput.value.toLowerCase().trim();
-    const appointmentCards = appointmentsContainer.querySelectorAll('.appointment-card');
-    let visibleCount = 0;
+      appointmentCards.forEach(card => {
+        // Search criteria
+        const doctorName = card.querySelector('.appointment-title').textContent.toLowerCase();
+        const appointmentId = card.querySelector('.appointment-id').textContent.toLowerCase();
+        const specialty = card.querySelector('.detail-value').textContent.toLowerCase();
+        const matchesSearch = doctorName.includes(searchTerm) ||
+                            appointmentId.includes(searchTerm) ||
+                            specialty.includes(searchTerm);
 
-    appointmentCards.forEach(card => {
-      // Search criteria
-      const doctorName = card.querySelector('.appointment-title').textContent.toLowerCase();
-      const appointmentId = card.querySelector('.appointment-id').textContent.toLowerCase();
-      const specialty = card.querySelector('.detail-value').textContent.toLowerCase();
-      const matchesSearch = doctorName.includes(searchTerm) ||
-                          appointmentId.includes(searchTerm) ||
-                          specialty.includes(searchTerm);
+        // Filter criteria
+        const statusBadge = card.querySelector('.status-badge');
+        const status = statusBadge ? statusBadge.textContent.toLowerCase().trim() : '';
+        let matchesFilter = false;
 
-      // Filter criteria
-      const statusBadge = card.querySelector('.status-badge');
-      const status = statusBadge ? statusBadge.textContent.toLowerCase().trim() : '';
-      let matchesFilter = false;
+        switch(activeFilter) {
+          case 'all':
+            matchesFilter = true;
+            break;
+          case 'pending':
+            matchesFilter = status.includes('pending');
+            break;
+          case 'scheduled':
+            matchesFilter = status.includes('scheduled');
+            break;
+          case 'completed':
+            matchesFilter = status.includes('completed');
+            break;
+          case 'cancelled':
+            matchesFilter = status.includes('cancelled') || status.includes('cancel');
+            break;
+        }
 
-      switch(activeFilter) {
-        case 'all':
-          matchesFilter = true;
-          break;
-        case 'pending':
-          matchesFilter = status.includes('pending');
-          break;
-        case 'scheduled':
-          matchesFilter = status.includes('scheduled');
-          break;
-        case 'completed':
-          matchesFilter = status.includes('completed');
-          break;
-        case 'cancelled':
-          matchesFilter = status.includes('cancelled') || status.includes('cancel');
-          break;
-      }
+        // Show card only if it matches both search and filter
+        if (matchesSearch && matchesFilter) {
+          card.style.display = 'block';
+          visibleCount++;
+        } else {
+          card.style.display = 'none';
+        }
+      });
 
-      // Show card only if it matches both search and filter
-      if (matchesSearch && matchesFilter) {
-        card.style.display = 'block';
-        visibleCount++;
+      // Show/hide empty state
+      if (visibleCount === 0) {
+        emptyState.style.display = 'block';
+        appointmentsContainer.style.display = 'none';
       } else {
-        card.style.display = 'none';
+        emptyState.style.display = 'none';
+        appointmentsContainer.style.display = 'grid';
       }
-    });
-
-    // Show/hide empty state
-    if (visibleCount === 0) {
-      emptyState.style.display = 'block';
-      appointmentsContainer.style.display = 'none';
-    } else {
-      emptyState.style.display = 'none';
-      appointmentsContainer.style.display = 'grid';
     }
-  }
 
-  // Initial update
-  updateAppointments();
-}
+    // Initial update
+    updateAppointments();
+  }
 
   // Modal functions
   function showCancelModal(appointmentId) {
+    console.log('Opening cancel modal for appointment ID:', appointmentId);
     currentAppointmentId = appointmentId;
-    document.getElementById('cancelModal').classList.add('active');
+    const cancelModal = document.getElementById('cancelModal');
+    cancelModal.classList.add('active');
   }
 
-  function showRescheduleModal(appointmentId) {
+  function showUpdateModal(appointmentId) {
+    console.log('Opening update modal for appointment ID:', appointmentId);
     currentAppointmentId = appointmentId;
-    document.getElementById('rescheduleModal').classList.add('active');
+    const updateModal = document.getElementById('updateModal');
+    updateModal.classList.add('active');
   }
 
   function showFeedbackModal(appointmentId) {
-    // Redirect to feedback page
+    console.log('Redirecting to feedback for appointment ID:', appointmentId);
     window.location.href = `/patient/appointments/${appointmentId}/feedback?patientId=${patientId}`;
   }
 
   function closeModal(modalId) {
-    document.getElementById(modalId).classList.remove('active');
+    console.log('Closing modal:', modalId);
+    const modal = document.getElementById(modalId);
+    modal.classList.remove('active');
     currentAppointmentId = null;
   }
 
   function confirmCancel() {
+    console.log('Confirming cancel for appointment ID:', currentAppointmentId);
     if (currentAppointmentId) {
-      // Submit cancel request
       const form = document.createElement('form');
       form.method = 'POST';
       form.action = `/patient/appointments/${currentAppointmentId}/cancel`;
@@ -1617,26 +1634,26 @@
     closeModal('cancelModal');
   }
 
-  function confirmReschedule() {
-    if (currentAppointmentId) {
-      // Redirect to booking page with appointment ID for rescheduling
-      window.location.href = `/patient/book-appointment?patientId=${patientId}&rescheduleId=${currentAppointmentId}`;
+  function confirmUpdate() {
+    console.log('Confirming update for appointment ID:', currentAppointmentId, 'Patient ID:', patientId);
+    if (currentAppointmentId && patientId) {
+      window.location.href = `/patient/book-appointment?appointmentId=${currentAppointmentId}&patientId=${patientId}`;
+    } else {
+      console.error('Update failed: currentAppointmentId or patientId is missing', { currentAppointmentId, patientId });
     }
-    closeModal('rescheduleModal');
+    closeModal('updateModal');
   }
 
   function exportAppointments() {
-    // Export functionality
+    console.log('Exporting appointments for patient ID:', patientId);
     window.location.href = `/patient/appointments/export?patientId=${patientId}`;
   }
 
   // Initialize page
   document.addEventListener('DOMContentLoaded', function() {
-    //checkScreenSize();
-    //initializeSearch();
-    //initializeFilters();
+    console.log('Page loaded, initializing...');
+    checkScreenSize();
     initializeSearchAndFilters();
-    updateAppointments();
   });
 
   window.addEventListener('resize', checkScreenSize);

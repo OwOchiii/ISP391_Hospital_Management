@@ -798,12 +798,13 @@
     <div class="page-header">
       <h1 class="page-title">
         <i class="bi bi-calendar-plus"></i>
-        Book New Appointment
+        <span th:if="${isUpdate}">Update Appointment</span>
+        <span th:unless="${isUpdate}">Book New Appointment</span>
       </h1>
       <nav>
         <ol class="breadcrumb">
           <li class="breadcrumb-item"><a th:href="@{/patient/dashboard(patientId=${patientId})}">Dashboard</a></li>
-          <li class="breadcrumb-item active">Book Appointment</li>
+          <li class="breadcrumb-item active" th:text="${isUpdate} ? 'Update Appointment' : 'Book Appointment'"></li>
         </ol>
       </nav>
     </div>
@@ -822,6 +823,7 @@
       </h2>
 
       <form th:action="@{/patient/book-appointment}" th:object="${appointmentForm}" method="post" id="appointmentForm">
+        <input type="hidden" th:field="*{appointmentId}" />
         <input type="hidden" th:field="*{patientId}" th:value="${patientId}" />
 
         <div class="row">
@@ -886,8 +888,6 @@
               <span th:errors="*{appointmentDate}">Date is required</span>
             </div>
           </div>
-
-
         </div>
 
         <!-- Time Selection -->
@@ -943,8 +943,7 @@
             </label>
             <div class="contact-field">
               <input type="tel" id="phoneNumber" th:field="*{phoneNumber}"
-                     th:value="${patient.user?.phoneNumber}" class="form-control"
-                     placeholder="0123456789" required />
+                     class="form-control" placeholder="0123456789" required />
               <button type="button" class="reset-btn" onclick="resetPhoneNumber()">
                 <i class="bi bi-arrow-clockwise"></i>
               </button>
@@ -964,8 +963,7 @@
             </label>
             <div class="contact-field">
               <input type="email" id="email" th:field="*{email}"
-                     th:value="${patient.user?.email}" class="form-control"
-                     placeholder="patient@example.com" maxlength="50" required />
+                     class="form-control" placeholder="patient@example.com" maxlength="50" required />
               <button type="button" class="reset-btn" onclick="resetEmail()">
                 <i class="bi bi-arrow-clockwise"></i>
               </button>
@@ -1003,33 +1001,36 @@
         <div class="text-center">
           <button type="button" class="btn-primary-custom" onclick="showConfirmation()">
             <i class="bi bi-calendar-check"></i>
-            Book Appointment
+            <span th:if="${isUpdate}">Update Appointment</span>
+            <span th:unless="${isUpdate}">Book Appointment</span>
           </button>
         </div>
       </form>
     </div>
   </div>
-</div>
 
-<!-- Confirmation Modal -->
-<div class="confirmation-overlay" id="confirmationOverlay">
-  <div class="confirmation-dialog">
-    <div class="confirmation-icon">
-      <i class="bi bi-calendar-check"></i>
-    </div>
-    <h3 class="confirmation-title">Confirm Appointment</h3>
-    <p class="confirmation-message">
-      Please review your appointment details and confirm to proceed with the booking.
-    </p>
-    <div class="confirmation-actions">
-      <button class="btn-primary-custom" onclick="confirmBooking(true)">
-        <i class="bi bi-check-circle"></i>
-        Confirm Booking
-      </button>
-      <button class="btn-outline-custom" onclick="confirmBooking(false)">
-        <i class="bi bi-x-circle"></i>
-        Cancel
-      </button>
+  <!-- Confirmation Modal -->
+  <div class="confirmation-overlay" id="confirmationOverlay">
+    <div class="confirmation-dialog">
+      <div class="confirmation-icon">
+        <i class="bi bi-calendar-check"></i>
+      </div>
+      <h3 class="confirmation-title" th:text="${isUpdate} ? 'Confirm Update' : 'Confirm Appointment'"></h3>
+      <p class="confirmation-message">
+        <span th:if="${isUpdate}">Please review your updated appointment details and confirm to proceed with the changes.</span>
+        <span th:unless="${isUpdate}">Please review your appointment details and confirm to proceed with the booking.</span>
+      </p>
+      <div class="confirmation-actions">
+        <button class="btn-primary-custom" onclick="confirmBooking(true)">
+          <i class="bi bi-check-circle"></i>
+          <span th:if="${isUpdate}">Confirm Update</span>
+          <span th:unless="${isUpdate}">Confirm Booking</span>
+        </button>
+        <button class="btn-outline-custom" onclick="confirmBooking(false)">
+          <i class="bi bi-x-circle"></i>
+          Cancel
+        </button>
+      </div>
     </div>
   </div>
 </div>
