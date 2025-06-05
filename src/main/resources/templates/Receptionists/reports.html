@@ -2,9 +2,908 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Title</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Reports - MediCare Plus</title>
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Font Awesome -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <!-- Chart.js -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.9.1/chart.min.js"></script>
+    <style>
+        :root {
+            --primary: #667eea;
+            --secondary: #764ba2;
+            --accent: #a78bfa;
+            --light: #f8fafc;
+            --dark: #3c366b;
+            --text-dark: #1f2937;
+            --text-light: #6b7280;
+            --text-muted: #9ca3af;
+            --bg-light: #f8fafc;
+            --bg-white: #ffffff;
+            --success-color: #10b981;
+            --warning-color: #f59e0b;
+            --error-color: #ef4444;
+            --info-color: #3b82f6;
+            --sidebar-width: 280px;
+            --header-height: 70px;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            line-height: 1.6;
+            color: var(--text-dark);
+            background: var(--bg-light);
+            overflow-x: hidden;
+        }
+
+        /* Sidebar Styles */
+        .sidebar {
+            position: fixed;
+            top: 0;
+            left: 0;
+            height: 100vh;
+            width: var(--sidebar-width);
+            background: linear-gradient(180deg, var(--primary) 0%, var(--secondary) 100%);
+            color: white;
+            z-index: 1000;
+            transition: transform 0.3s ease;
+            overflow-y: auto;
+            box-shadow: 4px 0 20px rgba(102, 126, 234, 0.15);
+        }
+
+        .sidebar.collapsed {
+            transform: translateX(-100%);
+        }
+
+        .logo {
+            padding: 1.5rem;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            background: rgba(255, 255, 255, 0.05);
+            text-align: left;
+        }
+
+        .logo a {
+            font-size: 1.5rem;
+            font-weight: 700;
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            color: white;
+            text-decoration: none;
+        }
+
+        .logo i {
+            font-size: 2rem;
+            background: linear-gradient(45deg, #a78bfa, #7c3aed);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .logo h2 {
+            font-size: 1.25rem;
+            font-weight: 600;
+            margin: 0;
+            line-height: 1.2;
+        }
+
+        .logo small {
+            font-size: 0.75rem;
+            font-weight: 400;
+            opacity: 0.8;
+            display: block;
+        }
+
+        .nav-section-title {
+            font-size: 0.75rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            color: rgba(255, 255, 255, 0.6);
+            padding: 0 1.5rem;
+            margin: 1.5rem 0 0.75rem;
+        }
+
+        .nav-item {
+            margin: 0.25rem 1rem;
+        }
+
+        .nav-link {
+            color: rgba(255, 255, 255, 0.8);
+            padding: 0.875rem 1.25rem;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            gap: 0.875rem;
+            text-decoration: none;
+            font-weight: 500;
+            transition: all 0.3s ease;
+            position: relative;
+        }
+
+        .nav-link:hover {
+            background: rgba(255, 255, 255, 0.1);
+            color: white;
+            transform: translateX(4px);
+        }
+
+        .nav-link.active {
+            background: rgba(255, 255, 255, 0.15);
+            color: white;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+        }
+
+        .nav-link.active::before {
+            content: '';
+            position: absolute;
+            left: 0;
+            top: 50%;
+            transform: translateY(-50%);
+            width: 4px;
+            height: 24px;
+            background: #a78bfa;
+            border-radius: 0 4px 4px 0;
+        }
+
+        .nav-link i {
+            font-size: 1.125rem;
+            width: 20px;
+            text-align: center;
+        }
+
+        .btn-light {
+            background: rgba(255, 255, 255, 0.15);
+            border: none;
+            color: white;
+            padding: 0.75rem 1.5rem;
+            border-radius: 12px;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .btn-light:hover {
+            background: rgba(255, 255, 255, 0.25);
+            color: white;
+            transform: translateY(-2px);
+        }
+
+        /* Main Content */
+        .main-content {
+            margin-left: var(--sidebar-width);
+            min-height: 100vh;
+            transition: margin-left 0.3s ease;
+        }
+
+        .main-content.expanded {
+            margin-left: 0;
+        }
+
+        /* Header */
+        header {
+            background: var(--bg-white);
+            height: var(--header-height);
+            padding: 0 2rem;
+            box-shadow: 0 2px 20px rgba(0, 0, 0, 0.08);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            position: sticky;
+            top: 0;
+            z-index: 999;
+        }
+
+        .sidebar-toggle {
+            background: none;
+            border: none;
+            font-size: 1.25rem;
+            color: var(--text-dark);
+            cursor: pointer;
+            padding: 0.5rem;
+            border-radius: 8px;
+            transition: all 0.3s ease;
+        }
+
+        .sidebar-toggle:hover {
+            background: var(--light);
+            color: var(--primary);
+        }
+
+        .h3 {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: var(--text-dark);
+            margin: 0;
+        }
+
+        .profile-info {
+            display: flex;
+            align-items: center;
+            gap: 1.5rem;
+        }
+
+        .notification-bell {
+            position: relative;
+            cursor: pointer;
+            padding: 0.5rem;
+            border-radius: 8px;
+            transition: all 0.3s ease;
+        }
+
+        .notification-bell:hover {
+            background: var(--light);
+        }
+
+        .badge {
+            font-size: 0.625rem;
+            padding: 0.25em 0.5em;
+            background: var(--error-color);
+        }
+
+        .rounded-circle {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, var(--primary), var(--accent));
+            object-fit: cover;
+        }
+
+        /* Notification Modal */
+        .notification-modal {
+            position: fixed;
+            top: 80px;
+            right: 20px;
+            width: 350px;
+            max-height: 450px;
+            overflow-y: auto;
+            background: var(--bg-white);
+            border: 1px solid rgba(102, 126, 234, 0.1);
+            border-radius: 16px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+            padding: 1.5rem;
+            z-index: 2000;
+            display: none;
+        }
+
+        .notification-modal h5 {
+            font-size: 1.25rem;
+            font-weight: 600;
+            color: var(--text-dark);
+            margin-bottom: 1rem;
+        }
+
+        .notification-item {
+            padding: 0.75rem;
+            border-bottom: 1px solid rgba(102, 126, 234, 0.1);
+            transition: background 0.2s ease;
+        }
+
+        .notification-item:hover {
+            background: var(--light);
+        }
+
+        .notification-item:last-child {
+            border-bottom: none;
+        }
+
+        /* Chart Container */
+        .chart-container {
+            background: var(--bg-white);
+            border-radius: 16px;
+            padding: 2rem;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+            border: 1px solid rgba(102, 126, 234, 0.1);
+        }
+
+        .chart-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1rem;
+        }
+
+        .chart-container h5 {
+            font-size: 1.25rem;
+            font-weight: 600;
+            color: var(--text-dark);
+            margin: 0;
+        }
+
+        .form-select {
+            border-radius: 8px;
+            font-size: 0.875rem;
+            padding: 0.5rem 1rem;
+            border: 1px solid rgba(102, 126, 234, 0.2);
+            width: auto;
+        }
+
+        .chart-content {
+            position: relative;
+            height: 300px;
+        }
+
+        .chart-legend {
+            display: flex;
+            justify-content: center;
+            gap: 1.5rem;
+            margin-top: 1rem;
+        }
+
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            font-size: 0.875rem;
+            color: var(--text-muted);
+        }
+
+        .legend-color {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            display: inline-block;
+        }
+
+        .legend-color.appointments { background: #3b82f6; }
+        .legend-color.income { background: #10b981; }
+
+        .dashboard-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1.5rem;
+            margin-bottom: 2rem;
+        }
+
+        .search-box {
+            position: relative;
+            display: flex;
+            align-items: center;
+        }
+
+        .search-box .input-group-text {
+            background: var(--light);
+            border: 1px solid rgba(102, 126, 234, 0.2);
+            color: var(--primary);
+            border-radius: 8px 0 0 8px;
+        }
+
+        .search-box input {
+            border: 1px solid rgba(102, 126, 234, 0.2);
+            border-radius: 0 8px 8px 0;
+            font-size: 0.875rem;
+            padding: 0.75rem 1rem;
+            color: var(--text-dark);
+        }
+
+        .search-box input:focus {
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+            outline: none;
+        }
+
+        /* Notification Toast */
+        .notification-toast {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            padding: 1rem 1.5rem;
+            border-radius: 12px;
+            color: white;
+            z-index: 2000;
+            display: none;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+        }
+
+        .notification-toast.success {
+            background: var(--success-color);
+        }
+
+        .notification-toast.error {
+            background: var(--error-color);
+        }
+
+        /* Responsive Design */
+        @media (max-width: 1200px) {
+            .dashboard-row {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .sidebar {
+                transform: translateX(-100%);
+            }
+
+            .main-content {
+                margin-left: 0;
+            }
+
+            .sidebar.collapsed {
+                transform: translateX(0);
+            }
+
+            .main-content.expanded {
+                margin-left: var(--sidebar-width);
+            }
+
+            header {
+                padding: 0 1rem;
+            }
+
+            .search-box input {
+                width: 100%;
+            }
+
+            .chart-container {
+                padding: 1.5rem;
+            }
+        }
+
+        @media (max-width: 576px) {
+            .chart-container {
+                padding: 1rem;
+            }
+
+            .form-select {
+                font-size: 0.75rem;
+                padding: 0.5rem;
+            }
+
+            .chart-container h5 {
+                font-size: 1rem;
+            }
+        }
+
+        /* Animation */
+        .main-content {
+            animation: fadeInUp 0.6s ease-out;
+        }
+
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+    </style>
 </head>
 <body>
+<div class="container-fluid">
+    <div class="row">
+        <!-- Sidebar -->
+        <nav class="sidebar col-lg-3 col-xl-2 d-none d-lg-block" id="patientSidebar">
+            <div class="logo">
+                <a href="#">
+                    <i class="fas fa-user-md"></i>
+                    <div>
+                        <h2>MediCare Plus</h2>
+                        <small>Healthcare Portal</small>
+                    </div>
+                </a>
+            </div>
+            <a href="new_appointment.jsp" class="btn btn-light mx-3 mb-3">
+                <i class="fas fa-plus"></i> New Appointment
+            </a>
+            <nav class="sidebar-nav">
+                <div class="nav-section-title">Navigation</div>
+                <ul class="nav flex-column">
+                    <li class="nav-item">
+                        <a href="dashboard.jsp" class="nav-link"><i class="fas fa-th-large"></i> Dashboard</a>
+                    </li>
+                    <div class="nav-section-title">Medical Services</div>
+                    <ul class="nav flex-column">
+                        <li class="nav-item">
+                            <a href="appointments.jsp" class="nav-link"><i class="fas fa-calendar-alt"></i> Appointments</a>
+                        </li>
+                        <li class="nav-item">
+                            <a href="doctors.jsp" class="nav-link"><i class="fas fa-user-md"></i> Doctors</a>
+                        </li>
+                        <li class="nav-item">
+                            <a href="patients.jsp" class="nav-link"><i class="fas fa-users"></i> Patients</a>
+                        </li>
+                        <li class="nav-item">
+                            <a href="reports.jsp" class="nav-link active"><i class="fas fa-chart-bar"></i> Reports</a>
+                        </li>
+                    </ul>
+                    <div class="nav-section-title">Account</div>
+                    <ul class="nav flex-column">
+                        <li class="nav-item">
+                            <a href="profile.jsp" class="nav-link"><i class="fas fa-stethoscope"></i> Profile</a>
+                        </li>
+                        <div class="nav-section-title">System</div>
+                        <ul class="nav flex-column">
+                            <li class="nav-item">
+                                <a href="settings.jsp" class="nav-link"><i class="fas fa-cog"></i> Settings</a>
+                            </li>
+                            <li class="nav-item">
+                                <a href="logout.jsp" class="nav-link"><i class="fas fa-sign-out-alt"></i> Logout</a>
+                            </li>
+                        </ul>
+                    </ul>
+                </ul>
+            </nav>
+        </nav>
 
+        <!-- Main Content -->
+        <main class="main-content col-lg-9 col-xl-10" id="mainContent">
+            <header class="d-flex justify-content-between align-items-center mb-4">
+                <div class="d-flex align-items-center gap-3">
+                    <button class="sidebar-toggle" onclick="toggleSidebar()">
+                        <i class="fas fa-list"></i>
+                    </button>
+                    <h1 class="h3">Reports</h1>
+                </div>
+                <div class="profile-info">
+                    <div class="search-box">
+                        <div class="input-group">
+                            <span class="input-group-text"><i class="fas fa-search"></i></span>
+                            <input type="text" id="search-input" class="form-control" placeholder="Search reports">
+                        </div>
+                    </div>
+                    <div class="notification-bell" role="button" onclick="toggleNotificationModal()">
+                        <i class="fas fa-bell fs-5"></i>
+                        <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger" id="notificationCount">0</span>
+                    </div>
+                    <img src="images/profile.jpg" alt="Profile" class="rounded-circle" onerror="this.src='https://via.placeholder.com/40';">
+                </div>
+            </header>
+
+            <!-- Notification Modal -->
+            <div id="notificationModal" class="notification-modal">
+                <h5>System Notifications</h5>
+                <div id="notificationList"></div>
+            </div>
+
+            <!-- Charts -->
+            <div class="dashboard-row">
+                <!-- Appointment Statistics -->
+                <div class="chart-container">
+                    <div class="chart-header">
+                        <h5>Appointment Statistics</h5>
+                        <select class="form-select" id="appointmentStatsPeriod">
+                            <option value="month">This Month</option>
+                            <option value="year">This Year</option>
+                        </select>
+                    </div>
+                    <div class="chart-content">
+                        <canvas id="appointmentStatsChart" height="300"></canvas>
+                        <div class="chart-legend">
+                            <div class="legend-item">
+                                <span class="legend-color appointments"></span>
+                                Appointments
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Income Statistics -->
+                <div class="chart-container">
+                    <div class="chart-header">
+                        <h5>Income Statistics</h5>
+                        <select class="form-select" id="incomeStatsPeriod">
+                            <option value="month">This Month</option>
+                            <option value="year">This Year</option>
+                        </select>
+                    </div>
+                    <div class="chart-content">
+                        <canvas id="incomeStatsChart" height="300"></canvas>
+                        <div class="chart-legend">
+                            <div class="legend-item">
+                                <span class="legend-color income"></span>
+                                Income
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Notification Toast -->
+            <div id="statusNotification" class="notification-toast success">
+                Data loaded successfully
+            </div>
+        </main>
+    </div>
+</div>
+
+<!-- Bootstrap JS -->
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+<script>
+    // Sidebar toggle functionality
+    function toggleSidebar() {
+        const sidebar = document.getElementById('patientSidebar');
+        const mainContent = document.getElementById('mainContent');
+
+        sidebar.classList.toggle('collapsed');
+        mainContent.classList.toggle('expanded');
+    }
+
+    // Auto-hide sidebar on mobile
+    function checkScreenSize() {
+        const sidebar = document.getElementById('patientSidebar');
+        const mainContent = document.getElementById('mainContent');
+
+        if (window.innerWidth <= 768) {
+            sidebar.classList.add('collapsed');
+            mainContent.classList.add('expanded');
+        } else {
+            sidebar.classList.remove('collapsed');
+            mainContent.classList.remove('expanded');
+        }
+    }
+
+    // Notification modal toggle
+    function toggleNotificationModal() {
+        const modal = document.getElementById('notificationModal');
+        modal.style.display = modal.style.display === 'block' ? 'none' : 'block';
+    }
+
+    // Initialize
+    checkScreenSize();
+    window.addEventListener('load', checkScreenSize);
+    window.addEventListener('resize', checkScreenSize);
+
+    // Close notification modal when clicking outside
+    window.onclick = function(event) {
+        const notificationModal = document.getElementById('notificationModal');
+        if (event.target !== notificationModal &&
+            !notificationModal.contains(event.target) &&
+            !event.target.closest('.notification-bell')) {
+            notificationModal.style.display = 'none';
+        }
+    };
+
+    // Chart initialization
+    let appointmentStatsChart = null;
+    let incomeStatsChart = null;
+
+    // Debounce function for API calls
+    function debounce(func, wait) {
+        let timeout;
+        return function executedFunction(...args) {
+            const later = () => {
+                clearTimeout(timeout);
+                func(...args);
+            };
+            clearTimeout(timeout);
+            timeout = setTimeout(later, wait);
+        };
+    }
+
+    // Display no data message
+    function displayNoDataMessage(ctx, message) {
+        ctx.canvas.parentNode.innerHTML = `
+            <div class="d-flex justify-content-center align-items-center" style="height: 300px;">
+                <p class="text-muted">${message}</p>
+            </div>
+        `;
+    }
+
+    // Initialize Appointment Statistics Chart
+    function initAppointmentStatsChart() {
+        const ctx = document.getElementById('appointmentStatsChart');
+        if (!ctx) return;
+
+        if (appointmentStatsChart) {
+            appointmentStatsChart.destroy();
+        }
+
+        appointmentStatsChart = new Chart(ctx.getContext('2d'), {
+            type: 'bar',
+            data: {
+                labels: [],
+                datasets: [{
+                    label: 'Appointments',
+                    data: [],
+                    backgroundColor: '#3b82f6',
+                    borderColor: '#3b82f6',
+                    borderWidth: 1,
+                    borderRadius: 8
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: { display: false },
+                    tooltip: {
+                        backgroundColor: 'rgba(0, 0, 0, 0.8)',
+                        cornerRadius: 8
+                    }
+                },
+                scales: {
+                    x: {
+                        grid: { display: false },
+                        title: { display: true, text: 'Period' }
+                    },
+                    y: {
+                        grid: { color: '#e9ecef' },
+                        title: { display: true, text: 'Number of Appointments' }
+                    }
+                }
+            }
+        });
+
+        updateAppointmentStatsChart('month');
+    }
+
+    // Update Appointment Statistics Chart
+    const updateAppointmentStatsChart = debounce(function(period) {
+        const ctx = document.getElementById('appointmentStatsChart');
+        if (!ctx) return;
+
+        fetch(`/getAppointmentStats?period=${period}`)
+            .then(response => {
+                if (!response.ok) throw new Error('Failed to fetch appointment stats');
+                return response.json();
+            })
+            .then(data => {
+                if (!data || !data.labels || !data.data || data.data.length === 0) {
+                    displayNoDataMessage(ctx, 'Waiting for appointment statistics data...');
+                    return;
+                }
+
+                if (!ctx.getContext) {
+                    const parent = ctx.parentNode;
+                    parent.innerHTML = '<canvas id="appointmentStatsChart" height="300"></canvas>';
+                    initAppointmentStatsChart();
+                }
+
+                if (appointmentStatsChart) {
+                    appointmentStatsChart.data.labels = data.labels;
+                    appointmentStatsChart.data.datasets[0].data = data.data;
+                    appointmentStatsChart.options.scales.x.title.text = period === 'month' ? 'Day' : 'Month';
+                    appointmentStatsChart.update();
+                }
+            })
+            .catch(error => {
+                console.error('Error fetching appointment stats:', error);
+                displayNoDataMessage(ctx, 'Error loading appointment statistics. Please try again later.');
+                showNotification('Failed to load appointment statistics', 'error');
+            });
+    }, 500);
+
+    // Initialize Income Statistics Chart
+    function initIncomeStatsChart() {
+        const ctx = document.getElementById('incomeStatsChart');
+        if (!ctx) return;
+
+        if (incomeStatsChart) {
+            incomeStatsChart.destroy();
+        }
+
+        incomeStatsChart = new Chart(ctx.getContext('2d'), {
+            type: 'bar',
+            data: {
+                labels: [],
+                datasets: [{
+                    label: 'Income',
+                    data: [],
+                    backgroundColor: '#10b981',
+                    borderColor: '#10b981',
+                    borderWidth: 1,
+                    borderRadius: 8
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: { display: false },
+                    tooltip: {
+                        backgroundColor: 'rgba(0, 0, 0, 0.8)',
+                        cornerRadius: 8
+                    }
+                },
+                scales: {
+                    x: {
+                        grid: { display: false },
+                        title: { display: true, text: 'Period' }
+                    },
+                    y: {
+                        grid: { color: '#e9ecef' },
+                        title: { display: true, text: 'Income ($)' }
+                    }
+                }
+            }
+        });
+
+        updateIncomeStatsChart('month');
+    }
+
+    // Update Income Statistics Chart
+    const updateIncomeStatsChart = debounce(function(period) {
+        const ctx = document.getElementById('incomeStatsChart');
+        if (!ctx) return;
+
+        fetch(`/getIncomeStats?period=${period}`)
+            .then(response => {
+                if (!response.ok) throw new Error('Failed to fetch income stats');
+                return response.json();
+            })
+            .then(data => {
+                if (!data || !data.labels || !data.data || data.data.length === 0) {
+                    displayNoDataMessage(ctx, 'Waiting for income statistics data...');
+                    return;
+                }
+
+                if (!ctx.getContext) {
+                    const parent = ctx.parentNode;
+                    parent.innerHTML = '<canvas id="incomeStatsChart" height="300"></canvas>';
+                    initIncomeStatsChart();
+                }
+
+                if (incomeStatsChart) {
+                    incomeStatsChart.data.labels = data.labels;
+                    incomeStatsChart.data.datasets[0].data = data.data;
+                    incomeStatsChart.options.scales.x.title.text = period === 'month' ? 'Day' : 'Month';
+                    incomeStatsChart.update();
+                }
+            })
+            .catch(error => {
+                console.error('Error fetching income stats:', error);
+                displayNoDataMessage(ctx, 'Error loading income statistics. Please try again later.');
+                showNotification('Failed to load income statistics', 'error');
+            });
+    }, 500);
+
+    // Event Listeners
+    document.addEventListener('DOMContentLoaded', () => {
+        initAppointmentStatsChart();
+        initIncomeStatsChart();
+
+        // Period select listeners
+        const appointmentPeriod = document.getElementById('appointmentStatsPeriod');
+        appointmentPeriod.addEventListener('change', function() {
+            updateAppointmentStatsChart(this.value);
+        });
+
+        const incomePeriod = document.getElementById('incomeStatsPeriod');
+        incomePeriod.addEventListener('change', function() {
+            updateIncomeStatsChart(this.value);
+        });
+
+        // Search input (placeholder for filtering)
+        document.getElementById('search-input').addEventListener('input', function() {
+            const query = this.value.trim();
+            if (query) {
+                showNotification('Search functionality not implemented yet.', 'info');
+            }
+        });
+
+        // Periodic data refresh
+        setInterval(() => {
+            const appointmentPeriod = document.getElementById('appointmentStatsPeriod').value;
+            const incomePeriod = document.getElementById('incomeStatsPeriod').value;
+            updateAppointmentStatsChart(appointmentPeriod);
+            updateIncomeStatsChart(incomePeriod);
+        }, 30000);
+    });
+
+    // Show notification toast
+    function showNotification(message, type) {
+        const toast = document.getElementById('statusNotification');
+        toast.textContent = message;
+        toast.className = `notification-toast ${type}`;
+        toast.style.display = 'block';
+        setTimeout(() => {
+            toast.style.display = 'none';
+        }, 3000);
+    }
+</script>
 </body>
 </html>

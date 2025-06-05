@@ -2,9 +2,1098 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Title</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Profile - MediCare Plus</title>
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Font Awesome -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary: #667eea;
+            --secondary: #764ba2;
+            --accent: #a78bfa;
+            --light: #f8fafc;
+            --dark: #3c366b;
+            --text-dark: #1f2937;
+            --text-light: #6b7280;
+            --text-muted: #9ca3af;
+            --bg-light: #f8fafc;
+            --bg-white: #ffffff;
+            --success-color: #10b981;
+            --warning-color: #f59e0b;
+            --error-color: #ef4444;
+            --info-color: #3b82f6;
+            --sidebar-width: 280px;
+            --header-height: 70px;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            line-height: 1.6;
+            color: var(--text-dark);
+            background: var(--bg-light);
+            overflow-x: hidden;
+        }
+
+        /* Sidebar Styles */
+        .sidebar {
+            position: fixed;
+            top: 0;
+            left: 0;
+            height: 100vh;
+            width: var(--sidebar-width);
+            background: linear-gradient(180deg, var(--primary) 0%, var(--secondary) 100%);
+            color: white;
+            z-index: 1000;
+            transition: transform 0.3s ease;
+            overflow-y: auto;
+            box-shadow: 4px 0 20px rgba(102, 126, 234, 0.15);
+        }
+
+        .sidebar.collapsed {
+            transform: translateX(-100%);
+        }
+
+        .logo {
+            padding: 1.5rem;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            background: rgba(255, 255, 255, 0.05);
+            text-align: left;
+        }
+
+        .logo a {
+            font-size: 1.5rem;
+            font-weight: 700;
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            color: white;
+            text-decoration: none;
+        }
+
+        .logo i {
+            font-size: 2rem;
+            background: linear-gradient(45deg, #a78bfa, #7c3aed);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .logo h2 {
+            font-size: 1.25rem;
+            font-weight: 600;
+            margin: 0;
+            line-height: 1.2;
+        }
+
+        .logo small {
+            font-size: 0.75rem;
+            font-weight: 400;
+            opacity: 0.8;
+            display: block;
+        }
+
+        .nav-section-title {
+            font-size: 0.75rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            color: rgba(255, 255, 255, 0.6);
+            padding: 0 1.5rem;
+            margin: 1.5rem 0 0.75rem;
+        }
+
+        .nav-item {
+            margin: 0.25rem 1rem;
+        }
+
+        .nav-link {
+            color: rgba(255, 255, 255, 0.8);
+            padding: 0.875rem 1.25rem;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            gap: 0.875rem;
+            text-decoration: none;
+            font-weight: 500;
+            transition: all 0.3s ease;
+            position: relative;
+        }
+
+        .nav-link:hover {
+            background: rgba(255, 255, 255, 0.1);
+            color: white;
+            transform: translateX(4px);
+        }
+
+        .nav-link.active {
+            background: rgba(255, 255, 255, 0.15);
+            color: white;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+        }
+
+        .nav-link.active::before {
+            content: '';
+            position: absolute;
+            left: 0;
+            top: 50%;
+            transform: translateY(-50%);
+            width: 4px;
+            height: 24px;
+            background: #a78bfa;
+            border-radius: 0 4px 4px 0;
+        }
+
+        .nav-link i {
+            font-size: 1.125rem;
+            width: 20px;
+            text-align: center;
+        }
+
+        .btn-light {
+            background: rgba(255, 255, 255, 0.15);
+            border: none;
+            color: white;
+            padding: 0.75rem 1.5rem;
+            border-radius: 12px;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .btn-light:hover {
+            background: rgba(255, 255, 255, 0.25);
+            color: white;
+            transform: translateY(-2px);
+        }
+
+        /* Main Content */
+        .main-content {
+            margin-left: var(--sidebar-width);
+            min-height: 100vh;
+            transition: margin-left 0.3s ease;
+        }
+
+        .main-content.expanded {
+            margin-left: 0;
+        }
+
+        /* Header */
+        header {
+            background: var(--bg-white);
+            height: var(--header-height);
+            padding: 0 2rem;
+            box-shadow: 0 2px 20px rgba(0, 0, 0, 0.08);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            position: sticky;
+            top: 0;
+            z-index: 999;
+        }
+
+        .sidebar-toggle {
+            background: none;
+            border: none;
+            font-size: 1.25rem;
+            color: var(--text-dark);
+            cursor: pointer;
+            padding: 0.5rem;
+            border-radius: 8px;
+            transition: all 0.3s ease;
+        }
+
+        .sidebar-toggle:hover {
+            background: var(--light);
+            color: var(--primary);
+        }
+
+        .h3 {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: var(--text-dark);
+            margin: 0;
+        }
+
+        .profile-info {
+            display: flex;
+            align-items: center;
+            gap: 1.5rem;
+        }
+
+        .notification-bell {
+            position: relative;
+            cursor: pointer;
+            padding: 0.5rem;
+            border-radius: 8px;
+            transition: all 0.3s ease;
+        }
+
+        .notification-bell:hover {
+            background: var(--light);
+        }
+
+        .badge {
+            font-size: 0.625rem;
+            padding: 0.25em 0.5em;
+            background: var(--error-color);
+        }
+
+        .rounded-circle {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, var(--primary), var(--accent));
+            object-fit: cover;
+        }
+
+        /* Notification Modal */
+        .notification-modal {
+            position: fixed;
+            top: 80px;
+            right: 20px;
+            width: 350px;
+            max-height: 450px;
+            overflow-y: auto;
+            background: var(--bg-white);
+            border: 1px solid rgba(102, 126, 234, 0.1);
+            border-radius: 16px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+            padding: 1.5rem;
+            z-index: 2000;
+            display: none;
+        }
+
+        .notification-modal h5 {
+            font-size: 1.25rem;
+            font-weight: 600;
+            color: var(--text-dark);
+            margin-bottom: 1rem;
+        }
+
+        .notification-item {
+            padding: 0.75rem;
+            border-bottom: 1px solid rgba(102, 126, 234, 0.1);
+            transition: background 0.2s ease;
+        }
+
+        .notification-item:hover {
+            background: var(--light);
+        }
+
+        .notification-item:last-child {
+            border-bottom: none;
+        }
+
+        /* Card Styles */
+        .card {
+            background: var(--bg-white);
+            border-radius: 16px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+            border: 1px solid rgba(102, 126, 234, 0.1);
+            padding: 1.5rem;
+        }
+
+        .card-header {
+            background: none;
+            border-bottom: 1px solid rgba(102, 126, 234, 0.1);
+            padding: 0 0 1rem 0;
+            margin-bottom: 1.5rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .card-title {
+            font-size: 1.25rem;
+            font-weight: 600;
+            color: var(--text-dark);
+            margin: 0;
+        }
+
+        .form-group {
+            margin-bottom: 1.5rem;
+        }
+
+        .form-group label {
+            display: block;
+            font-size: 0.875rem;
+            color: var(--text-muted);
+            margin-bottom: 0.5rem;
+            font-weight: 500;
+        }
+
+        .form-group p {
+            font-size: 0.875rem;
+            color: var(--text-dark);
+        }
+
+        .form-group input,
+        .form-group select {
+            width: 100%;
+            padding: 0.75rem 1rem;
+            border: 1px solid rgba(102, 126, 234, 0.2);
+            border-radius: 8px;
+            font-size: 0.875rem;
+            color: var(--text-dark);
+            transition: all 0.3s ease;
+        }
+
+        .form-group input:focus,
+        .form-group select:focus {
+            border-color: var(--primary);
+            outline: none;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+
+        .form-group input.is-invalid,
+        .form-group select.is-invalid {
+            border-color: var(--error-color);
+        }
+
+        .error-message {
+            color: var(--error-color);
+            font-size: 0.75rem;
+            margin-top: 0.25rem;
+            display: none;
+        }
+
+        .edit-button,
+        .save-button,
+        .cancel-button {
+            padding: 0.75rem 1.5rem;
+            border: none;
+            border-radius: 12px;
+            cursor: pointer;
+            font-size: 0.875rem;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            margin-right: 0.5rem;
+        }
+
+        .edit-button {
+            background: var(--primary);
+            color: white;
+        }
+
+        .edit-button:hover {
+            background: var(--secondary);
+            transform: translateY(-2px);
+        }
+
+        .save-button {
+            background: var(--success-color);
+            color: white;
+        }
+
+        .save-button:hover {
+            background: #059669;
+            transform: translateY(-2px);
+        }
+
+        .cancel-button {
+            background: var(--text-light);
+            color: white;
+        }
+
+        .cancel-button:hover {
+            background: #475569;
+            transform: translateY(-2px);
+        }
+
+        .hidden {
+            display: none;
+        }
+
+        /* Avatar Styling */
+        .avatar-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            margin-bottom: 1.5rem;
+        }
+
+        .avatar {
+            width: 120px;
+            height: 120px;
+            border-radius: 50%;
+            object-fit: cover;
+            border: 3px solid rgba(102, 126, 234, 0.2);
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+
+        .avatar-placeholder {
+            width: 120px;
+            height: 120px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, var(--primary), var(--accent));
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.875rem;
+            color: white;
+            border: 3px solid rgba(102, 126, 234, 0.2);
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+
+        .avatar-input {
+            margin-top: 0.75rem;
+            font-size: 0.875rem;
+            color: var(--text-dark);
+        }
+
+        .profile-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1.5rem;
+        }
+
+        /* Notification Toast */
+        .notification-toast {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            padding: 1rem 1.5rem;
+            border-radius: 12px;
+            color: white;
+            z-index: 2000;
+            display: none;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+        }
+
+        .notification-toast.success {
+            background: var(--success-color);
+        }
+
+        .notification-toast.error {
+            background: var(--error-color);
+        }
+
+        /* Responsive Design */
+        @media (max-width: 768px) {
+            .sidebar {
+                transform: translateX(-100%);
+            }
+
+            .main-content {
+                margin-left: 0;
+            }
+
+            .sidebar.collapsed {
+                transform: translateX(0);
+            }
+
+            .main-content.expanded {
+                margin-left: var(--sidebar-width);
+            }
+
+            .profile-grid {
+                grid-template-columns: 1fr;
+            }
+
+            header {
+                padding: 0 1rem;
+            }
+
+            .card {
+                padding: 1rem;
+            }
+        }
+
+        @media (max-width: 576px) {
+            .card {
+                padding: 0.75rem;
+            }
+
+            .form-group input,
+            .form-group select {
+                font-size: 0.75rem;
+            }
+
+            .edit-button,
+            .save-button,
+            .cancel-button {
+                padding: 0.5rem 1rem;
+                font-size: 0.875rem;
+            }
+
+            .avatar,
+            .avatar-placeholder {
+                width: 80px;
+                height: 80px;
+            }
+        }
+
+        /* Animation */
+        .main-content {
+            animation: fadeInUp 0.6s ease-out;
+        }
+
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+    </style>
 </head>
 <body>
+<div class="container-fluid">
+    <div class="row">
+        <!-- Sidebar -->
+        <nav class="sidebar col-lg-3 col-xl-2 d-none d-lg-block" id="patientSidebar">
+            <div class="logo">
+                <a href="#">
+                    <i class="fas fa-user-md"></i>
+                    <div>
+                        <h2>MediCare Plus</h2>
+                        <small>Healthcare Portal</small>
+                    </div>
+                </a>
+            </div>
+            <a href="new_appointment.jsp" class="btn btn-light mx-3 mb-3">
+                <i class="fas fa-plus"></i> New Appointment
+            </a>
+            <nav class="sidebar-nav">
+                <div class="nav-section-title">Navigation</div>
+                <ul class="nav flex-column">
+                    <li class="nav-item">
+                        <a href="dashboard.jsp" class="nav-link"><i class="fas fa-th-large"></i> Dashboard</a>
+                    </li>
+                    <div class="nav-section-title">Medical Services</div>
+                    <ul class="nav flex-column">
+                        <li class="nav-item">
+                            <a href="appointments.jsp" class="nav-link"><i class="fas fa-calendar-alt"></i> Appointments</a>
+                        </li>
+                        <li class="nav-item">
+                            <a href="doctors.jsp" class="nav-link"><i class="fas fa-user-md"></i> Doctors</a>
+                        </li>
+                        <li class="nav-item">
+                            <a href="patients.jsp" class="nav-link"><i class="fas fa-users"></i> Patients</a>
+                        </li>
+                        <li class="nav-item">
+                            <a href="reports.jsp" class="nav-link"><i class="fas fa-chart-bar"></i> Reports</a>
+                        </li>
+                    </ul>
+                    <div class="nav-section-title">Account</div>
+                    <ul class="nav flex-column">
+                        <li class="nav-item">
+                            <a href="profile.jsp" class="nav-link active"><i class="fas fa-stethoscope"></i> Profile</a>
+                        </li>
+                        <div class="nav-section-title">System</div>
+                        <ul class="nav flex-column">
+                            <li class="nav-item">
+                                <a href="settings.jsp" class="nav-link"><i class="fas fa-cog"></i> Settings</a>
+                            </li>
+                            <li class="nav-item">
+                                <a href="logout.jsp" class="nav-link"><i class="fas fa-sign-out-alt"></i> Logout</a>
+                            </li>
+                        </ul>
+                    </ul>
+                </ul>
+            </nav>
+        </nav>
 
+        <!-- Main Content -->
+        <main class="main-content col-lg-9 col-xl-10" id="mainContent">
+            <header class="d-flex justify-content-between align-items-center mb-4">
+                <div class="d-flex align-items-center gap-3">
+                    <button class="sidebar-toggle" onclick="toggleSidebar()">
+                        <i class="fas fa-list"></i>
+                    </button>
+                    <h1 class="h3">Profile</h1>
+                </div>
+                <div class="profile-info">
+                    <div class="notification-bell" role="button" onclick="toggleNotificationModal()">
+                        <i class="fas fa-bell fs-5"></i>
+                        <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger" id="notificationCount">0</span>
+                    </div>
+                    <img src="images/profile.jpg" alt="Profile" class="rounded-circle" id="headerAvatar" onerror="this.src='https://via.placeholder.com/40';">
+                </div>
+            </header>
+
+            <!-- Notification Modal -->
+            <div id="notificationModal" class="notification-modal">
+                <h5>System Notifications</h5>
+                <div id="notificationList"></div>
+            </div>
+
+            <!-- Profile Details -->
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="card-title">Receptionist Profile</h5>
+                    <button class="edit-button">Edit Profile</button>
+                </div>
+                <div class="card-body">
+                    <!-- Avatar Section -->
+                    <div class="avatar-container">
+                        <img id="avatar" class="avatar hidden" alt="Profile Avatar">
+                        <div id="avatarPlaceholder" class="avatar-placeholder">No Avatar</div>
+                        <input id="avatarInput" type="file" accept="image/*" class="avatar-input hidden">
+                    </div>
+
+                    <div class="profile-grid">
+                        <div class="form-group">
+                            <label for="fullName">Full Name *</label>
+                            <p id="fullName"></p>
+                            <input id="fullNameInput" type="text" class="hidden" required>
+                            <p id="fullNameError" class="error-message">Full Name is required.</p>
+                        </div>
+                        <div class="form-group">
+                            <label for="email">Email</label>
+                            <p id="email"></p>
+                            <input id="emailInput" type="email" pattern=".*@gmail\.com" class="hidden">
+                            <p id="emailError" class="error-message">Email must end with @gmail.com (e.g., example@gmail.com).</p>
+                        </div>
+                        <div class="form-group">
+                            <label for="phone">Contact Phone Number *</label>
+                            <p id="phone"></p>
+                            <input id="phoneInput" type="tel" pattern="\d{10}" class="hidden" required>
+                            <p id="phoneError" class="error-message">Phone Number must be exactly 10 digits.</p>
+                        </div>
+                        <div class="form-group">
+                            <label for="role">Role</label>
+                            <p id="role"></p>
+                            <select id="roleInput" class="hidden">
+                                <option value="Receptionist">Receptionist</option>
+                                <option value="Admin">Admin</option>
+                                <option value="Manager">Manager</option>
+                            </select>
+                            <p id="roleError" class="error-message">Role is required.</p>
+                        </div>
+                        <div class="form-group">
+                            <label for="dob">Date of Birth *</label>
+                            <p id="dob"></p>
+                            <input id="dobInput" type="date" max="2025-06-05" class="hidden" required>
+                            <p id="dobError" class="error-message">Date of Birth cannot be in the future.</p>
+                        </div>
+                        <div class="form-group">
+                            <label for="gender">Gender *</label>
+                            <p id="gender"></p>
+                            <select id="genderInput" class="hidden" required>
+                                <option value="">Select Gender</option>
+                                <option value="Male">Male</option>
+                                <option value="Female">Female</option>
+                                <option value="Other">Other</option>
+                            </select>
+                            <p id="genderError" class="error-message">Gender is required.</p>
+                        </div>
+                        <div class="form-group">
+                            <label for="address">Address</label>
+                            <p id="address"></p>
+                            <input id="addressInput" type="text" class="hidden" placeholder="Enter address">
+                            <p id="addressError" class="error-message">Address is required.</p>
+                        </div>
+                        <div class="form-group">
+                            <label for="language">Preferred Language</label>
+                            <p id="language"></p>
+                            <select id="languageInput" class="hidden">
+                                <option value="en">English</option>
+                                <option value="vi">Vietnamese</option>
+                            </select>
+                            <p id="languageError" class="error-message">Preferred Language is required.</p>
+                        </div>
+                    </div>
+                    <div id="profileActions" class="hidden mt-4">
+                        <button class="save-button">Save Changes</button>
+                        <button class="cancel-button">Cancel</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Notification Toast -->
+            <div id="statusNotification" class="notification-toast success">
+                Profile updated successfully
+            </div>
+        </main>
+    </div>
+</div>
+
+<!-- Bootstrap JS -->
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+<script>
+    // Sidebar toggle functionality
+    function toggleSidebar() {
+        const sidebar = document.getElementById('patientSidebar');
+        const mainContent = document.getElementById('mainContent');
+
+        sidebar.classList.toggle('collapsed');
+        mainContent.classList.toggle('expanded');
+    }
+
+    // Auto-hide sidebar on mobile
+    function checkScreenSize() {
+        const sidebar = document.getElementById('patientSidebar');
+        const mainContent = document.getElementById('mainContent');
+
+        if (window.innerWidth <= 768) {
+            sidebar.classList.add('collapsed');
+            mainContent.classList.add('expanded');
+        } else {
+            sidebar.classList.remove('collapsed');
+            mainContent.classList.remove('expanded');
+        }
+    }
+
+    // Notification modal toggle
+    function toggleNotificationModal() {
+        const modal = document.getElementById('notificationModal');
+        modal.style.display = modal.style.display === 'block' ? 'none' : 'block';
+    }
+
+    // Initialize
+    checkScreenSize();
+    window.addEventListener('load', checkScreenSize);
+    window.addEventListener('resize', checkScreenSize);
+
+    // Close notification modal when clicking outside
+    window.onclick = function(event) {
+        const notificationModal = document.getElementById('notificationModal');
+        if (event.target !== notificationModal &&
+            !notificationModal.contains(event.target) &&
+            !event.target.closest('.notification-bell')) {
+            notificationModal.style.display = 'none';
+        }
+    };
+
+    // Validation functions
+    function validateFullName() {
+        const input = document.getElementById('fullNameInput');
+        const error = document.getElementById('fullNameError');
+        const value = input.value.trim();
+        const isValid = value !== '';
+
+        if (isValid) {
+            input.classList.remove('is-invalid');
+            error.style.display = 'none';
+        } else {
+            input.classList.add('is-invalid');
+            error.style.display = 'block';
+        }
+        return isValid;
+    }
+
+    function validateEmail() {
+        const input = document.getElementById('emailInput');
+        const error = document.getElementById('emailError');
+        const value = input.value.trim();
+        const isValid = value === '' || /^[^\s@]+@gmail\.com$/.test(value);
+
+        if (isValid) {
+            input.classList.remove('is-invalid');
+            error.style.display = 'none';
+        } else {
+            input.classList.add('is-invalid');
+            error.style.display = 'block';
+        }
+        return isValid;
+    }
+
+    function validatePhone() {
+        const input = document.getElementById('phoneInput');
+        const error = document.getElementById('phoneError');
+        const value = input.value.trim();
+        const isValid = /^\d{10}$/.test(value);
+
+        if (isValid) {
+            input.classList.remove('is-invalid');
+            error.style.display = 'none';
+        } else {
+            input.classList.add('is-invalid');
+            error.style.display = 'block';
+        }
+        return isValid;
+    }
+
+    function validateDob() {
+        const input = document.getElementById('dobInput');
+        const error = document.getElementById('dobError');
+        const value = input.value;
+        const dob = new Date(value);
+        const today = new Date('2025-06-05');
+        const isValid = value !== '' && dob <= today;
+
+        if (isValid) {
+            input.classList.remove('is-invalid');
+            error.style.display = 'none';
+        } else {
+            input.classList.add('is-invalid');
+            error.style.display = 'block';
+        }
+        return isValid;
+    }
+
+    function validateGender() {
+        const input = document.getElementById('genderInput');
+        const error = document.getElementById('genderError');
+        const value = input.value;
+        const isValid = value !== '';
+
+        if (isValid) {
+            input.classList.remove('is-invalid');
+            error.style.display = 'none';
+        } else {
+            input.classList.add('is-invalid');
+            error.style.display = 'block';
+        }
+        return isValid;
+    }
+
+    function validateRole() {
+        const input = document.getElementById('roleInput');
+        const error = document.getElementById('roleError');
+        const value = input.value;
+        const isValid = value !== '';
+
+        if (isValid) {
+            input.classList.remove('is-invalid');
+            error.style.display = 'none';
+        } else {
+            input.classList.add('is-invalid');
+            error.style.display = 'block';
+        }
+        return isValid;
+    }
+
+    function validateAddress() {
+        const input = document.getElementById('addressInput');
+        const error = document.getElementById('addressError');
+        const value = input.value.trim();
+        const isValid = value !== '';
+
+        if (isValid) {
+            input.classList.remove('is-invalid');
+            error.style.display = 'none';
+        } else {
+            input.classList.add('is-invalid');
+            error.style.display = 'block';
+        }
+        return isValid;
+    }
+
+    function validateLanguage() {
+        const input = document.getElementById('languageInput');
+        const error = document.getElementById('languageError');
+        const value = input.value;
+        const isValid = value !== '';
+
+        if (isValid) {
+            input.classList.remove('is-invalid');
+            error.style.display = 'none';
+        } else {
+            input.classList.add('is-invalid');
+            error.style.display = 'block';
+        }
+        return isValid;
+    }
+
+    // Load profile data from database
+    async function loadProfile() {
+        try {
+            const response = await fetch('/getProfile');
+            if (response.ok) {
+                const profile = await response.json();
+                document.getElementById('fullName').textContent = profile.fullName || '';
+                document.getElementById('email').textContent = profile.email || '';
+                document.getElementById('phone').textContent = profile.phone || '';
+                document.getElementById('role').textContent = profile.role || '';
+                document.getElementById('dob').textContent = profile.dob ? new Date(profile.dob).toLocaleDateString('en-GB') : '';
+                document.getElementById('gender').textContent = profile.gender || '';
+                document.getElementById('address').textContent = profile.address || '';
+                document.getElementById('language').textContent = profile.language === 'en' ? 'English' : 'Vietnamese';
+
+                document.getElementById('fullNameInput').value = profile.fullName || '';
+                document.getElementById('emailInput').value = profile.email || '';
+                document.getElementById('phoneInput').value = profile.phone || '';
+                document.getElementById('roleInput').value = profile.role || 'Receptionist';
+                document.getElementById('dobInput').value = profile.dob || '';
+                document.getElementById('genderInput').value = profile.gender || '';
+                document.getElementById('addressInput').value = profile.address || '';
+                document.getElementById('languageInput').value = profile.language || 'en';
+
+                const avatar = document.getElementById('avatar');
+                const avatarPlaceholder = document.getElementById('avatarPlaceholder');
+                const headerAvatar = document.getElementById('headerAvatar');
+                if (profile.avatar) {
+                    avatar.src = profile.avatar;
+                    headerAvatar.src = profile.avatar;
+                    avatar.classList.remove('hidden');
+                    avatarPlaceholder.classList.add('hidden');
+                } else {
+                    avatar.classList.add('hidden');
+                    avatarPlaceholder.classList.remove('hidden');
+                }
+            } else {
+                throw new Error('Failed to load profile');
+            }
+        } catch (error) {
+            showNotification('Error loading profile data.', 'error');
+        }
+    }
+
+    // Save profile data to database
+    async function saveProfile(profileData) {
+        try {
+            const formData = new FormData();
+            Object.keys(profileData).forEach(key => {
+                formData.append(key, profileData[key]);
+            });
+            const avatarInput = document.getElementById('avatarInput');
+            if (avatarInput.files[0]) {
+                formData.append('avatarFile', avatarInput.files[0]);
+            }
+
+            const response = await fetch('/saveProfile', {
+                method: 'POST',
+                body: formData
+            });
+            if (response.ok) {
+                showNotification('Profile updated successfully!', 'success');
+                const updatedProfile = await response.json();
+                document.getElementById('headerAvatar').src = updatedProfile.avatar || 'https://via.placeholder.com/40';
+            } else {
+                throw new Error('Failed to save profile');
+            }
+        } catch (error) {
+            showNotification('Error saving profile data.', 'error');
+        }
+    }
+
+    // Show notification toast
+    function showNotification(message, type) {
+        const toast = document.getElementById('statusNotification');
+        toast.textContent = message;
+        toast.className = `notification-toast ${type}`;
+        toast.style.display = 'block';
+        setTimeout(() => {
+            toast.style.display = 'none';
+        }, 3000);
+    }
+
+    // Event Listeners
+    document.addEventListener('DOMContentLoaded', () => {
+        loadProfile();
+
+        // Real-time validation
+        document.getElementById('fullNameInput').addEventListener('input', validateFullName);
+        document.getElementById('emailInput').addEventListener('input', validateEmail);
+        document.getElementById('phoneInput').addEventListener('input', validatePhone);
+        document.getElementById('dobInput').addEventListener('input', validateDob);
+        document.getElementById('genderInput').addEventListener('change', validateGender);
+        document.getElementById('roleInput').addEventListener('change', validateRole);
+        document.getElementById('addressInput').addEventListener('input', validateAddress);
+        document.getElementById('languageInput').addEventListener('change', validateLanguage);
+
+        // Toggle Edit Mode
+        document.querySelector('.edit-button').addEventListener('click', () => {
+            document.querySelectorAll('.form-group p').forEach(p => p.classList.add('hidden'));
+            document.querySelectorAll('.form-group input, .form-group select').forEach(input => input.classList.remove('hidden'));
+            document.getElementById('avatarInput').classList.remove('hidden');
+            document.getElementById('profileActions').classList.remove('hidden');
+            document.querySelector('.edit-button').classList.add('hidden');
+            document.getElementById('fullNameInput').focus();
+        });
+
+        // Handle Avatar Upload Preview
+        document.getElementById('avatarInput').addEventListener('change', (event) => {
+            const file = event.target.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = (e) => {
+                    const avatar = document.getElementById('avatar');
+                    const avatarPlaceholder = document.getElementById('avatarPlaceholder');
+                    avatar.src = e.target.result;
+                    avatar.classList.remove('hidden');
+                    avatarPlaceholder.classList.add('hidden');
+                };
+                reader.readAsDataURL(file);
+            }
+        });
+
+        // Save Changes
+        document.querySelector('.save-button').addEventListener('click', async () => {
+            let isValid = true;
+
+            if (!validateFullName()) isValid = false;
+            if (!validateEmail()) isValid = false;
+            if (!validatePhone()) isValid = false;
+            if (!validateDob()) isValid = false;
+            if (!validateGender()) isValid = false;
+            if (!validateRole()) isValid = false;
+            if (!validateAddress()) isValid = false;
+            if (!validateLanguage()) isValid = false;
+
+            if (!isValid) {
+                showNotification('Please correct the errors in the form.', 'error');
+                return;
+            }
+
+            const profileData = {
+                fullName: document.getElementById('fullNameInput').value.trim(),
+                email: document.getElementById('emailInput').value.trim(),
+                phone: document.getElementById('phoneInput').value.trim(),
+                role: document.getElementById('roleInput').value,
+                dob: document.getElementById('dobInput').value,
+                gender: document.getElementById('genderInput').value,
+                address: document.getElementById('addressInput').value.trim(),
+                language: document.getElementById('languageInput').value,
+                avatar: document.getElementById('avatar').src || null
+            };
+
+            await saveProfile(profileData);
+
+            // Update display
+            document.getElementById('fullName').textContent = profileData.fullName;
+            document.getElementById('email').textContent = profileData.email;
+            document.getElementById('phone').textContent = profileData.phone;
+            document.getElementById('role').textContent = profileData.role;
+            document.getElementById('dob').textContent = profileData.dob ? new Date(profileData.dob).toLocaleDateString('en-GB') : '';
+            document.getElementById('gender').textContent = profileData.gender;
+            document.getElementById('address').textContent = profileData.address;
+            document.getElementById('language').textContent = profileData.language === 'en' ? 'English' : 'Vietnamese';
+
+            // Exit edit mode
+            document.querySelectorAll('.form-group p').forEach(p => p.classList.remove('hidden'));
+            document.querySelectorAll('.form-group input, .form-group select').forEach(input => input.classList.add('hidden'));
+            document.getElementById('avatarInput').classList.add('hidden');
+            document.getElementById('profileActions').classList.add('hidden');
+            document.querySelector('.edit-button').classList.remove('hidden');
+        });
+
+        // Cancel Edit
+        document.querySelector('.cancel-button').addEventListener('click', () => {
+            loadProfile();
+
+            // Reset validation styles
+            document.querySelectorAll('.form-group input, .form-group select').forEach(input => {
+                input.classList.remove('is-invalid');
+            });
+            document.querySelectorAll('.error-message').forEach(error => {
+                error.style.display = 'none';
+            });
+
+            // Exit edit mode
+            document.querySelectorAll('.form-group p').forEach(p => p.classList.remove('hidden'));
+            document.querySelectorAll('.form-group input, .form-group select').forEach(input => input.classList.add('hidden'));
+            document.getElementById('avatarInput').classList.add('hidden');
+            document.getElementById('profileActions').classList.add('hidden');
+            document.querySelector('.edit-button').classList.remove('hidden');
+        });
+    });
+</script>
 </body>
 </html>
