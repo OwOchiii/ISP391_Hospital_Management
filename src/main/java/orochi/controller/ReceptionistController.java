@@ -56,7 +56,7 @@ public class ReceptionistController {
         model.addAttribute("appointments", receptionistService.getAllAppointments());
         model.addAttribute("patients", receptionistService.getAllPatients());
         model.addAttribute("newUser", new Users());
-        return "receptionist/receptionist";
+        return "Receptionists/dashboard";
     }
 
     @PostMapping("/register")
