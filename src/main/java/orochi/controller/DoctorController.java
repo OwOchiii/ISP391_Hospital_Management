@@ -98,7 +98,7 @@ public class DoctorController {
                 pendingOrders = new ArrayList<>();
             }
 
-            List<Patient> patients = doctorService.getPatientsWithAppointments(doctorId);
+            List<Patient> patients = doctorService.findAllPatients();
             if (patients == null) {
                 patients = new ArrayList<>();
             }

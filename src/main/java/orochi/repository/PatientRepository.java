@@ -1,7 +1,6 @@
 package orochi.repository;
 
 import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
@@ -21,6 +20,10 @@ public interface PatientRepository extends JpaRepository<Patient, Integer> {
             "WHERE a.doctorId = :doctorId")
     Page<Patient> findPatientsWithAppointmentsByDoctorIdPaginated(@Param("doctorId") Integer doctorId, Pageable pageable);
 
+    // Method to find all patients without appointment constraints
+    @Query("SELECT p FROM Patient p")
+    Page<Patient> findAllPatientsPaginated(Pageable pageable);
+
     @Query("SELECT p FROM Patient p JOIN p.user u WHERE LOWER(u.fullName) LIKE LOWER(CONCAT('%', :name, '%'))")
     List<Patient> findByFullNameContainingIgnoreCase(@Param("name") String name);
 
@@ -35,10 +38,9 @@ public interface PatientRepository extends JpaRepository<Patient, Integer> {
                                           @Param("status") String status,
                                           Pageable pageable);
 
-    // Find all patients with a specific status
+    // Find all patients with a specific status without appointment constraints
     @Query("SELECT p FROM Patient p JOIN p.user u WHERE UPPER(u.status) = UPPER(:status)")
     Page<Patient> findByStatus(@Param("status") String status, Pageable pageable);
 
     Optional<Patient> findByUserId(Integer userId);
 }
-

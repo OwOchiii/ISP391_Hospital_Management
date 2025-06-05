@@ -960,7 +960,7 @@
                 <div class="patient-details">
                     <div class="detail-item">
                         <span class="detail-label">Date of Birth</span>
-                        <span class="detail-value" th:text="${patient.dateOfBirth != null ? #dates.format(patient.dateOfBirth, 'MMM dd, yyyy') : 'Not provided'}">Jan 15, 1985</span>
+                        <span class="detail-value" th:text="${patient.dateOfBirth != null ? #temporals.format(patient.dateOfBirth, 'MMM dd, yyyy') : 'Not provided'}">Jan 15, 1985</span>
                     </div>
                     <div class="detail-item">
                         <span class="detail-label">Age</span>

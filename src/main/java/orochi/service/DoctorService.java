@@ -235,7 +235,10 @@ public class DoctorService {
         try {
             logger.info("Fetching paginated patients for doctor ID: {}, page: {}, size: {}", doctorId, page, size);
             Pageable pageable = PageRequest.of(page, size);
-            return patientRepository.findPatientsWithAppointmentsByDoctorIdPaginated(doctorId, pageable);
+            // Use findAll to get all patients, not just those with appointments
+            return patientRepository.findAll(pageable);
+            // Alternatively, if you want to filter by assigned doctor:
+            // return patientRepository.findByAssignedDoctorIdPaginated(doctorId, pageable);
         } catch (DataAccessException e) {
             logger.error("Failed to fetch paginated patients for doctor ID: {}", doctorId, e);
             return Page.empty();
@@ -255,84 +258,42 @@ public class DoctorService {
         }
     }
 
-    /**
-     * Get total count of patients for a doctor
-     * @return Total patient count
-     */
-    public long getTotalCount() {
+    public List<Patient> findAllPatients() {
         try {
-            logger.info("Getting total patient count");
-            return patientRepository.count();
+            logger.info("Fetching all patients without pagination");
+            return patientRepository.findAll();
         } catch (DataAccessException e) {
-            logger.error("Failed to get total patient count", e);
-            return 0;
+            logger.error("Failed to fetch all patients", e);
+            return Collections.emptyList();
         }
     }
 
     /**
-     * Get count of active patients
-     * @return Active patient count
+     * Find patients by status with pagination
      */
-    public long getActiveCount() {
+    public Page<Patient> findAllPatientsByStatus(String status, int page, int size) {
         try {
-            logger.info("Getting active patient count");
-            return patientRepository.countByUserStatus("Active");
+            logger.info("Fetching patients with status: {}, page: {}, size: {}", status, page, size);
+            Pageable pageable = PageRequest.of(page, size);
+            return patientRepository.findByStatus(status, pageable);
         } catch (DataAccessException e) {
-            logger.error("Failed to get active patient count", e);
-            return 0;
-        }
-    }
-
-    /**
-     * Get count of new patients
-     * @return New patient count
-     */
-    public long getNewCount() {
-        try {
-            logger.info("Getting new patient count");
-            return patientRepository.countByUserStatus("New");
-        } catch (DataAccessException e) {
-            logger.error("Failed to get new patient count", e);
-            return 0;
-        }
-    }
-
-    /**
-     * Get count of inactive patients
-     * @return Inactive patient count
-     */
-    public long getInactiveCount() {
-        try {
-            logger.info("Getting inactive patient count");
-            return patientRepository.countByUserStatus("Inactive");
-        } catch (DataAccessException e) {
-            logger.error("Failed to get inactive patient count", e);
-            return 0;
+            logger.error("Failed to fetch patients by status: {}", status, e);
+            return Page.empty();
         }
     }
 
     public Page<Patient> findByDoctorAndStatus(Integer doctorId, String status, int page, int size) {
-        PageRequest pageRequest = PageRequest.of(page, size);
-        if (status.equalsIgnoreCase("active")) {
-            return patientRepository.findByDoctorIdAndStatus(doctorId, "ACTIVE", pageRequest);
-        } else if (status.equalsIgnoreCase("new")) {
-            return patientRepository.findByDoctorIdAndStatus(doctorId, "NEW", pageRequest);
-        } else if (status.equalsIgnoreCase("inactive")) {
-            return patientRepository.findByDoctorIdAndStatus(doctorId, "INACTIVE", pageRequest);
+        try {
+            logger.info("Fetching patients for doctor ID: {} with status: {}, page: {}, size: {}",
+                    doctorId, status, page, size);
+            PageRequest pageRequest = PageRequest.of(page, size);
+            // Use methods that don't require appointments
+            return patientRepository.findByStatus(status, pageRequest);
+            // Alternatively, if you want to filter by assigned doctor:
+            // return patientRepository.findByAssignedDoctorIdAndStatus(doctorId, status, pageRequest);
+        } catch (DataAccessException e) {
+            logger.error("Failed to fetch patients for doctor ID: {} with status: {}", doctorId, status, e);
+            return Page.empty();
         }
-        return findByDoctor(doctorId, page, size);
     }
-
-    public Page<Patient> findAllPatientsByStatus(String status, int page, int size) {
-        PageRequest pageRequest = PageRequest.of(page, size);
-        if (status.equalsIgnoreCase("active")) {
-            return patientRepository.findByStatus("ACTIVE", pageRequest);
-        } else if (status.equalsIgnoreCase("new")) {
-            return patientRepository.findByStatus("NEW", pageRequest);
-        } else if (status.equalsIgnoreCase("inactive")) {
-            return patientRepository.findByStatus("INACTIVE", pageRequest);
-        }
-        return findAllPatients(page, size);
-    }
-
 }
