@@ -853,7 +853,7 @@
             <label for="doctorId" class="form-label">
               Select Doctor <span class="required-asterisk">*</span>
             </label>
-            <select id="doctorId" th:field="*{doctorId}" class="form-select" onchange="showDoctorInfo()" required>
+            <select id="doctorId" th:field="*{doctorId}" class="form-select" onchange="updateDoctorsAndTimeSlots()" required>
               <option value="">Choose a Doctor</option>
             </select>
             <div th:if="${#fields.hasErrors('doctorId')}" class="error-message">
@@ -1044,6 +1044,9 @@
   const initialPhoneNumber = /*[[${patient.user?.phoneNumber}]]*/ '';
   const initialEmail = /*[[${patient.user?.email}]]*/ '';
   const patientId = /*[[${patientId}]]*/ '';
+  const isUpdate = /*[[${isUpdate}]]*/ false;
+  const initialDoctorId = /*[[${appointmentForm.doctorId}]]*/ '';
+  const initialSpecialtyId = /*[[${appointmentForm.specialtyId}]]*/ '';
 
   // Sidebar toggle functionality
   function toggleSidebar() {
@@ -1085,20 +1088,40 @@
               .then(response => response.json())
               .then(doctors => {
                 doctors.forEach(doctor => {
-
                   const option = document.createElement('option');
                   option.value = doctor.doctorId;
                   option.text = `Dr. ${doctor.fullName}`;
                   option.setAttribute('data-bio', doctor.bioDescription || 'Experienced medical professional');
                   option.setAttribute('data-name', doctor.fullName);
+                  if (isUpdate && doctor.doctorId == initialDoctorId) {
+                    option.selected = true;
+                  }
                   doctorSelect.appendChild(option);
                 });
                 doctorSelect.classList.remove('loading');
+                if (isUpdate && initialDoctorId) {
+                  showDoctorInfo();
+                }
               })
               .catch(error => {
                 console.error('Error fetching doctors:', error);
                 doctorSelect.classList.remove('loading');
               });
+    }
+
+    // Update time slots if a date is already selected
+    const appointmentDate = document.getElementById('appointmentDate').value;
+    if (appointmentDate && document.getElementById('doctorId').value) {
+      updateTimeSlots();
+    }
+  }
+
+  // Update both doctors and time slots when doctor changes
+  function updateDoctorsAndTimeSlots() {
+    showDoctorInfo();
+    const appointmentDate = document.getElementById('appointmentDate').value;
+    if (appointmentDate) {
+      updateTimeSlots();
     }
   }
 
@@ -1108,7 +1131,7 @@
     const selectedOption = doctorSelect.options[doctorSelect.selectedIndex];
     const doctorInfo = document.getElementById('doctorInfoDisplay');
 
-    if (selectedOption.value) {
+    if (selectedOption && selectedOption.value) {
       const doctorName = selectedOption.getAttribute('data-name');
       const doctorBio = selectedOption.getAttribute('data-bio');
       const specialtySelect = document.getElementById('specialtyId');
@@ -1129,6 +1152,7 @@
   function updateTimeSlots() {
     const dateInput = document.getElementById('appointmentDate').value;
     const doctorId = document.getElementById('doctorId').value;
+    const appointmentId = /*[[${appointmentForm.appointmentId}]]*/ '';
 
     if (dateInput && doctorId) {
       const timeSlots = document.querySelectorAll('.time-slot');
@@ -1136,12 +1160,18 @@
       // Reset all time slots
       timeSlots.forEach(slot => {
         slot.classList.remove('selected', 'disabled');
+        slot.title = "Available";
       });
 
       document.getElementById('appointmentTime').value = '';
 
-      // Fetch doctor availability for the selected date and doctor
-      fetch(`/patient/api/doctor-availability?date=${dateInput}&doctorId=${doctorId}`)
+      // Construct fetch URL conditionally based on isUpdate
+      let fetchUrl = `/patient/api/doctor-availability?date=${dateInput}&doctorId=${doctorId}`;
+      if (isUpdate && appointmentId) {
+        fetchUrl += `&appointmentId=${appointmentId}`;
+      }
+
+      fetch(fetchUrl)
               .then(response => response.json())
               .then(availability => {
                 const bookedTimes = availability.bookedTimes || [];
@@ -1149,7 +1179,6 @@
 
                 timeSlots.forEach(slot => {
                   const time = slot.getAttribute('data-time');
-                  // Mark slot as disabled if it's either directly booked or within the buffer period of a booked slot
                   if (bookedTimes.includes(time)) {
                     slot.classList.add('disabled');
                     slot.title = "This time slot is already booked";
@@ -1191,112 +1220,111 @@
   }
 
   // Trim and clean input fields on blur
-function cleanInputOnBlur(id, isStrict = false) {
-  const element = document.getElementById(id);
-  if (!element) return;
+  function cleanInputOnBlur(id, isStrict = false) {
+    const element = document.getElementById(id);
+    if (!element) return;
 
-  element.addEventListener('blur', () => {
-    let value = element.value.trim();
+    element.addEventListener('blur', () => {
+      let value = element.value.trim();
 
-    if (isStrict) {
-      // Remove all spaces for strict fields (phone/email)
-      value = value.replace(/\s+/g, '');
-    } else {
-      // Normalize spacing between words (one space only)
-      value = value.replace(/\s+/g, ' ');
-    }
+      if (isStrict) {
+        // Remove all spaces for strict fields (phone/email)
+        value = value.replace(/\s+/g, '');
+      } else {
+        // Normalize spacing between words (one space only)
+        value = value.replace(/\s+/g, ' ');
+      }
 
-    element.value = value;
-  });
-}
-
-// Apply trimming logic to input fields
-cleanInputOnBlur('phoneNumber', true); // strict: no space at all
-cleanInputOnBlur('email', true);       // strict: no space at all
-cleanInputOnBlur('description', false); // normalize spaces
-
-// Show confirmation dialog
-function showConfirmation() {
-  const specialtyId = document.getElementById('specialtyId').value;
-  const doctorId = document.getElementById('doctorId').value;
-  const appointmentDate = document.getElementById('appointmentDate').value;
-  const appointmentTime = document.getElementById('appointmentTime').value;
-  const phoneNumber = document.getElementById('phoneNumber').value.trim();
-  const email = document.getElementById('email').value.trim();
-  let description = document.getElementById('description').value.trim();
-
-  // Basic validation
-  if (!specialtyId) {
-    alert('Please select a medical specialty.');
-    return;
-  }
-  if (!doctorId) {
-    alert('Please select a doctor.');
-    return;
-  }
-  if (!appointmentDate) {
-    alert('Please select an appointment date.');
-    return;
-  }
-  if (!appointmentTime) {
-    alert('Please select an appointment time.');
-    return;
-  }
-  if (!phoneNumber) {
-    alert('Phone number is required.');
-    return;
-  }
-  if (!email) {
-    alert('Email address is required.');
-    return;
+      element.value = value;
+    });
   }
 
-  // Phone number validation: must start with 0 and be 10 or 12 digits long
-  const phoneRegex = /^0\d{9}$|^0\d{11}$/;
-  if (!phoneRegex.test(phoneNumber)) {
-    alert('Phone number must start with 0 and be either 10 or 12 digits long, with no spaces.');
-    return;
-  }
-
-  // Email validation
-  const emailRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
-  if (!emailRegex.test(email)) {
-    alert('Please enter a valid email address.');
-    return;
-  }
-
-  // Normalize description if it contains only spaces or is empty
-  description = description.replace(/\s+/g, ' ').trim();
-  document.getElementById('description').value = description === '' ? '' : description;
+  // Apply trimming logic to input fields
+  cleanInputOnBlur('phoneNumber', true); // strict: no space at all
+  cleanInputOnBlur('email', true);       // strict: no space at all
+  cleanInputOnBlur('description', false); // normalize spaces
 
   // Show confirmation dialog
-  document.getElementById('confirmationOverlay').classList.add('active');
-}
+  function showConfirmation() {
+    const specialtyId = document.getElementById('specialtyId').value;
+    const doctorId = document.getElementById('doctorId').value;
+    const appointmentDate = document.getElementById('appointmentDate').value;
+    const appointmentTime = document.getElementById('appointmentTime').value;
+    const phoneNumber = document.getElementById('phoneNumber').value.trim();
+    const email = document.getElementById('email').value.trim();
+    let description = document.getElementById('description').value.trim();
 
-// Confirm booking
-function confirmBooking(confirm) {
-  const overlay = document.getElementById('confirmationOverlay');
-  overlay.classList.remove('active');
-
-  if (confirm) {
-    // Clean up form data before submission
-    const phoneNumber = document.getElementById('phoneNumber').value.replace(/\s+/g, '');
-    const email = document.getElementById('email').value.replace(/\s+/g, '');
-    let description = document.getElementById('description').value.trim().replace(/\s+/g, ' ');
-
-    if (description === '') {
-      description = '';
+    // Basic validation
+    if (!specialtyId) {
+      alert('Please select a medical specialty.');
+      return;
+    }
+    if (!doctorId) {
+      alert('Please select a doctor.');
+      return;
+    }
+    if (!appointmentDate) {
+      alert('Please select an appointment date.');
+      return;
+    }
+    if (!appointmentTime) {
+      alert('Please select an appointment time.');
+      return;
+    }
+    if (!phoneNumber) {
+      alert('Phone number is required.');
+      return;
+    }
+    if (!email) {
+      alert('Email address is required.');
+      return;
     }
 
-    document.getElementById('phoneNumber').value = phoneNumber;
-    document.getElementById('email').value = email;
-    document.getElementById('description').value = description;
+    // Phone number validation: must start with 0 and be 10 or 12 digits long
+    const phoneRegex = /^0\d{9}$|^0\d{11}$/;
+    if (!phoneRegex.test(phoneNumber)) {
+      alert('Phone number must start with 0 and be either 10 or 12 digits long, with no spaces.');
+      return;
+    }
 
-    // Submit the form
-    document.getElementById('appointmentForm').submit();
+    // Email validation
+    const emailRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
+    if (!emailRegex.test(email)) {
+      alert('Please enter a valid email address.');
+      return;
+    }
+
+    // Normalize description if it contains only spaces or is empty
+    description = description.replace(/\s+/g, ' ').trim();
+    document.getElementById('description').value = description === '' ? '' : description;
+
+    // Show confirmation dialog
+    document.getElementById('confirmationOverlay').classList.add('active');
   }
-}
 
+  // Confirm booking
+  function confirmBooking(confirm) {
+    const overlay = document.getElementById('confirmationOverlay');
+    overlay.classList.remove('active');
+
+    if (confirm) {
+      // Clean up form data before submission
+      const phoneNumber = document.getElementById('phoneNumber').value.replace(/\s+/g, '');
+      const email = document.getElementById('email').value.replace(/\s+/g, '');
+      let description = document.getElementById('description').value.trim().replace(/\s+/g, ' ');
+
+      if (description === '') {
+        description = '';
+      }
+
+      document.getElementById('phoneNumber').value = phoneNumber;
+      document.getElementById('email').value = email;
+      document.getElementById('description').value = description;
+
+      // Submit the form
+      document.getElementById('appointmentForm').submit();
+    }
+  }
 
   // Initialize page
   document.addEventListener('DOMContentLoaded', function() {
@@ -1312,14 +1340,19 @@ function confirmBooking(confirm) {
     const dateInput = document.getElementById('appointmentDate');
     dateInput.setAttribute('min', tomorrow.toISOString().split('T')[0]);
     dateInput.setAttribute('max', maxDate.toISOString().split('T')[0]);
+
+    // For update mode, populate doctor dropdown
+    if (isUpdate && initialSpecialtyId) {
+      updateDoctors();
+    }
   });
 
   window.addEventListener('resize', checkScreenSize);
 
   function autoResize(textarea) {
-  textarea.style.height = 'auto';
-  textarea.style.height = textarea.scrollHeight + 'px';
-}
+    textarea.style.height = 'auto';
+    textarea.style.height = textarea.scrollHeight + 'px';
+  }
   /*]]>*/
 </script>
 </body>
