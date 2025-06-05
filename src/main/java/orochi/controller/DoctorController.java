@@ -468,7 +468,7 @@ public class DoctorController {
         }
     }
 
-    @GetMapping("/medical-orders")
+    @GetMapping("/medical-orders-legacy")
     public String getDoctorMedicalOrders(@RequestParam Integer doctorId, Model model) {
         try {
             logger.info("Fetching all medical orders for doctor ID: {}", doctorId);
@@ -486,7 +486,7 @@ public class DoctorController {
         }
     }
 
-    @GetMapping("/medical-orders/status")
+    @GetMapping("/medical-orders-legacy/status")
     public String getMedicalOrdersByStatus(
             @RequestParam Integer doctorId,
             @RequestParam String status,

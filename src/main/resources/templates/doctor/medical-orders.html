@@ -283,6 +283,41 @@
             color: #b91c1c;
         }
 
+        .nav-tabs .nav-link {
+            color: var(--text-dark);
+            border: none;
+            border-bottom: 3px solid transparent;
+            padding: 0.75rem 1.5rem;
+            font-weight: 500;
+        }
+
+        .nav-tabs .nav-link.active {
+            color: var(--primary-color);
+            background: transparent;
+            border-bottom: 3px solid var(--primary-color);
+        }
+
+        .nav-tabs .nav-link:hover:not(.active) {
+            border-bottom: 3px solid #e5e7eb;
+        }
+
+        .tab-pane {
+            padding: 1.5rem 0;
+        }
+
+        .order-count-badge {
+            background-color: var(--primary-color);
+            color: white;
+            border-radius: 50%;
+            width: 24px;
+            height: 24px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.75rem;
+            margin-left: 0.5rem;
+        }
+
         @media (max-width: 768px) {
             .sidebar {
                 transform: translateX(-100%);
@@ -451,7 +486,157 @@
             </div>
         </div>
 
-        <!-- Medical Orders List -->
+        <ul class="nav nav-tabs mb-3" id="orderTabs" role="tablist">
+            <li class="nav-item" role="presentation">
+                <button class="nav-link active" id="incoming-tab" data-bs-toggle="tab" data-bs-target="#incoming" type="button" role="tab" aria-controls="incoming" aria-selected="true">
+                    Incoming Orders <span class="order-count-badge" th:text="${incomingOrders != null ? incomingOrders.size() : 0}">0</span>
+                </button>
+            </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link" id="outgoing-tab" data-bs-toggle="tab" data-bs-target="#outgoing" type="button" role="tab" aria-controls="outgoing" aria-selected="false">
+                    Outgoing Orders <span class="order-count-badge" th:text="${outgoingOrders != null ? outgoingOrders.size() : 0}">0</span>
+                </button>
+            </li>
+        </ul>
+        <!-- Tab Content -->
+        <div class="tab-content" id="orderTabsContent">
+            <!-- Incoming Orders Tab -->
+            <div class="tab-pane fade show active" id="incoming" role="tabpanel" aria-labelledby="incoming-tab">
+                <div class="order-container">
+                    <div class="order-header">
+                        <h4 class="mb-0">Orders Received by Your Department</h4>
+                    </div>
+                    <div class="order-body">
+                        <div th:if="${incomingOrders == null || incomingOrders.isEmpty()}" class="text-center py-5">
+                            <i class="bi bi-inbox" style="font-size: 3rem; color: var(--text-light);"></i>
+                            <p class="mt-3">No incoming medical orders found with the current filters.</p>
+                        </div>
+
+                        <div th:if="${incomingOrders != null && !incomingOrders.isEmpty()}">
+                            <div th:each="order : ${incomingOrders}" class="order-list-item">
+                                <div class="row align-items-center">
+                                    <div class="col-md-1">
+                                        <div class="fs-5 text-center">
+                                            <i th:class="${
+                                                order.orderType == 'Lab Test' ? 'bi bi-flask text-primary' :
+                                                (order.orderType == 'Imaging' ? 'bi bi-camera text-info' :
+                                                (order.orderType == 'Procedure' ? 'bi bi-tools text-success' :
+                                                'bi bi-chat-dots text-warning'))
+                                            }"></i>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-3">
+                                        <div class="d-flex flex-column">
+                                            <div class="fw-semibold" th:text="${'Order #' + order.orderId}">Order #123</div>
+                                            <div class="text-muted small" th:text="${order.orderType}">Lab Test</div>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-2">
+                                        <div class="d-flex flex-column">
+                                            <div class="text-muted small">From</div>
+                                            <div th:text="${order.orderBy != null ? order.orderBy.user.fullName : 'Unknown Doctor'}">N/A</div>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-2">
+                                        <div class="d-flex flex-column">
+                                            <div class="text-muted small">Patient</div>
+                                            <div th:text="${order.appointment != null && order.appointment.patient != null && order.appointment.patient.user != null ?
+                                            order.appointment.patient.user.fullName : 'Unknown Patient'}">Patient Name</div>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-2">
+                                        <div class="d-flex flex-column">
+                                            <div class="text-muted small">Date</div>
+                                            <div th:text="${order.orderDate != null ? #dates.format(order.orderDate, 'dd MMM yyyy') : 'N/A'}">01 Jan 2023</div>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-1">
+                                        <div th:class="${'status-badge status-' + (order.status != null ? order.status.toLowerCase() : 'pending')}"
+                                             th:text="${order.status}">Pending</div>
+                                    </div>
+                                    <div class="col-md-1 text-end">
+                                        <a th:href="@{/doctor/medical-orders/{id}(id=${order.orderId}, doctorId=${doctorId})}" class="btn btn-sm btn-outline-primary">
+                                            <i class="bi bi-eye"></i>
+                                        </a>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Outgoing Orders Tab -->
+            <div class="tab-pane fade" id="outgoing" role="tabpanel" aria-labelledby="outgoing-tab">
+                <div class="order-container">
+                    <div class="order-header">
+                        <h4 class="mb-0">Orders You've Sent to Other Departments</h4>
+                    </div>
+                    <div class="order-body">
+                        <div th:if="${outgoingOrders == null || outgoingOrders.isEmpty()}" class="text-center py-5">
+                            <i class="bi bi-arrow-up-right-circle" style="font-size: 3rem; color: var(--text-light);"></i>
+                            <p class="mt-3">No outgoing medical orders found with the current filters.</p>
+                            <a th:href="@{/doctor/medical-orders/new(doctorId=${doctorId})}" class="btn-primary-custom mt-3">
+                                Create Your First Order
+                            </a>
+                        </div>
+
+                        <div th:if="${outgoingOrders != null && !outgoingOrders.isEmpty()}">
+                            <div th:each="order : ${outgoingOrders}" class="order-list-item">
+                                <div class="row align-items-center">
+                                    <div class="col-md-1">
+                                        <div class="fs-5 text-center">
+                                            <i th:class="${
+                                                order.orderType == 'Lab Test' ? 'bi bi-flask text-primary' :
+                                                (order.orderType == 'Imaging' ? 'bi bi-camera text-info' :
+                                                (order.orderType == 'Procedure' ? 'bi bi-tools text-success' :
+                                                'bi bi-chat-dots text-warning'))
+                                            }"></i>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-3">
+                                        <div class="d-flex flex-column">
+                                            <div class="fw-semibold" th:text="${'Order #' + order.orderId}">Order #123</div>
+                                            <div class="text-muted small" th:text="${order.orderType}">Lab Test</div>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-2">
+                                        <div class="d-flex flex-column">
+                                            <div class="text-muted small">To Department</div>
+                                            <div th:text="${order.assignedToDepartment != null ? order.assignedToDepartment.deptName : 'Not Assigned'}">Can't fetch it</div>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-2">
+                                        <div class="d-flex flex-column">
+                                            <div class="text-muted small">Patient</div>
+                                            <div th:text="${order.appointment != null && order.appointment.patient != null && order.appointment.patient.user != null ?
+                                            order.appointment.patient.user.fullName : 'Unknown Patient'}">Patient Name</div>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-2">
+                                        <div class="d-flex flex-column">
+                                            <div class="text-muted small">Date</div>
+                                            <div th:text="${order.orderDate != null ? #dates.format(order.orderDate, 'dd MMM yyyy') : 'N/A'}">01 Jan 2023</div>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-1">
+                                        <div th:class="${'status-badge status-' + (order.status != null ? order.status.toLowerCase() : 'pending')}"
+                                             th:text="${order.status}">Pending</div>
+                                    </div>
+                                    <div class="col-md-1 text-end">
+                                        <a th:href="@{/doctor/medical-orders/{id}(id=${order.orderId}, doctorId=${doctorId})}" class="btn btn-sm btn-outline-primary">
+                                            <i class="bi bi-eye"></i>
+                                        </a>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Medical Orders List
         <div class="order-container">
             <div class="order-header">
                 <h4 class="mb-0">Medical Orders</h4>
@@ -510,7 +695,7 @@
                     </div>
                 </div>
             </div>
-        </div>
+        </div> -->
     </div>
 </div>
 
@@ -551,6 +736,36 @@
 
     // Initialize page
     document.addEventListener('DOMContentLoaded', function() {
+        // Set form values from URL parameters if any
+        const urlParams = new URLSearchParams(window.location.search);
+        const status = urlParams.get('status');
+        const type = urlParams.get('type');
+        const date = urlParams.get('date');
+
+        if (status) document.getElementById('status').value = status;
+        if (type) document.getElementById('type').value = type;
+        if (date) document.getElementById('date').value = date;
+    });
+
+    document.addEventListener('DOMContentLoaded', function() {
+        // Restore tab state from sessionStorage if available
+        const activeTab = sessionStorage.getItem('activeOrderTab');
+        if (activeTab) {
+            const tab = document.querySelector(activeTab);
+            if (tab) {
+                const bsTab = new bootstrap.Tab(tab);
+                bsTab.show();
+            }
+        }
+
+        // Save tab state when changed
+        const tabs = document.querySelectorAll('button[data-bs-toggle="tab"]');
+        tabs.forEach(tab => {
+            tab.addEventListener('shown.bs.tab', function(e) {
+                sessionStorage.setItem('activeOrderTab', '#' + e.target.id);
+            });
+        });
+
         // Set form values from URL parameters if any
         const urlParams = new URLSearchParams(window.location.search);
         const status = urlParams.get('status');

@@ -710,3 +710,61 @@ ALTER TABLE [Users]
 ADD [Status] VARCHAR(10) DEFAULT 'Active' CHECK ([Status] IN ('Active', 'Inactive', 'Suspended')) NOT NULL;
 
 ALTER TABLE [Patient] DROP COLUMN [address];
+
+-- Add DoctorDepartment table for many-to-many relationship
+-- (since a doctor could potentially belong to multiple departments)
+CREATE TABLE [DoctorDepartment] (
+    [DoctorID] int NOT NULL,
+    [DepartmentID] int NOT NULL,
+    [IsPrimary] bit NOT NULL DEFAULT 0,
+    [JoinDate] date NOT NULL DEFAULT GETDATE(),
+    PRIMARY KEY ([DoctorID], [DepartmentID])
+)
+GO
+
+-- Add foreign key constraints
+ALTER TABLE [DoctorDepartment] ADD FOREIGN KEY ([DoctorID]) REFERENCES [Doctor] ([DoctorID])
+GO
+
+ALTER TABLE [DoctorDepartment] ADD FOREIGN KEY ([DepartmentID]) REFERENCES [Department] ([DepartmentID])
+GO
+
+-- Add index for faster queries
+CREATE INDEX [IX_DoctorDepartment_DepartmentID] ON [DoctorDepartment] ([DepartmentID])
+GO
+
+-- Add extended property for documentation
+EXEC sp_addextendedproperty
+     @name = N'Table_Description',
+     @value = 'Stores department membership for doctors',
+     @level0type = N'Schema', @level0name = 'dbo',
+     @level1type = N'Table',  @level1name = 'DoctorDepartment'
+GO
+
+INSERT INTO Department (DeptName, Description, HeadDoctorID)
+VALUES
+    ('Laboratory', 'Clinical testing laboratory for blood work, urine analysis, and other diagnostic tests', NULL),
+    ('Radiology', 'Diagnostic imaging services including X-ray, CT scan, MRI, and ultrasound', 2),
+    ('Pharmacy', 'Medication dispensing and management for inpatient and outpatient services', NULL),
+    ('Physical Therapy', 'Rehabilitation services for patients recovering from injuries or surgeries', NULL),
+    ('Cardiology', 'Heart and vascular care department specializing in cardiovascular diseases', 2);
+
+INSERT INTO Specialization (SpecName, Symptom, Price) VALUES
+                                                           ('Cardiology', 'Heart conditions, chest pain, palpitations, high blood pressure', 150.00),
+                                                           ('Dermatology', 'Skin conditions, rashes, acne, eczema, skin cancer screening', 120.00),
+                                                           ('Neurology', 'Headaches, seizures, strokes, nerve pain, movement disorders', 160.00),
+                                                           ('Orthopedics', 'Joint pain, fractures, sprains, sports injuries, arthritis', 140.00),
+                                                           ('Pediatrics', 'Child health, growth and development, childhood illnesses', 100.00),
+                                                           ('Gynecology', 'Women''s health, menstrual disorders, pregnancy planning', 130.00),
+                                                           ('Psychiatry', 'Mental health, depression, anxiety, mood disorders', 170.00),
+                                                           ('Ophthalmology', 'Eye conditions, vision problems, cataracts, glaucoma', 140.00),
+                                                           ('Endocrinology', 'Diabetes, thyroid disorders, hormone imbalances', 150.00),
+                                                           ('Gastroenterology', 'Digestive disorders, stomach pain, acid reflux, IBS', 145.00),
+                                                           ('Cardiology', 'Chest pain, shortness of breath, irregular heartbeat', 250.00),
+                                                           ('Neurology', 'Headaches, dizziness, seizures, memory problems', 275.00),
+                                                           ('Pediatrics', 'Childhood illnesses, developmental issues', 200.00),
+                                                           ('Orthopedics', 'Joint pain, fractures, sports injuries', 225.00),
+                                                           ('Dermatology', 'Skin conditions, rashes, acne', 175.00),
+                                                           ('Gastroenterology', 'Digestive issues, abdominal pain', 250.00),
+                                                           ('Ophthalmology', 'Vision problems, eye diseases', 200.00),
+                                                           ('Psychiatry', 'Mental health disorders, behavioral issues', 225.00);

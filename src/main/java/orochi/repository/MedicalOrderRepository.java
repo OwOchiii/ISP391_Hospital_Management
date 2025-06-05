@@ -34,4 +34,6 @@ public interface MedicalOrderRepository extends JpaRepository<MedicalOrder, Inte
     Page<MedicalOrder> findByDoctorId(@Param("doctorId") Integer doctorId, Pageable pageable);
 
     List<MedicalOrder> findByAppointmentPatientIdOrderByOrderDateDesc(Integer patientId);
+
+
 }

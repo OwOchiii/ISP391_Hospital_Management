@@ -65,5 +65,10 @@ public class Doctor {
     )
     @JsonIgnore
     private List<Specialization> specializations;
+
+    @OneToMany(mappedBy = "doctor")
+    @JsonIgnore
+    private List<DoctorDepartment> departments;
+
 }
 
