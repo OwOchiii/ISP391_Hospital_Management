@@ -28,11 +28,11 @@ public class ScheduleServiceImpl {
         return scheduleRepository.findAll();
     }
 
-    public List<Schedule> searchSchedules(String keyword, LocalDate date) {
-        if (keyword != null && date != null) {
-            return scheduleRepository.findByKeywordAndDate(keyword, date);
-        } else if (date != null) {
-            return scheduleRepository.findByScheduleDate(date);
+    public List<Schedule> searchSchedules(String keyword, LocalDate startDate, LocalDate endDate) {
+        if (keyword != null && startDate != null && endDate != null) {
+            return scheduleRepository.findByKeywordAndDateRange(keyword, startDate, endDate);
+        } else if (startDate != null && endDate != null) {
+            return scheduleRepository.findByDateRange(startDate, endDate);
         } else if (keyword != null) {
             return scheduleRepository.findByKeywordAndDate(keyword, null);
         }

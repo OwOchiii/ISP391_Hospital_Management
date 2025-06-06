@@ -15,4 +15,10 @@ public interface ScheduleRepository extends JpaRepository<Schedule, Integer> {
     List<Schedule> findByKeywordAndDate(String keyword, LocalDate date);
 
     List<Schedule> findByScheduleDate(LocalDate date);
+
+    @Query("SELECT s FROM Schedule s WHERE s.scheduleDate BETWEEN :startDate AND :endDate")
+    List<Schedule> findByDateRange(LocalDate startDate, LocalDate endDate);
+
+    @Query("SELECT s FROM Schedule s WHERE (s.doctor.user.fullName LIKE %:keyword%) AND (s.scheduleDate BETWEEN :startDate AND :endDate)")
+    List<Schedule> findByKeywordAndDateRange(String keyword, LocalDate startDate, LocalDate endDate);
 }

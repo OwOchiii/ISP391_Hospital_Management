@@ -21,16 +21,18 @@ public class ScheduleController {
     @GetMapping
     public String showSchedules(@RequestParam("adminId") Integer adminId,
                                 @RequestParam(value = "search", required = false) String search,
-                                @RequestParam(value = "dateFilter", required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate dateFilter,
+                                @RequestParam(value = "startDate", required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate startDate,
+                                @RequestParam(value = "endDate", required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate endDate,
                                 Model model) {
-        List<Schedule> schedules = scheduleService.searchSchedules(search, dateFilter);
+        List<Schedule> schedules = scheduleService.searchSchedules(search, startDate, endDate);
         model.addAttribute("schedules", schedules);
         model.addAttribute("adminId", adminId);
         model.addAttribute("search", search);
-        model.addAttribute("dateFilter", dateFilter);
+        model.addAttribute("startDate", startDate);
+        model.addAttribute("endDate", endDate);
         model.addAttribute("doctors", scheduleService.getAllDoctors());
         model.addAttribute("rooms", scheduleService.getAllRooms());
-        return "admin/schedule/list"; // Sửa ở đây để khớp với admin/schedule/list.html
+        return "admin/schedule/list";
     }
 
     @PostMapping("/save")
