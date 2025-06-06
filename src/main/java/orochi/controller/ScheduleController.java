@@ -30,7 +30,7 @@ public class ScheduleController {
         model.addAttribute("dateFilter", dateFilter);
         model.addAttribute("doctors", scheduleService.getAllDoctors());
         model.addAttribute("rooms", scheduleService.getAllRooms());
-        return "admin/schedules";
+        return "admin/schedule/list"; // Sửa ở đây để khớp với admin/schedule/list.html
     }
 
     @PostMapping("/save")
