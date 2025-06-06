@@ -469,21 +469,93 @@ public class DoctorController {
     }
 
     @GetMapping("/medical-orders")
-    public String getDoctorMedicalOrders(@RequestParam Integer doctorId, Model model) {
+    public String getAllMedicalOrders(
+            @RequestParam Integer doctorId,
+            @RequestParam(required = false) String status,
+            @RequestParam(required = false) String type,
+            @RequestParam(required = false) String date,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size,
+            Model model) {
         try {
-            logger.info("Fetching all medical orders for doctor ID: {}", doctorId);
-            List<MedicalOrder> orders = medicalOrderRepository.findByDoctorId(doctorId);
-            model.addAttribute("medicalOrders", orders);
-            model.addAttribute("doctorId", doctorId);
-            model.addAttribute("title", "All Medical Orders");
+            logger.info("Fetching medical orders for doctor ID: {} with filters - status: {}, type: {}, date: {}",
+                    doctorId, status, type, date);
 
-            logger.debug("Retrieved {} medical orders for doctor ID: {}", orders.size(), doctorId);
+            Doctor doctor = doctorRepository.findById(doctorId)
+                    .orElseThrow(() -> new IllegalArgumentException("Invalid doctor ID: " + doctorId));
+
+            // Get all outgoing orders (orders created by this doctor)
+            List<MedicalOrder> allOutgoingOrders = medicalOrderRepository.findByDoctorId(doctorId);
+
+            // Get all incoming orders (orders assigned to departments where this doctor is head)
+            List<MedicalOrder> allIncomingOrders = new ArrayList<>();
+            List<Department> headedDepartments = doctor.getDepartmentsLed();
+            if (headedDepartments != null && !headedDepartments.isEmpty()) {
+                for (Department department : headedDepartments) {
+                    if (department.getMedicalOrders() != null) {
+                        allIncomingOrders.addAll(department.getMedicalOrders());
+                    }
+                }
+            }
+
+            // Apply filters to both lists
+            List<MedicalOrder> outgoingOrders = applyFilters(allOutgoingOrders, status, type, date);
+            List<MedicalOrder> incomingOrders = applyFilters(allIncomingOrders, status, type, date);
+
+            model.addAttribute("doctorId", doctorId);
+            model.addAttribute("doctorName", doctor.getUser().getFullName());
+            model.addAttribute("outgoingOrders", outgoingOrders);
+            model.addAttribute("incomingOrders", incomingOrders);
+            model.addAttribute("selectedStatus", status);
+            model.addAttribute("selectedType", type);
+            model.addAttribute("selectedDate", date);
+
+            logger.debug("Retrieved {} outgoing and {} incoming medical orders for doctor ID: {}",
+                    outgoingOrders.size(), incomingOrders.size(), doctorId);
+
             return "doctor/medical-orders";
         } catch (Exception e) {
             logger.error("Error fetching medical orders for doctor ID: {}", doctorId, e);
             model.addAttribute("errorMessage", "Failed to retrieve medical orders: " + e.getMessage());
             return "error";
         }
+    }
+
+    // Helper method to apply filters to a list of medical orders
+    private List<MedicalOrder> applyFilters(List<MedicalOrder> orders, String status, String type, String date) {
+        List<MedicalOrder> filteredOrders = new ArrayList<>(orders);
+
+        // Apply status filter
+        if (status != null && !status.isEmpty()) {
+            filteredOrders.removeIf(order -> !order.getStatus().equalsIgnoreCase(status));
+        }
+
+        // Apply type filter
+        if (type != null && !type.isEmpty()) {
+            filteredOrders.removeIf(order -> !order.getOrderType().equalsIgnoreCase(type));
+        }
+
+        // Apply date filter
+        if (date != null && !date.isEmpty()) {
+            LocalDate filterDate = LocalDate.parse(date);
+            filteredOrders.removeIf(order -> {
+                if (order.getOrderDate() == null) return true;
+
+                // Convert java.sql.Date or java.util.Date to LocalDate safely
+                LocalDate orderDate;
+                if (order.getOrderDate() instanceof java.sql.Date) {
+                    orderDate = ((java.sql.Date) order.getOrderDate()).toLocalDate();
+                } else {
+                    orderDate = order.getOrderDate().toInstant()
+                            .atZone(java.time.ZoneId.systemDefault())
+                            .toLocalDate();
+                }
+
+                return !orderDate.equals(filterDate);
+            });
+        }
+
+        return filteredOrders;
     }
 
     @GetMapping("/medical-orders/status")

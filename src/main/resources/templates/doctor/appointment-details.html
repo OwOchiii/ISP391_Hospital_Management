@@ -936,6 +936,14 @@
                                        class="btn btn-sm btn-outline-primary">
                                         <i class="bi bi-download"></i> Download File
                                     </a>
+                                    <a th:href="@{/download/medical-results/{filename}(filename=${result.fileUrl != null ? result.fileUrl.substring(result.fileUrl.lastIndexOf('/') + 1) : ''}, inline=true)}"
+                                       class="btn btn-sm btn-outline-secondary ms-2" target="_blank">
+                                        <i class="bi bi-eye"></i> View File
+                                    </a>
+                                    <a th:href="@{/download/medical-result/{resultId}(resultId=${result.resultId}, inline=true)}"
+                                       class="btn btn-sm btn-outline-info ms-2" target="_blank">
+                                        <i class="bi bi-file-earmark-text"></i> View by ID
+                                    </a>
                                 </div>
                             </div>
                         </div>
@@ -1474,6 +1482,41 @@
                     console.error('Error:', error);
                     showAlert('error', 'An error occurred while creating the prescription.');
                 });
+        });
+
+        document.addEventListener('DOMContentLoaded', function() {
+            // Get all tabs
+            const tabs = document.querySelectorAll('#appointmentTabs button[data-bs-toggle="tab"]');
+
+            // Store active tab in session storage when changed
+            tabs.forEach(tab => {
+                tab.addEventListener('shown.bs.tab', function(e) {
+                    sessionStorage.setItem('activeOrderTab', '#' + e.target.id);
+                });
+            });
+
+            // Restore active tab from session storage or URL parameter
+            const urlParams = new URLSearchParams(window.location.search);
+            const activeTab = urlParams.get('tab');
+
+            if (activeTab) {
+                // If tab specified in URL, activate it
+                const tabEl = document.querySelector(`#${activeTab}-tab`);
+                if (tabEl) {
+                    const tab = new bootstrap.Tab(tabEl);
+                    tab.show();
+                }
+            } else {
+                // Otherwise check session storage
+                const storedTab = sessionStorage.getItem('activeOrderTab');
+                if (storedTab) {
+                    const tabEl = document.querySelector(storedTab);
+                    if (tabEl) {
+                        const tab = new bootstrap.Tab(tabEl);
+                        tab.show();
+                    }
+                }
+            }
         });
 
         // Add Medicine to Prescription

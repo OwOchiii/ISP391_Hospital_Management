@@ -343,7 +343,24 @@ public class DoctorAppointmentController {
             Model model) {
         try {
             logger.info("Fetching details for appointment ID: {} for doctor ID: {}", appointmentId, doctorId);
+
+            // First, try the standard permission check through doctorService
             Optional<Appointment> appointment = doctorService.getAppointmentDetails(appointmentId, doctorId);
+
+            // If that fails, check if the doctor has access through medical orders
+            if (appointment.isEmpty()) {
+                logger.info("Doctor {} is not directly assigned to appointment {}. Checking medical order access...",
+                        doctorId, appointmentId);
+
+                // Check if doctor has any medical orders for this appointment
+                boolean hasMedicalOrderAccess = medicalOrderRepository.existsByAppointmentIdAndDoctorId(appointmentId, doctorId);
+
+                if (hasMedicalOrderAccess) {
+                    logger.info("Doctor {} has access to appointment {} through medical orders", doctorId, appointmentId);
+                    // Directly fetch the appointment since we've verified access through medical orders
+                    appointment = appointmentRepository.findById(appointmentId);
+                }
+            }
 
             if (appointment.isPresent()) {
                 Optional<Patient> patient = doctorService.getPatientDetails(appointment.get().getPatientId());
