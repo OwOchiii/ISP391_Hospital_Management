@@ -919,18 +919,39 @@
                             </div>
 
 
+                            <!-- Updated Medical Results Display with Order Reference -->
                             <div class="history-item" th:each="result : ${results}">
                                 <div class="history-date">
                                     <span th:text="${#temporals.format(result.resultDate, 'MMM d, yyyy')}">May 23, 2023</span>
                                     <span class="badge rounded-pill ms-2"
                                           th:classappend="${result.status == 'PENDING' ? 'bg-warning' :
-                (result.status == 'IN_PROGRESS' ? 'bg-info' :
-                (result.status == 'COMPLETED' ? 'bg-success' : 'bg-danger'))}"
+(result.status == 'IN_PROGRESS' ? 'bg-info' :
+(result.status == 'COMPLETED' ? 'bg-success' : 'bg-danger'))}"
                                           th:text="${result.status}">PENDING</span>
                                 </div>
                                 <div class="history-content">
                                     <span th:text="${result.description}">Blood test results showing normal values</span>
                                 </div>
+                                <!-- Related Medical Order Information -->
+                                <div class="history-order-link mt-1 mb-1">
+                                    <!-- Create a flag variable to track if we found a linked order -->
+                                    <th:block th:with="foundLinkedOrder=${false}">
+                                        <!-- Loop through all orders and check for matches -->
+                                        <th:block th:each="order : ${medicalOrders}">
+                                            <!-- Display linked order info if there's a match -->
+                                            <th:block th:if="${order.resultId != null && order.resultId == result.resultId}">
+                                                    <span class="text-muted">
+                                                        <i class="bi bi-link"></i>
+                                                        <strong>Linked to order:</strong>
+                                                        <span class="badge bg-secondary" th:text="${order.orderType}">LAB</span>
+                                                        <span th:text="${order.description}">Complete blood count</span>
+                                                    </span>
+                                                <!-- Set our flag to true and break the loop -->
+                                                <th:block th:with="foundLinkedOrder=${true}" th:remove="tag"></th:block>
+                                            </th:block>
+                                        </th:block>
+                                        <!-- Only show "not linked" message if no match was found -->
+                                        <th:block th:if="${!foundLinkedOrder}">
                                 <div class="mt-2" th:if="${result.fileUrl != null}">
                                     <a th:href="@{/download/medical-results/{filename}(filename=${result.fileUrl != null ? result.fileUrl.substring(result.fileUrl.lastIndexOf('/') + 1) : ''})}"
                                        class="btn btn-sm btn-outline-primary">
@@ -940,12 +961,10 @@
                                        class="btn btn-sm btn-outline-secondary ms-2" target="_blank">
                                         <i class="bi bi-eye"></i> View File
                                     </a>
-                                    <a th:href="@{/download/medical-result/{resultId}(resultId=${result.resultId}, inline=true)}"
-                                       class="btn btn-sm btn-outline-info ms-2" target="_blank">
-                                        <i class="bi bi-file-earmark-text"></i> View by ID
-                                    </a>
                                 </div>
                             </div>
+
+
                         </div>
 
                         <div th:if="${results == null or results.empty}" class="alert alert-info">
@@ -1042,6 +1061,7 @@
             </div>
         </div>
 
+        <!-- Updated Medical Result Modal with Order Selection -->
         <div class="modal fade" id="addMedicalResultModal" tabindex="-1" aria-labelledby="medicalResultModalLabel" aria-hidden="true">
             <div class="modal-dialog modal-lg">
                 <div class="modal-content">
@@ -1052,9 +1072,27 @@
                         <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                     </div>
                     <div class="modal-body">
+                        <div class="alert alert-info">
+                            <i class="bi bi-info-circle me-2"></i> <strong>Note:</strong> Each medical order can have only one result. Select a specific order to link this result to it.
+                        </div>
+
                         <form th:action="@{/doctor/appointments/{appointmentId}/medical-result/submit(appointmentId=${appointment.appointmentId})}" method="post" enctype="multipart/form-data">
                             <input type="hidden" name="appointmentId" th:value="${appointment.appointmentId}">
                             <input type="hidden" name="doctorId" th:value="${doctorId}">
+
+                            <div class="form-group mb-3">
+                                <label for="orderId" class="form-label">Select Medical Order (Optional)</label>
+                                <select id="orderId" name="orderId" class="form-select">
+                                    <option value="">Create result without linking to an order</option>
+                                    <option th:each="order : ${medicalOrders}"
+                                            th:if="${order.resultId == null}"
+                                            th:value="${order.orderId}"
+                                            th:text="${order.orderType + ' - ' + order.description + ' (' + order.status + ')'}">
+                                        Order type - Description (Status)
+                                    </option>
+                                </select>
+                                <small class="text-muted">Only orders without existing results are shown. Each order can have only one result.</small>
+                            </div>
 
                             <div class="form-group mb-3">
                                 <label for="resultDescription" class="form-label">Result Description</label>
@@ -1087,6 +1125,7 @@
                 </div>
             </div>
         </div>
+
 
 
         <!-- Sidebar -->
@@ -1147,6 +1186,70 @@
 </div>
 
 <!-- Medical Order Modal -->
+<div class="modal fade" id="medicalOrderModal" tabindex="-1" aria-labelledby="medicalOrderModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="medicalOrderModalLabel">
+                    <i class="bi bi-clipboard-plus"></i> Create Medical Order
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <form th:action="@{/doctor/appointments/{appointmentId}/orders/create(appointmentId=${appointment.appointmentId})}" method="post">
+                    <input type="hidden" name="doctorId" th:value="${doctorId}">
+
+                    <div class="form-group mb-3">
+                        <label for="orderType" class="form-label">Order Type</label>
+                        <select id="orderType" name="orderType" class="form-select" required>
+                            <option value="">Select order type</option>
+                            <option value="LAB">Lab Test</option>
+                            <option value="IMAGING">Imaging</option>
+                            <option value="PROCEDURE">Procedure</option>
+                            <option value="CONSULTATION">Consultation</option>
+                            <option value="OTHER">Other</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group mb-3">
+                        <label for="orderDescription" class="form-label">Order Description</label>
+                        <textarea id="orderDescription" name="description" class="form-control" rows="4" required
+                                  placeholder="Describe the medical order details"></textarea>
+                    </div>
+
+                    <div class="form-group mb-3">
+                        <label for="orderStatus" class="form-label">Status</label>
+                        <select id="orderStatus" name="status" class="form-select" required>
+                            <option value="PENDING">Pending</option>
+                            <option value="IN_PROGRESS">In Progress</option>
+                            <option value="COMPLETED">Completed</option>
+                            <option value="CANCELLED">Cancelled</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group mb-3">
+                        <label for="assignedToDeptId" class="form-label">Assigned Department</label>
+                        <select id="assignedToDeptId" name="assignedToDeptId" class="form-select">
+                            <option value="">Select department (optional)</option>
+                            <option th:each="dept : ${departments}"
+                                    th:value="${dept.departmentId}"
+                                    th:text="${dept.deptName}">Department Name</option>
+                        </select>
+                    </div>
+
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                        <button type="submit" class="btn btn-primary-custom">
+                            <i class="bi bi-save"></i> Create Order
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Medical Result Modal -->
 <div class="modal fade" id="medicalResultModal" tabindex="-1" aria-labelledby="medicalResultModalLabel" aria-hidden="true">
     <div class="modal-dialog modal-lg">
         <div class="modal-content">

@@ -54,6 +54,9 @@ public class DoctorAppointmentController {
     @Autowired
     private MedicineInventoryRepository medicineInventoryRepository;
 
+    @Autowired
+    private DepartmentRepository departmentRepository;
+
     @GetMapping("")
     public String getAllAppointments(
             @RequestParam Integer doctorId,
@@ -408,6 +411,10 @@ public class DoctorAppointmentController {
                 model.addAttribute("resultTotalItems", resultsPage.getTotalElements());
                 model.addAttribute("resultSize", resultSize);
 
+                // Get departments for the dropdown
+                List<Department> departments = departmentRepository.findAll();
+                model.addAttribute("departments", departments);
+
                 logger.debug("Successfully retrieved appointment details for appointment ID: {}", appointmentId);
                 return "doctor/appointment-details";
             } else {
@@ -535,6 +542,7 @@ public class DoctorAppointmentController {
             @RequestParam String description,
             @RequestParam(required = false) MultipartFile resultFile,
             @RequestParam String status,
+            @RequestParam(required = false) Integer orderId,
             RedirectAttributes redirectAttributes) {
 
         try {
@@ -548,6 +556,24 @@ public class DoctorAppointmentController {
                 redirectAttributes.addFlashAttribute("errorMessage",
                         "Appointment not found or you don't have permission to submit results for it.");
                 return "redirect:/doctor/appointments";
+            }
+
+            // If an order ID is provided, check if it already has a result
+            if (orderId != null) {
+                Optional<MedicalOrder> orderOpt = medicalOrderRepository.findById(orderId);
+                if (orderOpt.isPresent()) {
+                    MedicalOrder order = orderOpt.get();
+                    if (order.getResultId() != null) {
+                        logger.warn("Order ID: {} already has a result. Only one result per order is allowed.", orderId);
+                        redirectAttributes.addFlashAttribute("errorMessage",
+                                "This order already has a result. Only one result is allowed per order.");
+                        return "redirect:/doctor/appointments/" + appointmentId + "?doctorId=" + doctorId;
+                    }
+                } else {
+                    logger.warn("Medical order not found for ID: {}", orderId);
+                    redirectAttributes.addFlashAttribute("errorMessage", "Medical order not found.");
+                    return "redirect:/doctor/appointments/" + appointmentId + "?doctorId=" + doctorId;
+                }
             }
 
             // Create the medical result
@@ -574,9 +600,20 @@ public class DoctorAppointmentController {
             }
 
             // Save the result
-            medicalResultRepository.save(medicalResult);
+            MedicalResult savedResult = medicalResultRepository.save(medicalResult);
             logger.info("Successfully created medical result ID: {} for appointment ID: {}",
-                    medicalResult.getResultId(), appointmentId);
+                    savedResult.getResultId(), appointmentId);
+
+            // If order ID is provided, update the order to reference this result
+            if (orderId != null) {
+                Optional<MedicalOrder> orderOpt = medicalOrderRepository.findById(orderId);
+                if (orderOpt.isPresent()) {
+                    MedicalOrder order = orderOpt.get();
+                    order.setResultId(savedResult.getResultId());
+                    medicalOrderRepository.save(order);
+                    logger.info("Updated order ID: {} to reference result ID: {}", orderId, savedResult.getResultId());
+                }
+            }
 
             // Add success message
             redirectAttributes.addFlashAttribute("successMessage",
