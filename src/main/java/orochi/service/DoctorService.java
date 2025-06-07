@@ -5,13 +5,17 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.dao.DataAccessException;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import orochi.model.Appointment;
-import orochi.model.Patient;
+import orochi.model.*;
 import orochi.repository.AppointmentRepository;
 import orochi.repository.DoctorRepository;
+import orochi.repository.PatientContactRepository;
 import orochi.repository.PatientRepository;
+import orochi.repository.UserRepository;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -28,14 +32,21 @@ public class DoctorService {
     private final AppointmentRepository appointmentRepository;
     private final PatientRepository patientRepository;
     private final DoctorRepository doctorRepository;
+    private final UserRepository userRepository;
+    @Getter
+    private final PatientContactRepository patientContactRepository;
 
     @Autowired
     public DoctorService(AppointmentRepository appointmentRepository,
                          PatientRepository patientRepository,
-                         DoctorRepository doctorRepository) {
+                         DoctorRepository doctorRepository,
+                         UserRepository userRepository,
+                         PatientContactRepository patientContactRepository) {
         this.appointmentRepository = appointmentRepository;
         this.patientRepository = patientRepository;
         this.doctorRepository = doctorRepository;
+        this.userRepository = userRepository;
+        this.patientContactRepository = patientContactRepository;
     }
 
     /**
@@ -304,8 +315,17 @@ public class DoctorService {
         doctorRepository.save(d);
     }
 
-
-
+    /**
+     * Get doctor by ID
+     * @param doctorId The doctor's ID
+     * @return The doctor object
+     * @throws IllegalArgumentException if doctor not found
+     */
+    public Doctor getDoctorById(Integer doctorId) {
+        logger.info("Getting doctor by ID: {}", doctorId);
+        return doctorRepository.findById(doctorId)
+                .orElseThrow(() -> new IllegalArgumentException("Doctor not found with ID: " + doctorId));
+    }
 
     public List<Patient> findAllPatients() {
         try {
@@ -328,6 +348,38 @@ public class DoctorService {
         } catch (DataAccessException e) {
             logger.error("Failed to fetch patients by status: {}", status, e);
             return Page.empty();
+        }
+    }
+
+    /**
+     * Toggle the lock status of a doctor's account
+     * @param doctorId The doctor's ID
+     */
+    public void toggleDoctorLock(Integer doctorId) {
+        try {
+            logger.info("Toggling lock status for doctor ID: {}", doctorId);
+
+            Doctor doctor = getDoctorById(doctorId);
+            Users user = doctor.getUser();
+
+            if (user == null) {
+                logger.error("Cannot toggle lock status: No user found for doctor ID: {}", doctorId);
+                throw new IllegalStateException("No user account found for this doctor");
+            }
+
+            // Toggle between Active and Inactive status (according to SQL schema constraint)
+            if ("Active".equals(user.getStatus())) {
+                user.setStatus("Inactive");
+                logger.info("Doctor ID: {} has been deactivated (set to Inactive)", doctorId);
+            } else {
+                user.setStatus("Active");
+                logger.info("Doctor ID: {} has been activated (set to Active)", doctorId);
+            }
+
+            userRepository.save(user);
+        } catch (Exception e) {
+            logger.error("Error toggling lock status for doctor ID: {}", doctorId, e);
+            throw new RuntimeException("Failed to toggle doctor lock status: " + e.getMessage(), e);
         }
     }
 
