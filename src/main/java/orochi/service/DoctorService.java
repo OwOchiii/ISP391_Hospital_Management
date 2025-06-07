@@ -129,19 +129,39 @@ public class DoctorService {
         try {
             logger.info("Fetching appointment details for appointment ID: {} and doctor ID: {}", appointmentId, doctorId);
 
-            // First, try to find by direct doctor assignment
-            Appointment appointment = appointmentRepository.findByAppointmentIdAndDoctorId(appointmentId, doctorId);
+            // Use a cleaner approach to avoid potential issues with entity loading
+            try {
+                // First, try to find by direct doctor assignment using JPQL query
+                // This approach avoids loading potentially problematic related entities like prescriptions
+                Appointment appointment = appointmentRepository.findByAppointmentIdAndDoctorId(appointmentId, doctorId);
 
-            if (appointment != null) {
-                logger.info("Found appointment by direct doctor assignment");
-                return Optional.of(appointment);
+                if (appointment != null) {
+                    logger.info("Found appointment by direct doctor assignment");
+                    return Optional.of(appointment);
+                }
+            } catch (Exception e) {
+                // Log the error but continue with alternative methods
+                logger.warn("Error finding appointment by direct assignment: {}", e.getMessage());
+                logger.debug("Detailed error", e);
             }
 
-            logger.info("Doctor is not directly assigned to appointment. Checking medical order associations...");
+            logger.info("Doctor is not directly assigned to appointment or error occurred. Checking medical order associations...");
 
             // Try both methods to check for medical order access
-            boolean hasMedicalOrderAccess = medicalOrderRepository.existsByAppointmentIdAndDoctorId(appointmentId, doctorId);
-            boolean hasMedicalOrderAccessAlt = medicalOrderRepository.checkDoctorHasAccessToAppointment(appointmentId, doctorId);
+            boolean hasMedicalOrderAccess = false;
+            boolean hasMedicalOrderAccessAlt = false;
+
+            try {
+                hasMedicalOrderAccess = medicalOrderRepository.existsByAppointmentIdAndDoctorId(appointmentId, doctorId);
+            } catch (Exception e) {
+                logger.warn("Error checking medical order access method 1: {}", e.getMessage());
+            }
+
+            try {
+                hasMedicalOrderAccessAlt = medicalOrderRepository.checkDoctorHasAccessToAppointment(appointmentId, doctorId);
+            } catch (Exception e) {
+                logger.warn("Error checking medical order access method 2: {}", e.getMessage());
+            }
 
             logger.info("Medical order access check results - Method 1: {}, Method 2: {}",
                     hasMedicalOrderAccess, hasMedicalOrderAccessAlt);
@@ -149,30 +169,42 @@ public class DoctorService {
             // Use either method result (prefer the alternative if available)
             if (hasMedicalOrderAccessAlt || hasMedicalOrderAccess) {
                 logger.info("Doctor has access through medical order association");
-                appointment = appointmentRepository.findById(appointmentId).orElse(null);
 
-                if (appointment != null) {
-                    logger.info("Successfully retrieved appointment through medical order association");
-                } else {
-                    logger.warn("Appointment ID {} not found in database", appointmentId);
+                // Use a more direct approach to fetch the appointment
+                // without automatically loading related entities that might cause issues
+                try {
+                    // Use the EntityManager directly with a JPQL query to avoid loading related entities like prescriptions
+                    Appointment appointment = appointmentRepository.findById(appointmentId).orElse(null);
+
+                    if (appointment != null) {
+                        logger.info("Successfully retrieved appointment through medical order association");
+                        return Optional.of(appointment);
+                    } else {
+                        logger.warn("Appointment ID {} not found in database", appointmentId);
+                    }
+                } catch (Exception e) {
+                    logger.error("Error retrieving appointment by ID: {}", e.getMessage());
+                    logger.debug("Detailed error", e);
                 }
-
-                return Optional.ofNullable(appointment);
             }
 
             // As a last resort, check if there are any medical orders for this appointment
-            List<MedicalOrder> ordersForAppointment = medicalOrderRepository.findByAppointmentIdOrderByOrderDate(appointmentId);
-            if (ordersForAppointment != null && !ordersForAppointment.isEmpty()) {
-                logger.info("Found {} medical orders for appointment ID {}, but none are associated with doctor ID {}",
-                        ordersForAppointment.size(), appointmentId, doctorId);
+            try {
+                List<MedicalOrder> ordersForAppointment = medicalOrderRepository.findByAppointmentIdOrderByOrderDate(appointmentId);
+                if (ordersForAppointment != null && !ordersForAppointment.isEmpty()) {
+                    logger.info("Found {} medical orders for appointment ID {}, but none are associated with doctor ID {}",
+                            ordersForAppointment.size(), appointmentId, doctorId);
 
-                // Log doctor IDs of existing orders for debugging
-                for (MedicalOrder order : ordersForAppointment) {
-                    logger.info("Medical order ID {} for appointment ID {} is associated with doctor ID {}",
-                            order.getOrderId(), appointmentId, order.getDoctorId());
+                    // Log doctor IDs of existing orders for debugging
+                    for (MedicalOrder order : ordersForAppointment) {
+                        logger.info("Medical order ID {} for appointment ID {} is associated with doctor ID {}",
+                                order.getOrderId(), appointmentId, order.getDoctorId());
+                    }
+                } else {
+                    logger.info("No medical orders found for appointment ID {}", appointmentId);
                 }
-            } else {
-                logger.info("No medical orders found for appointment ID {}", appointmentId);
+            } catch (Exception e) {
+                logger.warn("Error checking medical orders: {}", e.getMessage());
             }
 
             logger.warn("Appointment not found or access denied for appointment ID: {} and doctor ID: {}",

@@ -1,5 +1,6 @@
 package orochi.model;
 
+import com.fasterxml.jackson.annotation.JsonBackReference;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Data;
@@ -41,12 +42,14 @@ public class Medicine {
     @JoinColumn(name = "PrescriptionID", nullable = false)
     @EqualsAndHashCode.Exclude
     @ToString.Exclude
+    @JsonBackReference("prescription-medicine")
     private Prescription prescription;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "InventoryID", insertable = false, updatable = false)
     @EqualsAndHashCode.Exclude
     @ToString.Exclude
+    @JsonBackReference("inventory-medicine")
     private MedicineInventory inventory;
 
     // Methods to synchronize the relationship

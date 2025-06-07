@@ -121,45 +121,57 @@ public class PrescriptionController {
                 ));
             }
 
-            // Use injected EntityManager to execute native SQL
+            // First approach: Delete related medicines using repository
             try {
-                logger.info("Using direct JDBC to delete medicines for prescription ID: {}", prescriptionId);
-                Session session = entityManager.unwrap(Session.class);
-
-                // Execute native SQL to delete medicines first
-                int deletedMedicines = session.createNativeMutationQuery("DELETE FROM Medicine WHERE PrescriptionID = :prescriptionId")
-                        .setParameter("prescriptionId", prescriptionId)
-                        .executeUpdate();
-
+                logger.info("Deleting medicines for prescription ID: {}", prescriptionId);
+                int deletedMedicines = medicineRepository.deleteMedicinesByPrescriptionId(prescriptionId);
                 logger.info("Deleted {} medicines for prescription ID: {}", deletedMedicines, prescriptionId);
 
-                // Execute native SQL to delete the prescription
-                int deletedPrescriptions = session.createNativeMutationQuery("DELETE FROM Prescription WHERE PrescriptionID = :prescriptionId")
-                        .setParameter("prescriptionId", prescriptionId)
-                        .executeUpdate();
-
-                logger.info("Deleted {} prescriptions with ID: {}", deletedPrescriptions, prescriptionId);
-
-                if (deletedPrescriptions == 0) {
-                    throw new IllegalStateException("Failed to delete prescription");
-                }
-            } catch (Exception e) {
-                logger.warn("JDBC delete failed: {}, trying repository methods", e.getMessage());
-
-                // Fallback to repository methods if JDBC approach fails
-                medicineRepository.deleteMedicinesByPrescriptionId(prescriptionId);
+                // Then delete the prescription
                 prescriptionRepository.deleteById(prescriptionId);
+                logger.info("Successfully deleted prescription with ID: {}", prescriptionId);
+
+                return ResponseEntity.ok(Map.of(
+                        "success", true,
+                        "message", "Prescription and associated medicines deleted successfully"
+                ));
+            } catch (Exception e) {
+                // Log the exception but don't rethrow it
+                logger.error("Error during prescription deletion using repository methods", e);
+
+                // Use second approach with JDBC if the first fails
+                try {
+                    logger.info("Falling back to direct JDBC to delete medicines for prescription ID: {}", prescriptionId);
+                    Session session = entityManager.unwrap(Session.class);
+
+                    // Execute native SQL to delete medicines first
+                    int deletedMedicines = session.createNativeMutationQuery("DELETE FROM Medicine WHERE PrescriptionID = :prescriptionId")
+                            .setParameter("prescriptionId", prescriptionId)
+                            .executeUpdate();
+                    logger.info("Deleted {} medicines for prescription ID: {}", deletedMedicines, prescriptionId);
+
+                    // Execute native SQL to delete the prescription
+                    int deletedPrescriptions = session.createNativeMutationQuery("DELETE FROM Prescription WHERE PrescriptionID = :prescriptionId")
+                            .setParameter("prescriptionId", prescriptionId)
+                            .executeUpdate();
+                    logger.info("Deleted {} prescriptions with ID: {}", deletedPrescriptions, prescriptionId);
+
+                    if (deletedPrescriptions == 0) {
+                        throw new IllegalStateException("Failed to delete prescription");
+                    }
+
+                    return ResponseEntity.ok(Map.of(
+                            "success", true,
+                            "message", "Prescription and associated medicines deleted successfully using JDBC"
+                    ));
+                } catch (Exception jdbcEx) {
+                    // Log the exception and throw a new one to properly roll back the transaction
+                    logger.error("Error during prescription deletion using JDBC", jdbcEx);
+                    throw new RuntimeException("Failed to delete prescription: " + jdbcEx.getMessage());
+                }
             }
-
-            logger.info("Successfully deleted prescription with ID: {}", prescriptionId);
-
-            Map<String, Object> response = new HashMap<>();
-            response.put("success", true);
-            response.put("message", "Prescription deleted successfully");
-
-            return ResponseEntity.ok(response);
         } catch (Exception e) {
-            logger.error("Error deleting prescription with ID {}: {}", prescriptionId, e.getMessage(), e);
+            logger.error("Unhandled error during prescription deletion", e);
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(Map.of(
                     "success", false,
                     "message", "Failed to delete prescription: " + e.getMessage()

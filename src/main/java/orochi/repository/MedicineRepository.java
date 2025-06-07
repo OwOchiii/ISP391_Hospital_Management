@@ -21,7 +21,7 @@ public interface MedicineRepository extends JpaRepository<Medicine, Integer> {
     @Modifying
     @Query(value = "DELETE FROM Medicine WHERE PrescriptionID = :prescriptionId", nativeQuery = true)
     @Transactional
-    void deleteMedicinesByPrescriptionId(@Param("prescriptionId") Integer prescriptionId);
+    int deleteMedicinesByPrescriptionId(@Param("prescriptionId") Integer prescriptionId);
 
     void deleteByPrescription(Prescription prescription);
 }
