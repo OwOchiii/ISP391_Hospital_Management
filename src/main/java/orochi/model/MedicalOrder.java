@@ -2,6 +2,7 @@ package orochi.model;
 
 import jakarta.persistence.*;
 import lombok.Data;
+import com.fasterxml.jackson.annotation.JsonBackReference;
 
 @Entity
 @Table(name = "MedicalOrder")
@@ -51,6 +52,6 @@ public class MedicalOrder {
 
     @ManyToOne
     @JoinColumn(name = "resultID", insertable = false, updatable = false)
+    @JsonBackReference(value = "result-order")
     private MedicalResult medicalResult;
 }
-

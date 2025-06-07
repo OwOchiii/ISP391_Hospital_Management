@@ -23,9 +23,13 @@ public interface MedicalResultRepository extends JpaRepository<MedicalResult, In
     // Paginated version
     Page<MedicalResult> findByDoctorId(Integer doctorId, Pageable pageable);
 
-    // Find results for a specific medical order
+    // Find a single result for a specific medical order (old method - keeping for backward compatibility)
     @Query("SELECT r FROM MedicalResult r JOIN MedicalOrder o ON r.resultId = o.resultId WHERE o.orderId = :orderId")
     MedicalResult findByOrderId(@Param("orderId") Integer orderId);
+
+    // Find all results for a specific medical order (new method)
+    @Query("SELECT r FROM MedicalResult r WHERE r.resultId IN (SELECT o.resultId FROM MedicalOrder o WHERE o.orderId = :orderId AND o.resultId IS NOT NULL) OR r.resultId IN (SELECT mo.resultId FROM MedicalOrder mo WHERE mo.orderId = :orderId) ORDER BY r.resultDate DESC")
+    List<MedicalResult> findAllByOrderId(@Param("orderId") Integer orderId);
 
     // Find all pending results that need to be reviewed by doctors
     List<MedicalResult> findByStatusOrderByResultDateDesc(String status);

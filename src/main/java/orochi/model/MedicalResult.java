@@ -4,6 +4,8 @@ import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import com.fasterxml.jackson.annotation.JsonManagedReference;
+import com.fasterxml.jackson.annotation.JsonBackReference;
 
 import java.time.LocalDateTime;
 
@@ -24,6 +26,7 @@ public class MedicalResult {
 
     @ManyToOne
     @JoinColumn(name = "AppointmentID", insertable = false, updatable = false)
+    @JsonBackReference(value = "appointment-result")
     private Appointment appointment;
 
     @Column(name = "DoctorID", nullable = false)
@@ -31,6 +34,7 @@ public class MedicalResult {
 
     @ManyToOne
     @JoinColumn(name = "DoctorID", insertable = false, updatable = false)
+    @JsonBackReference(value = "doctor-result")
     private Doctor doctor;
 
     @Column(name = "ResultDate", nullable = false)
@@ -46,6 +50,7 @@ public class MedicalResult {
     private String status;
 
     @OneToMany(mappedBy = "medicalResult")
+    @JsonManagedReference(value = "result-order")
     private java.util.List<MedicalOrder> orders;
 
     @PrePersist

@@ -17,8 +17,11 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseBody;
 
 import orochi.model.MedicalReport;
+import orochi.model.MedicalResult;
 import orochi.repository.MedicalReportRepository;
+import orochi.repository.MedicalResultRepository;
 
+import java.io.File;
 import java.net.MalformedURLException;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -36,6 +39,9 @@ public class FileDownloadController {
 
     @Autowired
     private MedicalReportRepository medicalReportRepository;
+
+    @Autowired
+    private MedicalResultRepository medicalResultRepository;
 
     /**
      * Download a report by report ID
@@ -128,6 +134,49 @@ public class FileDownloadController {
     }
 
     /**
+     * Download a medical result file by result ID
+     * @param resultId The ID of the medical result to download the file for
+     * @param inline If true, view the file inline; if false (default), download the file
+     */
+    @GetMapping("/medical-result/{resultId:\\d+}")
+    @ResponseBody
+    public ResponseEntity<Resource> downloadMedicalResultById(
+            @PathVariable Integer resultId,
+            @RequestParam(required = false, defaultValue = "false") boolean inline) {
+        try {
+            logger.info("Requested medical result file by ID: {}", resultId);
+
+            // Get the medical result from the database
+            Optional<MedicalResult> resultOpt = medicalResultRepository.findById(resultId);
+            if (resultOpt.isEmpty()) {
+                logger.error("Medical result not found for ID: {}", resultId);
+                return ResponseEntity.notFound().build();
+            }
+
+            MedicalResult result = resultOpt.get();
+            String fileUrl = result.getFileUrl();
+
+            // Check if fileUrl is null or empty
+            if (fileUrl == null || fileUrl.isEmpty()) {
+                logger.error("No file URL for medical result ID: {}", resultId);
+                return ResponseEntity.notFound().build();
+            }
+
+            // Extract the filename from the URL
+            String fileName = fileUrl;
+            if (fileUrl.contains("/")) {
+                fileName = fileUrl.substring(fileUrl.lastIndexOf("/") + 1);
+            }
+
+            logger.info("Extracted filename '{}' from medical result ID: {}", fileName, resultId);
+            return serveFile(fileName, inline);
+        } catch (Exception e) {
+            logger.error("Error downloading medical result by ID: {}", resultId, e);
+            return ResponseEntity.internalServerError().build();
+        }
+    }
+
+    /**
      * Helper method to serve a file from the medical-results directory
      * @param fileName The name of the file to serve
      * @param inline Whether to display the file inline or as an attachment
@@ -135,45 +184,58 @@ public class FileDownloadController {
      */
     private ResponseEntity<Resource> serveFile(String fileName, boolean inline) {
         try {
+            // Sanitize the filename to remove any path information
+            if (fileName.contains("/")) {
+                fileName = fileName.substring(fileName.lastIndexOf("/") + 1);
+            }
+
+            logger.info("Attempting to serve file: {}", fileName);
+
             // Try multiple possible locations for the file
-            // First try the primary location
-            Path filePath = Paths.get(uploadDir, "medical-results", fileName);
-            logger.info("Looking for file at: {}", filePath.toAbsolutePath());
+            // Prepare a list of possible file paths
+            Path[] possiblePaths = {
+                Paths.get(uploadDir, "medical-results", fileName),
+                Paths.get("uploads/medical-results", fileName),
+                Paths.get("D:/KanbanWeb/ISP301_Hospital_Management/uploads/medical-results", fileName),
+                Paths.get("D:/KanbanWeb/ISP301_Hospital_Management/upload-dir/medical-results", fileName),
+                Paths.get(uploadDir, "reports", fileName),
+                Paths.get(uploadDir, fileName),
+            };
 
-            if (!Files.exists(filePath)) {
-                // Try looking in reports directory
-                filePath = Paths.get(uploadDir, "reports", fileName);
-                logger.info("File not found, trying reports directory: {}", filePath.toAbsolutePath());
-
-                if (!Files.exists(filePath)) {
-                    // Try fallback location with upload-dir
-                    filePath = Paths.get("D:/KanbanWeb/ISP301_Hospital_Management/upload-dir/medical-results", fileName);
-                    logger.info("File not found, trying fallback location: {}", filePath.toAbsolutePath());
-
-                    if (!Files.exists(filePath)) {
-                        // Try one more location with absolute path
-                        filePath = Paths.get("/uploads/reports", fileName);
-                        logger.info("File not found, trying absolute path: {}", filePath.toAbsolutePath());
-
-                        if (!Files.exists(filePath)) {
-                            logger.error("File not found in any location: {}", fileName);
-                            return ResponseEntity.notFound().build();
-                        }
-                    }
+            // Try each path until we find the file
+            Path filePath = null;
+            for (Path path : possiblePaths) {
+                logger.debug("Looking for file at: {}", path.toAbsolutePath());
+                if (Files.exists(path)) {
+                    filePath = path;
+                    logger.info("Found file at: {}", path.toAbsolutePath());
+                    break;
                 }
             }
 
+            // If we couldn't find the file, return 404
+            if (filePath == null) {
+                logger.error("File not found in any location: {}", fileName);
+                return ResponseEntity.notFound().build();
+            }
+
             Resource resource = new UrlResource(filePath.toUri());
-            logger.info("Successfully located file: {}", filePath.toAbsolutePath());
 
             // Determine content type based on file extension
             String contentType;
-            if (fileName.toLowerCase().endsWith(".pdf")) {
+            String lowerCaseFileName = fileName.toLowerCase();
+            if (lowerCaseFileName.endsWith(".pdf")) {
                 contentType = MediaType.APPLICATION_PDF_VALUE;
-            } else if (fileName.toLowerCase().endsWith(".jpg") || fileName.toLowerCase().endsWith(".jpeg")) {
+            } else if (lowerCaseFileName.endsWith(".jpg") || lowerCaseFileName.endsWith(".jpeg")) {
                 contentType = MediaType.IMAGE_JPEG_VALUE;
-            } else if (fileName.toLowerCase().endsWith(".png")) {
+            } else if (lowerCaseFileName.endsWith(".png")) {
                 contentType = MediaType.IMAGE_PNG_VALUE;
+            } else if (lowerCaseFileName.endsWith(".docx")) {
+                contentType = "application/vnd.openxmlformats-officedocument.wordprocessingml.document";
+            } else if (lowerCaseFileName.endsWith(".mp3")) {
+                contentType = "audio/mpeg";
+            } else if (lowerCaseFileName.endsWith(".ipynb")) {
+                contentType = "application/json";
             } else {
                 contentType = MediaType.APPLICATION_OCTET_STREAM_VALUE;
             }

@@ -11,6 +11,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import orochi.model.Appointment;
+import orochi.model.MedicalOrder;
 import orochi.model.Patient;
 import orochi.repository.*;
 
@@ -122,13 +123,62 @@ public class DoctorService {
 
     /**
      * Get appointment details by appointmentId
+     * This method allows access to both the assigned doctor and doctors from medical order departments
      */
     public Optional<Appointment> getAppointmentDetails(Integer appointmentId, Integer doctorId) {
         try {
             logger.info("Fetching appointment details for appointment ID: {} and doctor ID: {}", appointmentId, doctorId);
+
+            // First, try to find by direct doctor assignment
             Appointment appointment = appointmentRepository.findByAppointmentIdAndDoctorId(appointmentId, doctorId);
-            return Optional.ofNullable(appointment);
-        } catch (DataAccessException e) {
+
+            if (appointment != null) {
+                logger.info("Found appointment by direct doctor assignment");
+                return Optional.of(appointment);
+            }
+
+            logger.info("Doctor is not directly assigned to appointment. Checking medical order associations...");
+
+            // Try both methods to check for medical order access
+            boolean hasMedicalOrderAccess = medicalOrderRepository.existsByAppointmentIdAndDoctorId(appointmentId, doctorId);
+            boolean hasMedicalOrderAccessAlt = medicalOrderRepository.checkDoctorHasAccessToAppointment(appointmentId, doctorId);
+
+            logger.info("Medical order access check results - Method 1: {}, Method 2: {}",
+                    hasMedicalOrderAccess, hasMedicalOrderAccessAlt);
+
+            // Use either method result (prefer the alternative if available)
+            if (hasMedicalOrderAccessAlt || hasMedicalOrderAccess) {
+                logger.info("Doctor has access through medical order association");
+                appointment = appointmentRepository.findById(appointmentId).orElse(null);
+
+                if (appointment != null) {
+                    logger.info("Successfully retrieved appointment through medical order association");
+                } else {
+                    logger.warn("Appointment ID {} not found in database", appointmentId);
+                }
+
+                return Optional.ofNullable(appointment);
+            }
+
+            // As a last resort, check if there are any medical orders for this appointment
+            List<MedicalOrder> ordersForAppointment = medicalOrderRepository.findByAppointmentIdOrderByOrderDate(appointmentId);
+            if (ordersForAppointment != null && !ordersForAppointment.isEmpty()) {
+                logger.info("Found {} medical orders for appointment ID {}, but none are associated with doctor ID {}",
+                        ordersForAppointment.size(), appointmentId, doctorId);
+
+                // Log doctor IDs of existing orders for debugging
+                for (MedicalOrder order : ordersForAppointment) {
+                    logger.info("Medical order ID {} for appointment ID {} is associated with doctor ID {}",
+                            order.getOrderId(), appointmentId, order.getDoctorId());
+                }
+            } else {
+                logger.info("No medical orders found for appointment ID {}", appointmentId);
+            }
+
+            logger.warn("Appointment not found or access denied for appointment ID: {} and doctor ID: {}",
+                    appointmentId, doctorId);
+            return Optional.empty();
+        } catch (Exception e) {
             logger.error("Failed to fetch appointment details for appointment ID: {} and doctor ID: {}",
                     appointmentId, doctorId, e);
             return Optional.empty();
