@@ -5,15 +5,13 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.dao.DataAccessException;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageRequest;
-import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import orochi.model.Appointment;
-import orochi.model.MedicalOrder;
 import orochi.model.Patient;
-import orochi.repository.*;
+import orochi.repository.AppointmentRepository;
+import orochi.repository.DoctorRepository;
+import orochi.repository.PatientRepository;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -30,23 +28,14 @@ public class DoctorService {
     private final AppointmentRepository appointmentRepository;
     private final PatientRepository patientRepository;
     private final DoctorRepository doctorRepository;
-    @Getter
-    private final MedicalOrderRepository medicalOrderRepository;
-    @Getter
-    private final PrescriptionRepository prescriptionRepository;
-    @Getter
-    private final PatientContactRepository patientContactRepository;
 
     @Autowired
     public DoctorService(AppointmentRepository appointmentRepository,
                          PatientRepository patientRepository,
-                         DoctorRepository doctorRepository, MedicalOrderRepository medicalOrderRepository, PrescriptionRepository prescriptionRepository, PatientContactRepository patientContactRepository) {
+                         DoctorRepository doctorRepository) {
         this.appointmentRepository = appointmentRepository;
         this.patientRepository = patientRepository;
         this.doctorRepository = doctorRepository;
-        this.medicalOrderRepository = medicalOrderRepository;
-        this.prescriptionRepository = prescriptionRepository;
-        this.patientContactRepository = patientContactRepository;
     }
 
     /**
@@ -123,94 +112,13 @@ public class DoctorService {
 
     /**
      * Get appointment details by appointmentId
-     * This method allows access to both the assigned doctor and doctors from medical order departments
      */
     public Optional<Appointment> getAppointmentDetails(Integer appointmentId, Integer doctorId) {
         try {
             logger.info("Fetching appointment details for appointment ID: {} and doctor ID: {}", appointmentId, doctorId);
-
-            // Use a cleaner approach to avoid potential issues with entity loading
-            try {
-                // First, try to find by direct doctor assignment using JPQL query
-                // This approach avoids loading potentially problematic related entities like prescriptions
-                Appointment appointment = appointmentRepository.findByAppointmentIdAndDoctorId(appointmentId, doctorId);
-
-                if (appointment != null) {
-                    logger.info("Found appointment by direct doctor assignment");
-                    return Optional.of(appointment);
-                }
-            } catch (Exception e) {
-                // Log the error but continue with alternative methods
-                logger.warn("Error finding appointment by direct assignment: {}", e.getMessage());
-                logger.debug("Detailed error", e);
-            }
-
-            logger.info("Doctor is not directly assigned to appointment or error occurred. Checking medical order associations...");
-
-            // Try both methods to check for medical order access
-            boolean hasMedicalOrderAccess = false;
-            boolean hasMedicalOrderAccessAlt = false;
-
-            try {
-                hasMedicalOrderAccess = medicalOrderRepository.existsByAppointmentIdAndDoctorId(appointmentId, doctorId);
-            } catch (Exception e) {
-                logger.warn("Error checking medical order access method 1: {}", e.getMessage());
-            }
-
-            try {
-                hasMedicalOrderAccessAlt = medicalOrderRepository.checkDoctorHasAccessToAppointment(appointmentId, doctorId);
-            } catch (Exception e) {
-                logger.warn("Error checking medical order access method 2: {}", e.getMessage());
-            }
-
-            logger.info("Medical order access check results - Method 1: {}, Method 2: {}",
-                    hasMedicalOrderAccess, hasMedicalOrderAccessAlt);
-
-            // Use either method result (prefer the alternative if available)
-            if (hasMedicalOrderAccessAlt || hasMedicalOrderAccess) {
-                logger.info("Doctor has access through medical order association");
-
-                // Use a more direct approach to fetch the appointment
-                // without automatically loading related entities that might cause issues
-                try {
-                    // Use the EntityManager directly with a JPQL query to avoid loading related entities like prescriptions
-                    Appointment appointment = appointmentRepository.findById(appointmentId).orElse(null);
-
-                    if (appointment != null) {
-                        logger.info("Successfully retrieved appointment through medical order association");
-                        return Optional.of(appointment);
-                    } else {
-                        logger.warn("Appointment ID {} not found in database", appointmentId);
-                    }
-                } catch (Exception e) {
-                    logger.error("Error retrieving appointment by ID: {}", e.getMessage());
-                    logger.debug("Detailed error", e);
-                }
-            }
-
-            // As a last resort, check if there are any medical orders for this appointment
-            try {
-                List<MedicalOrder> ordersForAppointment = medicalOrderRepository.findByAppointmentIdOrderByOrderDate(appointmentId);
-                if (ordersForAppointment != null && !ordersForAppointment.isEmpty()) {
-                    logger.info("Found {} medical orders for appointment ID {}, but none are associated with doctor ID {}",
-                            ordersForAppointment.size(), appointmentId, doctorId);
-
-                    // Log doctor IDs of existing orders for debugging
-                    for (MedicalOrder order : ordersForAppointment) {
-                        logger.info("Medical order ID {} for appointment ID {} is associated with doctor ID {}",
-                                order.getOrderId(), appointmentId, order.getDoctorId());
-                    }
-                } else {
-                    logger.info("No medical orders found for appointment ID {}", appointmentId);
-                }
-            } catch (Exception e) {
-                logger.warn("Error checking medical orders: {}", e.getMessage());
-            }
-
-            logger.warn("Appointment not found or access denied for appointment ID: {} and doctor ID: {}",
-                    appointmentId, doctorId);
-            return Optional.empty();
-        } catch (Exception e) {
+            Appointment appointment = appointmentRepository.findByAppointmentIdAndDoctorId(appointmentId, doctorId);
+            return Optional.ofNullable(appointment);
+        } catch (DataAccessException e) {
             logger.error("Failed to fetch appointment details for appointment ID: {} and doctor ID: {}",
                     appointmentId, doctorId, e);
             return Optional.empty();
@@ -339,6 +247,65 @@ public class DoctorService {
             return Page.empty();
         }
     }
+    public List<Doctor> searchDoctors(String search, String statusFilter) {
+        String trimmed = (search != null && !search.isBlank()) ? search.trim() : null;
+        String status = (statusFilter != null && !statusFilter.isBlank()) ? statusFilter.trim() : null;
+        try {
+            logger.info("Searching doctors with keyword='{}' and status='{}'", trimmed, status);
+            return doctorRepository.searchDoctors(trimmed, status);
+        } catch (DataAccessException e) {
+            logger.error("Error searching doctors with keyword='{}' and status='{}'", trimmed, status, e);
+            return Collections.emptyList();
+        }
+    }
+
+    public DoctorForm loadForm(int doctorId) {
+        Doctor d = getDoctorById(doctorId);
+        Users u  = d.getUser();
+        DoctorForm form = new DoctorForm();
+        form.setDoctorId(d.getDoctorId());
+        form.setUserId(u.getUserId());
+        form.setFullName(      u.getFullName());
+        form.setEmail(         u.getEmail());
+        form.setPhoneNumber(   u.getPhoneNumber());
+        form.setStatus(        u.getStatus());
+        form.setBioDescription(d.getBioDescription());
+        return form;
+    }
+
+    public void saveFromForm(DoctorForm form) {
+        // 1) xử lý Users
+        Users u;
+        if (form.getUserId() != null) {
+            u = userRepository.findById(form.getUserId())
+                    .orElseThrow(() -> new IllegalArgumentException("User not found: " + form.getUserId()));
+        } else {
+            u = new Users();
+            // thiết lập các mặc định: roleId, isGuest, createdAt,...
+            u.setRoleId(2);           // giả sử 2 = ROLE_DOCTOR
+            u.setGuest(false);
+            u.setCreatedAt(LocalDateTime.now());
+        }
+        u.setFullName(    form.getFullName());
+        u.setEmail(       form.getEmail());
+        u.setPhoneNumber( form.getPhoneNumber());
+        u.setStatus(      form.getStatus());
+        userRepository.save(u);
+
+        // 2) xử lý Doctor
+        Doctor d;
+        if (form.getDoctorId() != null) {
+            d = getDoctorById(form.getDoctorId());
+        } else {
+            d = new Doctor();
+        }
+        d.setUserId(       u.getUserId());
+        d.setBioDescription(form.getBioDescription());
+        doctorRepository.save(d);
+    }
+
+
+
 
     public List<Patient> findAllPatients() {
         try {

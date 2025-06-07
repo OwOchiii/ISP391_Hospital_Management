@@ -1,0 +1,677 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Doctors - MediCare Plus</title>
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Font Awesome -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary: #667eea;
+            --secondary: #764ba2;
+            --accent: #a78bfa;
+            --light: #f8fafc;
+            --dark: #3c366b;
+            --text-dark: #1f2937;
+            --text-light: #6b7280;
+            --text-muted: #9ca3af;
+            --bg-light: #f8fafc;
+            --bg-white: #ffffff;
+            --success-color: #10b981;
+            --warning-color: #f59e0b;
+            --error-color: #ef4444;
+            --info-color: #3b82f6;
+            --sidebar-width: 280px;
+            --header-height: 70px;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            line-height: 1.6;
+            color: var(--text-dark);
+            background: var(--bg-light);
+            overflow-x: hidden;
+        }
+
+        /* Sidebar Styles */
+        .sidebar {
+            position: fixed;
+            top: 0;
+            left: 0;
+            height: 100vh;
+            width: var(--sidebar-width);
+            background: linear-gradient(180deg, var(--primary) 0%, var(--secondary) 100%);
+            color: white;
+            z-index: 1000;
+            transition: transform 0.3s ease;
+            overflow-y: auto;
+            box-shadow: 4px 0 20px rgba(102, 126, 234, 0.15);
+        }
+
+        .sidebar.collapsed {
+            transform: translateX(-100%);
+        }
+
+        .logo {
+            padding: 1.5rem;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            background: rgba(255, 255, 255, 0.05);
+            text-align: left;
+        }
+
+        .logo a {
+            font-size: 1.5rem;
+            font-weight: 700;
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            color: white;
+            text-decoration: none;
+        }
+
+        .logo i {
+            font-size: 2rem;
+            background: linear-gradient(45deg, #a78bfa, #7c3aed);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .logo h2 {
+            font-size: 1.25rem;
+            font-weight: 600;
+            margin: 0;
+            line-height: 1.2;
+        }
+
+        .logo small {
+            font-size: 0.75rem;
+            font-weight: 400;
+            opacity: 0.8;
+            display: block;
+        }
+
+        .nav-section-title {
+            font-size: 0.75rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            color: rgba(255, 255, 255, 0.6);
+            padding: 0 1.5rem;
+            margin: 1.5rem 0 0.75rem;
+        }
+
+        .nav-item {
+            margin: 0.25rem 1rem;
+        }
+
+        .nav-link {
+            color: rgba(255, 255, 255, 0.8);
+            padding: 0.875rem 1.25rem;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            gap: 0.875rem;
+            text-decoration: none;
+            font-weight: 500;
+            transition: all 0.3s ease;
+            position: relative;
+        }
+
+        .nav-link:hover {
+            background: rgba(255, 255, 255, 0.1);
+            color: white;
+            transform: translateX(4px);
+        }
+
+        .nav-link.active {
+            background: rgba(255, 255, 255, 0.15);
+            color: white;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+        }
+
+        .nav-link.active::before {
+            content: '';
+            position: absolute;
+            left: 0;
+            top: 50%;
+            transform: translateY(-50%);
+            width: 4px;
+            height: 24px;
+            background: #a78bfa;
+            border-radius: 0 4px 4px 0;
+        }
+
+        .nav-link i {
+            font-size: 1.125rem;
+            width: 20px;
+            text-align: center;
+        }
+
+        .btn-light {
+            background: rgba(255, 255, 255, 0.15);
+            border: none;
+            color: white;
+            padding: 0.75rem 1.5rem;
+            border-radius: 12px;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .btn-light:hover {
+            background: rgba(255, 255, 255, 0.25);
+            color: white;
+            transform: translateY(-2px);
+        }
+
+        /* Main Content */
+        .main-content {
+            margin-left: var(--sidebar-width);
+            min-height: 100vh;
+            transition: margin-left 0.3s ease;
+        }
+
+        .main-content.expanded {
+            margin-left: 0;
+        }
+
+        /* Header */
+        header {
+            background: var(--bg-white);
+            height: var(--header-height);
+            padding: 0 2rem;
+            box-shadow: 0 2px 20px rgba(0, 0, 0, 0.08);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            position: sticky;
+            top: 0;
+            z-index: 999;
+        }
+
+        .sidebar-toggle {
+            background: none;
+            border: none;
+            font-size: 1.25rem;
+            color: var(--text-dark);
+            cursor: pointer;
+            padding: 0.5rem;
+            border-radius: 8px;
+            transition: all 0.3s ease;
+        }
+
+        .sidebar-toggle:hover {
+            background: var(--light);
+            color: var(--primary);
+        }
+
+        .h3 {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: var(--text-dark);
+            margin: 0;
+        }
+
+        .profile-info {
+            display: flex;
+            align-items: center;
+            gap: 1.5rem;
+        }
+
+        .notification-bell {
+            position: relative;
+            cursor: pointer;
+            padding: 0.5rem;
+            border-radius: 8px;
+            transition: all 0.3s ease;
+        }
+
+        .notification-bell:hover {
+            background: var(--light);
+        }
+
+        .badge {
+            font-size: 0.625rem;
+            padding: 0.25em 0.5em;
+            background: var(--error-color);
+        }
+
+        .rounded-circle {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, var(--primary), var(--accent));
+            object-fit: cover;
+        }
+
+        /* Doctor Cards */
+        .doctor-card {
+            background: var(--bg-white);
+            border-radius: 16px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+            border: 1px solid rgba(102, 126, 234, 0.1);
+            border-top: 4px solid var(--primary);
+            padding: 1.5rem;
+            text-align: center;
+            transition: all 0.3s ease;
+        }
+
+        .doctor-card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 8px 30px rgba(102, 126, 234, 0.15);
+        }
+
+        .doctor-card img {
+            width: 100px;
+            height: 100px;
+            border-radius: 50%;
+            margin-bottom: 1rem;
+            object-fit: cover;
+        }
+
+        .doctor-card h3 {
+            font-size: 1.125rem;
+            font-weight: 600;
+            color: var(--text-dark);
+            margin-bottom: 0.5rem;
+        }
+
+        .doctor-card p {
+            font-size: 0.875rem;
+            color: var(--text-muted);
+            margin-bottom: 0.5rem;
+        }
+
+        .btn-view {
+            background: var(--primary);
+            color: white;
+            padding: 0.5rem 1.5rem;
+            border-radius: 8px;
+            font-size: 0.875rem;
+            border: none;
+            transition: all 0.3s ease;
+            margin-right: 0.5rem;
+        }
+
+        .btn-view:hover {
+            background: var(--secondary);
+            transform: translateY(-2px);
+        }
+
+        .btn-book {
+            background: var(--success-color);
+            color: white;
+            padding: 0.5rem 1.5rem;
+            border-radius: 8px;
+            font-size: 0.875rem;
+            text-decoration: none;
+            transition: all 0.3s ease;
+        }
+
+        .btn-book:hover {
+            background: #059669;
+            transform: translateY(-2px);
+        }
+
+        /* Modal */
+        .modal-content {
+            border-radius: 16px;
+            border: 1px solid rgba(102, 126, 234, 0.1);
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+        }
+
+        .modal-header {
+            border-bottom: 1px solid rgba(102, 126, 234, 0.1);
+            padding: 1.5rem;
+        }
+
+        .modal-title {
+            font-size: 1.25rem;
+            font-weight: 600;
+            color: var(--text-dark);
+        }
+
+        .modal-body {
+            padding: 1.5rem;
+        }
+
+        .detail-item {
+            margin-bottom: 1rem;
+        }
+
+        .detail-label {
+            font-size: 0.875rem;
+            font-weight: 500;
+            color: var(--text-muted);
+            display: block;
+            margin-bottom: 0.25rem;
+        }
+
+        .detail-value {
+            font-size: 0.875rem;
+            color: var(--text-dark);
+        }
+
+        /* Responsive Design */
+        @media (max-width: 768px) {
+            .sidebar {
+                transform: translateX(-100%);
+            }
+
+            .main-content {
+                margin-left: 0;
+            }
+
+            header {
+                padding: 0 1rem;
+            }
+
+            .doctor-card {
+                padding: 1rem;
+            }
+        }
+
+        @media (max-width: 576px) {
+            .doctor-card img {
+                width: 80px;
+                height: 80px;
+            }
+
+            .doctor-card h3 {
+                font-size: 1rem;
+            }
+
+            .doctor-card p, .btn-view, .btn-book {
+                font-size: 0.75rem;
+            }
+
+            .btn-view, .btn-book {
+                padding: 0.5rem 1rem;
+            }
+        }
+
+        /* Animation */
+        .main-content {
+            animation: fadeInUp 0.6s ease-out;
+        }
+
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+    </style>
+</head>
+<body>
+<div class="container-fluid">
+    <div class="row">
+        <!-- Sidebar -->
+        <nav class="sidebar col-lg-3 col-xl-2 d-none d-lg-block" id="patientSidebar">
+            <div class="logo">
+                <a href="#">
+                    <i class="fas fa-user-md"></i>
+                    <div>
+                        <h2>MediCare Plus</h2>
+                        <small>Healthcare Portal</small>
+                    </div>
+                </a>
+            </div>
+            <a href="new_appointment.jsp" class="btn btn-light mx-3 mb-3">
+                <i class="fas fa-plus"></i> New Appointment
+            </a>
+            <nav class="sidebar-nav">
+                <div class="nav-section-title">Navigation</div>
+                <ul class="nav flex-column">
+                    <li class="nav-item">
+                        <a href="dashboard.jsp" class="nav-link"><i class="fas fa-th-large"></i> Dashboard</a>
+                    </li>
+                    <div class="nav-section-title">Medical Services</div>
+                    <ul class="nav flex-column">
+                        <li class="nav-item">
+                            <a href="appointments.jsp" class="nav-link"><i class="fas fa-calendar-alt"></i> Appointments</a>
+                        </li>
+                        <li class="nav-item">
+                            <a href="doctors.jsp" class="nav-link active"><i class="fas fa-user-md"></i> Doctors</a>
+                        </li>
+                        <li class="nav-item">
+                            <a href="patients.jsp" class="nav-link"><i class="fas fa-users"></i> Patients</a>
+                        </li>
+                        <li class="nav-item">
+                            <a href="reports.jsp" class="nav-link"><i class="fas fa-chart-bar"></i> Reports</a>
+                        </li>
+                    </ul>
+                    <div class="nav-section-title">Account</div>
+                    <ul class="nav flex-column">
+                        <li class="nav-item">
+                            <a href="profile.jsp" class="nav-link"><i class="fas fa-stethoscope"></i> Profile</a>
+                        </li>
+                    </ul>
+                    <div class="nav-section-title">System</div>
+                    <ul class="nav flex-column">
+                        <li class="nav-item">
+                            <a href="settings.jsp" class="nav-link"><i class="fas fa-cog"></i> Settings</a>
+                        </li>
+                        <li class="nav-item">
+                            <a href="logout.jsp" class="nav-link"><i class="fas fa-sign-out-alt"></i> Logout</a>
+                        </li>
+                    </ul>
+                </ul>
+            </nav>
+        </nav>
+
+        <!-- Main Content -->
+        <main class="main-content col-lg-9 col-xl-10" id="mainContent">
+            <header class="d-flex justify-content-between align-items-center mb-4">
+                <div class="d-flex align-items-center gap-3">
+                    <button class="sidebar-toggle" onclick="toggleSidebar()">
+                        <i class="fas fa-list"></i>
+                    </button>
+                    <h1 class="h3">Doctors</h1>
+                </div>
+                <div class="profile-info">
+                    <div class="notification-bell" role="button" onclick="toggleNotificationModal()">
+                        <i class="fas fa-bell fs-5"></i>
+                        <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger" id="notificationCount">0</span>
+                    </div>
+                    <img src="images/profile.jpg" alt="Profile" class="rounded-circle" onerror="this.src='https://via.placeholder.com/40';">
+                </div>
+            </header>
+
+            <!-- Notification Modal -->
+            <div id="notificationModal" class="notification-modal" style="display: none;">
+                <h5>System Notifications</h5>
+                <div id="notificationList"></div>
+            </div>
+
+            <!-- Doctors Grid -->
+            <div class="row row-cols-1 row-cols-md-2 row-cols-lg-3 g-4" id="doctorsGrid"></div>
+        </main>
+    </div>
+</div>
+
+<!-- Doctor Details Modal -->
+<div class="modal fade" id="doctorModal" tabindex="-1" aria-labelledby="doctorModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="doctorModalLabel"></h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <div class="detail-item">
+                    <span class="detail-label">Specialty</span>
+                    <span class="detail-value" id="modalSpecialty"></span>
+                </div>
+                <div class="detail-item">
+                    <span class="detail-label">Qualifications</span>
+                    <span class="detail-value" id="modalQualifications"></span>
+                </div>
+                <div class="detail-item">
+                    <span class="detail-label">Contact Phone Number</span>
+                    <span class="detail-value" id="modalPhone"></span>
+                </div>
+                <div class="detail-item">
+                    <span class="detail-label">Email</span>
+                    <span class="detail-value" id="modalEmail"></span>
+                </div>
+                <div class="detail-item">
+                    <span class="detail-label">Office Location</span>
+                    <span class="detail-value" id="modalOffice"></span>
+                </div>
+                <div class="detail-item">
+                    <span class="detail-label">Years of Experience</span>
+                    <span class="detail-value" id="modalExperience"></span>
+                </div>
+                <div class="detail-item">
+                    <span class="detail-label">Bio</span>
+                    <span class="detail-value" id="modalBio"></span>
+                </div>
+                <div class="detail-item">
+                    <span class="detail-label">Votes</span>
+                    <span class="detail-value" id="modalVotes"></span>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Bootstrap JS -->
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+<script>
+    // Sidebar toggle functionality
+    function toggleSidebar() {
+        const sidebar = document.getElementById('patientSidebar');
+        const mainContent = document.getElementById('mainContent');
+
+        sidebar.classList.toggle('collapsed');
+        mainContent.classList.toggle('expanded');
+    }
+
+    // Auto-hide sidebar on mobile
+    function checkScreenSize() {
+        const sidebar = document.getElementById('patientSidebar');
+        const mainContent = document.getElementById('mainContent');
+
+        if (window.innerWidth <= 768) {
+            sidebar.classList.add('collapsed');
+            mainContent.classList.add('expanded');
+        } else {
+            sidebar.classList.remove('collapsed');
+            mainContent.classList.remove('expanded');
+        }
+    }
+
+    // Initialize
+    checkScreenSize();
+    window.addEventListener('load', checkScreenSize);
+    window.addEventListener('resize', checkScreenSize);
+
+    // Modal handling
+    const doctorModal = new bootstrap.Modal(document.getElementById('doctorModal'));
+
+    // Fetch doctors from server
+    async function fetchDoctors() {
+        try {
+            const response = await fetch('/api/doctors');
+            if (!response.ok) throw new Error('Failed to fetch doctors');
+            const data = await response.json();
+            return data; // Expected format: [{ id, name, specialty, rating, votes, imageUrl, qualifications, phone, email, office, experience, bio }]
+        } catch (error) {
+            console.error('Error fetching doctors:', error);
+            return [];
+        }
+    }
+
+    // Render doctors
+    async function renderDoctors() {
+        const grid = document.getElementById('doctorsGrid');
+        const doctors = await fetchDoctors();
+        grid.innerHTML = '';
+
+        if (doctors.length === 0) {
+            grid.innerHTML = '<p class="text-center text-muted col-12">No doctors available.</p>';
+            return;
+        }
+
+        doctors.forEach(doctor => {
+            const col = document.createElement('div');
+            col.className = 'col';
+            col.innerHTML = `
+                <div class="doctor-card">
+                    <img src="${doctor.imageUrl || 'https://via.placeholder.com/100'}" alt="${doctor.name}" onerror="this.src='https://via.placeholder.com/100';">
+                    <h3>${doctor.name}</h3>
+                    <p>${doctor.specialty}</p>
+                    <p><i class="fas fa-star text-warning"></i> ${doctor.rating} (${doctor.votes} votes)</p>
+                    <div>
+                        <button class="btn-view" onclick="openDoctorModal(${doctor.id})">View</button>
+                        <a href="new_appointment.jsp?doctorId=${doctor.id}&doctorName=${encodeURIComponent(doctor.name)}" class="btn-book">Book</a>
+                    </div>
+                </div>
+            `;
+            grid.appendChild(col);
+        });
+    }
+
+    // Fetch doctor details
+    async function fetchDoctorDetails(id) {
+        try {
+            const response = await fetch(`/api/doctors/${id}`);
+            if (!response.ok) throw new Error('Failed to fetch doctor details');
+            const data = await response.json();
+            return data;
+        } catch (error) {
+            console.error('Error fetching doctor details:', error);
+            return null;
+        }
+    }
+
+    // Open doctor modal
+    async function openDoctorModal(id) {
+        const doctor = await fetchDoctorDetails(id);
+        if (!doctor) {
+            alert('Failed to load doctor details.');
+            return;
+        }
+
+        document.getElementById('doctorModalLabel').textContent = doctor.name;
+        document.getElementById('modalSpecialty').textContent = doctor.specialty || 'N/A';
+        document.getElementById('modalQualifications').textContent = doctor.qualifications || 'N/A';
+        document.getElementById('modalPhone').textContent = doctor.phone || 'N/A';
+        document.getElementById('modalEmail').textContent = doctor.email || 'N/A';
+        document.getElementById('modalOffice').textContent = doctor.office || 'N/A';
+        document.getElementById('modalExperience').textContent = doctor.experience || 'N/A';
+        document.getElementById('modalBio').textContent = doctor.bio || 'N/A';
+        document.getElementById('modalVotes').innerHTML = `<i class="fas fa-star text-warning"></i> ${doctor.rating || 'N/A'} (${doctor.votes || 0} votes)`;
+
+        doctorModal.show();
+    }
+
+    // Notification modal toggle (placeholder)
+    function toggleNotificationModal() {
+        const modal = document.getElementById('notificationModal');
+        modal.style.display = modal.style.display === 'block' ? 'none' : 'block';
+    }
+
+    // Initialize
+    document.addEventListener('DOMContentLoaded', renderDoctors);
+</script>
+</body>
+</html>

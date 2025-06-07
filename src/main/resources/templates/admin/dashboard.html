@@ -682,9 +682,9 @@
         <div class="nav-section">
             <div class="nav-section-title">User Management</div>
             <div class="nav-item">
-                <a th:href="@{/admin/users(adminId=${adminId})}" class="nav-link">
+                <a th:href="@{/admin/patients(adminId=${adminId})}" class="nav-link">
                     <i class="bi bi-people"></i>
-                    Account Management
+                    Patient Management
                 </a>
             </div>
             <div class="nav-item">
@@ -693,6 +693,13 @@
                     Doctor Management
                 </a>
             </div>
+            <div class="nav-item">
+                <a th:href="@{/admin/receptionists(adminId=${adminId})}" class="nav-link">
+                    <i class="bi bi-person-badge"></i>
+                    Receptionist Management
+                </a>
+            </div>
+
         </div>
 
         <div class="nav-section">
@@ -1027,6 +1034,7 @@
             </div>
 
             <!-- Room Management -->
+            <!-- Trong dashboard.html, phần “Room Management” -->
             <div class="management-card">
                 <div class="card-header">
                     <h3 class="card-title">
@@ -1037,15 +1045,16 @@
                 <div class="card-body">
                     <div class="management-summary">
                         <div class="summary-item">
-                            <div class="summary-value" th:text="${availableRooms != null ? availableRooms : '0'}">22</div>
+                            <div class="summary-value" th:text="${availableRooms != null ? availableRooms : '0'}">25</div>
                             <div class="summary-label">Available</div>
                         </div>
                         <div class="summary-item">
-                            <div class="summary-value" th:text="${occupiedRooms != null ? occupiedRooms : '0'}">6</div>
+                            <div class="summary-value" th:text="${occupiedRooms != null ? occupiedRooms : '0'}">25</div>
                             <div class="summary-label">Occupied</div>
                         </div>
                     </div>
                     <div class="card-actions">
+                        <!-- Thay # bằng đúng đường dẫn -->
                         <a th:href="@{/admin/rooms(adminId=${adminId})}" class="btn-admin-primary">
                             <i class="bi bi-eye"></i>
                             View All
@@ -1057,6 +1066,7 @@
                     </div>
                 </div>
             </div>
+
 
             <!-- Medical Orders -->
             <div class="management-card">

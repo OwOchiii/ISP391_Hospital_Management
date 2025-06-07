@@ -13,6 +13,7 @@ import orochi.repository.UserRepository;
 import orochi.service.UserService;
 
 import java.time.LocalDateTime;
+import java.util.List;
 import java.time.YearMonth;
 import java.util.Optional;
 import java.util.UUID;
@@ -210,4 +211,19 @@ public class UserServiceImpl implements UserService {
 
         logger.info("Password reset successful for user: {}", email);
     }
+    @Override
+    public List<Users> getAllReceptionists() {
+        return userRepository.findByRoleId(3);
+    }
+
+    @Override
+    public Optional<Users> findById(Integer userId) {
+        return userRepository.findById(userId);
+    }
+
+    @Override
+    public Users save(Users user) {
+        return userRepository.save(user);
+    }
+
 }

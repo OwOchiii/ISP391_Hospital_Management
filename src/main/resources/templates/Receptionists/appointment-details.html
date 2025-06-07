@@ -1,0 +1,290 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Appointment Detail</title>
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Font Awesome -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        body {
+            background-color: #f8f9fa;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            color: #212529;
+        }
+
+        .container {
+            padding: 2rem;
+        }
+
+        .card {
+            border-top: 4px solid #0d6efd;
+            border-radius: 0.5rem;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            max-width: 900px;
+            margin: 0 auto;
+        }
+
+        .card-body {
+            padding: 2rem;
+        }
+
+        h1 {
+            font-size: 1.75rem;
+            font-weight: 700;
+            color: #212529;
+            text-align: center;
+            margin-bottom: 1.5rem;
+        }
+
+        h2 {
+            font-size: 1.25rem;
+            font-weight: 600;
+            color: #212529;
+            margin-bottom: 1.5rem;
+        }
+
+        .form-label {
+            font-size: 0.875rem;
+            font-weight: 500;
+            color: #495057;
+        }
+
+        p {
+            font-size: 0.9rem;
+            color: #212529;
+            margin-bottom: 0;
+        }
+
+        .btn-secondary {
+            background-color: #6c757d;
+            border-color: #6c757d;
+            padding: 0.75rem 2rem;
+            font-size: 0.9rem;
+            font-weight: 500;
+        }
+
+        .btn-secondary:hover {
+            background-color: #5c636a;
+            border-color: #565e64;
+        }
+
+        .alert {
+            margin-bottom: 1.5rem;
+            font-size: 0.9rem;
+        }
+
+        .d-none {
+            display: none !important;
+        }
+
+        @media (max-width: 767.98px) {
+            .card-body {
+                padding: 1.5rem;
+            }
+
+            h1 {
+                font-size: 1.5rem;
+            }
+
+            h2 {
+                font-size: 1rem;
+            }
+
+            .btn-secondary {
+                padding: 0.5rem 1.5rem;
+                font-size: 0.85rem;
+            }
+
+            p {
+                font-size: 0.85rem;
+            }
+        }
+    </style>
+</head>
+<body>
+<div class="container">
+    <h1>Appointment Detail</h1>
+    <div class="card">
+        <div class="card-body">
+            <!-- Error Message -->
+            <div id="errorMessage" class="alert alert-danger d-none" role="alert"></div>
+
+            <!-- Personal Information -->
+            <div class="mb-4">
+                <h2>1. Personal Information</h2>
+                <div class="row g-3">
+                    <div class="col-md-6">
+                        <label class="form-label">Full Name</label>
+                        <p id="fullName">-</p>
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label">Gender</label>
+                        <p id="gender">-</p>
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label">Date of Birth</label>
+                        <p id="dateOfBirth">-</p>
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label">Citizen Identification Card</label>
+                        <p id="citizenId">-</p>
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label">Health Insurance Number</label>
+                        <p id="healthInsuranceNumber">-</p>
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label">Contact Phone Number</label>
+                        <p id="phoneNumber">-</p>
+                    </div>
+                    <div class="col-md-12">
+                        <label class="form-label">Contact Address</label>
+                        <p id="contactAddress">-</p>
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label">Email</label>
+                        <p id="email">-</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Appointment Information -->
+            <div class="mb-4">
+                <h2>2. Appointment Information</h2>
+                <div class="row g-3">
+                    <div class="col-md-6">
+                        <label class="form-label">Department/Clinic</label>
+                        <p id="department">-</p>
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label">Type of Visit</label>
+                        <p id="typeOfVisit">-</p>
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label">Preferred Date and Time</label>
+                        <p id="preferredDateTime">-</p>
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label">Preferred Doctor</label>
+                        <p id="preferredDoctor">-</p>
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label">Room</label>
+                        <p id="room">-</p>
+                    </div>
+                    <div class="col-md-12">
+                        <label class="form-label">Reason for Visit</label>
+                        <p id="reasonForVisit">-</p>
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label">Referral Letter</label>
+                        <p id="referralLetter">-</p>
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label">Last Visit Date (if Follow-Up)</label>
+                        <p id="lastVisitDate">-</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Representative Information -->
+            <div class="mb-4">
+                <h2>3. Representative Information</h2>
+                <div class="row g-3">
+                    <div class="col-md-6">
+                        <label class="form-label">Representative Full Name</label>
+                        <p id="representativeFullName">-</p>
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label">Relationship to Patient</label>
+                        <p id="relationshipToPatient">-</p>
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label">Representative Phone Number</label>
+                        <p id="representativePhoneNumber">-</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Special Notes -->
+            <div class="mb-4">
+                <h2>4. Special Notes</h2>
+                <div class="row g-3">
+                    <div class="col-md-6">
+                        <label class="form-label">Special Assistance Requirements</label>
+                        <p id="specialAssistance">-</p>
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label">Language Support</label>
+                        <p id="languageSupport">-</p>
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label">VAT Invoice Required</label>
+                        <p id="vatInvoiceRequired">-</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Back Button -->
+            <div class="text-center">
+                <button onclick="history.back()" class="btn btn-secondary">Back to List</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Bootstrap JS -->
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+<script>
+    // Load appointment data from database
+    async function loadAppointmentData() {
+        try {
+            const response = await fetch('/api/appointment'); // Replace with your API endpoint
+            if (response.ok) {
+                const data = await response.json();
+                document.getElementById('fullName').textContent = data.fullName || '-';
+                document.getElementById('gender').textContent = data.gender || '-';
+                document.getElementById('dateOfBirth').textContent = data.dateOfBirth ? new Date(data.dateOfBirth).toLocaleDateString('en-GB') : '-';
+                document.getElementById('citizenId').textContent = data.citizenId || '-';
+                document.getElementById('healthInsuranceNumber').textContent = data.healthInsuranceNumber || '-';
+                document.getElementById('phoneNumber').textContent = data.phoneNumber || '-';
+                document.getElementById('contactAddress').textContent = data.contactAddress || '-';
+                document.getElementById('email').textContent = data.email || '-';
+                document.getElementById('department').textContent = data.department || '-';
+                document.getElementById('typeOfVisit').textContent = data.typeOfVisit || '-';
+                document.getElementById('preferredDateTime').textContent = data.preferredDateTime ? new Date(data.preferredDateTime).toLocaleString('en-GB', { dateStyle: 'medium', timeStyle: 'short' }) : '-';
+                document.getElementById('preferredDoctor').textContent = data.preferredDoctor || '-';
+                document.getElementById('room').textContent = data.room || '-';
+                document.getElementById('reasonForVisit').textContent = data.reasonForVisit || '-';
+                document.getElementById('referralLetter').textContent = data.referralLetter || '-';
+                document.getElementById('lastVisitDate').textContent = data.lastVisitDate ? new Date(data.lastVisitDate).toLocaleDateString('en-GB') : '-';
+                document.getElementById('representativeFullName').textContent = data.representativeFullName || '-';
+                document.getElementById('relationshipToPatient').textContent = data.relationshipToPatient || '-';
+                document.getElementById('representativePhoneNumber').textContent = data.representativePhoneNumber || '-';
+                document.getElementById('specialAssistance').textContent = data.specialAssistance || '-';
+                document.getElementById('languageSupport').textContent = data.languageSupport || '-';
+                document.getElementById('vatInvoiceRequired').textContent = data.vatInvoiceRequired ? 'Yes' : 'No';
+            } else {
+                showError('Failed to load appointment data.');
+            }
+        } catch (error) {
+            showError('Error loading appointment data.');
+        }
+    }
+
+    // Show error message
+    function showError(message) {
+        const errorMessage = document.getElementById('errorMessage');
+        errorMessage.textContent = message;
+        errorMessage.classList.remove('d-none');
+        setTimeout(() => errorMessage.classList.add('d-none'), 3000);
+    }
+
+    // Load data on page load
+    document.addEventListener('DOMContentLoaded', loadAppointmentData);
+</script>
+</body>
+</html>
