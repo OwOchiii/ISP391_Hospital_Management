@@ -594,27 +594,27 @@
       <div class="modal-dialog modal-lg modal-dialog-centered">
         <div class="modal-content">
           <div class="modal-header">
-            <h5 class="modal-title" id="specializationModalLabel">Thêm/Chỉnh sửa Chuyên môn</h5>
+            <h5 class="modal-title" id="specializationModalLabel" th:text="${isAddMode != null && isAddMode ? 'Thêm Chuyên môn Mới' : 'Chỉnh sửa Chuyên môn'}">Thêm/Chỉnh sửa Chuyên môn</h5>
             <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
           </div>
           <div class="modal-body">
             <form id="specializationForm" th:action="@{/admin/specializations/save(adminId=${adminId})}" method="post" onsubmit="return validateSpecializationForm()">
               <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
-              <input type="hidden" id="specId" name="specId" th:value="${specialization.specId}"/>
+              <input type="hidden" id="specId" name="specId" th:value="${specialization != null ? specialization.specId : ''}"/>
 
               <div class="container-fluid">
                 <div class="row g-3">
                   <div class="col-md-6">
                     <label for="specName" class="form-label">Tên Chuyên môn *</label>
-                    <input type="text" class="form-control" id="specName" name="specName" th:value="${specialization.specName}" required/>
+                    <input type="text" class="form-control" id="specName" name="specName" th:value="${specialization != null ? specialization.specName : ''}" required/>
                   </div>
                   <div class="col-md-6">
                     <label for="symptom" class="form-label">Triệu chứng</label>
-                    <input type="text" class="form-control" id="symptom" name="symptom" th:value="${specialization.symptom}"/>
+                    <input type="text" class="form-control" id="symptom" name="symptom" th:value="${specialization != null ? specialization.symptom : ''}"/>
                   </div>
                   <div class="col-md-6">
                     <label for="price" class="form-label">Giá (VND) *</label>
-                    <input type="number" class="form-control" id="price" name="price" step="0.01" th:value="${specialization.price}" required/>
+                    <input type="number" class="form-control" id="price" name="price" step="0.01" th:value="${specialization != null ? specialization.price : ''}" required/>
                   </div>
                 </div>
               </div>
@@ -687,7 +687,7 @@
       inputPrice.value = '';
     } else if (mode === 'edit') {
       modalTitle.textContent = 'Chỉnh sửa Chuyên môn';
-      inputSpecId.value = button.getAttribute('data-id');
+      inputSpecId.value = button.getAttribute('data-id') || '';
       inputSpecName.value = button.getAttribute('data-specName') || '';
       inputSymptom.value = button.getAttribute('data-symptom') || '';
       inputPrice.value = button.getAttribute('data-price') || '';

@@ -24,8 +24,9 @@ public class AdminSpecializationController {
     @GetMapping("/add")
     public String showAddForm(@RequestParam("adminId") Integer adminId, Model model) {
         model.addAttribute("adminId", adminId);
-        model.addAttribute("specialization", new Specialization());
-        return "admin/specialization/list"; // Sử dụng cùng template cho cả thêm và chỉnh sửa
+        model.addAttribute("specialization", new Specialization()); // Tạo đối tượng mới
+        model.addAttribute("isAddMode", true); // Thêm biến để phân biệt chế độ thêm
+        return "admin/specialization/list";
     }
 
     @PostMapping("/save")
@@ -40,8 +41,12 @@ public class AdminSpecializationController {
                                @RequestParam("adminId") Integer adminId,
                                Model model) {
         Specialization specialization = specializationService.getSpecializationById(specId);
+        if (specialization == null) {
+            return "redirect:/admin/specializations?adminId=" + adminId; // Xử lý nếu không tìm thấy
+        }
         model.addAttribute("adminId", adminId);
         model.addAttribute("specialization", specialization);
+        model.addAttribute("isAddMode", false); // Thêm biến để phân biệt chế độ chỉnh sửa
         return "admin/specialization/list";
     }
 
