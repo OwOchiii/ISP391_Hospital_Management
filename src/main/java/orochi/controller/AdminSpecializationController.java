@@ -18,6 +18,7 @@ public class AdminSpecializationController {
     public String showSpecializations(@RequestParam("adminId") Integer adminId, Model model) {
         model.addAttribute("specializations", specializationService.getAllSpecializations());
         model.addAttribute("adminId", adminId);
+        model.addAttribute("isAddMode", false); // Giá trị mặc định khi chỉ xem danh sách
         return "admin/specialization/list";
     }
 
