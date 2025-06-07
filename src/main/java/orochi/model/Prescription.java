@@ -1,5 +1,6 @@
 package orochi.model;
 
+import com.fasterxml.jackson.annotation.JsonManagedReference;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Data;
@@ -35,7 +36,7 @@ public class Prescription {
     @Column(name = "Notes", length = Integer.MAX_VALUE)
     private String notes;
 
-    @OneToOne
+    @ManyToOne
     @JoinColumn(name = "AppointmentID", insertable = false, updatable = false)
     private Appointment appointment;
 
@@ -48,5 +49,6 @@ public class Prescription {
     private Doctor doctor;
 
     @OneToMany(mappedBy = "prescription", cascade = CascadeType.ALL, orphanRemoval = true)
+    @JsonManagedReference("prescription-medicine")
     private List<Medicine> medicines;
 }

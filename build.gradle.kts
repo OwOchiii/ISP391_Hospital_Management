@@ -49,6 +49,10 @@ dependencies {
     implementation("org.springframework.boot:spring-boot-starter-mail")
     implementation("io.mailtrap:mailtrap-java:1.0.0")
     
+    // Jackson modules for Java 8 date/time support
+    implementation("com.fasterxml.jackson.datatype:jackson-datatype-jsr310")
+    implementation("com.fasterxml.jackson.core:jackson-databind")
+
     // PDF Generation - updated libraries
     implementation("com.itextpdf:itextpdf:5.5.13.3")
     implementation("com.itextpdf:html2pdf:4.0.5")

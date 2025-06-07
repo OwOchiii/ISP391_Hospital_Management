@@ -326,7 +326,7 @@
                 </div>
                 <div th:if="${result.fileUrl != null}" class="mt-2">
                     <span class="fw-semibold">Attached File:</span>
-                    <a th:href="@{/download/medical-results/{filename}(filename=${result.fileUrl != null ? result.fileUrl.substring(result.fileUrl.lastIndexOf('/') + 1) : ''})}" target="_blank" class="text-primary">
+                    <a th:href="@{/download/medical-result/{resultId}(resultId=${result.resultId})}" target="_blank" class="text-primary">
                         <i class="bi bi-file-earmark-arrow-down me-1"></i>Download Attachment
                     </a>
                 </div>
@@ -393,7 +393,12 @@
                 },
                 body: formData
             })
-            .then(response => response.json())
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error('Network response was not ok');
+                }
+                return response.json();
+            })
             .then(data => {
                 // Reset button state
                 generatePdfBtn.disabled = false;
@@ -401,17 +406,27 @@
 
                 if (data.success) {
                     // Show success message
-                    statusMessage.textContent = data.message;
+                    statusMessage.textContent = data.message || 'Report generated successfully!';
                     reportStatus.classList.remove('alert-warning-custom');
                     reportStatus.classList.add('alert-success-custom');
                     reportStatus.style.display = 'flex';
 
                     // Provide download link if available
                     if (data.fileUrl) {
-                        // You could redirect to the file or show a download button
+                        // Create a download button
+                        const downloadBtn = document.createElement('a');
+                        downloadBtn.href = `/download/report/${data.reportId}`;
+                        downloadBtn.className = 'btn btn-success-custom mt-3 d-block';
+                        downloadBtn.innerHTML = '<i class="bi bi-download me-2"></i> Download PDF Report';
+                        downloadBtn.target = '_blank';
+
+                        // Insert button after the form
+                        document.querySelector('.d-flex.justify-content-end').insertAdjacentElement('afterend', downloadBtn);
+
+                        // Automatically trigger download after a short delay
                         setTimeout(() => {
-                            window.location.href = data.fileUrl;
-                        }, 1000);
+                            window.open(`/download/report/${data.reportId}`, '_blank');
+                        }, 1500);
                     }
                 } else {
                     // Show error message

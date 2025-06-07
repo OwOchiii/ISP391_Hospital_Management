@@ -65,6 +65,6 @@ public class Appointment {
     @OneToMany(mappedBy = "appointment")
     private List<MedicalOrder> medicalOrders;
 
-    @OneToOne(mappedBy = "appointment")
-    private Prescription prescription;
+    @OneToMany(mappedBy = "appointment")
+    private List<Prescription> prescriptions;
 }

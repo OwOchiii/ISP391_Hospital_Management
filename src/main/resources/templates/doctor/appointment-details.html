@@ -159,6 +159,9 @@
             border-radius: 16px;
             box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
             padding: 1.5rem;
+            width: 100%;
+            box-sizing: border-box;
+            height: fit-content;
         }
 
         .sidebar-card h5 {
@@ -173,8 +176,6 @@
         .sidebar-card h5 i {
             color: var(--primary-color);
         }
-
-
 
         /* Tabs */
         .nav-tabs {
@@ -524,7 +525,6 @@
             color: white;
         }
 
-
         /* Responsive Design */
         @media (max-width: 1200px) {
             .appointment-grid {
@@ -533,6 +533,19 @@
 
             .appointment-sidebar {
                 order: -1;
+                width: 100%;
+                margin-bottom: 1.5rem;
+            }
+
+            /* Make sidebar cards display horizontally on medium screens */
+            .appointment-sidebar {
+                flex-direction: row;
+                flex-wrap: wrap;
+            }
+
+            .sidebar-card {
+                flex: 1 1 calc(50% - 1rem);
+                min-width: 280px;
             }
         }
 
@@ -570,6 +583,16 @@
 
             .appointment-container {
                 padding: 0 0.5rem;
+            }
+
+            /* Stack sidebar cards vertically on very small screens */
+            .appointment-sidebar {
+                flex-direction: column;
+            }
+
+            .sidebar-card {
+                width: 100%;
+                margin-bottom: 1rem;
             }
         }
 
@@ -694,13 +717,13 @@
                         </div>
                     </div>
 
-                    <!-- Description Section (Merged from reason for visit and symptoms) -->
+                    <!-- Description Section -->
                     <div class="form-group">
                         <label for="appointmentDescription" class="form-label">Description (Reason for Visit & Symptoms)</label>
                         <textarea id="appointmentDescription" class="form-control" rows="5" th:text="${appointment?.description}" placeholder="Enter description, reason for visit, and reported symptoms"></textarea>
                     </div>
 
-                    <!-- Action Buttons - Added Create Medical Order button -->
+                    <!-- Action Buttons -->
                     <div class="action-buttons">
                         <button class="action-btn btn-primary-custom" id="createMedicalOrder" data-bs-toggle="modal" data-bs-target="#medicalOrderModal">
                             <i class="bi bi-clipboard-plus"></i> Create Medical Order
@@ -728,7 +751,6 @@
                     <div class="notes-section mt-4">
                         <h6><i class="bi bi-card-text me-2"></i>Previous Notes</h6>
 
-                        <!-- Example of existing notes (can be populated dynamically) -->
                         <div class="note-item">
                             <div class="note-header">
                                 <span class="note-author">Dr. John Smith</span>
@@ -769,7 +791,6 @@
                     <div class="medical-history">
                         <h6><i class="bi bi-clock-history me-2"></i>Medical History</h6>
 
-                        <!-- Display actual appointment history dynamically -->
                         <div th:if="${patientAppointmentHistory != null and not patientAppointmentHistory.empty}">
                             <div class="history-item" th:each="historyItem : ${patientAppointmentHistory}">
                                 <div class="history-date" th:text="${#temporals.format(historyItem.dateTime, 'MMMM d, yyyy')}">May 23, 2023</div>
@@ -777,7 +798,6 @@
                             </div>
                         </div>
 
-                        <!-- Show this when no history is available -->
                         <div th:if="${patientAppointmentHistory == null or patientAppointmentHistory.empty}" class="alert alert-info">
                             <i class="bi bi-info-circle me-2"></i> No previous appointment history is available for this patient.
                         </div>
@@ -789,11 +809,11 @@
                         <div th:if="${medicalOrders != null and not medicalOrders.empty}">
                             <div class="d-flex justify-content-between align-items-center mb-3">
                                 <div>
-                <span>Showing
-                    <span th:text="${(orderCurrentPage * orderSize) + 1}">1</span>-<span
-                            th:text="${(orderCurrentPage * orderSize) + medicalOrders.size()}">5</span>
-                    of <span th:text="${orderTotalItems}">10</span> orders
-                </span>
+                                    <span>Showing
+                                        <span th:text="${(orderCurrentPage * orderSize) + 1}">1</span>-<span
+                                                th:text="${(orderCurrentPage * orderSize) + medicalOrders.size()}">5</span>
+                                        of <span th:text="${orderTotalItems}">10</span> orders
+                                    </span>
                                 </div>
                                 <div>
                                     <nav aria-label="Medical orders pagination">
@@ -823,8 +843,8 @@
                                     <span th:text="${#dates.format(order.orderDate, 'MMM d, yyyy')}">May 23, 2023</span>
                                     <span class="badge rounded-pill ms-2"
                                           th:classappend="${order.status == 'PENDING' ? 'bg-warning' :
-                       (order.status == 'IN_PROGRESS' ? 'bg-info' :
-                       (order.status == 'COMPLETED' ? 'bg-success' : 'bg-danger'))}"
+                           (order.status == 'IN_PROGRESS' ? 'bg-info' :
+                           (order.status == 'COMPLETED' ? 'bg-success' : 'bg-danger'))}"
                                           th:text="${order.status}">PENDING</span>
                                 </div>
                                 <div class="history-content">
@@ -832,7 +852,6 @@
                                     <span th:text="${order.description}">Complete blood count and metabolic panel</span>
                                 </div>
                                 <div class="mt-2">
-                                    <!-- Button to update status -->
                                     <div class="dropdown d-inline-block">
                                         <button class="btn btn-sm btn-outline-secondary dropdown-toggle"
                                                 type="button"
@@ -880,20 +899,17 @@
                         </button>
                     </div>
 
-
-
-
                     <div class="medical-history mt-4">
                         <h6><i class="bi bi-clipboard-data me-2"></i>Medical Results</h6>
 
                         <div th:if="${results != null and not results.empty}">
                             <div class="d-flex justify-content-between align-items-center mb-3">
                                 <div>
-                <span>Showing
-                    <span th:text="${(resultCurrentPage * resultSize) + 1}">1</span>-<span
-                            th:text="${(resultCurrentPage * resultSize) + results.size()}">5</span>
-                    of <span th:text="${resultTotalItems}">10</span> results
-                </span>
+                                    <span>Showing
+                                        <span th:text="${(resultCurrentPage * resultSize) + 1}">1</span>-<span
+                                                th:text="${(resultCurrentPage * resultSize) + results.size()}">5</span>
+                                        of <span th:text="${resultTotalItems}">10</span> results
+                                    </span>
                                 </div>
                                 <div>
                                     <nav aria-label="Medical results pagination">
@@ -918,53 +934,42 @@
                                 </div>
                             </div>
 
-
-                            <!-- Updated Medical Results Display with Order Reference -->
                             <div class="history-item" th:each="result : ${results}">
                                 <div class="history-date">
                                     <span th:text="${#temporals.format(result.resultDate, 'MMM d, yyyy')}">May 23, 2023</span>
                                     <span class="badge rounded-pill ms-2"
                                           th:classappend="${result.status == 'PENDING' ? 'bg-warning' :
-(result.status == 'IN_PROGRESS' ? 'bg-info' :
-(result.status == 'COMPLETED' ? 'bg-success' : 'bg-danger'))}"
+                    (result.status == 'IN_PROGRESS' ? 'bg-info' :
+                    (result.status == 'COMPLETED' ? 'bg-success' : 'bg-danger'))}"
                                           th:text="${result.status}">PENDING</span>
                                 </div>
                                 <div class="history-content">
                                     <span th:text="${result.description}">Blood test results showing normal values</span>
                                 </div>
-                                <!-- Related Medical Order Information -->
                                 <div class="history-order-link mt-1 mb-1">
-                                    <!-- Create a flag variable to track if we found a linked order -->
                                     <th:block th:with="foundLinkedOrder=${false}">
-                                        <!-- Loop through all orders and check for matches -->
                                         <th:block th:each="order : ${medicalOrders}">
-                                            <!-- Display linked order info if there's a match -->
                                             <th:block th:if="${order.resultId != null && order.resultId == result.resultId}">
-                                                    <span class="text-muted">
-                                                        <i class="bi bi-link"></i>
-                                                        <strong>Linked to order:</strong>
-                                                        <span class="badge bg-secondary" th:text="${order.orderType}">LAB</span>
-                                                        <span th:text="${order.description}">Complete blood count</span>
-                                                    </span>
-                                                <!-- Set our flag to true and break the loop -->
+                                                <span class="text-muted">
+                                                    <i class="bi bi-link"></i>
+                                                    <strong>Linked to order:</strong>
+                                                    <span class="badge bg-secondary" th:text="${order.orderType}">LAB</span>
+                                                    <span th:text="${order.description}">Complete blood count</span>
+                                                </span>
                                                 <th:block th:with="foundLinkedOrder=${true}" th:remove="tag"></th:block>
                                             </th:block>
                                         </th:block>
-                                        <!-- Only show "not linked" message if no match was found -->
                                         <th:block th:if="${!foundLinkedOrder}">
-                                <div class="mt-2" th:if="${result.fileUrl != null}">
-                                    <a th:href="@{/download/medical-results/{filename}(filename=${result.fileUrl != null ? result.fileUrl.substring(result.fileUrl.lastIndexOf('/') + 1) : ''})}"
-                                       class="btn btn-sm btn-outline-primary">
-                                        <i class="bi bi-download"></i> Download File
-                                    </a>
-                                    <a th:href="@{/download/medical-results/{filename}(filename=${result.fileUrl != null ? result.fileUrl.substring(result.fileUrl.lastIndexOf('/') + 1) : ''}, inline=true)}"
-                                       class="btn btn-sm btn-outline-secondary ms-2" target="_blank">
-                                        <i class="bi bi-eye"></i> View File
-                                    </a>
+                                            <div class="mt-2" th:if="${result.fileUrl != null}">
+                                                <a th:href="@{/download/medical-results/{filename}(filename=${result.fileUrl != null ? result.fileUrl.substring(result.fileUrl.lastIndexOf('/') + 1) : ''})}"
+                                                   class="btn btn-sm btn-outline-primary">
+                                                    <i class="bi bi-download"></i> Download File
+                                                </a>
+                                            </div>
+                                        </th:block>
+                                    </th:block>
                                 </div>
                             </div>
-
-
                         </div>
 
                         <div th:if="${results == null or results.empty}" class="alert alert-info">
@@ -976,11 +981,9 @@
                         </button>
                     </div>
 
-
                     <div class="medical-history mt-4">
                         <h6><i class="bi bi-capsule me-2"></i>Prescriptions</h6>
 
-                        <!-- Display prescriptions if they exist -->
                         <div th:if="${prescriptions != null and not prescriptions.empty}">
                             <div class="history-item" th:each="prescription : ${prescriptions}">
                                 <div class="history-date">
@@ -990,7 +993,6 @@
                                     <strong>Prescription #<span th:text="${prescription.prescriptionId}">123</span></strong>
                                     <p th:text="${prescription.notes}">General notes about the prescription</p>
 
-                                    <!-- Medicines in this prescription -->
                                     <div class="mt-2 mb-2">
                                         <strong>Medications:</strong>
                                         <ul class="list-group mt-1">
@@ -1041,7 +1043,6 @@
                             </div>
                         </div>
 
-                        <!-- Show this when no prescriptions are available -->
                         <div th:if="${prescriptions == null or prescriptions.empty}" class="alert alert-info">
                             <i class="bi bi-info-circle me-2"></i> No prescriptions have been created for this appointment yet.
                         </div>
@@ -1051,82 +1052,13 @@
                         </button>
                     </div>
 
-
                     <a th:href="@{/medical-results/generate-report/{appointmentId}(appointmentId=${appointment.appointmentId},doctorId=${doctorId})}"
                        class="action-btn btn-info-custom">
                         <i class="bi bi-file-earmark-medical"></i> Generate Medical Report
                     </a>
-
                 </div>
             </div>
         </div>
-
-        <!-- Updated Medical Result Modal with Order Selection -->
-        <div class="modal fade" id="addMedicalResultModal" tabindex="-1" aria-labelledby="medicalResultModalLabel" aria-hidden="true">
-            <div class="modal-dialog modal-lg">
-                <div class="modal-content">
-                    <div class="modal-header">
-                        <h5 class="modal-title" id="addMedicalResultModalLabel">
-                            <i class="bi bi-clipboard-data"></i> Add Medical Result
-                        </h5>
-                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                    </div>
-                    <div class="modal-body">
-                        <div class="alert alert-info">
-                            <i class="bi bi-info-circle me-2"></i> <strong>Note:</strong> Each medical order can have only one result. Select a specific order to link this result to it.
-                        </div>
-
-                        <form th:action="@{/doctor/appointments/{appointmentId}/medical-result/submit(appointmentId=${appointment.appointmentId})}" method="post" enctype="multipart/form-data">
-                            <input type="hidden" name="appointmentId" th:value="${appointment.appointmentId}">
-                            <input type="hidden" name="doctorId" th:value="${doctorId}">
-
-                            <div class="form-group mb-3">
-                                <label for="orderId" class="form-label">Select Medical Order (Optional)</label>
-                                <select id="orderId" name="orderId" class="form-select">
-                                    <option value="">Create result without linking to an order</option>
-                                    <option th:each="order : ${medicalOrders}"
-                                            th:if="${order.resultId == null}"
-                                            th:value="${order.orderId}"
-                                            th:text="${order.orderType + ' - ' + order.description + ' (' + order.status + ')'}">
-                                        Order type - Description (Status)
-                                    </option>
-                                </select>
-                                <small class="text-muted">Only orders without existing results are shown. Each order can have only one result.</small>
-                            </div>
-
-                            <div class="form-group mb-3">
-                                <label for="resultDescription" class="form-label">Result Description</label>
-                                <textarea id="resultDescription" name="description" class="form-control" rows="4" required></textarea>
-                            </div>
-
-                            <div class="form-group mb-3">
-                                <label for="resultFile" class="form-label">Upload Result File (optional)</label>
-                                <input type="file" id="resultFile" name="resultFile" class="form-control">
-                            </div>
-
-                            <div class="form-group mb-3">
-                                <label for="resultStatus" class="form-label">Result Status</label>
-                                <select id="resultStatus" name="status" class="form-select" required>
-                                    <option value="PENDING">Pending</option>
-                                    <option value="IN_PROGRESS">In Progress</option>
-                                    <option value="COMPLETED">Completed</option>
-                                    <option value="CANCELLED">Cancelled</option>
-                                </select>
-                            </div>
-
-                            <div class="text-end">
-                                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-                                <button type="submit" class="btn btn-primary-custom">
-                                    <i class="bi bi-save"></i> Save Result
-                                </button>
-                            </div>
-                        </form>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-
 
         <!-- Sidebar -->
         <div class="appointment-sidebar">
@@ -1249,36 +1181,52 @@
     </div>
 </div>
 
-<!-- Medical Result Modal -->
-<div class="modal fade" id="medicalResultModal" tabindex="-1" aria-labelledby="medicalResultModalLabel" aria-hidden="true">
+<!-- Add Medical Result Modal -->
+<div class="modal fade" id="addMedicalResultModal" tabindex="-1" aria-labelledby="addMedicalResultModalLabel" aria-hidden="true">
     <div class="modal-dialog modal-lg">
         <div class="modal-content">
             <div class="modal-header">
-                <h5 class="modal-title" id="medicalResultModalLabel">
+                <h5 class="modal-title" id="addMedicalResultModalLabel">
                     <i class="bi bi-clipboard-data"></i> Add Medical Result
                 </h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
             <div class="modal-body">
-                <form th:action="@{/doctor/appointments/{appointmentId}/medical-result/submit(appointmentId=${appointment.appointmentId})}"
-                      method="post"
-                      enctype="multipart/form-data">
+                <div class="alert alert-info">
+                    <i class="bi bi-info-circle me-2"></i> <strong>Note:</strong> Each medical order can have only one result. Select a specific order to link this result to it.
+                </div>
+
+                <form th:action="@{/doctor/appointments/{appointmentId}/medical-result/submit(appointmentId=${appointment.appointmentId})}" method="post" enctype="multipart/form-data">
+                    <input type="hidden" name="appointmentId" th:value="${appointment.appointmentId}">
                     <input type="hidden" name="doctorId" th:value="${doctorId}">
 
                     <div class="form-group mb-3">
-                        <label for="description" class="form-label">Result Description</label>
-                        <textarea id="description" name="description" class="form-control" rows="4" required></textarea>
+                        <label for="orderId" class="form-label">Select Medical Order (Optional)</label>
+                        <select id="orderId" name="orderId" class="form-select">
+                            <option value="">Create result without linking to an order</option>
+                            <option th:each="order : ${medicalOrders}"
+                                    th:if="${order.resultId == null}"
+                                    th:value="${order.orderId}"
+                                    th:text="${order.orderType + ' - ' + order.description + ' (' + order.status + ')'}">
+                                Order type - Description (Status)
+                            </option>
+                        </select>
+                        <small class="text-muted">Only orders without existing results are shown. Each order can have only one result.</small>
                     </div>
 
                     <div class="form-group mb-3">
-                        <label for="fileUrl" class="form-label">File URL (if available)</label>
-                        <input type="text" id="fileUrl" name="fileUrl" class="form-control">
-                        <small class="text-muted">Enter the URL if you have an external file to reference</small>
+                        <label for="resultDescription" class="form-label">Result Description</label>
+                        <textarea id="resultDescription" name="description" class="form-control" rows="4" required></textarea>
                     </div>
 
                     <div class="form-group mb-3">
-                        <label for="status" class="form-label">Result Status</label>
-                        <select id="status" name="status" class="form-select" required>
+                        <label for="resultFile" class="form-label">Upload Result File (optional)</label>
+                        <input type="file" id="resultFile" name="resultFile" class="form-control">
+                    </div>
+
+                    <div class="form-group mb-3">
+                        <label for="resultStatus" class="form-label">Result Status</label>
+                        <select id="resultStatus" name="status" class="form-select" required>
                             <option value="PENDING">Pending</option>
                             <option value="IN_PROGRESS">In Progress</option>
                             <option value="COMPLETED">Completed</option>
@@ -1286,7 +1234,7 @@
                         </select>
                     </div>
 
-                    <div class="modal-footer">
+                    <div class="text-end">
                         <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
                         <button type="submit" class="btn btn-primary-custom">
                             <i class="bi bi-save"></i> Save Result
@@ -1362,6 +1310,7 @@
     </div>
 </div>
 
+<!-- Add Medicine Modal -->
 <div class="modal fade" id="addMedicineModal" tabindex="-1" aria-labelledby="addMedicineModalLabel" aria-hidden="true">
     <div class="modal-dialog modal-lg">
         <div class="modal-content">
@@ -1424,17 +1373,15 @@
     </div>
 </div>
 
-</body>
+<!-- Bootstrap JS Bundle with Popper -->
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 <script src="/js/doctor-notes.js"></script>
 <script src="/js/medical-orders.js"></script>
 
-<!-- Bootstrap JS Bundle with Popper -->
-<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 <script>
     // Simple confirmation dialogs for appointment actions
     document.getElementById('completeAppointment').addEventListener('click', function() {
         if (confirm('Are you sure you want to mark this appointment as completed?')) {
-            // Get the appointment ID and doctor ID
             const appointmentId = getAppointmentIdFromUrl();
             const doctorId = getDoctorIdFromUrl();
 
@@ -1448,7 +1395,6 @@
 
     document.getElementById('cancelAppointment').addEventListener('click', function() {
         if (confirm('Are you sure you want to cancel this appointment?')) {
-            // Get the appointment ID and doctor ID
             const appointmentId = getAppointmentIdFromUrl();
             const doctorId = getDoctorIdFromUrl();
 
@@ -1462,17 +1408,14 @@
 
     // Function to update appointment status
     function updateAppointmentStatus(appointmentId, doctorId, status) {
-        // Get CSRF token
         const token = document.querySelector('meta[name="_csrf"]').getAttribute('content');
         const header = document.querySelector('meta[name="_csrf_header"]').getAttribute('content');
 
-        // Create form data
         const formData = new FormData();
         formData.append('appointmentId', appointmentId);
         formData.append('doctorId', doctorId);
         formData.append('status', status);
 
-        // Send AJAX request
         fetch('/doctor/appointments/update-status', {
             method: 'POST',
             headers: {
@@ -1480,41 +1423,36 @@
             },
             body: formData
         })
-        .then(response => response.json())
-        .then(data => {
-            if (data.success) {
-                // Show success message
-                const alertDiv = document.createElement('div');
-                alertDiv.className = 'alert-custom alert-success-custom';
-                alertDiv.innerHTML = `<i class="bi bi-check-circle"></i> ${data.message}`;
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    const alertDiv = document.createElement('div');
+                    alertDiv.className = 'alert-custom alert-success-custom';
+                    alertDiv.innerHTML = `<i class="bi bi-check-circle"></i> ${data.message}`;
 
-                // Insert at the top of the main content
-                const container = document.querySelector('.appointment-container');
-                container.insertBefore(alertDiv, container.firstChild);
+                    const container = document.querySelector('.appointment-container');
+                    container.insertBefore(alertDiv, container.firstChild);
 
-                // Update status badge
-                const statusBadge = document.querySelector('.status-badge');
-                if (statusBadge) {
-                    statusBadge.textContent = status;
-                    statusBadge.className = 'status-badge ' +
-                        (status === 'Completed' ? 'status-completed' :
-                         status === 'Scheduled' ? 'status-scheduled' :
-                         status === 'Pending' ? 'status-pending' : 'status-cancelled');
+                    const statusBadge = document.querySelector('.status-badge');
+                    if (statusBadge) {
+                        statusBadge.textContent = status;
+                        statusBadge.className = 'status-badge ' +
+                            (status === 'Completed' ? 'status-completed' :
+                                status === 'Scheduled' ? 'status-scheduled' :
+                                    status === 'Pending' ? 'status-pending' : 'status-cancelled');
+                    }
+
+                    setTimeout(() => {
+                        window.location.reload();
+                    }, 1500);
+                } else {
+                    alert('Error: ' + data.message);
                 }
-
-                // Reload after a short delay
-                setTimeout(() => {
-                    window.location.reload();
-                }, 1500);
-            } else {
-                // Show error message
-                alert('Error: ' + data.message);
-            }
-        })
-        .catch(error => {
-            console.error('Error:', error);
-            alert('An error occurred while updating the appointment status.');
-        });
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('An error occurred while updating the appointment status.');
+            });
     }
 
     // Helper functions to get IDs from URL
@@ -1522,13 +1460,11 @@
         const urlPath = window.location.pathname;
         const pathParts = urlPath.split('/');
 
-        // URL format is typically /doctor/appointments/{appointmentId}
         for (let i = 0; i < pathParts.length; i++) {
             if (pathParts[i] === 'appointments' && i + 1 < pathParts.length) {
                 return parseInt(pathParts[i + 1]);
             }
         }
-
         return null;
     }
 
@@ -1547,11 +1483,9 @@
             const doctorId = document.getElementById('doctorId').value;
             const notes = document.getElementById('prescriptionNotes').value;
 
-            // Get CSRF token
             const token = document.querySelector('meta[name="_csrf"]').getAttribute('content');
             const header = document.querySelector('meta[name="_csrf_header"]').getAttribute('content');
 
-            // Create form data
             const formData = new FormData();
             formData.append('appointmentId', appointmentId);
             formData.append('patientId', patientId);
@@ -1568,11 +1502,9 @@
                 .then(response => response.json())
                 .then(data => {
                     if (data.success) {
-                        // Close modal
                         const modal = bootstrap.Modal.getInstance(document.getElementById('createPrescriptionModal'));
                         modal.hide();
 
-                        // Show success message and reload
                         showAlert('success', data.message);
                         setTimeout(() => {
                             window.location.reload();
@@ -1587,49 +1519,42 @@
                 });
         });
 
-        document.addEventListener('DOMContentLoaded', function() {
-            // Get all tabs
-            const tabs = document.querySelectorAll('#appointmentTabs button[data-bs-toggle="tab"]');
+        // Tab persistence
+        const tabs = document.querySelectorAll('#appointmentTabs button[data-bs-toggle="tab"]');
 
-            // Store active tab in session storage when changed
-            tabs.forEach(tab => {
-                tab.addEventListener('shown.bs.tab', function(e) {
-                    sessionStorage.setItem('activeOrderTab', '#' + e.target.id);
-                });
+        tabs.forEach(tab => {
+            tab.addEventListener('shown.bs.tab', function(e) {
+                sessionStorage.setItem('activeOrderTab', '#' + e.target.id);
             });
+        });
 
-            // Restore active tab from session storage or URL parameter
-            const urlParams = new URLSearchParams(window.location.search);
-            const activeTab = urlParams.get('tab');
+        const urlParams = new URLSearchParams(window.location.search);
+        const activeTab = urlParams.get('tab');
 
-            if (activeTab) {
-                // If tab specified in URL, activate it
-                const tabEl = document.querySelector(`#${activeTab}-tab`);
+        if (activeTab) {
+            const tabEl = document.querySelector(`#${activeTab}-tab`);
+            if (tabEl) {
+                const tab = new bootstrap.Tab(tabEl);
+                tab.show();
+            }
+        } else {
+            const storedTab = sessionStorage.getItem('activeOrderTab');
+            if (storedTab) {
+                const tabEl = document.querySelector(storedTab);
                 if (tabEl) {
                     const tab = new bootstrap.Tab(tabEl);
                     tab.show();
                 }
-            } else {
-                // Otherwise check session storage
-                const storedTab = sessionStorage.getItem('activeOrderTab');
-                if (storedTab) {
-                    const tabEl = document.querySelector(storedTab);
-                    if (tabEl) {
-                        const tab = new bootstrap.Tab(tabEl);
-                        tab.show();
-                    }
-                }
             }
-        });
+        }
 
         // Add Medicine to Prescription
         document.querySelectorAll('.add-medicine').forEach(button => {
             button.addEventListener('click', function() {
                 const prescriptionId = this.getAttribute('data-prescription-id');
                 document.getElementById('medicinePrescriptionId').value = prescriptionId;
-                document.getElementById('medicineId').value = ''; // Clear ID for new medicine
+                document.getElementById('medicineId').value = '';
 
-                // Reset form
                 document.getElementById('medicineForm').reset();
                 document.getElementById('addMedicineModalLabel').textContent = 'Add Medication to Prescription';
             });
@@ -1641,14 +1566,12 @@
                 const medicineId = this.getAttribute('data-medicine-id');
                 const prescriptionId = this.getAttribute('data-prescription-id');
 
-                // Get medicine details
                 fetch(`/doctor/prescriptions/medicine/${medicineId}`)
                     .then(response => response.json())
                     .then(data => {
                         if (data.success) {
                             const medicine = data.medicine;
 
-                            // Populate form
                             document.getElementById('medicineId').value = medicine.medicationId;
                             document.getElementById('medicinePrescriptionId').value = prescriptionId;
                             document.getElementById('medicineSelect').value = medicine.inventoryId;
@@ -1657,10 +1580,8 @@
                             document.getElementById('medicineDuration').value = medicine.duration;
                             document.getElementById('medicineInstructions').value = medicine.instructions;
 
-                            // Update modal title
                             document.getElementById('addMedicineModalLabel').textContent = 'Edit Medication';
 
-                            // Show modal
                             const modal = new bootstrap.Modal(document.getElementById('addMedicineModal'));
                             modal.show();
                         } else {
@@ -1684,17 +1605,14 @@
             const duration = document.getElementById('medicineDuration').value;
             const instructions = document.getElementById('medicineInstructions').value;
 
-            // Validate form
             if (!inventoryId || !dosage || !frequency || !duration) {
                 showAlert('error', 'Please fill in all required fields.');
                 return;
             }
 
-            // Get CSRF token
             const token = document.querySelector('meta[name="_csrf"]').getAttribute('content');
             const header = document.querySelector('meta[name="_csrf_header"]').getAttribute('content');
 
-            // Create form data
             const formData = new FormData();
             formData.append('prescriptionId', prescriptionId);
             formData.append('inventoryId', inventoryId);
@@ -1703,7 +1621,6 @@
             formData.append('duration', duration);
             formData.append('instructions', instructions);
 
-            // Determine if creating or updating
             const url = medicineId ?
                 `/doctor/prescriptions/medicine/update/${medicineId}` :
                 '/doctor/prescriptions/medicine/add';
@@ -1718,11 +1635,9 @@
                 .then(response => response.json())
                 .then(data => {
                     if (data.success) {
-                        // Close modal
                         const modal = bootstrap.Modal.getInstance(document.getElementById('addMedicineModal'));
                         modal.hide();
 
-                        // Show success message and reload
                         showAlert('success', data.message);
                         setTimeout(() => {
                             window.location.reload();
@@ -1743,7 +1658,6 @@
                 if (confirm('Are you sure you want to remove this medication from the prescription?')) {
                     const medicineId = this.getAttribute('data-medicine-id');
 
-                    // Get CSRF token
                     const token = document.querySelector('meta[name="_csrf"]').getAttribute('content');
                     const header = document.querySelector('meta[name="_csrf_header"]').getAttribute('content');
 
@@ -1791,11 +1705,9 @@
             const prescriptionId = document.getElementById('editPrescriptionId').value;
             const notes = document.getElementById('editPrescriptionNotes').value;
 
-            // Get CSRF token
             const token = document.querySelector('meta[name="_csrf"]').getAttribute('content');
             const header = document.querySelector('meta[name="_csrf_header"]').getAttribute('content');
 
-            // Create form data
             const formData = new FormData();
             formData.append('prescriptionId', prescriptionId);
             formData.append('notes', notes);
@@ -1810,11 +1722,9 @@
                 .then(response => response.json())
                 .then(data => {
                     if (data.success) {
-                        // Close modal
                         const modal = bootstrap.Modal.getInstance(document.getElementById('editPrescriptionNotesModal'));
                         modal.hide();
 
-                        // Show success message and reload
                         showAlert('success', data.message);
                         setTimeout(() => {
                             window.location.reload();
@@ -1835,39 +1745,37 @@
                 if (confirm('Are you sure you want to delete this prescription? This will also remove all medications associated with it.')) {
                     const prescriptionId = this.getAttribute('data-prescription-id');
 
-                    // Get CSRF token
                     const token = document.querySelector('meta[name="_csrf"]').getAttribute('content');
                     const header = document.querySelector('meta[name="_csrf_header"]').getAttribute('content');
 
-                    // Use fetch with JSON instead of FormData
                     fetch(`/doctor/prescriptions/delete/${prescriptionId}`, {
                         method: 'POST',
                         headers: {
                             [header]: token,
                             'Content-Type': 'application/json'
                         },
-                        body: JSON.stringify({}) // Empty JSON object
+                        body: JSON.stringify({})
                     })
-                    .then(response => {
-                        if (!response.ok) {
-                            throw new Error('Network response was not ok');
-                        }
-                        return response.json();
-                    })
-                    .then(data => {
-                        if (data.success) {
-                            showAlert('success', data.message);
-                            setTimeout(() => {
-                                window.location.reload();
-                            }, 1500);
-                        } else {
-                            showAlert('error', data.message || 'An error occurred');
-                        }
-                    })
-                    .catch(error => {
-                        console.error('Error:', error);
-                        showAlert('error', 'An error occurred while deleting the prescription.');
-                    });
+                        .then(response => {
+                            if (!response.ok) {
+                                throw new Error('Network response was not ok');
+                            }
+                            return response.json();
+                        })
+                        .then(data => {
+                            if (data.success) {
+                                showAlert('success', data.message);
+                                setTimeout(() => {
+                                    window.location.reload();
+                                }, 1500);
+                            } else {
+                                showAlert('error', data.message || 'An error occurred');
+                            }
+                        })
+                        .catch(error => {
+                            console.error('Error:', error);
+                            showAlert('error', 'An error occurred while deleting the prescription.');
+                        });
                 }
             });
         });
@@ -1878,11 +1786,9 @@
             alertDiv.className = `alert-custom ${type === 'success' ? 'alert-success-custom' : 'alert-warning-custom'}`;
             alertDiv.innerHTML = `<i class="bi ${type === 'success' ? 'bi-check-circle' : 'bi-exclamation-triangle'}"></i> ${message}`;
 
-            // Insert at the top of the main content
             const container = document.querySelector('.appointment-container');
             container.insertBefore(alertDiv, container.firstChild);
 
-            // Auto remove after 5 seconds
             setTimeout(() => {
                 alertDiv.remove();
             }, 5000);
@@ -1890,5 +1796,5 @@
     });
 </script>
 
+</body>
 </html>
-
