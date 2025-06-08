@@ -1,6 +1,6 @@
 package orochi.service.impl;
 
-import orochi.model.Service;
+import orochi.model.MedicalService;
 import orochi.model.Specialization;
 import orochi.repository.ServiceRepository;
 import orochi.repository.SpecializationRepository;
@@ -19,15 +19,15 @@ public class ServiceServiceImpl {
         this.specializationRepository = specializationRepository;
     }
 
-    public List<Service> getAllServices() {
+    public List<MedicalService> getAllServices() {
         return serviceRepository.findAll();
     }
 
-    public Service saveService(Service service) {
+    public MedicalService saveService(MedicalService service) {
         return serviceRepository.save(service);
     }
 
-    public Service getServiceById(Integer serviceId) {
+    public MedicalService getServiceById(Integer serviceId) {
         return serviceRepository.findById(serviceId).orElse(null);
     }
 

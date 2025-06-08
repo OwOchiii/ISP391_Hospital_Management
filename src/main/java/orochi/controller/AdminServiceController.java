@@ -1,6 +1,6 @@
 package orochi.controller;
 
-import orochi.model.Service;
+import orochi.model.MedicalService;
 import orochi.model.Specialization;
 import orochi.service.impl.ServiceServiceImpl;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -21,14 +21,14 @@ public class AdminServiceController {
     public String showServices(@RequestParam("adminId") Integer adminId, Model model) {
         model.addAttribute("services", serviceService.getAllServices());
         model.addAttribute("adminId", adminId);
-        model.addAttribute("isAddMode", false); // Giá trị mặc định khi xem danh sách
+        model.addAttribute("isAddMode", false);
         return "admin/service/list";
     }
 
     @GetMapping("/add")
     public String showAddForm(@RequestParam("adminId") Integer adminId, Model model) {
         model.addAttribute("adminId", adminId);
-        model.addAttribute("service", new Service());
+        model.addAttribute("service", new MedicalService());
         model.addAttribute("specializations", serviceService.getAllSpecializations());
         model.addAttribute("isAddMode", true);
         return "admin/service/list";
@@ -36,7 +36,7 @@ public class AdminServiceController {
 
     @PostMapping("/save")
     public String saveService(@RequestParam("adminId") Integer adminId,
-                              @ModelAttribute Service service) {
+                              @ModelAttribute MedicalService service) {
         serviceService.saveService(service);
         return "redirect:/admin/services?adminId=" + adminId;
     }
@@ -45,7 +45,7 @@ public class AdminServiceController {
     public String showEditForm(@PathVariable("serviceId") Integer serviceId,
                                @RequestParam("adminId") Integer adminId,
                                Model model) {
-        Service service = serviceService.getServiceById(serviceId);
+        MedicalService service = serviceService.getServiceById(serviceId);
         if (service == null) {
             return "redirect:/admin/services?adminId=" + adminId;
         }
