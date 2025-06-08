@@ -301,10 +301,16 @@ public class PatientDashboardController {
                 return "error";
             }
 
-            Optional<Patient> patient = patientRepository.findById(patientId);
-            if (patient.isPresent()) {
-                model.addAttribute("patient", patient.get());
+            Optional<Patient> patientOpt = patientRepository.findById(patientId);
+            if (!patientOpt.isPresent()) {
+                logger.error("Patient not found for ID: {}", patientId);
+                model.addAttribute("errorMessage", "Patient not found");
+                return "error";
             }
+            Patient patient = patientOpt.get();
+            model.addAttribute("patient", patient);
+            model.addAttribute("patientName", patient.getUser().getFullName());
+            model.addAttribute("patientId", patientId);
 
             return "patient/profile";
         } catch (Exception e) {
@@ -312,6 +318,11 @@ public class PatientDashboardController {
             model.addAttribute("errorMessage", "An error occurred: " + e.getMessage());
             return "error";
         }
+    }
+
+    @GetMapping("/update-profile")
+    public String updateProfile() {
+        return "patient/update-profile";
     }
 
     @GetMapping("/customer-support")
