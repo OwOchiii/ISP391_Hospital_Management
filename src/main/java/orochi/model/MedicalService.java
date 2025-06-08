@@ -1,4 +1,4 @@
-    package orochi.model;
+package orochi.model;
 
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
@@ -12,7 +12,7 @@ import java.math.BigDecimal;
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
-public class Service {
+public class MedicalService {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
