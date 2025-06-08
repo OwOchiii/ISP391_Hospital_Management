@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Quản lý Chuyên môn - MediCare Plus</title>
+  <title>Specialty Management - MediCare Plus</title>
   <!-- Bootstrap CSS -->
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
   <!-- Bootstrap Icons -->
@@ -463,7 +463,7 @@
       <div class="nav-item">
         <a th:href="@{/admin/specializations(adminId=${adminId})}" class="nav-link active">
           <i class="bi bi-award"></i>
-          Specialties Management
+          Specialty Management
         </a>
       </div>
     </div>
@@ -516,7 +516,7 @@
       <button class="sidebar-toggle" onclick="toggleSidebar()">
         <i class="bi bi-list"></i>
       </button>
-      <h1 class="page-title">Quản lý Chuyên môn</h1>
+      <h1 class="page-title">Specialty Management</h1>
     </div>
     <div class="header-right">
       <div class="header-actions">
@@ -542,26 +542,26 @@
 
   <!-- Content Area -->
   <div class="content-area">
-    <!-- Specialization Management Content -->
+    <!-- Specialty Management Content -->
     <div class="d-flex justify-content-between align-items-center mb-3">
       <div>
         <button type="button" class="btn btn-success me-2" data-bs-toggle="modal" data-bs-target="#specializationModal" data-mode="add">
-          <i class="bi bi-plus-lg"></i> Thêm Chuyên môn
+          <i class="bi bi-plus-lg"></i> Add Specialty
         </button>
         <a th:href="@{/admin/dashboard(adminId=${adminId})}" class="btn btn-outline-primary me-2">
-          <i class="bi bi-house-door-fill"></i> Quay lại Bảng điều khiển
+          <i class="bi bi-house-door-fill"></i> Back to Dashboard
         </a>
         <a th:href="@{/admin/specializations(adminId=${adminId})}" class="btn btn-primary">
-          <i class="bi bi-arrow-clockwise"></i> Làm mới
+          <i class="bi bi-arrow-clockwise"></i> Refresh
         </a>
       </div>
     </div>
 
-    <!-- Specialization Cards -->
+    <!-- Specialty Cards -->
     <div class="row g-4">
       <div th:if="${#lists.isEmpty(specializations)}" class="col-12">
         <div class="alert alert-warning text-center">
-          Không tìm thấy chuyên môn nào.
+          No specialties found.
         </div>
       </div>
       <div th:each="s : ${specializations}" class="col-12 col-sm-6 col-lg-4">
@@ -571,17 +571,17 @@
               <div class="flex-grow-1">
                 <h5 class="card-title mb-2" th:text="${s.specName}">Cardiology</h5>
                 <div class="specialization-info">
-                  <p class="mb-1" th:text="'Triệu chứng: ' + ${s.symptom != null ? s.symptom : 'Không có'}">Triệu chứng: Không xác định</p>
-                  <p class="mb-1" th:text="'Giá: ' + ${#numbers.formatDecimal(s.price, 0, 'COMMA', 2, 'POINT')} + ' VND'">Giá: 0 VND</p>
+                  <p class="mb-1" th:text="'Symptoms: ' + ${s.symptom != null ? s.symptom : 'None'}">Symptoms: None</p>
+                  <p class="mb-1" th:text="'Price: ' + ${#numbers.formatDecimal(s.price, 0, 'COMMA', 2, 'POINT')} + ' VND'">Price: 0 VND</p>
                 </div>
               </div>
             </div>
             <div class="button-container mt-auto d-flex">
               <button type="button" class="btn btn-outline-secondary btn-action btn-sm me-2" data-bs-toggle="modal" data-bs-target="#specializationModal" data-mode="edit" th:attr="data-id=${s.specId},data-specName=${s.specName},data-symptom=${s.symptom},data-price=${s.price}">
-                <i class="bi bi-pencil-square"></i> Chỉnh sửa
+                <i class="bi bi-pencil-square"></i> Edit
               </button>
-              <a th:href="@{/admin/specializations/delete/{id}(id=${s.specId},adminId=${adminId})}" class="btn btn-danger btn-action btn-sm" onclick="return confirm('Bạn có chắc chắn muốn xóa chuyên môn này không?')">
-                <i class="bi bi-trash"></i> Xóa
+              <a th:href="@{/admin/specializations/delete/{id}(id=${s.specId},adminId=${adminId})}" class="btn btn-danger btn-action btn-sm" onclick="return confirm('Are you sure you want to delete this specialty?')">
+                <i class="bi bi-trash"></i> Delete
               </a>
             </div>
           </div>
@@ -594,7 +594,7 @@
       <div class="modal-dialog modal-lg modal-dialog-centered">
         <div class="modal-content">
           <div class="modal-header">
-            <h5 class="modal-title" id="specializationModalLabel" th:text="${isAddMode != null && isAddMode ? 'Thêm Chuyên môn Mới' : 'Chỉnh sửa Chuyên môn'}">Thêm/Chỉnh sửa Chuyên môn</h5>
+            <h5 class="modal-title" id="specializationModalLabel" th:text="${isAddMode != null && isAddMode ? 'Add New Specialty' : 'Edit Specialty'}">Add/Edit Specialty</h5>
             <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
           </div>
           <div class="modal-body">
@@ -605,23 +605,23 @@
               <div class="container-fluid">
                 <div class="row g-3">
                   <div class="col-md-6">
-                    <label for="specName" class="form-label">Tên Chuyên môn *</label>
+                    <label for="specName" class="form-label">Specialty Name *</label>
                     <input type="text" class="form-control" id="specName" name="specName" th:value="${specialization != null ? specialization.specName : ''}" required/>
                   </div>
                   <div class="col-md-6">
-                    <label for="symptom" class="form-label">Triệu chứng</label>
+                    <label for="symptom" class="form-label">Symptoms</label>
                     <input type="text" class="form-control" id="symptom" name="symptom" th:value="${specialization != null ? specialization.symptom : ''}"/>
                   </div>
                   <div class="col-md-6">
-                    <label for="price" class="form-label">Giá (VND) *</label>
+                    <label for="price" class="form-label">Price (VND) *</label>
                     <input type="number" class="form-control" id="price" name="price" step="0.01" th:value="${specialization != null ? specialization.price : ''}" required/>
                   </div>
                 </div>
               </div>
 
               <div class="mt-4 text-end">
-                <button type="button" class="btn btn-secondary me-2" data-bs-dismiss="modal">Hủy</button>
-                <button type="submit" class="btn btn-primary">Lưu</button>
+                <button type="button" class="btn btn-secondary me-2" data-bs-dismiss="modal">Cancel</button>
+                <button type="submit" class="btn btn-primary">Save</button>
               </div>
             </form>
           </div>
@@ -680,13 +680,13 @@
     var inputPrice = form.querySelector('#price');
 
     if (mode === 'add') {
-      modalTitle.textContent = 'Thêm Chuyên môn Mới';
+      modalTitle.textContent = 'Add New Specialty';
       inputSpecId.value = '';
       inputSpecName.value = '';
       inputSymptom.value = '';
       inputPrice.value = '';
     } else if (mode === 'edit') {
-      modalTitle.textContent = 'Chỉnh sửa Chuyên môn';
+      modalTitle.textContent = 'Edit Specialty';
       inputSpecId.value = button.getAttribute('data-id') || '';
       inputSpecName.value = button.getAttribute('data-specName') || '';
       inputSymptom.value = button.getAttribute('data-symptom') || '';
@@ -702,12 +702,12 @@
     const price = document.getElementById("price").value;
 
     if (!specName) {
-      alert("Tên chuyên môn không được để trống.");
+      alert("Specialty name cannot be empty.");
       return false;
     }
 
     if (!price || price <= 0) {
-      alert("Giá phải là một số dương.");
+      alert("Price must be a positive number.");
       return false;
     }
 
