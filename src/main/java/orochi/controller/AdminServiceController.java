@@ -20,6 +20,7 @@ public class AdminServiceController {
     @GetMapping
     public String showServices(@RequestParam("adminId") Integer adminId, Model model) {
         model.addAttribute("services", serviceService.getAllServices());
+        model.addAttribute("specializations", serviceService.getAllSpecializations()); // Thêm dòng này
         model.addAttribute("adminId", adminId);
         model.addAttribute("isAddMode", false);
         return "admin/service/list";

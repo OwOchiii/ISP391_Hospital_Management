@@ -4,12 +4,16 @@ import orochi.model.MedicalService;
 import orochi.model.Specialization;
 import orochi.repository.ServiceRepository;
 import orochi.repository.SpecializationRepository;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
 
 @Service
 public class ServiceServiceImpl {
+
+    private static final Logger logger = LoggerFactory.getLogger(ServiceServiceImpl.class);
 
     private final ServiceRepository serviceRepository;
     private final SpecializationRepository specializationRepository;
@@ -36,6 +40,8 @@ public class ServiceServiceImpl {
     }
 
     public List<Specialization> getAllSpecializations() {
-        return specializationRepository.findAll();
+        List<Specialization> specializations = specializationRepository.findAll();
+        logger.info("Number of specializations retrieved: {}", specializations.size());
+        return specializations;
     }
 }

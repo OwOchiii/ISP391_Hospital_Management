@@ -8,6 +8,5 @@ import java.util.List;
 
 @Repository
 public interface SpecializationRepository extends JpaRepository<Specialization, Integer> {
-    // Find all specializations ordered by name
     List<Specialization> findAllByOrderBySpecNameAsc();
 }
