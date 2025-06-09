@@ -160,7 +160,7 @@ public class AppointmentServiceImpl extends AppointmentService {
         appointment.setPatientId(appointmentDTO.getPatientId());
         appointment.setDoctorId(appointmentDTO.getDoctorId());
         appointment.setDateTime(dateTime);
-        appointment.setStatus(Appointment.AppointmentStatus.SCHEDULED);
+        appointment.setStatus(String.valueOf(Appointment.AppointmentStatus.SCHEDULED));
         appointment.setEmail(appointmentDTO.getEmail());
         appointment.setPhoneNumber(appointmentDTO.getPhoneNumber());
         appointment.setDescription(appointmentDTO.getDescription());
@@ -177,21 +177,18 @@ public class AppointmentServiceImpl extends AppointmentService {
         return savedAppointment;
     }
 
-    @Override
     public Page<Appointment> getAppointmentsByStatus(Appointment.AppointmentStatus status, Pageable pageable) {
         return appointmentRepository.findByStatus(status, pageable);
     }
 
-    @Override
     public Page<Appointment> getAllAppointments(Pageable pageable) {
         return appointmentRepository.findAllWithDetails(pageable);
     }
 
-    @Override
     public Appointment updateAppointmentStatus(Integer appointmentId, Appointment.AppointmentStatus status) {
         Appointment appointment = appointmentRepository.findById(appointmentId)
                 .orElseThrow(() -> new IllegalArgumentException("Invalid appointment ID: " + appointmentId));
-        appointment.setStatus(status);
+        appointment.setStatus(String.valueOf(status));
         Appointment updatedAppointment = appointmentRepository.save(appointment);
         emailService.sendSimpleMessage(
                 appointment.getEmail(),
@@ -203,7 +200,7 @@ public class AppointmentServiceImpl extends AppointmentService {
     }
 
     @Override
-    public void getAppointmentsByDoctorIdAndPatientName(Integer doctorId, String patientName) {
+    public List<Appointment> getAppointmentsByDoctorIdAndPatientName(Integer doctorId, String patientName) {
         if (patientName == null || patientName.isBlank()) {
             return appointmentRepository.findByDoctorIdOrderByDateTimeDesc(doctorId);
         }

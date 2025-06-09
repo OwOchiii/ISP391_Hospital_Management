@@ -23,7 +23,7 @@ import java.util.*;
 import java.util.stream.Collectors;
 
 @Service
-public abstract class AppointmentService {
+public class AppointmentService {
 
     @Autowired
     private AppointmentRepository appointmentRepository;
@@ -155,7 +155,7 @@ public abstract class AppointmentService {
         appointment.setPatientId(patientId);
         appointment.setDoctorId(doctorId);
         appointment.setDateTime(dateTime);
-        appointment.setStatus(Appointment.AppointmentStatus.valueOf("Scheduled"));
+        appointment.setStatus("schedule");
         appointment.setEmail(email);
         appointment.setPhoneNumber(phoneNumber);
         appointment.setDescription(description);
@@ -166,7 +166,8 @@ public abstract class AppointmentService {
 
     public abstract Appointment bookAppointment(AppointmentFormDTO appointmentDTO);
 
-    public void getAppointmentsByDoctorIdAndPatientName(Integer doctorId, String search) {
+    public List<Appointment> getAppointmentsByDoctorIdAndPatientName(Integer doctorId, String search) {
+        return null;
     }
 
     public abstract Page<Appointment> getAppointmentsByDoctorId(Integer doctorId, Pageable pageable);

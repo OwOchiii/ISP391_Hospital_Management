@@ -53,16 +53,16 @@ public class AdminAppointmentController {
                 appointments = appointmentService.getAllAppointments(pageable);
             } else {
                 Appointment.AppointmentStatus appointmentStatus = Appointment.AppointmentStatus.valueOf(status);
-                appointments = appointmentService.getAppointmentsByStatus(appointmentStatus, pageable);
+                appointments = appointmentService.getTotalAppointments(appointmentStatus, pageable);
             }
             model.addAttribute("appointments", appointments);
             model.addAttribute("currentStatus", status);
         }
 
         model.addAttribute("totalAppointments", appointmentMetricService.getTotalAppointments());
-        model.addAttribute("inProgressCount", appointmentMetricService.getAppointmentsByStatus(Appointment.AppointmentStatus.IN_PROGRESS));
-        model.addAttribute("completedCount", appointmentMetricService.getAppointmentsByStatus(Appointment.AppointmentStatus.COMPLETED));
-        model.addAttribute("rejectedCount", appointmentMetricService.getAppointmentsByStatus(Appointment.AppointmentStatus.REJECTED));
+        model.addAttribute("inProgressCount", appointmentMetricService.getTotalAppointments(Appointment.AppointmentStatus.IN_PROGRESS));
+        model.addAttribute("completedCount", appointmentMetricService.getTotalAppointments(Appointment.AppointmentStatus.COMPLETED));
+        model.addAttribute("rejectedCount", appointmentMetricService.getTotalAppointments(Appointment.AppointmentStatus.REJECTED));
         model.addAttribute("search", search);
 
         // Add Chart.js data

@@ -9,6 +9,7 @@ import org.springframework.data.repository.query.Param;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Optional;
 
 public interface AppointmentRepository extends JpaRepository<Appointment, Integer> {
 
@@ -49,4 +50,6 @@ public interface AppointmentRepository extends JpaRepository<Appointment, Intege
     List<Appointment> findTodayAppointmentsForDoctor(Integer doctorId, LocalDateTime startOfDay, LocalDateTime endOfDay);
 
     List<Appointment> findUpcomingAppointmentsForDoctor(Integer doctorId, LocalDateTime now);
+
+    Optional<Appointment> findByAppointmentIdAndDoctorId(Integer appointmentId, Integer doctorId);
 }

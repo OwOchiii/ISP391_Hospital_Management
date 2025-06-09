@@ -42,9 +42,9 @@ public class Appointment {
     private LocalDateTime dateTime;
 
     @Enumerated(EnumType.STRING)
-    @Column(name = "Status", nullable = false, columnDefinition = "varchar(20) DEFAULT 'SCHEDULED'")
-    @NotBlank(message = "Status is required")
-    private AppointmentStatus status;
+    @Column(name = "Status", nullable = false, columnDefinition = "varchar(20) DEFAULT 'Scheduled'")
+    @NotNull(message = "Status is required")
+    private String status;
 
     @Column(name = "Email")
     private String email;
