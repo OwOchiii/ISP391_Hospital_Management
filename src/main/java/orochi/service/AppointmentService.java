@@ -3,6 +3,7 @@ package orochi.service;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import orochi.dto.AppointmentFormDTO;
 import orochi.model.Appointment;
 import orochi.model.Doctor;
 import orochi.model.Patient;
@@ -20,7 +21,7 @@ import java.util.*;
 import java.util.stream.Collectors;
 
 @Service
-public class AppointmentService {
+public abstract class AppointmentService {
 
     @Autowired
     private AppointmentRepository appointmentRepository;
@@ -160,4 +161,6 @@ public class AppointmentService {
         // Save appointment
         return appointmentRepository.save(appointment);
     }
+
+    public abstract Appointment bookAppointment(AppointmentFormDTO appointmentDTO);
 }
