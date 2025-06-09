@@ -723,3 +723,5 @@ ALTER TABLE [Patient] DROP COLUMN [address];
 -- Add foreign key constraint for PatientID referencing Patient table
     ALTER TABLE Schedule ADD CONSTRAINT FK_Schedule_Patient
         FOREIGN KEY (PatientID) REFERENCES Patient(PatientID);
+
+    Alter table Schedule add IsCompleted bit NOT NULL DEFAULT 0;

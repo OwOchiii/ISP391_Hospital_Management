@@ -8,6 +8,7 @@ import orochi.model.Schedule;
 
 import java.time.LocalDate;
 import java.util.List;
+import java.util.Optional;
 
 @Repository
 public interface ScheduleRepository extends JpaRepository<Schedule, Integer> {
@@ -25,6 +26,9 @@ public interface ScheduleRepository extends JpaRepository<Schedule, Integer> {
 
     // Find schedules by patient ID
     List<Schedule> findByPatientId(Integer patientId);
+
+    // Find schedule by appointment ID
+    Optional<Schedule> findByAppointmentId(Integer appointmentId);
 
     // Count appointments for a doctor in a date range
     @Query("SELECT COUNT(s) FROM Schedule s WHERE s.doctorId = :doctorId AND s.eventType = 'appointment' AND s.scheduleDate BETWEEN :startDate AND :endDate")

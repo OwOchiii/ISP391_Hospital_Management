@@ -733,7 +733,7 @@
       <div class="schedule-controls">
         <div class="view-toggle">
           <button class="view-btn active" onclick="switchView('week')">Week View</button>
-          <button class="view-btn" onclick="switchView('day')">Day View</button>
+
         </div>
 
         <div class="week-navigation">
@@ -746,6 +746,12 @@
           <button class="nav-button" onclick="navigateWeek(1)">
             <i class="bi bi-chevron-right"></i>
           </button>
+
+          <!-- Date Jump Control -->
+          <div class="date-jump ms-3">
+            <input type="date" id="jumpToDate" class="form-control form-control-sm" onchange="jumpToWeek(this.value)"
+                  title="Jump to week containing this date">
+          </div>
         </div>
 
         <button class="btn-primary-custom" data-bs-toggle="modal" data-bs-target="#addScheduleModal">
@@ -992,6 +998,35 @@
     });
   }
 
+  // Jump to week containing the selected date
+  function jumpToWeek(dateString) {
+    if (!dateString) return;
+
+    // Parse the selected date
+    const selectedDate = new Date(dateString);
+
+    // Find the Monday of the week containing this date
+    const dayOfWeek = selectedDate.getDay(); // 0 = Sunday, 1 = Monday, etc.
+    const mondayOffset = dayOfWeek === 0 ? -6 : 1 - dayOfWeek; // Calculate days to Monday
+
+    // Set the currentWeekStart to the Monday of the selected week
+    currentWeekStart = new Date(selectedDate);
+    currentWeekStart.setDate(selectedDate.getDate() + mondayOffset);
+
+    // Update the display and load data for the new week
+    updateWeekDisplay();
+    loadScheduleData();
+
+    // Update the date input to show the selected date
+    document.getElementById('jumpToDate').value = dateString;
+  }
+
+  // Initialize the date picker with today's date
+  document.addEventListener('DOMContentLoaded', function() {
+    const today = new Date().toISOString().split('T')[0];
+    document.getElementById('jumpToDate').value = today;
+  });
+
   // Event type change handler
   document.getElementById('eventType').addEventListener('change', function() {
     const appointmentFields = document.getElementById('appointmentFields');
@@ -1215,7 +1250,9 @@
 
         const cell = document.createElement('td');
         cell.className = 'schedule-cell';
-        cell.onclick = () => openAddModal(Object.keys(dayMap)[day], time);
+
+        // Remove the onclick handler for empty cells
+        // cell.onclick = () => openAddModal(Object.keys(dayMap)[day], time);
 
         // Find appointments that affect this time slot
         // We need to check if this time slot falls within any appointment's time window
@@ -1234,7 +1271,13 @@
           // If a schedule exists, display it
           const eventDiv = document.createElement('div');
           eventDiv.className = `schedule-event ${schedule.type}`;
-          eventDiv.onclick = (e) => { e.stopPropagation(); editEvent(schedule.id); };
+
+          // Redirect to details page when clicking on a schedule
+          eventDiv.onclick = (e) => {
+            e.stopPropagation();
+            // Navigate to schedule details page
+            window.location.href = `/doctor/schedule-details/${schedule.id}?doctorId=${doctorId}`;
+          };
 
           // If this is the start of a multi-hour appointment, make it span multiple cells
           if (schedule.time === time && schedule.durationHours > 0.5) {
@@ -1277,11 +1320,11 @@
 
           cell.appendChild(eventDiv);
         } else {
-          // No schedule, show add button
-          const addButton = document.createElement('div');
-          addButton.className = 'add-event-btn';
-          addButton.textContent = '+ Add';
-          cell.appendChild(addButton);
+          // Remove the "Add" button from empty cells
+          // const addButton = document.createElement('div');
+          // addButton.className = 'add-event-btn';
+          // addButton.textContent = '+ Add';
+          // cell.appendChild(addButton);
         }
 
         row.appendChild(cell);

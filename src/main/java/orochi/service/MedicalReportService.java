@@ -31,7 +31,7 @@ public class MedicalReportService {
 
     private static final Logger logger = LoggerFactory.getLogger(MedicalReportService.class);
 
-    @Value("${file.upload-dir:/uploads}")
+    @Value("${file.upload.directory:D:/KanbanWeb/ISP301_Hospital_Management/uploads}")
     private String uploadDir;
 
     @Autowired
@@ -104,10 +104,15 @@ public class MedicalReportService {
 
             // Create a PDF file
             String fileName = generateFileName(appointmentId);
-            String filePath = uploadDir + "/reports/" + fileName;
 
-            // Ensure the directory exists
-            createDirectoryIfNotExists(uploadDir + "/reports/");
+            // Create directory path for medical reports
+            String medicalReportsDir = uploadDir + "/medical-results";
+            createDirectoryIfNotExists(medicalReportsDir);
+
+            // Full path to the file
+            String filePath = medicalReportsDir + "/" + fileName;
+
+            logger.info("Preparing to generate PDF at: {}", filePath);
 
             // Generate the HTML content using Thymeleaf
             Context context = new Context();
@@ -125,6 +130,7 @@ public class MedicalReportService {
             File pdfFile = new File(filePath);
             try (FileOutputStream outputStream = new FileOutputStream(pdfFile)) {
                 HtmlConverter.convertToPdf(htmlContent, outputStream);
+                logger.info("PDF file created successfully at: {}", filePath);
             }
 
             // Create a MedicalReport entity and save it
@@ -134,9 +140,10 @@ public class MedicalReportService {
             report.setReportDate(LocalDateTime.now());
             report.setSummary(additionalNotes);
             report.setStatus("COMPLETED");
-            report.setFileUrl(fileName);
+            report.setFileUrl(fileName);  // Store just the filename, not the full path
 
             MedicalReport savedReport = medicalReportRepository.save(report);
+            logger.info("Medical report saved to database with ID: {}", savedReport.getReportId());
 
             // Associate results with the report
             for (MedicalResult result : results) {

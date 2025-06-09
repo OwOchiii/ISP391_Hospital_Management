@@ -21,9 +21,11 @@ public class ScheduleDTO {
     private LocalTime endTime;
     private String eventType; // "appointment", "oncall", "break"
     private String description;
+    private Boolean isCompleted = false; // Track completion status
 
     // Additional display fields
     private String patientName;
-    private String roomName;
+    private String roomNumber;
     private String doctorName;
+    private String roomName;
 }

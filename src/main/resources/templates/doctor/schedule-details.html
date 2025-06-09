@@ -689,7 +689,7 @@
                         <a th:href="@{/doctor/schedule(doctorId=${doctorId})}">Schedule</a>
                     </li>
                     <li class="breadcrumb-item active" aria-current="page">
-                        <span th:text="${workEntry.type == 'appointment' ? 'Appointment Details' : 'On-Call Duty Details'}">Work Details</span>
+                        <span th:text="${workEntry.eventType == 'appointment' ? 'Appointment Details' : 'On-Call Duty Details'}">Work Details</span>
                     </li>
                 </ol>
             </nav>
@@ -701,16 +701,16 @@
                 <div class="row align-items-center">
                     <div class="col-md-8">
                         <div class="d-flex align-items-center gap-3 mb-3">
-                            <div th:class="${'work-type-badge type-' + workEntry.type}"
-                                 th:text="${workEntry.type == 'appointment' ? 'Appointment' : 'On-Call Duty'}">
+                            <div th:class="${'work-type-badge type-' + workEntry.eventType}"
+                                 th:text="${workEntry.eventType == 'appointment' ? 'Appointment' : 'On-Call Duty'}">
                                 Appointment
                             </div>
-                            <div th:class="${'status-badge status-' + workEntry.status.toLowerCase()}"
-                                 th:text="${workEntry.status}">
+                            <div th:class="${'status-badge status-' + (workEntry.isCompleted ? 'completed' : 'scheduled')}"
+                                 th:text="${workEntry.isCompleted ? 'Completed' : 'Scheduled'}">
                                 Scheduled
                             </div>
                         </div>
-                        <h2 class="mb-2" th:text="${workEntry.type == 'appointment' ? (workEntry.patientName + ' - ' + workEntry.description) : 'On-Call Duty - ' + workEntry.department}">
+                        <h2 class="mb-2" th:text="${workEntry.eventType == 'appointment' ? (workEntry.patientName + ' - ' + workEntry.description) : 'On-Call Duty - ' + workEntry.description}">
                             Patient Consultation - John Smith
                         </h2>
                         <p class="mb-0 lead" th:text="${#temporals.format(workEntry.scheduleDate, 'EEEE, MMMM dd, yyyy') + ' • ' + workEntry.startTime + ' - ' + workEntry.endTime}">
@@ -719,7 +719,7 @@
                     </div>
                     <div class="col-md-4 text-md-end">
                         <div class="fs-1">
-                            <i th:class="${'bi ' + (workEntry.type == 'appointment' ? 'bi-calendar-check' : 'bi-shield-check')}" class="bi bi-calendar-check"></i>
+                            <i th:class="${'bi ' + (workEntry.eventType == 'appointment' ? 'bi-calendar-check' : 'bi-shield-check')}" class="bi bi-calendar-check"></i>
                         </div>
                     </div>
                 </div>
@@ -732,8 +732,8 @@
             <div class="details-card">
                 <div class="card-header">
                     <h3 class="card-title">
-                        <i th:class="${'bi ' + (workEntry.type == 'appointment' ? 'bi-person-check' : 'bi-shield-check')}"></i>
-                        <span th:text="${workEntry.type == 'appointment' ? 'Appointment Information' : 'On-Call Duty Information'}">Appointment Information</span>
+                        <i th:class="${'bi ' + (workEntry.eventType == 'appointment' ? 'bi-person-check' : 'bi-shield-check')}"></i>
+                        <span th:text="${workEntry.eventType == 'appointment' ? 'Appointment Information' : 'On-Call Duty Information'}">Appointment Information</span>
                     </h3>
                 </div>
                 <div class="card-body">
@@ -759,13 +759,13 @@
                             </div>
                         </div>
 
-                        <div class="info-item" th:if="${workEntry.roomNumber}">
+                        <div class="info-item" th:if="${workEntry.roomNumber != null}">
                             <div class="info-icon">
                                 <i class="bi bi-geo-alt"></i>
                             </div>
                             <div class="info-content">
                                 <h6>Location</h6>
-                                <p th:text="${'Room ' + workEntry.roomNumber}">Room 101</p>
+                                <p th:text="${'Room ' + workEntry.roomNumber}">N/A</p>
                             </div>
                         </div>
 
@@ -775,13 +775,14 @@
                             </div>
                             <div class="info-content">
                                 <h6>Duration</h6>
-                                <p th:text="${workEntry.duration + ' minutes'}">30 minutes</p>
+                                <p th:with="minutes=${T(java.time.Duration).between(workEntry.startTime, workEntry.endTime).toMinutes()}"
+                                   th:text="${minutes + ' minutes'}">N/A</p>
                             </div>
                         </div>
                     </div>
 
                     <!-- Patient Information (for appointments) -->
-                    <div th:if="${workEntry.type == 'appointment'}" class="patient-card">
+                    <div th:if="${workEntry.eventType == 'appointment'}" class="patient-card">
                         <div class="patient-header">
                             <div class="patient-avatar">
                                 <span th:text="${workEntry.patientName != null ? #strings.substring(workEntry.patientName, 0, 2).toUpperCase() : 'PT'}">JS</span>
@@ -804,33 +805,38 @@
                     </div>
 
                     <!-- On-Call Information (for on-call duties) -->
-                    <div th:if="${workEntry.type == 'oncall'}" class="patient-card">
+                    <div th:if="${workEntry.eventType == 'oncall'}" class="patient-card">
                         <div class="patient-header">
                             <div class="patient-avatar" style="background: linear-gradient(135deg, #8b5cf6, #7c3aed);">
                                 <i class="bi bi-shield-check"></i>
                             </div>
                             <div class="patient-info">
-                                <h5 th:text="${workEntry.onCallType + ' Duty'}">Emergency On-Call Duty</h5>
-                                <p th:text="${workEntry.department + ' Department'}">Emergency Department</p>
+                                <h5>On-Call Duty</h5>
+                                <p th:text="${'Room: ' + workEntry.roomNumber}">Emergency Department</p>
                             </div>
                         </div>
                         <div class="contact-info">
-                            <div class="contact-item" th:if="${workEntry.priority}">
-                                <i class="bi bi-exclamation-triangle"></i>
-                                <span th:text="${'Priority: ' + workEntry.priority}">Priority: High</span>
+                            <div class="contact-item">
+                                <i class="bi bi-clock"></i>
+                                <span th:text="${workEntry.startTime + ' - ' + workEntry.endTime}">09:00 - 17:00</span>
                             </div>
                             <div class="contact-item">
-                                <i class="bi bi-telephone"></i>
-                                <span>Emergency Line: +1 234 567 9999</span>
+                                <i class="bi bi-geo-alt"></i>
+                                <span th:text="${'Room ID: ' + workEntry.roomNumber}">Room 101</span>
+                            </div>
+                            <div class="contact-item">
+                                <i class="bi bi-check-circle" th:if="${workEntry.isCompleted}"></i>
+                                <i class="bi bi-clock-history" th:unless="${workEntry.isCompleted}"></i>
+                                <span th:text="${workEntry.isCompleted ? 'Completed' : 'Scheduled'}">Status</span>
                             </div>
                         </div>
                     </div>
 
                     <!-- Description/Notes -->
-                    <div th:if="${workEntry.description or workEntry.notes}" class="notes-section">
+                    <div th:if="${workEntry.description}" class="notes-section">
                         <div class="notes-title">
                             <i class="bi bi-sticky"></i>
-                            <span th:text="${workEntry.type == 'appointment' ? 'Appointment Notes' : 'Duty Instructions'}">Notes</span>
+                            <span th:text="${workEntry.eventType == 'appointment' ? 'Appointment Notes' : 'Duty Instructions'}">Notes</span>
                         </div>
                         <div class="notes-content" th:text="${workEntry.description ?: workEntry.notes}">
                             Regular checkup and follow-up consultation for chronic condition management.
@@ -850,7 +856,7 @@
                 </div>
                 <div class="card-body">
                     <!-- Appointment Actions -->
-                    <div th:if="${workEntry.type == 'appointment'}">
+                    <div th:if="${workEntry.eventType == 'appointment'}">
                         <div class="d-grid gap-3">
                             <a th:href="@{/doctor/appointments/{id}/edit(id=${workEntry.appointmentId}, doctorId=${doctorId})}"
                                class="btn-primary-custom">
@@ -864,65 +870,16 @@
                                 View Patient Record
                             </a>
 
-                            <button th:if="${workEntry.status == 'Scheduled'}"
-                                    class="btn-success-custom"
-                                    onclick="confirmAppointment()">
-                                <i class="bi bi-check-circle"></i>
-                                Confirm Appointment
-                            </button>
-
-                            <button th:if="${workEntry.status == 'Confirmed'}"
-                                    class="btn-success-custom"
-                                    onclick="completeAppointment()">
+                            <button class="btn-success-custom" onclick="toggleCompleted()">
                                 <i class="bi bi-check2-circle"></i>
-                                Mark as Completed
+                                <span id="completedButtonText">Mark as Completed</span>
                             </button>
-
-                            <button class="btn-warning-custom" onclick="rescheduleAppointment()">
-                                <i class="bi bi-calendar-event"></i>
-                                Reschedule
-                            </button>
-                        </div>
-                    </div>
-
-                    <!-- On-Call Actions -->
-                    <div th:if="${workEntry.type == 'oncall'}">
-                        <div class="d-grid gap-3">
-                            <a th:href="@{/doctor/schedule/{id}/edit(id=${workEntry.scheduleId}, doctorId=${doctorId})}"
-                               class="btn-primary-custom">
-                                <i class="bi bi-pencil"></i>
-                                Edit Duty Details
-                            </a>
-
-                            <button th:if="${workEntry.status == 'Scheduled'}"
-                                    class="btn-success-custom"
-                                    onclick="startOnCallDuty()">
-                                <i class="bi bi-play-circle"></i>
-                                Start Duty
-                            </button>
-
-                            <button th:if="${workEntry.status == 'Active'}"
-                                    class="btn-warning-custom"
-                                    onclick="endOnCallDuty()">
-                                <i class="bi bi-stop-circle"></i>
-                                End Duty
-                            </button>
-
-                            <a href="#" class="btn-outline-custom">
-                                <i class="bi bi-telephone"></i>
-                                Emergency Contacts
-                            </a>
                         </div>
                     </div>
 
                     <!-- Common Actions -->
                     <hr class="my-4">
                     <div class="d-grid gap-2">
-                        <button class="btn-outline-custom" onclick="printDetails()">
-                            <i class="bi bi-printer"></i>
-                            Print Details
-                        </button>
-
                         <a th:href="@{/doctor/schedule(doctorId=${doctorId})}" class="btn-outline-custom">
                             <i class="bi bi-arrow-left"></i>
                             Back to Schedule
@@ -937,7 +894,7 @@
             <div class="card-header">
                 <h3 class="card-title">
                     <i class="bi bi-clock-history"></i>
-                    <span th:text="${workEntry.type == 'appointment' ? 'Patient History' : 'Recent On-Call Activities'}">Recent Activities</span>
+                    <span th:text="${workEntry.eventType == 'appointment' ? 'Patient History' : 'Recent On-Call Activities'}">Recent Activities</span>
                 </h3>
             </div>
             <div class="card-body">
@@ -1114,6 +1071,63 @@
     function printDetails() {
         window.print();
     }
+
+    // Toggle completed status functionality
+    function toggleCompleted() {
+        const completedButtonText = document.getElementById('completedButtonText');
+        const scheduleId = workEntry.scheduleId || workEntry.appointmentId;
+        const type = workEntry.type;
+        const endpoint = type === 'appointment'
+            ? `/api/appointments/${scheduleId}/toggle-completed`
+            : `/api/schedule/${scheduleId}/toggle-completed`;
+
+        fetch(endpoint, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ doctorId: doctorId })
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                // Update the UI based on new completed status
+                if (data.completed) {
+                    completedButtonText.innerText = 'Mark as Incomplete';
+                    // Add completed status badge
+                    document.querySelector('.status-badge').className = 'status-badge status-completed';
+                    document.querySelector('.status-badge').innerText = 'Completed';
+                } else {
+                    completedButtonText.innerText = 'Mark as Completed';
+                    // Revert to original status
+                    document.querySelector('.status-badge').className = 'status-badge status-' +
+                        (workEntry.originalStatus || 'scheduled').toLowerCase();
+                    document.querySelector('.status-badge').innerText = workEntry.originalStatus || 'Scheduled';
+                }
+            } else {
+                alert('Failed to update completion status');
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            alert('An error occurred while updating completion status');
+        });
+    }
+
+    // Store original status for toggle
+    if (!workEntry.originalStatus) {
+        workEntry.originalStatus = workEntry.status;
+    }
+
+    // Set initial button text based on completed status
+    document.addEventListener('DOMContentLoaded', () => {
+        const completedButtonText = document.getElementById('completedButtonText');
+        if (workEntry.status && workEntry.status.toLowerCase() === 'completed') {
+            completedButtonText.innerText = 'Mark as Incomplete';
+        } else {
+            completedButtonText.innerText = 'Mark as Completed';
+        }
+    });
 
     // Navigation link handlers
     document.querySelectorAll('.nav-link').forEach(link => {
