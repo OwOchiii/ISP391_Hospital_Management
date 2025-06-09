@@ -50,14 +50,16 @@ public interface ScheduleService {
     List<ScheduleDTO> searchSchedules(String keyword, LocalDate startDate, LocalDate endDate);
 
     /**
-     * Get all doctors
+     * Toggle the completion status of a schedule
+     * @return the new completion status (true if completed, false if not completed)
      */
-    List<Doctor> getAllDoctors();
+    boolean toggleScheduleCompletion(Integer scheduleId, Integer doctorId);
 
     /**
-     * Get all rooms
+     * Toggle the completion status of an appointment
+     * @return the new completion status (true if completed, false if not completed)
      */
-    List<Room> getAllRooms();
+    boolean toggleAppointmentCompletion(Integer appointmentId, Integer doctorId);
 
     /**
      * Format a date range for display (e.g., "Jan 15 - Jan 21, 2024")
@@ -68,32 +70,42 @@ public interface ScheduleService {
      * Inner class for schedule statistics
      */
     class ScheduleStatistics {
-        private final Integer weeklyAppointments;
-        private final Integer onCallHours;
-        private final Integer roomsAssigned;
-        private final Integer totalHours;
+        private int weeklyAppointments;
+        private int onCallHours;
+        private int roomsAssigned;
+        private int totalHours;
 
-        public ScheduleStatistics(Integer weeklyAppointments, Integer onCallHours, Integer roomsAssigned, Integer totalHours) {
-            this.weeklyAppointments = weeklyAppointments;
-            this.onCallHours = onCallHours;
-            this.roomsAssigned = roomsAssigned;
-            this.totalHours = totalHours;
-        }
-
-        public Integer getWeeklyAppointments() {
+        public int getWeeklyAppointments() {
             return weeklyAppointments;
         }
 
-        public Integer getOnCallHours() {
+        public void setWeeklyAppointments(int weeklyAppointments) {
+            this.weeklyAppointments = weeklyAppointments;
+        }
+
+        public int getOnCallHours() {
             return onCallHours;
         }
 
-        public Integer getRoomsAssigned() {
+        public void setOnCallHours(int onCallHours) {
+            this.onCallHours = onCallHours;
+        }
+
+        public int getRoomsAssigned() {
             return roomsAssigned;
         }
 
-        public Integer getTotalHours() {
+        public void setRoomsAssigned(int roomsAssigned) {
+            this.roomsAssigned = roomsAssigned;
+        }
+
+        public int getTotalHours() {
             return totalHours;
+        }
+
+        public void setTotalHours(int totalHours) {
+            this.totalHours = totalHours;
         }
     }
 }
+

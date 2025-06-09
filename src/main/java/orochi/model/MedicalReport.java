@@ -18,14 +18,14 @@ public class MedicalReport {
     @Column(name = "AppointmentID", nullable = false)
     private Integer appointmentId;
 
-    @ManyToOne
+    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "AppointmentID", insertable = false, updatable = false)
     private Appointment appointment;
 
     @Column(name = "DoctorID", nullable = false)
     private Integer doctorId;
 
-    @ManyToOne
+    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "DoctorID", insertable = false, updatable = false)
     private Doctor doctor;
 

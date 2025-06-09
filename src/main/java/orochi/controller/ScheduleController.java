@@ -18,7 +18,9 @@ import orochi.service.ScheduleService;
 import java.time.DayOfWeek;
 import java.time.LocalDate;
 import java.time.temporal.TemporalAdjusters;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 @Controller
 @RequestMapping("/doctor")
@@ -170,6 +172,81 @@ public class ScheduleController {
         return patientRepository.findAll();
     }
 
+    /**
+     * View schedule details for a specific entry
+     */
+    @GetMapping("/schedule-details/{scheduleId}")
+    public String viewScheduleDetails(
+            @PathVariable Integer scheduleId,
+            @RequestParam Integer doctorId,
+            Model model) {
+
+        ScheduleDTO workEntry = scheduleService.getScheduleById(scheduleId);
+
+        // Add data to model
+        model.addAttribute("doctorId", doctorId);
+        model.addAttribute("workEntry", workEntry);
+
+        return "doctor/schedule-details";
+    }
+
+    /**
+     * Toggle completion status of a schedule entry
+     */
+    @PostMapping("/api/schedule/{scheduleId}/toggle-completed")
+    @ResponseBody
+    public ResponseEntity<?> toggleCompleted(
+            @PathVariable Integer scheduleId,
+            @RequestBody Map<String, Integer> requestBody) {
+
+        Integer doctorId = requestBody.get("doctorId");
+
+        try {
+            boolean isCompleted = scheduleService.toggleScheduleCompletion(scheduleId, doctorId);
+
+            Map<String, Object> response = new HashMap<>();
+            response.put("success", true);
+            response.put("completed", isCompleted);
+            response.put("message", isCompleted ? "Schedule marked as completed" : "Schedule marked as incomplete");
+
+            return ResponseEntity.ok(response);
+        } catch (Exception e) {
+            Map<String, Object> response = new HashMap<>();
+            response.put("success", false);
+            response.put("message", e.getMessage());
+
+            return ResponseEntity.badRequest().body(response);
+        }
+    }
+
+    /**
+     * Toggle completion status of an appointment
+     */
+    @PostMapping("/api/appointments/{appointmentId}/toggle-completed")
+    @ResponseBody
+    public ResponseEntity<?> toggleAppointmentCompleted(
+            @PathVariable Integer appointmentId,
+            @RequestBody Map<String, Integer> requestBody) {
+
+        Integer doctorId = requestBody.get("doctorId");
+
+        try {
+            boolean isCompleted = scheduleService.toggleAppointmentCompletion(appointmentId, doctorId);
+
+            Map<String, Object> response = new HashMap<>();
+            response.put("success", true);
+            response.put("completed", isCompleted);
+            response.put("message", isCompleted ? "Appointment marked as completed" : "Appointment marked as incomplete");
+
+            return ResponseEntity.ok(response);
+        } catch (Exception e) {
+            Map<String, Object> response = new HashMap<>();
+            response.put("success", false);
+            response.put("message", e.getMessage());
+
+            return ResponseEntity.badRequest().body(response);
+        }
+    }
     /**
      * Inner class to represent the week schedule response
      */

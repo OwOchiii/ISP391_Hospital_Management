@@ -1,4 +1,4 @@
--- Add MedicalReport table to store compilations of test results
+ -- Add MedicalReport table to store compilations of test results
 CREATE TABLE [MedicalReport] (
   [ReportID] int PRIMARY KEY IDENTITY(1,1),
   [AppointmentID] int NOT NULL,

@@ -47,6 +47,9 @@ public class Schedule {
     @Column(name = "Description", length = 255)
     private String description;
 
+    @Column(name = "IsCompleted", nullable = false)
+    private Boolean isCompleted = false;
+
     @ManyToOne
     @JoinColumn(name = "DoctorID", insertable = false, updatable = false)
     private Doctor doctor;

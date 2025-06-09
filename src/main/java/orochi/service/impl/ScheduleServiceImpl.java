@@ -88,7 +88,14 @@ public class ScheduleServiceImpl implements ScheduleService {
         if (roomsAssigned == null) roomsAssigned = 0;
         if (totalHours == null) totalHours = 0;
 
-        return new ScheduleStatistics(weeklyAppointments, onCallHours, roomsAssigned, totalHours);
+        // Create and populate statistics object
+        ScheduleStatistics stats = new ScheduleStatistics();
+        stats.setWeeklyAppointments(weeklyAppointments);
+        stats.setOnCallHours(onCallHours);
+        stats.setRoomsAssigned(roomsAssigned);
+        stats.setTotalHours(totalHours);
+
+        return stats;
     }
 
     @Override
@@ -140,12 +147,12 @@ public class ScheduleServiceImpl implements ScheduleService {
                 .collect(Collectors.toList());
     }
 
-    @Override
+
     public List<Doctor> getAllDoctors() {
         return doctorRepository.findAll();
     }
 
-    @Override
+
     public List<Room> getAllRooms() {
         return roomRepository.findAll();
     }
@@ -174,6 +181,7 @@ public class ScheduleServiceImpl implements ScheduleService {
         dto.setEndTime(schedule.getEndTime());
         dto.setEventType(schedule.getEventType());
         dto.setDescription(schedule.getDescription());
+        dto.setIsCompleted(schedule.getIsCompleted());
 
         // Get related entity names if available
         if (schedule.getDoctor() != null) {
@@ -185,6 +193,7 @@ public class ScheduleServiceImpl implements ScheduleService {
 
         if (schedule.getRoom() != null) {
             dto.setRoomName(schedule.getRoom().getRoomName());
+            dto.setRoomNumber(schedule.getRoom().getRoomNumber());
         } else if (schedule.getRoomId() != null) {
             roomRepository.findById(schedule.getRoomId())
                 .ifPresent(room -> dto.setRoomName(room.getRoomName()));
@@ -223,7 +232,52 @@ public class ScheduleServiceImpl implements ScheduleService {
         schedule.setEndTime(dto.getEndTime());
         schedule.setEventType(dto.getEventType());
         schedule.setDescription(dto.getDescription());
+        schedule.setIsCompleted(dto.getIsCompleted());
 
         return schedule;
+    }
+
+    @Override
+    public boolean toggleScheduleCompletion(Integer scheduleId, Integer doctorId) {
+        // Find the schedule by ID
+        Schedule schedule = scheduleRepository.findById(scheduleId)
+                .orElseThrow(() -> new RuntimeException("Schedule not found with ID: " + scheduleId));
+
+        // Verify the schedule belongs to the doctor
+        if (!schedule.getDoctorId().equals(doctorId)) {
+            throw new RuntimeException("Schedule does not belong to the specified doctor");
+        }
+
+        // Toggle the completion status
+        boolean newStatus = !schedule.getIsCompleted();
+        schedule.setIsCompleted(newStatus);
+
+        // Save the updated schedule
+        scheduleRepository.save(schedule);
+
+        // Return the new status
+        return newStatus;
+    }
+
+    @Override
+    public boolean toggleAppointmentCompletion(Integer appointmentId, Integer doctorId) {
+        // Find the schedule associated with this appointment
+        Schedule schedule = scheduleRepository.findByAppointmentId(appointmentId)
+                .orElseThrow(() -> new RuntimeException("Schedule not found for appointment with ID: " + appointmentId));
+
+        // Verify the schedule belongs to the doctor
+        if (!schedule.getDoctorId().equals(doctorId)) {
+            throw new RuntimeException("Appointment does not belong to the specified doctor");
+        }
+
+        // Toggle the completion status
+        boolean newStatus = !schedule.getIsCompleted();
+        schedule.setIsCompleted(newStatus);
+
+        // Save the updated schedule
+        scheduleRepository.save(schedule);
+
+        // Return the new status
+        return newStatus;
     }
 }
