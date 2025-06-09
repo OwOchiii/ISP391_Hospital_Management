@@ -28,7 +28,7 @@ import java.util.stream.Collectors;
 
 @Service
 @Transactional
-public class AppointmentServiceImpl implements AppointmentService {
+public class AppointmentServiceImpl extends AppointmentService {
     private static final Logger logger = LoggerFactory.getLogger(AppointmentServiceImpl.class);
 
     private final AppointmentRepository appointmentRepository;
@@ -203,7 +203,7 @@ public class AppointmentServiceImpl implements AppointmentService {
     }
 
     @Override
-    public List<Appointment> getAppointmentsByDoctorIdAndPatientName(Integer doctorId, String patientName) {
+    public void getAppointmentsByDoctorIdAndPatientName(Integer doctorId, String patientName) {
         if (patientName == null || patientName.isBlank()) {
             return appointmentRepository.findByDoctorIdOrderByDateTimeDesc(doctorId);
         }

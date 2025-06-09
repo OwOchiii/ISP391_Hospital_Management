@@ -8,10 +8,10 @@ import org.springframework.dao.DataAccessException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import orochi.model.Appointment;
-import orochi.model.Patient;
 import orochi.model.Doctor;
-import orochi.model.Users;
 import orochi.model.DoctorForm;
+import orochi.model.Patient;
+import orochi.model.Users;
 import orochi.repository.AppointmentRepository;
 import orochi.repository.DoctorRepository;
 import orochi.repository.PatientRepository;
@@ -37,7 +37,8 @@ public class DoctorService {
     @Autowired
     public DoctorService(AppointmentRepository appointmentRepository,
                          PatientRepository patientRepository,
-                         DoctorRepository doctorRepository, UserRepository userRepository) {
+                         DoctorRepository doctorRepository,
+                         UserRepository userRepository) {
         this.appointmentRepository = appointmentRepository;
         this.patientRepository = patientRepository;
         this.doctorRepository = doctorRepository;
@@ -68,8 +69,7 @@ public class DoctorService {
             logger.info("Fetching appointments for doctor ID: {} on date: {} (from {} to {})",
                     doctorId, date, startOfDay, endOfDay);
 
-            return appointmentRepository.findByDoctorIdAndDateTimeBetweenOrderByDateTime(
-                    doctorId, startOfDay, endOfDay);
+            return appointmentRepository.findByDoctorIdAndDateTimeBetweenOrderByDateTime(doctorId, startOfDay, endOfDay);
         } catch (DataAccessException e) {
             logger.error("Failed to fetch appointments for doctor ID: {} on date: {}", doctorId, date, e);
             return Collections.emptyList();
@@ -77,9 +77,9 @@ public class DoctorService {
     }
 
     /**
-     * Get appointments by status (pending, completed, cancelled, etc.)
+     * Get appointments by status (e.g., IN_PROGRESS, COMPLETED, REJECTED)
      */
-    public List<Appointment> getAppointmentsByStatus(Integer doctorId, String status) {
+    public List<Appointment> getAppointmentsByStatus(Integer doctorId, Appointment.AppointmentStatus status) {
         try {
             logger.info("Fetching appointments for doctor ID: {} with status: {}", doctorId, status);
             return appointmentRepository.findByDoctorIdAndStatusOrderByDateTimeDesc(doctorId, status);
@@ -94,8 +94,10 @@ public class DoctorService {
      */
     public List<Appointment> getTodayAppointments(Integer doctorId) {
         try {
-            logger.info("Fetching today's appointments for doctor ID: {}", doctorId);
-            return appointmentRepository.findTodayAppointmentsForDoctor(doctorId);
+            LocalDateTime startOfDay = LocalDateTime.now().toLocalDate().atStartOfDay();
+            LocalDateTime endOfDay = startOfDay.plusDays(1).minusSeconds(1);
+            logger.info("Fetching today's appointments for doctor ID: {} (from {} to {})", doctorId, startOfDay, endOfDay);
+            return appointmentRepository.findTodayAppointmentsForDoctor(doctorId, startOfDay, endOfDay);
         } catch (DataAccessException e) {
             logger.error("Failed to fetch today's appointments for doctor ID: {}", doctorId, e);
             return Collections.emptyList();
@@ -117,13 +119,12 @@ public class DoctorService {
     }
 
     /**
-     * Get appointment details by appointmentId
+     * Get appointment details by appointmentId and doctorId
      */
     public Optional<Appointment> getAppointmentDetails(Integer appointmentId, Integer doctorId) {
         try {
             logger.info("Fetching appointment details for appointment ID: {} and doctor ID: {}", appointmentId, doctorId);
-            Appointment appointment = appointmentRepository.findByDoctorIdOrderByDateTimeDesc(appointmentId, doctorId);
-            return Optional.ofNullable(appointment);
+            return appointmentRepository.findByAppointmentIdAndDoctorId(appointmentId, doctorId);
         } catch (DataAccessException e) {
             logger.error("Failed to fetch appointment details for appointment ID: {} and doctor ID: {}",
                     appointmentId, doctorId, e);
@@ -184,7 +185,6 @@ public class DoctorService {
      * Get the count of active doctors in the system
      * @return the number of active doctors
      */
-
     public List<Doctor> getAllDoctors() {
         try {
             logger.info("Fetching all doctors");
@@ -256,14 +256,14 @@ public class DoctorService {
 
     public DoctorForm loadForm(int doctorId) {
         Doctor d = getDoctorById(doctorId);
-        Users u  = d.getUser();
+        Users u = d.getUser();
         DoctorForm form = new DoctorForm();
         form.setDoctorId(d.getDoctorId());
         form.setUserId(u.getUserId());
-        form.setFullName(      u.getFullName());
-        form.setEmail(         u.getEmail());
-        form.setPhoneNumber(   u.getPhoneNumber());
-        form.setStatus(        u.getStatus());
+        form.setFullName(u.getFullName());
+        form.setEmail(u.getEmail());
+        form.setPhoneNumber(u.getPhoneNumber());
+        form.setStatus(u.getStatus());
         form.setBioDescription(d.getBioDescription());
         return form;
     }
@@ -281,10 +281,10 @@ public class DoctorService {
             u.setGuest(false);
             u.setCreatedAt(LocalDateTime.now());
         }
-        u.setFullName(    form.getFullName());
-        u.setEmail(       form.getEmail());
-        u.setPhoneNumber( form.getPhoneNumber());
-        u.setStatus(      form.getStatus());
+        u.setFullName(form.getFullName());
+        u.setEmail(form.getEmail());
+        u.setPhoneNumber(form.getPhoneNumber());
+        u.setStatus(form.getStatus());
         userRepository.save(u);
 
         // 2) xử lý Doctor
@@ -294,11 +294,8 @@ public class DoctorService {
         } else {
             d = new Doctor();
         }
-        d.setUserId(       u.getUserId());
+        d.setUserId(u.getUserId());
         d.setBioDescription(form.getBioDescription());
         doctorRepository.save(d);
     }
-
-
 }
-

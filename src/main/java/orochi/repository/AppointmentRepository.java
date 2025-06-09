@@ -45,4 +45,8 @@ public interface AppointmentRepository extends JpaRepository<Appointment, Intege
     // Thêm: Phương thức bị thiếu trong AppointmentService
     @Query("SELECT a FROM Appointment a WHERE a.doctorId = :doctorId AND a.dateTime BETWEEN :startDate AND :endDate ORDER BY a.dateTime")
     List<Appointment> findByDoctorIdAndDateTimeBetweenOrderByDateTime(@Param("doctorId") Integer doctorId, @Param("startDate") LocalDateTime startDate, @Param("endDate") LocalDateTime endDate);
+
+    List<Appointment> findTodayAppointmentsForDoctor(Integer doctorId, LocalDateTime startOfDay, LocalDateTime endOfDay);
+
+    List<Appointment> findUpcomingAppointmentsForDoctor(Integer doctorId, LocalDateTime now);
 }

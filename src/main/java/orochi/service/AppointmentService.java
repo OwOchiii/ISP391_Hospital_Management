@@ -1,6 +1,8 @@
 package orochi.service;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import orochi.dto.AppointmentFormDTO;
@@ -153,7 +155,7 @@ public abstract class AppointmentService {
         appointment.setPatientId(patientId);
         appointment.setDoctorId(doctorId);
         appointment.setDateTime(dateTime);
-        appointment.setStatus("Scheduled");
+        appointment.setStatus(Appointment.AppointmentStatus.valueOf("Scheduled"));
         appointment.setEmail(email);
         appointment.setPhoneNumber(phoneNumber);
         appointment.setDescription(description);
@@ -163,4 +165,9 @@ public abstract class AppointmentService {
     }
 
     public abstract Appointment bookAppointment(AppointmentFormDTO appointmentDTO);
+
+    public void getAppointmentsByDoctorIdAndPatientName(Integer doctorId, String search) {
+    }
+
+    public abstract Page<Appointment> getAppointmentsByDoctorId(Integer doctorId, Pageable pageable);
 }
