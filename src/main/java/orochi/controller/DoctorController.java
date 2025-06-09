@@ -19,6 +19,7 @@ import orochi.config.CustomUserDetails;
 
 import java.time.LocalDate;
 import java.util.*;
+import java.util.stream.Collectors;
 
 @Controller
 @RequestMapping("/doctor")
@@ -480,27 +481,38 @@ public class DoctorController {
         try {
             logger.info("Fetching medical orders for doctor ID: {} with filters - status: {}, type: {}, date: {}",
                     doctorId, status, type, date);
+            long startTime = System.currentTimeMillis();
 
             Doctor doctor = doctorRepository.findById(doctorId)
                     .orElseThrow(() -> new IllegalArgumentException("Invalid doctor ID: " + doctorId));
 
-            // Get all outgoing orders (orders created by this doctor)
-            List<MedicalOrder> allOutgoingOrders = medicalOrderRepository.findByDoctorId(doctorId);
-
-            // Get all incoming orders (orders assigned to departments where this doctor is head)
-            List<MedicalOrder> allIncomingOrders = new ArrayList<>();
-            List<Department> headedDepartments = doctor.getDepartmentsLed();
-            if (headedDepartments != null && !headedDepartments.isEmpty()) {
-                for (Department department : headedDepartments) {
-                    if (department.getMedicalOrders() != null) {
-                        allIncomingOrders.addAll(department.getMedicalOrders());
-                    }
-                }
+            // Parse date if provided
+            LocalDate parsedDate = null;
+            if (date != null && !date.isEmpty()) {
+                parsedDate = LocalDate.parse(date);
             }
 
-            // Apply filters to both lists
-            List<MedicalOrder> outgoingOrders = applyFilters(allOutgoingOrders, status, type, date);
-            List<MedicalOrder> incomingOrders = applyFilters(allIncomingOrders, status, type, date);
+            // Get outgoing orders with a single optimized query
+            List<MedicalOrder> outgoingOrders = medicalOrderRepository.findByDoctorIdAndFiltersWithDetails(
+                    doctorId,
+                    (status != null && !status.isEmpty()) ? status : null,
+                    (type != null && !type.isEmpty()) ? type : null,
+                    parsedDate);
+
+            // Get incoming orders with a single optimized query
+            List<MedicalOrder> incomingOrders = new ArrayList<>();
+            List<Department> headedDepartments = doctor.getDepartmentsLed();
+            if (headedDepartments != null && !headedDepartments.isEmpty()) {
+                List<Integer> departmentIds = headedDepartments.stream()
+                        .map(Department::getDepartmentId)
+                        .collect(Collectors.toList());
+
+                incomingOrders = medicalOrderRepository.findByDepartmentIdsAndFiltersWithDetails(
+                        departmentIds,
+                        (status != null && !status.isEmpty()) ? status : null,
+                        (type != null && !type.isEmpty()) ? type : null,
+                        parsedDate);
+            }
 
             model.addAttribute("doctorId", doctorId);
             model.addAttribute("doctorName", doctor.getUser().getFullName());
@@ -510,8 +522,7 @@ public class DoctorController {
             model.addAttribute("selectedType", type);
             model.addAttribute("selectedDate", date);
 
-            logger.debug("Retrieved {} outgoing and {} incoming medical orders for doctor ID: {}",
-                    outgoingOrders.size(), incomingOrders.size(), doctorId);
+            long totalTime = System.currentTimeMillis() - startTime;
 
             return "doctor/medical-orders";
         } catch (Exception e) {

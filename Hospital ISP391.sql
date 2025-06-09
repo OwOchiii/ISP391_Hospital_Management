@@ -710,3 +710,16 @@ ALTER TABLE [Users]
 ADD [Status] VARCHAR(10) DEFAULT 'Active' CHECK ([Status] IN ('Active', 'Inactive', 'Suspended')) NOT NULL;
 
 ALTER TABLE [Patient] DROP COLUMN [address];
+
+-- Add PatientID column
+    ALTER TABLE Schedule ADD PatientID INT NULL;
+
+-- Add EventType column with default value 'appointment'
+    ALTER TABLE Schedule ADD EventType VARCHAR(20) NOT NULL DEFAULT 'appointment';
+
+-- Add Description column
+    ALTER TABLE Schedule ADD Description VARCHAR(255) NULL;
+
+-- Add foreign key constraint for PatientID referencing Patient table
+    ALTER TABLE Schedule ADD CONSTRAINT FK_Schedule_Patient
+        FOREIGN KEY (PatientID) REFERENCES Patient(PatientID);

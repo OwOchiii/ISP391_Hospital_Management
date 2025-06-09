@@ -8,6 +8,7 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import orochi.model.MedicalOrder;
 
+import java.time.LocalDate;
 import java.util.List;
 import java.util.Optional;
 
@@ -60,5 +61,52 @@ public interface MedicalOrderRepository extends JpaRepository<MedicalOrder, Inte
     boolean checkDoctorHasAccessToAppointment(@Param("appointmentId") Integer appointmentId, @Param("doctorId") Integer doctorId);
 
     List<MedicalOrder> findByResultId(Integer resultId);
-}
 
+    // Add these optimized query methods for department medical orders
+    @Query("SELECT m FROM MedicalOrder m " +
+           "LEFT JOIN FETCH m.appointment a " +
+           "LEFT JOIN FETCH a.patient p " +
+           "LEFT JOIN FETCH p.user " +
+           "LEFT JOIN FETCH a.doctor d " +
+           "LEFT JOIN FETCH d.user " +
+           "WHERE m.assignedToDepartment.id IN :departmentIds " +
+           "ORDER BY m.orderDate DESC")
+    List<MedicalOrder> findByDepartmentIdsWithDetails(@Param("departmentIds") List<Integer> departmentIds);
+
+    // Add filtered query for both department and status
+    @Query("SELECT m FROM MedicalOrder m " +
+           "LEFT JOIN FETCH m.appointment a " +
+           "LEFT JOIN FETCH a.patient p " +
+           "LEFT JOIN FETCH p.user " +
+           "LEFT JOIN FETCH a.doctor d " +
+           "LEFT JOIN FETCH d.user " +
+           "WHERE m.assignedToDepartment.id IN :departmentIds " +
+           "AND (:status IS NULL OR m.status = :status) " +
+           "AND (:type IS NULL OR m.orderType = :type) " +
+           "AND (:date IS NULL OR CAST(m.orderDate AS LocalDate) = :date) " +
+           "ORDER BY m.orderDate DESC")
+    List<MedicalOrder> findByDepartmentIdsAndFiltersWithDetails(
+            @Param("departmentIds") List<Integer> departmentIds,
+            @Param("status") String status,
+            @Param("type") String type,
+            @Param("date") LocalDate date);
+
+    // Add optimized query for doctor's outgoing orders with filters
+    @Query("SELECT m FROM MedicalOrder m " +
+           "LEFT JOIN FETCH m.appointment a " +
+           "LEFT JOIN FETCH a.patient p " +
+           "LEFT JOIN FETCH p.user " +
+           "LEFT JOIN FETCH a.doctor d " +
+           "LEFT JOIN FETCH d.user " +
+           "LEFT JOIN FETCH m.assignedToDepartment " +
+           "WHERE m.doctorId = :doctorId " +
+           "AND (:status IS NULL OR m.status = :status) " +
+           "AND (:type IS NULL OR m.orderType = :type) " +
+           "AND (:date IS NULL OR CAST(m.orderDate AS LocalDate) = :date) " +
+           "ORDER BY m.orderDate DESC")
+    List<MedicalOrder> findByDoctorIdAndFiltersWithDetails(
+            @Param("doctorId") Integer doctorId,
+            @Param("status") String status,
+            @Param("type") String type,
+            @Param("date") LocalDate date);
+}
