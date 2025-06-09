@@ -122,7 +122,7 @@ public class DoctorService {
     public Optional<Appointment> getAppointmentDetails(Integer appointmentId, Integer doctorId) {
         try {
             logger.info("Fetching appointment details for appointment ID: {} and doctor ID: {}", appointmentId, doctorId);
-            Appointment appointment = appointmentRepository.findByAppointmentIdAndDoctorId(appointmentId, doctorId);
+            Appointment appointment = appointmentRepository.findByDoctorIdOrderByDateTimeDesc(appointmentId, doctorId);
             return Optional.ofNullable(appointment);
         } catch (DataAccessException e) {
             logger.error("Failed to fetch appointment details for appointment ID: {} and doctor ID: {}",
