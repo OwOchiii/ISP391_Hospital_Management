@@ -4,6 +4,7 @@ import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import org.hibernate.annotations.DynamicUpdate;
 
 import java.time.LocalDateTime;
 
@@ -12,6 +13,7 @@ import java.time.LocalDateTime;
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
+@DynamicUpdate
 public class Users {
 
     @Id
@@ -47,6 +49,8 @@ public class Users {
     @OneToOne(mappedBy = "user")
     private Doctor doctor;
 
+    @Column(name = "Status", nullable = false)
+    private String status;
 
     @Column(name = "created_at", nullable = false, updatable = false)
     private LocalDateTime createdAt;
@@ -55,5 +59,18 @@ public class Users {
     @PrePersist
     protected void onCreate() {
         this.createdAt = LocalDateTime.now();
+    }
+
+    @Override
+    public String toString() {
+        return "Users{" +
+                "userId=" + userId +
+                ", fullName='" + fullName + '\'' +
+                ", email='" + email + '\'' +
+                ", phoneNumber='" + phoneNumber + '\'' +
+                ", isGuest=" + isGuest +
+                ", roleId=" + (role != null ? role.getRoleId() : null) +
+                ", createdAt=" + createdAt +
+                '}';
     }
 }

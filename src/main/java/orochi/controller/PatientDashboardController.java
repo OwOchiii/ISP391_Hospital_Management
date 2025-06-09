@@ -1,21 +1,25 @@
 package orochi.controller;
 
+import jakarta.validation.Valid;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.dao.DataAccessException;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Controller;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.ui.Model;
+import org.springframework.validation.BindingResult;
+import org.springframework.validation.FieldError;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
+import lombok.extern.slf4j.Slf4j;
 import orochi.model.*;
-import orochi.repository.AppointmentRepository;
-import orochi.repository.MedicalOrderRepository;
-import orochi.repository.PatientRepository;
+import orochi.repository.*;
 import orochi.config.CustomUserDetails;
 import orochi.service.FeedbackService;
 import orochi.service.PatientService;
@@ -32,7 +36,13 @@ public class PatientDashboardController {
     private static final Logger logger = LoggerFactory.getLogger(PatientDashboardController.class);
 
     @Autowired
+    private UserRepository userRepository;
+
+    @Autowired
     private PatientRepository patientRepository;
+
+    @Autowired
+    private PatientContactRepository patientContactRepository;
 
     @Autowired
     private AppointmentRepository appointmentRepository;
@@ -321,8 +331,139 @@ public class PatientDashboardController {
     }
 
     @GetMapping("/update-profile")
-    public String updateProfile() {
+    public String showUpdateProfileForm(Model model) {
+        Integer patientId = getCurrentPatientId();
+        if (patientId == null) {
+            model.addAttribute("errorMessage", "Patient ID is required");
+            return "error";
+        }
+
+        Optional<Patient> patientOpt = patientRepository.findById(patientId);
+        if (!patientOpt.isPresent()) {
+            model.addAttribute("errorMessage", "Patient not found");
+            return "error";
+        }
+
+        Patient patient = patientOpt.get();
+        Users user = patient.getUser();
+        String streetAddress = "";
+        if (patient.getContacts() != null && !patient.getContacts().isEmpty()) {
+            PatientContact contact = patient.getContacts().get(0);
+            streetAddress = contact.getStreetAddress();
+        }
+
+        ProfileUpdateForm form = new ProfileUpdateForm();
+        form.setFullName(user.getFullName());
+        form.setEmail(user.getEmail());
+        form.setPhoneNumber(user.getPhoneNumber());
+        form.setDateOfBirth(patient.getDateOfBirth());
+        form.setGender(patient.getGender());
+        form.setDescription(patient.getDescription());
+        form.setStreetAddress(streetAddress);
+
+        model.addAttribute("profileForm", form);
+        model.addAttribute("patientId", patientId);
+        model.addAttribute("patientName", user.getFullName());
+
         return "patient/update-profile";
+    }
+
+    @PostMapping("/update-profile")
+    @Transactional
+    public String updateProfile(@ModelAttribute("profileForm") @Valid ProfileUpdateForm form,
+                                BindingResult bindingResult,
+                                RedirectAttributes redirectAttributes, Model model) {
+        System.out.println("Processing update-profile with form: " + form);
+
+        Integer patientId = getCurrentPatientId();
+        if (patientId == null) {
+            System.out.println("Patient ID is null");
+            redirectAttributes.addFlashAttribute("errorMessage", "Patient ID is required");
+            return "redirect:/patient/profile";
+        }
+
+        if (bindingResult.hasErrors()) {
+            System.out.println("Validation errors found: " + bindingResult.getAllErrors());
+            return "patient/update-profile";
+        }
+
+        Optional<Patient> patientOpt = patientRepository.findById(patientId);
+        if (!patientOpt.isPresent()) {
+            System.out.println("Patient not found for ID: " + patientId);
+            redirectAttributes.addFlashAttribute("errorMessage", "Patient not found");
+            return "redirect:/patient/profile";
+        }
+
+        Patient patient = patientOpt.get();
+        Users user = patient.getUser();
+        System.out.println("Found patient ID: " + patient.getPatientId() + ", user ID: " + user.getUserId());
+
+        String newEmail = form.getEmail();
+        String newPhoneNumber = form.getPhoneNumber();
+
+        if (!newEmail.equals(user.getEmail())) {
+            Optional<Users> emailCheck = userRepository.findByEmail(newEmail);
+            if (emailCheck.isPresent() && !emailCheck.get().getUserId().equals(user.getUserId())) {
+                System.out.println("Email already in use: " + newEmail);
+                bindingResult.addError(new FieldError("profileForm", "email", "This email is already in use."));
+            }
+        }
+
+        if (!newPhoneNumber.equals(user.getPhoneNumber()) && userRepository.existsByPhoneNumberAndUserIdNot(newPhoneNumber, user.getUserId())) {
+            System.out.println("Phone number already in use: " + newPhoneNumber);
+            bindingResult.addError(new FieldError("profileForm", "phoneNumber", "This phone number is already in use."));
+        }
+
+        if (bindingResult.hasErrors()) {
+            System.out.println("Post-validation errors found: " + bindingResult.getAllErrors());
+            return "patient/update-profile";
+        }
+
+        try {
+            // Update Users entity
+            user.setFullName(form.getFullName());
+            user.setEmail(newEmail);
+            user.setPhoneNumber(newPhoneNumber);
+            System.out.println("Saving user ID: " + user.getUserId() + ", email: " + user.getEmail());
+            userRepository.save(user);
+
+            // Update Patient entity
+            patient.setDateOfBirth(form.getDateOfBirth());
+            patient.setGender(form.getGender());
+            patient.setDescription(form.getDescription());
+            System.out.println("Saving patient ID: " + patient.getPatientId());
+            patientRepository.save(patient);
+
+            // Update or create PatientContact
+            Optional<PatientContact> contactOpt = patientContactRepository.findFirstByPatientId(patientId);
+            if (contactOpt.isPresent()) {
+                PatientContact contact = contactOpt.get();
+                contact.setStreetAddress(form.getStreetAddress());
+                contact.setCity("OK");
+                contact.setCountry("OK");
+                System.out.println("Saving existing contact ID: " + contact.getContactId());
+                patientContactRepository.save(contact);
+            } else {
+                PatientContact newContact = new PatientContact();
+                newContact.setPatientId(patientId);
+                newContact.setAddressType("Primary");
+                newContact.setStreetAddress(form.getStreetAddress());
+                newContact.setCity("OK");
+                newContact.setCountry("OK");
+                System.out.println("Saving new contact for patient ID: " + patientId);
+                patientContactRepository.save(newContact);
+            }
+
+            // Move success message after all saves
+            System.out.println("Profile updated successfully for patient ID: " + patientId);
+            redirectAttributes.addFlashAttribute("successMessage", "Profile updated successfully");
+            return "redirect:/patient/profile";
+        } catch (Exception e) {
+            System.out.println("Error updating profile for patient ID: " + patientId + ", error: " + e.getMessage());
+            e.printStackTrace();
+            model.addAttribute("errorMessage", "Failed to update profile: " + e.getMessage());
+            return "patient/update-profile";
+        }
     }
 
     @GetMapping("/customer-support")
