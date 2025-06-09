@@ -776,209 +776,15 @@
         <thead class="time-header">
         <tr>
           <th>Time</th>
-          <th>Monday<br><small class="text-muted">Jan 15</small></th>
-          <th>Tuesday<br><small class="text-muted">Jan 16</small></th>
-          <th>Wednesday<br><small class="text-muted">Jan 17</small></th>
-          <th>Thursday<br><small class="text-muted">Jan 18</small></th>
-          <th>Friday<br><small class="text-muted">Jan 19</small></th>
-          <th>Saturday<br><small class="text-muted">Jan 20</small></th>
-          <th>Sunday<br><small class="text-muted">Jan 21</small></th>
+          <!-- Dynamically generate date headers for each day of the week -->
+          <th th:each="day : ${#numbers.sequence(0, 6)}">
+            <span th:text="${#temporals.dayOfWeekName(weekStart.plusDays(day))}">Monday</span><br>
+            <small class="text-muted" th:text="${#temporals.format(weekStart.plusDays(day), 'MMM d')}">Jan 15</small>
+          </th>
         </tr>
         </thead>
-        <tbody>
-        <!-- 7:00 AM -->
-        <tr class="time-slot">
-          <td class="time-label">7:00 AM</td>
-          <td class="schedule-cell" onclick="openAddModal('Monday', '07:00')">
-            <div class="add-event-btn">+ Add</div>
-          </td>
-          <td class="schedule-cell" onclick="openAddModal('Tuesday', '07:00')">
-            <div class="schedule-event oncall" onclick="event.stopPropagation(); editEvent(1)">
-              <div class="event-room">R101</div>
-              <div class="event-title">On-Call Duty</div>
-              <div class="event-details">Emergency Coverage</div>
-            </div>
-          </td>
-          <td class="schedule-cell" onclick="openAddModal('Wednesday', '07:00')">
-            <div class="add-event-btn">+ Add</div>
-          </td>
-          <td class="schedule-cell" onclick="openAddModal('Thursday', '07:00')">
-            <div class="add-event-btn">+ Add</div>
-          </td>
-          <td class="schedule-cell" onclick="openAddModal('Friday', '07:00')">
-            <div class="add-event-btn">+ Add</div>
-          </td>
-          <td class="schedule-cell" onclick="openAddModal('Saturday', '07:00')">
-            <div class="schedule-event oncall" onclick="event.stopPropagation(); editEvent(2)">
-              <div class="event-room">R102</div>
-              <div class="event-title">Weekend On-Call</div>
-              <div class="event-details">Full Day Coverage</div>
-            </div>
-          </td>
-          <td class="schedule-cell" onclick="openAddModal('Sunday', '07:00')">
-            <div class="add-event-btn">+ Add</div>
-          </td>
-        </tr>
-
-        <!-- 8:00 AM -->
-        <tr class="time-slot">
-          <td class="time-label">8:00 AM</td>
-          <td class="schedule-cell" onclick="openAddModal('Monday', '08:00')">
-            <div class="schedule-event appointment" onclick="event.stopPropagation(); editEvent(3)">
-              <div class="event-room">R201</div>
-              <div class="event-title">John Smith</div>
-              <div class="event-details">General Checkup</div>
-            </div>
-          </td>
-          <td class="schedule-cell" onclick="openAddModal('Tuesday', '08:00')">
-            <div class="schedule-event oncall" onclick="event.stopPropagation(); editEvent(4)">
-              <div class="event-room">R101</div>
-              <div class="event-title">On-Call Duty</div>
-              <div class="event-details">Emergency Coverage</div>
-            </div>
-          </td>
-          <td class="schedule-cell" onclick="openAddModal('Wednesday', '08:00')">
-            <div class="schedule-event appointment" onclick="event.stopPropagation(); editEvent(5)">
-              <div class="event-room">R203</div>
-              <div class="event-title">Sarah Johnson</div>
-              <div class="event-details">Follow-up Visit</div>
-            </div>
-          </td>
-          <td class="schedule-cell" onclick="openAddModal('Thursday', '08:00')">
-            <div class="add-event-btn">+ Add</div>
-          </td>
-          <td class="schedule-cell" onclick="openAddModal('Friday', '08:00')">
-            <div class="schedule-event appointment" onclick="event.stopPropagation(); editEvent(6)">
-              <div class="event-room">R201</div>
-              <div class="event-title">Mike Davis</div>
-              <div class="event-details">Consultation</div>
-            </div>
-          </td>
-          <td class="schedule-cell" onclick="openAddModal('Saturday', '08:00')">
-            <div class="schedule-event oncall" onclick="event.stopPropagation(); editEvent(7)">
-              <div class="event-room">R102</div>
-              <div class="event-title">Weekend On-Call</div>
-              <div class="event-details">Full Day Coverage</div>
-            </div>
-          </td>
-          <td class="schedule-cell" onclick="openAddModal('Sunday', '08:00')">
-            <div class="add-event-btn">+ Add</div>
-          </td>
-        </tr>
-
-        <!-- 9:00 AM -->
-        <tr class="time-slot">
-          <td class="time-label">9:00 AM</td>
-          <td class="schedule-cell" onclick="openAddModal('Monday', '09:00')">
-            <div class="schedule-event appointment" onclick="event.stopPropagation(); editEvent(8)">
-              <div class="event-room">R201</div>
-              <div class="event-title">Emily Wilson</div>
-              <div class="event-details">Physical Therapy</div>
-            </div>
-          </td>
-          <td class="schedule-cell" onclick="openAddModal('Tuesday', '09:00')">
-            <div class="schedule-event break" onclick="event.stopPropagation(); editEvent(9)">
-              <div class="event-title">Coffee Break</div>
-              <div class="event-details">15 min break</div>
-            </div>
-          </td>
-          <td class="schedule-cell" onclick="openAddModal('Wednesday', '09:00')">
-            <div class="add-event-btn">+ Add</div>
-          </td>
-          <td class="schedule-cell" onclick="openAddModal('Thursday', '09:00')">
-            <div class="schedule-event appointment" onclick="event.stopPropagation(); editEvent(10)">
-              <div class="event-room">R204</div>
-              <div class="event-title">Robert Brown</div>
-              <div class="event-details">Surgery Consultation</div>
-            </div>
-          </td>
-          <td class="schedule-cell" onclick="openAddModal('Friday', '09:00')">
-            <div class="add-event-btn">+ Add</div>
-          </td>
-          <td class="schedule-cell" onclick="openAddModal('Saturday', '09:00')">
-            <div class="schedule-event oncall" onclick="event.stopPropagation(); editEvent(11)">
-              <div class="event-room">R102</div>
-              <div class="event-title">Weekend On-Call</div>
-              <div class="event-details">Full Day Coverage</div>
-            </div>
-          </td>
-          <td class="schedule-cell" onclick="openAddModal('Sunday', '09:00')">
-            <div class="add-event-btn">+ Add</div>
-          </td>
-        </tr>
-
-        <!-- Additional time slots... (10:00 AM - 6:00 PM) -->
-        <tr class="time-slot">
-          <td class="time-label">10:00 AM</td>
-          <td class="schedule-cell" onclick="openAddModal('Monday', '10:00')"><div class="add-event-btn">+ Add</div></td>
-          <td class="schedule-cell" onclick="openAddModal('Tuesday', '10:00')"><div class="add-event-btn">+ Add</div></td>
-          <td class="schedule-cell" onclick="openAddModal('Wednesday', '10:00')"><div class="add-event-btn">+ Add</div></td>
-          <td class="schedule-cell" onclick="openAddModal('Thursday', '10:00')"><div class="add-event-btn">+ Add</div></td>
-          <td class="schedule-cell" onclick="openAddModal('Friday', '10:00')"><div class="add-event-btn">+ Add</div></td>
-          <td class="schedule-cell" onclick="openAddModal('Saturday', '10:00')"><div class="add-event-btn">+ Add</div></td>
-          <td class="schedule-cell" onclick="openAddModal('Sunday', '10:00')"><div class="add-event-btn">+ Add</div></td>
-        </tr>
-
-        <tr class="time-slot">
-          <td class="time-label">11:00 AM</td>
-          <td class="schedule-cell" onclick="openAddModal('Monday', '11:00')"><div class="add-event-btn">+ Add</div></td>
-          <td class="schedule-cell" onclick="openAddModal('Tuesday', '11:00')"><div class="add-event-btn">+ Add</div></td>
-          <td class="schedule-cell" onclick="openAddModal('Wednesday', '11:00')"><div class="add-event-btn">+ Add</div></td>
-          <td class="schedule-cell" onclick="openAddModal('Thursday', '11:00')"><div class="add-event-btn">+ Add</div></td>
-          <td class="schedule-cell" onclick="openAddModal('Friday', '11:00')"><div class="add-event-btn">+ Add</div></td>
-          <td class="schedule-cell" onclick="openAddModal('Saturday', '11:00')"><div class="add-event-btn">+ Add</div></td>
-          <td class="schedule-cell" onclick="openAddModal('Sunday', '11:00')"><div class="add-event-btn">+ Add</div></td>
-        </tr>
-
-        <tr class="time-slot">
-          <td class="time-label">12:00 PM</td>
-          <td class="schedule-cell" onclick="openAddModal('Monday', '12:00')">
-            <div class="schedule-event break">
-              <div class="event-title">Lunch Break</div>
-              <div class="event-details">1 hour</div>
-            </div>
-          </td>
-          <td class="schedule-cell" onclick="openAddModal('Tuesday', '12:00')">
-            <div class="schedule-event break">
-              <div class="event-title">Lunch Break</div>
-              <div class="event-details">1 hour</div>
-            </div>
-          </td>
-          <td class="schedule-cell" onclick="openAddModal('Wednesday', '12:00')">
-            <div class="schedule-event break">
-              <div class="event-title">Lunch Break</div>
-              <div class="event-details">1 hour</div>
-            </div>
-          </td>
-          <td class="schedule-cell" onclick="openAddModal('Thursday', '12:00')">
-            <div class="schedule-event break">
-              <div class="event-title">Lunch Break</div>
-              <div class="event-details">1 hour</div>
-            </div>
-          </td>
-          <td class="schedule-cell" onclick="openAddModal('Friday', '12:00')">
-            <div class="schedule-event break">
-              <div class="event-title">Lunch Break</div>
-              <div class="event-details">1 hour</div>
-            </div>
-          </td>
-          <td class="schedule-cell" onclick="openAddModal('Saturday', '12:00')"><div class="add-event-btn">+ Add</div></td>
-          <td class="schedule-cell" onclick="openAddModal('Sunday', '12:00')"><div class="add-event-btn">+ Add</div></td>
-        </tr>
-
-        <!-- Continue with more time slots as needed -->
-        <tr class="time-slot">
-          <td class="time-label">1:00 PM</td>
-          <td class="schedule-cell" onclick="openAddModal('Monday', '13:00')"><div class="add-event-btn">+ Add</div></td>
-          <td class="schedule-cell" onclick="openAddModal('Tuesday', '13:00')"><div class="add-event-btn">+ Add</div></td>
-          <td class="schedule-cell" onclick="openAddModal('Wednesday', '13:00')"><div class="add-event-btn">+ Add</div></td>
-          <td class="schedule-cell" onclick="openAddModal('Thursday', '13:00')"><div class="add-event-btn">+ Add</div></td>
-          <td class="schedule-cell" onclick="openAddModal('Friday', '13:00')"><div class="add-event-btn">+ Add</div></td>
-          <td class="schedule-cell" onclick="openAddModal('Saturday', '13:00')"><div class="add-event-btn">+ Add</div></td>
-          <td class="schedule-cell" onclick="openAddModal('Sunday', '13:00')"><div class="add-event-btn">+ Add</div></td>
-        </tr>
-
-        <!-- Add more rows as needed -->
+        <tbody id="scheduleTableBody">
+        <!-- Table body will be populated dynamically with JavaScript -->
         </tbody>
       </table>
     </div>
@@ -1170,6 +976,20 @@
     const year = currentWeekStart.getFullYear();
 
     document.getElementById('currentWeek').textContent = `${startStr} - ${endStr}, ${year}`;
+
+    // Update the table headers with the new dates
+    const headers = document.querySelectorAll('.time-header th:not(:first-child)');
+    const days = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
+
+    headers.forEach((header, index) => {
+      const date = new Date(currentWeekStart);
+      date.setDate(date.getDate() + index);
+
+      const dayName = days[index];
+      const dateStr = date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+
+      header.innerHTML = `${dayName}<br><small class="text-muted">${dateStr}</small>`;
+    });
   }
 
   // Event type change handler
@@ -1243,6 +1063,11 @@
     if (formData.eventType === 'appointment') {
       formData.patientId = document.getElementById('patientSelect').value;
       formData.description = document.getElementById('appointmentDescription').value;
+
+      // If this is tied to an appointment, include the appointmentId
+      if (document.getElementById('appointmentId')) {
+        formData.appointmentId = document.getElementById('appointmentId').value;
+      }
     } else if (formData.eventType === 'oncall') {
       formData.description = document.getElementById('oncallDescription').value;
     } else if (formData.eventType === 'break') {
@@ -1262,9 +1087,77 @@
 
   // Load schedule data from backend
   function loadScheduleData() {
-    // This would fetch data from your backend API
-    console.log('Loading schedule data for week starting:', currentWeekStart);
-    // Implementation would depend on your backend structure
+    // Get formatted date for API call
+    const formattedDate = currentWeekStart.toISOString().split('T')[0];
+
+    // Show loading indicator (optional)
+    const tableBody = document.getElementById('scheduleTableBody');
+    tableBody.innerHTML = '<tr><td colspan="8" class="text-center py-4">Loading schedule data...</td></tr>';
+
+    // Make AJAX call to get schedule data for the selected week
+    fetch(`/doctor/schedule/week?doctorId=${doctorId}&weekStart=${formattedDate}`)
+      .then(response => {
+        if (!response.ok) {
+          throw new Error('Network response was not ok');
+        }
+        return response.json();
+      })
+      .then(data => {
+        console.log('Schedule data loaded:', data);
+
+        // Convert server data to the format expected by populateScheduleTable
+        const formattedSchedules = data.schedules.map(schedule => {
+          // Extract hour and minute from time strings
+          const startTime = schedule.startTime;
+          const endTime = schedule.endTime;
+
+          // Calculate duration in hours
+          const startHour = parseInt(startTime.split(':')[0]);
+          const startMinute = parseInt(startTime.split(':')[1]);
+          const endHour = parseInt(endTime.split(':')[0]);
+          const endMinute = parseInt(endTime.split(':')[1]);
+
+          const durationHours = (endHour - startHour) + (endMinute - startMinute) / 60;
+
+          // Format time for display (e.g., "9:00" instead of "09:00")
+          const displayTime = startHour + ':' + (startMinute === 0 ? '00' : startMinute);
+
+          // Calculate day of week (0 = Monday, 6 = Sunday)
+          const scheduleDate = new Date(schedule.scheduleDate);
+          const day = (scheduleDate.getDay() + 6) % 7; // Convert Sunday=0 to Sunday=6
+
+          // Determine title and details based on event type
+          let title, details;
+          if (schedule.eventType === 'appointment') {
+            title = schedule.patientName || 'Patient Appointment';
+            details = schedule.description || 'Appointment';
+          } else if (schedule.eventType === 'oncall') {
+            title = 'On-Call Duty';
+            details = schedule.description || 'Emergency Coverage';
+          } else if (schedule.eventType === 'break') {
+            title = schedule.description || 'Break';
+            details = durationHours < 1 ? `${Math.round(durationHours * 60)} min break` : `${durationHours} hour break`;
+          }
+
+          return {
+            id: schedule.scheduleId,
+            day: day,
+            time: displayTime,
+            type: schedule.eventType,
+            title: title,
+            details: details,
+            room: schedule.roomId,
+            durationHours: durationHours
+          };
+        });
+
+        // Call the populate function with the formatted data
+        populateScheduleTable(formattedSchedules);
+      })
+      .catch(error => {
+        console.error('Error loading schedule data:', error);
+        tableBody.innerHTML = '<tr><td colspan="8" class="text-center py-4 text-danger">Error loading schedule data. Please try again.</td></tr>';
+      });
   }
 
   // Initialize
@@ -1283,7 +1176,122 @@
       this.classList.add('active');
     });
   });
+
+  // Function to populate the schedule table with data
+  function populateScheduleTable(schedules) {
+    const tableBody = document.getElementById('scheduleTableBody');
+    tableBody.innerHTML = '';
+
+    // Generate time slots with 30-minute intervals from 8:00 to 18:00
+    const timeSlots = [];
+    for (let hour = 8; hour <= 18; hour++) {
+      timeSlots.push(`${hour}:00`);
+      timeSlots.push(`${hour}:30`);
+    }
+
+    // Track occupied cells to avoid double rendering for multi-hour appointments
+    const occupiedCells = new Set();
+
+    // Create rows for each time slot
+    timeSlots.forEach((time, timeIndex) => {
+      const row = document.createElement('tr');
+      row.className = 'time-slot';
+
+      // Add time label cell
+      const timeCell = document.createElement('td');
+      timeCell.className = 'time-label';
+      timeCell.textContent = time;
+      row.appendChild(timeCell);
+
+      // Add a cell for each day of the week
+      for (let day = 0; day < 7; day++) {
+        // Generate a unique cell identifier
+        const cellId = `${day}-${time}`;
+
+        // Skip if this cell is already occupied by a multi-hour appointment
+        if (occupiedCells.has(cellId)) {
+          continue;
+        }
+
+        const cell = document.createElement('td');
+        cell.className = 'schedule-cell';
+        cell.onclick = () => openAddModal(Object.keys(dayMap)[day], time);
+
+        // Find appointments that affect this time slot
+        // We need to check if this time slot falls within any appointment's time window
+        const schedule = schedules.find(s => {
+          if (s.day !== day) return false;
+
+          // Check if this time slot is within the appointment's time window
+          const startTimeIndex = timeSlots.indexOf(s.time);
+          const durationInSlots = s.durationHours ? Math.ceil(s.durationHours * 2) : 1; // Convert hours to 30-min slots
+          const endTimeIndex = startTimeIndex + durationInSlots - 1;
+
+          return startTimeIndex <= timeIndex && timeIndex <= endTimeIndex;
+        });
+
+        if (schedule) {
+          // If a schedule exists, display it
+          const eventDiv = document.createElement('div');
+          eventDiv.className = `schedule-event ${schedule.type}`;
+          eventDiv.onclick = (e) => { e.stopPropagation(); editEvent(schedule.id); };
+
+          // If this is the start of a multi-hour appointment, make it span multiple cells
+          if (schedule.time === time && schedule.durationHours > 0.5) {
+            // Calculate how many 30-minute slots this appointment spans
+            const durationInSlots = Math.ceil(schedule.durationHours * 2); // 2 slots per hour
+
+            // Set rowspan to make the cell cover multiple time slots
+            cell.setAttribute('rowspan', durationInSlots);
+
+            // Mark the spanned cells as occupied so we don't render them again
+            for (let i = 1; i < durationInSlots; i++) {
+              if (timeIndex + i < timeSlots.length) {
+                occupiedCells.add(`${day}-${timeSlots[timeIndex + i]}`);
+              }
+            }
+
+            // Add duration indicator to the event
+            const durationDiv = document.createElement('div');
+            durationDiv.className = 'event-duration';
+            durationDiv.textContent = `${schedule.durationHours} hour${schedule.durationHours > 1 ? 's' : ''}`;
+            eventDiv.appendChild(durationDiv);
+          }
+
+          // Room info
+          const roomDiv = document.createElement('div');
+          roomDiv.className = 'event-room';
+          roomDiv.textContent = `R${schedule.room}`;
+          eventDiv.appendChild(roomDiv);
+
+          // Title and details
+          const titleDiv = document.createElement('div');
+          titleDiv.className = 'event-title';
+          titleDiv.textContent = schedule.title;
+          eventDiv.appendChild(titleDiv);
+
+          const detailsDiv = document.createElement('div');
+          detailsDiv.className = 'event-details';
+          detailsDiv.textContent = schedule.details;
+          eventDiv.appendChild(detailsDiv);
+
+          cell.appendChild(eventDiv);
+        } else {
+          // No schedule, show add button
+          const addButton = document.createElement('div');
+          addButton.className = 'add-event-btn';
+          addButton.textContent = '+ Add';
+          cell.appendChild(addButton);
+        }
+
+        row.appendChild(cell);
+      }
+
+      tableBody.appendChild(row);
+    });
+  }
   /*]]>*/
 </script>
 </body>
 </html>
+
