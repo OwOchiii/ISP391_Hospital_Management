@@ -1160,7 +1160,7 @@
         <div class="appointment-description" th:if="${appointment.description != null and !#strings.isEmpty(appointment.description)}">
           <h6>
             <i class="bi bi-clipboard-pulse"></i>
-            Reason for Visit
+            Reason
           </h6>
           <p th:text="${appointment.description}">Regular checkup and consultation for ongoing treatment plan.</p>
         </div>
@@ -1209,7 +1209,7 @@
               <i class="bi bi-eye"></i>
               View Details
             </a>
-            <a th:href="@{/patient/book-appointment(patientId=${patientId}, doctorId=${appointment.doctor?.doctorId})}"
+            <a th:href="@{/patient/book-appointment(patientId=${patientId})}"
                class="btn-primary-custom btn-sm">
               <i class="bi bi-calendar-plus"></i>
               Book Again

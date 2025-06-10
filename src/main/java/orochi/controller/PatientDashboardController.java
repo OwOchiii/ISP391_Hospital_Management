@@ -26,6 +26,8 @@ import orochi.service.PatientService;
 
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
+import java.time.format.DateTimeParseException;
+import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 
@@ -555,9 +557,9 @@ public class PatientDashboardController {
             Model model) {
         try {
             if (page < 0) {
-                page = 0; // Default to first page if invalid
+                page = 0;
             }
-            // Rest of your existing code...
+
             Integer patientId = getCurrentPatientId();
             Optional<Patient> patientOpt = patientRepository.findById(patientId);
             Patient patient = patientOpt.orElseThrow(() -> new Exception("Patient not found"));
@@ -568,28 +570,64 @@ public class PatientDashboardController {
             model.addAttribute("patientName", patient.getUser() != null ? patient.getUser().getFullName() : "Patient");
 
             Pageable pageable = PageRequest.of(page, size);
-            Page<Feedback> feedbackPage;
+            Page<Feedback> feedbackPage = null; // Initialize to null
 
             String fromDateTrimmed = (fromDate != null) ? fromDate.trim() : null;
             String toDateTrimmed = (toDate != null) ? toDate.trim() : null;
 
-            if (fromDateTrimmed != null && !fromDateTrimmed.isEmpty() && toDateTrimmed != null && !toDateTrimmed.isEmpty()) {
-                LocalDateTime start = LocalDateTime.parse(fromDateTrimmed + "T00:00:00");
-                LocalDateTime end = LocalDateTime.parse(toDateTrimmed + "T23:59:59");
+            LocalDateTime start = null, end = null;
+            if (fromDateTrimmed != null && !fromDateTrimmed.isEmpty()) {
+                try {
+                    start = LocalDateTime.parse(fromDateTrimmed + "T00:00:00");
+                } catch (DateTimeParseException e) {
+                    model.addAttribute("errorMessage", "Invalid From Date format. Please use YYYY-MM-DD.");
+                    model.addAttribute("feedbacks", Collections.emptyList()); // Default to empty list
+                    model.addAttribute("currentPage", 0);
+                    model.addAttribute("totalPages", 0);
+                    model.addAttribute("size", size);
+                    model.addAttribute("fromDate", fromDate);
+                    model.addAttribute("toDate", toDate);
+                    return "patient/my-feedback";
+                }
+            }
+            if (toDateTrimmed != null && !toDateTrimmed.isEmpty()) {
+                try {
+                    end = LocalDateTime.parse(toDateTrimmed + "T23:59:59");
+                    if (start != null && end.isBefore(start)) {
+                        model.addAttribute("errorMessage", "To Date cannot be before From Date.");
+                        model.addAttribute("feedbacks", Collections.emptyList());
+                        model.addAttribute("currentPage", 0);
+                        model.addAttribute("totalPages", 0);
+                        model.addAttribute("size", size);
+                        model.addAttribute("fromDate", fromDate);
+                        model.addAttribute("toDate", toDate);
+                        return "patient/my-feedback";
+                    }
+                } catch (DateTimeParseException e) {
+                    model.addAttribute("errorMessage", "Invalid To Date format. Please use YYYY-MM-DD.");
+                    model.addAttribute("feedbacks", Collections.emptyList());
+                    model.addAttribute("currentPage", 0);
+                    model.addAttribute("totalPages", 0);
+                    model.addAttribute("size", size);
+                    model.addAttribute("fromDate", fromDate);
+                    model.addAttribute("toDate", toDate);
+                    return "patient/my-feedback";
+                }
+            }
+
+            if (start != null && end != null) {
                 feedbackPage = feedbackService.getFeedbackByUserIdAndDateRange(userId, start, end, pageable);
-            } else if (fromDateTrimmed != null && !fromDateTrimmed.isEmpty()) {
-                LocalDateTime start = LocalDateTime.parse(fromDateTrimmed + "T00:00:00");
+            } else if (start != null) {
                 feedbackPage = feedbackService.getFeedbackByUserIdAndDateRange(userId, start, LocalDateTime.now(), pageable);
-            } else if (toDateTrimmed != null && !toDateTrimmed.isEmpty()) {
-                LocalDateTime end = LocalDateTime.parse(toDateTrimmed + "T23:59:59");
+            } else if (end != null) {
                 feedbackPage = feedbackService.getFeedbackByUserIdAndDateRange(userId, LocalDateTime.of(1900, 1, 1, 0, 0), end, pageable);
             } else {
                 feedbackPage = feedbackService.getFeedbackByUserId(userId, pageable);
             }
 
-            model.addAttribute("feedbacks", feedbackPage.getContent());
+            model.addAttribute("feedbacks", feedbackPage != null ? feedbackPage.getContent() : Collections.emptyList());
             model.addAttribute("currentPage", page);
-            model.addAttribute("totalPages", feedbackPage.getTotalPages());
+            model.addAttribute("totalPages", feedbackPage != null ? feedbackPage.getTotalPages() : 0);
             model.addAttribute("size", size);
             model.addAttribute("fromDate", fromDate);
             model.addAttribute("toDate", toDate);
@@ -597,7 +635,13 @@ public class PatientDashboardController {
         } catch (Exception e) {
             logger.error("Error fetching feedback", e);
             model.addAttribute("errorMessage", "Failed to fetch feedback: " + e.getMessage());
-            return "error";
+            model.addAttribute("feedbacks", Collections.emptyList()); // Ensure feedbacks is never null
+            model.addAttribute("currentPage", 0);
+            model.addAttribute("totalPages", 0);
+            model.addAttribute("size", size);
+            model.addAttribute("fromDate", fromDate);
+            model.addAttribute("toDate", toDate);
+            return "patient/my-feedback";
         }
     }
 
