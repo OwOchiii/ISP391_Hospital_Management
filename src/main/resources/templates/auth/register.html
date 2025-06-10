@@ -914,6 +914,12 @@
                     this.classList.remove('is-valid');
                     this.classList.add('is-invalid');
                 }
+            } else if (this.id === 'password') {
+                updatePasswordStrength(this.value);
+                if (this.value.trim()) {
+                    this.classList.remove('is-invalid');
+                    this.classList.add('is-valid');
+                }
             } else {
                 if (this.value.trim()) {
                     this.classList.remove('is-invalid');
@@ -922,10 +928,70 @@
             }
         });
     });
+
+    // Password strength meter function
+    function updatePasswordStrength(password) {
+        // Check requirements
+        const requirements = {
+            length: password.length >= 8,
+            uppercase: /[A-Z]/.test(password),
+            lowercase: /[a-z]/.test(password),
+            number: /\d/.test(password),
+            special: /[!@#$%^&*(),.?":{}|<>]/.test(password)
+        };
+
+        // Update requirement indicators
+        for (const [req, met] of Object.entries(requirements)) {
+            const reqElement = document.getElementById(`req-${req}`);
+            if (reqElement) {
+                reqElement.className = met ? 'requirement met' : 'requirement unmet';
+                reqElement.querySelector('i').className = met ? 'bi bi-check-circle' : 'bi bi-circle';
+            }
+        }
+
+        // Count met requirements for strength calculation
+        const metCount = Object.values(requirements).filter(Boolean).length;
+
+        // Update strength bar
+        const strengthFill = document.getElementById('strengthFill');
+        const strengthText = document.getElementById('strengthText');
+
+        if (!password) {
+            strengthFill.className = 'strength-fill';
+            strengthFill.style.width = '0%';
+            strengthText.textContent = 'Password strength: None';
+            return;
+        }
+
+        // Determine strength level
+        let strengthClass = '';
+        let strengthLevel = '';
+        let strengthWidth = '';
+
+        if (metCount <= 1) {
+            strengthClass = 'strength-weak';
+            strengthLevel = 'Weak';
+            strengthWidth = '25%';
+        } else if (metCount === 2) {
+            strengthClass = 'strength-fair';
+            strengthLevel = 'Fair';
+            strengthWidth = '50%';
+        } else if (metCount === 3 || metCount === 4) {
+            strengthClass = 'strength-good';
+            strengthLevel = 'Good';
+            strengthWidth = '75%';
+        } else {
+            strengthClass = 'strength-strong';
+            strengthLevel = 'Strong';
+            strengthWidth = '100%';
+        }
+
+        // Apply changes to the DOM
+        strengthFill.className = `strength-fill ${strengthClass}`;
+        strengthFill.style.width = strengthWidth;
+        strengthText.textContent = `Password strength: ${strengthLevel}`;
+    }
 </script>
 <script src="/js/register-tests.js"></script>
 </body>
 </html>
-
-
-

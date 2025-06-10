@@ -870,16 +870,20 @@
                                 View Patient Record
                             </a>
 
-                            <button class="btn-success-custom" onclick="toggleCompleted()">
-                                <i class="bi bi-check2-circle"></i>
-                                <span id="completedButtonText">Mark as Completed</span>
-                            </button>
+
                         </div>
                     </div>
 
                     <!-- Common Actions -->
                     <hr class="my-4">
+
                     <div class="d-grid gap-2">
+
+                        <button class="btn-success-custom w-100" onclick="toggleCompleted()">
+                            <i class="bi bi-check2-circle"></i>
+                            <span id="completedButtonText">Mark as Completed</span>
+                        </button>
+
                         <a th:href="@{/doctor/schedule(doctorId=${doctorId})}" class="btn-outline-custom">
                             <i class="bi bi-arrow-left"></i>
                             Back to Schedule
@@ -1076,19 +1080,29 @@
     function toggleCompleted() {
         const completedButtonText = document.getElementById('completedButtonText');
         const scheduleId = workEntry.scheduleId || workEntry.appointmentId;
-        const type = workEntry.type;
+        const type = workEntry.eventType; // Using eventType instead of type
         const endpoint = type === 'appointment'
-            ? `/api/appointments/${scheduleId}/toggle-completed`
-            : `/api/schedule/${scheduleId}/toggle-completed`;
+            ? `/doctor/api/appointments/${scheduleId}/toggle-completed`
+            : `/doctor/api/schedule/${scheduleId}/toggle-completed`;
+
+        // Get CSRF token
+        const csrfToken = document.querySelector('input[name="_csrf"]').value;
+        const csrfParameter = document.querySelector('input[name="_csrf"]').name;
 
         fetch(endpoint, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
+                'X-CSRF-TOKEN': csrfToken
             },
             body: JSON.stringify({ doctorId: doctorId })
         })
-        .then(response => response.json())
+        .then(response => {
+            if (!response.ok) {
+                throw new Error('Network response was not ok');
+            }
+            return response.json();
+        })
         .then(data => {
             if (data.success) {
                 // Update the UI based on new completed status

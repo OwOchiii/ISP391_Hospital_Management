@@ -28,4 +28,6 @@ public class ScheduleDTO {
     private String roomNumber;
     private String doctorName;
     private String roomName;
+    private String patientEmail;
+    private String patientPhone;
 }

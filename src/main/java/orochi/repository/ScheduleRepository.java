@@ -35,7 +35,7 @@ public interface ScheduleRepository extends JpaRepository<Schedule, Integer> {
     Integer countAppointmentsInDateRange(@Param("doctorId") Integer doctorId, @Param("startDate") LocalDate startDate, @Param("endDate") LocalDate endDate);
 
     // Calculate total on-call hours for a doctor in a date range
-    @Query(value = "SELECT COALESCE(SUM(DATEDIFF(HOUR, startTime, endTime)), 0) FROM Schedule " +
+    @Query(value = "SELECT COALESCE(SUM(DATEDIFF(MINUTE, CONCAT(ScheduleDate, ' ', startTime), CONCAT(ScheduleDate, ' ', endTime)) / 60.0), 0) FROM Schedule " +
            "WHERE DoctorID = :doctorId AND EventType = 'oncall' AND ScheduleDate BETWEEN :startDate AND :endDate", nativeQuery = true)
     Integer sumOnCallHoursInDateRange(@Param("doctorId") Integer doctorId, @Param("startDate") LocalDate startDate, @Param("endDate") LocalDate endDate);
 
@@ -44,7 +44,7 @@ public interface ScheduleRepository extends JpaRepository<Schedule, Integer> {
     Integer countDistinctRoomsInDateRange(@Param("doctorId") Integer doctorId, @Param("startDate") LocalDate startDate, @Param("endDate") LocalDate endDate);
 
     // Calculate total working hours for a doctor in a date range
-    @Query(value = "SELECT COALESCE(SUM(DATEDIFF(HOUR, startTime, endTime)), 0) FROM Schedule " +
+    @Query(value = "SELECT COALESCE(SUM(DATEDIFF(MINUTE, CONCAT(ScheduleDate, ' ', startTime), CONCAT(ScheduleDate, ' ', endTime)) / 60.0), 0) FROM Schedule " +
            "WHERE DoctorID = :doctorId AND ScheduleDate BETWEEN :startDate AND :endDate", nativeQuery = true)
     Integer sumTotalHoursInDateRange(@Param("doctorId") Integer doctorId, @Param("startDate") LocalDate startDate, @Param("endDate") LocalDate endDate);
 

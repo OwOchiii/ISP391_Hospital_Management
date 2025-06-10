@@ -325,10 +325,12 @@
       padding: 0.5rem;
       border-right: 1px solid #e5e7eb;
       vertical-align: top;
-      min-height: 80px;
+      min-height: 40px; /* Set a consistent minimum height */
       position: relative;
       cursor: pointer;
       transition: background-color 0.3s ease;
+      height: 100%; /* Make sure cell takes full height */
+      box-sizing: border-box; /* Include padding in element's height calculation */
     }
 
     .schedule-cell:hover {
@@ -346,6 +348,11 @@
       transition: all 0.3s ease;
       position: relative;
       overflow: hidden;
+      height: 100%; /* Ensure event fills entire cell height */
+      display: flex;
+      flex-direction: column;
+      box-sizing: border-box;
+      min-height: 100%; /* Force minimum height to be 100% of cell */
     }
 
     .schedule-event:hover {
@@ -390,6 +397,12 @@
       border-radius: 3px;
       font-size: 0.7rem;
       font-weight: 500;
+    }
+
+    .event-duration {
+      font-size: 0.7rem;
+      opacity: 0.8;
+      margin-top: auto;
     }
 
     .add-event-btn {
@@ -750,7 +763,7 @@
           <!-- Date Jump Control -->
           <div class="date-jump ms-3">
             <input type="date" id="jumpToDate" class="form-control form-control-sm" onchange="jumpToWeek(this.value)"
-                  title="Jump to week containing this date">
+                   title="Jump to week containing this date">
           </div>
         </div>
 
@@ -1131,68 +1144,72 @@
 
     // Make AJAX call to get schedule data for the selected week
     fetch(`/doctor/schedule/week?doctorId=${doctorId}&weekStart=${formattedDate}`)
-      .then(response => {
-        if (!response.ok) {
-          throw new Error('Network response was not ok');
-        }
-        return response.json();
-      })
-      .then(data => {
-        console.log('Schedule data loaded:', data);
+            .then(response => {
+              if (!response.ok) {
+                throw new Error('Network response was not ok');
+              }
+              return response.json();
+            })
+            .then(data => {
+              console.log('Schedule data loaded:', data);
 
-        // Convert server data to the format expected by populateScheduleTable
-        const formattedSchedules = data.schedules.map(schedule => {
-          // Extract hour and minute from time strings
-          const startTime = schedule.startTime;
-          const endTime = schedule.endTime;
+              // Convert server data to the format expected by populateScheduleTable
+              const formattedSchedules = data.schedules.map(schedule => {
+                // Extract hour and minute from time strings
+                const startTime = schedule.startTime;
+                const endTime = schedule.endTime;
 
-          // Calculate duration in hours
-          const startHour = parseInt(startTime.split(':')[0]);
-          const startMinute = parseInt(startTime.split(':')[1]);
-          const endHour = parseInt(endTime.split(':')[0]);
-          const endMinute = parseInt(endTime.split(':')[1]);
+                // Calculate duration in hours (more precise calculation)
+                const startHour = parseInt(startTime.split(':')[0]);
+                const startMinute = parseInt(startTime.split(':')[1] || 0); // Handle undefined minutes
+                const endHour = parseInt(endTime.split(':')[0]);
+                const endMinute = parseInt(endTime.split(':')[1] || 0); // Handle undefined minutes
 
-          const durationHours = (endHour - startHour) + (endMinute - startMinute) / 60;
+                // Calculate total minutes, then convert to hours for more precision
+                const startTotalMinutes = (startHour * 60) + startMinute;
+                const endTotalMinutes = (endHour * 60) + endMinute;
+                const durationMinutes = endTotalMinutes - startTotalMinutes;
+                const durationHours = durationMinutes / 60;
 
-          // Format time for display (e.g., "9:00" instead of "09:00")
-          const displayTime = startHour + ':' + (startMinute === 0 ? '00' : startMinute);
+                // Format time for display (e.g., "9:00" instead of "09:00")
+                const displayTime = startHour + ':' + (startMinute === 0 ? '00' : startMinute);
 
-          // Calculate day of week (0 = Monday, 6 = Sunday)
-          const scheduleDate = new Date(schedule.scheduleDate);
-          const day = (scheduleDate.getDay() + 6) % 7; // Convert Sunday=0 to Sunday=6
+                // Calculate day of week (0 = Monday, 6 = Sunday)
+                const scheduleDate = new Date(schedule.scheduleDate);
+                const day = (scheduleDate.getDay() + 6) % 7; // Convert Sunday=0 to Sunday=6
 
-          // Determine title and details based on event type
-          let title, details;
-          if (schedule.eventType === 'appointment') {
-            title = schedule.patientName || 'Patient Appointment';
-            details = schedule.description || 'Appointment';
-          } else if (schedule.eventType === 'oncall') {
-            title = 'On-Call Duty';
-            details = schedule.description || 'Emergency Coverage';
-          } else if (schedule.eventType === 'break') {
-            title = schedule.description || 'Break';
-            details = durationHours < 1 ? `${Math.round(durationHours * 60)} min break` : `${durationHours} hour break`;
-          }
+                // Determine title and details based on event type
+                let title, details;
+                if (schedule.eventType === 'appointment') {
+                  title = schedule.patientName || 'Patient Appointment';
+                  details = schedule.description || 'Appointment';
+                } else if (schedule.eventType === 'oncall') {
+                  title = 'On-Call Duty';
+                  details = schedule.description || 'Emergency Coverage';
+                } else if (schedule.eventType === 'break') {
+                  title = schedule.description || 'Break';
+                  details = durationHours < 1 ? `${Math.round(durationHours * 60)} min break` : `${durationHours} hour break`;
+                }
 
-          return {
-            id: schedule.scheduleId,
-            day: day,
-            time: displayTime,
-            type: schedule.eventType,
-            title: title,
-            details: details,
-            room: schedule.roomId,
-            durationHours: durationHours
-          };
-        });
+                return {
+                  id: schedule.scheduleId,
+                  day: day,
+                  time: displayTime,
+                  type: schedule.eventType,
+                  title: title,
+                  details: details,
+                  room: schedule.roomNumber,
+                  durationHours: durationHours
+                };
+              });
 
-        // Call the populate function with the formatted data
-        populateScheduleTable(formattedSchedules);
-      })
-      .catch(error => {
-        console.error('Error loading schedule data:', error);
-        tableBody.innerHTML = '<tr><td colspan="8" class="text-center py-4 text-danger">Error loading schedule data. Please try again.</td></tr>';
-      });
+              // Call the populate function with the formatted data
+              populateScheduleTable(formattedSchedules);
+            })
+            .catch(error => {
+              console.error('Error loading schedule data:', error);
+              tableBody.innerHTML = '<tr><td colspan="8" class="text-center py-4 text-danger">Error loading schedule data. Please try again.</td></tr>';
+            });
   }
 
   // Initialize
@@ -1217,121 +1234,127 @@
     const tableBody = document.getElementById('scheduleTableBody');
     tableBody.innerHTML = '';
 
-    // Generate time slots with 30-minute intervals from 8:00 to 18:00
+    // Generate time slots with 30-minute intervals from 00:00 to 23:30 (full 24 hours)
     const timeSlots = [];
-    for (let hour = 8; hour <= 18; hour++) {
+    for (let hour = 0; hour < 24; hour++) {
       timeSlots.push(`${hour}:00`);
       timeSlots.push(`${hour}:30`);
     }
 
-    // Track occupied cells to avoid double rendering for multi-hour appointments
+    // Create a grid to track which cells are occupied by rowspan
     const occupiedCells = new Set();
 
     // Create rows for each time slot
     timeSlots.forEach((time, timeIndex) => {
       const row = document.createElement('tr');
       row.className = 'time-slot';
+      row.id = `time-slot-${timeIndex}`;
 
       // Add time label cell
       const timeCell = document.createElement('td');
       timeCell.className = 'time-label';
-      timeCell.textContent = time;
+
+      // Format the time to show in 12-hour format with AM/PM for better readability
+      const hourNum = parseInt(time.split(':')[0]);
+      const minutes = time.split(':')[1];
+      const ampm = hourNum >= 12 ? 'PM' : 'AM';
+      const displayHour = hourNum % 12 || 12; // Convert 0 to 12 for 12 AM
+      timeCell.textContent = `${displayHour}:${minutes} ${ampm}`;
+
       row.appendChild(timeCell);
 
       // Add a cell for each day of the week
       for (let day = 0; day < 7; day++) {
-        // Generate a unique cell identifier
-        const cellId = `${day}-${time}`;
+        const cellKey = `${day}-${timeIndex}`;
 
-        // Skip if this cell is already occupied by a multi-hour appointment
-        if (occupiedCells.has(cellId)) {
+        // Skip this cell if it's already occupied by a rowspan from a previous row
+        if (occupiedCells.has(cellKey)) {
           continue;
         }
 
-        const cell = document.createElement('td');
-        cell.className = 'schedule-cell';
-
-        // Remove the onclick handler for empty cells
-        // cell.onclick = () => openAddModal(Object.keys(dayMap)[day], time);
-
-        // Find appointments that affect this time slot
-        // We need to check if this time slot falls within any appointment's time window
-        const schedule = schedules.find(s => {
-          if (s.day !== day) return false;
-
-          // Check if this time slot is within the appointment's time window
-          const startTimeIndex = timeSlots.indexOf(s.time);
-          const durationInSlots = s.durationHours ? Math.ceil(s.durationHours * 2) : 1; // Convert hours to 30-min slots
-          const endTimeIndex = startTimeIndex + durationInSlots - 1;
-
-          return startTimeIndex <= timeIndex && timeIndex <= endTimeIndex;
+        // Check if there's a schedule that starts at this exact time slot
+        const exactSchedule = schedules.find(s => {
+          const [scheduleHour, scheduleMinute] = s.time.split(':').map(Number);
+          const scheduleTime = `${scheduleHour}:${scheduleMinute || '00'}`;
+          return scheduleTime === time && s.day === day;
         });
 
-        if (schedule) {
-          // If a schedule exists, display it
+        if (exactSchedule) {
+          // Calculate how many 30-minute slots this schedule spans
+          const durationInSlots = Math.ceil(exactSchedule.durationHours * 2); // 2 slots per hour
+
+          // Ensure at least 1 slot, and properly handle partial hours by rounding up
+          const adjustedDurationInSlots = Math.max(1, Math.ceil((exactSchedule.durationHours * 60) / 30));
+
+          // Create the cell with the correct rowspan
+          const cell = document.createElement('td');
+          cell.className = 'schedule-cell';
+          cell.setAttribute('rowspan', adjustedDurationInSlots);
+
+          // Mark all future slots that will be covered by this rowspan as occupied
+          for (let i = 0; i < adjustedDurationInSlots; i++) {
+            occupiedCells.add(`${day}-${timeIndex + i}`);
+          }
+
+          // Create the event div
           const eventDiv = document.createElement('div');
-          eventDiv.className = `schedule-event ${schedule.type}`;
+          eventDiv.className = `schedule-event ${exactSchedule.type}`;
+
+          // Make the event div fill the entire rowspanned cell properly
+          eventDiv.style.height = '100%';
+          eventDiv.style.display = 'flex';
+          eventDiv.style.flexDirection = 'column';
+          eventDiv.style.position = 'relative';
+
+          // Calculate explicit height based on rowspan for better coverage
+          const slotHeight = 55; // Adjust this value based on your actual row height
+          eventDiv.style.minHeight = `${adjustedDurationInSlots * slotHeight}px`;
 
           // Redirect to details page when clicking on a schedule
           eventDiv.onclick = (e) => {
             e.stopPropagation();
             // Navigate to schedule details page
-            window.location.href = `/doctor/schedule-details/${schedule.id}?doctorId=${doctorId}`;
+            window.location.href = `/doctor/schedule-details/${exactSchedule.id}?doctorId=${doctorId}`;
           };
-
-          // If this is the start of a multi-hour appointment, make it span multiple cells
-          if (schedule.time === time && schedule.durationHours > 0.5) {
-            // Calculate how many 30-minute slots this appointment spans
-            const durationInSlots = Math.ceil(schedule.durationHours * 2); // 2 slots per hour
-
-            // Set rowspan to make the cell cover multiple time slots
-            cell.setAttribute('rowspan', durationInSlots);
-
-            // Mark the spanned cells as occupied so we don't render them again
-            for (let i = 1; i < durationInSlots; i++) {
-              if (timeIndex + i < timeSlots.length) {
-                occupiedCells.add(`${day}-${timeSlots[timeIndex + i]}`);
-              }
-            }
-
-            // Add duration indicator to the event
-            const durationDiv = document.createElement('div');
-            durationDiv.className = 'event-duration';
-            durationDiv.textContent = `${schedule.durationHours} hour${schedule.durationHours > 1 ? 's' : ''}`;
-            eventDiv.appendChild(durationDiv);
-          }
 
           // Room info
           const roomDiv = document.createElement('div');
           roomDiv.className = 'event-room';
-          roomDiv.textContent = `R${schedule.room}`;
+          roomDiv.textContent = `R${exactSchedule.room}`;
           eventDiv.appendChild(roomDiv);
 
           // Title and details
           const titleDiv = document.createElement('div');
           titleDiv.className = 'event-title';
-          titleDiv.textContent = schedule.title;
+          titleDiv.textContent = exactSchedule.title;
           eventDiv.appendChild(titleDiv);
 
           const detailsDiv = document.createElement('div');
           detailsDiv.className = 'event-details';
-          detailsDiv.textContent = schedule.details;
+          detailsDiv.textContent = exactSchedule.details;
           eventDiv.appendChild(detailsDiv);
 
-          cell.appendChild(eventDiv);
-        } else {
-          // Remove the "Add" button from empty cells
-          // const addButton = document.createElement('div');
-          // addButton.className = 'add-event-btn';
-          // addButton.textContent = '+ Add';
-          // cell.appendChild(addButton);
-        }
+          // Duration indicator at the bottom
+          const durationDiv = document.createElement('div');
+          durationDiv.className = 'event-duration';
+          durationDiv.textContent = `${exactSchedule.durationHours}h`;
+          eventDiv.appendChild(durationDiv);
 
-        row.appendChild(cell);
+          cell.appendChild(eventDiv);
+          row.appendChild(cell);
+        } else {
+          // If no schedule, add an empty cell
+          const cell = document.createElement('td');
+          cell.className = 'schedule-cell';
+          row.appendChild(cell);
+        }
       }
 
       tableBody.appendChild(row);
     });
+
+    // For debugging - Log cell information
+    console.log('Total occupied cells:', occupiedCells.size);
   }
   /*]]>*/
 </script>
