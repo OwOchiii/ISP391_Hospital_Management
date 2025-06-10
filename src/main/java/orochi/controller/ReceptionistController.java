@@ -59,6 +59,74 @@ public class ReceptionistController {
         return "Receptionists/dashboard";
     }
 
+    @GetMapping("/new_appointment")
+    public String newAppointment(Authentication authentication) {
+        // Ensure authentication is not null
+        if (authentication == null || !authentication.isAuthenticated()) {
+            return "redirect:/login";
+        }
+
+        //getData, action ...
+        return "Receptionists/new_appointment";
+    }
+
+    @GetMapping("/appointments")
+    public String appointments(Authentication authentication) {
+        // Ensure authentication is not null
+        if (authentication == null || !authentication.isAuthenticated()) {
+            return "redirect:/login";
+        }
+
+        return "Receptionists/appointments";
+    }
+
+    @GetMapping("/doctors")
+    public String doctors(Authentication authentication) {
+        if (authentication == null || !authentication.isAuthenticated()) {
+            return "redirect:/login";
+        }
+
+        return "Receptionists/doctors";
+    }
+
+    @GetMapping("/patients")
+    public String patients(Authentication authentication) {
+        if (authentication == null || !authentication.isAuthenticated()) {
+            return "redirect:/login";
+        }
+
+        return "Receptionists/patients";
+    }
+
+    @GetMapping("/reports")
+    public String reports(Authentication authentication) {
+        if (authentication == null || !authentication.isAuthenticated()) {
+            return "redirect:/login";
+        }
+
+        return "Receptionists/reports";
+    }
+
+    @GetMapping("/profile")
+    public String profile(Authentication authentication) {
+        if (authentication == null || !authentication.isAuthenticated()) {
+            return "redirect:/login";
+        }
+
+        return "Receptionists/profile";
+    }
+
+    @GetMapping("/settings")
+    public String settings(Authentication authentication) {
+        if (authentication == null || !authentication.isAuthenticated()) {
+            return "redirect:/login";
+        }
+
+        return "Receptionists/settings";
+    }
+
+
+
     @PostMapping("/register")
     public String registerPatient(@ModelAttribute("newUser") Users user) {
         receptionistService.registerPatient(user);

@@ -10,7 +10,11 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import orochi.model.*;
+import orochi.model.Appointment;
+import orochi.model.Doctor;
+import orochi.model.DoctorForm;
+import orochi.model.Patient;
+import orochi.model.Users;
 import orochi.repository.AppointmentRepository;
 import orochi.repository.DoctorRepository;
 import orochi.repository.PatientContactRepository;
@@ -99,8 +103,10 @@ public class DoctorService {
      */
     public List<Appointment> getTodayAppointments(Integer doctorId) {
         try {
-            logger.info("Fetching today's appointments for doctor ID: {}", doctorId);
-            return appointmentRepository.findTodayAppointmentsForDoctor(doctorId);
+            LocalDateTime startOfDay = LocalDateTime.now().toLocalDate().atStartOfDay();
+            LocalDateTime endOfDay = startOfDay.plusDays(1).minusSeconds(1);
+            logger.info("Fetching today's appointments for doctor ID: {} (from {} to {})", doctorId, startOfDay, endOfDay);
+            return appointmentRepository.findTodayAppointmentsForDoctor(doctorId, startOfDay, endOfDay);
         } catch (DataAccessException e) {
             logger.error("Failed to fetch today's appointments for doctor ID: {}", doctorId, e);
             return Collections.emptyList();
@@ -189,60 +195,63 @@ public class DoctorService {
      * Get the count of active doctors in the system
      * @return the number of active doctors
      */
-    public Integer getActiveDoctors() {
-        try {
-            // Count all doctors in the Doctor table
-            return Math.toIntExact(doctorRepository.count());
-        } catch (Exception e) {
-            logger.error("Error getting active doctors count", e);
-            return 0;
-        }
-    }
 
-    /**
-     * Get the count of doctors who are currently online (have a schedule now)
-     * @return the number of online doctors
-     */
-    public Integer getOnlineDoctors() {
-        try {
-            // For now, since we don't have a ScheduleRepository yet, we'll return a placeholder value
-            // In a real implementation, you would query the Schedule table to find doctors with
-            // current date matching ScheduleDate and current time between startTime and endTime
-            return 5; // Placeholder value
 
-            /*
-             * The real implementation would be something like:
-             *
-             * LocalDate today = LocalDate.now();
-             * LocalTime currentTime = LocalTime.now();
-             *
-             * return Math.toIntExact(scheduleRepository.countByScheduleDateAndStartTimeBeforeAndEndTimeAfter(
-             *     today, currentTime, currentTime));
-             */
-        } catch (Exception e) {
-            logger.error("Error getting online doctors count", e);
-            return 0;
-        }
-    }
 
-    /**
-     * Get patients with appointments for a doctor with pagination
-     * @param doctorId The doctor's ID
-     * @param page Page number (0-based)
-     * @param size Number of items per page
-     * @return Page of patients
-     */
-    public Page<Patient> findByDoctor(Integer doctorId, int page, int size) {
+    public List<Doctor> getAllDoctors() {
         try {
-            logger.info("Fetching paginated patients for doctor ID: {}, page: {}, size: {}", doctorId, page, size);
-            Pageable pageable = PageRequest.of(page, size);
-            // Use findAll to get all patients, not just those with appointments
-            return patientRepository.findAll(pageable);
-            // Alternatively, if you want to filter by assigned doctor:
-            // return patientRepository.findByAssignedDoctorIdPaginated(doctorId, pageable);
+            logger.info("Fetching all doctors");
+            return doctorRepository.findAll();
         } catch (DataAccessException e) {
-            logger.error("Failed to fetch paginated patients for doctor ID: {}", doctorId, e);
-            return Page.empty();
+            logger.error("Error fetching all doctors", e);
+            return Collections.emptyList();
+        }
+    }
+
+    public Doctor getDoctorById(int id) {
+        return doctorRepository.findById(id)
+                .orElseThrow(() -> new IllegalArgumentException("Doctor not found for ID: " + id));
+    }
+
+    public Doctor saveDoctor(Doctor doctor) {
+        try {
+            logger.info("Saving doctor {}", doctor);
+            return doctorRepository.save(doctor);
+        } catch (DataAccessException e) {
+            logger.error("Error saving doctor {}", doctor, e);
+            throw e;
+        }
+    }
+
+    public void toggleDoctorLock(int id) {
+        Doctor doctor = getDoctorById(id);
+        Users user = doctor.getUser();
+        String newStatus = "LOCKED".equals(user.getStatus()) ? "ACTIVE" : "LOCKED";
+        user.setStatus(newStatus);
+        userRepository.save(user);
+        logger.info("Doctor user {} status toggled to {}", user.getUserId(), newStatus);
+    }
+
+    // --------------------------------
+    // Admin search & filter methods
+    // --------------------------------
+    public long getActiveDoctors() {
+        try {
+            logger.info("Counting active doctors");
+            return doctorRepository.count();
+        } catch (DataAccessException e) {
+            logger.error("Error counting doctors", e);
+            return 0;
+        }
+    }
+
+    public int getOnlineDoctors() {
+        try {
+            // TODO: thay bằng logic thực tế (vd: đếm bác sĩ có lịch hẹn sắp tới,…)
+            return 0;
+        } catch (Exception e) {
+            logger.error("Error getting online doctors", e);
+            return 0;
         }
     }
 
@@ -258,6 +267,7 @@ public class DoctorService {
             return Page.empty();
         }
     }
+
     public List<Doctor> searchDoctors(String search, String statusFilter) {
         String trimmed = (search != null && !search.isBlank()) ? search.trim() : null;
         String status = (statusFilter != null && !statusFilter.isBlank()) ? statusFilter.trim() : null;
@@ -272,14 +282,14 @@ public class DoctorService {
 
     public DoctorForm loadForm(int doctorId) {
         Doctor d = getDoctorById(doctorId);
-        Users u  = d.getUser();
+        Users u = d.getUser();
         DoctorForm form = new DoctorForm();
         form.setDoctorId(d.getDoctorId());
         form.setUserId(u.getUserId());
-        form.setFullName(      u.getFullName());
-        form.setEmail(         u.getEmail());
-        form.setPhoneNumber(   u.getPhoneNumber());
-        form.setStatus(        u.getStatus());
+        form.setFullName(u.getFullName());
+        form.setEmail(u.getEmail());
+        form.setPhoneNumber(u.getPhoneNumber());
+        form.setStatus(u.getStatus());
         form.setBioDescription(d.getBioDescription());
         return form;
     }
@@ -297,10 +307,10 @@ public class DoctorService {
             u.setGuest(false);
             u.setCreatedAt(LocalDateTime.now());
         }
-        u.setFullName(    form.getFullName());
-        u.setEmail(       form.getEmail());
-        u.setPhoneNumber( form.getPhoneNumber());
-        u.setStatus(      form.getStatus());
+        u.setFullName(form.getFullName());
+        u.setEmail(form.getEmail());
+        u.setPhoneNumber(form.getPhoneNumber());
+        u.setStatus(form.getStatus());
         userRepository.save(u);
 
         // 2) xử lý Doctor
@@ -310,7 +320,7 @@ public class DoctorService {
         } else {
             d = new Doctor();
         }
-        d.setUserId(       u.getUserId());
+        d.setUserId(u.getUserId());
         d.setBioDescription(form.getBioDescription());
         doctorRepository.save(d);
     }

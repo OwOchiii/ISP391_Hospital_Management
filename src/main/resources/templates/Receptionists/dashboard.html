@@ -594,44 +594,51 @@
                     </div>
                 </a>
             </div>
-            <a href="new_appointment.html" class="btn btn-light mx-3 mb-3">
+            <a href="/receptionist/new_appointment" class="btn btn-light mx-3 mb-3">
                 <i class="fas fa-plus"></i> New Appointment
             </a>
             <nav class="sidebar-nav">
                 <div class="nav-section-title">Navigation</div>
                 <ul class="nav flex-column">
                     <li class="nav-item">
-                        <a href="dashboard.html" class="nav-link active"><i class="fas fa-th-large"></i> Dashboard</a>
+                        <a href="/receptionist/dashboard" class="nav-link active"><i class="fas fa-th-large"></i> Dashboard</a>
                     </li>
                     <div class="nav-section-title">Medical Services</div>
                     <ul class="nav flex-column">
                     <li class="nav-item">
-                        <a href="appointments.html" class="nav-link"><i class="fas fa-calendar-alt"></i> Appointments</a>
+                        <a href="/receptionist/appointments" class="nav-link"><i class="fas fa-calendar-alt"></i> Appointments</a>
                     </li>
                     <li class="nav-item">
-                        <a href="doctors.html" class="nav-link"><i class="fas fa-user-md"></i> Doctors</a>
+                        <a href="/receptionist/doctors" class="nav-link"><i class="fas fa-user-md"></i> Doctors</a>
                     </li>
                     <li class="nav-item">
-                        <a href="patients.html" class="nav-link"><i class="fas fa-users"></i> Patients</a>
+                        <a href="/receptionist/patients" class="nav-link"><i class="fas fa-users"></i> Patients</a>
                     </li>
 
                     <li class="nav-item">
-                        <a href="reports.html" class="nav-link"><i class="fas fa-chart-bar"></i> Reports</a>
+                        <a href="/receptionist/reports" class="nav-link"><i class="fas fa-chart-bar"></i> Reports</a>
                     </li>
+                    </ul>
 
                         <div class="nav-section-title">Account</div>
                         <ul class="nav flex-column">
                     <li class="nav-item">
-                        <a href="profile.html" class="nav-link"><i class="fas fa-stethoscope"></i> Profile</a>
+                        <a href="/receptionist/profile" class="nav-link"><i class="fas fa-stethoscope"></i> Profile</a>
                     </li>
+                        </ul>
                             <div class="nav-section-title">System</div>
                             <ul class="nav flex-column">
                     <li class="nav-item">
-                        <a href="settings.html" class="nav-link"><i class="fas fa-cog"></i> Settings</a>
+                        <a href="/receptionist/settings" class="nav-link"><i class="fas fa-cog"></i> Settings</a>
                     </li>
-                    <li class="nav-item">
-                        <a href="logout.html" class="nav-link"><i class="fas fa-sign-out-alt"></i> Logout</a>
-                    </li>
+                            </ul>
+                    <form th:action="@{/auth/logout}" method="post">
+                        <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}" />
+                        <button type="submit" class="logout-btn">
+                            <i class="bi bi-box-arrow-right"></i>
+                            Logout Securely
+                        </button>
+                    </form>
                 </ul>
             </nav>
         </nav>
@@ -1058,7 +1065,7 @@
                 ]
             },
             options: {
-                responsive: true;
+                responsive: true,
                 maintainAspectRatio: false,
                 plugins: {
                     legend: { display: false },
