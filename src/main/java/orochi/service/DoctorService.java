@@ -106,7 +106,7 @@ public class DoctorService {
             LocalDateTime startOfDay = LocalDateTime.now().toLocalDate().atStartOfDay();
             LocalDateTime endOfDay = startOfDay.plusDays(1).minusSeconds(1);
             logger.info("Fetching today's appointments for doctor ID: {} (from {} to {})", doctorId, startOfDay, endOfDay);
-            return appointmentRepository.findTodayAppointmentsForDoctor(doctorId, startOfDay, endOfDay);
+            return appointmentRepository.findTodayAppointmentsForDoctor(doctorId);
         } catch (DataAccessException e) {
             logger.error("Failed to fetch today's appointments for doctor ID: {}", doctorId, e);
             return Collections.emptyList();
@@ -404,6 +404,20 @@ public class DoctorService {
             // return patientRepository.findByAssignedDoctorIdAndStatus(doctorId, status, pageRequest);
         } catch (DataAccessException e) {
             logger.error("Failed to fetch patients for doctor ID: {} with status: {}", doctorId, status, e);
+            return Page.empty();
+        }
+    }
+
+    public Page<Patient> findByDoctor(Integer doctorId, int page, int size) {
+        try {
+            logger.info("Fetching paginated patients for doctor ID: {}, page: {}, size: {}", doctorId, page, size);
+            Pageable pageable = PageRequest.of(page, size);
+            // Use findAll to get all patients, not just those with appointments
+            return patientRepository.findAll(pageable);
+            // Alternatively, if you want to filter by assigned doctor:
+            // return patientRepository.findByAssignedDoctorIdPaginated(doctorId, pageable);
+        } catch (DataAccessException e) {
+            logger.error("Failed to fetch paginated patients for doctor ID: {}", doctorId, e);
             return Page.empty();
         }
     }

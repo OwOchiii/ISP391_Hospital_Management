@@ -170,7 +170,7 @@ public class AuthController {
             String resetUrl = "http://localhost:8090/auth/reset-password?token=" + token + "&email=" + email;
 
             // Log the reset URL to console for development purposes
-            //logger.info("PASSWORD RESET LINK: {}", resetUrl);
+            logger.info("PASSWORD RESET LINK: {}", resetUrl);
             emailService.sendPasswordResetEmail(email, resetUrl);
             // Add success message to model
             model.addAttribute("successMessage", "Password reset instructions have been sent to your email.");

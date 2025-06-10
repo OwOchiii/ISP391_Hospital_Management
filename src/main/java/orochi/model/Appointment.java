@@ -40,8 +40,7 @@ public class Appointment {
     @NotNull(message = "Date and time is required")
     private LocalDateTime dateTime;
 
-    @Enumerated(EnumType.STRING)
-    @Column(name = "Status", nullable = false, columnDefinition = "varchar(20) DEFAULT 'Scheduled'")
+    @Column(name = "Status", nullable = false, columnDefinition = "varchar(20) DEFAULT 'SCHEDULED'")
     @NotNull(message = "Status is required")
     private String status;
 
@@ -72,10 +71,6 @@ public class Appointment {
     @OneToMany(mappedBy = "appointment", fetch = FetchType.LAZY)
     private List<MedicalOrder> medicalOrders;
 
-
-    public enum AppointmentStatus {
-        SCHEDULED, IN_PROGRESS, COMPLETED, REJECTED, CANCELLED, PENDING
-    }
     @OneToMany(mappedBy = "appointment", fetch = FetchType.LAZY)
     private List<Prescription> prescriptions;
 

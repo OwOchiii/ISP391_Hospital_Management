@@ -155,7 +155,7 @@ public class AppointmentService {
         appointment.setPatientId(patientId);
         appointment.setDoctorId(doctorId);
         appointment.setDateTime(dateTime);
-        appointment.setStatus("schedule");
+        appointment.setStatus("Scheduled"); // Use string value instead of enum
         appointment.setEmail(email);
         appointment.setPhoneNumber(phoneNumber);
         appointment.setDescription(description);
@@ -164,11 +164,80 @@ public class AppointmentService {
         return appointmentRepository.save(appointment);
     }
 
-    public abstract Appointment bookAppointment(AppointmentFormDTO appointmentDTO);
+    @Transactional
+    public Appointment updateAppointmentStatus(Integer appointmentId, String status) {
+        Appointment appointment = appointmentRepository.findById(appointmentId)
+            .orElseThrow(() -> new RuntimeException("Appointment not found with ID: " + appointmentId));
+        appointment.setStatus(status); // Direct assignment of enum value instead of toString()
+        appointmentRepository.save(appointment);
+        return appointment;
+    }
+
+    public Page<Appointment> searchAppointmentsByDoctorId(Integer doctorId, String search, Pageable pageable) {
+        // Search appointments for a specific doctor with a search term (patient name)
+        // Convert list to page for pagination
+        List<Appointment> appointments = appointmentRepository.findByDoctorIdAndPatientUserFullNameContainingIgnoreCase(doctorId, search);
+
+        int start = (int) pageable.getOffset();
+        int end = Math.min((start + pageable.getPageSize()), appointments.size());
+
+        List<Appointment> pageContent = appointments.subList(start, end);
+        return new org.springframework.data.domain.PageImpl<>(pageContent, pageable, appointments.size());
+    }
+
+    public Page<Appointment> getAppointmentsByDoctorId(Integer doctorId, Pageable pageable) {
+        List<Appointment> appointments = appointmentRepository.findByDoctorIdOrderByDateTimeDesc(doctorId);
+
+        int start = (int) pageable.getOffset();
+        int end = Math.min((start + pageable.getPageSize()), appointments.size());
+
+        List<Appointment> pageContent = appointments.subList(start, end);
+        return new org.springframework.data.domain.PageImpl<>(pageContent, pageable, appointments.size());
+    }
+
+    public Page<Appointment> getAllAppointments(Pageable pageable) {
+        return appointmentRepository.findAll(pageable);
+    }
+
+    /**
+     * Get appointments filtered by status
+     * @param status The status to filter by (Scheduled, Completed, Cancel, Pending)
+     * @param pageable Pagination information
+     * @return Page of filtered appointments
+     */
+    public Page<Appointment> getAppointmentsByStatus(String status, Pageable pageable) {
+        return appointmentRepository.findByStatusOrderByDateTimeDesc(status, pageable);
+    }
+
+    @Transactional
+    public Appointment bookAppointment(AppointmentFormDTO appointmentDTO) {
+        // Validate doctor and patient existence
+        Doctor doctor = doctorRepository.findById(appointmentDTO.getDoctorId())
+            .orElseThrow(() -> new RuntimeException("Doctor not found with ID: " + appointmentDTO.getDoctorId()));
+
+        Patient patient = patientRepository.findById(appointmentDTO.getPatientId())
+            .orElseThrow(() -> new RuntimeException("Patient not found with ID: " + appointmentDTO.getPatientId()));
+
+        // Get date and time
+        LocalDate appointmentDate = appointmentDTO.getAppointmentDate(); // Already a LocalDate, no need to parse
+        LocalTime appointmentTime = LocalTime.parse(appointmentDTO.getAppointmentTime());
+        LocalDateTime dateTime = LocalDateTime.of(appointmentDate, appointmentTime);
+
+        // Create new appointment
+        Appointment appointment = new Appointment();
+        appointment.setPatientId(appointmentDTO.getPatientId());
+        appointment.setDoctorId(appointmentDTO.getDoctorId());
+        appointment.setDateTime(dateTime);
+        appointment.setStatus("Pending"); // Default status
+        appointment.setEmail(appointmentDTO.getEmail());
+        appointment.setPhoneNumber(appointmentDTO.getPhoneNumber());
+        appointment.setDescription(appointmentDTO.getDescription());
+
+        // Save appointment
+        return appointmentRepository.save(appointment);
+    }
 
     public List<Appointment> getAppointmentsByDoctorIdAndPatientName(Integer doctorId, String search) {
         return null;
     }
-
-    public abstract Page<Appointment> getAppointmentsByDoctorId(Integer doctorId, Pageable pageable);
 }

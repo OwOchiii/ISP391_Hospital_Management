@@ -160,7 +160,7 @@ public class AppointmentServiceImpl extends AppointmentService {
         appointment.setPatientId(appointmentDTO.getPatientId());
         appointment.setDoctorId(appointmentDTO.getDoctorId());
         appointment.setDateTime(dateTime);
-        appointment.setStatus(String.valueOf(Appointment.AppointmentStatus.SCHEDULED));
+        appointment.setStatus("Pending");
         appointment.setEmail(appointmentDTO.getEmail());
         appointment.setPhoneNumber(appointmentDTO.getPhoneNumber());
         appointment.setDescription(appointmentDTO.getDescription());
@@ -177,7 +177,7 @@ public class AppointmentServiceImpl extends AppointmentService {
         return savedAppointment;
     }
 
-    public Page<Appointment> getAppointmentsByStatus(Appointment.AppointmentStatus status, Pageable pageable) {
+    public Page<Appointment> getAppointmentsByStatus(String status, Pageable pageable) {
         return appointmentRepository.findByStatus(status, pageable);
     }
 
@@ -185,10 +185,10 @@ public class AppointmentServiceImpl extends AppointmentService {
         return appointmentRepository.findAllWithDetails(pageable);
     }
 
-    public Appointment updateAppointmentStatus(Integer appointmentId, Appointment.AppointmentStatus status) {
+    public Appointment updateAppointmentStatus(Integer appointmentId, String status) {
         Appointment appointment = appointmentRepository.findById(appointmentId)
                 .orElseThrow(() -> new IllegalArgumentException("Invalid appointment ID: " + appointmentId));
-        appointment.setStatus(String.valueOf(status));
+        appointment.setStatus(status);
         Appointment updatedAppointment = appointmentRepository.save(appointment);
         emailService.sendSimpleMessage(
                 appointment.getEmail(),

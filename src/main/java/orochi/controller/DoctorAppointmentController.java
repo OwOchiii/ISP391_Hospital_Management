@@ -195,14 +195,24 @@ public class DoctorAppointmentController {
             }
 
             Appointment appointment = appointmentOpt.get();
-            appointment.setStatus(status);
-            doctorService.getAppointmentRepository().save(appointment);
 
-            logger.info("Successfully updated appointment ID: {} status to: {}", appointmentId, status);
-            return ResponseEntity.ok(Map.of(
-                    "success", true,
-                    "message", "Appointment status updated successfully",
-                    "newStatus", status));
+            try {
+                // Update appointment status with the new status parameter
+                appointment.setStatus(status);
+                doctorService.getAppointmentRepository().save(appointment);
+
+                logger.info("Successfully updated appointment ID: {} status to: {}", appointmentId, status);
+                return ResponseEntity.ok(Map.of(
+                        "success", true,
+                        "message", "Appointment status updated successfully",
+                        "newStatus", status));
+            } catch (IllegalArgumentException e) {
+                logger.error("Invalid status value: {} for appointment ID: {}", status, appointmentId);
+                return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                        .body(Map.of("success", false,
+                                "message", "Invalid status value. Allowed values are: " +
+                                        String.join(", ", allowedStatuses)));
+            }
         } catch (Exception e) {
             logger.error("Error updating status for appointment ID: {} to {} by doctor ID: {}",
                     appointmentId, status, doctorId, e);
