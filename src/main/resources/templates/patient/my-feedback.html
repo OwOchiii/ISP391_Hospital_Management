@@ -191,16 +191,16 @@
           </tbody>
         </table>
       </div>
-      <nav aria-label="Page navigation">
+      <nav th:if="${totalPages > 0 and !feedbacks.isEmpty()}" aria-label="Page navigation">
         <ul class="pagination justify-content-center">
           <li class="page-item" th:classappend="${currentPage == 0 ? 'disabled' : ''}">
-            <a class="page-link" th:href="@{/patient/my-feedback(page=${currentPage - 1}, size=${size}, fromDate=${fromDate != null and !#strings.isEmpty(fromDate) ? fromDate : ''}, toDate=${toDate != null and !#strings.isEmpty(toDate) ? toDate : ''}, patientId=${patientId})}">Previous</a>
+            <a class="page-link" th:href="@{/patient/my-feedback(page=${currentPage - 1}, size=${size}, fromDate=${fromDate != null and !#strings.isEmpty(fromDate) ? fromDate : ''}, toDate=${toDate != null and !#strings.isEmpty(toDate) ? toDate : ''}, patientId=${patientId})}" th:unless="${currentPage == 0}">Previous</a>
           </li>
           <li class="page-item" th:each="i : ${#numbers.sequence(0, totalPages - 1)}" th:classappend="${i == currentPage ? 'active' : ''}">
             <a class="page-link" th:href="@{/patient/my-feedback(page=${i}, size=${size}, fromDate=${fromDate != null and !#strings.isEmpty(fromDate) ? fromDate : ''}, toDate=${toDate != null and !#strings.isEmpty(toDate) ? toDate : ''}, patientId=${patientId})}" th:text="${i + 1}"></a>
           </li>
           <li class="page-item" th:classappend="${currentPage == totalPages - 1 ? 'disabled' : ''}">
-            <a class="page-link" th:href="@{/patient/my-feedback(page=${currentPage + 1}, size=${size}, fromDate=${fromDate != null and !#strings.isEmpty(fromDate) ? fromDate : ''}, toDate=${toDate != null and !#strings.isEmpty(toDate) ? toDate : ''}, patientId=${patientId})}">Next</a>
+            <a class="page-link" th:href="@{/patient/my-feedback(page=${currentPage + 1}, size=${size}, fromDate=${fromDate != null and !#strings.isEmpty(fromDate) ? fromDate : ''}, toDate=${toDate != null and !#strings.isEmpty(toDate) ? toDate : ''}, patientId=${patientId})}" th:unless="${currentPage == totalPages - 1}">Next</a>
           </li>
         </ul>
       </nav>

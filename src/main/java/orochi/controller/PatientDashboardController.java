@@ -553,13 +553,16 @@ public class PatientDashboardController {
             @RequestParam(required = false) String fromDate,
             @RequestParam(required = false) String toDate,
             Model model) {
-        try{
+        try {
+            if (page < 0) {
+                page = 0; // Default to first page if invalid
+            }
+            // Rest of your existing code...
             Integer patientId = getCurrentPatientId();
             Optional<Patient> patientOpt = patientRepository.findById(patientId);
             Patient patient = patientOpt.orElseThrow(() -> new Exception("Patient not found"));
             Integer userId = patient.getUser().getUserId();
 
-            // Get patient info
             model.addAttribute("userId", userId);
             model.addAttribute("patientId", patientId);
             model.addAttribute("patientName", patient.getUser() != null ? patient.getUser().getFullName() : "Patient");
@@ -567,7 +570,6 @@ public class PatientDashboardController {
             Pageable pageable = PageRequest.of(page, size);
             Page<Feedback> feedbackPage;
 
-            // Trim date strings to handle whitespace
             String fromDateTrimmed = (fromDate != null) ? fromDate.trim() : null;
             String toDateTrimmed = (toDate != null) ? toDate.trim() : null;
 
@@ -592,8 +594,7 @@ public class PatientDashboardController {
             model.addAttribute("fromDate", fromDate);
             model.addAttribute("toDate", toDate);
             return "patient/my-feedback";
-        }
-        catch(Exception e){
+        } catch (Exception e) {
             logger.error("Error fetching feedback", e);
             model.addAttribute("errorMessage", "Failed to fetch feedback: " + e.getMessage());
             return "error";
