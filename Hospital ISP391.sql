@@ -86,7 +86,7 @@ CREATE TABLE [Appointment] (
   [RoomID] int NULL,
   [Description] varchar(255) NULL,
   [DateTime] datetime NOT NULL,
-  [Status] varchar(20) NOT NULL CHECK (Status IN ('Scheduled', 'Completed', 'Cancel')) DEFAULT 'Scheduled'
+  [Status] varchar(20) NOT NULL CHECK (Status IN ('Scheduled', 'Completed', 'Cancel')) DEFAULT 'Scheduled',
   [Email] varchar(255) NULL,
   [PhoneNumber] varchar (20) NULL
 )

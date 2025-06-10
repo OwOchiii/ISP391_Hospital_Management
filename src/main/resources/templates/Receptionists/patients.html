@@ -1,0 +1,679 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Patients - MediCare Plus</title>
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Font Awesome -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary: #667eea;
+            --secondary: #764ba2;
+            --accent: #a78bfa;
+            --light: #f8fafc;
+            --dark: #3c366b;
+            --text-dark: #1f2937;
+            --text-light: #6b7280;
+            --text-muted: #9ca3af;
+            --bg-light: #f8fafc;
+            --bg-white: #ffffff;
+            --success-color: #10b981;
+            --warning-color: #f59e0b;
+            --error-color: #ef4444;
+            --info-color: #3b82f6;
+            --sidebar-width: 280px;
+            --header-height: 70px;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            line-height: 1.6;
+            color: var(--text-dark);
+            background: var(--bg-light);
+            overflow-x: hidden;
+        }
+
+        /* Sidebar Styles */
+        .sidebar {
+            position: fixed;
+            top: 0;
+            left: 0;
+            height: 100vh;
+            width: var(--sidebar-width);
+            background: linear-gradient(180deg, var(--primary) 0%, var(--secondary) 100%);
+            color: white;
+            z-index: 1000;
+            transition: transform 0.3s ease;
+            overflow-y: auto;
+            box-shadow: 4px 0 20px rgba(102, 126, 234, 0.15);
+        }
+
+        .sidebar.collapsed {
+            transform: translateX(-100%);
+        }
+
+        .logo {
+            padding: 1.5rem;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            background: rgba(255, 255, 255, 0.05);
+            text-align: left;
+        }
+
+        .logo a {
+            font-size: 1.5rem;
+            font-weight: 700;
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            color: white;
+            text-decoration: none;
+        }
+
+        .logo i {
+            font-size: 2rem;
+            background: linear-gradient(45deg, #a78bfa, #7c3aed);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .logo h2 {
+            font-size: 1.25rem;
+            font-weight: 600;
+            margin: 0;
+            line-height: 1.2;
+        }
+
+        .logo small {
+            font-size: 0.75rem;
+            font-weight: 400;
+            opacity: 0.8;
+            display: block;
+        }
+
+        .nav-section-title {
+            font-size: 0.75rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            color: rgba(255, 255, 255, 0.6);
+            padding: 0 1.5rem;
+            margin: 1.5rem 0 0.75rem;
+        }
+
+        .nav-item {
+            margin: 0.25rem 1rem;
+        }
+
+        .nav-link {
+            color: rgba(255, 255, 255, 0.8);
+            padding: 0.875rem 1.25rem;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            gap: 0.875rem;
+            text-decoration: none;
+            font-weight: 500;
+            transition: all 0.3s ease;
+            position: relative;
+        }
+
+        .nav-link:hover {
+            background: rgba(255, 255, 255, 0.1);
+            color: white;
+            transform: translateX(4px);
+        }
+
+        .nav-link.active {
+            background: rgba(255, 255, 255, 0.15);
+            color: white;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+        }
+
+        .nav-link.active::before {
+            content: '';
+            position: absolute;
+            left: 0;
+            top: 50%;
+            transform: translateY(-50%);
+            width: 4px;
+            height: 24px;
+            background: #a78bfa;
+            border-radius: 0 4px 4px 0;
+        }
+
+        .nav-link i {
+            font-size: 1.125rem;
+            width: 20px;
+            text-align: center;
+        }
+
+        .btn-light {
+            background: rgba(255, 255, 255, 0.15);
+            border: none;
+            color: white;
+            padding: 0.75rem 1.5rem;
+            border-radius: 12px;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .btn-light:hover {
+            background: rgba(255, 255, 255, 0.25);
+            color: white;
+            transform: translateY(-2px);
+        }
+
+        /* Main Content */
+        .main-content {
+            margin-left: var(--sidebar-width);
+            min-height: 100vh;
+            transition: margin-left 0.3s ease;
+        }
+
+        .main-content.expanded {
+            margin-left: 0;
+        }
+
+        /* Header */
+        header {
+            background: var(--bg-white);
+            height: var(--header-height);
+            padding: 0 2rem;
+            box-shadow: 0 2px 20px rgba(0, 0, 0, 0.08);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            position: sticky;
+            top: 0;
+            z-index: 999;
+        }
+
+        .sidebar-toggle {
+            background: none;
+            border: none;
+            font-size: 1.25rem;
+            color: var(--text-dark);
+            cursor: pointer;
+            padding: 0.5rem;
+            border-radius: 8px;
+            transition: all 0.3s ease;
+        }
+
+        .sidebar-toggle:hover {
+            background: var(--light);
+            color: var(--primary);
+        }
+
+        .h3 {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: var(--text-dark);
+            margin: 0;
+        }
+
+        .profile-info {
+            display: flex;
+            align-items: center;
+            gap: 1.5rem;
+        }
+
+        .notification-bell {
+            position: relative;
+            cursor: pointer;
+            padding: 0.5rem;
+            border-radius: 8px;
+            transition: all 0.3s ease;
+        }
+
+        .notification-bell:hover {
+            background: var(--light);
+        }
+
+        .badge {
+            font-size: 0.625rem;
+            padding: 0.25em 0.5em;
+            background: var(--error-color);
+        }
+
+        .rounded-circle {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, var(--primary), var(--accent));
+            object-fit: cover;
+        }
+
+        /* Tables */
+        .card {
+            background: var(--bg-white);
+            border-radius: 16px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+            border: 1px solid rgba(102, 126, 234, 0.1);
+            margin-bottom: 1.5rem;
+        }
+
+        .card-header {
+            background: none;
+            border-bottom: 1px solid rgba(102, 126, 234, 0.1);
+            padding: 1.5rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .card-title {
+            font-size: 1.25rem;
+            font-weight: 600;
+            color: var(--text-dark);
+            margin: 0;
+        }
+
+        .card-body {
+            padding: 1.5rem;
+        }
+
+        .input-group-text {
+            background: var(--light);
+            border: 1px solid rgba(102, 126, 234, 0.2);
+            color: var(--primary);
+        }
+
+        .form-control {
+            border: 1px solid rgba(102, 126, 234, 0.2);
+            border-radius: 8px;
+            font-size: 0.875rem;
+        }
+
+        .table {
+            --bs-table-hover-bg: var(--light);
+        }
+
+        .table th {
+            font-size: 0.875rem;
+            color: var(--text-muted);
+            font-weight: 500;
+        }
+
+        .table td {
+            font-size: 0.875rem;
+            color: var(--text-dark);
+            vertical-align: middle;
+        }
+
+        .action-buttons {
+            display: flex;
+            gap: 0.5rem;
+        }
+
+        .btn-view {
+            width: 32px;
+            height: 32px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.875rem;
+            transition: all 0.3s ease;
+            background: #e0f2fe;
+            color: #0284c7;
+            text-decoration: none;
+        }
+
+        .btn-view:hover {
+            background: #bae6fd;
+        }
+
+        .pagination {
+            display: flex;
+            gap: 0.5rem;
+            margin-top: 1rem;
+            justify-content: center;
+        }
+
+        .pagination button {
+            padding: 0.5rem 1rem;
+            border: 1px solid rgba(102, 126, 234, 0.2);
+            border-radius: 8px;
+            background: var(--bg-white);
+            cursor: pointer;
+            font-size: 0.875rem;
+            transition: all 0.3s ease;
+        }
+
+        .pagination button:hover {
+            background: var(--light);
+        }
+
+        .pagination button:disabled {
+            cursor: not-allowed;
+            opacity: 0.5;
+        }
+
+        /* Responsive Design */
+        @media (max-width: 768px) {
+            .sidebar {
+                transform: translateX(-100%);
+            }
+
+            .main-content {
+                margin-left: 0;
+            }
+
+            header {
+                padding: 0 1rem;
+            }
+
+            .card {
+                padding: 1rem;
+            }
+
+            .form-control {
+                width: 100%;
+            }
+        }
+
+        @media (max-width: 576px) {
+            .card-body {
+                padding: 1rem;
+            }
+
+            .table td, .table th {
+                font-size: 0.75rem;
+            }
+
+            .btn-view {
+                width: 28px;
+                height: 28px;
+                font-size: 0.75rem;
+            }
+        }
+
+        /* Animation */
+        .main-content {
+            animation: fadeInUp 0.6s ease-out;
+        }
+
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+    </style>
+</head>
+<body>
+<div class="container-fluid">
+    <div class="row">
+        <!-- Sidebar -->
+        <nav class="sidebar col-lg-3 col-xl-2 d-none d-lg-block" id="patientSidebar">
+            <div class="logo">
+                <a href="#">
+                    <i class="fas fa-user-md"></i>
+                    <div>
+                        <h2>MediCare Plus</h2>
+                        <small>Healthcare Portal</small>
+                    </div>
+                </a>
+            </div>
+            <a href="new_appointment.jsp" class="btn btn-light mx-3 mb-3">
+                <i class="fas fa-plus"></i> New Appointment
+            </a>
+            <nav class="sidebar-nav">
+                <div class="nav-section-title">Navigation</div>
+                <ul class="nav flex-column">
+                    <li class="nav-item">
+                        <a href="dashboard.jsp" class="nav-link"><i class="fas fa-th-large"></i> Dashboard</a>
+                    </li>
+                    <div class="nav-section-title">Medical Services</div>
+                    <ul class="nav flex-column">
+                        <li class="nav-item">
+                            <a href="appointments.jsp" class="nav-link"><i class="fas fa-calendar-alt"></i> Appointments</a>
+                        </li>
+                        <li class="nav-item">
+                            <a href="doctors.jsp" class="nav-link"><i class="fas fa-user-md"></i> Doctors</a>
+                        </li>
+                        <li class="nav-item">
+                            <a href="patients.jsp" class="nav-link active"><i class="fas fa-users"></i> Patients</a>
+                        </li>
+                        <li class="nav-item">
+                            <a href="reports.jsp" class="nav-link"><i class="fas fa-chart-bar"></i> Reports</a>
+                        </li>
+                    </ul>
+                    <div class="nav-section-title">Account</div>
+                    <ul class="nav flex-column">
+                        <li class="nav-item">
+                            <a href="profile.jsp" class="nav-link"><i class="fas fa-stethoscope"></i> Profile</a>
+                        </li>
+                    </ul>
+                    <div class="nav-section-title">System</div>
+                    <ul class="nav flex-column">
+                        <li class="nav-item">
+                            <a href="settings.jsp" class="nav-link"><i class="fas fa-cog"></i> Settings</a>
+                        </li>
+                        <li class="nav-item">
+                            <a href="logout.jsp" class="nav-link"><i class="fas fa-sign-out-alt"></i> Logout</a>
+                        </li>
+                    </ul>
+                </ul>
+            </nav>
+        </nav>
+
+        <!-- Main Content -->
+        <main class="main-content col-lg-9 col-xl-10" id="mainContent">
+            <header class="d-flex justify-content-between align-items-center mb-4">
+                <div class="d-flex align-items-center gap-3">
+                    <button class="sidebar-toggle" onclick="toggleSidebar()">
+                        <i class="fas fa-list"></i>
+                    </button>
+                    <h1 class="h3">Patients</h1>
+                </div>
+                <div class="profile-info">
+                    <div class="notification-bell" role="button" onclick="toggleNotificationModal()">
+                        <i class="fas fa-bell fs-5"></i>
+                        <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger" id="notificationCount">0</span>
+                    </div>
+                    <img src="images/profile.jpg" alt="Profile" class="rounded-circle" onerror="this.src='https://via.placeholder.com/40';">
+                </div>
+            </header>
+
+            <!-- Notification Modal -->
+            <div id="notificationModal" class="notification-modal" style="display: none;">
+                <h5>System Notifications</h5>
+                <div id="notificationList"></div>
+            </div>
+
+            <!-- Patient List -->
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="card-title">Patient List</h5>
+                </div>
+                <div class="card-body">
+                    <div class="input-group mb-3">
+                        <span class="input-group-text"><i class="fas fa-search"></i></span>
+                        <input type="text" class="form-control" id="search-input" placeholder="Search by Name, Citizen ID, or Phone">
+                    </div>
+                    <div class="table-responsive">
+                        <table class="table table-hover">
+                            <thead>
+                            <tr>
+                                <th>Name</th>
+                                <th>Citizen ID</th>
+                                <th>Phone</th>
+                                <th>Actions</th>
+                            </tr>
+                            </thead>
+                            <tbody id="patient-list"></tbody>
+                        </table>
+                    </div>
+                    <div class="pagination" id="pagination"></div>
+                </div>
+            </div>
+        </main>
+    </div>
+</div>
+
+<!-- Bootstrap JS -->
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+<script>
+    // Sidebar toggle functionality
+    function toggleSidebar() {
+        const sidebar = document.getElementById('patientSidebar');
+        const mainContent = document.getElementById('mainContent');
+
+        sidebar.classList.toggle('collapsed');
+        mainContent.classList.toggle('expanded');
+    }
+
+    // Auto-hide sidebar on mobile
+    function checkScreenSize() {
+        const sidebar = document.getElementById('patientSidebar');
+        const mainContent = document.getElementById('mainContent');
+
+        if (window.innerWidth <= 768) {
+            sidebar.classList.add('collapsed');
+            mainContent.classList.add('expanded');
+        } else {
+            sidebar.classList.remove('collapsed');
+            mainContent.classList.remove('expanded');
+        }
+    }
+
+    // Initialize
+    checkScreenSize();
+    window.addEventListener('load', checkScreenSize);
+    window.addEventListener('resize', checkScreenSize);
+
+    // Notification modal toggle (placeholder)
+    function toggleNotificationModal() {
+        const modal = document.getElementById('notificationModal');
+        modal.style.display = modal.style.display === 'block' ? 'none' : 'block';
+    }
+
+    // Pagination settings
+    const itemsPerPage = 12;
+    let currentPage = 1;
+    let searchTerm = '';
+
+    // Debounce function to limit search calls
+    function debounce(func, wait) {
+        let timeout;
+        return function executedFunction(...args) {
+            const later = () => {
+                clearTimeout(timeout);
+                func(...args);
+            };
+            clearTimeout(timeout);
+            timeout = setTimeout(later, wait);
+        };
+    }
+
+    // Fetch patients from server
+    async function fetchPatients(page, search = '') {
+        try {
+            const response = await fetch(`/api/patients?page=${page}&search=${encodeURIComponent(search)}`);
+            if (!response.ok) throw new Error('Failed to fetch patients');
+            const data = await response.json();
+            return data; // Expected format: { patients: [{ id, name, citizenId, phone }], total: number }
+        } catch (error) {
+            console.error('Error fetching patients:', error);
+            return { patients: [], total: 0 };
+        }
+    }
+
+    // Render patients
+    async function renderPatients() {
+        const tbody = document.getElementById('patient-list');
+        const pagination = document.getElementById('pagination');
+        const { patients, total } = await fetchPatients(currentPage, searchTerm);
+        tbody.innerHTML = '';
+
+        if (patients.length === 0) {
+            tbody.innerHTML = '<tr><td colspan="4" class="text-center text-muted">No patients found.</td></tr>';
+            pagination.innerHTML = '';
+            return;
+        }
+
+        patients.forEach(patient => {
+            const row = document.createElement('tr');
+            row.innerHTML = `
+                <td>${patient.name}</td>
+                <td>${patient.citizenId}</td>
+                <td>${patient.phone}</td>
+                <td class="action-buttons">
+                    <a href="patient_details.jsp?patientId=${patient.id}&patientName=${encodeURIComponent(patient.name)}" class="btn-view"><i class="fas fa-eye"></i></a>
+                </td>
+            `;
+            tbody.appendChild(row);
+        });
+
+        // Render pagination
+        const totalPages = Math.ceil(total / itemsPerPage);
+        pagination.innerHTML = '';
+
+        if (totalPages > 1) {
+            const prevButton = document.createElement('button');
+            prevButton.textContent = 'Previous';
+            prevButton.disabled = currentPage === 1;
+            prevButton.onclick = () => {
+                currentPage--;
+                renderPatients();
+            };
+            pagination.appendChild(prevButton);
+
+            for (let i = 1; i <= totalPages; i++) {
+                const pageButton = document.createElement('button');
+                pageButton.textContent = i;
+                pageButton.disabled = i === currentPage;
+                pageButton.onclick = () => {
+                    currentPage = i;
+                    renderPatients();
+                };
+                pagination.appendChild(pageButton);
+            }
+
+            const nextButton = document.createElement('button');
+            nextButton.textContent = 'Next';
+            nextButton.disabled = currentPage === totalPages;
+            nextButton.onclick = () => {
+                currentPage++;
+                renderPatients();
+            };
+            pagination.appendChild(nextButton);
+        }
+    }
+
+    // Search patients
+    const searchPatients = debounce(function() {
+        searchTerm = document.getElementById('search-input').value;
+        currentPage = 1;
+        renderPatients();
+    }, 300);
+
+    // Attach search event listener
+    document.getElementById('search-input').addEventListener('input', searchPatients);
+
+    // Initialize
+    document.addEventListener('DOMContentLoaded', renderPatients);
+</script>
+</body>
+</html>

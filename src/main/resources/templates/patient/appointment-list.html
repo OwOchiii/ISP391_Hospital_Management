@@ -604,7 +604,7 @@
       background: linear-gradient(135deg, var(--patient-primary), var(--patient-secondary));
       border: none;
       padding: 0.75rem 1.5rem;
-      border-radius: 12px;
+      border-radius: 8px;
       color: white;
       font-weight: 600;
       text-decoration: none;
@@ -627,7 +627,7 @@
       color: var(--patient-primary);
       background: transparent;
       padding: 0.75rem 1.5rem;
-      border-radius: 12px;
+      border-radius: 8px;
       font-weight: 600;
       text-decoration: none;
       transition: all 0.3s ease;
@@ -640,7 +640,7 @@
     .btn-outline-custom:hover {
       background: var(--patient-primary);
       color: white;
-      transform: none;
+      transform: translateY(-2px);
       text-decoration: none;
     }
 
@@ -649,7 +649,7 @@
       color: var(--warning-color);
       background: transparent;
       padding: 0.75rem 1.5rem;
-      border-radius: 12px;
+      border-radius: 8px;
       font-weight: 600;
       text-decoration: none;
       transition: all 0.3s ease;
@@ -662,7 +662,7 @@
     .btn-warning-custom:hover {
       background: var(--warning-color);
       color: white;
-      transform: none;
+      transform: translateY(-2px);
       text-decoration: none;
     }
 
@@ -671,7 +671,7 @@
       color: var(--error-color);
       background: transparent;
       padding: 0.75rem 1.5rem;
-      border-radius: 12px;
+      border-radius: 8px;
       font-weight: 600;
       text-decoration: none;
       transition: all 0.3s ease;
@@ -684,7 +684,7 @@
     .btn-danger-custom:hover {
       background: var(--error-color);
       color: white;
-      transform: none;
+      transform: translateY(-2px);
       text-decoration: none;
     }
 
@@ -730,7 +730,7 @@
       color: var(--text-dark);
       padding: 0.75rem 1rem;
       margin: 0 0.25rem;
-      border-radius: 12px;
+      border-radius: 8px;
       font-weight: 600;
     }
 
@@ -742,7 +742,6 @@
     .pagination .page-item.active .page-link {
       background: var(--patient-primary);
       border-color: var(--patient-primary);
-      color: white;
     }
 
     /* Success Message */
@@ -831,6 +830,7 @@
     }
 
     /* Update Modal */
+    /* Confirmation Modal */
     .modal-overlay {
       position: fixed;
       top: 0;
@@ -887,6 +887,10 @@
 
     .modal-icon.warning {
       background: linear-gradient(135deg, var(--warning-color), #d97706);
+    }
+
+    .modal-icon.danger {
+      background: linear-gradient(135deg, var(--error-color), #dc2626);
     }
 
     .modal-title {

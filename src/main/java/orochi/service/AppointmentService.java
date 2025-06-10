@@ -1,8 +1,11 @@
 package orochi.service;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import orochi.dto.AppointmentFormDTO;
 import orochi.model.Appointment;
 import orochi.model.Doctor;
 import orochi.model.Patient;
@@ -34,6 +37,7 @@ public class AppointmentService {
     @Autowired
     private SpecializationRepository specializationRepository;
 
+    // Standard appointment duration in minutes
     private static final int APPOINTMENT_DURATION = 30;
 
     public List<Specialization> getAllSpecializations() {
@@ -97,11 +101,13 @@ public class AppointmentService {
     public List<String> getBookedTimeSlots(LocalDate date, Integer doctorId) {
         LocalDateTime startOfDay = date.atStartOfDay();
         LocalDateTime endOfDay = date.atTime(23, 59, 59);
+
         List<Appointment> bookedAppointments = appointmentRepository
-                .findByDoctorIdAndDateTimeBetweenOrderByDateTime(doctorId, startOfDay, endOfDay);
+            .findByDoctorIdAndDateTimeBetweenOrderByDateTime(doctorId, startOfDay, endOfDay);
+
         return bookedAppointments.stream()
-                .map(appointment -> appointment.getDateTime().toLocalTime().format(DateTimeFormatter.ofPattern("HH:mm:ss")))
-                .collect(Collectors.toList());
+            .map(appointment -> appointment.getDateTime().toLocalTime().format(DateTimeFormatter.ofPattern("HH:mm:ss")))
+            .collect(Collectors.toList());
     }
 
     @Transactional
@@ -185,4 +191,12 @@ public class AppointmentService {
 
         return appointmentRepository.save(appointment);
     }
+
+    public abstract Appointment bookAppointment(AppointmentFormDTO appointmentDTO);
+
+    public List<Appointment> getAppointmentsByDoctorIdAndPatientName(Integer doctorId, String search) {
+        return null;
+    }
+
+    public abstract Page<Appointment> getAppointmentsByDoctorId(Integer doctorId, Pageable pageable);
 }

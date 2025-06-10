@@ -16,6 +16,7 @@ import java.util.List;
 public class Doctor {
 
     @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "DoctorID")
     private Integer doctorId;
 

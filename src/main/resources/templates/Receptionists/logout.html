@@ -1,0 +1,528 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Logout - MediCare Plus</title>
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH" crossorigin="anonymous">
+    <!-- Font Awesome -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary: #667eea;
+            --secondary: #764ba2;
+            --accent: #a78bfa;
+            --light: #f8fafc;
+            --dark: #3c366b;
+            --text-dark: #1f2937;
+            --text-light: #ffffff;
+            --text-muted: #6b7280;
+            --bg-light: #f8fafc;
+            --bg-white: #ffffff;
+            --sidebar-width: 280px;
+            --header-height: 70px;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background: linear-gradient(135deg, var(--bg-light), #e9ecef);
+            color: var(--text-dark);
+            line-height: 1.6;
+            overflow-x: hidden;
+        }
+
+        /* Sidebar Styles */
+        .sidebar {
+            position: fixed;
+            top: 0;
+            left: 0;
+            height: 100vh;
+            width: var(--sidebar-width);
+            background: linear-gradient(180deg, var(--primary) 0%, var(--secondary) 100%);
+            color: var(--text-light);
+            z-index: 1000;
+            transition: transform 0.3s ease;
+            overflow-y: auto;
+            box-shadow: 4px 0 20px rgba(102, 126, 234, 0.15);
+        }
+
+        .sidebar.collapsed {
+            transform: translateX(-100%);
+        }
+
+        .logo {
+            padding: 1.5rem;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            background: rgba(255, 255, 255, 0.05);
+            text-align: left;
+        }
+
+        .logo a {
+            font-size: 1.5rem;
+            font-weight: 700;
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            color: var(--text-light);
+            text-decoration: none;
+        }
+
+        .logo i {
+            font-size: 2rem;
+            background: linear-gradient(45deg, var(--accent), #7c3aed);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .logo h2 {
+            font-size: 1.25rem;
+            font-weight: 600;
+            margin: 0;
+            line-height: 1.2;
+        }
+
+        .logo small {
+            font-size: 0.75rem;
+            font-weight: 400;
+            opacity: 0.8;
+            display: block;
+        }
+
+        .nav-section-title {
+            font-size: 0.75rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            color: rgba(255, 255, 255, 0.6);
+            padding: 0 1.5rem;
+            margin: 1.5rem 0 0.75rem;
+        }
+
+        .nav-item {
+            margin: 0.25rem 1rem;
+        }
+
+        .nav-link {
+            color: rgba(255, 255, 255, 0.8);
+            padding: 0.875rem 1.25rem;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            gap: 0.875rem;
+            text-decoration: none;
+            font-weight: 500;
+            transition: all 0.3s ease;
+            position: relative;
+        }
+
+        .nav-link:hover {
+            background: rgba(255, 255, 255, 0.1);
+            color: var(--text-light);
+            transform: translateX(4px);
+        }
+
+        .nav-link.active {
+            background: rgba(255, 255, 255, 0.15);
+            color: var(--text-light);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+        }
+
+        .nav-link.active::before {
+            content: '';
+            position: absolute;
+            left: 0;
+            top: 50%;
+            transform: translateY(-50%);
+            width: 4px;
+            height: 24px;
+            background: var(--accent);
+            border-radius: 0 4px 4px 0;
+        }
+
+        .nav-link i {
+            font-size: 1.125rem;
+            width: 20px;
+            text-align: center;
+        }
+
+        .btn-light {
+            background: rgba(255, 255, 255, 0.15);
+            border: none;
+            color: var(--text-light);
+            padding: 0.75rem 1.5rem;
+            border-radius: 12px;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .btn-light:hover {
+            background: rgba(255, 255, 255, 0.25);
+            color: var(--text-light);
+            transform: translateY(-2px);
+        }
+
+        /* Main Content */
+        .main-content {
+            margin-left: var(--sidebar-width);
+            min-height: 100vh;
+            padding: 2rem;
+            transition: margin-left 0.3s ease;
+        }
+
+        .main-content.expanded {
+            margin-left: 0;
+        }
+
+        /* Header */
+        header {
+            background: var(--bg-white);
+            height: var(--header-height);
+            padding: 0 2rem;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            position: sticky;
+            top: 0;
+            z-index: 999;
+        }
+
+        .sidebar-toggle {
+            background: none;
+            border: none;
+            font-size: 1.25rem;
+            color: var(--text-dark);
+            cursor: pointer;
+            padding: 0.5rem;
+            border-radius: 8px;
+            transition: all 0.3s ease;
+        }
+
+        .sidebar-toggle:hover {
+            background: var(--light);
+            color: var(--primary);
+        }
+
+        .h3 {
+            font-size: 1.5rem;
+            font-weight: 600;
+            color: var(--text-dark);
+            margin: 0;
+        }
+
+        .profile-info {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        .notification-bell {
+            position: relative;
+            cursor: pointer;
+            padding: 0.5rem;
+            border-radius: 8px;
+            transition: all 0.3s ease;
+        }
+
+        .notification-bell:hover {
+            background: var(--light);
+        }
+
+        .badge {
+            font-size: 0.625rem;
+            padding: 0.25em 0.5em;
+            background: #ef4444;
+        }
+
+        .rounded-circle {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, var(--primary), var(--accent));
+            object-fit: cover;
+        }
+
+        /* Logout Card */
+        .logout-card {
+            background: var(--bg-white);
+            border-radius: 1rem;
+            padding: 2.5rem;
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.1);
+            max-width: 450px;
+            margin: 6rem auto;
+            text-align: center;
+            border: 1px solid rgba(102, 126, 234, 0.1);
+            animation: fadeInUp 0.6s ease-out;
+        }
+
+        .logout-card h2 {
+            font-size: 1.75rem;
+            font-weight: 600;
+            color: var(--text-dark);
+            margin-bottom: 1rem;
+        }
+
+        .logout-card p {
+            font-size: 1rem;
+            color: var(--text-muted);
+            margin-bottom: 2rem;
+        }
+
+        .logout-btn {
+            background: #ef4444;
+            color: var(--text-light);
+            padding: 0.75rem 2rem;
+            border: none;
+            border-radius: 0.5rem;
+            font-size: 0.95rem;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            margin-right: 0.75rem;
+        }
+
+        .logout-btn:hover {
+            background: #dc2626;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(239, 68, 68, 0.3);
+        }
+
+        .cancel-btn {
+            background: #6b7280;
+            color: var(--text-light);
+            padding: 0.75rem 2rem;
+            border: none;
+            border-radius: 0.5rem;
+            font-size: 0.95rem;
+            font-weight: 600;
+            transition: all 0.3s ease;
+        }
+
+        .cancel-btn:hover {
+            background: #4b5563;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(107, 114, 128, 0.3);
+        }
+
+        /* Animation */
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        /* Responsive Design */
+        @media (max-width: 768px) {
+            .sidebar {
+                transform: translateX(-100%);
+            }
+
+            .main-content {
+                margin-left: 0;
+                padding: 1.5rem;
+            }
+
+            .sidebar.collapsed {
+                transform: translateX(0);
+            }
+
+            .main-content.expanded {
+                margin-left: var(--sidebar-width);
+            }
+
+            .logout-card {
+                margin: 3rem 1rem;
+                padding: 2rem;
+            }
+
+            .logout-btn, .cancel-btn {
+                padding: 0.6rem 1.5rem;
+                font-size: 0.9rem;
+                margin: 0.5rem 0.25rem;
+            }
+
+            header {
+                padding: 0 1rem;
+            }
+        }
+
+        @media (max-width: 576px) {
+            .logout-card h2 {
+                font-size: 1.5rem;
+            }
+
+            .logout-card p {
+                font-size: 0.9rem;
+            }
+        }
+    </style>
+</head>
+<body>
+<div class="container-fluid">
+    <div class="row">
+        <!-- Sidebar -->
+        <nav class="sidebar col-lg-3 col-xl-2 d-none d-lg-block" id="patientSidebar">
+            <div class="logo">
+                <a href="#">
+                    <i class="fas fa-user-md"></i>
+                    <div>
+                        <h2>MediCare Plus</h2>
+                        <small>Healthcare Portal</small>
+                    </div>
+                </a>
+            </div>
+            <a href="new_appointment.html" class="btn btn-light mx-3 mb-3">
+                <i class="fas fa-plus"></i> New Appointment
+            </a>
+            <nav class="sidebar-nav">
+                <div class="nav-section-title">Navigation</div>
+                <ul class="nav flex-column">
+                    <li class="nav-item">
+                        <a href="dashboard.html" class="nav-link"><i class="fas fa-th-large"></i> Dashboard</a>
+                    </li>
+                    <div class="nav-section-title">Medical Services</div>
+                    <ul class="nav flex-column">
+                        <li class="nav-item">
+                            <a href="appointments.html" class="nav-link"><i class="fas fa-calendar-alt"></i> Appointments</a>
+                        </li>
+                        <li class="nav-item">
+                            <a href="doctors.html" class="nav-link"><i class="fas fa-user-md"></i> Doctors</a>
+                        </li>
+                        <li class="nav-item">
+                            <a href="patients.html" class="nav-link"><i class="fas fa-users"></i> Patients</a>
+                        </li>
+                        <li class="nav-item">
+                            <a href="reports.html" class="nav-link"><i class="fas fa-chart-bar"></i> Reports</a>
+                        </li>
+                    </ul>
+                    <div class="nav-section-title">Account</div>
+                    <ul class="nav flex-column">
+                        <li class="nav-item">
+                            <a href="profile.html" class="nav-link"><i class="fas fa-stethoscope"></i> Profile</a>
+                        </li>
+                        <div class="nav-section-title">System</div>
+                        <ul class="nav flex-column">
+                            <li class="nav-item">
+                                <a href="settings.html" class="nav-link"><i class="fas fa-cog"></i> Settings</a>
+                            </li>
+                            <li class="nav-item">
+                                <a href="logout.html" class="nav-link active"><i class="fas fa-sign-out-alt"></i> Logout</a>
+                            </li>
+                        </ul>
+                    </ul>
+                </ul>
+            </nav>
+        </nav>
+
+        <!-- Main Content -->
+        <main class="main-content col-lg-9 col-xl-10" id="mainContent">
+            <header class="d-flex justify-content-between align-items-center mb-4">
+                <div class="d-flex align-items-center gap-3">
+                    <button class="sidebar-toggle" onclick="toggleSidebar()">
+                        <i class="fas fa-bars"></i>
+                    </button>
+                    <h1 class="h3">Logout</h1>
+                </div>
+                <div class="profile-info">
+                    <div class="notification-bell" role="button" onclick="toggleNotificationModal()">
+                        <i class="fas fa-bell fs-5"></i>
+                        <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger" id="notificationCount">0</span>
+                    </div>
+                    <img src="images/profile.jpg" alt="Profile" class="rounded-circle" onerror="this.src='https://via.placeholder.com/40';">
+                </div>
+            </header>
+
+            <!-- Notification Modal -->
+            <div id="notificationModal" class="notification-modal">
+                <h5>System Notifications</h5>
+                <div id="notificationList"></div>
+            </div>
+
+            <!-- Logout Card -->
+            <div class="logout-card">
+                <h2>Confirm Logout</h2>
+                <p>Are you sure you want to end your session? You'll need to log in again to access MediCare Plus.</p>
+                <button class="logout-btn">Logout</button>
+                <button class="cancel-btn">Cancel</button>
+            </div>
+        </main>
+    </div>
+</div>
+
+<!-- Bootstrap JS -->
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js" integrity="sha384-YvpcrYf0tY3lHB60NNkmXc5s9fDVZLESaAA55NDzOxhy9GkcIdslK1eN7N6jIeHz" crossorigin="anonymous"></script>
+<script>
+    // Sidebar toggle functionality
+    function toggleSidebar() {
+        const sidebar = document.getElementById('patientSidebar');
+        const mainContent = document.getElementById('mainContent');
+        sidebar.classList.toggle('collapsed');
+        mainContent.classList.toggle('expanded');
+    }
+
+    // Auto-hide sidebar on mobile
+    function checkScreenSize() {
+        const sidebar = document.getElementById('patientSidebar');
+        const mainContent = document.getElementById('mainContent');
+        if (window.innerWidth <= 768) {
+            sidebar.classList.add('collapsed');
+            mainContent.classList.add('expanded');
+        } else {
+            sidebar.classList.remove('collapsed');
+            mainContent.classList.remove('expanded');
+        }
+    }
+
+    // Notification modal toggle
+    function toggleNotificationModal() {
+        const modal = document.getElementById('notificationModal');
+        modal.style.display = modal.style.display === 'block' ? 'none' : 'block';
+    }
+
+    // Initialize
+    checkScreenSize();
+    window.addEventListener('load', checkScreenSize);
+    window.addEventListener('resize', checkScreenSize);
+
+    // Close notification modal when clicking outside
+    window.onclick = function(event) {
+        const notificationModal = document.getElementById('notificationModal');
+        if (event.target !== notificationModal &&
+            !notificationModal.contains(event.target) &&
+            !event.target.closest('.notification-bell')) {
+            notificationModal.style.display = 'none';
+        }
+    };
+
+    // Handle Logout Button
+    document.querySelector('.logout-btn').addEventListener('click', () => {
+        const confirmLogout = confirm('Are you sure you want to logout?');
+        if (confirmLogout) {
+            localStorage.clear();
+            window.location.href = 'login.html'; // Update to your login page
+        }
+    });
+
+    // Handle Cancel Button
+    document.querySelector('.cancel-btn').addEventListener('click', () => {
+        window.location.href = 'dashboard.html'; // Update to your dashboard page
+    });
+</script>
+</body>
+</html>

@@ -1,9 +1,12 @@
 package orochi.model;
 
 import jakarta.persistence.*;
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import orochi.model.*;
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -21,9 +24,11 @@ public class Appointment {
     private Integer appointmentId;
 
     @Column(name = "DoctorID", nullable = false)
+    @NotNull(message = "Doctor ID is required")
     private Integer doctorId;
 
     @Column(name = "PatientID", nullable = false)
+    @NotNull(message = "Patient ID is required")
     private Integer patientId;
 
     @Column(name = "RoomID")
@@ -33,9 +38,12 @@ public class Appointment {
     private String description;
 
     @Column(name = "DateTime", nullable = false)
+    @NotNull(message = "Date and time is required")
     private LocalDateTime dateTime;
 
+    @Enumerated(EnumType.STRING)
     @Column(name = "Status", nullable = false, columnDefinition = "varchar(20) DEFAULT 'Scheduled'")
+    @NotNull(message = "Status is required")
     private String status;
 
     @Column(name = "Email")
@@ -67,4 +75,8 @@ public class Appointment {
 
     @OneToOne(mappedBy = "appointment")
     private Prescription prescription;
+
+    public enum AppointmentStatus {
+        SCHEDULED, IN_PROGRESS, COMPLETED, REJECTED, CANCELLED, PENDING
+    }
 }

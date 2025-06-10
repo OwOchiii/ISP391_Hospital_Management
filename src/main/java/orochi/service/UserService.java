@@ -1,5 +1,6 @@
 package orochi.service;
-
+import java.util.List;
+import java.util.Optional;
 import orochi.model.Users;
 
 public interface UserService {
@@ -14,4 +15,8 @@ public interface UserService {
     boolean validatePasswordResetToken(String token, String email);
     void resetPassword(String token, String email, String newPassword);
     // Other user-related methods
+
+    List<Users> getAllReceptionists();
+    Optional<Users> findById(Integer userId);
+    Users save(Users user);
 }

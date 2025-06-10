@@ -24,5 +24,19 @@ public interface DoctorRepository extends JpaRepository<Doctor, Integer> {
     // Find doctors by specialization ID
     @Query("SELECT d FROM Doctor d JOIN d.specializations s WHERE s.specId = :specId")
     List<Doctor> findBySpecializationId(@Param("specId") Integer specId);
-}
 
+    // Search & filter doctors by name/email and status
+    @Query("""
+        SELECT d FROM Doctor d JOIN d.user u
+        WHERE (:search IS NULL
+               OR LOWER(u.fullName) LIKE LOWER(CONCAT('%', :search, '%'))
+               OR LOWER(u.email)    LIKE LOWER(CONCAT('%', :search, '%')))
+          AND (:statusFilter IS NULL OR u.status = :statusFilter)
+        ORDER BY d.doctorId
+        """ )
+    List<Doctor> searchDoctors(
+            @Param("search") String search,
+            @Param("statusFilter") String statusFilter
+    );
+
+}

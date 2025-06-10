@@ -36,5 +36,6 @@ public class Specialization {
 
     @OneToMany(mappedBy = "specialization")
     @JsonIgnore
-    private List<Service> services;
+    private List<MedicalService> services;
 }
+
