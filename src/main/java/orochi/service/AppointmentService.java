@@ -192,11 +192,11 @@ public class AppointmentService {
         return appointmentRepository.save(appointment);
     }
 
-    public abstract Appointment bookAppointment(AppointmentFormDTO appointmentDTO);
+    //public abstract Appointment bookAppointment(AppointmentFormDTO appointmentDTO);
 
     public List<Appointment> getAppointmentsByDoctorIdAndPatientName(Integer doctorId, String search) {
         return null;
     }
 
-    public abstract Page<Appointment> getAppointmentsByDoctorId(Integer doctorId, Pageable pageable);
+    //public abstract Page<Appointment> getAppointmentsByDoctorId(Integer doctorId, Pageable pageable);
 }

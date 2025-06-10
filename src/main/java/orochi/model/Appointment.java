@@ -41,7 +41,6 @@ public class Appointment {
     @NotNull(message = "Date and time is required")
     private LocalDateTime dateTime;
 
-    @Enumerated(EnumType.STRING)
     @Column(name = "Status", nullable = false, columnDefinition = "varchar(20) DEFAULT 'Scheduled'")
     @NotNull(message = "Status is required")
     private String status;

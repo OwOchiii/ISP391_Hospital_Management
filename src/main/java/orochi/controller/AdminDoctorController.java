@@ -1,3 +1,4 @@
+/*
 // src/main/java/orochi/controller/AdminDoctorController.java
 package orochi.controller;
 
@@ -70,4 +71,4 @@ public class AdminDoctorController {
         doctorService.toggleDoctorLock(id);
         return "redirect:/admin/doctors?adminId=" + adminId;
     }
-}
+}*/

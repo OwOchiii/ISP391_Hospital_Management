@@ -8,7 +8,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 
 import orochi.service.AppointmentMetricService;
-import orochi.service.DoctorService;
+//import orochi.service.DoctorService;
 import orochi.service.MedicalOrderService;
 import orochi.service.PrescriptionService;
 import orochi.service.RevenueService;
@@ -22,7 +22,7 @@ public class AdminDashboardController {
     private final UserService userService;
     private final AppointmentMetricService appointmentService;
     private final RevenueService revenueService;
-    private final DoctorService doctorService;
+    //private final DoctorService doctorService;
     private final RoomService roomService;
     private final PrescriptionService prescriptionService;
     private final MedicalOrderService medicalOrderService;
@@ -32,14 +32,14 @@ public class AdminDashboardController {
             UserService userService,
             AppointmentMetricService appointmentService,
             RevenueService revenueService,
-            DoctorService doctorService,
+            //DoctorService doctorService,
             RoomService roomService,
             PrescriptionService prescriptionService,
             MedicalOrderService medicalOrderService) {
         this.userService = userService;
         this.appointmentService = appointmentService;
         this.revenueService = revenueService;
-        this.doctorService = doctorService;
+        //this.doctorService = doctorService;
         this.roomService = roomService;
         this.prescriptionService = prescriptionService;
         this.medicalOrderService = medicalOrderService;
@@ -62,7 +62,7 @@ public class AdminDashboardController {
         model.addAttribute("totalUsers", userService.getTotalUsers());
         model.addAttribute("totalAppointments", appointmentService.getTotalAppointments());
         model.addAttribute("totalRevenue", revenueService.getMonthlyRevenue());
-        model.addAttribute("totalDoctors", doctorService.getActiveDoctors());
+        //model.addAttribute("totalDoctors", doctorService.getActiveDoctors());
         model.addAttribute("totalRooms", roomService.getTotalRooms());
         model.addAttribute("totalPrescriptions", prescriptionService.getMonthlyCount());
 
@@ -77,7 +77,7 @@ public class AdminDashboardController {
         model.addAttribute("newUsersToday", userService.getNewUsersToday());
         model.addAttribute("todayAppointments", appointmentService.getTodayAppointments());
         model.addAttribute("pendingAppointments", appointmentService.getPendingAppointments());
-        model.addAttribute("onlineDoctors", doctorService.getOnlineDoctors());
+        //model.addAttribute("onlineDoctors", doctorService.getOnlineDoctors());
         model.addAttribute("busyDoctors", 15); // PLACEHOLDER: 15 busy doctors
         model.addAttribute("availableRooms", roomService.getAvailableRooms());
         model.addAttribute("occupiedRooms", 6); // PLACEHOLDER: 6 occupied rooms

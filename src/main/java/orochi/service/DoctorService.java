@@ -1,3 +1,4 @@
+/*
 package orochi.service;
 
 import lombok.Getter;
@@ -7,11 +8,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.dao.DataAccessException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import orochi.model.Appointment;
-import orochi.model.Doctor;
-import orochi.model.DoctorForm;
-import orochi.model.Patient;
-import orochi.model.Users;
+import orochi.model.*;
 import orochi.repository.AppointmentRepository;
 import orochi.repository.DoctorRepository;
 import orochi.repository.PatientRepository;
@@ -45,9 +42,10 @@ public class DoctorService {
         this.userRepository = userRepository;
     }
 
-    /**
+*
      * Get all appointments for a doctor
-     */
+
+
     public List<Appointment> getAppointments(Integer doctorId) {
         try {
             logger.info("Fetching all appointments for doctor with ID: {}", doctorId);
@@ -58,9 +56,10 @@ public class DoctorService {
         }
     }
 
-    /**
+*
      * Get appointments for a doctor on a specific date
-     */
+
+
     public List<Appointment> getAppointmentsByDate(Integer doctorId, LocalDate date) {
         try {
             LocalDateTime startOfDay = date.atStartOfDay();
@@ -76,9 +75,10 @@ public class DoctorService {
         }
     }
 
-    /**
+*
      * Get appointments by status (e.g., IN_PROGRESS, COMPLETED, REJECTED)
-     */
+
+
     public List<Appointment> getAppointmentsByStatus(Integer doctorId, Appointment.AppointmentStatus status) {
         try {
             logger.info("Fetching appointments for doctor ID: {} with status: {}", doctorId, status);
@@ -89,9 +89,10 @@ public class DoctorService {
         }
     }
 
-    /**
+*
      * Get today's appointments for a doctor
-     */
+
+
     public List<Appointment> getTodayAppointments(Integer doctorId) {
         try {
             LocalDateTime startOfDay = LocalDateTime.now().toLocalDate().atStartOfDay();
@@ -104,9 +105,10 @@ public class DoctorService {
         }
     }
 
-    /**
+*
      * Get upcoming appointments for a doctor
-     */
+
+
     public List<Appointment> getUpcomingAppointments(Integer doctorId) {
         try {
             LocalDateTime now = LocalDateTime.now();
@@ -118,9 +120,10 @@ public class DoctorService {
         }
     }
 
-    /**
+*
      * Get appointment details by appointmentId and doctorId
-     */
+
+
     public Optional<Appointment> getAppointmentDetails(Integer appointmentId, Integer doctorId) {
         try {
             logger.info("Fetching appointment details for appointment ID: {} and doctor ID: {}", appointmentId, doctorId);
@@ -132,9 +135,10 @@ public class DoctorService {
         }
     }
 
-    /**
+*
      * Get patient details by patientId
-     */
+
+
     public Optional<Patient> getPatientDetails(Integer patientId) {
         try {
             logger.info("Fetching patient details for patient ID: {}", patientId);
@@ -145,9 +149,10 @@ public class DoctorService {
         }
     }
 
-    /**
+*
      * Get patients with appointments for this doctor
-     */
+
+
     public List<Patient> getPatientsWithAppointments(Integer doctorId) {
         try {
             logger.info("Fetching patients with appointments for doctor ID: {}", doctorId);
@@ -158,9 +163,10 @@ public class DoctorService {
         }
     }
 
-    /**
+*
      * Search patients by name
-     */
+
+
     public List<Patient> searchPatientsByName(String name) {
         try {
             logger.info("Searching patients by name containing: {}", name);
@@ -181,10 +187,11 @@ public class DoctorService {
         }
     }
 
-    /**
+*
      * Get the count of active doctors in the system
      * @return the number of active doctors
-     */
+
+
     public List<Doctor> getAllDoctors() {
         try {
             logger.info("Fetching all doctors");
@@ -299,3 +306,4 @@ public class DoctorService {
         doctorRepository.save(d);
     }
 }
+*/

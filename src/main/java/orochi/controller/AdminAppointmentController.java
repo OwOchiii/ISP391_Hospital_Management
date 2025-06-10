@@ -1,4 +1,4 @@
-package orochi.controller;
+/*package orochi.controller;
 
 import orochi.config.CustomUserDetails;
 import orochi.model.Appointment;
@@ -102,4 +102,4 @@ public class AdminAppointmentController {
                 + "}]"
                 + "}";
     }
-}
+}*/
