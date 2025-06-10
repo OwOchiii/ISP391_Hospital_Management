@@ -82,7 +82,7 @@ public class AuthController {
         user.setPhoneNumber(phoneNumber);
         user.setRoleId(roleId);
         user.setGuest(false); // Assuming new registrations are not guests by default
-        user.setStatus("ACTIVE");
+        user.setStatus("Active");
 
         try {
             userService.registerNewUser(user);

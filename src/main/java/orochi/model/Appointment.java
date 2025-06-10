@@ -76,7 +76,7 @@ public class Appointment {
     @OneToOne(mappedBy = "appointment")
     private Prescription prescription;
 
-    public enum AppointmentStatus {
+    /*public enum AppointmentStatus {
         SCHEDULED, IN_PROGRESS, COMPLETED, REJECTED, CANCELLED, PENDING
-    }
+    }*/
 }
