@@ -1,0 +1,423 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Hospital Dashboard</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        :root {
+            --primary-color: #3b82f6;
+            --secondary-color: #10b981;
+            --background-light: #f8fafc;
+            --background-dark: #1e293b;
+            --text-light: #1e293b;
+            --text-dark: #e2e8f0;
+            --card-bg-light: rgba(255, 255, 255, 0.7);
+            --card-bg-dark: rgba(30, 41, 59, 0.7);
+            --shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            --backdrop-blur: blur(10px);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Inter', sans-serif;
+        }
+
+        body {
+            background: var(--background-light);
+            color: var(--text-light);
+            transition: background 0.3s, color 0.3s;
+            min-height: 100vh;
+        }
+
+        body.dark-theme {
+            background: var(--background-dark);
+            color: var(--text-dark);
+        }
+
+        .container {
+            display: flex;
+            min-height: 100vh;
+        }
+
+        .sidebar {
+            width: 250px;
+            padding: 20px;
+            background: var(--card-bg-light);
+            backdrop-filter: var(--backdrop-blur);
+            border-right: 1px solid rgba(255, 255, 255, 0.2);
+            transition: transform 0.3s;
+        }
+
+        .dark-theme .sidebar {
+            background: var(--card-bg-dark);
+            border-right: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .sidebar-header {
+            margin-bottom: 30px;
+        }
+
+        .sidebar-header h2 {
+            font-size: 1.5rem;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .sidebar nav ul li {
+            margin: 15px 0;
+        }
+
+        .sidebar nav ul li a {
+            color: var(--text-light);
+            text-decoration: none;
+            font-weight: 500;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 10px;
+            border-radius: 8px;
+            transition: background 0.3s, color 0.3s;
+        }
+
+        .dark-theme .sidebar nav ul li a {
+            color: var(--text-dark);
+        }
+
+        .sidebar nav ul li a:hover,
+        .sidebar nav ul li a.active {
+            background: var(--primary-color);
+            color: #fff;
+        }
+
+        .theme-toggle {
+            margin-top: auto;
+            padding-top: 20px;
+        }
+
+        .theme-toggle button {
+            background: none;
+            border: none;
+            color: var(--text-light);
+            font-size: 1.2rem;
+            cursor: pointer;
+            transition: color 0.3s;
+        }
+
+        .dark-theme .theme-toggle button {
+            color: var(--text-dark);
+        }
+
+        .content {
+            flex: 1;
+            padding: 20px;
+        }
+
+        header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 15px 20px;
+            background: var(--card-bg-light);
+            backdrop-filter: var(--backdrop-blur);
+            border-radius: 12px;
+            margin-bottom: 20px;
+            box-shadow: var(--shadow);
+        }
+
+        .dark-theme header {
+            background: var(--card-bg-dark);
+        }
+
+        header h1 {
+            font-size: 1.8rem;
+        }
+
+        .user-profile {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .user-profile span {
+            font-weight: 500;
+        }
+
+        .stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+
+        .stat-card {
+            background: var(--card-bg-light);
+            backdrop-filter: var(--backdrop-blur);
+            border-radius: 12px;
+            padding: 20px;
+            text-align: center;
+            box-shadow: var(--shadow);
+            transition: transform 0.3s;
+        }
+
+        .dark-theme .stat-card {
+            background: var(--card-bg-dark);
+        }
+
+        .stat-card:hover {
+            transform: translateY(-5px);
+        }
+
+        .stat-icon {
+            font-size: 2rem;
+            color: var(--primary-color);
+            margin-bottom: 10px;
+        }
+
+        .stat-card h3 {
+            font-size: 1.1rem;
+            margin-bottom: 10px;
+        }
+
+        .stat-card p {
+            font-size: 1.5rem;
+            font-weight: 600;
+        }
+
+        .chart-section {
+            background: var(--card-bg-light);
+            backdrop-filter: var(--backdrop-blur);
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 30px;
+            box-shadow: var(--shadow);
+        }
+
+        .dark-theme .chart-section {
+            background: var(--card-bg-dark);
+        }
+
+        .chart-section h2 {
+            font-size: 1.4rem;
+            margin-bottom: 20px;
+        }
+
+        .chart-container {
+            position: relative;
+            height: 300px;
+        }
+
+        .recent-appointments h2 {
+            font-size: 1.4rem;
+            margin-bottom: 20px;
+        }
+
+        .table-container {
+            background: var(--card-bg-light);
+            backdrop-filter: var(--backdrop-blur);
+            border-radius: 12px;
+            padding: 20px;
+            box-shadow: var(--shadow);
+            overflow-x: auto;
+        }
+
+        .dark-theme .table-container {
+            background: var(--card-bg-dark);
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        th, td {
+            padding: 12px;
+            text-align: left;
+            border-bottom: 1px solid rgba(0, 0, 0, 0.1);
+        }
+
+        .dark-theme th,
+        .dark-theme td {
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        th {
+            font-weight: 600;
+            background: rgba(0, 0, 0, 0.05);
+        }
+
+        .dark-theme th {
+            background: rgba(255, 255, 255, 0.05);
+        }
+
+        .table-row:hover {
+            background: rgba(0, 0, 0, 0.05);
+        }
+
+        .dark-theme .table-row:hover {
+            background: rgba(255, 255, 255, 0.05);
+        }
+
+        .status-badge {
+            padding: 5px 10px;
+            border-radius: 12px;
+            font-size: 0.9rem;
+            font-weight: 500;
+            transition: background 0.3s;
+        }
+
+        .status-badge.pending {
+            background: #fef3c7;
+            color: #d97706;
+        }
+
+        .status-badge.confirmed {
+            background: #d1fae5;
+            color: #059669;
+        }
+
+        .status-badge.outpatient {
+            background: #dbeafe;
+            color: #2563eb;
+        }
+
+        .status-badge.rejected {
+            background: #fee2e2;
+            color: #dc2626;
+        }
+
+        .dark-theme .status-badge.pending { background: #d97706; color: #fff; }
+        .dark-theme .status-badge.confirmed { background: #059669; color: #fff; }
+        .dark-theme .status-badge.outpatient { background: #2563eb; color: #fff; }
+        .dark-theme .status-badge.rejected { background: #dc2626; color: #fff; }
+
+        @media (max-width: 768px) {
+            .container {
+                flex-direction: column;
+            }
+
+            .sidebar {
+                width: 100%;
+                transform: translateY(-100%);
+                position: fixed;
+                top: 0;
+                left: 0;
+                z-index: 1000;
+            }
+
+            .sidebar.active {
+                transform: translateY(0);
+            }
+
+            .content {
+                margin-top: 60px;
+            }
+
+            .stats {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body class="light-theme">
+<div class="container">
+    <aside class="sidebar">
+        <div class="sidebar-header">
+            <h2><i class="fas fa-hospital"></i> Hospital</h2>
+        </div>
+        <nav>
+            <ul>
+                <li><a th:href="@{/dashboard}" class="active"><i class="fas fa-tachometer-alt"></i> Dashboard</a></li>
+                <li><a th:href="@{/patients}"><i class="fas fa-users"></i> Patients</a></li>
+                <li><a th:href="@{/appointments}"><i class="fas fa-calendar-alt"></i> Appointments</a></li>
+                <li><a th:href="@{/verify-appointments}"><i class="fas fa-check-circle"></i> Verify Appointments</a></li>
+            </ul>
+        </nav>
+        <div class="theme-toggle">
+            <button id="themeToggle" title="Toggle Theme">
+                <i class="fas fa-moon"></i>
+            </button>
+        </div>
+    </aside>
+    <main class="content">
+        <header>
+            <h1>Dashboard</h1>
+            <div class="user-profile">
+                <span>Admin</span>
+                <i class="fas fa-user-circle fa-2x"></i>
+            </div>
+        </header>
+        <section class="stats">
+            <div class="stat-card">
+                <div class="stat-icon"><i class="fas fa-users"></i></div>
+                <h3>Total Patients</h3>
+                <p th:text="${totalPatients}">0</p>
+            </div>
+            <div class="stat-card">
+                <div class="stat-icon"><i class="fas fa-user-md"></i></div>
+                <h3>Total Doctors</h3>
+                <p th:text="${totalDoctors}">0</p>
+            </div>
+            <div class="stat-card">
+                <div class="stat-icon"><i class="fas fa-procedures"></i></div>
+                <h3>Total Surgeries</h3>
+                <p th:text="${totalOperations}">0</p>
+            </div>
+            <div class="stat-card">
+                <div class="stat-icon"><i class="fas fa-money-bill-wave"></i></div>
+                <h3>Total Revenue</h3>
+                <p th:text="${#numbers.formatDecimal(totalIncome, 0, 'COMMA', 0, 'POINT')} + ' VNĐ'">0 VNĐ</p>
+            </div>
+        </section>
+        <section class="chart-section">
+            <h2>Patient Statistics</h2>
+            <div class="chart-container">
+                <canvas id="patientChart"></canvas>
+            </div>
+        </section>
+        <section class="recent-appointments">
+            <h2>Recent Appointments</h2>
+            <div class="table-container">
+                <table>
+                    <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>Patient</th>
+                        <th>Doctor</th>
+                        <th>Date</th>
+                        <th>Time</th>
+                        <th>Department</th>
+                        <th>Status</th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                    <tr th:each="appointment : ${appointments}" class="table-row">
+                        <td th:text="${appointment.id}">1</td>
+                        <td th:text="${appointment.patient?.name ?: 'N/A'}">Patient</td>
+                        <td th:text="${appointment.doctor?.name ?: 'N/A'}">Doctor</td>
+                        <td th:text="${appointment.appointmentDate}">2025-01-10</td>
+                        <td th:text="${appointment.appointmentTime}">10:00</td>
+                        <td th:text="${appointment.department}">Department</td>
+                        <td>
+                                    <span class="status-badge"
+                                          th:classappend="${appointment.status?.name?.toLowerCase() ?: 'pending'}"
+                                          th:text="${appointment.status?.name ?: 'Pending'}">
+                                        Status
+                                    </span>
+                        </td>
+                    </tr>
+                    </tbody>
+                </table>
+            </div>
+        </section>
+    </main>
+</div>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<script th:src="@{/js/dashboard.js}"></script>
+</body>
+</html>
