@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <title th:text="${title}">XSS Test Page</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+</head>
+<body>
+    <h1>XSS Testing Page</h1>
+
+    <h2>Test 1: Standard Thymeleaf Output (Auto-Escaped)</h2>
+    <div>
+        <p>Your input (auto-escaped with th:text): <span th:text="${userInput}">No input provided</span></p>
+    </div>
+
+    <h2>Test 2: Unescaped Output (Vulnerable - for testing only!)</h2>
+    <div>
+        <p>Your input (unescaped with th:utext - DANGEROUS!): <span th:utext="${userInput}">No input provided</span></p>
+    </div>
+
+    <h2>Test 3: Attribute Injection</h2>
+    <div>
+        <a th:href="'javascript:void(0);' + ${userInput}">Test link with user input in href</a>
+    </div>
+
+    <h2>Test Your Protection</h2>
+    <form method="get" action="/test/xss">
+        <label for="input">Enter test XSS payload:</label><br>
+        <input type="text" id="input" name="input" size="50" th:value="${userInput}" placeholder="<script>alert('XSS')</script>"><br>
+        <button type="submit">Test XSS Protection</button>
+    </form>
+
+    <h3>Security Headers:</h3>
+    <div id="security-headers">
+        <p>Security headers will be displayed here</p>
+    </div>
+
+    <script>
+        // Script to check which security headers are present
+        window.onload = function() {
+            const headerDiv = document.getElementById('security-headers');
+            headerDiv.innerHTML = '';
+
+            // Create a new request to check headers
+            fetch(window.location.href)
+                .then(response => {
+                    const headers = [
+                        'Content-Security-Policy',
+                        'X-XSS-Protection',
+                        'X-Content-Type-Options',
+                        'X-Frame-Options'
+                    ];
+
+                    let headerContent = '<ul>';
+                    headers.forEach(header => {
+                        const value = response.headers.get(header);
+                        if (value) {
+                            headerContent += `<li><strong>${header}:</strong> ${value}</li>`;
+                        } else {
+                            headerContent += `<li><strong>${header}:</strong> <span style="color:red">Not set</span></li>`;
+                        }
+                    });
+                    headerContent += '</ul>';
+
+                    headerDiv.innerHTML = headerContent;
+                })
+                .catch(error => {
+                    headerDiv.innerHTML = `<p>Error checking headers: ${error}</p>`;
+                });
+        };
+    </script>
+</body>
+</html>
+

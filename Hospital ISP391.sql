@@ -678,8 +678,8 @@ BEGIN
                             -- Keep the Doctor record but also add Patient record
                             IF NOT EXISTS (SELECT 1 FROM [Patient] WHERE [UserID] = @UserID)
                                 BEGIN
-                                    INSERT INTO [Patient] ([UserID], [dateOfBirth], [gender], [address], [description])
-                                    VALUES (@UserID, NULL, NULL, NULL, NULL);
+                                    INSERT INTO [Patient] ([UserID], [dateOfBirth], [gender], [description])
+                                    VALUES (@UserID, NULL,  NULL, NULL);
                                 END
                         END
                         -- If changing to any other role, just keep existing records
@@ -688,8 +688,8 @@ BEGIN
                             -- Make sure appropriate role-specific record exists
                             IF @NewRoleID = @RoleIDForPatient AND NOT EXISTS (SELECT 1 FROM [Patient] WHERE [UserID] = @UserID)
                                 BEGIN
-                                    INSERT INTO [Patient] ([UserID], [dateOfBirth], [gender], [address], [description])
-                                    VALUES (@UserID, NULL, NULL, NULL, NULL);
+                                    INSERT INTO [Patient] ([UserID], [dateOfBirth], [gender], [description])
+                                    VALUES (@UserID, NULL,  NULL, NULL);
                                 END
                             ELSE IF @NewRoleID = @RoleIDForDoctor AND NOT EXISTS (SELECT 1 FROM [Doctor] WHERE [UserID] = @UserID)
                                 BEGIN

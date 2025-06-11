@@ -191,16 +191,22 @@ public class FileDownloadController {
 
             logger.info("Attempting to serve file: {}", fileName);
 
-            // Try multiple possible locations for the file
-            // Prepare a list of possible file paths
-            Path[] possiblePaths = {
-                Paths.get(uploadDir, "medical-results", fileName),
-                Paths.get("uploads/medical-results", fileName),
-                Paths.get("D:/KanbanWeb/ISP301_Hospital_Management/uploads/medical-results", fileName),
-                Paths.get("D:/KanbanWeb/ISP301_Hospital_Management/upload-dir/medical-results", fileName),
-                Paths.get(uploadDir, "reports", fileName),
-                Paths.get(uploadDir, fileName),
-            };
+            // Define common subdirectories
+            String[] subdirs = {"medical-results", "reports", ""};
+
+            // Create a list of possible file paths using the configured uploadDir as the base
+            Path[] possiblePaths = new Path[subdirs.length * 2];
+
+            int index = 0;
+            // Try with the primary uploadDir first
+            for (String subdir : subdirs) {
+                possiblePaths[index++] = Paths.get(uploadDir, subdir, fileName).normalize();
+            }
+
+            // Try with a fallback "upload-dir" directory in case uploadDir is configured differently
+            for (String subdir : subdirs) {
+                possiblePaths[index++] = Paths.get("upload-dir", subdir, fileName).normalize();
+            }
 
             // Try each path until we find the file
             Path filePath = null;
