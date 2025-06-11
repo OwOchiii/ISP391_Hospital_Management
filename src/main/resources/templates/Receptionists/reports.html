@@ -504,46 +504,67 @@
                 <ul class="nav flex-column">
                     <li class="nav-item">
                         <a href="/receptionist/dashboard" class="nav-link"><i class="fas fa-th-large"></i> Dashboard</a>
-                    </li>
-                    <div class="nav-section-title">Medical Services</div>
-                    <ul class="nav flex-column">
-                        <li class="nav-item">
-                            <a href="/receptionist/appointments" class="nav-link"><i class="fas fa-calendar-alt"></i> Appointments</a>
-                        </li>
-                        <li class="nav-item">
-                            <a href="/receptionist/doctors" class="nav-link"><i class="fas fa-user-md"></i> Doctors</a>
-                        </li>
-                        <li class="nav-item">
-                            <a href="/receptionist/patients" class="nav-link"><i class="fas fa-users"></i> Patients</a>
-                        </li>
+                    </li><!-- Sidebar -->
+                    <nav class="sidebar col-lg-3 col-xl-2 d-none d-lg-block" id="patientSidebar">
+                        <div class="logo">
+                            <a href="#">
+                                <i class="fas fa-user-md"></i>
+                                <div>
+                                    <h2>MediCare Plus</h2>
+                                    <small>Healthcare Portal</small>
+                                </div>
+                            </a>
+                        </div>
+                        <nav class="sidebar-nav">
+                            <div class="nav-section-title">Navigation</div>
+                            <ul class="nav flex-column">
+                                <li class="nav-item">
+                                    <a href="/receptionist/dashboard" class="nav-link active"><i class="fas fa-th-large"></i>
+                                        Dashboard</a>
+                                </li>
+                                <div class="nav-section-title">Medical Services</div>
+                                <ul class="nav flex-column">
+                                    <li class="nav-item">
+                                        <a href="/receptionist/appointments" class="nav-link"><i class="fas fa-calendar-alt"></i>
+                                            Appointments</a>
+                                    </li>
+                                    <li class="nav-item">
+                                        <a href="/receptionist/doctors" class="nav-link"><i class="fas fa-user-md"></i> Doctors</a>
+                                    </li>
+                                    <li class="nav-item">
+                                        <a href="/receptionist/patients" class="nav-link"><i class="fas fa-users"></i> Patients</a>
+                                    </li>
+                                    <li class="nav-item">
+                                        <a href="/receptionist/payments" class="nav-link"><i class="fas fa-money-bill-wave"></i> Payments</a>
+                                    </li>
+                                    <li class="nav-item">
+                                        <a href="/receptionist/reports" class="nav-link"><i class="fas fa-chart-bar"></i>
+                                            Reports</a>
+                                    </li>
+                                </ul>
 
-                        <li class="nav-item">
-                            <a href="/receptionist/reports" class="nav-link active"><i class="fas fa-chart-bar"></i> Reports</a>
-                        </li>
-                    </ul>
-
-                    <div class="nav-section-title">Account</div>
-                    <ul class="nav flex-column">
-                        <li class="nav-item">
-                            <a href="/receptionist/profile" class="nav-link"><i class="fas fa-stethoscope"></i> Profile</a>
-                        </li>
-                    </ul>
-                    <div class="nav-section-title">System</div>
-                    <ul class="nav flex-column">
-                        <li class="nav-item">
-                            <a href="/receptionist/settings" class="nav-link"><i class="fas fa-cog"></i> Settings</a>
-                        </li>
-                    </ul>
-                    <form class="nav-item" th:action="@{/auth/logout}" method="post">
-                        <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}" />
-                        <button type="submit" class="logout-btn nav-link">
-                            <i class="bi bi-box-arrow-right"></i>
-                            Logout Securely
-                        </button>
-                    </form>
-                </ul>
-            </nav>
-        </nav>
+                                <div class="nav-section-title">Account</div>
+                                <ul class="nav flex-column">
+                                    <li class="nav-item">
+                                        <a href="/receptionist/profile" class="nav-link"><i class="fas fa-stethoscope"></i> Profile</a>
+                                    </li>
+                                </ul>
+                                <div class="nav-section-title">System</div>
+                                <ul class="nav flex-column">
+                                    <li class="nav-item">
+                                        <a href="/receptionist/settings" class="nav-link"><i class="fas fa-cog"></i> Settings</a>
+                                    </li>
+                                </ul>
+                                <form class="nav-item" th:action="@{/auth/logout}" method="post">
+                                    <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
+                                    <button type="submit" class="nav-link logout-btn">
+                                        <i class="fas fa-sign-out-alt"></i>
+                                        Logout
+                                    </button>
+                                </form>
+                            </ul>
+                        </nav>
+                    </nav>
 
         <!-- Main Content -->
         <main class="main-content col-lg-9 col-xl-10" id="mainContent">
