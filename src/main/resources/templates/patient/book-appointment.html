@@ -4,6 +4,10 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Book Appointment - MediCare Plus</title>
+  <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+  <script src="https://code.jquery.com/ui/1.12.1/jquery-ui.min.js"></script>
+  <link rel="stylesheet" href="https://code.jquery.com/ui/1.12.1/themes/base/jquery-ui.css">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/dompurify/2.4.5/purify.min.js"></script>
 
   <!-- Bootstrap CSS -->
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
@@ -881,8 +885,8 @@
             <label for="appointmentDate" class="form-label">
               Appointment Date <span class="required-asterisk">*</span>
             </label>
-            <input type="date" id="appointmentDate" th:field="*{appointmentDate}"
-                   class="form-control" required onchange="updateTimeSlots()" />
+            <input type="text" id="appointmentDate" th:field="*{appointmentDate}"
+                   class="form-control" required placeholder="YYYY-MM-DD" />
             <div th:if="${#fields.hasErrors('appointmentDate')}" class="error-message">
               <i class="bi bi-exclamation-circle"></i>
               <span th:errors="*{appointmentDate}">Date is required</span>
@@ -989,8 +993,8 @@
           </label>
           <textarea id="description" th:field="*{description}" class="form-control"
                     rows="4" maxlength="250" placeholder="Please describe your symptoms or reason for the appointment..."
-                    style="resize: none;" oninput="autoResize(this)"></textarea>
-          <small class="text-muted">Maximum 250 characters</small>
+                    style="resize: none;" oninput="sanitizeOnInput(this); autoResize(this)"></textarea>
+          <small class="text-muted">Maximum 250 characters. HTML, scripts, and links are not allowed.</small>
           <div th:if="${#fields.hasErrors('description')}" class="error-message">
             <i class="bi bi-exclamation-circle"></i>
             <span th:errors="*{description}">Description is too long</span>
@@ -1219,6 +1223,27 @@
     document.getElementById('email').value = initialEmail;
   }
 
+  // Sanitize Description input to prevent XSS, HTML, and malicious URLs
+  function sanitizeDescription(input) {
+    // Step 1: Encode HTML characters to prevent HTML rendering
+    const encoded = input.replace(/</g, '&lt;').replace(/>/g, '&gt;')
+                         .replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+
+    // Step 2: Remove or encode potential script tags and dangerous URLs
+    const div = document.createElement('div');
+    div.innerText = encoded; // Use innerText to ensure no HTML/script execution
+    let sanitized = div.innerHTML;
+
+    // Step 3: Remove any remaining <a> tags or URLs with dangerous protocols
+    sanitized = sanitized.replace(/<a\b[^>]*>(.*?)<\/a>/gi, '$1'); // Remove <a> tags, keep content
+    sanitized = sanitized.replace(/\b(javascript|data):/gi, ''); // Remove dangerous protocols
+
+    // Step 4: Normalize whitespace and trim
+    sanitized = sanitized.trim().replace(/\s+/g, ' ');
+
+    return sanitized;
+  }
+
   // Trim and clean input fields on blur
   function cleanInputOnBlur(id, isStrict = false) {
     const element = document.getElementById(id);
@@ -1231,8 +1256,13 @@
         // Remove all spaces for strict fields (phone/email)
         value = value.replace(/\s+/g, '');
       } else {
-        // Normalize spacing between words (one space only)
-        value = value.replace(/\s+/g, ' ');
+        // Sanitize Description field
+        if (id === 'description') {
+          value = sanitizeDescription(value);
+        } else {
+          // Normalize spacing between words (one space only)
+          value = value.replace(/\s+/g, ' ');
+        }
       }
 
       element.value = value;
@@ -1242,7 +1272,7 @@
   // Apply trimming logic to input fields
   cleanInputOnBlur('phoneNumber', true); // strict: no space at all
   cleanInputOnBlur('email', true);       // strict: no space at all
-  cleanInputOnBlur('description', false); // normalize spaces
+  cleanInputOnBlur('description', false); // sanitize and normalize spaces
 
   // Show confirmation dialog
   function showConfirmation() {
@@ -1294,9 +1324,9 @@
       return;
     }
 
-    // Normalize description if it contains only spaces or is empty
-    description = description.replace(/\s+/g, ' ').trim();
-    document.getElementById('description').value = description === '' ? '' : description;
+    // Sanitize description before confirmation
+    description = sanitizeDescription(description);
+    document.getElementById('description').value = description;
 
     // Show confirmation dialog
     document.getElementById('confirmationOverlay').classList.add('active');
@@ -1311,11 +1341,10 @@
       // Clean up form data before submission
       const phoneNumber = document.getElementById('phoneNumber').value.replace(/\s+/g, '');
       const email = document.getElementById('email').value.replace(/\s+/g, '');
-      let description = document.getElementById('description').value.trim().replace(/\s+/g, ' ');
+      let description = document.getElementById('description').value.trim();
 
-      if (description === '') {
-        description = '';
-      }
+      // Final sanitization of description
+      description = sanitizeDescription(description);
 
       document.getElementById('phoneNumber').value = phoneNumber;
       document.getElementById('email').value = email;
@@ -1337,9 +1366,24 @@
     const maxDate = new Date(tomorrow);
     maxDate.setDate(tomorrow.getDate() + 7);
 
+    // Initialize jQuery UI Datepicker for appointmentDate
     const dateInput = document.getElementById('appointmentDate');
-    dateInput.setAttribute('min', tomorrow.toISOString().split('T')[0]);
-    dateInput.setAttribute('max', maxDate.toISOString().split('T')[0]);
+    if (dateInput) {
+      $(dateInput).datepicker({
+        dateFormat: 'yy-mm-dd', // Match ISO format for form submission
+        minDate: tomorrow,
+        maxDate: maxDate,
+        beforeShowDay: function(date) {
+          const day = date.getDay();
+          // Disable Saturday (6) and Sunday (0)
+          return [day !== 0 && day !== 6, day !== 0 && day !== 6 ? '' : 'ui-state-disabled'];
+        },
+        onSelect: function(dateText) {
+          // Update time slots when a date is selected
+          updateTimeSlots();
+        }
+      });
+    }
 
     // For update mode, populate doctor dropdown
     if (isUpdate && initialSpecialtyId) {
