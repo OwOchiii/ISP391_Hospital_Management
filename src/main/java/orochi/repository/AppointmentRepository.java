@@ -126,4 +126,12 @@ public interface AppointmentRepository extends JpaRepository<Appointment, Intege
     Page<Appointment> findAllWithDetails(Pageable pageable);
 
     Page<Appointment> findByStatusOrderByDateTimeDesc(String status, Pageable pageable);
+
+    @Query("SELECT a FROM Appointment a WHERE a.doctorId = :doctorId AND a.dateTime BETWEEN :start AND :end AND a.appointmentId != :appointmentId ORDER BY a.dateTime")
+    List<Appointment> findByDoctorIdAndDateTimeBetweenAndAppointmentIdNotOrderByDateTime(
+            @Param("doctorId") Integer doctorId,
+            @Param("start") LocalDateTime start,
+            @Param("end") LocalDateTime end,
+            @Param("appointmentId") Integer appointmentId);
+
 }

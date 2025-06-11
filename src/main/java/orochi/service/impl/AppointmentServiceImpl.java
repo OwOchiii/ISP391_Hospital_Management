@@ -1,97 +1,122 @@
 package orochi.service.impl;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+import orochi.dto.AppointmentFormDTO;
+import orochi.model.Appointment;
+import orochi.model.Doctor;
+import orochi.model.Patient;
+import orochi.model.Specialization;
 import orochi.repository.AppointmentRepository;
-import orochi.service.AppointmentMetricService;
+import orochi.repository.DoctorRepository;
+import orochi.repository.PatientRepository;
+import orochi.repository.SpecializationRepository;
+import orochi.service.AppointmentService;
+import orochi.service.EmailService;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
-import java.time.YearMonth;
+import java.time.LocalTime;
+import java.time.format.DateTimeFormatter;
+import java.util.*;
+import java.util.stream.Collectors;
 
 @Service
-public class AppointmentMetricServiceImpl implements AppointmentMetricService {
+@Transactional
+public class AppointmentServiceImpl extends AppointmentService {
+    private static final Logger logger = LoggerFactory.getLogger(AppointmentServiceImpl.class);
+
     private final AppointmentRepository appointmentRepository;
+    private final DoctorRepository doctorRepository;
+    private final PatientRepository patientRepository;
+    private final SpecializationRepository specializationRepository;
+    private final EmailService emailService;
+
+    // Standard appointment duration in minutes
+    private static final int APPOINTMENT_DURATION = 30;
 
     @Autowired
-    public AppointmentMetricServiceImpl(AppointmentRepository appointmentRepository) {
+    public AppointmentServiceImpl(AppointmentRepository appointmentRepository,
+                                  DoctorRepository doctorRepository,
+                                  PatientRepository patientRepository,
+                                  SpecializationRepository specializationRepository,
+                                  EmailService emailService) {
         this.appointmentRepository = appointmentRepository;
+        this.doctorRepository = doctorRepository;
+        this.patientRepository = patientRepository;
+        this.specializationRepository = specializationRepository;
+        this.emailService = emailService;
     }
 
     @Override
-    public Integer getTotalAppointments() {
-        try {
-            return Math.toIntExact(appointmentRepository.count());
-        } catch (Exception e) {
-            return 0;
-        }
+    public List<Specialization> getAllSpecializations() {
+        return specializationRepository.findAllByOrderBySpecNameAsc();
     }
 
     @Override
-    public Integer getTodayAppointments() {
-        try {
-            LocalDate today = LocalDate.now();
-            LocalDateTime startOfDay = today.atStartOfDay();
-            LocalDateTime endOfDay = today.plusDays(1).atStartOfDay().minusSeconds(1);
-
-            // Assuming you'll add a method to find appointments by date range
-            // If not available, you may need to add this method to the repository
-            long count = appointmentRepository.findAll().stream()
-                    .filter(a -> a.getDateTime() != null &&
-                            !a.getDateTime().isBefore(startOfDay) &&
-                            !a.getDateTime().isAfter(endOfDay))
-                    .count();
-            return Math.toIntExact(count);
-        } catch (Exception e) {
-            return 0;
-        }
+    public List<Doctor> getDoctorsBySpecialization(Integer specId) {
+        return doctorRepository.findBySpecializationId(specId);
     }
 
     @Override
-    public Integer getPendingAppointments() {
-        try {
-            // Assuming your Appointment entity has a status field and "pending" is a valid status
-            long count = appointmentRepository.findAll().stream()
-                    .filter(a -> "pending".equalsIgnoreCase(a.getStatus()))
-                    .count();
-            return Math.toIntExact(count);
-        } catch (Exception e) {
-            return 0;
-        }
-    }
+    public Map<String, List<String>> getDoctorAvailability(LocalDate date, Integer doctorId) {
+        LocalDateTime startOfDay = date.atStartOfDay();
+        LocalDateTime endOfDay = date.atTime(23, 59, 59);
 
-    @Override
-    public Integer getGrowthPercentage() {
-        try {
-            // Calculate growth by comparing current month appointments with previous month
-            YearMonth currentMonth = YearMonth.now();
-            YearMonth previousMonth = currentMonth.minusMonths(1);
+        List<Appointment> bookedAppointments = appointmentRepository
+                .findByDoctorIdAndDateTimeBetweenOrderByDateTime(doctorId, startOfDay, endOfDay);
 
-            LocalDateTime currentMonthStart = currentMonth.atDay(1).atStartOfDay();
-            LocalDateTime currentMonthEnd = currentMonth.atEndOfMonth().plusDays(1).atStartOfDay().minusSeconds(1);
+        // Get the exact booked times
+        List<String> bookedTimes = bookedAppointments.stream()
+                .map(appointment -> appointment.getDateTime().toLocalTime().format(DateTimeFormatter.ofPattern("HH:mm:ss")))
+                .collect(Collectors.toList());
 
-            LocalDateTime previousMonthStart = previousMonth.atDay(1).atStartOfDay();
-            LocalDateTime previousMonthEnd = previousMonth.atEndOfMonth().plusDays(1).atStartOfDay().minusSeconds(1);
+        // Get the unavailable times (booked time ± buffer period)
+        List<String> unavailableTimes = new ArrayList<>();
 
-            long currentMonthCount = appointmentRepository.findAll().stream()
-                    .filter(a -> a.getDateTime() != null &&
-                            !a.getDateTime().isBefore(currentMonthStart) &&
-                            !a.getDateTime().isAfter(currentMonthEnd))
-                    .count();
+        // Create a set of all possible time slots
+        Set<String> allTimeSlots = new HashSet<>(Arrays.asList(
+                "08:00:00", "08:30:00", "09:00:00", "09:30:00", "10:00:00", "10:30:00",
+                "11:00:00", "11:30:00", "14:00:00", "14:30:00", "15:00:00", "15:30:00",
+                "16:00:00", "16:30:00", "17:00:00", "17:30:00"
+        ));
 
-            long previousMonthCount = appointmentRepository.findAll().stream()
-                    .filter(a -> a.getDateTime() != null &&
-                            !a.getDateTime().isBefore(previousMonthStart) &&
-                            !a.getDateTime().isAfter(previousMonthEnd))
-                    .count();
+        // For each booked appointment, mark surrounding time slots as unavailable
+        for (Appointment appointment : bookedAppointments) {
+            LocalTime appointmentTime = appointment.getDateTime().toLocalTime();
 
-            if (previousMonthCount == 0) {
-                return currentMonthCount > 0 ? 100 : 0;
+            // Mark time slots within 30 minutes as unavailable
+            for (String timeSlot : allTimeSlots) {
+                LocalTime slotTime = LocalTime.parse(timeSlot);
+
+                // Calculate time difference in minutes
+                int minutesDifference = Math.abs(
+                        (slotTime.getHour() * 60 + slotTime.getMinute()) -
+                                (appointmentTime.getHour() * 60 + appointmentTime.getMinute())
+                );
+
+                // If the time slot is within 30 minutes of a booked appointment
+                // and it's not the exact booked time (which is in bookedTimes)
+                if (minutesDifference < APPOINTMENT_DURATION && !bookedTimes.contains(timeSlot)) {
+                    unavailableTimes.add(timeSlot);
+                }
             }
-
-            return (int) ((currentMonthCount - previousMonthCount) * 100 / previousMonthCount);
-        } catch (Exception e) {
-            return 0;
         }
+
+        // Remove duplicates
+        unavailableTimes = unavailableTimes.stream().distinct().collect(Collectors.toList());
+
+        // Create result map
+        Map<String, List<String>> result = new HashMap<>();
+        result.put("bookedTimes", bookedTimes);
+        result.put("unavailableTimes", unavailableTimes);
+
+        return result;
     }
 
     @Override

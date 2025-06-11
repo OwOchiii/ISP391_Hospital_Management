@@ -1,4 +1,4 @@
-/*package orochi.controller;
+package orochi.controller;
 
 import orochi.config.CustomUserDetails;
 import orochi.model.Appointment;
@@ -79,8 +79,8 @@ public class AdminAppointmentController {
                                           @AuthenticationPrincipal CustomUserDetails userDetails) {
         if (userDetails.getAuthorities().stream().noneMatch(a ->
                 a.getAuthority().equals("ROLE_ADMIN") ||
-                a.getAuthority().equals("ROLE_DOCTOR") ||
-                a.getAuthority().equals("ROLE_RECEPTIONIST"))) {
+                        a.getAuthority().equals("ROLE_DOCTOR") ||
+                        a.getAuthority().equals("ROLE_RECEPTIONIST"))) {
             throw new SecurityException("Unauthorized action");
         }
 
@@ -106,4 +106,4 @@ public class AdminAppointmentController {
                 + "}]"
                 + "}";
     }
-}*/
+}
