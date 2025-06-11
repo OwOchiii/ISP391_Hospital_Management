@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Login - MediCare Plus</title>
-
+    <script src="https://www.google.com/recaptcha/api.js" async defer></script>
     <!-- Bootstrap CSS -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <!-- Bootstrap Icons -->
@@ -437,8 +437,8 @@
                                     <i class="bi bi-eye" id="passwordIcon"></i>
                                 </button>
                             </div>
-                            <div class="invalid-feedback">
-                                Password is required.
+                            <div id="password-feedback" class="invalid-feedback" style="display: none;">
+                                Please enter your password.
                             </div>
                         </div>
 
@@ -455,6 +455,18 @@
                                 <a th:href="@{/auth/forgot-password}" class="text-decoration-none">
                                     Forgot Password?
                                 </a>
+                            </div>
+                        </div>
+
+                        <!-- reCAPTCHA widget with better error handling -->
+                        <div class="form-group mb-3">
+                            <!-- Add a hidden input field to ensure g-recaptcha-response is submitted even if empty -->
+                            <input type="hidden" name="g-recaptcha-response" value="">
+                            <div class="g-recaptcha" th:data-sitekey="${captchaSiteKey}"
+                                 data-callback="onCaptchaSuccess" data-expired-callback="onCaptchaExpired"
+                                 data-error-callback="onCaptchaError"></div>
+                            <div class="invalid-feedback d-block" th:if="${param.captchaError}">
+                                Please verify you are not a robot.
                             </div>
                         </div>
 
@@ -499,14 +511,51 @@
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 
 <script>
+    // reCAPTCHA callback functions
+    function onCaptchaSuccess(token) {
+        document.querySelector('input[name="g-recaptcha-response"]').value = token;
+        console.log('CAPTCHA verified successfully');
+    }
+
+    function onCaptchaExpired() {
+        document.querySelector('input[name="g-recaptcha-response"]').value = '';
+        console.log('CAPTCHA verification expired');
+    }
+
+    function onCaptchaError() {
+        document.querySelector('input[name="g-recaptcha-response"]').value = '';
+        console.log('CAPTCHA verification error');
+    }
+
     // Form validation and submission
     document.getElementById('loginForm').addEventListener('submit', function(e) {
         const form = this;
         const email = document.getElementById('email').value;
         const password = document.getElementById('password').value;
+        const passwordFeedback = document.getElementById('password-feedback');
 
         // Reset previous validation states
         form.classList.remove('was-validated');
+
+        let isValid = true;
+
+        // Check email
+        if (!email) {
+            document.getElementById('email').classList.add('is-invalid');
+            isValid = false;
+        } else {
+            document.getElementById('email').classList.remove('is-invalid');
+        }
+
+        // Check password
+        if (!password) {
+            document.getElementById('password').classList.add('is-invalid');
+            passwordFeedback.style.display = 'block';
+            isValid = false;
+        } else {
+            document.getElementById('password').classList.remove('is-invalid');
+            passwordFeedback.style.display = 'none';
+        }
 
         // Basic validation
         if (!email || !password) {
@@ -521,7 +570,7 @@
         btnText.textContent = 'Signing In...';
         spinner.style.display = 'inline-block';
 
-        // Let the form submit normally to  your Spring controller
+        // Let the form submit normally to your Spring controller
         return true;
     });
 
@@ -621,3 +670,7 @@
 </script>
 </body>
 </html>
+
+
+
+

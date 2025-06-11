@@ -69,7 +69,7 @@ public class EmailServiceImpl implements EmailService {
         context.setVariable("resetLink", resetUrl);
         context.setVariable("userEmail", to);
         context.setVariable("userName", to.substring(0, to.indexOf('@')));
-        context.setVariable("expirationTime", "1 hour");
+        context.setVariable("expirationTime", "10 minutes");
 
         // Add the missing expirationDate variable (1 hour from now)
         java.util.Date expirationDate = new java.util.Date(System.currentTimeMillis() + 3600000); // 1 hour in milliseconds

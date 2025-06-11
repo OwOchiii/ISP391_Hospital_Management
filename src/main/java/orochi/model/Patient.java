@@ -47,6 +47,21 @@ public class Patient {
     @OneToMany(mappedBy = "patient")
     private List<Prescription> prescriptions;
 
+    @Transient
+    private Integer age;
+
+    @Transient
+    private String status;
+
+    @Transient
+    private Integer totalAppointments;
+
+    @Transient
+    private Integer upcomingAppointments;
+
+    @Transient
+    private String lastVisit;
+
     public String getFullName() {
         return user != null ? user.getFullName() : null;
     }

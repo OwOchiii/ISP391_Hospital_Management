@@ -2,7 +2,6 @@
 
 import orochi.config.CustomUserDetails;
 import orochi.model.Appointment;
-import orochi.config.CustomUserDetails;
 import orochi.service.AppointmentMetricService;
 import orochi.service.AppointmentService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -20,6 +19,12 @@ public class AdminAppointmentController {
 
     private final AppointmentService appointmentService;
     private final AppointmentMetricService appointmentMetricService;
+
+    // Status constants that match the database constraints
+    public static final String STATUS_SCHEDULED = "Scheduled";
+    public static final String STATUS_COMPLETED = "Completed";
+    public static final String STATUS_CANCELLED = "Cancel";
+    public static final String STATUS_PENDING = "Pending";
 
     @Autowired
     public AdminAppointmentController(AppointmentService appointmentService,
@@ -41,63 +46,62 @@ public class AdminAppointmentController {
         if (userDetails.getAuthorities().stream().anyMatch(a -> a.getAuthority().equals("ROLE_DOCTOR"))) {
             Integer doctorId = userDetails.getDoctorId();
             if (search != null && !search.isBlank()) {
-                model.addAttribute("appointments");
-                model.addAttribute("currentStatus", "ALL");
+                appointments = appointmentService.searchAppointmentsByDoctorId(doctorId, search, pageable);
             } else {
                 appointments = appointmentService.getAppointmentsByDoctorId(doctorId, pageable);
-                model.addAttribute("appointments", appointments);
-                model.addAttribute("currentStatus", "ALL");
             }
+            model.addAttribute("currentStatus", "ALL");
         } else {
             if ("ALL".equals(status)) {
                 appointments = appointmentService.getAllAppointments(pageable);
             } else {
-                Appointment.AppointmentStatus appointmentStatus = Appointment.AppointmentStatus.valueOf(status);
-                appointments = appointmentService.getTotalAppointments(appointmentStatus, pageable);
+                appointments = appointmentService.getAppointmentsByStatus(status, pageable);
             }
-            model.addAttribute("appointments", appointments);
             model.addAttribute("currentStatus", status);
         }
 
+        model.addAttribute("appointments", appointments);
         model.addAttribute("totalAppointments", appointmentMetricService.getTotalAppointments());
-        model.addAttribute("inProgressCount", appointmentMetricService.getTotalAppointments(Appointment.AppointmentStatus.IN_PROGRESS));
-        model.addAttribute("completedCount", appointmentMetricService.getTotalAppointments(Appointment.AppointmentStatus.COMPLETED));
-        model.addAttribute("rejectedCount", appointmentMetricService.getTotalAppointments(Appointment.AppointmentStatus.REJECTED));
+        model.addAttribute("inProgressCount", appointmentMetricService.getTotalAppointments(STATUS_PENDING));
+        model.addAttribute("completedCount", appointmentMetricService.getTotalAppointments(STATUS_COMPLETED));
+        model.addAttribute("rejectedCount", appointmentMetricService.getTotalAppointments(STATUS_CANCELLED));
         model.addAttribute("search", search);
 
         // Add Chart.js data
         model.addAttribute("chartData", getChartData());
 
-        return "appointments";
+        return "admin/appointments";
     }
 
     @PostMapping("/updateStatus")
     public String updateAppointmentStatus(@RequestParam Integer appointmentId,
                                           @RequestParam String status,
                                           @AuthenticationPrincipal CustomUserDetails userDetails) {
-        if (userDetails.getAuthorities().stream().noneMatch(a -> a.getAuthority().equals("ROLE_ADMIN") || a.getAuthority().equals("ROLE_DOCTOR") || a.getAuthority().equals("ROLE_RECEPTIONIST"))) {
+        if (userDetails.getAuthorities().stream().noneMatch(a ->
+                a.getAuthority().equals("ROLE_ADMIN") ||
+                a.getAuthority().equals("ROLE_DOCTOR") ||
+                a.getAuthority().equals("ROLE_RECEPTIONIST"))) {
             throw new SecurityException("Unauthorized action");
         }
-        Appointment.AppointmentStatus appointmentStatus = Appointment.AppointmentStatus.valueOf(status);
-        appointmentService.updateAppointmentStatus(appointmentId, appointmentStatus);
+
+        // Just pass the string status - no enum conversion
+        appointmentService.updateAppointmentStatus(appointmentId, status);
         return "redirect:/admin/appointments";
     }
 
     private String getChartData() {
         return "{"
-                + "\"labels\": [\"In Progress\", \"Completed\", \"Rejected\", \"Scheduled\", \"Cancelled\", \"Pending\"],"
+                + "\"labels\": [\"Pending\", \"Completed\", \"Cancelled\", \"Scheduled\"],"
                 + "\"datasets\": [{"
                 + "\"label\": \"Appointments\","
                 + "\"data\": ["
-                + appointmentMetricService.getAppointmentsByStatus(Appointment.AppointmentStatus.IN_PROGRESS) + ","
-                + appointmentMetricService.getAppointmentsByStatus(Appointment.AppointmentStatus.COMPLETED) + ","
-                + appointmentMetricService.getAppointmentsByStatus(Appointment.AppointmentStatus.REJECTED) + ","
-                + appointmentMetricService.getAppointmentsByStatus(Appointment.AppointmentStatus.SCHEDULED) + ","
-                + appointmentMetricService.getAppointmentsByStatus(Appointment.AppointmentStatus.CANCELLED) + ","
-                + appointmentMetricService.getAppointmentsByStatus(Appointment.AppointmentStatus.PENDING)
+                + appointmentMetricService.getAppointmentsByStatus(STATUS_PENDING) + ","
+                + appointmentMetricService.getAppointmentsByStatus(STATUS_COMPLETED) + ","
+                + appointmentMetricService.getAppointmentsByStatus(STATUS_CANCELLED) + ","
+                + appointmentMetricService.getAppointmentsByStatus(STATUS_SCHEDULED)
                 + "],"
-                + "\"backgroundColor\": [\"#36A2EB\", \"#4CAF50\", \"#FF6384\", \"#FFCE56\", \"#E7E9ED\", \"#9966FF\"],"
-                + "\"borderColor\": [\"#36A2EB\", \"#4CAF50\", \"#FF6384\", \"#FFCE56\", \"#E7E9ED\", \"#9966FF\"],"
+                + "\"backgroundColor\": [\"#36A2EB\", \"#4CAF50\", \"#FF6384\", \"#FFCE56\"],"
+                + "\"borderColor\": [\"#36A2EB\", \"#4CAF50\", \"#FF6384\", \"#FFCE56\"],"
                 + "\"borderWidth\": 1"
                 + "}]"
                 + "}";

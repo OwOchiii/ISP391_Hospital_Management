@@ -1,7 +1,6 @@
 package orochi.model;
 
 import jakarta.persistence.*;
-import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import lombok.AllArgsConstructor;
 import lombok.Data;
@@ -51,31 +50,30 @@ public class Appointment {
     @Column(name = "PhoneNumber")
     private String phoneNumber;
 
-    @ManyToOne
+    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "DoctorID", insertable = false, updatable = false)
     private Doctor doctor;
 
-    @ManyToOne
+    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "PatientID", insertable = false, updatable = false)
     private Patient patient;
 
-    @ManyToOne
+    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "RoomID", insertable = false, updatable = false)
     private Room room;
 
-    @OneToMany(mappedBy = "appointment")
+    @OneToMany(mappedBy = "appointment", fetch = FetchType.LAZY)
     private List<Transaction> transactions;
 
-    @OneToMany(mappedBy = "appointment")
+    @OneToMany(mappedBy = "appointment", fetch = FetchType.LAZY)
     private List<MedicalResult> medicalResults;
 
-    @OneToMany(mappedBy = "appointment")
+    @OneToMany(mappedBy = "appointment", fetch = FetchType.LAZY)
     private List<MedicalOrder> medicalOrders;
 
-    @OneToOne(mappedBy = "appointment")
-    private Prescription prescription;
+    @OneToMany(mappedBy = "appointment", fetch = FetchType.LAZY)
+    private List<Prescription> prescriptions;
 
-    /*public enum AppointmentStatus {
-        SCHEDULED, IN_PROGRESS, COMPLETED, REJECTED, CANCELLED, PENDING
-    }*/
+    @OneToOne(mappedBy = "appointment", fetch = FetchType.LAZY)
+    private Schedule schedule;
 }

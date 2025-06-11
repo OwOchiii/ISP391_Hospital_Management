@@ -1,0 +1,1161 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Work Details - MediCare Plus</title>
+
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Bootstrap Icons -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css">
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+
+    <style>
+        :root {
+            --primary-color: #2563eb;
+            --secondary-color: #1e40af;
+            --accent-color: #06b6d4;
+            --text-dark: #1f2937;
+            --text-light: #6b7280;
+            --bg-light: #f8fafc;
+            --success-color: #10b981;
+            --error-color: #ef4444;
+            --warning-color: #f59e0b;
+            --sidebar-width: 280px;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            line-height: 1.6;
+            color: var(--text-dark);
+            background: var(--bg-light);
+        }
+
+        .sidebar {
+            position: fixed;
+            top: 0;
+            left: 0;
+            height: 100vh;
+            width: var(--sidebar-width);
+            background: linear-gradient(135deg, var(--primary-color) 0%, var(--secondary-color) 100%);
+            color: white;
+            z-index: 1000;
+            transition: transform 0.3s ease;
+            overflow-y: auto;
+        }
+
+        .sidebar.collapsed {
+            transform: translateX(-100%);
+        }
+
+        .sidebar-header {
+            padding: 1.5rem;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .brand-logo {
+            font-size: 1.5rem;
+            font-weight: 700;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            color: white;
+            text-decoration: none;
+        }
+
+        .sidebar-nav {
+            padding: 1rem 0;
+        }
+
+        .nav-section-title {
+            padding: 0.75rem 1.5rem;
+            font-size: 0.75rem;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            color: rgba(255, 255, 255, 0.6);
+            font-weight: 600;
+        }
+
+        .nav-item {
+            margin: 0.25rem 1rem;
+        }
+
+        .nav-link {
+            color: rgba(255, 255, 255, 0.8);
+            padding: 0.75rem 1rem;
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            text-decoration: none;
+            transition: all 0.3s ease;
+        }
+
+        .nav-link:hover,
+        .nav-link.active {
+            background: rgba(255, 255, 255, 0.1);
+            color: white;
+        }
+
+        .main-content {
+            margin-left: var(--sidebar-width);
+            min-height: 100vh;
+            transition: margin-left 0.3s ease;
+        }
+
+        .main-content.expanded {
+            margin-left: 0;
+        }
+
+        .top-header {
+            background: white;
+            padding: 1rem 2rem;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .header-left {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        .sidebar-toggle {
+            background: none;
+            border: none;
+            font-size: 1.2rem;
+            color: var(--text-dark);
+            cursor: pointer;
+        }
+
+        .header-right {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        .doctor-info {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+
+        .doctor-avatar {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, var(--primary-color), var(--accent-color));
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: 600;
+        }
+
+        .content-area {
+            padding: 2rem;
+        }
+
+        .page-header {
+            background: linear-gradient(135deg, var(--primary-color) 0%, var(--secondary-color) 100%);
+            color: white;
+            padding: 2rem;
+            border-radius: 15px;
+            margin-bottom: 2rem;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .page-header::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><circle cx="50" cy="50" r="2" fill="rgba(255,255,255,0.1)"/></svg>');
+            opacity: 0.5;
+        }
+
+        .page-header-content {
+            position: relative;
+            z-index: 2;
+        }
+
+        .breadcrumb-nav {
+            background: white;
+            padding: 1rem 1.5rem;
+            border-radius: 10px;
+            margin-bottom: 2rem;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+        }
+
+        .breadcrumb {
+            margin: 0;
+            background: none;
+            padding: 0;
+        }
+
+        .breadcrumb-item a {
+            color: var(--primary-color);
+            text-decoration: none;
+        }
+
+        .breadcrumb-item.active {
+            color: var(--text-light);
+        }
+
+        .work-details-grid {
+            display: grid;
+            grid-template-columns: 2fr 1fr;
+            gap: 2rem;
+            margin-bottom: 2rem;
+        }
+
+        .details-card {
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.08);
+            overflow: hidden;
+        }
+
+        .card-header {
+            padding: 1.5rem;
+            border-bottom: 1px solid #e5e7eb;
+            background: var(--bg-light);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .card-title {
+            font-size: 1.25rem;
+            font-weight: 600;
+            margin: 0;
+            color: var(--text-dark);
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+
+        .card-body {
+            padding: 1.5rem;
+        }
+
+        .work-type-badge {
+            padding: 0.5rem 1rem;
+            border-radius: 20px;
+            font-size: 0.9rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        .type-appointment {
+            background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+            color: white;
+        }
+
+        .type-oncall {
+            background: linear-gradient(135deg, #8b5cf6, #7c3aed);
+            color: white;
+        }
+
+        .status-badge {
+            padding: 0.375rem 0.875rem;
+            border-radius: 20px;
+            font-size: 0.85rem;
+            font-weight: 500;
+        }
+
+        .status-scheduled { background: #e0e7ff; color: #3730a3; }
+        .status-confirmed { background: #dcfce7; color: #166534; }
+        .status-completed { background: #dbeafe; color: #1e40af; }
+        .status-cancelled { background: #fee2e2; color: #b91c1c; }
+        .status-active { background: #f3e8ff; color: #7c3aed; }
+        .status-pending { background: #fef3c7; color: #92400e; }
+
+        .info-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1.5rem;
+            margin-bottom: 2rem;
+        }
+
+        .info-item {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            padding: 1rem;
+            background: var(--bg-light);
+            border-radius: 10px;
+            border-left: 4px solid var(--primary-color);
+        }
+
+        .info-icon {
+            width: 40px;
+            height: 40px;
+            border-radius: 8px;
+            background: var(--primary-color);
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.1rem;
+        }
+
+        .info-content h6 {
+            margin: 0;
+            font-size: 0.85rem;
+            color: var(--text-light);
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            font-weight: 600;
+        }
+
+        .info-content p {
+            margin: 0;
+            font-size: 1rem;
+            font-weight: 600;
+            color: var(--text-dark);
+        }
+
+        .patient-card {
+            background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
+            border: 1px solid #e2e8f0;
+            border-radius: 12px;
+            padding: 1.5rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .patient-header {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            margin-bottom: 1rem;
+        }
+
+        .patient-avatar {
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, var(--accent-color), #0891b2);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 1.5rem;
+            font-weight: 700;
+        }
+
+        .patient-info h5 {
+            margin: 0;
+            font-size: 1.25rem;
+            font-weight: 600;
+            color: var(--text-dark);
+        }
+
+        .patient-info p {
+            margin: 0;
+            color: var(--text-light);
+            font-size: 0.9rem;
+        }
+
+        .contact-info {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1rem;
+            margin-top: 1rem;
+        }
+
+        .contact-item {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            font-size: 0.9rem;
+            color: var(--text-dark);
+        }
+
+        .contact-item i {
+            color: var(--primary-color);
+            width: 16px;
+        }
+
+        .notes-section {
+            background: #fffbeb;
+            border: 1px solid #fbbf24;
+            border-radius: 10px;
+            padding: 1.5rem;
+            margin-top: 1.5rem;
+        }
+
+        .notes-title {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            font-size: 1rem;
+            font-weight: 600;
+            color: #92400e;
+            margin-bottom: 0.75rem;
+        }
+
+        .notes-content {
+            color: #78350f;
+            line-height: 1.6;
+        }
+
+        .action-buttons {
+            display: flex;
+            gap: 1rem;
+            margin-top: 2rem;
+            flex-wrap: wrap;
+        }
+
+        .btn-primary-custom {
+            background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+            border: none;
+            padding: 0.75rem 1.5rem;
+            border-radius: 8px;
+            color: white;
+            font-weight: 500;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            transition: all 0.3s ease;
+        }
+
+        .btn-primary-custom:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(37, 99, 235, 0.3);
+            color: white;
+        }
+
+        .btn-outline-custom {
+            border: 2px solid var(--primary-color);
+            color: var(--primary-color);
+            padding: 0.75rem 1.5rem;
+            border-radius: 8px;
+            background: transparent;
+            font-weight: 500;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            transition: all 0.3s ease;
+        }
+
+        .btn-outline-custom:hover {
+            background: var(--primary-color);
+            color: white;
+        }
+
+        .btn-success-custom {
+            background: linear-gradient(135deg, var(--success-color), #059669);
+            border: none;
+            padding: 0.75rem 1.5rem;
+            border-radius: 8px;
+            color: white;
+            font-weight: 500;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            transition: all 0.3s ease;
+        }
+
+        .btn-success-custom:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(16, 185, 129, 0.3);
+            color: white;
+        }
+
+        .btn-warning-custom {
+            background: linear-gradient(135deg, var(--warning-color), #d97706);
+            border: none;
+            padding: 0.75rem 1.5rem;
+            border-radius: 8px;
+            color: white;
+            font-weight: 500;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            transition: all 0.3s ease;
+        }
+
+        .btn-warning-custom:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(245, 158, 11, 0.3);
+            color: white;
+        }
+
+        .timeline-item {
+            display: flex;
+            align-items: flex-start;
+            gap: 1rem;
+            padding: 1rem 0;
+            border-bottom: 1px solid #e5e7eb;
+        }
+
+        .timeline-item:last-child {
+            border-bottom: none;
+        }
+
+        .timeline-time {
+            min-width: 80px;
+            font-weight: 600;
+            color: var(--primary-color);
+            font-size: 0.9rem;
+        }
+
+        .timeline-content {
+            flex: 1;
+        }
+
+        .timeline-title {
+            font-weight: 600;
+            color: var(--text-dark);
+            margin-bottom: 0.25rem;
+        }
+
+        .timeline-description {
+            color: var(--text-light);
+            font-size: 0.9rem;
+        }
+
+        @media (max-width: 768px) {
+            .sidebar {
+                transform: translateX(-100%);
+            }
+
+            .main-content {
+                margin-left: 0;
+            }
+
+            .work-details-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .content-area {
+                padding: 1rem;
+            }
+
+            .action-buttons {
+                flex-direction: column;
+            }
+
+            .doctor-info span {
+                display: none;
+            }
+
+            .top-header {
+                padding: 1rem;
+            }
+
+            .info-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .contact-info {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+<!-- Sidebar -->
+<div class="sidebar" id="sidebar">
+    <div class="sidebar-header">
+        <a href="#" class="brand-logo">
+            <i class="bi bi-heart-pulse"></i>
+            <div>
+                <div>MediCare Plus</div>
+                <small style="font-size: 0.75rem; font-weight: 400; opacity: 0.8;">Doctor Portal</small>
+            </div>
+        </a>
+    </div>
+
+    <nav class="sidebar-nav">
+        <div class="nav-section">
+            <div class="nav-section-title">Dashboard</div>
+            <div class="nav-item">
+                <a th:href="@{/doctor/dashboard(doctorId=${doctorId})}" class="nav-link">
+                    <i class="bi bi-speedometer2"></i>
+                    Dashboard
+                </a>
+            </div>
+        </div>
+
+        <div class="nav-section">
+            <div class="nav-section-title">Patient Care</div>
+            <div class="nav-item">
+                <a th:href="@{/doctor/appointments(doctorId=${doctorId})}" class="nav-link">
+                    <i class="bi bi-calendar-check"></i>
+                    Appointments
+                </a>
+            </div>
+            <div class="nav-item">
+                <a th:href="@{/doctor/patients(doctorId=${doctorId})}" class="nav-link">
+                    <i class="bi bi-people"></i>
+                    Patients
+                </a>
+            </div>
+            <div class="nav-item">
+                <a th:href="@{/doctor/medical-orders(doctorId=${doctorId})}" class="nav-link">
+                    <i class="bi bi-prescription2"></i>
+                    Medical Orders
+                </a>
+            </div>
+        </div>
+
+        <div class="nav-section">
+            <div class="nav-section-title">Management</div>
+            <div class="nav-item">
+                <a th:href="@{/doctor/schedule(doctorId=${doctorId})}" class="nav-link active">
+                    <i class="bi bi-calendar-week"></i>
+                    View Schedule
+                </a>
+            </div>
+            <div class="nav-item">
+                <a href="#" class="nav-link">
+                    <i class="bi bi-chat-dots"></i>
+                    Messages
+                </a>
+            </div>
+        </div>
+
+        <div class="nav-section">
+            <div class="nav-section-title">System</div>
+            <div class="nav-item">
+                <a href="#" class="nav-link">
+                    <i class="bi bi-gear"></i>
+                    Settings
+                </a>
+            </div>
+            <div class="nav-item">
+                <form th:action="@{/auth/logout}" method="post">
+                    <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}" />
+                    <button type="submit" class="nav-link w-100 text-start border-0 bg-transparent">
+                        <i class="bi bi-box-arrow-right"></i>
+                        Logout
+                    </button>
+                </form>
+            </div>
+        </div>
+    </nav>
+</div>
+
+<!-- Main Content -->
+<div class="main-content" id="mainContent">
+    <!-- Top Header -->
+    <div class="top-header">
+        <div class="header-left">
+            <button class="sidebar-toggle" onclick="toggleSidebar()">
+                <i class="bi bi-list"></i>
+            </button>
+            <h4 class="mb-0">Work Details</h4>
+        </div>
+
+        <div class="header-right">
+            <div class="doctor-info">
+                <div class="doctor-avatar">
+                    <span th:text="${doctorName != null ? #strings.substring(doctorName, 0, 2).toUpperCase() : 'DR'}">DR</span>
+                </div>
+                <div>
+                    <div class="fw-semibold" th:text="${doctorName != null ? doctorName : 'Doctor'}">Doctor</div>
+                    <small class="text-muted" th:text="${'ID: ' + doctorId}">ID: 123</small>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Content Area -->
+    <div class="content-area">
+        <!-- Breadcrumb Navigation -->
+        <div class="breadcrumb-nav">
+            <nav aria-label="breadcrumb">
+                <ol class="breadcrumb">
+                    <li class="breadcrumb-item">
+                        <a th:href="@{/doctor/dashboard(doctorId=${doctorId})}">
+                            <i class="bi bi-house"></i> Dashboard
+                        </a>
+                    </li>
+                    <li class="breadcrumb-item">
+                        <a th:href="@{/doctor/schedule(doctorId=${doctorId})}">Schedule</a>
+                    </li>
+                    <li class="breadcrumb-item active" aria-current="page">
+                        <span th:text="${workEntry.eventType == 'appointment' ? 'Appointment Details' : 'On-Call Duty Details'}">Work Details</span>
+                    </li>
+                </ol>
+            </nav>
+        </div>
+
+        <!-- Page Header -->
+        <div class="page-header">
+            <div class="page-header-content">
+                <div class="row align-items-center">
+                    <div class="col-md-8">
+                        <div class="d-flex align-items-center gap-3 mb-3">
+                            <div th:class="${'work-type-badge type-' + workEntry.eventType}"
+                                 th:text="${workEntry.eventType == 'appointment' ? 'Appointment' : 'On-Call Duty'}">
+                                Appointment
+                            </div>
+                            <div th:class="${'status-badge status-' + (workEntry.isCompleted ? 'completed' : 'scheduled')}"
+                                 th:text="${workEntry.isCompleted ? 'Completed' : 'Scheduled'}">
+                                Scheduled
+                            </div>
+                        </div>
+                        <h2 class="mb-2" th:text="${workEntry.eventType == 'appointment' ? (workEntry.patientName + ' - ' + workEntry.description) : 'On-Call Duty - ' + workEntry.description}">
+                            Patient Consultation - John Smith
+                        </h2>
+                        <p class="mb-0 lead" th:text="${#temporals.format(workEntry.scheduleDate, 'EEEE, MMMM dd, yyyy') + ' • ' + workEntry.startTime + ' - ' + workEntry.endTime}">
+                            Monday, January 15, 2024 • 09:00 - 09:30
+                        </p>
+                    </div>
+                    <div class="col-md-4 text-md-end">
+                        <div class="fs-1">
+                            <i th:class="${'bi ' + (workEntry.eventType == 'appointment' ? 'bi-calendar-check' : 'bi-shield-check')}" class="bi bi-calendar-check"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Work Details Grid -->
+        <div class="work-details-grid">
+            <!-- Main Details -->
+            <div class="details-card">
+                <div class="card-header">
+                    <h3 class="card-title">
+                        <i th:class="${'bi ' + (workEntry.eventType == 'appointment' ? 'bi-person-check' : 'bi-shield-check')}"></i>
+                        <span th:text="${workEntry.eventType == 'appointment' ? 'Appointment Information' : 'On-Call Duty Information'}">Appointment Information</span>
+                    </h3>
+                </div>
+                <div class="card-body">
+                    <!-- Basic Information Grid -->
+                    <div class="info-grid">
+                        <div class="info-item">
+                            <div class="info-icon">
+                                <i class="bi bi-calendar3"></i>
+                            </div>
+                            <div class="info-content">
+                                <h6>Date</h6>
+                                <p th:text="${#temporals.format(workEntry.scheduleDate, 'EEEE, MMM dd, yyyy')}">Monday, Jan 15, 2024</p>
+                            </div>
+                        </div>
+
+                        <div class="info-item">
+                            <div class="info-icon">
+                                <i class="bi bi-clock"></i>
+                            </div>
+                            <div class="info-content">
+                                <h6>Time</h6>
+                                <p th:text="${workEntry.startTime + ' - ' + workEntry.endTime}">09:00 - 09:30</p>
+                            </div>
+                        </div>
+
+                        <div class="info-item" th:if="${workEntry.roomNumber != null}">
+                            <div class="info-icon">
+                                <i class="bi bi-geo-alt"></i>
+                            </div>
+                            <div class="info-content">
+                                <h6>Location</h6>
+                                <p th:text="${'Room ' + workEntry.roomNumber}">N/A</p>
+                            </div>
+                        </div>
+
+                        <div class="info-item">
+                            <div class="info-icon">
+                                <i class="bi bi-hourglass-split"></i>
+                            </div>
+                            <div class="info-content">
+                                <h6>Duration</h6>
+                                <p th:with="minutes=${T(java.time.Duration).between(workEntry.startTime, workEntry.endTime).toMinutes()}"
+                                   th:text="${minutes + ' minutes'}">N/A</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Patient Information (for appointments) -->
+                    <div th:if="${workEntry.eventType == 'appointment'}" class="patient-card">
+                        <div class="patient-header">
+                            <div class="patient-avatar">
+                                <span th:text="${workEntry.patientName != null ? #strings.substring(workEntry.patientName, 0, 2).toUpperCase() : 'PT'}">JS</span>
+                            </div>
+                            <div class="patient-info">
+                                <h5 th:text="${workEntry.patientName}">John Smith</h5>
+                                <p th:text="${'Patient ID: ' + workEntry.patientId}">Patient ID: 12345</p>
+                            </div>
+                        </div>
+                        <div class="contact-info">
+                            <div class="contact-item" th:if="${workEntry.patientEmail}">
+                                <i class="bi bi-envelope"></i>
+                                <span th:text="${workEntry.patientEmail}">john.smith@email.com</span>
+                            </div>
+                            <div class="contact-item" th:if="${workEntry.patientPhone}">
+                                <i class="bi bi-telephone"></i>
+                                <span th:text="${workEntry.patientPhone}">+1 234 567 8900</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- On-Call Information (for on-call duties) -->
+                    <div th:if="${workEntry.eventType == 'oncall'}" class="patient-card">
+                        <div class="patient-header">
+                            <div class="patient-avatar" style="background: linear-gradient(135deg, #8b5cf6, #7c3aed);">
+                                <i class="bi bi-shield-check"></i>
+                            </div>
+                            <div class="patient-info">
+                                <h5>On-Call Duty</h5>
+                                <p th:text="${'Room: ' + workEntry.roomNumber}">Emergency Department</p>
+                            </div>
+                        </div>
+                        <div class="contact-info">
+                            <div class="contact-item">
+                                <i class="bi bi-clock"></i>
+                                <span th:text="${workEntry.startTime + ' - ' + workEntry.endTime}">09:00 - 17:00</span>
+                            </div>
+                            <div class="contact-item">
+                                <i class="bi bi-geo-alt"></i>
+                                <span th:text="${'Room ID: ' + workEntry.roomNumber}">Room 101</span>
+                            </div>
+                            <div class="contact-item">
+                                <i class="bi bi-check-circle" th:if="${workEntry.isCompleted}"></i>
+                                <i class="bi bi-clock-history" th:unless="${workEntry.isCompleted}"></i>
+                                <span th:text="${workEntry.isCompleted ? 'Completed' : 'Scheduled'}">Status</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Description/Notes -->
+                    <div th:if="${workEntry.description}" class="notes-section">
+                        <div class="notes-title">
+                            <i class="bi bi-sticky"></i>
+                            <span th:text="${workEntry.eventType == 'appointment' ? 'Appointment Notes' : 'Duty Instructions'}">Notes</span>
+                        </div>
+                        <div class="notes-content" th:text="${workEntry.description ?: workEntry.notes}">
+                            Regular checkup and follow-up consultation for chronic condition management.
+                            Review previous test results and adjust medication if necessary.
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Quick Actions Sidebar -->
+            <div class="details-card">
+                <div class="card-header">
+                    <h3 class="card-title">
+                        <i class="bi bi-lightning"></i>
+                        Quick Actions
+                    </h3>
+                </div>
+                <div class="card-body">
+                    <!-- Appointment Actions -->
+                    <div th:if="${workEntry.eventType == 'appointment'}">
+                        <div class="d-grid gap-3">
+                            <a th:href="@{/doctor/appointments/{id}/edit(id=${workEntry.appointmentId}, doctorId=${doctorId})}"
+                               class="btn-primary-custom">
+                                <i class="bi bi-pencil"></i>
+                                Edit Appointment
+                            </a>
+
+                            <a th:href="@{/doctor/patients/{id}(id=${workEntry.patientId}, doctorId=${doctorId})}"
+                               class="btn-outline-custom">
+                                <i class="bi bi-person-lines-fill"></i>
+                                View Patient Record
+                            </a>
+
+
+                        </div>
+                    </div>
+
+                    <!-- Common Actions -->
+                    <hr class="my-4">
+
+                    <div class="d-grid gap-2">
+
+                        <button class="btn-success-custom w-100" onclick="toggleCompleted()">
+                            <i class="bi bi-check2-circle"></i>
+                            <span id="completedButtonText">Mark as Completed</span>
+                        </button>
+
+                        <a th:href="@{/doctor/schedule(doctorId=${doctorId})}" class="btn-outline-custom">
+                            <i class="bi bi-arrow-left"></i>
+                            Back to Schedule
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Related Information -->
+        <div class="details-card">
+            <div class="card-header">
+                <h3 class="card-title">
+                    <i class="bi bi-clock-history"></i>
+                    <span th:text="${workEntry.eventType == 'appointment' ? 'Patient History' : 'Recent On-Call Activities'}">Recent Activities</span>
+                </h3>
+            </div>
+            <div class="card-body">
+                <!-- Timeline of related activities -->
+                <div class="timeline-item">
+                    <div class="timeline-time">10:30</div>
+                    <div class="timeline-content">
+                        <div class="timeline-title">Previous Appointment</div>
+                        <div class="timeline-description">Last consultation on December 20, 2023</div>
+                    </div>
+                </div>
+
+                <div class="timeline-item">
+                    <div class="timeline-time">09:15</div>
+                    <div class="timeline-content">
+                        <div class="timeline-title">Lab Results Received</div>
+                        <div class="timeline-description">Blood work results available for review</div>
+                    </div>
+                </div>
+
+                <div class="timeline-item">
+                    <div class="timeline-time">08:45</div>
+                    <div class="timeline-content">
+                        <div class="timeline-title">Appointment Confirmed</div>
+                        <div class="timeline-description">Patient confirmed attendance via phone</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Bootstrap JS -->
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+<script th:inline="javascript">
+    /*<![CDATA[*/
+    // Get data from Thymeleaf
+    const doctorId = /*[[${doctorId}]]*/ 0;
+    const workEntry = /*[[${workEntry}]]*/ {};
+
+    // Sidebar toggle functionality
+    function toggleSidebar() {
+        const sidebar = document.getElementById('sidebar');
+        const mainContent = document.getElementById('mainContent');
+        sidebar.classList.toggle('collapsed');
+        mainContent.classList.toggle('expanded');
+    }
+
+    // Auto-hide sidebar on mobile
+    function checkScreenSize() {
+        const sidebar = document.getElementById('sidebar');
+        const mainContent = document.getElementById('mainContent');
+        if (window.innerWidth <= 768) {
+            sidebar.classList.add('collapsed');
+            mainContent.classList.add('expanded');
+        } else {
+            sidebar.classList.remove('collapsed');
+            mainContent.classList.remove('expanded');
+        }
+    }
+
+    // Check screen size on load and resize
+    window.addEventListener('load', checkScreenSize);
+    window.addEventListener('resize', checkScreenSize);
+
+    // Appointment Actions
+    function confirmAppointment() {
+        if (confirm('Are you sure you want to confirm this appointment?')) {
+            // Make API call to confirm appointment
+            fetch(`/api/appointments/${workEntry.appointmentId}/confirm`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ doctorId: doctorId })
+            })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        location.reload();
+                    } else {
+                        alert('Failed to confirm appointment');
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    alert('An error occurred while confirming the appointment');
+                });
+        }
+    }
+
+    function completeAppointment() {
+        if (confirm('Mark this appointment as completed?')) {
+            // Make API call to complete appointment
+            fetch(`/api/appointments/${workEntry.appointmentId}/complete`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ doctorId: doctorId })
+            })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        location.reload();
+                    } else {
+                        alert('Failed to complete appointment');
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    alert('An error occurred while completing the appointment');
+                });
+        }
+    }
+
+    function rescheduleAppointment() {
+        // Redirect to reschedule page
+        window.location.href = `/doctor/appointments/${workEntry.appointmentId}/reschedule?doctorId=${doctorId}`;
+    }
+
+    // On-Call Actions
+    function startOnCallDuty() {
+        if (confirm('Start your on-call duty now?')) {
+            // Make API call to start duty
+            fetch(`/api/schedule/${workEntry.scheduleId}/start-duty`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ doctorId: doctorId })
+            })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        location.reload();
+                    } else {
+                        alert('Failed to start duty');
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    alert('An error occurred while starting duty');
+                });
+        }
+    }
+
+    function endOnCallDuty() {
+        if (confirm('End your on-call duty?')) {
+            // Make API call to end duty
+            fetch(`/api/schedule/${workEntry.scheduleId}/end-duty`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ doctorId: doctorId })
+            })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        location.reload();
+                    } else {
+                        alert('Failed to end duty');
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    alert('An error occurred while ending duty');
+                });
+        }
+    }
+
+    // Utility Functions
+    function printDetails() {
+        window.print();
+    }
+
+    // Toggle completed status functionality
+    function toggleCompleted() {
+        const completedButtonText = document.getElementById('completedButtonText');
+        const scheduleId = workEntry.scheduleId || workEntry.appointmentId;
+        const type = workEntry.eventType; // Using eventType instead of type
+        const endpoint = type === 'appointment'
+            ? `/doctor/api/appointments/${scheduleId}/toggle-completed`
+            : `/doctor/api/schedule/${scheduleId}/toggle-completed`;
+
+        // Get CSRF token
+        const csrfToken = document.querySelector('input[name="_csrf"]').value;
+        const csrfParameter = document.querySelector('input[name="_csrf"]').name;
+
+        fetch(endpoint, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRF-TOKEN': csrfToken
+            },
+            body: JSON.stringify({ doctorId: doctorId })
+        })
+        .then(response => {
+            if (!response.ok) {
+                throw new Error('Network response was not ok');
+            }
+            return response.json();
+        })
+        .then(data => {
+            if (data.success) {
+                // Update the UI based on new completed status
+                if (data.completed) {
+                    completedButtonText.innerText = 'Mark as Incomplete';
+                    // Add completed status badge
+                    document.querySelector('.status-badge').className = 'status-badge status-completed';
+                    document.querySelector('.status-badge').innerText = 'Completed';
+                } else {
+                    completedButtonText.innerText = 'Mark as Completed';
+                    // Revert to original status
+                    document.querySelector('.status-badge').className = 'status-badge status-' +
+                        (workEntry.originalStatus || 'scheduled').toLowerCase();
+                    document.querySelector('.status-badge').innerText = workEntry.originalStatus || 'Scheduled';
+                }
+            } else {
+                alert('Failed to update completion status');
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            alert('An error occurred while updating completion status');
+        });
+    }
+
+    // Store original status for toggle
+    if (!workEntry.originalStatus) {
+        workEntry.originalStatus = workEntry.status;
+    }
+
+    // Set initial button text based on completed status
+    document.addEventListener('DOMContentLoaded', () => {
+        const completedButtonText = document.getElementById('completedButtonText');
+        if (workEntry.status && workEntry.status.toLowerCase() === 'completed') {
+            completedButtonText.innerText = 'Mark as Incomplete';
+        } else {
+            completedButtonText.innerText = 'Mark as Completed';
+        }
+    });
+
+    // Navigation link handlers
+    document.querySelectorAll('.nav-link').forEach(link => {
+        link.addEventListener('click', function(e) {
+            if (this.getAttribute('href') === '#') {
+                e.preventDefault();
+            }
+            // Remove active class from all links
+            document.querySelectorAll('.nav-link').forEach(l => l.classList.remove('active'));
+            // Add active class to clicked link
+            this.classList.add('active');
+        });
+    });
+    /*]]>*/
+</script>
+</body>
+</html>
