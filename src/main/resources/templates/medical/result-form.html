@@ -1,0 +1,421 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Medical Result Form - MediCare Plus</title>
+
+    <!-- CSRF Tokens for Ajax Requests -->
+    <meta name="_csrf" th:content="${_csrf.token}"/>
+    <meta name="_csrf_header" th:content="${_csrf.headerName}"/>
+
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Bootstrap Icons -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css">
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+
+    <style>
+        :root {
+            --primary-color: #2563eb;
+            --secondary-color: #1e40af;
+            --accent-color: #06b6d4;
+            --text-dark: #1f2937;
+            --text-light: #6b7280;
+            --text-muted: #9ca3af;
+            --bg-light: #f8fafc;
+            --bg-white: #ffffff;
+            --success-color: #10b981;
+            --warning-color: #f59e0b;
+            --error-color: #ef4444;
+            --info-color: #3b82f6;
+            --border-color: #e5e7eb;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            line-height: 1.6;
+            color: var(--text-dark);
+            background: var(--bg-light);
+        }
+
+        .page-header {
+            background: var(--bg-white);
+            padding: 2rem 0;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+            margin-bottom: 2rem;
+        }
+
+        .header-content {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 1rem;
+        }
+
+        .page-title {
+            font-size: 2rem;
+            font-weight: 700;
+            color: var(--text-dark);
+            margin: 0;
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+
+        .page-title i {
+            color: var(--primary-color);
+        }
+
+        .main-container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 1rem;
+        }
+
+        .content-card {
+            background: var(--bg-white);
+            border-radius: 16px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+            padding: 2rem;
+            margin-bottom: 2rem;
+        }
+
+        .section-title {
+            font-size: 1.5rem;
+            font-weight: 700;
+            margin-bottom: 1.5rem;
+            color: var(--text-dark);
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .section-title i {
+            color: var(--primary-color);
+        }
+
+        .info-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 1.5rem;
+            margin-bottom: 2rem;
+        }
+
+        .info-item {
+            padding: 1.25rem;
+            background: var(--bg-light);
+            border-radius: 12px;
+            border-left: 4px solid var(--primary-color);
+        }
+
+        .info-label {
+            font-size: 0.875rem;
+            font-weight: 600;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 0.025em;
+            margin-bottom: 0.5rem;
+        }
+
+        .info-value {
+            font-size: 1.125rem;
+            font-weight: 600;
+            color: var(--text-dark);
+        }
+
+        .form-group {
+            margin-bottom: 1.5rem;
+        }
+
+        .form-label {
+            font-weight: 600;
+            color: var(--text-dark);
+            margin-bottom: 0.5rem;
+        }
+
+        .form-control, .form-select {
+            border: 2px solid var(--border-color);
+            border-radius: 8px;
+            padding: 0.75rem;
+            transition: all 0.3s ease;
+        }
+
+        .form-control:focus, .form-select:focus {
+            border-color: var(--primary-color);
+            box-shadow: 0 0 0 0.2rem rgba(37, 99, 235, 0.25);
+        }
+
+        .btn-primary-custom {
+            background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+            border: none;
+            padding: 0.75rem 1.5rem;
+            border-radius: 8px;
+            color: white;
+            font-weight: 600;
+            transition: all 0.3s ease;
+        }
+
+        .btn-primary-custom:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(37, 99, 235, 0.3);
+            color: white;
+        }
+
+        .file-upload-container {
+            border: 2px dashed var(--border-color);
+            border-radius: 8px;
+            padding: 2rem;
+            text-align: center;
+            margin-bottom: 1.5rem;
+            transition: all 0.3s ease;
+        }
+
+        .file-upload-container:hover {
+            border-color: var(--primary-color);
+        }
+
+        .upload-icon {
+            font-size: 2.5rem;
+            color: var(--text-muted);
+            margin-bottom: 1rem;
+        }
+
+        .upload-text {
+            font-weight: 600;
+            color: var(--text-dark);
+            margin-bottom: 0.5rem;
+        }
+
+        .upload-subtext {
+            color: var(--text-muted);
+            font-size: 0.875rem;
+            margin-bottom: 1rem;
+        }
+
+        /* Alert Messages */
+        .alert-custom {
+            border: none;
+            border-radius: 12px;
+            padding: 1rem 1.25rem;
+            margin-bottom: 1.5rem;
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+
+        .alert-success-custom {
+            background: rgba(16, 185, 129, 0.1);
+            color: var(--success-color);
+            border-left: 4px solid var(--success-color);
+        }
+
+        .alert-warning-custom {
+            background: rgba(245, 158, 11, 0.1);
+            color: var(--warning-color);
+            border-left: 4px solid var(--warning-color);
+        }
+    </style>
+</head>
+<body>
+<!-- Page Header -->
+<div class="page-header">
+    <div class="container-fluid">
+        <div class="header-content">
+            <div>
+                <!-- Return Link -->
+                <a href="#" onclick="history.back()" class="d-flex align-items-center text-decoration-none mb-2 text-primary fw-semibold">
+                    <i class="bi bi-arrow-left me-2"></i> Back
+                </a>
+
+                <h1 class="page-title">
+                    <i class="bi bi-clipboard-pulse"></i>
+                    Medical Result Form
+                </h1>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="main-container">
+    <!-- Success/Error Messages -->
+    <div th:if="${successMessage}" class="alert-custom alert-success-custom">
+        <i class="bi bi-check-circle"></i>
+        <span th:text="${successMessage}">Result saved successfully!</span>
+    </div>
+
+    <div th:if="${errorMessage}" class="alert-custom alert-warning-custom">
+        <i class="bi bi-exclamation-triangle"></i>
+        <span th:text="${errorMessage}">An error occurred while saving the result.</span>
+    </div>
+
+    <div class="content-card">
+        <h2 class="section-title">
+            <i class="bi bi-clipboard-check"></i>
+            Medical Order Details
+        </h2>
+
+        <div class="info-grid">
+            <div class="info-item">
+                <div class="info-label">Order Type</div>
+                <div class="info-value" th:text="${order.orderType}">LABORATORY</div>
+            </div>
+            <div class="info-item">
+                <div class="info-label">Status</div>
+                <div class="info-value">
+                    <span class="badge rounded-pill"
+                          th:classappend="${order.status == 'PENDING' ? 'bg-warning' :
+                                       (order.status == 'IN_PROGRESS' ? 'bg-info' :
+                                       (order.status == 'COMPLETED' ? 'bg-success' : 'bg-danger'))}"
+                          th:text="${order.status}">PENDING</span>
+                </div>
+            </div>
+            <div class="info-item">
+                <div class="info-label">Order Date</div>
+                <div class="info-value" th:text="${#dates.format(order.orderDate, 'MMM d, yyyy')}">May 23, 2023</div>
+            </div>
+            <div class="info-item">
+                <div class="info-label">Department</div>
+                <div class="info-value" th:text="${order.assignedToDepartment != null ? order.assignedToDepartment.deptName : 'Not Assigned'}">Laboratory</div>
+            </div>
+        </div>
+
+        <div class="form-group">
+            <label class="form-label">Description</label>
+            <div class="p-3 bg-light rounded border">
+                <p th:text="${order.description}" class="mb-0">Complete blood count and metabolic panel.</p>
+            </div>
+        </div>
+    </div>
+
+    <div class="content-card">
+        <h2 class="section-title">
+            <i class="bi bi-clipboard-data"></i>
+            Enter Result
+        </h2>
+
+        <form th:action="@{/medical-results/order/{orderId}/submit(orderId=${order.orderId})}" method="post" enctype="multipart/form-data">
+            <!-- Hidden fields -->
+            <input type="hidden" name="doctorId" th:value="${order.doctorId}">
+
+            <div class="form-group">
+                <label for="description" class="form-label">Result Description</label>
+                <textarea id="description" name="description" class="form-control" rows="6" required
+                          th:text="${result != null ? result.description : ''}"></textarea>
+                <div class="form-text">Enter detailed findings, observations, and interpretation of the test results.</div>
+            </div>
+
+            <div class="form-group">
+                <label class="form-label">Attach Result File (Optional)</label>
+                <!-- Display existing file if available -->
+                <div th:if="${result != null && result.fileUrl != null}" class="mb-3">
+                    <div class="d-flex align-items-center p-3 bg-light rounded border">
+                        <i class="bi bi-file-earmark-pdf text-danger me-2" style="font-size: 1.5rem;"></i>
+                        <div class="flex-grow-1">
+                            <span>Existing file attached</span>
+                        </div>
+                        <a th:href="${result.fileUrl}" class="btn btn-sm btn-primary" target="_blank">
+                            <i class="bi bi-eye me-1"></i> View File
+                        </a>
+                    </div>
+                </div>
+                <div class="file-upload-container">
+                    <i class="bi bi-cloud-upload upload-icon"></i>
+                    <div class="upload-text">Drag and drop file here</div>
+                    <div class="upload-subtext">or click to browse files</div>
+                    <input type="file" name="resultFile" class="form-control" id="resultFile">
+                </div>
+                <div class="form-text">Upload scanned documents, images, or any other relevant files (PDF, JPG, PNG, etc.)</div>
+            </div>
+
+            <div class="form-group">
+                <label for="status" class="form-label">Result Status</label>
+                <select id="status" name="status" class="form-select" required>
+                    <option value="DRAFT" th:selected="${result != null && result.status == 'DRAFT'}">Draft</option>
+                    <option value="PENDING_REVIEW" th:selected="${result != null && result.status == 'PENDING_REVIEW'}">Pending Review</option>
+                    <option value="COMPLETED" th:selected="${result != null && result.status == 'COMPLETED'}">Completed</option>
+                </select>
+            </div>
+
+            <div class="d-flex justify-content-end gap-2">
+                <a href="#" onclick="history.back()" class="btn btn-outline-secondary">
+                    <i class="bi bi-x-circle me-2"></i> Cancel
+                </a>
+                <button type="submit" class="btn btn-primary-custom">
+                    <i class="bi bi-save me-2"></i> Save Result
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Bootstrap JS Bundle with Popper -->
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+<script>
+    // File upload preview
+    document.getElementById('resultFile').addEventListener('change', function(e) {
+        const fileName = e.target.files[0]?.name;
+        if (fileName) {
+            const uploadText = document.querySelector('.upload-text');
+            uploadText.textContent = 'File selected: ' + fileName;
+
+            const uploadIcon = document.querySelector('.upload-icon');
+            uploadIcon.classList.remove('bi-cloud-upload');
+            uploadIcon.classList.add('bi-file-earmark-check');
+            uploadIcon.style.color = 'var(--success-color)';
+        }
+    });
+
+    // Drag and drop functionality
+    const dropArea = document.querySelector('.file-upload-container');
+
+    ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
+        dropArea.addEventListener(eventName, preventDefaults, false);
+    });
+
+    function preventDefaults(e) {
+        e.preventDefault();
+        e.stopPropagation();
+    }
+
+    ['dragenter', 'dragover'].forEach(eventName => {
+        dropArea.addEventListener(eventName, highlight, false);
+    });
+
+    ['dragleave', 'drop'].forEach(eventName => {
+        dropArea.addEventListener(eventName, unhighlight, false);
+    });
+
+    function highlight() {
+        dropArea.style.borderColor = 'var(--primary-color)';
+        dropArea.style.backgroundColor = 'rgba(37, 99, 235, 0.05)';
+    }
+
+    function unhighlight() {
+        dropArea.style.borderColor = 'var(--border-color)';
+        dropArea.style.backgroundColor = 'transparent';
+    }
+
+    dropArea.addEventListener('drop', handleDrop, false);
+
+    function handleDrop(e) {
+        const dt = e.dataTransfer;
+        const files = dt.files;
+        document.getElementById('resultFile').files = files;
+
+        if (files.length > 0) {
+            const uploadText = document.querySelector('.upload-text');
+            uploadText.textContent = 'File selected: ' + files[0].name;
+
+            const uploadIcon = document.querySelector('.upload-icon');
+            uploadIcon.classList.remove('bi-cloud-upload');
+            uploadIcon.classList.add('bi-file-earmark-check');
+            uploadIcon.style.color = 'var(--success-color)';
+        }
+    }
+</script>
+</body>
+</html>
+

@@ -1,0 +1,598 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Medical Report - MediCare Plus</title>
+    <style>
+        /* Basic CSS compatible with iTextPDF and html2pdf */
+        body {
+            font-family: Arial, Helvetica, sans-serif;
+            margin: 0;
+            padding: 20px;
+            color: #333333;
+            background-color: #ffffff;
+            font-size: 12px;
+            line-height: 1.4;
+        }
+
+        /* Container */
+        .report-container {
+            width: 100%;
+            max-width: 800px;
+            margin: 0 auto;
+            background-color: #ffffff;
+        }
+
+        /* Header Styles */
+        .report-header {
+            background-color: #2563eb;
+            color: #ffffff;
+            padding: 25px;
+            margin-bottom: 30px;
+            text-align: center;
+            border-radius: 8px;
+        }
+
+        .hospital-name {
+            font-size: 24px;
+            font-weight: bold;
+            margin-bottom: 8px;
+        }
+
+        .hospital-tagline {
+            font-size: 12px;
+            margin-bottom: 15px;
+            opacity: 0.9;
+        }
+
+        .report-title {
+            font-size: 18px;
+            font-weight: bold;
+            margin-bottom: 5px;
+        }
+
+        .report-date {
+            font-size: 12px;
+            opacity: 0.8;
+        }
+
+        /* Section Styles */
+        .section {
+            margin-bottom: 25px;
+            border: 1px solid #e5e7eb;
+            border-radius: 6px;
+            overflow: hidden;
+        }
+
+        .section-header {
+            background-color: #f8fafc;
+            padding: 15px 20px;
+            border-bottom: 1px solid #e5e7eb;
+        }
+
+        .section-title {
+            font-size: 16px;
+            font-weight: bold;
+            color: #2563eb;
+            margin: 0;
+        }
+
+        .section-content {
+            padding: 20px;
+        }
+
+        /* Info Grid - Using table layout for compatibility */
+        .info-grid {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 0;
+        }
+
+        .info-grid td {
+            width: 50%;
+            padding: 12px;
+            vertical-align: top;
+            border: none;
+        }
+
+        .info-item {
+            background-color: #f8fafc;
+            padding: 12px;
+            border-radius: 4px;
+            border-left: 3px solid #2563eb;
+            margin-bottom: 8px;
+        }
+
+        .info-label {
+            font-weight: bold;
+            font-size: 10px;
+            text-transform: uppercase;
+            color: #6b7280;
+            display: block;
+            margin-bottom: 4px;
+        }
+
+        .info-value {
+            font-weight: normal;
+            font-size: 13px;
+            color: #1f2937;
+        }
+
+        /* Result Items */
+        .result-item {
+            margin-bottom: 20px;
+            border: 1px solid #e5e7eb;
+            border-radius: 6px;
+            overflow: hidden;
+        }
+
+        .result-header {
+            background-color: #f8fafc;
+            padding: 15px 20px;
+            border-bottom: 1px solid #e5e7eb;
+        }
+
+        .result-header-table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        .result-header-table td {
+            border: none;
+            padding: 0;
+            vertical-align: middle;
+        }
+
+        .result-title {
+            font-weight: bold;
+            font-size: 14px;
+            color: #1f2937;
+        }
+
+        .result-date {
+            color: #6b7280;
+            font-size: 11px;
+            text-align: right;
+        }
+
+        .result-body {
+            padding: 20px;
+        }
+
+        .result-meta {
+            margin-bottom: 15px;
+        }
+
+        .result-meta-item {
+            display: inline-block;
+            margin-right: 20px;
+            margin-bottom: 8px;
+        }
+
+        .result-meta-label {
+            font-weight: bold;
+            font-size: 11px;
+            color: #6b7280;
+            margin-right: 6px;
+        }
+
+        .result-content {
+            background-color: #f8fafc;
+            padding: 15px;
+            border-radius: 4px;
+            border-left: 4px solid #3b82f6;
+            white-space: pre-line;
+            line-height: 1.5;
+            font-size: 12px;
+            margin-top: 10px;
+        }
+
+        /* Badge Styles - Using simple background colors */
+        .badge {
+            display: inline-block;
+            padding: 4px 8px;
+            border-radius: 12px;
+            font-size: 10px;
+            font-weight: bold;
+            color: #ffffff;
+            text-transform: uppercase;
+        }
+
+        .badge-success {
+            background-color: #10b981;
+        }
+
+        .badge-warning {
+            background-color: #f59e0b;
+        }
+
+        .badge-info {
+            background-color: #3b82f6;
+        }
+
+        .badge-danger {
+            background-color: #ef4444;
+        }
+
+        /* Additional Notes */
+        .additional-notes {
+            background-color: #ecfdf5;
+            border: 1px solid #bbf7d0;
+            border-radius: 6px;
+            padding: 20px;
+            margin-top: 25px;
+            border-left: 4px solid #10b981;
+        }
+
+        .additional-notes .section-title {
+            color: #059669;
+            margin-bottom: 12px;
+            font-size: 14px;
+        }
+
+        .additional-notes-content {
+            color: #065f46;
+            line-height: 1.5;
+            font-size: 12px;
+        }
+
+        /* Signature Section - Using table layout */
+        .signature-section {
+            margin-top: 40px;
+            padding-top: 20px;
+            border-top: 2px solid #e5e7eb;
+        }
+
+        .signature-table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        .signature-table td {
+            width: 50%;
+            padding: 0 20px;
+            text-align: center;
+            vertical-align: top;
+            border: none;
+        }
+
+        .signature-block {
+            text-align: center;
+        }
+
+        .signature-line {
+            border-top: 2px solid #1f2937;
+            margin-top: 50px;
+            padding-top: 12px;
+            position: relative;
+        }
+
+        .signature-name {
+            font-weight: bold;
+            font-size: 14px;
+            color: #1f2937;
+            margin-bottom: 4px;
+        }
+
+        .signature-title {
+            font-size: 11px;
+            color: #6b7280;
+        }
+
+        /* Footer */
+        .report-footer {
+            margin-top: 40px;
+            padding-top: 15px;
+            border-top: 1px solid #e5e7eb;
+            text-align: center;
+        }
+
+        .footer-table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        .footer-table td {
+            border: none;
+            padding: 5px;
+            font-size: 10px;
+            color: #6b7280;
+        }
+
+        .page-number {
+            text-align: right;
+        }
+
+        .report-id {
+            text-align: left;
+        }
+
+        /* File Attachment */
+        .file-attachment {
+            background-color: #f8fafc;
+            padding: 8px 12px;
+            border-radius: 4px;
+            border: 1px solid #e5e7eb;
+            font-size: 11px;
+            color: #1f2937;
+            margin-top: 8px;
+            display: inline-block;
+        }
+
+        /* Print Styles */
+        @media print {
+            body {
+                margin: 0;
+                padding: 15px;
+            }
+
+            .report-container {
+                max-width: none;
+            }
+
+            .section {
+                page-break-inside: avoid;
+            }
+
+            .result-item {
+                page-break-inside: avoid;
+            }
+        }
+
+        /* Utility Classes */
+        .text-center {
+            text-align: center;
+        }
+
+        .text-right {
+            text-align: right;
+        }
+
+        .text-left {
+            text-align: left;
+        }
+
+        .mb-0 {
+            margin-bottom: 0;
+        }
+
+        .mb-10 {
+            margin-bottom: 10px;
+        }
+
+        .mt-10 {
+            margin-top: 10px;
+        }
+
+        .bold {
+            font-weight: bold;
+        }
+
+        /* Table helpers for layout */
+        .layout-table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        .layout-table td {
+            border: none;
+            padding: 0;
+            vertical-align: top;
+        }
+    </style>
+</head>
+<body>
+<div class="report-container">
+    <!-- Enhanced Header -->
+    <div class="report-header">
+        <div class="hospital-name">MediCare Plus Hospital</div>
+        <div class="hospital-tagline">Your Health, Our Priority</div>
+        <div class="report-title">Medical Report</div>
+        <div class="report-date" th:text="${#temporals.format(generatedDate, 'MMMM d, yyyy - HH:mm')}">May 30, 2023 - 14:30</div>
+    </div>
+
+    <!-- Patient Information Section -->
+    <div class="section">
+        <div class="section-header">
+            <div class="section-title">Patient Information</div>
+        </div>
+        <div class="section-content">
+            <table class="info-grid">
+                <tr>
+                    <td>
+                        <div class="info-item">
+                            <span class="info-label">Full Name</span>
+                            <div class="info-value" th:text="${patient.user != null ? patient.user.fullName : 'N/A'}">John Doe</div>
+                        </div>
+                    </td>
+                    <td>
+                        <div class="info-item">
+                            <span class="info-label">Date of Birth</span>
+                            <div class="info-value" th:text="${patient.dateOfBirth != null ? #dates.format(patient.dateOfBirth, 'MMMM d, yyyy') : 'N/A'}">January 1, 1980</div>
+                        </div>
+                    </td>
+                </tr>
+                <tr>
+                    <td>
+                        <div class="info-item">
+                            <span class="info-label">Gender</span>
+                            <div class="info-value" th:text="${patient.gender != null ? patient.gender : 'N/A'}">Male</div>
+                        </div>
+                    </td>
+                    <td>
+                        <div class="info-item">
+                            <span class="info-label">Contact Number</span>
+                            <div class="info-value" th:text="${patient.user != null ? patient.user.phoneNumber : 'N/A'}">+1 123-456-7890</div>
+                        </div>
+                    </td>
+                </tr>
+            </table>
+        </div>
+    </div>
+
+    <!-- Appointment Details Section -->
+    <div class="section">
+        <div class="section-header">
+            <div class="section-title">Appointment Details</div>
+        </div>
+        <div class="section-content">
+            <table class="info-grid">
+                <tr>
+                    <td>
+                        <div class="info-item">
+                            <span class="info-label">Appointment Date & Time</span>
+                            <div class="info-value" th:text="${#temporals.format(appointment.dateTime, 'MMMM d, yyyy - HH:mm')}">May 25, 2023 - 10:00</div>
+                        </div>
+                    </td>
+                    <td>
+                        <div class="info-item">
+                            <span class="info-label">Attending Physician</span>
+                            <div class="info-value" th:text="${doctor.user != null ? doctor.user.fullName : 'N/A'}">Dr. Jane Smith</div>
+                        </div>
+                    </td>
+                </tr>
+                <tr>
+                    <td>
+                        <div class="info-item">
+                            <span class="info-label">Appointment Status</span>
+                            <div class="info-value" th:text="${appointment.status}">Completed</div>
+                        </div>
+                    </td>
+                    <td>
+                        <div class="info-item">
+                            <span class="info-label">Visit Description</span>
+                            <div class="info-value" th:text="${appointment.description != null ? appointment.description : 'N/A'}">Regular checkup</div>
+                        </div>
+                    </td>
+                </tr>
+            </table>
+        </div>
+    </div>
+
+    <!-- Medical Orders Section -->
+    <div class="section" th:if="${not #lists.isEmpty(orders)}">
+        <div class="section-header">
+            <div class="section-title">Medical Orders</div>
+        </div>
+        <div class="section-content">
+            <div th:each="order : ${orders}" class="result-item">
+                <div class="result-header">
+                    <table class="result-header-table">
+                        <tr>
+                            <td>
+                                <div class="result-title" th:text="${order.orderType}">LABORATORY</div>
+                            </td>
+                            <td>
+                                <div class="result-date" th:text="${#dates.format(order.orderDate, 'MMM d, yyyy')}">May 25, 2023</div>
+                            </td>
+                        </tr>
+                    </table>
+                </div>
+                <div class="result-body">
+                    <div class="result-meta">
+                        <div class="result-meta-item">
+                            <span class="result-meta-label">Status:</span>
+                            <span class="badge"
+                                  th:classappend="${order.status == 'PENDING' ? 'badge-warning' :
+                                                 (order.status == 'IN_PROGRESS' ? 'badge-info' :
+                                                 (order.status == 'COMPLETED' ? 'badge-success' : 'badge-danger'))}"
+                                  th:text="${order.status}">COMPLETED</span>
+                        </div>
+                        <div class="result-meta-item" th:if="${order.assignedToDepartment != null}">
+                            <span class="result-meta-label">Department:</span>
+                            <span th:text="${order.assignedToDepartment.deptName}">Laboratory</span>
+                        </div>
+                    </div>
+                    <div class="result-content" th:text="${order.description}">Complete blood count and metabolic panel.</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Medical Results Section -->
+    <div class="section" th:if="${not #lists.isEmpty(results)}">
+        <div class="section-header">
+            <div class="section-title">Medical Results</div>
+        </div>
+        <div class="section-content">
+            <div th:each="result : ${results}" class="result-item">
+                <div class="result-header">
+                    <table class="result-header-table">
+                        <tr>
+                            <td>
+                                <div class="result-title">Medical Result</div>
+                            </td>
+                            <td>
+                                <div class="result-date" th:text="${#temporals.format(result.resultDate, 'MMM d, yyyy - HH:mm')}">May 26, 2023 - 14:30</div>
+                            </td>
+                        </tr>
+                    </table>
+                </div>
+                <div class="result-body">
+                    <div class="result-meta">
+                        <div class="result-meta-item">
+                            <span class="result-meta-label">Status:</span>
+                            <span class="badge"
+                                  th:classappend="${result.status == 'DRAFT' ? 'badge-warning' :
+                                                 (result.status == 'PENDING_REVIEW' ? 'badge-info' :
+                                                 (result.status == 'COMPLETED' ? 'badge-success' : 'badge-danger'))}"
+                                  th:text="${result.status}">COMPLETED</span>
+                        </div>
+                    </div>
+                    <div class="result-content" th:text="${result.description}">
+                        Blood pressure: 120/80 mmHg (Normal)
+                        Heart rate: 72 bpm (Normal)
+                        Respiratory rate: 16 breaths per minute (Normal)
+                        Temperature: 98.6°F (Normal)
+                        Oxygen saturation: 98% (Normal)
+                    </div>
+                    <div th:if="${result.fileUrl != null}" class="file-attachment">
+                        Document attached in original record
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Additional Notes -->
+    <div class="additional-notes" th:if="${additionalNotes != null and !additionalNotes.isEmpty()}">
+        <div class="section-title">Additional Notes</div>
+        <div class="additional-notes-content" th:text="${additionalNotes}">Patient is showing improvement. Continue with the prescribed medication for another two weeks and schedule a follow-up appointment.</div>
+    </div>
+
+    <!-- Signature Section -->
+    <div class="signature-section">
+        <table class="signature-table">
+            <tr>
+                <td>
+                    <div class="signature-block">
+                        <div class="signature-line">
+                            <div class="signature-name" th:text="${doctor.user != null ? doctor.user.fullName : 'Doctor'}">Dr. Jane Smith</div>
+                            <div class="signature-title">Attending Physician</div>
+                        </div>
+                    </div>
+                </td>
+                <td>
+                    <div class="signature-block">
+                        <div class="signature-line">
+                            <div class="signature-name">Hospital Authority</div>
+                            <div class="signature-title">MediCare Plus Hospital</div>
+                        </div>
+                    </div>
+                </td>
+            </tr>
+        </table>
+    </div>
+
+    <!-- Footer -->
+    <div class="report-footer">
+        <table class="footer-table">
+            <tr>
+                <td class="report-id">Report ID: MCP-2024-001234</td>
+                <td class="page-number">Page 1 of 1</td>
+            </tr>
+        </table>
+    </div>
+</div>
+</body>
+</html>

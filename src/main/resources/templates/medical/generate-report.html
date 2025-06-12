@@ -1,0 +1,466 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Generate Medical Report - MediCare Plus</title>
+
+    <!-- CSRF Tokens for Ajax Requests -->
+    <meta name="_csrf" th:content="${_csrf.token}"/>
+    <meta name="_csrf_header" th:content="${_csrf.headerName}"/>
+
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Bootstrap Icons -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css">
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+
+    <style>
+        :root {
+            --primary-color: #2563eb;
+            --secondary-color: #1e40af;
+            --accent-color: #06b6d4;
+            --text-dark: #1f2937;
+            --text-light: #6b7280;
+            --text-muted: #9ca3af;
+            --bg-light: #f8fafc;
+            --bg-white: #ffffff;
+            --success-color: #10b981;
+            --warning-color: #f59e0b;
+            --error-color: #ef4444;
+            --info-color: #3b82f6;
+            --border-color: #e5e7eb;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            line-height: 1.6;
+            color: var(--text-dark);
+            background: var(--bg-light);
+        }
+
+        .page-header {
+            background: var(--bg-white);
+            padding: 2rem 0;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+            margin-bottom: 2rem;
+        }
+
+        .header-content {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 1rem;
+        }
+
+        .page-title {
+            font-size: 2rem;
+            font-weight: 700;
+            color: var(--text-dark);
+            margin: 0;
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+
+        .page-title i {
+            color: var(--primary-color);
+        }
+
+        .main-container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 1rem;
+        }
+
+        .content-card {
+            background: var(--bg-white);
+            border-radius: 16px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+            padding: 2rem;
+            margin-bottom: 2rem;
+        }
+
+        .section-title {
+            font-size: 1.5rem;
+            font-weight: 700;
+            margin-bottom: 1.5rem;
+            color: var(--text-dark);
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .section-title i {
+            color: var(--primary-color);
+        }
+
+        .result-item {
+            margin-bottom: 1.5rem;
+            padding: 1.5rem;
+            background-color: var(--bg-light);
+            border-radius: 12px;
+            border-left: 4px solid var(--primary-color);
+        }
+
+        .result-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1rem;
+        }
+
+        .result-title {
+            font-weight: 600;
+            font-size: 1.1rem;
+        }
+
+        .result-date {
+            color: var(--text-muted);
+            font-size: 0.9rem;
+        }
+
+        .result-content {
+            margin-top: 1rem;
+            white-space: pre-line;
+        }
+
+        .badge-custom {
+            padding: 0.35rem 0.75rem;
+            border-radius: 50rem;
+            font-size: 0.75rem;
+            font-weight: 600;
+        }
+
+        .badge-pending {
+            background-color: var(--warning-color);
+            color: white;
+        }
+
+        .badge-in-progress {
+            background-color: var(--info-color);
+            color: white;
+        }
+
+        .badge-completed {
+            background-color: var(--success-color);
+            color: white;
+        }
+
+        .badge-cancelled {
+            background-color: var(--error-color);
+            color: white;
+        }
+
+        .form-group {
+            margin-bottom: 1.5rem;
+        }
+
+        .form-label {
+            font-weight: 600;
+            margin-bottom: 0.5rem;
+        }
+
+        .form-control {
+            border: 2px solid var(--border-color);
+            border-radius: 8px;
+            padding: 0.75rem;
+            transition: all 0.3s ease;
+        }
+
+        .form-control:focus {
+            border-color: var(--primary-color);
+            box-shadow: 0 0 0 0.2rem rgba(37, 99, 235, 0.25);
+        }
+
+        .btn-primary-custom {
+            background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+            border: none;
+            padding: 0.75rem 1.5rem;
+            border-radius: 8px;
+            color: white;
+            font-weight: 600;
+            transition: all 0.3s ease;
+        }
+
+        .btn-primary-custom:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(37, 99, 235, 0.3);
+            color: white;
+        }
+
+        /* Alert Messages */
+        .alert-custom {
+            border: none;
+            border-radius: 12px;
+            padding: 1rem 1.25rem;
+            margin-bottom: 1.5rem;
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+
+        .alert-success-custom {
+            background: rgba(16, 185, 129, 0.1);
+            color: var(--success-color);
+            border-left: 4px solid var(--success-color);
+        }
+
+        .alert-warning-custom {
+            background: rgba(245, 158, 11, 0.1);
+            color: var(--warning-color);
+            border-left: 4px solid var(--warning-color);
+        }
+
+        #reportStatus {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            z-index: 1050;
+            display: none;
+        }
+    </style>
+</head>
+<body>
+<!-- Page Header -->
+<div class="page-header">
+    <div class="container-fluid">
+        <div class="header-content">
+            <div>
+                <!-- Return Link -->
+                <a href="#" onclick="history.back()" class="d-flex align-items-center text-decoration-none mb-2 text-primary fw-semibold">
+                    <i class="bi bi-arrow-left me-2"></i> Back
+                </a>
+
+                <h1 class="page-title">
+                    <i class="bi bi-file-earmark-medical"></i>
+                    Generate Medical Report
+                </h1>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="main-container">
+    <!-- Success/Error Messages -->
+    <div id="reportStatus" class="alert-custom alert-success-custom">
+        <i class="bi bi-check-circle"></i>
+        <span id="statusMessage">Report generated successfully!</span>
+    </div>
+
+    <div class="content-card">
+        <h2 class="section-title">
+            <i class="bi bi-file-earmark-text"></i>
+            Medical Report Preview
+        </h2>
+
+        <p class="mb-4">
+            This report will compile all medical results and orders for this appointment. You can add additional notes below before generating the PDF.
+        </p>
+
+        <div class="alert-custom alert-warning-custom">
+            <i class="bi bi-info-circle"></i>
+            <span>This is a preview of the report content. The PDF will include all relevant patient information and formatting.</span>
+        </div>
+
+        <div class="mb-4">
+            <div class="badge bg-info rounded-pill mb-2">Report Date: <span th:text="${#temporals.format(generatedDate, 'MMM d, yyyy')}">May 30, 2023</span></div>
+        </div>
+
+        <!-- Medical Orders Section -->
+        <div th:if="${not #lists.isEmpty(orders)}" class="mb-4">
+            <h3 class="section-title fs-5">
+                <i class="bi bi-clipboard-check"></i>
+                Medical Orders
+            </h3>
+
+            <div th:each="order : ${orders}" class="result-item">
+                <div class="result-header">
+                    <div class="result-title" th:text="${order.orderType}">LABORATORY</div>
+                    <div class="result-date" th:text="${#dates.format(order.orderDate, 'MMM d, yyyy')}">May 25, 2023</div>
+                </div>
+                <div>
+                    <span class="fw-semibold">Status:</span>
+                    <span class="badge badge-custom"
+                          th:classappend="${order.status == 'PENDING' ? 'badge-pending' :
+                                       (order.status == 'IN_PROGRESS' ? 'badge-in-progress' :
+                                       (order.status == 'COMPLETED' ? 'badge-completed' : 'badge-cancelled'))}"
+                          th:text="${order.status}">COMPLETED</span>
+                </div>
+                <div th:if="${order.assignedToDepartment != null}">
+                    <span class="fw-semibold">Department:</span>
+                    <span th:text="${order.assignedToDepartment.deptName}">Laboratory</span>
+                </div>
+                <div class="result-content" th:text="${order.description}">Complete blood count and metabolic panel.</div>
+            </div>
+        </div>
+
+        <!-- Medical Results Section -->
+        <div th:if="${not #lists.isEmpty(results)}" class="mb-4">
+            <h3 class="section-title fs-5">
+                <i class="bi bi-clipboard-pulse"></i>
+                Medical Results
+            </h3>
+
+            <div th:each="result : ${results}" class="result-item">
+                <div class="result-header">
+                    <div class="result-title">Test Result</div>
+                    <div class="result-date" th:text="${#temporals.format(result.resultDate, 'MMM d, yyyy')}">May 26, 2023</div>
+                </div>
+                <div>
+                    <span class="fw-semibold">Status:</span>
+                    <span class="badge badge-custom"
+                          th:classappend="${result.status == 'DRAFT' ? 'badge-pending' :
+                                       (result.status == 'PENDING_REVIEW' ? 'badge-in-progress' :
+                                       (result.status == 'COMPLETED' ? 'badge-completed' : 'badge-cancelled'))}"
+                          th:text="${result.status}">COMPLETED</span>
+                </div>
+                <div class="result-content" th:text="${result.description}">
+                    Blood pressure: 120/80 mmHg (Normal)
+                    Heart rate: 72 bpm (Normal)
+                    Respiratory rate: 16 breaths per minute (Normal)
+                    Temperature: 98.6°F (Normal)
+                    Oxygen saturation: 98% (Normal)
+                </div>
+                <div th:if="${result.fileUrl != null}" class="mt-2">
+                    <span class="fw-semibold">Attached File:</span>
+                    <a th:href="@{/download/medical-result/{resultId}(resultId=${result.resultId})}" target="_blank" class="text-primary">
+                        <i class="bi bi-file-earmark-arrow-down me-1"></i>Download Attachment
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        <!-- Additional Notes Form -->
+        <div class="mt-5">
+            <h3 class="section-title fs-5">
+                <i class="bi bi-pencil-square"></i>
+                Additional Notes
+            </h3>
+
+            <div class="form-group">
+                <label for="additionalNotes" class="form-label">Doctor's Comments</label>
+                <textarea id="additionalNotes" class="form-control" rows="5" placeholder="Add any additional comments, observations, or recommendations for this patient..."></textarea>
+                <div class="form-text">These notes will be included in the final PDF report.</div>
+            </div>
+
+            <div class="d-flex justify-content-end gap-2 mt-4">
+                <a href="#" onclick="history.back()" class="btn btn-outline-secondary">
+                    <i class="bi bi-x-circle me-2"></i> Cancel
+                </a>
+                <button type="button" id="generatePdfBtn" class="btn btn-primary-custom">
+                    <i class="bi bi-file-earmark-pdf me-2"></i> Generate PDF Report
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Bootstrap JS Bundle with Popper -->
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const generatePdfBtn = document.getElementById('generatePdfBtn');
+        const reportStatus = document.getElementById('reportStatus');
+        const statusMessage = document.getElementById('statusMessage');
+        const additionalNotes = document.getElementById('additionalNotes');
+
+        // Get CSRF token for AJAX requests
+        const csrfToken = document.querySelector("meta[name='_csrf']").content;
+        const csrfHeader = document.querySelector("meta[name='_csrf_header']").content;
+
+        generatePdfBtn.addEventListener('click', function() {
+            // Disable button and show loading state
+            generatePdfBtn.disabled = true;
+            generatePdfBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span> Generating PDF...';
+
+            // Get appointment ID and doctor ID from URL
+            const appointmentId = [[${appointmentId}]];
+            const doctorId = [[${doctorId}]];
+
+            // Create form data
+            const formData = new FormData();
+            formData.append('doctorId', doctorId);
+            formData.append('additionalNotes', additionalNotes.value);
+
+            // Send AJAX request to generate PDF
+            fetch(`/medical-results/generate-pdf/${appointmentId}`, {
+                method: 'POST',
+                headers: {
+                    [csrfHeader]: csrfToken
+                },
+                body: formData
+            })
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error('Network response was not ok');
+                }
+                return response.json();
+            })
+            .then(data => {
+                // Reset button state
+                generatePdfBtn.disabled = false;
+                generatePdfBtn.innerHTML = '<i class="bi bi-file-earmark-pdf me-2"></i> Generate PDF Report';
+
+                if (data.success) {
+                    // Show success message
+                    statusMessage.textContent = data.message || 'Report generated successfully!';
+                    reportStatus.classList.remove('alert-warning-custom');
+                    reportStatus.classList.add('alert-success-custom');
+                    reportStatus.style.display = 'flex';
+
+                    // Provide download link if available
+                    if (data.fileUrl) {
+                        // Create a download button
+                        const downloadBtn = document.createElement('a');
+                        downloadBtn.href = `/download/report/${data.reportId}`;
+                        downloadBtn.className = 'btn btn-success-custom mt-3 d-block';
+                        downloadBtn.innerHTML = '<i class="bi bi-download me-2"></i> Download PDF Report';
+                        downloadBtn.target = '_blank';
+
+                        // Insert button after the form
+                        document.querySelector('.d-flex.justify-content-end').insertAdjacentElement('afterend', downloadBtn);
+
+                        // Automatically trigger download after a short delay
+                        setTimeout(() => {
+                            window.open(`/download/report/${data.reportId}`, '_blank');
+                        }, 1500);
+                    }
+                } else {
+                    // Show error message
+                    statusMessage.textContent = data.message || 'Failed to generate PDF report';
+                    reportStatus.classList.remove('alert-success-custom');
+                    reportStatus.classList.add('alert-warning-custom');
+                    reportStatus.style.display = 'flex';
+                }
+
+                // Hide status message after 5 seconds
+                setTimeout(() => {
+                    reportStatus.style.display = 'none';
+                }, 5000);
+            })
+            .catch(error => {
+                console.error('Error:', error);
+
+                // Reset button state
+                generatePdfBtn.disabled = false;
+                generatePdfBtn.innerHTML = '<i class="bi bi-file-earmark-pdf me-2"></i> Generate PDF Report';
+
+                // Show error message
+                statusMessage.textContent = 'An error occurred while generating the PDF';
+                reportStatus.classList.remove('alert-success-custom');
+                reportStatus.classList.add('alert-warning-custom');
+                reportStatus.style.display = 'flex';
+
+                // Hide status message after 5 seconds
+                setTimeout(() => {
+                    reportStatus.style.display = 'none';
+                }, 5000);
+            });
+        });
+    });
+</script>
+</body>
+</html>

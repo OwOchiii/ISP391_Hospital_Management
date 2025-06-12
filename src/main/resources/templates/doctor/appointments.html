@@ -46,12 +46,20 @@
             color: white;
             z-index: 1000;
             transition: transform 0.3s ease;
-            overflow-y: auto;
+            overflow-y: auto; /* Change this to hidden or remove it */
+            scrollbar-width: none; /* For Firefox */
+            -ms-overflow-style: none; /* For Internet Explorer and Edge */
         }
 
         .sidebar.collapsed {
             transform: translateX(-100%);
         }
+
+        .sidebar::-webkit-scrollbar {
+            display: none; /* For Chrome, Safari, and Opera */
+        }
+
+
 
         .sidebar-header {
             padding: 1.5rem;
@@ -69,8 +77,18 @@
         }
 
         .sidebar-nav {
-            padding: 1rem 0;
+            padding: 1.5rem 0;
         }
+
+        .nav-section-title {
+            padding: 0.75rem 1.5rem;
+            font-size: 0.75rem;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            color: rgba(255, 255, 255, 0.6);
+            font-weight: 600;
+        }
+
 
         .nav-item {
             margin: 0.25rem 1rem;
@@ -375,7 +393,7 @@
         .status-scheduled { background: #e0e7ff; color: #3730a3; }
         .status-completed { background: #dbeafe; color: #1e40af; }
         .status-cancel, .status-cancelled { background: #fee2e2; color: #b91c1c; }
-
+        .status-pending { background: #f3f4f6; color: #4b5563; }
 
         .form-control {
             border: 2px solid #e5e7eb;
@@ -458,56 +476,82 @@
     <div class="sidebar-header">
         <a href="#" class="brand-logo">
             <i class="bi bi-heart-pulse"></i>
-            MediCare Plus
+            <div>
+                <div>MediCare Plus</div>
+                <small style="font-size: 0.75rem; font-weight: 400; opacity: 0.8;">Doctor Portal</small>
+            </div>
         </a>
     </div>
 
     <nav class="sidebar-nav">
-        <div class="nav-item">
-            <a th:href="@{/doctor/dashboard(doctorId=${doctorId})}" class="nav-link">
-                <i class="bi bi-speedometer2"></i>
-                Dashboard
-            </a>
+        <div class="nav-section">
+            <div class="nav-section-title">Dashboard</div>
+            <div class="nav-item">
+                <a th:href="@{/doctor/dashboard(doctorId=${doctorId})}" class="nav-link active">
+                    <i class="bi bi-speedometer2"></i>
+                    Dashboard
+                </a>
+            </div>
         </div>
-        <div class="nav-item">
-            <a th:href="@{/doctor/appointments(doctorId=${doctorId})}" class="nav-link active">
-                <i class="bi bi-calendar-check"></i>
-                Appointments
-            </a>
+
+        <div class="nav-section">
+            <div class="nav-section-title">Patient Care</div>
+            <div class="nav-item">
+                <a th:href="@{/doctor/appointments(doctorId=${doctorId})}" class="nav-link active">
+                    <i class="bi bi-calendar-check"></i>
+                    Appointments
+                </a>
+            </div>
+            <div class="nav-item">
+                <a th:href="@{/doctor/patients(doctorId=${doctorId})}" class="nav-link">
+                    <i class="bi bi-people"></i>
+                    Patients
+                </a>
+            </div>
+            <div class="nav-item">
+                <a th:href="@{/doctor/medical-orders(doctorId=${doctorId})}" class="nav-link">
+                    <i class="bi bi-prescription2"></i>
+                    Medical Orders
+                </a>
+            </div>
         </div>
-        <div class="nav-item">
-            <a th:href="@{/doctor/patients(doctorId=${doctorId})}" class="nav-link">
-                <i class="bi bi-people"></i>
-                Patients
-            </a>
+
+        <div class="nav-section">
+            <div class="nav-section-title">Management</div>
+            <div class="nav-item">
+                <a th:href="@{/doctor/schedule(doctorId=${doctorId})}" class="nav-link">
+                    <i class="bi bi-calendar-week"></i>
+                    View Schedule
+                </a>
+            </div>
+            <div class="nav-item">
+                <a href="#" class="nav-link">
+                    <i class="bi bi-chat-dots"></i>
+                    Messages
+                </a>
+            </div>
         </div>
-        <div class="nav-item">
-            <a th:href="@{/doctor/medical-orders(doctorId=${doctorId})}" class="nav-link">
-                <i class="bi bi-prescription2"></i>
-                Medical Orders
-            </a>
-        </div>
-        <div class="nav-item">
-            <a href="#" class="nav-link">
-                <i class="bi bi-chat-dots"></i>
-                Messages
-            </a>
-        </div>
-        <div class="nav-item">
-            <a href="#" class="nav-link">
-                <i class="bi bi-gear"></i>
-                Settings
-            </a>
-        </div>
-        <div class="nav-item">
-            <a th:href="@{/auth/logout}" class="nav-link">
-                <i class="bi bi-box-arrow-right"></i>
-                Logout
-            </a>
+
+        <div class="nav-section">
+            <div class="nav-section-title">System</div>
+            <div class="nav-item">
+                <a href="#" class="nav-link">
+                    <i class="bi bi-gear"></i>
+                    Settings
+                </a>
+            </div>
+            <div class="nav-item">
+                <form th:action="@{/auth/logout}" method="post">
+                    <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}" />
+                    <button type="submit" class="nav-link w-100 text-start border-0 bg-transparent">
+                        <i class="bi bi-box-arrow-right"></i>
+                        Logout
+                    </button>
+                </form>
+            </div>
         </div>
     </nav>
 </div>
-
 <!-- Main Content -->
 <div class="main-content" id="mainContent">
     <!-- Top Header -->
@@ -597,6 +641,7 @@
                         <label class="form-label">Status</label>
                         <select class="form-control" name="status">
                             <option value="">All Status</option>
+                            <option value="Pending" th:selected="${status == 'Pending'}">Pending</option>
                             <option value="Scheduled" th:selected="${status == 'Scheduled'}">Scheduled</option>
                             <option value="Completed" th:selected="${status == 'Completed'}">Completed</option>
                             <option value="Cancel" th:selected="${status == 'Cancel'}">Cancelled</option>
@@ -697,6 +742,7 @@
                                         th:data-appointment-id="${appointment.appointmentId}"
                                         th:data-original-value="${appointment.status}"
                                         onchange="updateAppointmentStatus(this)">
+                                    <option value="Pending" th:selected="${appointment.status == 'Pending'}">Pending</option>
                                     <option value="Scheduled" th:selected="${appointment.status == 'Scheduled'}">Scheduled</option>
                                     <option value="Completed" th:selected="${appointment.status == 'Completed'}">Completed</option>
                                     <option value="Cancel" th:selected="${appointment.status == 'Cancel'}">Cancelled</option>
@@ -704,7 +750,7 @@
                             </div>
 
                             <div class="d-flex gap-2">
-                                <a th:href="@{/doctor/appointment/{id}(id=${appointment.appointmentId}, doctorId=${doctorId})}"
+                                <a th:href="@{/doctor/appointments/{id}(id=${appointment.appointmentId}, doctorId=${doctorId})}"
                                    class="btn-outline-custom btn-sm">
                                     <i class="bi bi-eye"></i>
                                     View Details
@@ -750,6 +796,17 @@
     // Get doctor ID from Thymeleaf
     const doctorId = /*[[${doctorId}]]*/ 0;
 
+    document.addEventListener('DOMContentLoaded', function() {
+        // Set appointments tab as active
+        const currentPath = window.location.pathname;
+        if (currentPath.includes('/appointments')) {
+            document.querySelectorAll('.nav-link').forEach(link => {
+                link.classList.remove('active');
+            });
+            document.querySelector('.nav-link[href*="appointments"]').classList.add('active');
+        }
+    });
+
     // Sidebar toggle functionality
     function toggleSidebar() {
         const sidebar = document.getElementById('sidebar');
@@ -777,8 +834,7 @@
     window.addEventListener('load', checkScreenSize);
     window.addEventListener('resize', checkScreenSize);
 
-    // Update appointment status
-    // Update appointment status
+
     function updateAppointmentStatus(selectElement) {
         const appointmentId = selectElement.getAttribute('data-appointment-id');
         const newStatus = selectElement.value;
@@ -817,16 +873,22 @@
                     showAlert('success', data.message);
 
                     // Update the status badge UI to match the selected value
-                    const statusBadge = appointmentCard.querySelector('.status-badge');
-                    if (statusBadge) {
-                        // Map "Cancel" to "cancelled" for CSS class purposes if needed
-                        const cssStatus = newStatus.toLowerCase() === 'cancel' ? 'cancelled' : newStatus.toLowerCase();
-                        statusBadge.className = `status-badge status-${cssStatus}`;
+                        const statusBadge = appointmentCard.querySelector('.status-badge');
+                        if (statusBadge) {
+                            // Remove old status classes
+                            statusBadge.classList.forEach(cls => {
+                                if (cls.startsWith('status-') && cls !== 'status-badge') {
+                                    statusBadge.classList.remove(cls);
+                                }
+                            });
 
-                        // Display "Cancelled" for "Cancel" status (if you want better user display)
-                        const displayStatus = newStatus === 'Cancel' ? 'Cancelled' : newStatus;
-                        statusBadge.textContent = displayStatus;
-                    }
+                            // Add the new status class
+                            const cssStatus = newStatus.toLowerCase() === 'cancel' ? 'cancelled' : newStatus.toLowerCase();
+                            statusBadge.classList.add(`status-${cssStatus}`);
+
+                            // Display status text (format nicely for display)
+                            statusBadge.textContent = newStatus;
+                        }
 
                     // Update the original value attribute
                     selectElement.setAttribute('data-original-value', newStatus);
@@ -893,7 +955,7 @@
 
             const appointmentId = this.getAttribute('data-appointment-id');
             if (appointmentId) {
-                window.location.href = `/doctor/appointment/${appointmentId}?doctorId=${doctorId}`;
+                window.location.href = `/doctor/appointments/${appointmentId}?doctorId=${doctorId}`;
             }
         });
     });

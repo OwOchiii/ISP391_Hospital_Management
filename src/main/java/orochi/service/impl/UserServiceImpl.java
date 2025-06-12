@@ -121,7 +121,7 @@ public class UserServiceImpl implements UserService {
 
         Users user = userOptional.get();
         String token = UUID.randomUUID().toString();
-        LocalDateTime expiryDate = LocalDateTime.now().plusHours(1);
+        LocalDateTime expiryDate = LocalDateTime.now().plusMinutes(10);
 
         // Check if user already has a token
         Optional<PasswordResetToken> existingToken = tokenRepository.findByUserId(user.getUserId());
@@ -197,6 +197,11 @@ public class UserServiceImpl implements UserService {
         }
 
         Users user = userOptional.get();
+
+        // Check if new password is the same as the old one
+        if (passwordEncoder.matches(newPassword, user.getPasswordHash())) {
+            throw new RuntimeException("New password cannot be the same as your current password");
+        }
 
         // Update password
         user.setPasswordHash(passwordEncoder.encode(newPassword));

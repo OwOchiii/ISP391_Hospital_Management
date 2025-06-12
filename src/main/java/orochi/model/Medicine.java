@@ -1,9 +1,12 @@
 package orochi.model;
 
+import com.fasterxml.jackson.annotation.JsonBackReference;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Data;
+import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
+import lombok.ToString;
 
 @Entity
 @Table(name = "Medicine")
@@ -17,7 +20,7 @@ public class Medicine {
     @Column(name = "MedicationID")
     private Integer medicationId;
 
-    @Column(name = "PrescriptionID", nullable = false)
+    @Column(name = "PrescriptionID", insertable = false, updatable = false)
     private Integer prescriptionId;
 
     @Column(name = "InventoryID", nullable = false)
@@ -35,11 +38,23 @@ public class Medicine {
     @Column(name = "Instructions", length = Integer.MAX_VALUE)
     private String instructions;
 
-    @ManyToOne
-    @JoinColumn(name = "PrescriptionID", insertable = false, updatable = false)
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "PrescriptionID", nullable = false)
+    @EqualsAndHashCode.Exclude
+    @ToString.Exclude
+    @JsonBackReference("prescription-medicine")
     private Prescription prescription;
 
-    @ManyToOne
+    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "InventoryID", insertable = false, updatable = false)
+    @EqualsAndHashCode.Exclude
+    @ToString.Exclude
+    @JsonBackReference("inventory-medicine")
     private MedicineInventory inventory;
+
+    // Methods to synchronize the relationship
+    public void setPrescription(Prescription prescription) {
+        this.prescription = prescription;
+        this.prescriptionId = prescription != null ? prescription.getPrescriptionId() : null;
+    }
 }
