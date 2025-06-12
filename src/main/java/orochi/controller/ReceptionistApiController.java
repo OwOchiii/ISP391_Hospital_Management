@@ -11,10 +11,15 @@ import orochi.repository.UserRepository;
 import orochi.service.impl.DoctorServiceImpl;
 import orochi.service.impl.ReceptionistService;
 
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.time.Month;
+import java.time.Year;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 
 @RestController
 @RequestMapping("/api")
@@ -208,6 +213,229 @@ public class ReceptionistApiController {
         } catch (Exception e) {
             return ResponseEntity.badRequest().body("Error updating appointment status: " + e.getMessage());
         }
+    }
+
+    /**
+     * Endpoint to serve dashboard data including patient and appointment statistics
+     * @param dataType Type of data requested (patientStats, appointmentStatus, summaryData)
+     * @param period Time period for statistics (day, month, 5years)
+     * @return Dashboard statistics data
+     */
+    @GetMapping("/dashboard-data")
+    public ResponseEntity<?> getDashboardData(
+            @RequestParam String dataType,
+            @RequestParam(defaultValue = "month") String period) {
+
+        try {
+            Map<String, Object> response = new HashMap<>();
+
+            switch (dataType) {
+                case "patientStats":
+                    response.put("patientStats", getPatientStatistics(period));
+                    break;
+
+                case "appointmentStatus":
+                    response.put("appointmentStatus", getAppointmentStatistics(period));
+                    break;
+
+                case "summaryData":
+                    response.put("summary", getDashboardSummary());
+                    break;
+
+                default:
+                    return ResponseEntity.badRequest().body("Invalid dataType parameter");
+            }
+
+            return ResponseEntity.ok(response);
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body("Error fetching dashboard data: " + e.getMessage());
+        }
+    }
+
+    /**
+     * Get patient statistics based on the specified time period
+     */
+    private Map<String, Object> getPatientStatistics(String period) {
+        List<Patient> allPatients = receptionistService.getAllPatients();
+        Map<String, Object> result = new HashMap<>();
+        LocalDate now = LocalDate.now();
+
+        // Generate data points based on period
+        switch (period) {
+            case "day":
+                // Last 30 days patient count
+                List<Integer> dailyStats = IntStream.rangeClosed(1, 30)
+                    .mapToObj(day -> {
+                        LocalDate targetDate = now.minusDays(30 - day);
+                        return (int) allPatients.stream()
+                                .filter(p -> p.getUser().getCreatedAt() != null &&
+                                        p.getUser().getCreatedAt().toLocalDate().equals(targetDate))
+                                .count();
+                    })
+                    .collect(Collectors.toList());
+                result.put("data", dailyStats);
+                break;
+
+            case "month":
+                // Monthly patient count for current year
+                List<Integer> monthlyStats = IntStream.rangeClosed(1, 12)
+                    .mapToObj(month -> {
+                        return (int) allPatients.stream()
+                                .filter(p -> p.getUser().getCreatedAt() != null &&
+                                        p.getUser().getCreatedAt().toLocalDate().getYear() == now.getYear() &&
+                                        p.getUser().getCreatedAt().toLocalDate().getMonthValue() == month)
+                                .count();
+                    })
+                    .collect(Collectors.toList());
+                result.put("data", monthlyStats);
+                break;
+
+            case "5years":
+                // Yearly patient count for last 5 years
+                int currentYear = now.getYear();
+                List<Integer> yearlyStats = IntStream.rangeClosed(currentYear - 4, currentYear)
+                    .mapToObj(year -> {
+                        return (int) allPatients.stream()
+                                .filter(p -> p.getUser().getCreatedAt() != null &&
+                                        p.getUser().getCreatedAt().toLocalDate().getYear() == year)
+                                .count();
+                    })
+                    .collect(Collectors.toList());
+                result.put("data", yearlyStats);
+                break;
+        }
+
+        return result;
+    }
+
+    /**
+     * Get appointment statistics based on the specified time period
+     */
+    private Map<String, Object> getAppointmentStatistics(String period) {
+        List<Appointment> allAppointments = receptionistService.getAllAppointments();
+        Map<String, Object> result = new HashMap<>();
+        LocalDateTime now = LocalDateTime.now();
+
+        // Generate data points based on period
+        switch (period) {
+            case "day":
+                // Last 30 days appointment count by status
+                List<Integer> scheduledDaily = generateDailyStats(allAppointments, "SCHEDULED", 30);
+                List<Integer> completedDaily = generateDailyStats(allAppointments, "COMPLETED", 30);
+                List<Integer> cancelledDaily = generateDailyStats(allAppointments, "CANCELLED", 30);
+
+                result.put("scheduled", scheduledDaily);
+                result.put("completed", completedDaily);
+                result.put("cancelled", cancelledDaily);
+                break;
+
+            case "month":
+                // Monthly appointment count by status for current year
+                List<Integer> scheduledMonthly = generateMonthlyStats(allAppointments, "SCHEDULED");
+                List<Integer> completedMonthly = generateMonthlyStats(allAppointments, "COMPLETED");
+                List<Integer> cancelledMonthly = generateMonthlyStats(allAppointments, "CANCELLED");
+
+                result.put("scheduled", scheduledMonthly);
+                result.put("completed", completedMonthly);
+                result.put("cancelled", cancelledMonthly);
+                break;
+
+            case "5years":
+                // Yearly appointment count by status for last 5 years
+                int currentYear = now.getYear();
+                List<Integer> scheduledYearly = generateYearlyStats(allAppointments, "SCHEDULED", currentYear);
+                List<Integer> completedYearly = generateYearlyStats(allAppointments, "COMPLETED", currentYear);
+                List<Integer> cancelledYearly = generateYearlyStats(allAppointments, "CANCELLED", currentYear);
+
+                result.put("scheduled", scheduledYearly);
+                result.put("completed", completedYearly);
+                result.put("cancelled", cancelledYearly);
+                break;
+        }
+
+        return result;
+    }
+
+    /**
+     * Get summary data for dashboard cards
+     */
+    private Map<String, Object> getDashboardSummary() {
+        Map<String, Object> summary = new HashMap<>();
+
+        // Count new patients in the last 30 days
+        LocalDate thirtyDaysAgo = LocalDate.now().minusDays(30);
+        long newPatients = receptionistService.getAllPatients().stream()
+                .filter(p -> p.getUser().getCreatedAt() != null &&
+                        p.getUser().getCreatedAt().toLocalDate().isAfter(thirtyDaysAgo))
+                .count();
+
+        // Count all doctors
+        long doctorsCount = doctorService.getAllDoctors().size();
+
+        // Count total appointments
+        long totalAppointments = receptionistService.getAllAppointments().size();
+
+        // Count active staff (doctors + receptionists)
+        long activeStaff = doctorsCount +
+                userRepository.findAll().stream()
+                .filter(u -> "RECEPTIONIST".equals(u.getRole()) && "ACTIVE".equals(u.getStatus()))
+                .count();
+
+        summary.put("newPatients", newPatients);
+        summary.put("doctors", doctorsCount);
+        summary.put("totalAppointments", totalAppointments);
+        summary.put("activeStaff", activeStaff);
+
+        return summary;
+    }
+
+    /**
+     * Helper method to generate daily statistics for appointments by status
+     */
+    private List<Integer> generateDailyStats(List<Appointment> appointments, String status, int days) {
+        LocalDate now = LocalDate.now();
+        return IntStream.rangeClosed(1, days)
+                .mapToObj(day -> {
+                    LocalDate targetDate = now.minusDays(days - day);
+                    return (int) appointments.stream()
+                            .filter(a -> status.equalsIgnoreCase(a.getStatus()) &&
+                                    a.getDateTime() != null &&
+                                    a.getDateTime().toLocalDate().equals(targetDate))
+                            .count();
+                })
+                .collect(Collectors.toList());
+    }
+
+    /**
+     * Helper method to generate monthly statistics for appointments by status
+     */
+    private List<Integer> generateMonthlyStats(List<Appointment> appointments, String status) {
+        int currentYear = LocalDate.now().getYear();
+        return IntStream.rangeClosed(1, 12)
+                .mapToObj(month -> {
+                    return (int) appointments.stream()
+                            .filter(a -> status.equalsIgnoreCase(a.getStatus()) &&
+                                    a.getDateTime() != null &&
+                                    a.getDateTime().getYear() == currentYear &&
+                                    a.getDateTime().getMonthValue() == month)
+                            .count();
+                })
+                .collect(Collectors.toList());
+    }
+
+    /**
+     * Helper method to generate yearly statistics for appointments by status
+     */
+    private List<Integer> generateYearlyStats(List<Appointment> appointments, String status, int currentYear) {
+        return IntStream.rangeClosed(currentYear - 4, currentYear)
+                .mapToObj(year -> {
+                    return (int) appointments.stream()
+                            .filter(a -> status.equalsIgnoreCase(a.getStatus()) &&
+                                    a.getDateTime() != null &&
+                                    a.getDateTime().getYear() == year)
+                            .count();
+                })
+                .collect(Collectors.toList());
     }
 
     // Helper method to map appointments to response format

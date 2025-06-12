@@ -689,23 +689,23 @@
                     <div class="info-grid">
                         <div class="info-item">
                             <div class="info-label">Appointment Date</div>
-                            <div class="info-value" th:text="${#temporals.format(appointment?.dateTime, 'MMMM d, yyyy')}">June 15, 2023</div>
+                            <div class="info-value" th:text="${#temporals.format(appointment?.dateTime, 'MMMM d, yyyy')}">N/A</div>
                         </div>
                         <div class="info-item">
                             <div class="info-label">Appointment Time</div>
-                            <div class="info-value" th:text="${#temporals.format(appointment?.dateTime, 'h:mm a')}">10:30 AM</div>
+                            <div class="info-value" th:text="${#temporals.format(appointment?.dateTime, 'h:mm a')}">N/A</div>
                         </div>
                         <div class="info-item">
                             <div class="info-label">Doctor</div>
-                            <div class="info-value" th:text="${doctorName ?: 'Dr. John Smith'}">Dr. John Smith</div>
+                            <div class="info-value" th:text="${doctor.getUser().getFullName() ?: 'N/A'}"></div>
                         </div>
                         <div class="info-item">
                             <div class="info-label">Patient</div>
-                            <div class="info-value" th:text="${patientName ?: 'Jane Doe'}">Jane Doe</div>
+                            <div class="info-value" th:text="${patient.getFullName() ?: 'N/A<'}">N/A<</div>
                         </div>
                         <div class="info-item">
                             <div class="info-label">Room</div>
-                            <div class="info-value" th:text="${roomNumber ?: 'Examination Room 3'}">Examination Room 3</div>
+                            <div class="info-value" th:text="${roomNumber ?: 'N/A'}">N/A</div>
                         </div>
                         <div class="info-item">
                             <div class="info-label">Contact Email</div>
@@ -1067,27 +1067,27 @@
 
                 <div class="mb-3">
                     <div class="text-muted small mb-1">Full Name</div>
-                    <div class="fw-semibold" th:text="${patientName ?: 'Jane Doe'}">Jane Doe</div>
+                    <div class="fw-semibold" th:text="${patient.getFullName() ?: 'Jane Doe'}">Jane Doe</div>
                 </div>
 
                 <div class="mb-3">
                     <div class="text-muted small mb-1">Date of Birth</div>
-                    <div class="fw-semibold" th:text="${patientDOB ?: 'January 15, 1985'}">January 15, 1985</div>
+                    <div class="fw-semibold" th:text="${patient.getDateOfBirth() ?: 'January 15, 1985'}">January 15, 1985</div>
                 </div>
 
                 <div class="mb-3">
                     <div class="text-muted small mb-1">Gender</div>
-                    <div class="fw-semibold" th:text="${patientGender ?: 'Female'}">Female</div>
+                    <div class="fw-semibold" th:text="${patient.getGender() ?: 'Female'}">Female</div>
                 </div>
 
                 <div class="mb-3">
                     <div class="text-muted small mb-1">Contact Number</div>
-                    <div class="fw-semibold" th:text="${patientPhone ?: '+1 (555) 123-4567'}">+1 (555) 123-4567</div>
+                    <div class="fw-semibold" th:text="${appointment.getPhoneNumber() ?: '+1 (555) 123-4567'}">+1 (555) 123-4567</div>
                 </div>
 
                 <div>
                     <div class="text-muted small mb-1">Email Address</div>
-                    <div class="fw-semibold" th:text="${patientEmail ?: 'jane.doe@example.com'}">jane.doe@example.com</div>
+                    <div class="fw-semibold" th:text="${appointment.getEmail() ?: 'jane.doe@example.com'}">jane.doe@example.com</div>
                 </div>
 
                 <a th:href="@{/doctor/patients/{patientId}(patientId=${appointment.patientId}, doctorId=${doctorId})}" class="btn btn-outline-primary-custom w-100 mt-3">

@@ -128,6 +128,10 @@ public class DoctorController {
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int size,
             @RequestParam(required = false) String status,
+            @RequestParam(required = false) String gender,
+            @RequestParam(required = false) String ageRange,
+            @RequestParam(required = false) String lastVisit,
+            @RequestParam(required = false) String searchTerm,
             Model model,
             Authentication authentication) {
         try {
@@ -144,6 +148,8 @@ public class DoctorController {
 
             logger.info("Fetching paginated patients with appointments for doctor ID: {}, page: {}, size: {}",
                     doctorId, page, size);
+            logger.info("Filter parameters - status: {}, gender: {}, ageRange: {}, lastVisit: {}, searchTerm: {}",
+                    status, gender, ageRange, lastVisit, searchTerm);
 
             // Get paginated patients - either for specific doctor or all patients
             Page<Patient> patientsPage;
@@ -162,12 +168,36 @@ public class DoctorController {
                 }
             }
 
+            // Apply additional client-side filtering for advanced filters
+            List<Patient> filteredPatients = new ArrayList<>(patientsPage.getContent());
+
+            // Apply gender filter - ensuring null values are considered
+            if (gender != null && !gender.isEmpty()) {
+                filteredPatients.removeIf(patient ->
+                    patient.getGender() == null || !patient.getGender().equalsIgnoreCase(gender));
+            }
+
+            // Apply age range filter - null handling is in the method
+            if (ageRange != null && !ageRange.isEmpty()) {
+                filteredPatients = applyAgeRangeFilter(filteredPatients, ageRange);
+            }
+
+            // Apply last visit filter - null handling is in the method
+            if (lastVisit != null && !lastVisit.isEmpty()) {
+                filteredPatients = applyLastVisitFilter(filteredPatients, lastVisit);
+            }
+
+            // Apply search term filter - null handling is in the method
+            if (searchTerm != null && !searchTerm.isEmpty()) {
+                filteredPatients = applySearchTermFilter(filteredPatients, searchTerm);
+            }
+
             // Process patients to enrich with derived data
             int activeCount = 0;
             int newCount = 0;
             int inactiveCount = 0;
 
-            for (Patient patient : patientsPage.getContent()) {
+            for (Patient patient : filteredPatients) {
                 // Calculate age if date of birth is available
                 if (patient.getDateOfBirth() != null) {
                     int age = java.time.Period.between(
@@ -252,7 +282,7 @@ public class DoctorController {
                 }
             }
 
-            model.addAttribute("patients", patientsPage.getContent());
+            model.addAttribute("patients", filteredPatients);
             model.addAttribute("currentPage", page);
             model.addAttribute("totalPages", patientsPage.getTotalPages());
             model.addAttribute("pageSize", size);
@@ -264,6 +294,11 @@ public class DoctorController {
             model.addAttribute("inactivePatients", inactiveCount);
             model.addAttribute("doctorId", doctorId);
             model.addAttribute("selectedStatus", status != null ? status : "all");
+            model.addAttribute("selectedGender", gender);
+            model.addAttribute("selectedAgeRange", ageRange);
+            model.addAttribute("selectedLastVisit", lastVisit);
+            model.addAttribute("searchTerm", searchTerm);
+
             // Get doctor name if doctorId is provided
             if (doctorId != null) {
                 Doctor doctor = doctorRepository.findById(doctorId).orElse(null);
@@ -280,13 +315,156 @@ public class DoctorController {
             model.addAttribute("page", patientsPage);
 
             logger.debug("Retrieved {} patients (page {} of {})",
-                    patientsPage.getContent().size(), page + 1, patientsPage.getTotalPages());
+                    filteredPatients.size(), page + 1, patientsPage.getTotalPages());
             return "doctor/patients";
         } catch (Exception e) {
             logger.error("Error fetching paginated patients", e);
             model.addAttribute("errorMessage", "Failed to retrieve patients: " + e.getMessage());
             return "error";
         }
+    }
+
+    // Helper method to apply age range filter
+    private List<Patient> applyAgeRangeFilter(List<Patient> patients, String ageRange) {
+        if (ageRange == null || ageRange.isEmpty()) {
+            return patients;
+        }
+
+        List<Patient> filtered = new ArrayList<>(patients);
+        int minAge = 0;
+        int maxAge = Integer.MAX_VALUE;
+
+        // Parse age range values
+        if (ageRange.equals("0-18")) {
+            minAge = 0; maxAge = 18;
+        } else if (ageRange.equals("19-35")) {
+            minAge = 19; maxAge = 35;
+        } else if (ageRange.equals("36-50")) {
+            minAge = 36; maxAge = 50;
+        } else if (ageRange.equals("51-65")) {
+            minAge = 51; maxAge = 65;
+        } else if (ageRange.equals("65+")) {
+            minAge = 65; maxAge = Integer.MAX_VALUE;
+        }
+
+        final int finalMinAge = minAge;
+        final int finalMaxAge = maxAge;
+
+        return filtered.stream()
+            .filter(patient -> {
+                if (patient == null) {
+                    return false;
+                }
+
+                if (patient.getAge() == null) {
+                    // Calculate age if not already set
+                    if (patient.getDateOfBirth() != null) {
+                        int age = java.time.Period.between(
+                            patient.getDateOfBirth(),
+                            java.time.LocalDate.now()
+                        ).getYears();
+                        patient.setAge(age);
+                        return age >= finalMinAge && age <= finalMaxAge;
+                    }
+                    return false; // No age data available
+                }
+                return patient.getAge() >= finalMinAge && patient.getAge() <= finalMaxAge;
+            })
+            .collect(java.util.stream.Collectors.toList());
+    }
+
+    // Helper method to apply last visit filter
+    private List<Patient> applyLastVisitFilter(List<Patient> patients, String lastVisit) {
+        List<Patient> filtered = new ArrayList<>(patients);
+        java.time.LocalDate now = java.time.LocalDate.now();
+        java.time.LocalDate compareDate = null;
+
+        // Determine the comparison date based on lastVisit value
+        if (lastVisit.equals("week")) {
+            compareDate = now.minusWeeks(1);
+        } else if (lastVisit.equals("month")) {
+            compareDate = now.minusMonths(1);
+        } else if (lastVisit.equals("3months")) {
+            compareDate = now.minusMonths(3);
+        } else if (lastVisit.equals("6months")) {
+            compareDate = now.minusMonths(6);
+        } else if (lastVisit.equals("year")) {
+            compareDate = now.minusYears(1);
+        }
+
+        if (compareDate == null) {
+            return filtered; // Invalid filter, return all patients
+        }
+
+        final java.time.LocalDate finalCompareDate = compareDate;
+
+        return filtered.stream()
+            .filter(patient -> {
+                String lastVisitStr = patient.getLastVisit();
+                if (lastVisitStr == null || lastVisitStr.equals("Never")) {
+                    return false;
+                }
+
+                if (lastVisitStr.equals("Today")) {
+                    return true; // Today is always within any time range
+                }
+
+                if (lastVisitStr.equals("Yesterday")) {
+                    return true; // Yesterday is always within any time range except same day
+                }
+
+                // Parse "X days ago" format
+                if (lastVisitStr.endsWith(" days ago")) {
+                    try {
+                        int daysAgo = Integer.parseInt(lastVisitStr.replace(" days ago", "").trim());
+                        java.time.LocalDate visitDate = now.minusDays(daysAgo);
+                        return !visitDate.isBefore(finalCompareDate);
+                    } catch (NumberFormatException e) {
+                        return false;
+                    }
+                }
+
+                return false;
+            })
+            .collect(java.util.stream.Collectors.toList());
+    }
+
+    // Helper method to apply search term filter
+    private List<Patient> applySearchTermFilter(List<Patient> patients, String searchTerm) {
+        if (searchTerm == null || searchTerm.isEmpty()) {
+            return patients;
+        }
+
+        String lowercaseSearchTerm = searchTerm.toLowerCase();
+
+        return patients.stream()
+            .filter(patient -> {
+                // Check patient name
+                if (patient.getUser() != null && patient.getUser().getFullName() != null &&
+                    patient.getUser().getFullName().toLowerCase().contains(lowercaseSearchTerm)) {
+                    return true;
+                }
+
+                // Check patient ID
+                if (("P" + patient.getPatientId()).toLowerCase().contains(lowercaseSearchTerm)) {
+                    return true;
+                }
+
+                // Check phone number
+                if (patient.getUser() != null && patient.getUser().getPhoneNumber() != null &&
+                    patient.getUser().getPhoneNumber().toLowerCase().contains(lowercaseSearchTerm)) {
+                    return true;
+                }
+
+                // Check email
+                if (patient.getUser() != null && patient.getUser().getEmail() != null &&
+                    patient.getUser().getEmail().toLowerCase().contains(lowercaseSearchTerm)) {
+                    return true;
+                }
+
+                return false;
+            })
+            .collect(java.util.stream.Collectors.toList());
     }
 
     @GetMapping("/patients/{patientId}")

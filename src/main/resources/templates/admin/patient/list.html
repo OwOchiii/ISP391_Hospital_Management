@@ -557,7 +557,7 @@
                             <td th:text="${p.user.phoneNumber}">0123456789</td>
                             <td th:text="${p.dateOfBirth}">1980-05-15</td>
                             <td th:text="${p.gender}">Male</td>
-                            <td th:text="${p.address}">123 Ly Thuong Kiet...</td>
+                            <td th:text="${p.getPrimaryAddress()}">123 Ly Thuong Kiet...</td>
                             <td th:text="${p.description}">Allergic to penicillin.</td>
                             <td th:text="${#temporals.format(p.user.createdAt,'yyyy-MM-dd HH:mm')}">2025-05-29 10:36</td>
                             <td>
