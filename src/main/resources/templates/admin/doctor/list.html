@@ -721,6 +721,10 @@
                         </div>
 
                         <div class="doctor-actions">
+                            <button class="btn-outline-custom btn-sm" type="button" data-bs-toggle="modal" data-bs-target="#doctorModal" data-mode="edit"
+                                    th:attr="data-id=${d.doctorId}, data-fullname=${d.user.fullName}, data-email=${d.user.email}, data-phone=${d.user.phoneNumber}, data-bio=${d.bioDescription}, data-status=${d.user.status}">
+                                <i class="bi bi-pencil-square"></i> Edit
+                            </button>
                             <button class="btn-outline-custom btn-sm" type="button" data-bs-toggle="collapse"
                                     th:attr="data-bs-target='#details-' + ${d.doctorId}" aria-expanded="false"
                                     th:attrappend="aria-controls='details-' + ${d.doctorId}">
@@ -923,7 +927,7 @@
     function toggleDoctorLock(button) {
         const doctorId = button.getAttribute('data-doctor-id');
         const currentStatus = button.getAttribute('data-current-status');
-        const newStatus = currentStatus === 'LOCKED' ? 'ACTIVE' : 'LOCKED';
+        const newStatus = currentStatus === 'LOCKED' ? 'ACTIVE' : 'LOCKED'; // Only ACTIVE or LOCKED
 
         if (!doctorId) {
             showAlert('error', 'Invalid doctor ID');
