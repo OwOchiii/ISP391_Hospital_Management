@@ -367,7 +367,7 @@
             transition: all 0.3s ease;
             border: 1px solid rgba(102, 126, 234, 0.1);
             display: flex;
-            align-items: center;
+            /*align-items: center;*/
             /*justify-content: space-between;*/
             min-height: 20px;
             height: auto;
@@ -384,7 +384,7 @@
             height: 3rem;
             border-radius: 6px;
             display: flex;
-            /*align-items: center;*/
+            align-items: center;
             justify-content: center;
             font-size: 1.2rem;
             color: white;
@@ -472,7 +472,7 @@
 
         /* Tables */
         .card {
-            background: var--bg-white);
+            background: white;
             border-radius: 15px;
             box-shadow: 0 2px 15px rgba(0, 0, 0, 0.08);
             border: 2px solid rgba(102, 126, 234, 0.2);
@@ -743,19 +743,26 @@
             </header>
 
             <!-- Notification Modal -->
-            <div id="notificationModal" class="notification-modal">
-                <h5>System Notifications</h5>
-                <div id="notificationList"></div>
+            <div class="notification-modal" id="notificationModal">
+                <h5>Notifications</h5>
+                <div class="notification-item">
+                    <p><strong>New Payment:</strong> INV-001 completed.</p>
+                    <small>2 hours ago</small>
+                </div>
+                <div class="notification-item">
+                    <p><strong>Pending Payment:</strong> INV-002 awaiting confirmation.</p>
+                    <small>1 day ago</small>
+                </div>
             </div>
 
             <!-- Quick Access Action Bar -->
             <div class="quick-access">
                 <h5>Quick Access</h5>
                 <div class="d-flex gap-3 flex-wrap">
-                    <a href="/receptionist/book_appointment" class="btn btn-primary">
+                    <a href="/receptionist/new_appointment" class="btn btn-primary">
                         <i class="fas fa-calendar-plus"></i> Book Appointment
                     </a>
-                    <a href="/receptionist/register_patients" class="btn btn-primary">
+                    <a href="/receptionist/patient_register" class="btn btn-primary">
                         <i class="fas fa-user-plus"></i> Register Patient
                     </a>
                 </div>
