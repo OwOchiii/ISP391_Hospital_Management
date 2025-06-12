@@ -4,6 +4,10 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Book Appointment - MediCare Plus</title>
+  <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+  <script src="https://code.jquery.com/ui/1.12.1/jquery-ui.min.js"></script>
+  <link rel="stylesheet" href="https://code.jquery.com/ui/1.12.1/themes/base/jquery-ui.css">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/dompurify/2.4.5/purify.min.js"></script>
 
   <!-- Bootstrap CSS -->
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
@@ -705,16 +709,14 @@
       </div>
     </a>
   </div>
-
   <nav class="sidebar-nav">
     <div class="nav-section-title">Dashboard</div>
     <div class="nav-item">
-      <a th:href="@{/patient/dashboard(patientId=${patientId})}" class="nav-link">
+      <a th:href="@{/patient/dashboard}" class="nav-link">
         <i class="bi bi-speedometer2"></i>
         Dashboard
       </a>
     </div>
-
     <div class="nav-section-title">Medical Services</div>
     <div class="nav-item">
       <a th:href="@{/patient/search-doctor(patientId=${patientId})}" class="nav-link">
@@ -723,26 +725,24 @@
       </a>
     </div>
     <div class="nav-item">
-      <a th:href="@{/patient/book-appointment(patientId=${patientId})}" class="nav-link active">
+      <a th:href="@{/patient/book-appointment}" class="nav-link active">
         <i class="bi bi-calendar-plus"></i>
         Book Appointment
       </a>
     </div>
     <div class="nav-item">
-      <a th:href="@{/patient/appointment-list(patientId=${patientId})}" class="nav-link">
+      <a th:href="@{/patient/appointment-list}" class="nav-link">
         <i class="bi bi-calendar-check"></i>
         My Appointments
       </a>
     </div>
-
     <div class="nav-section-title">Account</div>
     <div class="nav-item">
-      <a th:href="@{/patient/profile(patientId=${patientId})}" class="nav-link">
+      <a th:href="@{/patient/profile}" class="nav-link">
         <i class="bi bi-person"></i>
         My Profile
       </a>
     </div>
-
     <div class="nav-section-title">Support</div>
     <div class="nav-item">
       <a th:href="@{/patient/customer-support(patientId=${patientId})}" class="nav-link">
@@ -751,12 +751,11 @@
       </a>
     </div>
     <div class="nav-item">
-      <a th:href="@{/patient/feedback(patientId=${patientId})}" class="nav-link">
+      <a th:href="@{/patient/feedback}" class="nav-link">
         <i class="bi bi-chat-square-text"></i>
         Feedback
       </a>
     </div>
-
     <div class="nav-section-title">System</div>
     <div class="nav-item">
       <form th:action="@{/auth/logout}" method="post">
@@ -781,9 +780,9 @@
     </div>
 
     <div class="header-right">
-      <a th:href="@{/patient/dashboard(patientId=${patientId})}" class="btn-outline-custom">
+      <a th:href="@{/patient/appointment-list}" class="btn-outline-custom">
         <i class="bi bi-arrow-left"></i>
-        Back to Dashboard
+        Back to Appointment List
       </a>
       <div class="patient-info">
         <div class="patient-avatar">
@@ -803,12 +802,13 @@
     <div class="page-header">
       <h1 class="page-title">
         <i class="bi bi-calendar-plus"></i>
-        Book New Appointment
+        <span th:if="${isUpdate}">Update Appointment</span>
+        <span th:unless="${isUpdate}">Book New Appointment</span>
       </h1>
       <nav>
         <ol class="breadcrumb">
-          <li class="breadcrumb-item"><a th:href="@{/patient/dashboard(patientId=${patientId})}">Dashboard</a></li>
-          <li class="breadcrumb-item active">Book Appointment</li>
+          <li class="breadcrumb-item"><a th:href="@{/patient/dashboard}">Dashboard</a></li>
+          <li class="breadcrumb-item active" th:text="${isUpdate} ? 'Update Appointment' : 'Book Appointment'"></li>
         </ol>
       </nav>
     </div>
@@ -827,8 +827,9 @@
       </h2>
 
       <form th:action="@{/patient/book-appointment}" th:object="${appointmentForm}" method="post" id="appointmentForm">
+        <input type="hidden" th:field="*{appointmentId}" />
         <input type="hidden" th:field="*{patientId}" th:value="${patientId}" />
-        <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}" />
+
         <div class="row">
           <!-- Specialty Selection -->
           <div class="col-md-6 mb-3">
@@ -856,7 +857,7 @@
             <label for="doctorId" class="form-label">
               Select Doctor <span class="required-asterisk">*</span>
             </label>
-            <select id="doctorId" th:field="*{doctorId}" class="form-select" onchange="showDoctorInfo()" required>
+            <select id="doctorId" th:field="*{doctorId}" class="form-select" onchange="updateDoctorsAndTimeSlots()" required>
               <option value="">Choose a Doctor</option>
             </select>
             <div th:if="${#fields.hasErrors('doctorId')}" class="error-message">
@@ -884,8 +885,8 @@
             <label for="appointmentDate" class="form-label">
               Appointment Date <span class="required-asterisk">*</span>
             </label>
-            <input type="date" id="appointmentDate" th:field="*{appointmentDate}"
-                   class="form-control" required onchange="updateTimeSlots()" />
+            <input type="text" id="appointmentDate" th:field="*{appointmentDate}"
+                   class="form-control" required placeholder="YYYY-MM-DD" />
             <div th:if="${#fields.hasErrors('appointmentDate')}" class="error-message">
               <i class="bi bi-exclamation-circle"></i>
               <span th:errors="*{appointmentDate}">Date is required</span>
@@ -946,8 +947,7 @@
             </label>
             <div class="contact-field">
               <input type="tel" id="phoneNumber" th:field="*{phoneNumber}"
-                     th:value="${patient.user?.phoneNumber}" class="form-control"
-                     placeholder="0123456789" required />
+                     class="form-control" placeholder="0123456789" required />
               <button type="button" class="reset-btn" onclick="resetPhoneNumber()">
                 <i class="bi bi-arrow-clockwise"></i>
               </button>
@@ -967,8 +967,7 @@
             </label>
             <div class="contact-field">
               <input type="email" id="email" th:field="*{email}"
-                     th:value="${patient.user?.email}" class="form-control"
-                     placeholder="patient@example.com" required />
+                     class="form-control" placeholder="patient@example.com" maxlength="50" required />
               <button type="button" class="reset-btn" onclick="resetEmail()">
                 <i class="bi bi-arrow-clockwise"></i>
               </button>
@@ -993,9 +992,9 @@
             Reason for Visit / Symptoms (Optional)
           </label>
           <textarea id="description" th:field="*{description}" class="form-control"
-                    rows="4" maxlength="500"
-                    placeholder="Please describe your symptoms or reason for the appointment..."></textarea>
-          <small class="text-muted">Maximum 500 characters</small>
+                    rows="4" maxlength="250" placeholder="Please describe your symptoms or reason for the appointment..."
+                    style="resize: none;" oninput="sanitizeOnInput(this); autoResize(this)"></textarea>
+          <small class="text-muted">Maximum 250 characters. HTML, scripts, and links are not allowed.</small>
           <div th:if="${#fields.hasErrors('description')}" class="error-message">
             <i class="bi bi-exclamation-circle"></i>
             <span th:errors="*{description}">Description is too long</span>
@@ -1006,33 +1005,36 @@
         <div class="text-center">
           <button type="button" class="btn-primary-custom" onclick="showConfirmation()">
             <i class="bi bi-calendar-check"></i>
-            Book Appointment
+            <span th:if="${isUpdate}">Update Appointment</span>
+            <span th:unless="${isUpdate}">Book Appointment</span>
           </button>
         </div>
       </form>
     </div>
   </div>
-</div>
 
-<!-- Confirmation Modal -->
-<div class="confirmation-overlay" id="confirmationOverlay">
-  <div class="confirmation-dialog">
-    <div class="confirmation-icon">
-      <i class="bi bi-calendar-check"></i>
-    </div>
-    <h3 class="confirmation-title">Confirm Appointment</h3>
-    <p class="confirmation-message">
-      Please review your appointment details and confirm to proceed with the booking.
-    </p>
-    <div class="confirmation-actions">
-      <button class="btn-primary-custom" onclick="confirmBooking(true)">
-        <i class="bi bi-check-circle"></i>
-        Confirm Booking
-      </button>
-      <button class="btn-outline-custom" onclick="confirmBooking(false)">
-        <i class="bi bi-x-circle"></i>
-        Cancel
-      </button>
+  <!-- Confirmation Modal -->
+  <div class="confirmation-overlay" id="confirmationOverlay">
+    <div class="confirmation-dialog">
+      <div class="confirmation-icon">
+        <i class="bi bi-calendar-check"></i>
+      </div>
+      <h3 class="confirmation-title" th:text="${isUpdate} ? 'Confirm Update' : 'Confirm Appointment'"></h3>
+      <p class="confirmation-message">
+        <span th:if="${isUpdate}">Please review your updated appointment details and confirm to proceed with the changes.</span>
+        <span th:unless="${isUpdate}">Please review your appointment details and confirm to proceed with the booking.</span>
+      </p>
+      <div class="confirmation-actions">
+        <button class="btn-primary-custom" onclick="confirmBooking(true)">
+          <i class="bi bi-check-circle"></i>
+          <span th:if="${isUpdate}">Confirm Update</span>
+          <span th:unless="${isUpdate}">Confirm Booking</span>
+        </button>
+        <button class="btn-outline-custom" onclick="confirmBooking(false)">
+          <i class="bi bi-x-circle"></i>
+          Cancel
+        </button>
+      </div>
     </div>
   </div>
 </div>
@@ -1046,6 +1048,9 @@
   const initialPhoneNumber = /*[[${patient.user?.phoneNumber}]]*/ '';
   const initialEmail = /*[[${patient.user?.email}]]*/ '';
   const patientId = /*[[${patientId}]]*/ '';
+  const isUpdate = /*[[${isUpdate}]]*/ false;
+  const initialDoctorId = /*[[${appointmentForm.doctorId}]]*/ '';
+  const initialSpecialtyId = /*[[${appointmentForm.specialtyId}]]*/ '';
 
   // Sidebar toggle functionality
   function toggleSidebar() {
@@ -1092,14 +1097,35 @@
                   option.text = `Dr. ${doctor.fullName}`;
                   option.setAttribute('data-bio', doctor.bioDescription || 'Experienced medical professional');
                   option.setAttribute('data-name', doctor.fullName);
+                  if (isUpdate && doctor.doctorId == initialDoctorId) {
+                    option.selected = true;
+                  }
                   doctorSelect.appendChild(option);
                 });
                 doctorSelect.classList.remove('loading');
+                if (isUpdate && initialDoctorId) {
+                  showDoctorInfo();
+                }
               })
               .catch(error => {
                 console.error('Error fetching doctors:', error);
                 doctorSelect.classList.remove('loading');
               });
+    }
+
+    // Update time slots if a date is already selected
+    const appointmentDate = document.getElementById('appointmentDate').value;
+    if (appointmentDate && document.getElementById('doctorId').value) {
+      updateTimeSlots();
+    }
+  }
+
+  // Update both doctors and time slots when doctor changes
+  function updateDoctorsAndTimeSlots() {
+    showDoctorInfo();
+    const appointmentDate = document.getElementById('appointmentDate').value;
+    if (appointmentDate) {
+      updateTimeSlots();
     }
   }
 
@@ -1109,7 +1135,7 @@
     const selectedOption = doctorSelect.options[doctorSelect.selectedIndex];
     const doctorInfo = document.getElementById('doctorInfoDisplay');
 
-    if (selectedOption.value) {
+    if (selectedOption && selectedOption.value) {
       const doctorName = selectedOption.getAttribute('data-name');
       const doctorBio = selectedOption.getAttribute('data-bio');
       const specialtySelect = document.getElementById('specialtyId');
@@ -1130,6 +1156,7 @@
   function updateTimeSlots() {
     const dateInput = document.getElementById('appointmentDate').value;
     const doctorId = document.getElementById('doctorId').value;
+    const appointmentId = /*[[${appointmentForm.appointmentId}]]*/ '';
 
     if (dateInput && doctorId) {
       const timeSlots = document.querySelectorAll('.time-slot');
@@ -1137,12 +1164,18 @@
       // Reset all time slots
       timeSlots.forEach(slot => {
         slot.classList.remove('selected', 'disabled');
+        slot.title = "Available";
       });
 
       document.getElementById('appointmentTime').value = '';
 
-      // Fetch doctor availability for the selected date and doctor
-      fetch(`/patient/api/doctor-availability?date=${dateInput}&doctorId=${doctorId}`)
+      // Construct fetch URL conditionally based on isUpdate
+      let fetchUrl = `/patient/api/doctor-availability?date=${dateInput}&doctorId=${doctorId}`;
+      if (isUpdate && appointmentId) {
+        fetchUrl += `&appointmentId=${appointmentId}`;
+      }
+
+      fetch(fetchUrl)
               .then(response => response.json())
               .then(availability => {
                 const bookedTimes = availability.bookedTimes || [];
@@ -1150,7 +1183,6 @@
 
                 timeSlots.forEach(slot => {
                   const time = slot.getAttribute('data-time');
-                  // Mark slot as disabled if it's either directly booked or within the buffer period of a booked slot
                   if (bookedTimes.includes(time)) {
                     slot.classList.add('disabled');
                     slot.title = "This time slot is already booked";
@@ -1191,15 +1223,66 @@
     document.getElementById('email').value = initialEmail;
   }
 
+  // Sanitize Description input to prevent XSS, HTML, and malicious URLs
+  function sanitizeDescription(input) {
+    // Step 1: Encode HTML characters to prevent HTML rendering
+    const encoded = input.replace(/</g, '&lt;').replace(/>/g, '&gt;')
+                         .replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+
+    // Step 2: Remove or encode potential script tags and dangerous URLs
+    const div = document.createElement('div');
+    div.innerText = encoded; // Use innerText to ensure no HTML/script execution
+    let sanitized = div.innerHTML;
+
+    // Step 3: Remove any remaining <a> tags or URLs with dangerous protocols
+    sanitized = sanitized.replace(/<a\b[^>]*>(.*?)<\/a>/gi, '$1'); // Remove <a> tags, keep content
+    sanitized = sanitized.replace(/\b(javascript|data):/gi, ''); // Remove dangerous protocols
+
+    // Step 4: Normalize whitespace and trim
+    sanitized = sanitized.trim().replace(/\s+/g, ' ');
+
+    return sanitized;
+  }
+
+  // Trim and clean input fields on blur
+  function cleanInputOnBlur(id, isStrict = false) {
+    const element = document.getElementById(id);
+    if (!element) return;
+
+    element.addEventListener('blur', () => {
+      let value = element.value.trim();
+
+      if (isStrict) {
+        // Remove all spaces for strict fields (phone/email)
+        value = value.replace(/\s+/g, '');
+      } else {
+        // Sanitize Description field
+        if (id === 'description') {
+          value = sanitizeDescription(value);
+        } else {
+          // Normalize spacing between words (one space only)
+          value = value.replace(/\s+/g, ' ');
+        }
+      }
+
+      element.value = value;
+    });
+  }
+
+  // Apply trimming logic to input fields
+  cleanInputOnBlur('phoneNumber', true); // strict: no space at all
+  cleanInputOnBlur('email', true);       // strict: no space at all
+  cleanInputOnBlur('description', false); // sanitize and normalize spaces
+
   // Show confirmation dialog
   function showConfirmation() {
-    // Validate required fields
     const specialtyId = document.getElementById('specialtyId').value;
     const doctorId = document.getElementById('doctorId').value;
     const appointmentDate = document.getElementById('appointmentDate').value;
     const appointmentTime = document.getElementById('appointmentTime').value;
     const phoneNumber = document.getElementById('phoneNumber').value.trim();
     const email = document.getElementById('email').value.trim();
+    let description = document.getElementById('description').value.trim();
 
     // Basic validation
     if (!specialtyId) {
@@ -1227,10 +1310,10 @@
       return;
     }
 
-    // Phone number validation (must start with 0 and be 10 or 12 digits)
+    // Phone number validation: must start with 0 and be 10 or 12 digits long
     const phoneRegex = /^0\d{9}$|^0\d{11}$/;
-    if (!phoneRegex.test(phoneNumber.replace(/\s+/g, ''))) {
-      alert('Phone number must start with 0 and be either 10 or 12 digits long.');
+    if (!phoneRegex.test(phoneNumber)) {
+      alert('Phone number must start with 0 and be either 10 or 12 digits long, with no spaces.');
       return;
     }
 
@@ -1240,6 +1323,10 @@
       alert('Please enter a valid email address.');
       return;
     }
+
+    // Sanitize description before confirmation
+    description = sanitizeDescription(description);
+    document.getElementById('description').value = description;
 
     // Show confirmation dialog
     document.getElementById('confirmationOverlay').classList.add('active');
@@ -1253,8 +1340,11 @@
     if (confirm) {
       // Clean up form data before submission
       const phoneNumber = document.getElementById('phoneNumber').value.replace(/\s+/g, '');
-      const email = document.getElementById('email').value.trim();
-      const description = document.getElementById('description').value.trim();
+      const email = document.getElementById('email').value.replace(/\s+/g, '');
+      let description = document.getElementById('description').value.trim();
+
+      // Final sanitization of description
+      description = sanitizeDescription(description);
 
       document.getElementById('phoneNumber').value = phoneNumber;
       document.getElementById('email').value = email;
@@ -1276,12 +1366,37 @@
     const maxDate = new Date(tomorrow);
     maxDate.setDate(tomorrow.getDate() + 7);
 
+    // Initialize jQuery UI Datepicker for appointmentDate
     const dateInput = document.getElementById('appointmentDate');
-    dateInput.setAttribute('min', tomorrow.toISOString().split('T')[0]);
-    dateInput.setAttribute('max', maxDate.toISOString().split('T')[0]);
+    if (dateInput) {
+      $(dateInput).datepicker({
+        dateFormat: 'yy-mm-dd', // Match ISO format for form submission
+        minDate: tomorrow,
+        maxDate: maxDate,
+        beforeShowDay: function(date) {
+          const day = date.getDay();
+          // Disable Saturday (6) and Sunday (0)
+          return [day !== 0 && day !== 6, day !== 0 && day !== 6 ? '' : 'ui-state-disabled'];
+        },
+        onSelect: function(dateText) {
+          // Update time slots when a date is selected
+          updateTimeSlots();
+        }
+      });
+    }
+
+    // For update mode, populate doctor dropdown
+    if (isUpdate && initialSpecialtyId) {
+      updateDoctors();
+    }
   });
 
   window.addEventListener('resize', checkScreenSize);
+
+  function autoResize(textarea) {
+    textarea.style.height = 'auto';
+    textarea.style.height = textarea.scrollHeight + 'px';
+  }
   /*]]>*/
 </script>
 </body>

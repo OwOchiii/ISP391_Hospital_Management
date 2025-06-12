@@ -5,15 +5,19 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.dao.DataAccessException;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import orochi.model.Appointment;
-import orochi.model.Patient;
 import orochi.model.Doctor;
-import orochi.model.Users;
 import orochi.model.DoctorForm;
+import orochi.model.Patient;
+import orochi.model.Users;
 import orochi.repository.AppointmentRepository;
 import orochi.repository.DoctorRepository;
+import orochi.repository.PatientContactRepository;
 import orochi.repository.PatientRepository;
 import orochi.repository.UserRepository;
 
@@ -33,15 +37,20 @@ public class DoctorService {
     private final PatientRepository patientRepository;
     private final DoctorRepository doctorRepository;
     private final UserRepository userRepository;
+    @Getter
+    private final PatientContactRepository patientContactRepository;
 
     @Autowired
     public DoctorService(AppointmentRepository appointmentRepository,
                          PatientRepository patientRepository,
-                         DoctorRepository doctorRepository, UserRepository userRepository) {
+                         DoctorRepository doctorRepository,
+                         UserRepository userRepository,
+                         PatientContactRepository patientContactRepository) {
         this.appointmentRepository = appointmentRepository;
         this.patientRepository = patientRepository;
         this.doctorRepository = doctorRepository;
         this.userRepository = userRepository;
+        this.patientContactRepository = patientContactRepository;
     }
 
     /**
@@ -94,7 +103,9 @@ public class DoctorService {
      */
     public List<Appointment> getTodayAppointments(Integer doctorId) {
         try {
-            logger.info("Fetching today's appointments for doctor ID: {}", doctorId);
+            LocalDateTime startOfDay = LocalDateTime.now().toLocalDate().atStartOfDay();
+            LocalDateTime endOfDay = startOfDay.plusDays(1).minusSeconds(1);
+            logger.info("Fetching today's appointments for doctor ID: {} (from {} to {})", doctorId, startOfDay, endOfDay);
             return appointmentRepository.findTodayAppointmentsForDoctor(doctorId);
         } catch (DataAccessException e) {
             logger.error("Failed to fetch today's appointments for doctor ID: {}", doctorId, e);
@@ -185,6 +196,8 @@ public class DoctorService {
      * @return the number of active doctors
      */
 
+
+
     public List<Doctor> getAllDoctors() {
         try {
             logger.info("Fetching all doctors");
@@ -242,6 +255,19 @@ public class DoctorService {
         }
     }
 
+    /**
+     * Find all patients with pagination
+     */
+    public Page<Patient> findAllPatients(int page, int size) {
+        try {
+            logger.info("Fetching all patients with pagination, page: {}, size: {}", page, size);
+            return patientRepository.findAll(PageRequest.of(page, size));
+        } catch (DataAccessException e) {
+            logger.error("Failed to fetch all patients with pagination", e);
+            return Page.empty();
+        }
+    }
+
     public List<Doctor> searchDoctors(String search, String statusFilter) {
         String trimmed = (search != null && !search.isBlank()) ? search.trim() : null;
         String status = (statusFilter != null && !statusFilter.isBlank()) ? statusFilter.trim() : null;
@@ -256,14 +282,14 @@ public class DoctorService {
 
     public DoctorForm loadForm(int doctorId) {
         Doctor d = getDoctorById(doctorId);
-        Users u  = d.getUser();
+        Users u = d.getUser();
         DoctorForm form = new DoctorForm();
         form.setDoctorId(d.getDoctorId());
         form.setUserId(u.getUserId());
-        form.setFullName(      u.getFullName());
-        form.setEmail(         u.getEmail());
-        form.setPhoneNumber(   u.getPhoneNumber());
-        form.setStatus(        u.getStatus());
+        form.setFullName(u.getFullName());
+        form.setEmail(u.getEmail());
+        form.setPhoneNumber(u.getPhoneNumber());
+        form.setStatus(u.getStatus());
         form.setBioDescription(d.getBioDescription());
         return form;
     }
@@ -281,10 +307,10 @@ public class DoctorService {
             u.setGuest(false);
             u.setCreatedAt(LocalDateTime.now());
         }
-        u.setFullName(    form.getFullName());
-        u.setEmail(       form.getEmail());
-        u.setPhoneNumber( form.getPhoneNumber());
-        u.setStatus(      form.getStatus());
+        u.setFullName(form.getFullName());
+        u.setEmail(form.getEmail());
+        u.setPhoneNumber(form.getPhoneNumber());
+        u.setStatus(form.getStatus());
         userRepository.save(u);
 
         // 2) xử lý Doctor
@@ -294,11 +320,105 @@ public class DoctorService {
         } else {
             d = new Doctor();
         }
-        d.setUserId(       u.getUserId());
+        d.setUserId(u.getUserId());
         d.setBioDescription(form.getBioDescription());
         doctorRepository.save(d);
     }
 
+    /**
+     * Get doctor by ID
+     * @param doctorId The doctor's ID
+     * @return The doctor object
+     * @throws IllegalArgumentException if doctor not found
+     */
+    public Doctor getDoctorById(Integer doctorId) {
+        logger.info("Getting doctor by ID: {}", doctorId);
+        return doctorRepository.findById(doctorId)
+                .orElseThrow(() -> new IllegalArgumentException("Doctor not found with ID: " + doctorId));
+    }
 
+    public List<Patient> findAllPatients() {
+        try {
+            logger.info("Fetching all patients without pagination");
+            return patientRepository.findAll();
+        } catch (DataAccessException e) {
+            logger.error("Failed to fetch all patients", e);
+            return Collections.emptyList();
+        }
+    }
+
+    /**
+     * Find patients by status with pagination
+     */
+    public Page<Patient> findAllPatientsByStatus(String status, int page, int size) {
+        try {
+            logger.info("Fetching patients with status: {}, page: {}, size: {}", status, page, size);
+            Pageable pageable = PageRequest.of(page, size);
+            return patientRepository.findByStatus(status, pageable);
+        } catch (DataAccessException e) {
+            logger.error("Failed to fetch patients by status: {}", status, e);
+            return Page.empty();
+        }
+    }
+
+    /**
+     * Toggle the lock status of a doctor's account
+     * @param doctorId The doctor's ID
+     */
+    public void toggleDoctorLock(Integer doctorId) {
+        try {
+            logger.info("Toggling lock status for doctor ID: {}", doctorId);
+
+            Doctor doctor = getDoctorById(doctorId);
+            Users user = doctor.getUser();
+
+            if (user == null) {
+                logger.error("Cannot toggle lock status: No user found for doctor ID: {}", doctorId);
+                throw new IllegalStateException("No user account found for this doctor");
+            }
+
+            // Toggle between Active and Inactive status (according to SQL schema constraint)
+            if ("Active".equals(user.getStatus())) {
+                user.setStatus("Inactive");
+                logger.info("Doctor ID: {} has been deactivated (set to Inactive)", doctorId);
+            } else {
+                user.setStatus("Active");
+                logger.info("Doctor ID: {} has been activated (set to Active)", doctorId);
+            }
+
+            userRepository.save(user);
+        } catch (Exception e) {
+            logger.error("Error toggling lock status for doctor ID: {}", doctorId, e);
+            throw new RuntimeException("Failed to toggle doctor lock status: " + e.getMessage(), e);
+        }
+    }
+
+    public Page<Patient> findByDoctorAndStatus(Integer doctorId, String status, int page, int size) {
+        try {
+            logger.info("Fetching patients for doctor ID: {} with status: {}, page: {}, size: {}",
+                    doctorId, status, page, size);
+            PageRequest pageRequest = PageRequest.of(page, size);
+            // Use methods that don't require appointments
+            return patientRepository.findByStatus(status, pageRequest);
+            // Alternatively, if you want to filter by assigned doctor:
+            // return patientRepository.findByAssignedDoctorIdAndStatus(doctorId, status, pageRequest);
+        } catch (DataAccessException e) {
+            logger.error("Failed to fetch patients for doctor ID: {} with status: {}", doctorId, status, e);
+            return Page.empty();
+        }
+    }
+
+    public Page<Patient> findByDoctor(Integer doctorId, int page, int size) {
+        try {
+            logger.info("Fetching paginated patients for doctor ID: {}, page: {}, size: {}", doctorId, page, size);
+            Pageable pageable = PageRequest.of(page, size);
+            // Use findAll to get all patients, not just those with appointments
+            return patientRepository.findAll(pageable);
+            // Alternatively, if you want to filter by assigned doctor:
+            // return patientRepository.findByAssignedDoctorIdPaginated(doctorId, pageable);
+        } catch (DataAccessException e) {
+            logger.error("Failed to fetch paginated patients for doctor ID: {}", doctorId, e);
+            return Page.empty();
+        }
+    }
 }
-

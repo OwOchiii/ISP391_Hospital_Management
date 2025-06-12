@@ -4,6 +4,7 @@ import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import org.hibernate.annotations.DynamicUpdate;
 
 import java.time.LocalDateTime;
 
@@ -12,6 +13,7 @@ import java.time.LocalDateTime;
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
+@DynamicUpdate
 public class Users {
 
     @Id
@@ -37,9 +39,6 @@ public class Users {
     @Column(name = "IsGuest", nullable = false, columnDefinition = "bit default 0")
     private boolean isGuest;
 
-    @Column(name = "Status", nullable = false)
-    private String status;
-
     @ManyToOne
     @JoinColumn(name = "RoleID", insertable = false, updatable = false)
     private Role role;
@@ -53,11 +52,28 @@ public class Users {
     @Column(name = "created_at", nullable = false, updatable = false)
     private LocalDateTime createdAt;
 
+    @Column(name = "Status", nullable = false, columnDefinition = "varchar(10) DEFAULT 'Active'")
+    private String status = "Active";
+
     // Optional: Use JPA's @PrePersist to set the timestamp automatically
     @PrePersist
     protected void onCreate() {
         this.createdAt = LocalDateTime.now();
+        if (this.status == null) {
+            this.status = "Active";
+        }
     }
 
-
+    @Override
+    public String toString() {
+        return "Users{" +
+                "userId=" + userId +
+                ", fullName='" + fullName + '\'' +
+                ", email='" + email + '\'' +
+                ", phoneNumber='" + phoneNumber + '\'' +
+                ", isGuest=" + isGuest +
+                ", roleId=" + (role != null ? role.getRoleId() : null) +
+                ", createdAt=" + createdAt +
+                '}';
+    }
 }

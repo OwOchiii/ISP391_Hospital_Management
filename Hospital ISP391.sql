@@ -571,3 +571,176 @@ BEGIN
         END
 END;
 GO
+
+-- Add email and phone number fields to Appointment table
+ALTER TABLE [Appointment]
+    ADD [Email] varchar(255) NULL,
+        [PhoneNumber] varchar(20) NULL;
+GO
+
+-- Add comment explaining the purpose of these fields
+EXEC sp_addextendedproperty
+     @name = N'Column_Description',
+     @value = 'Optional contact email for appointment notifications',
+     @level0type = N'Schema', @level0name = 'dbo',
+     @level1type = N'Table',  @level1name = 'Appointment',
+     @level2type = N'Column', @level2name = 'Email';
+GO
+
+EXEC sp_addextendedproperty
+     @name = N'Column_Description',
+     @value = 'Optional contact phone number for appointment notifications',
+     @level0type = N'Schema', @level0name = 'dbo',
+     @level1type = N'Table',  @level1name = 'Appointment',
+     @level2type = N'Column', @level2name = 'PhoneNumber';
+GO
+
+ALTER TABLE [Appointment] DROP CONSTRAINT [CK__Appointme__Statu__4F7CD00D];
+
+-- Step 2: Add the updated CHECK constraint (Check your own constraint name and replace it if necessary)
+ALTER TABLE [Appointment] ADD CONSTRAINT [CK__Appointme__Statu__4F7CD00D]
+    CHECK (Status IN ('Scheduled', 'Completed', 'Cancel', 'Pending'));
+
+-- Add DoctorNotes table to store notes for appointments
+CREATE TABLE [DoctorNotes] (
+                               [NoteID] int PRIMARY KEY IDENTITY(1,1),
+                               [AppointmentID] int NOT NULL,
+                               [DoctorID] int NOT NULL,
+                               [NoteContent] varchar(max) NOT NULL,
+                               [CreatedAt] datetime NOT NULL DEFAULT GETDATE(),
+                               [UpdatedAt] datetime NULL
+)
+GO
+
+-- Add foreign key constraints
+ALTER TABLE [DoctorNotes] ADD FOREIGN KEY ([AppointmentID]) REFERENCES [Appointment] ([AppointmentID])
+GO
+
+ALTER TABLE [DoctorNotes] ADD FOREIGN KEY ([DoctorID]) REFERENCES [Doctor] ([DoctorID])
+GO
+
+-- Add index for faster queries
+CREATE INDEX [IX_DoctorNotes_AppointmentID] ON [DoctorNotes] ([AppointmentID])
+GO
+
+-- Add description
+EXEC sp_addextendedproperty
+     @name = N'Table_Description',
+     @value = 'Stores doctor notes for patient appointments',
+     @level0type = N'Schema', @level0name = 'dbo',
+     @level1type = N'Table',  @level1name = 'DoctorNotes'
+GO
+
+-- Sample data (optional, for testing)
+-- INSERT INTO [DoctorNotes] ([AppointmentID], [DoctorID], [NoteContent])
+-- VALUES (1, 1, 'Patient reported mild improvements after starting new medication. Recommended continuing current treatment plan with follow-up in 2 weeks.');
+
+
+-- Updated trigger that allows role changes but keeps associated records
+CREATE OR ALTER TRIGGER trg_ManageUserRoleChanges
+    ON [Users]
+    AFTER UPDATE
+    AS
+BEGIN
+    SET NOCOUNT ON;
+
+    IF UPDATE(RoleID) -- Only execute if RoleID was updated
+        BEGIN
+            DECLARE @RoleIDForPatient INT = (SELECT [RoleID] FROM [Role] WHERE [RoleName] = 'PATIENT');
+            DECLARE @RoleIDForDoctor INT = (SELECT [RoleID] FROM [Role] WHERE [RoleName] = 'DOCTOR');
+
+            -- Process each updated row individually
+            DECLARE @UserID INT, @NewRoleID INT, @OldRoleID INT
+            DECLARE user_cursor CURSOR FOR
+                SELECT i.[UserID], i.[RoleID], d.[RoleID]
+                FROM inserted i
+                         INNER JOIN deleted d ON i.[UserID] = d.[UserID]
+                WHERE i.[RoleID] <> d.[RoleID]; -- Only process rows where role actually changed
+
+            OPEN user_cursor
+            FETCH NEXT FROM user_cursor INTO @UserID, @NewRoleID, @OldRoleID
+
+            WHILE @@FETCH_STATUS = 0
+                BEGIN
+                    -- Check if changing TO doctor role
+                    IF @NewRoleID = @RoleIDForDoctor AND @OldRoleID = @RoleIDForPatient
+                        BEGIN
+                            -- Keep the Patient record but also add Doctor record
+                            IF NOT EXISTS (SELECT 1 FROM [Doctor] WHERE [UserID] = @UserID)
+                                BEGIN
+                                    INSERT INTO [Doctor] ([UserID], [BioDescription])
+                                    VALUES (@UserID, NULL);
+                                END
+                        END
+                        -- Check if changing TO patient role
+                    ELSE IF @NewRoleID = @RoleIDForPatient AND @OldRoleID = @RoleIDForDoctor
+                        BEGIN
+                            -- Keep the Doctor record but also add Patient record
+                            IF NOT EXISTS (SELECT 1 FROM [Patient] WHERE [UserID] = @UserID)
+                                BEGIN
+                                    INSERT INTO [Patient] ([UserID], [dateOfBirth], [gender], [address], [description])
+                                    VALUES (@UserID, NULL, NULL, NULL, NULL);
+                                END
+                        END
+                        -- If changing to any other role, just keep existing records
+                    ELSE
+                        BEGIN
+                            -- Make sure appropriate role-specific record exists
+                            IF @NewRoleID = @RoleIDForPatient AND NOT EXISTS (SELECT 1 FROM [Patient] WHERE [UserID] = @UserID)
+                                BEGIN
+                                    INSERT INTO [Patient] ([UserID], [dateOfBirth], [gender], [address], [description])
+                                    VALUES (@UserID, NULL, NULL, NULL, NULL);
+                                END
+                            ELSE IF @NewRoleID = @RoleIDForDoctor AND NOT EXISTS (SELECT 1 FROM [Doctor] WHERE [UserID] = @UserID)
+                                BEGIN
+                                    INSERT INTO [Doctor] ([UserID], [BioDescription])
+                                    VALUES (@UserID, NULL);
+                                END
+                        END
+
+                    FETCH NEXT FROM user_cursor INTO @UserID, @NewRoleID, @OldRoleID
+                END
+
+            CLOSE user_cursor
+            DEALLOCATE user_cursor
+        END
+END;
+
+ALTER TABLE [Users]
+ADD [Status] VARCHAR(10) DEFAULT 'Active' CHECK ([Status] IN ('Active', 'Inactive', 'Suspended')) NOT NULL;
+
+ALTER TABLE [Patient] DROP COLUMN [address];
+
+-- Add PatientID column
+    ALTER TABLE Schedule ADD PatientID INT NULL;
+
+-- Add EventType column with default value 'appointment'
+    ALTER TABLE Schedule ADD EventType VARCHAR(20) NOT NULL DEFAULT 'appointment';
+
+-- Add Description column
+    ALTER TABLE Schedule ADD Description VARCHAR(255) NULL;
+
+-- Add foreign key constraint for PatientID referencing Patient table
+    ALTER TABLE Schedule ADD CONSTRAINT FK_Schedule_Patient
+        FOREIGN KEY (PatientID) REFERENCES Patient(PatientID);
+
+    Alter table Schedule add IsCompleted bit NOT NULL DEFAULT 0;
+
+-- Create Feedback table
+CREATE TABLE [Feedback] (
+    [FeedbackID] int PRIMARY KEY IDENTITY(1,1),
+    [UserID] int NOT NULL,
+    [description] varchar(max) NOT NULL,
+    [created_at] DATETIME NOT NULL DEFAULT GETDATE(),
+    FOREIGN KEY ([UserID]) REFERENCES [Users] ([UserID])
+);
+
+-- Add index for faster queries on UserID
+CREATE INDEX [IX_Feedback_UserID] ON [Feedback] ([UserID]);
+
+-- Add table description
+EXEC sp_addextendedproperty
+     @name = N'Table_Description',
+     @value = 'Stores user feedback for the Medicare system',
+     @level0type = N'Schema', @level0name = 'dbo',
+     @level1type = N'Table',  @level1name = 'Feedback';

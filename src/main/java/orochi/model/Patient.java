@@ -4,6 +4,7 @@ import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import org.hibernate.annotations.DynamicUpdate;
 
 import java.time.LocalDate;
 import java.util.List;
@@ -13,6 +14,7 @@ import java.util.List;
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
+@DynamicUpdate
 public class Patient {
 
     @Id
@@ -28,7 +30,6 @@ public class Patient {
 
     @Column(name = "gender")
     private String gender;
-
 
     @Column(name = "description", length = Integer.MAX_VALUE)
     private String description;
@@ -46,7 +47,33 @@ public class Patient {
     @OneToMany(mappedBy = "patient")
     private List<Prescription> prescriptions;
 
+    @Transient
+    private Integer age;
+
+    @Transient
+    private String status;
+
+    @Transient
+    private Integer totalAppointments;
+
+    @Transient
+    private Integer upcomingAppointments;
+
+    @Transient
+    private String lastVisit;
+
     public String getFullName() {
         return user != null ? user.getFullName() : null;
+    }
+
+    @Override
+    public String toString() {
+        return "Patient{" +
+                "patientId=" + patientId +
+                ", userId=" + (user != null ? user.getUserId() : null) +
+                ", dateOfBirth=" + dateOfBirth +
+                ", gender='" + gender + '\'' +
+                ", description='" + description + '\'' +
+                '}';
     }
 }

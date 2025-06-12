@@ -1,11 +1,14 @@
 package orochi.controller;
 
+import jakarta.servlet.http.HttpServletRequest;
 import orochi.model.Users;
+import orochi.service.CaptchaService;
 import orochi.service.EmailService;
 import orochi.service.UserService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.ModelAttribute;
@@ -18,14 +21,18 @@ import org.springframework.ui.Model;
 @Controller
 @RequestMapping("/auth")
 public class AuthController {
-
+    private final CaptchaService captchaService; // Assuming you have a CaptchaService for CAPTCHA validation
     private final EmailService emailService;
     private final UserService userService;
     private static final Logger logger = LoggerFactory.getLogger(AuthController.class);
-    private static final int roleId = 4; // Assuming 1 is the default role ID for new users
+    private static final int roleId = 4; // Assuming 4 is the default role ID for new users
+
+    @Value("${google.recaptcha.key.site}")
+    private String recaptchaSiteKey;
 
     @Autowired
-    public AuthController(EmailService emailService, UserService userService) {
+    public AuthController(CaptchaService captchaService, EmailService emailService, UserService userService) {
+        this.captchaService = captchaService;
         this.emailService = emailService;
         this.userService = userService;
     }
@@ -34,6 +41,8 @@ public class AuthController {
     public String login(
             @RequestParam(value = "error", required = false) String error,
             @RequestParam(value = "logout", required = false) String logout,
+            @RequestParam(value = "captchaError", required = false) String captchaError,
+            HttpServletRequest request,
             Model model) {
 
         if (error != null) {
@@ -46,11 +55,51 @@ public class AuthController {
             logger.info("User logged out successfully");
         }
 
-        return "auth/login"; // Returns the login.html page
+        if (captchaError != null) {
+            // Build a more descriptive error message based on the error code
+            String errorMessage;
+            switch (captchaError) {
+                case "EMPTY_RESPONSE":
+                    errorMessage = "Please complete the reCAPTCHA verification";
+                    break;
+                case "VALIDATION_FAILED":
+                    errorMessage = "reCAPTCHA verification failed - please try again";
+                    break;
+                default:
+                    errorMessage = "reCAPTCHA error: " + captchaError;
+            }
+            model.addAttribute("errorMessage", errorMessage);
+
+            // Add debug information if available
+            String debugInfo = (String) request.getSession().getAttribute("CAPTCHA_DEBUG_INFO");
+            if (debugInfo != null) {
+                logger.debug("CAPTCHA debug info: {}", debugInfo);
+                model.addAttribute("captchaDebugInfo", debugInfo);
+            }
+
+            logger.warn("CAPTCHA verification failed with code: {}", captchaError);
+
+            // Get the username from session if it was saved during CAPTCHA error
+            String lastUsername = (String) request.getSession().getAttribute("LAST_USERNAME");
+            if (lastUsername != null) {
+                model.addAttribute("lastUsername", lastUsername);
+                // Remove the attribute once used
+                request.getSession().removeAttribute("LAST_USERNAME");
+            }
+
+            // Clear the CAPTCHA error flags
+            request.getSession().removeAttribute("CAPTCHA_ERROR");
+            request.getSession().removeAttribute("CAPTCHA_DEBUG_INFO");
+        }
+
+        // Add the site key to the model using the injected property
+        model.addAttribute("captchaSiteKey", recaptchaSiteKey);
+        return "auth/login";
     }
 
     @GetMapping("/register")
-    public String register() {
+    public String register(Model model) {
+        model.addAttribute("captchaSiteKey", recaptchaSiteKey);
         return "auth/register"; // Returns the register.html page
     }
 
@@ -61,8 +110,15 @@ public class AuthController {
                                      @RequestParam String password,
                                      @RequestParam String phoneNumber,
                                      @RequestParam(required = false, defaultValue = "false") boolean agreeTerms,
+                                     @RequestParam("g-recaptcha-response") String captchaResponse,
                                      Model model,
                                      RedirectAttributes redirectAttributes) {
+
+        if (!captchaService.validateCaptcha(captchaResponse)) {
+            model.addAttribute("errorMessage", "Please verify you are not a robot");
+            model.addAttribute("captchaSiteKey", recaptchaSiteKey);
+            return "auth/register";
+        }
 
         // Check if terms were agreed to
         if (!agreeTerms) {
@@ -82,7 +138,7 @@ public class AuthController {
         user.setPhoneNumber(phoneNumber);
         user.setRoleId(roleId);
         user.setGuest(false); // Assuming new registrations are not guests by default
-        user.setStatus("ACTIVE");
+        user.setStatus("Active");
 
         try {
             userService.registerNewUser(user);
@@ -114,7 +170,7 @@ public class AuthController {
             String resetUrl = "http://localhost:8090/auth/reset-password?token=" + token + "&email=" + email;
 
             // Log the reset URL to console for development purposes
-            //logger.info("PASSWORD RESET LINK: {}", resetUrl);
+            logger.info("PASSWORD RESET LINK: {}", resetUrl);
             emailService.sendPasswordResetEmail(email, resetUrl);
             // Add success message to model
             model.addAttribute("successMessage", "Password reset instructions have been sent to your email.");

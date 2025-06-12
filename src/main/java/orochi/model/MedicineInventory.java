@@ -1,5 +1,6 @@
 package orochi.model;
 
+import com.fasterxml.jackson.annotation.JsonManagedReference;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Data;
@@ -49,5 +50,6 @@ public class MedicineInventory {
     private String supplier;
 
     @OneToMany(mappedBy = "inventory")
+    @JsonManagedReference("inventory-medicine")
     private List<Medicine> medicines;
 }
