@@ -933,7 +933,7 @@
   <nav class="sidebar-nav">
     <div class="nav-section-title">Dashboard</div>
     <div class="nav-item">
-      <a th:href="@{/patient/dashboard(patientId=${patientId})}" class="nav-link">
+      <a th:href="@{/patient/dashboard}" class="nav-link">
         <i class="bi bi-speedometer2"></i>
         Dashboard
       </a>
@@ -947,13 +947,13 @@
       </a>
     </div>
     <div class="nav-item">
-      <a th:href="@{/patient/book-appointment(patientId=${patientId})}" class="nav-link">
+      <a th:href="@{/patient/book-appointment}" class="nav-link">
         <i class="bi bi-calendar-plus"></i>
         Book Appointment
       </a>
     </div>
     <div class="nav-item">
-      <a th:href="@{/patient/appointment-list(patientId=${patientId})}" class="nav-link active">
+      <a th:href="@{/patient/appointment-list}" class="nav-link active">
         <i class="bi bi-calendar-check"></i>
         My Appointments
       </a>
@@ -961,7 +961,7 @@
 
     <div class="nav-section-title">Account</div>
     <div class="nav-item">
-      <a th:href="@{/patient/profile(patientId=${patientId})}" class="nav-link">
+      <a th:href="@{/patient/profile}" class="nav-link">
         <i class="bi bi-person"></i>
         My Profile
       </a>
@@ -975,7 +975,7 @@
       </a>
     </div>
     <div class="nav-item">
-      <a th:href="@{/patient/feedback(patientId=${patientId})}" class="nav-link">
+      <a th:href="@{/patient/feedback}" class="nav-link">
         <i class="bi bi-chat-square-text"></i>
         Feedback
       </a>
@@ -1005,7 +1005,7 @@
     </div>
 
     <div class="header-right">
-      <a th:href="@{/patient/book-appointment(patientId=${patientId})}" class="btn-primary-custom">
+      <a th:href="@{/patient/book-appointment}" class="btn-primary-custom">
         <i class="bi bi-calendar-plus"></i>
         Book New Appointment
       </a>
@@ -1033,7 +1033,7 @@
           </h1>
           <nav>
             <ol class="breadcrumb">
-              <li class="breadcrumb-item"><a th:href="@{/patient/dashboard(patientId=${patientId})}">Dashboard</a></li>
+              <li class="breadcrumb-item"><a th:href="@{/patient/dashboard}">Dashboard</a></li>
               <li class="breadcrumb-item active">Appointments</li>
             </ol>
           </nav>
@@ -1213,7 +1213,7 @@
               <i class="bi bi-eye"></i>
               View Details
             </a>
-            <a th:href="@{/patient/book-appointment(patientId=${patientId})}"
+            <a th:href="@{/patient/book-appointment}"
                class="btn-primary-custom btn-sm">
               <i class="bi bi-calendar-plus"></i>
               Book Again
@@ -1383,7 +1383,7 @@
       <i class="bi bi-calendar-x"></i>
       <h3>No Appointments Found</h3>
       <p>No appointments match your current search criteria. Try adjusting your filters or search terms.</p>
-      <a th:href="@{/patient/book-appointment(patientId=${patientId})}" class="btn-primary-custom">
+      <a th:href="@{/patient/book-appointment}" class="btn-primary-custom">
         <i class="bi bi-calendar-plus"></i>
         Book Your First Appointment
       </a>

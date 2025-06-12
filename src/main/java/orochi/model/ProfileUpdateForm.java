@@ -2,6 +2,7 @@ package orochi.model;
 
 import jakarta.validation.constraints.*;
 import lombok.Data;
+import org.springframework.format.annotation.DateTimeFormat;
 
 import java.time.LocalDate;
 
@@ -22,6 +23,7 @@ public class ProfileUpdateForm {
 
     @NotNull(message = "Date of Birth is required")
     @Past(message = "Date of Birth must be in the past")
+    @DateTimeFormat(pattern = "yyyy-MM-dd")
     private LocalDate dateOfBirth;
 
     @NotBlank(message = "Gender is required")

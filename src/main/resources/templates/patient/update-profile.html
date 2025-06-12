@@ -7,6 +7,9 @@
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css">
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+  <script src="https://code.jquery.com/ui/1.12.1/jquery-ui.min.js"></script>
+  <link rel="stylesheet" href="https://code.jquery.com/ui/1.12.1/themes/base/jquery-ui.css">
   <style>
     :root {
       --primary-color: #2563eb;
@@ -438,19 +441,19 @@
   </div>
   <nav class="sidebar-nav">
     <div class="nav-item">
-      <a th:href="@{/patient/dashboard(patientId=${patientId})}" class="nav-link"><i class="bi bi-speedometer2"></i> Dashboard</a>
+      <a th:href="@{/patient/dashboard}" class="nav-link"><i class="bi bi-speedometer2"></i> Dashboard</a>
     </div>
     <div class="nav-item">
       <a th:href="@{/patient/search-doctor(patientId=${patientId})}" class="nav-link"><i class="bi bi-search"></i> Search Doctors</a>
     </div>
     <div class="nav-item">
-      <a th:href="@{/patient/book-appointment(patientId=${patientId})}" class="nav-link"><i class="bi bi-calendar-plus"></i> Book Appointment</a>
+      <a th:href="@{/patient/book-appointment}" class="nav-link"><i class="bi bi-calendar-plus"></i> Book Appointment</a>
     </div>
     <div class="nav-item">
-      <a th:href="@{/patient/appointment-list(patientId=${patientId})}" class="nav-link"><i class="bi bi-calendar-check"></i> My Appointments</a>
+      <a th:href="@{/patient/appointment-list}" class="nav-link"><i class="bi bi-calendar-check"></i> My Appointments</a>
     </div>
     <div class="nav-item">
-      <a th:href="@{/patient/profile(patientId=${patientId})}" class="nav-link active"><i class="bi bi-person"></i> My Profile</a>
+      <a th:href="@{/patient/profile}" class="nav-link active"><i class="bi bi-person"></i> My Profile</a>
     </div>
     <div class="nav-item">
       <form th:action="@{/auth/logout}" method="post">
@@ -483,7 +486,7 @@
       <h1 class="page-title"><i class="bi bi-person"></i> Update Profile</h1>
       <nav>
         <ol class="breadcrumb">
-          <li class="breadcrumb-item"><a th:href="@{/patient/profile(patientId=${patientId})}">Profile</a></li>
+          <li class="breadcrumb-item"><a th:href="@{/patient/profile}">Profile</a></li>
           <li class="breadcrumb-item active">Update Profile</li>
         </ol>
       </nav>
@@ -526,7 +529,7 @@
           </div>
           <div class="col-md-6 mb-3">
             <label for="dateOfBirth" class="form-label">Date of Birth <span class="required-asterisk">*</span></label>
-            <input type="date" id="dateOfBirth" th:field="*{dateOfBirth}" class="form-control" required max="2025-06-08" />
+            <input type="text" id="dateOfBirth" th:field="*{dateOfBirth}" class="form-control" required placeholder="YYYY-MM-DD" />
             <div th:if="${#fields.hasErrors('dateOfBirth')}" class="error-message"><i class="bi bi-exclamation-circle"></i> <span th:errors="*{dateOfBirth}"></span></div>
           </div>
         </div>
@@ -550,8 +553,8 @@
           <label for="description" class="form-label">Description (Optional)</label>
           <div class="contact-field">
             <textarea id="description" th:field="*{description}" class="form-control" rows="4" maxlength="250" style="resize: none;" oninput="autoResize(this)"></textarea>
+            <button type="button" class="reset-btn" onclick="resetField('description')"><i class="bi bi-arrow-clockwise"></i></button>
           </div>
-          <button type="button" class="reset-btn mt-2" onclick="resetField('description')"><i class="bi bi-arrow-clockwise"></i> Reset Description</button>
           <small class="text-muted">Maximum 250 characters</small>
           <div th:if="${#fields.hasErrors('description')}" class="error-message"><i class="bi bi-exclamation-circle"></i> <span th:errors="*{description}"></span></div>
         </div>
@@ -565,7 +568,7 @@
         </div>
         <div class="text-center">
           <button type="button" class="btn-primary-custom" onclick="showConfirmation()"><i class="bi bi-check-circle"></i> Update Profile</button>
-          <a th:href="@{/patient/profile(patientId=${patientId})}" class="btn-outline-custom ms-3"><i class="bi bi-arrow-left"></i> Back to Profile</a>
+          <a th:href="@{/patient/profile}" class="btn-outline-custom ms-3"><i class="bi bi-arrow-left"></i> Back to Profile</a>
         </div>
       </form>
     </div>
@@ -640,7 +643,7 @@
       return;
     }
     const today = new Date();
-    today.setHours(0, 0, 0, 0); // Normalize to start of day
+    today.setHours(0, 0, 0, 0);
     const dob = new Date(dateOfBirth);
     if (dob >= today) {
       alert('Date of Birth must be in the past.');
@@ -667,10 +670,23 @@
   }
 
   document.addEventListener('DOMContentLoaded', function() {
+    const dateInput = document.getElementById('dateOfBirth');
+    if (dateInput) {
+      $(dateInput).datepicker({
+        dateFormat: 'yy-mm-dd',
+        changeMonth: true,
+        changeYear: true,
+        yearRange: '1900:2025',
+        maxDate: '-1d'
+      });
+    }
+
     const today = new Date();
     const yesterday = new Date(today);
     yesterday.setDate(today.getDate() - 1);
-    document.getElementById('dateOfBirth').setAttribute('max', yesterday.toISOString().split('T')[0]);
+    if (dateInput) {
+      dateInput.setAttribute('max', yesterday.toISOString().split('T')[0]);
+    }
   });
 
   function autoResize(textarea) {

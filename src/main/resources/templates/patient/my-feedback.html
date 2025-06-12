@@ -116,16 +116,16 @@
   </div>
   <nav class="sidebar-nav">
     <div class="nav-section-title">Dashboard</div>
-    <div class="nav-item"><a th:href="@{/patient/dashboard(patientId=${patientId})}" class="nav-link"><i class="bi bi-speedometer2"></i> Dashboard</a></div>
+    <div class="nav-item"><a th:href="@{/patient/dashboard}" class="nav-link"><i class="bi bi-speedometer2"></i> Dashboard</a></div>
     <div class="nav-section-title">Medical Services</div>
     <div class="nav-item"><a th:href="@{/patient/search-doctor(patientId=${patientId})}" class="nav-link"><i class="bi bi-search"></i> Search Doctors</a></div>
-    <div class="nav-item"><a th:href="@{/patient/book-appointment(patientId=${patientId})}" class="nav-link"><i class="bi bi-calendar-plus"></i> Book Appointment</a></div>
-    <div class="nav-item"><a th:href="@{/patient/appointment-list(patientId=${patientId})}" class="nav-link"><i class="bi bi-calendar-check"></i> My Appointments</a></div>
+    <div class="nav-item"><a th:href="@{/patient/book-appointment}" class="nav-link"><i class="bi bi-calendar-plus"></i> Book Appointment</a></div>
+    <div class="nav-item"><a th:href="@{/patient/appointment-list}" class="nav-link"><i class="bi bi-calendar-check"></i> My Appointments</a></div>
     <div class="nav-section-title">Account</div>
-    <div class="nav-item"><a th:href="@{/patient/profile(patientId=${patientId})}" class="nav-link"><i class="bi bi-person"></i> My Profile</a></div>
+    <div class="nav-item"><a th:href="@{/patient/profile}" class="nav-link"><i class="bi bi-person"></i> My Profile</a></div>
     <div class="nav-section-title">Support</div>
     <div class="nav-item"><a th:href="@{/patient/customer-support(patientId=${patientId})}" class="nav-link"><i class="bi bi-headset"></i> Customer Support</a></div>
-    <div class="nav-item"><a th:href="@{/patient/feedback(patientId=${patientId})}" class="nav-link"><i class="bi bi-chat-square-text"></i> Feedback</a></div>
+    <div class="nav-item"><a th:href="@{/patient/feedback}" class="nav-link"><i class="bi bi-chat-square-text"></i> Feedback</a></div>
     <div class="nav-section-title">System</div>
     <div class="nav-item">
       <form th:action="@{/auth/logout}" method="post">
@@ -142,7 +142,7 @@
       <h4 class="mb-0">My Feedback</h4>
     </div>
     <div class="header-right">
-      <a th:href="@{/patient/dashboard(patientId=${patientId})}" class="btn-outline-custom"><i class="bi bi-arrow-left"></i> Back to Dashboard</a>
+      <a th:href="@{/patient/dashboard}" class="btn-outline-custom"><i class="bi bi-arrow-left"></i> Back to Dashboard</a>
       <div class="patient-info">
         <div class="patient-avatar"><span th:text="${patientName != null ? #strings.substring(patientName, 0, 2).toUpperCase() : 'PT'}">PT</span></div>
         <div><div class="fw-semibold" th:text="${patientName != null ? patientName : 'Patient'}">Patient</div><small class="text-muted" th:text="${'ID: ' + patientId}">ID: 123</small></div>
@@ -207,7 +207,7 @@
         </ul>
       </nav>
       <div class="text-center">
-        <a th:href="@{/patient/feedback(patientId=${patientId})}" class="btn-outline-custom"><i class="bi bi-arrow-left"></i> Back to Feedback</a>
+        <a th:href="@{/patient/feedback}" class="btn-outline-custom"><i class="bi bi-arrow-left"></i> Back to Feedback</a>
       </div>
     </div>
   </div>
