@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Patient Profile - MediCare Plus</title>
+  <title>Cancel Appointment - MediCare Plus</title>
 
   <!-- Bootstrap CSS -->
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
@@ -300,17 +300,17 @@
       color: var(--text-muted);
     }
 
-    /* Profile Card */
-    .profile-card {
+    /* Appointment Card */
+    .appointment-card {
       background: var(--bg-white);
       border-radius: 16px;
       box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
       padding: 2rem;
-      border-left: 4px solid var(--patient-primary);
+      border-left: 4px solid var(--error-color);
       position: relative;
     }
 
-    .profile-header {
+    .appointment-header {
       display: flex;
       justify-content: space-between;
       align-items: flex-start;
@@ -318,11 +318,11 @@
       gap: 1rem;
     }
 
-    .profile-info {
+    .appointment-info {
       flex: 1;
     }
 
-    .profile-title {
+    .appointment-title {
       font-size: 1.25rem;
       font-weight: 700;
       color: var(--text-dark);
@@ -332,13 +332,70 @@
       gap: 0.5rem;
     }
 
-    .profile-id {
+    .appointment-id {
       font-size: 0.875rem;
       color: var(--text-muted);
       font-weight: 500;
     }
 
-    .profile-details {
+    .appointment-status {
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+    }
+
+    .status-badge {
+      padding: 0.5rem 1rem;
+      border-radius: 20px;
+      font-weight: 600;
+      font-size: 0.75rem;
+      text-transform: uppercase;
+      letter-spacing: 0.025em;
+      display: flex;
+      align-items: center;
+      gap: 0.25rem;
+    }
+
+    .status-scheduled {
+      background: #dbeafe;
+      color: #1e40af;
+    }
+
+    .appointment-datetime {
+      background: var(--bg-light);
+      padding: 1rem;
+      border-radius: 12px;
+      margin-bottom: 1.5rem;
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+    }
+
+    .datetime-icon {
+      width: 50px;
+      height: 50px;
+      border-radius: 12px;
+      background: linear-gradient(135deg, var(--patient-primary), var(--patient-secondary));
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: white;
+      font-size: 1.25rem;
+    }
+
+    .datetime-info h6 {
+      margin: 0;
+      font-weight: 600;
+      color: var(--text-dark);
+    }
+
+    .datetime-info p {
+      margin: 0;
+      color: var(--text-light);
+      font-size: 0.875rem;
+    }
+
+    .appointment-details {
       display: grid;
       grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
       gap: 1rem;
@@ -363,12 +420,44 @@
       font-size: 1rem;
       font-weight: 500;
       color: var(--text-dark);
-      background: var(--bg-light);
-      padding: 0.5rem;
-      border-radius: 8px;
     }
 
-    .profile-description {
+    .doctor-info {
+      background: var(--bg-light);
+      padding: 1rem;
+      border-radius: 12px;
+      margin-bottom: 1.5rem;
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+    }
+
+    .doctor-avatar {
+      width: 50px;
+      height: 50px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, var(--info-color), var(--patient-accent));
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: white;
+      font-weight: 700;
+      font-size: 1.125rem;
+    }
+
+    .doctor-details h6 {
+      margin: 0;
+      font-weight: 600;
+      color: var(--text-dark);
+    }
+
+    .doctor-details p {
+      margin: 0;
+      font-size: 0.875rem;
+      color: var(--text-light);
+    }
+
+    .appointment-description {
       background: var(--bg-light);
       padding: 1rem;
       border-radius: 8px;
@@ -376,7 +465,7 @@
       margin-bottom: 1.5rem;
     }
 
-    .profile-description h6 {
+    .appointment-description h6 {
       font-weight: 600;
       margin-bottom: 0.5rem;
       color: var(--text-dark);
@@ -385,10 +474,27 @@
       gap: 0.5rem;
     }
 
-    .profile-description p {
+    .appointment-description p {
       margin: 0;
       color: var(--text-light);
       line-height: 1.5;
+    }
+
+    .description-input {
+      width: 100%;
+      border: 2px solid var(--border-color);
+      border-radius: 8px;
+      padding: 0.75rem;
+      font-size: 1rem;
+      transition: all 0.3s ease;
+      resize: vertical;
+      min-height: 100px;
+    }
+
+    .description-input:focus {
+      border-color: var(--patient-primary);
+      box-shadow: 0 0 0 0.2rem rgba(5, 150, 105, 0.25);
+      outline: none;
     }
 
     .btn-primary-custom {
@@ -413,25 +519,115 @@
       text-decoration: none;
     }
 
-    .btn-outline-custom {
-      border: 2px solid var(--success-color);
-      color: var(--success-color);
+    .btn-danger-custom {
+      border: 2px solid var(--error-color);
+      color: var(--error-color);
       background: transparent;
       padding: 0.75rem 1.5rem;
-      border-radius: 12px;
+      border-radius: 8px;
       font-weight: 600;
       text-decoration: none;
       transition: all 0.3s ease;
       display: inline-flex;
       align-items: center;
       gap: 0.5rem;
+      cursor: pointer;
     }
 
-    .btn-outline-custom:hover {
-      background: var(--success-color);
+    .btn-danger-custom:hover {
+      background: var(--error-color);
       color: white;
       transform: translateY(-2px);
       text-decoration: none;
+    }
+
+    /* Modal Styles */
+    .modal-overlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0, 0, 0, 0.5);
+      z-index: 2000;
+      display: none;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .modal-overlay.active {
+      display: flex;
+    }
+
+    .modal-dialog {
+      background: var(--bg-white);
+      border-radius: 20px;
+      padding: 2rem;
+      max-width: 500px;
+      width: 90%;
+      box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+      text-align: center;
+      animation: slideIn 0.3s ease-out;
+      position: relative;
+      z-index: 2100;
+      pointer-events: auto;
+    }
+
+    @keyframes slideIn {
+      from {
+        opacity: 0;
+        transform: translateY(-30px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    .modal-icon {
+      width: 80px;
+      height: 80px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin: 0 auto 1.5rem;
+      color: white;
+      font-size: 2rem;
+    }
+
+    .modal-icon.danger {
+      background: linear-gradient(135deg, var(--error-color), #dc2626);
+    }
+
+    .modal-title {
+      font-size: 1.5rem;
+      font-weight: 700;
+      color: var(--text-dark);
+      margin-bottom: 1rem;
+    }
+
+    .modal-message {
+      color: var(--text-light);
+      margin-bottom: 2rem;
+      line-height: 1.6;
+    }
+
+    .modal-actions {
+      display: flex;
+      gap: 1rem;
+      justify-content: center;
+    }
+
+    .modal-actions button {
+      pointer-events: auto;
+    }
+
+    /* Read-only styles */
+    .detail-value.read-only {
+      background: var(--bg-light);
+      padding: 0.5rem;
+      border-radius: 8px;
     }
 
     /* Responsive Design */
@@ -448,16 +644,16 @@
         padding: 1rem;
       }
 
-      .profile-card {
+      .appointment-card {
         padding: 1.5rem;
       }
 
-      .profile-header {
+      .appointment-header {
         flex-direction: column;
         gap: 1rem;
       }
 
-      .profile-details {
+      .appointment-details {
         grid-template-columns: 1fr;
       }
 
@@ -511,7 +707,7 @@
       </a>
     </div>
     <div class="nav-item">
-      <a th:href="@{/patient/appointment-list}" class="nav-link">
+      <a th:href="@{/patient/appointment-list}" class="nav-link active">
         <i class="bi bi-calendar-check"></i>
         My Appointments
       </a>
@@ -519,7 +715,7 @@
 
     <div class="nav-section-title">Account</div>
     <div class="nav-item">
-      <a th:href="@{/patient/profile}" class="nav-link active">
+      <a th:href="@{/patient/profile}" class="nav-link">
         <i class="bi bi-person"></i>
         My Profile
       </a>
@@ -559,21 +755,21 @@
       <button class="sidebar-toggle" onclick="toggleSidebar()">
         <i class="bi bi-list"></i>
       </button>
-      <h4 class="mb-0">Patient Profile</h4>
+      <h4 class="mb-0">Cancel Appointment</h4>
     </div>
 
     <div class="header-right">
-      <a th:href="@{/patient/dashboard}" class="btn-outline-custom">
-        <i class="bi bi-arrow-left"></i>
-        Back to Dashboard
+      <a th:href="@{/patient/book-appointment}" class="btn-primary-custom">
+        <i class="bi bi-calendar-plus"></i>
+        Book New Appointment
       </a>
       <div class="patient-info">
         <div class="patient-avatar">
-          <span th:text="${patient.user.fullName != null ? #strings.substring(patient.user.fullName, 0, 2).toUpperCase() : 'PT'}">PT</span>
+          <span th:text="${patientName != null ? #strings.substring(patientName, 0, 2).toUpperCase() : 'PT'}">PT</span>
         </div>
         <div>
-          <div class="fw-semibold" th:text="${patient.user.fullName != null ? patient.user.fullName : 'Patient'}">Patient</div>
-          <small class="text-muted" th:text="${'ID: ' + patient.user.userId}">ID: 123</small>
+          <div class="fw-semibold" th:text="${patientName != null ? patientName : 'Patient'}">Patient</div>
+          <small class="text-muted" th:text="${'ID: ' + patientId}">ID: 123</small>
         </div>
       </div>
     </div>
@@ -586,78 +782,135 @@
       <div class="d-flex justify-content-between align-items-center">
         <div>
           <h1 class="page-title">
-            <i class="bi bi-person"></i>
-            My Profile
+            <i class="bi bi-x-circle"></i>
+            Cancel Appointment
           </h1>
           <nav>
             <ol class="breadcrumb">
               <li class="breadcrumb-item"><a th:href="@{/patient/dashboard}">Dashboard</a></li>
-              <li class="breadcrumb-item active">My Profile</li>
+              <li class="breadcrumb-item"><a th:href="@{/patient/appointment-list}">Appointments</a></li>
+              <li class="breadcrumb-item active">Cancel Appointment</li>
             </ol>
           </nav>
         </div>
       </div>
     </div>
 
-    <!-- Profile Card -->
-    <div th:if="${patient != null}" class="profile-card">
-      <div class="profile-header">
-        <div class="profile-info">
-          <div class="profile-title">
-            <span th:text="${patient.user.fullName != null ? patient.user.fullName : 'Patient Profile'}">Patient Profile</span>
+    <!-- Error Message -->
+    <div th:if="${errorMessage}" class="alert alert-danger alert-dismissible fade show" role="alert">
+      <i class="bi bi-exclamation-circle"></i>
+      <span th:text="${errorMessage}"></span>
+      <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    </div>
+
+    <!-- Success Message -->
+    <div th:if="${successMessage}" class="alert alert-success alert-dismissible fade show" role="alert">
+      <i class="bi bi-check-circle"></i>
+      <span th:text="${successMessage}"></span>
+      <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    </div>
+
+    <!-- Appointment Card -->
+    <div class="appointment-card">
+      <div class="appointment-header">
+        <div class="appointment-info">
+          <div class="appointment-title">
+            <span th:text="${appointment.doctor?.user?.fullName != null ? 'Dr. ' + appointment.doctor.user.fullName : 'Doctor Appointment'}">Doctor Appointment</span>
           </div>
-          <div class="profile-id">User ID: <span th:text="${patient.user.userId}">ID</span></div>
+          <div class="appointment-id">Appointment ID: <span th:text="${'APT' + appointment.appointmentId}">APT001234</span></div>
+        </div>
+        <div class="appointment-status">
+          <span class="status-badge status-scheduled">
+            <i class="bi bi-clock"></i>
+            <span th:text="${appointment.status ?: 'Scheduled'}">Scheduled</span>
+          </span>
         </div>
       </div>
 
-      <div class="profile-details">
+      <div class="appointment-datetime">
+        <div class="datetime-icon">
+          <i class="bi bi-calendar-event"></i>
+        </div>
+        <div class="datetime-info">
+          <h6 th:text="${appointment.dateTime != null ? #temporals.format(appointment.dateTime, 'EEEE, MMMM d, yyyy') : 'Date TBD'}">Date TBD</h6>
+          <p th:text="${appointment.dateTime != null ? #temporals.format(appointment.dateTime, 'h:mm a') : 'Time TBD'}">Time TBD</p>
+        </div>
+      </div>
+
+      <div class="doctor-info">
+        <div class="doctor-avatar">
+          <span th:text="${appointment.doctor?.user?.fullName != null ? #strings.substring(appointment.doctor.user.fullName, 0, 2).toUpperCase() : 'DR'}">DR</span>
+        </div>
+        <div class="doctor-details">
+          <h6 th:text="${appointment.doctor?.user?.fullName != null ? 'Dr. ' + appointment.doctor.user.fullName : 'Doctor Name'}">Doctor Name</h6>
+          <p th:text="${appointment.doctor?.specializations != null and !#lists.isEmpty(appointment.doctor.specializations) ? appointment.doctor.specializations[0].specName : 'General Practice'}">General Practice</p>
+        </div>
+      </div>
+
+      <div class="appointment-details">
         <div class="detail-item">
-          <span class="detail-label">Full Name</span>
-          <span class="detail-value" th:text="${patient.user.fullName != null ? patient.user.fullName : 'Not provided'}">Not provided</span>
+          <span class="detail-label">Specialty</span>
+          <span class="detail-value read-only" th:text="${appointment.doctor?.specializations != null and !#lists.isEmpty(appointment.doctor.specializations) ? appointment.doctor.specializations[0].specName : 'General Practice'}">General Practice</span>
+        </div>
+        <div class="detail-item">
+          <span class="detail-label">Room</span>
+          <span class="detail-value read-only" th:text="${appointment.room != null ? 'Room ' + appointment.room.roomNumber : 'TBD'}">TBD</span>
+        </div>
+        <div class="detail-item">
+          <span class="detail-label">Contact</span>
+          <span class="detail-value read-only" th:text="${appointment.phoneNumber ?: 'Not provided'}">Not provided</span>
         </div>
         <div class="detail-item">
           <span class="detail-label">Email</span>
-          <span class="detail-value" th:text="${patient.user.email != null ? patient.user.email : 'Not provided'}">Not provided</span>
-        </div>
-        <div class="detail-item">
-          <span class="detail-label">Phone Number</span>
-          <span class="detail-value" th:text="${patient.user.phoneNumber != null ? patient.user.phoneNumber : 'Not provided'}">Not provided</span>
-        </div>
-        <div class="detail-item">
-          <span class="detail-label">Date of Birth</span>
-          <span class="detail-value" th:text="${patient.dateOfBirth != null ? #temporals.format(patient.dateOfBirth, 'yyyy-MM-dd') : 'Not provided'}">Not provided</span>
-        </div>
-        <div class="detail-item">
-          <span class="detail-label">Gender</span>
-          <span class="detail-value" th:text="${patient.gender != null ? patient.gender : 'Not provided'}">Not provided</span>
-        </div>
-        <div class="detail-item">
-          <span class="detail-label">Street Address</span>
-          <span class="detail-value" th:if="${patient.contacts != null and not #lists.isEmpty(patient.contacts)}" th:text="${patient.contacts[0].streetAddress}">No address provided</span>
-          <span class="detail-value" th:unless="${patient.contacts != null and not #lists.isEmpty(patient.contacts)}">No address provided</span>
+          <span class="detail-value read-only" th:text="${appointment.email ?: 'Not provided'}">Not provided</span>
         </div>
       </div>
 
-      <div class="profile-description">
+      <div class="appointment-description">
         <h6>
           <i class="bi bi-clipboard-pulse"></i>
-          Description
+          Reason for Cancellation
         </h6>
-        <p th:text="${patient.description != null ? patient.description : 'No description provided'}">No description provided</p>
-      </div>
-
-      <div class="d-flex gap-2">
-        <a th:href="@{/patient/update-profile}" class="btn-primary-custom">
-          <i class="bi bi-pencil-square"></i>
-          Update Profile
-        </a>
+        <p class="mb-3">You are about to cancel this appointment. Please provide a reason for the cancellation.</p>
+        <form id="cancelForm" th:action="@{/patient/appointment-list/{id}/cancel(id=${appointment.appointmentId}, patientId=${patientId})}" method="post">
+          <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}" />
+          <input type="hidden" name="patientId" th:value="${patientId}" />
+          <textarea class="description-input" name="description" placeholder="Enter reason for cancellation" th:text="${appointment.description}"></textarea>
+          <div class="mt-3 d-flex gap-2">
+            <button type="button" class="btn-danger-custom" onclick="showCancelModal()">
+              <i class="bi bi-x-circle"></i>
+              Cancel Appointment
+            </button>
+            <a th:href="@{/patient/appointment-list}" class="btn-primary-custom">
+              <i class="bi bi-arrow-left"></i>
+              Back to Appointment List
+            </a>
+          </div>
+        </form>
       </div>
     </div>
+  </div>
+</div>
 
-    <div th:unless="${patient != null}" class="alert alert-danger alert-dismissible fade show" role="alert">
-      <i class="bi bi-exclamation-circle"></i>
-      <span>Patient information not found.</span>
-      <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+<!-- Cancel Confirmation Modal -->
+<div class="modal-overlay" id="cancelModal">
+  <div class="modal-dialog">
+    <div class="modal-icon danger">
+      <i class="bi bi-x-circle"></i>
+    </div>
+    <h3 class="modal-title">Confirm Cancellation</h3>
+    <p class="modal-message">
+      Are you sure you want to cancel this appointment? This action cannot be undone.
+    </p>
+    <div class="modal-actions">
+      <button class="btn-danger-custom" onclick="confirmCancel()">
+        <i class="bi bi-x-circle"></i>
+        Yes, Cancel
+      </button>
+      <button class="btn-primary-custom" onclick="closeModal('cancelModal')">
+        <i class="bi bi-check-circle"></i>
+        No, Keep Appointment
+      </button>
     </div>
   </div>
 </div>
@@ -667,6 +920,9 @@
 
 <script th:inline="javascript">
   /*<![CDATA[*/
+  let currentAppointmentId = /*[[${appointment.appointmentId}]]*/ '';
+  const patientId = /*[[${patientId}]]*/ '';
+
   function toggleSidebar() {
     const sidebar = document.getElementById('sidebar');
     const mainContent = document.getElementById('mainContent');
@@ -684,6 +940,28 @@
       sidebar.classList.remove('collapsed');
       mainContent.classList.remove('expanded');
     }
+  }
+
+  function showCancelModal() {
+    event.preventDefault();
+    console.log('Opening cancel modal for appointment ID:', currentAppointmentId);
+    const cancelModal = document.getElementById('cancelModal');
+    cancelModal.classList.add('active');
+  }
+
+  function closeModal(modalId) {
+    console.log('Closing modal:', modalId);
+    const modal = document.getElementById(modalId);
+    modal.classList.remove('active');
+  }
+
+  function confirmCancel() {
+    console.log('Confirming cancel for appointment ID:', currentAppointmentId);
+    if (currentAppointmentId) {
+      const form = document.getElementById('cancelForm');
+      form.submit();
+    }
+    closeModal('cancelModal');
   }
 
   document.addEventListener('DOMContentLoaded', function() {

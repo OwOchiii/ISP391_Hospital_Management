@@ -53,7 +53,7 @@ public interface AppointmentRepository extends JpaRepository<Appointment, Intege
     List<Appointment> findByDoctorIdAndPatientUserFullNameContainingIgnoreCase(@Param("doctorId") Integer doctorId, @Param("fullName") String fullName);
 
     // Thêm: Phương thức bị thiếu trong AppointmentService
-    @Query("SELECT a FROM Appointment a WHERE a.doctorId = :doctorId AND a.dateTime BETWEEN :startDate AND :endDate ORDER BY a.dateTime")
+    @Query("SELECT a FROM Appointment a WHERE a.doctorId = :doctorId AND a.dateTime BETWEEN :startDate AND :endDate AND a.status != 'Cancel' ORDER BY a.dateTime")
     List<Appointment> findByDoctorIdAndDateTimeBetweenOrderByDateTime(@Param("doctorId") Integer doctorId, @Param("startDate") LocalDateTime startDate, @Param("endDate") LocalDateTime endDate);
 
     List<Appointment> findByPatientIdAndDateTimeAfterOrderByDateTime(Integer patientId, LocalDateTime now);
@@ -126,4 +126,12 @@ public interface AppointmentRepository extends JpaRepository<Appointment, Intege
     Page<Appointment> findAllWithDetails(Pageable pageable);
 
     Page<Appointment> findByStatusOrderByDateTimeDesc(String status, Pageable pageable);
+
+    @Query("SELECT a FROM Appointment a WHERE a.doctorId = :doctorId AND a.dateTime BETWEEN :start AND :end AND a.appointmentId != :appointmentId ORDER BY a.dateTime")
+    List<Appointment> findByDoctorIdAndDateTimeBetweenAndAppointmentIdNotOrderByDateTime(
+            @Param("doctorId") Integer doctorId,
+            @Param("start") LocalDateTime start,
+            @Param("end") LocalDateTime end,
+            @Param("appointmentId") Integer appointmentId);
+
 }

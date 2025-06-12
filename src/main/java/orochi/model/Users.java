@@ -4,6 +4,7 @@ import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import org.hibernate.annotations.DynamicUpdate;
 
 import java.time.LocalDateTime;
 
@@ -12,6 +13,7 @@ import java.time.LocalDateTime;
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
+@DynamicUpdate
 public class Users {
 
     @Id
@@ -61,5 +63,17 @@ public class Users {
             this.status = "Active";
         }
     }
-}
 
+    @Override
+    public String toString() {
+        return "Users{" +
+                "userId=" + userId +
+                ", fullName='" + fullName + '\'' +
+                ", email='" + email + '\'' +
+                ", phoneNumber='" + phoneNumber + '\'' +
+                ", isGuest=" + isGuest +
+                ", roleId=" + (role != null ? role.getRoleId() : null) +
+                ", createdAt=" + createdAt +
+                '}';
+    }
+}
