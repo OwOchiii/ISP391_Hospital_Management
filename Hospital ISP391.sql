@@ -23,6 +23,7 @@ CREATE TABLE [Patient] (
   [UserID] int NOT NULL UNIQUE,
   [dateOfBirth] date NULL,
   [gender] varchar(10) NULL CHECK (gender IN ('Male', 'Female', 'Other')),
+  [address] varchar(255) NULL,
   [description] varchar(max) NULL
 )
 GO

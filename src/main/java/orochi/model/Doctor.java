@@ -60,9 +60,9 @@ public class Doctor {
 
     @ManyToMany
     @JoinTable(
-            name = "DoctorSpecialization",
-            joinColumns = @JoinColumn(name = "DoctorID"),
-            inverseJoinColumns = @JoinColumn(name = "SpecID")
+        name = "DoctorSpecialization",
+        joinColumns = @JoinColumn(name = "DoctorID"),
+        inverseJoinColumns = @JoinColumn(name = "SpecID")
     )
     @JsonIgnore
     private List<Specialization> specializations;
