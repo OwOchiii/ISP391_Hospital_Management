@@ -327,7 +327,7 @@
             color: var(--admin-primary);
             padding: 0.5rem 1rem;
             border-radius: 8px;
-            background: none;
+            background: transparent;
             font-weight: 500;
             text-decoration: none;
             display: inline-flex;
@@ -726,12 +726,12 @@
                                     th:attrappend="aria-controls='details-' + ${p.patientId}">
                                 <i class="bi bi-eye"></i> View Details
                             </button>
-                            <button type="button" class="btn-sm toggle-lock-btn"
-                                    th:classappend="${p.user.status=='LOCKED'} ? 'btn-success-custom' : 'btn-warning-custom'"
-                                    th:text="${p.user.status=='LOCKED'} ? 'Unlock' : 'Lock'"
-                                    th:data-patient-id="${p.patientId}"
-                                    th:data-current-status="${p.user.status}"
-                                    onclick="togglePatientLock(this)"></button>
+                            <form th:action="@{/admin/patients/{id}/toggleLock(id=${p.patientId},adminId=${adminId})}" method="post" style="display:inline">
+                                <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
+                                <button type="submit" class="btn-sm"
+                                        th:classappend="${p.user.status=='LOCKED'} ? 'btn-success-custom' : 'btn-warning-custom'"
+                                        th:text="${p.user.status=='LOCKED'} ? 'Unlock' : 'Lock'"></button>
+                            </form>
                         </div>
 
                         <div class="collapse" th:id="'details-' + ${p.patientId}">
@@ -845,78 +845,6 @@
     function hideAlerts() {
         document.getElementById('successAlert').style.display = 'none';
         document.getElementById('errorAlert').style.display = 'none';
-    }
-
-    // Toggle patient lock status
-    function togglePatientLock(button) {
-        const patientId = button.getAttribute('data-patient-id');
-        const currentStatus = button.getAttribute('data-current-status');
-        const newStatus = currentStatus === 'LOCKED' ? 'ACTIVE' : 'LOCKED';
-
-        if (!patientId) {
-            showAlert('error', 'Invalid patient ID');
-            return;
-        }
-
-        // Disable button while processing
-        button.disabled = true;
-        const patientCard = button.closest('.patient-card');
-        patientCard.style.opacity = '0.7';
-
-        // Get CSRF token
-        const token = document.querySelector('meta[name="_csrf"]').getAttribute('content');
-        const header = document.querySelector('meta[name="_csrf_header"]').getAttribute('content');
-
-        // Make AJAX call to toggle status
-        fetch(`/admin/patients/${patientId}/toggleLock?adminId=${adminId}`, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/x-www-form-urlencoded',
-                [header]: token
-            }
-        })
-            .then(response => {
-                if (!response.ok) {
-                    return response.text().then(text => {
-                        console.log('Raw response:', text); // Log raw response for debugging
-                        try {
-                            const errorData = JSON.parse(text);
-                            throw new Error(`HTTP error! status: ${response.status}, message: ${errorData.message || 'Unknown error'}`);
-                        } catch (e) {
-                            throw new Error(`HTTP error! status: ${response.status}, message: Unexpected response: ${text.substring(0, 50)}...`);
-                        }
-                    });
-                }
-                return response.json();
-            })
-            .then(data => {
-                if (data.success) {
-                    // Update UI
-                    const statusBadge = patientCard.querySelector('.status-badge');
-                    statusBadge.textContent = newStatus;
-                    statusBadge.classList.remove('status-active', 'status-locked');
-                    statusBadge.classList.add(newStatus === 'LOCKED' ? 'status-locked' : 'status-active');
-
-                    // Update button
-                    button.textContent = newStatus === 'LOCKED' ? 'Unlock' : 'Lock';
-                    button.classList.remove('btn-success-custom', 'btn-warning-custom');
-                    button.classList.add(newStatus === 'LOCKED' ? 'btn-success-custom' : 'btn-warning-custom');
-                    button.setAttribute('data-current-status', newStatus);
-
-                    showAlert('success', data.message || `Patient ${newStatus.toLowerCase()} successfully`);
-                } else {
-                    throw new Error(data.message || 'Failed to update status');
-                }
-            })
-            .catch(error => {
-                console.error('Error updating status:', error);
-                showAlert('error', `An error occurred while updating the status: ${error.message}`);
-            })
-            .finally(() => {
-                // Re-enable button and remove loading indicator
-                button.disabled = false;
-                patientCard.style.opacity = '1';
-            });
     }
 
     // Navigation link handlers

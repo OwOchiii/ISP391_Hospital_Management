@@ -730,12 +730,12 @@
                                     th:attrappend="aria-controls='details-' + ${d.doctorId}">
                                 <i class="bi bi-eye"></i> View Details
                             </button>
-                            <button type="button" class="btn-sm toggle-lock-btn"
-                                    th:classappend="${d.user.status=='LOCKED'} ? 'btn-success-custom' : 'btn-warning-custom'"
-                                    th:text="${d.user.status=='LOCKED'} ? 'Unlock' : 'Lock'"
-                                    th:data-doctor-id="${d.doctorId}"
-                                    th:data-current-status="${d.user.status}"
-                                    onclick="toggleDoctorLock(this)"></button>
+                            <form th:action="@{/admin/doctors/{id}/toggleLock(id=${d.doctorId},adminId=${adminId})}" method="post" style="display:inline">
+                                <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
+                                <button type="submit" class="btn-sm"
+                                        th:classappend="${d.user.status=='LOCKED'} ? 'btn-success-custom' : 'btn-warning-custom'"
+                                        th:text="${d.user.status=='LOCKED'} ? 'Unlock' : 'Lock'"></button>
+                            </form>
                         </div>
 
                         <div class="collapse" th:id="'details-' + ${d.doctorId}">
@@ -904,95 +904,6 @@
     // Refresh doctors
     function refreshDoctors() {
         window.location.reload();
-    }
-
-    // Show alert messages
-    function showAlert(type, message) {
-        hideAlerts();
-        const alertId = type === 'success' ? 'successAlert' : 'errorAlert';
-        const messageId = type === 'success' ? 'successMessage' : 'errorMessage';
-        document.getElementById(messageId).textContent = message;
-        document.getElementById(alertId).style.display = 'block';
-        setTimeout(hideAlerts, 5000);
-        window.scrollTo({ top: 0, behavior: 'smooth' });
-    }
-
-    // Hide all alerts
-    function hideAlerts() {
-        document.getElementById('successAlert').style.display = 'none';
-        document.getElementById('errorAlert').style.display = 'none';
-    }
-
-    // Toggle doctor lock status
-    function toggleDoctorLock(button) {
-        const doctorId = button.getAttribute('data-doctor-id');
-        const currentStatus = button.getAttribute('data-current-status');
-        const newStatus = currentStatus === 'LOCKED' ? 'ACTIVE' : 'LOCKED'; // Only ACTIVE or LOCKED
-
-        if (!doctorId) {
-            showAlert('error', 'Invalid doctor ID');
-            return;
-        }
-
-        // Disable button while processing
-        button.disabled = true;
-        const doctorCard = button.closest('.doctor-card');
-        doctorCard.style.opacity = '0.7';
-
-        // Get CSRF token
-        const token = document.querySelector('meta[name="_csrf"]').getAttribute('content');
-        const header = document.querySelector('meta[name="_csrf_header"]').getAttribute('content');
-
-        // Make AJAX call to toggle status
-        fetch(`/admin/doctors/${doctorId}/toggleLock?adminId=${adminId}`, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/x-www-form-urlencoded',
-                [header]: token
-            }
-        })
-            .then(response => {
-                if (!response.ok) {
-                    return response.text().then(text => {
-                        console.log('Raw response:', text);
-                        try {
-                            const errorData = JSON.parse(text);
-                            throw new Error(`HTTP error! status: ${response.status}, message: ${errorData.message || 'Unknown error'}`);
-                        } catch (e) {
-                            throw new Error(`HTTP error! status: ${response.status}, message: Unexpected response: ${text.substring(0, 50)}...`);
-                        }
-                    });
-                }
-                return response.json();
-            })
-            .then(data => {
-                if (data.success) {
-                    // Update UI
-                    const statusBadge = doctorCard.querySelector('.status-badge');
-                    statusBadge.textContent = newStatus;
-                    statusBadge.classList.remove('status-active', 'status-locked');
-                    statusBadge.classList.add(newStatus === 'LOCKED' ? 'status-locked' : 'status-active');
-
-                    // Update button
-                    button.textContent = newStatus === 'LOCKED' ? 'Unlock' : 'Lock';
-                    button.classList.remove('btn-success-custom', 'btn-warning-custom');
-                    button.classList.add(newStatus === 'LOCKED' ? 'btn-success-custom' : 'btn-warning-custom');
-                    button.setAttribute('data-current-status', newStatus);
-
-                    showAlert('success', data.message || `Doctor ${newStatus.toLowerCase()} successfully`);
-                } else {
-                    throw new Error(data.message || 'Failed to update status');
-                }
-            })
-            .catch(error => {
-                console.error('Error updating status:', error);
-                showAlert('error', `An error occurred while updating the status: ${error.message}`);
-            })
-            .finally(() => {
-                // Re-enable button and remove loading indicator
-                button.disabled = false;
-                doctorCard.style.opacity = '1';
-            });
     }
 
     // Validate doctor form
