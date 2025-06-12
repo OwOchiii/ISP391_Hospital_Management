@@ -408,8 +408,9 @@ public class DoctorAppointmentController {
                 model.addAttribute("patient", patient.orElse(null));
                 model.addAttribute("medicalOrders", medicalOrdersPage.getContent());
                 model.addAttribute("doctorId", doctorId);
+                model.addAttribute("doctor", doctorRepository.findById(doctorId).orElse(null));
                 model.addAttribute("results", resultsPage.getContent());
-
+                model.addAttribute("roomNumber", appointment.get().getRoom().getRoomNumber());
                 // Add pagination information to the model
                 model.addAttribute("orderCurrentPage", orderPage);
                 model.addAttribute("orderTotalPages", medicalOrdersPage.getTotalPages());
