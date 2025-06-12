@@ -504,7 +504,7 @@
           <div class="col-md-6 mb-3">
             <label for="fullName" class="form-label">Full Name <span class="required-asterisk">*</span></label>
             <div class="contact-field">
-              <input type="text" id="fullName" th:field="*{fullName}" class="form-control" required />
+              <input type="text" id="fullName" th:field="*{fullName}" class="form-control" maxlength="50" required />
               <button type="button" class="reset-btn" onclick="resetField('fullName')"><i class="bi bi-arrow-clockwise"></i></button>
             </div>
             <div th:if="${#fields.hasErrors('fullName')}" class="error-message"><i class="bi bi-exclamation-circle"></i> <span th:errors="*{fullName}"></span></div>
@@ -512,7 +512,7 @@
           <div class="col-md-6 mb-3">
             <label for="email" class="form-label">Email Address <span class="required-asterisk">*</span></label>
             <div class="contact-field">
-              <input type="email" id="email" th:field="*{email}" class="form-control" required />
+              <input type="email" id="email" th:field="*{email}" class="form-control" maxlength="50" required />
               <button type="button" class="reset-btn" onclick="resetField('email')"><i class="bi bi-arrow-clockwise"></i></button>
             </div>
             <div th:if="${#fields.hasErrors('email')}" class="error-message"><i class="bi bi-exclamation-circle"></i> <span th:errors="*{email}"></span></div>
@@ -561,7 +561,7 @@
         <div class="mb-3">
           <label for="streetAddress" class="form-label">Street Address <span class="required-asterisk">*</span></label>
           <div class="contact-field">
-            <input type="text" id="streetAddress" th:field="*{streetAddress}" class="form-control" required />
+            <input type="text" id="streetAddress" th:field="*{streetAddress}" class="form-control" maxlength="250" required />
             <button type="button" class="reset-btn" onclick="resetField('streetAddress')"><i class="bi bi-arrow-clockwise"></i></button>
           </div>
           <div th:if="${#fields.hasErrors('streetAddress')}" class="error-message"><i class="bi bi-exclamation-circle"></i> <span th:errors="*{streetAddress}"></span></div>
