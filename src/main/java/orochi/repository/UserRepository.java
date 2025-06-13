@@ -23,5 +23,8 @@ public interface UserRepository extends JpaRepository<Users, Integer> {
     // Count active users
     @Query("SELECT COUNT(u) FROM Users u WHERE u.isGuest = :active")
     Integer countByIsGuest(@Param("active") boolean active);
+
+    @Query("SELECT COUNT(u) > 0 FROM Users u WHERE u.phoneNumber = :phoneNumber AND u.userId != :userId")
+    boolean existsByPhoneNumberAndUserIdNot(@Param("phoneNumber") String phoneNumber, @Param("userId") Integer userId);
 }
 

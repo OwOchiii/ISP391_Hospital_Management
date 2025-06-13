@@ -725,3 +725,22 @@ ALTER TABLE [Patient] DROP COLUMN [address];
         FOREIGN KEY (PatientID) REFERENCES Patient(PatientID);
 
     Alter table Schedule add IsCompleted bit NOT NULL DEFAULT 0;
+
+-- Create Feedback table
+CREATE TABLE [Feedback] (
+    [FeedbackID] int PRIMARY KEY IDENTITY(1,1),
+    [UserID] int NOT NULL,
+    [description] varchar(max) NOT NULL,
+    [created_at] DATETIME NOT NULL DEFAULT GETDATE(),
+    FOREIGN KEY ([UserID]) REFERENCES [Users] ([UserID])
+);
+
+-- Add index for faster queries on UserID
+CREATE INDEX [IX_Feedback_UserID] ON [Feedback] ([UserID]);
+
+-- Add table description
+EXEC sp_addextendedproperty
+     @name = N'Table_Description',
+     @value = 'Stores user feedback for the Medicare system',
+     @level0type = N'Schema', @level0name = 'dbo',
+     @level1type = N'Table',  @level1name = 'Feedback';
