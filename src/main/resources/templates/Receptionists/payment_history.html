@@ -2,9 +2,560 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Title</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Payment History - MediCare Plus</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    <style>
+        :root {
+            --primary: #667eea;
+            --secondary: #764ba2;
+            --accent: #a78bfa;
+            --light: #f8fafc;
+            --dark: #3c366b;
+            --text-dark: #1f2937;
+            --text-light: #6b7280;
+            --text-muted: #9ca3af;
+            --bg-light: #f8fafc;
+            --bg-white: #ffffff;
+            --success-color: #10b981;
+            --warning-color: #f59e0b;
+            --error-color: #ef4444;
+            --info-color: #3b82f6;
+            --header-height: 70px;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            line-height: 1.6;
+            color: var(--text-dark);
+            background: var(--bg-light);
+            overflow-x: hidden;
+        }
+
+        .main-content {
+            min-height: 100vh;
+        }
+
+        header {
+            background: var(--bg-white);
+            height: var(--header-height);
+            padding: 0 2rem;
+            box-shadow: 0 2px 20px rgba(0, 0, 0, 0.08);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            position: sticky;
+            top: 0;
+            z-index: 999;
+        }
+
+        .h3 {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: var(--text-dark);
+            margin: 0;
+        }
+
+        .profile-info {
+            display: flex;
+            align-items: center;
+            gap: 1.5rem;
+        }
+
+        .notification-bell {
+            position: relative;
+            cursor: pointer;
+            padding: 0.5rem;
+            border-radius: 8px;
+            transition: all 0.3s ease;
+        }
+
+        .notification-bell:hover {
+            background: var(--light);
+        }
+
+        .badge {
+            font-size: 0.625rem;
+            padding: 0.25em 0.5em;
+            background: var(--error-color);
+        }
+
+        .rounded-circle {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, var(--primary), var(--accent));
+            object-fit: cover;
+        }
+
+        .notification-modal {
+            position: fixed;
+            top: 80px;
+            right: 20px;
+            width: 350px;
+            max-height: 450px;
+            overflow-y: auto;
+            background: var(--bg-white);
+            border: 1px solid rgba(102, 126, 234, 0.1);
+            border-radius: 16px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+            padding: 1.5rem;
+            z-index: 2000;
+            display: none;
+        }
+
+        .notification-modal h5 {
+            font-size: 1.25rem;
+            font-weight: 600;
+            color: var(--text-dark);
+            margin-bottom: 1rem;
+        }
+
+        .notification-item {
+            padding: 0.75rem;
+            border-bottom: 1px solid rgba(102, 126, 234, 0.1);
+            transition: background 0.2s ease;
+        }
+
+        .notification-item:hover {
+            background: var(--light);
+        }
+
+        .notification-item:last-child {
+            border-bottom: none;
+        }
+
+        .card {
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 2px 15px rgba(0, 0, 0, 0.08);
+            border: 2px solid rgba(102, 126, 234, 0.2);
+            transition: all 0.3s ease;
+        }
+
+        .card:hover {
+            box-shadow: 0 8px 30px rgba(102, 126, 234, 0.25);
+        }
+
+        .card-header {
+            background: linear-gradient(135deg, rgba(102, 126, 234, 0.05), rgba(167, 139, 250, 0.05));
+            border-bottom: 1px solid rgba(102, 126, 234, 0.2);
+            padding: 1.75rem;
+        }
+
+        .card-title {
+            font-size: 1.25rem;
+            font-weight: 600;
+            color: var(--text-dark);
+        }
+
+        .card-body {
+            padding: 0.8rem;
+        }
+
+        .input-group-text {
+            background: var(--light);
+            border: 1px solid rgba(102, 126, 234, 0.2);
+            color: var(--primary);
+        }
+
+        .form-control, .form-select {
+            border: 1px solid rgba(102, 126, 234, 0.2);
+            border-radius: 8px;
+            font-size: 0.875rem;
+        }
+
+        .table {
+            --bs-table-hover-bg: var(--light);
+        }
+
+        .table th {
+            font-size: 0.875rem;
+            color: var(--text-muted);
+            font-weight: 500;
+        }
+
+        .table td {
+            font-size: 0.875rem;
+            color: var(--text-dark);
+            vertical-align: middle;
+        }
+
+        .status-dropdown {
+            border-radius: 8px;
+            font-size: 0.75rem;
+            padding: 0.25rem 0.5rem;
+            border: none;
+        }
+
+        .status-dropdown.completed {
+            background-color: #c6f6d5;
+            color: #15803d;
+        }
+
+        .status-dropdown.pending {
+            background-color: #fefcbf;
+            color: #b45309;
+        }
+
+        .btn-export {
+            background: var(--primary);
+            color: white;
+            padding: 0.5rem 1rem;
+            border-radius: 8px;
+            font-size: 0.875rem;
+            border: none;
+            transition: all 0.3s ease;
+        }
+
+        .btn-export:hover {
+            background: var(--secondary);
+            transform: translateY(-2px);
+        }
+
+        .btn-back {
+            background: var(--text-muted);
+            border: none;
+            padding: 0.75rem 1.5rem;
+            border-radius: 8px;
+            font-weight: 600;
+            transition: all 0.3s ease;
+        }
+
+        .btn-back:hover {
+            background: var(--text-light);
+            transform: translateY(-2px);
+        }
+
+        .filter-group {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            flex-wrap: wrap;
+        }
+
+        .filter-label {
+            font-size: 0.875rem;
+            color: var(--text-dark);
+            font-weight: 500;
+        }
+
+        @media (max-width: 768px) {
+            header {
+                padding: 0 1rem;
+            }
+
+            .filter-group {
+                flex-direction: column;
+                align-items: stretch;
+            }
+
+            .input-group, .form-select, .btn-export {
+                width: 100%;
+            }
+        }
+
+        @media (max-width: 576px) {
+            .card {
+                padding: 1rem;
+            }
+
+            .table {
+                font-size: 0.75rem;
+            }
+
+            .table-responsive {
+                overflow-x: auto;
+            }
+        }
+
+        .main-content {
+            animation: fadeInUp 0.6s ease-out;
+        }
+
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+    </style>
 </head>
 <body>
+<div class="container-fluid">
+    <main class="main-content col-12 px-0">
+        <header>
+            <div class="d-flex align-items-center">
+                <h3>Payment History</h3>
+            </div>
+            <div class="profile-info">
+                <div class="notification-bell" onclick="toggleNotificationModal()">
+                    <i class="fas fa-bell"></i>
+                    <span class="badge rounded-pill">3</span>
+                </div>
+                <img src="/images/profile.jpg" alt="Profile" class="rounded-circle">
+            </div>
+        </header>
+        <div class="container-fluid p-4">
+            <div class="mb-3">
+                <button class="btn btn-back" onclick="history.back()">Back</button>
+            </div>
+            <div class="card">
+                <div class="card-header d-flex justify-content-between align-items-center flex-wrap">
+                    <h5 class="card-title">Payment History</h5>
+                    <div class="filter-group">
+                        <div class="input-group" style="width: 250px;">
+                            <span class="input-group-text"><i class="fas fa-search"></i></span>
+                            <input type="text" class="form-control" id="searchInput" placeholder="Search payments...">
+                        </div>
+                        <select class="form-select" id="statusFilter" style="width: 150px;">
+                            <option value="">All Statuses</option>
+                            <option value="completed">Completed</option>
+                            <option value="pending">Pending</option>
+                        </select>
+                        <div class="d-flex align-items-center gap-2">
+                            <span class="filter-label">From:</span>
+                            <input type="date" class="form-control" id="dateFrom" style="width: 150px;">
+                        </div>
+                        <div class="d-flex align-items-center gap-2">
+                            <span class="filter-label">To:</span>
+                            <input type="date" class="form-control" id="dateTo" style="width: 150px;">
+                        </div>
+                        <div class="d-flex align-items-center gap-2">
+                            <select class="form-select" id="exportFormat" style="width: 120px;">
+                                <option value="csv">Export CSV</option>
+                                <option value="xlsx">Export XLSX</option>
+                            </select>
+                            <button class="btn-export" onclick="exportData()"><i class="fas fa-download"></i> Export</button>
+                        </div>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-hover" id="paymentTable">
+                            <thead>
+                            <tr>
+                                <th>Patient Name</th>
+                                <th>Phone</th>
+                                <th>Invoice ID</th>
+                                <th>Amount</th>
+                                <th>Due Date</th>
+                                <th>Status</th>
+                                <th>Action</th>
+                            </tr>
+                            </thead>
+                            <tbody id="paymentTableBody">
+                            </tbody>
+                        </table>
+                    </div>
+                    <div class="d-flex justify-content-between align-items-center mt-3">
+                        <div>
+                            <span>Showing <span id="currentEntries">0-0</span> of <span id="totalEntries">0</span> entries</span>
+                        </div>
+                        <nav>
+                            <ul class="pagination pagination-sm" id="pagination">
+                                <li class="page-item disabled"><a class="page-link" href="#" onclick="changePage(-1)">Previous</a></li>
+                                <li class="page-item active"><a class="page-link" href="#" onclick="changePage(1)">1</a></li>
+                                <li class="page-item"><a class="page-link" href="#" onclick="changePage(1)">Next</a></li>
+                            </ul>
+                        </nav>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+</div>
+<div class="notification-modal" id="notificationModal">
+    <h5>Notifications</h5>
+    <div class="notification-item">
+        <p><strong>New Payment:</strong> INV-001 completed.</p>
+        <small>2 hours ago</small>
+    </div>
+    <div class="notification-item">
+        <p><strong>Pending Payment:</strong> INV-002 awaiting confirmation.</p>
+        <small>1 day ago</small>
+    </div>
+</div>
+<script>
+    function toggleNotificationModal() {
+        const modal = document.getElementById('notificationModal');
+        modal.style.display = modal.style.display === 'block' ? 'none' : 'block';
+    }
 
+    // Sample data
+    const samplePayments = [
+        { id: 1, invoiceId: 'INV-001', patientName: 'John Doe', phone: '0123456789', amount: '$150.00', dueDate: '2025-06-01', status: 'completed' },
+        { id: 2, invoiceId: 'INV-002', patientName: 'Jane Smith', phone: '0987654321', amount: '$200.00', dueDate: '2025-06-02', status: 'pending' },
+        { id: 3, invoiceId: 'INV-003', patientName: 'Alice Johnson', phone: '0912345678', amount: '$300.00', dueDate: '2025-06-03', status: 'completed' },
+        { id: 4, invoiceId: 'INV-004', patientName: 'Nguyen Van A', phone: '0932145678', amount: '$180.00', dueDate: '2025-06-04', status: 'completed' },
+        { id: 5, invoiceId: 'INV-005', patientName: 'Tran Thi B', phone: '0901234567', amount: '$250.00', dueDate: '2025-06-05', status: 'pending' }
+    ];
+
+    let payments = samplePayments; // Initialize with sample data
+    let currentPage = 1;
+    const rowsPerPage = 5;
+    let filteredPayments = [...payments];
+
+    async function fetchPayments() {
+        // Simulate fetching data; in production, replace with actual API call
+        return samplePayments;
+    }
+
+    function renderTable(data, page) {
+        const tableBody = document.getElementById('paymentTableBody');
+        if (!tableBody) {
+            console.error('Table body element not found');
+            return;
+        }
+        tableBody.innerHTML = '';
+
+        const start = (page - 1) * rowsPerPage;
+        const end = start + rowsPerPage;
+        const paginatedData = data.slice(start, end);
+
+        paginatedData.forEach(payment => {
+            const row = document.createElement('tr');
+            row.innerHTML = `
+                <td>${payment.patientName}</td>
+                <td>${payment.phone}</td>
+                <td>${payment.invoiceId}</td>
+                <td>${payment.amount}</td>
+                <td>${payment.dueDate}</td>
+                <td><span class="status-dropdown ${payment.status.toLowerCase()}">${payment.status.charAt(0).toUpperCase() + payment.status.slice(1)}</span></td>
+                <td><button class="btn btn-sm btn-primary" onclick="viewPayment()"><i class="fas fa-eye"></i> View</button></td>
+            `;
+            tableBody.appendChild(row);
+        });
+
+        document.getElementById('currentEntries').textContent = `${start + 1}-${Math.min(end, data.length)}`;
+        document.getElementById('totalEntries').textContent = data.length;
+
+        const pagination = document.getElementById('pagination');
+        if (!pagination) {
+            console.error('Pagination element not found');
+            return;
+        }
+        pagination.innerHTML = `
+            <li class="page-item ${page === 1 ? 'disabled' : ''}"><a class="page-link" href="#" onclick="changePage(${page - 1}); return false;">Previous</a></li>
+        `;
+        const totalPages = Math.ceil(data.length / rowsPerPage);
+        for (let i = 1; i <= totalPages; i++) {
+            pagination.innerHTML += `
+                <li class="page-item ${i === page ? 'active' : ''}"><a class="page-link" href="#" onclick="changePage(${i}); return false;">${i}</a></li>
+            `;
+        }
+        pagination.innerHTML += `
+            <li class="page-item ${page === totalPages ? 'disabled' : ''}"><a class="page-link" href="#" onclick="changePage(${page + 1}); return false;">Next</a></li>
+        `;
+    }
+
+    function changePage(page) {
+        if (page < 1 || page > Math.ceil(filteredPayments.length / rowsPerPage)) return;
+        currentPage = page;
+        renderTable(filteredPayments, currentPage);
+    }
+
+    function filterPayments() {
+        const searchInput = document.getElementById('searchInput').value.trim().toLowerCase();
+        const statusFilter = document.getElementById('statusFilter').value;
+        const dateFrom = document.getElementById('dateFrom').value;
+        const dateTo = document.getElementById('dateTo').value;
+
+        filteredPayments = payments.filter(payment => {
+            const matchesSearch = !searchInput ||
+                payment.invoiceId.toLowerCase().includes(searchInput) ||
+                payment.patientName.toLowerCase().includes(searchInput) ||
+                payment.phone.toLowerCase().includes(searchInput);
+            const matchesStatus = !statusFilter || payment.status.toLowerCase() === statusFilter;
+            const paymentDate = new Date(payment.dueDate);
+            const matchesDate = (!dateFrom || paymentDate >= new Date(dateFrom)) &&
+                (!dateTo || paymentDate <= new Date(dateTo));
+
+            return matchesSearch && matchesStatus && matchesDate;
+        });
+
+        currentPage = 1;
+        renderTable(filteredPayments, currentPage);
+    }
+
+    function viewPayment() {
+        window.location.href = '/receptionist/view_payment_details';
+    }
+
+    function exportData() {
+        const format = document.getElementById('exportFormat').value;
+        const headers = ['Patient Name', 'Phone', 'Invoice ID', 'Amount', 'Due Date', 'Status'];
+        const rows = filteredPayments.map(payment => [
+            payment.patientName,
+            payment.phone,
+            payment.invoiceId,
+            payment.amount,
+            payment.dueDate,
+            payment.status
+        ]);
+
+        if (filteredPayments.length === 0) {
+            alert('No data available to export.');
+            return;
+        }
+
+        try {
+            if (format === 'csv') {
+                const escapeCsvCell = cell => {
+                    if (cell == null) return '""';
+                    const str = cell.toString();
+                    if (str.includes(',') || str.includes('"') || str.includes('\n')) {
+                        return `"${str.replace(/"/g, '""')}"`;
+                    }
+                    return `"${str}"`;
+                };
+                const csvContent = [headers, ...rows]
+                    .map(row => row.map(escapeCsvCell).join(','))
+                    .join('\n');
+                const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+                const link = document.createElement('a');
+                link.href = URL.createObjectURL(blob);
+                link.download = 'payment_history.csv';
+                link.click();
+                URL.revokeObjectURL(link.href);
+            } else if (format === 'xlsx') {
+                const wsData = [headers, ...rows];
+                const ws = XLSX.utils.aoa_to_sheet(wsData);
+                const wb = XLSX.utils.book_new();
+                XLSX.utils.book_append_sheet(wb, ws, 'Payment History');
+                XLSX.writeFile(wb, 'payment_history.xlsx');
+            }
+        } catch (error) {
+            console.error('Export failed:', error);
+            alert('An error occurred during export. Please try again.');
+        }
+    }
+
+    document.getElementById('searchInput').addEventListener('input', filterPayments);
+    document.getElementById('statusFilter').addEventListener('change', filterPayments);
+    document.getElementById('dateFrom').addEventListener('change', filterPayments);
+    document.getElementById('dateTo').addEventListener('change', filterPayments);
+
+    async function init() {
+        payments = await fetchPayments();
+        filteredPayments = [...payments];
+        renderTable(filteredPayments, currentPage);
+    }
+
+    document.addEventListener('DOMContentLoaded', init);
+</script>
 </body>
 </html>

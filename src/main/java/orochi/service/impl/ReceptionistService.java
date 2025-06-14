@@ -11,6 +11,7 @@ import orochi.repository.ReceptionistRepository;
 import orochi.repository.UserRepository;
 
 import java.util.List;
+import java.util.Optional;
 
 @Service
 public class ReceptionistService {
@@ -57,5 +58,33 @@ public class ReceptionistService {
     // Check if the user is a Receptionist
     public boolean isReceptionist(Users user) {
         return user.getRole().getRoleName().equals("RECEPTIONIST");
+    }
+
+    // Update appointment status
+    public boolean updateAppointmentStatus(Integer appointmentId, String status) {
+        Optional<Appointment> appointmentOptional = appointmentRepository.findById(appointmentId);
+
+        if (appointmentOptional.isPresent()) {
+            Appointment appointment = appointmentOptional.get();
+            // Validate the status is one of the allowed values from the database schema
+            if (!isValidAppointmentStatus(status)) {
+                throw new IllegalArgumentException("Invalid appointment status: " + status);
+            }
+
+            appointment.setStatus(status);
+            appointmentRepository.save(appointment);
+            return true;
+        }
+
+        return false;
+    }
+
+    // Validate that the status is one of the allowed values
+    private boolean isValidAppointmentStatus(String status) {
+        return status != null && (
+                status.equals("Scheduled") ||
+                status.equals("Completed") ||
+                status.equals("Cancel") ||
+                status.equals("Pending"));
     }
 }

@@ -257,112 +257,112 @@
             object-fit: cover;
         }
 
-        /* Tables */
-        .card {
+        /* Doctor Cards */
+        .doctor-card {
             background: var(--bg-white);
             border-radius: 16px;
             box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
             border: 1px solid rgba(102, 126, 234, 0.1);
-            margin-bottom: 1.5rem;
-        }
-
-        .card-header {
-            background: none;
-            border-bottom: 1px solid rgba(102, 126, 234, 0.1);
+            border-top: 4px solid var(--primary);
             padding: 1.5rem;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
+            text-align: center;
+            transition: all 0.3s ease;
         }
 
-        .card-title {
-            font-size: 1.25rem;
+        .doctor-card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 8px 30px rgba(102, 126, 234, 0.15);
+        }
+
+        .doctor-card img {
+            width: 100px;
+            height: 100px;
+            border-radius: 50%;
+            margin-bottom: 1rem;
+            object-fit: cover;
+        }
+
+        .doctor-card h3 {
+            font-size: 1.125rem;
             font-weight: 600;
             color: var(--text-dark);
-            margin: 0;
+            margin-bottom: 0.5rem;
         }
 
-        .card-body {
-            padding: 1.5rem;
-        }
-
-        .input-group-text {
-            background: var(--light);
-            border: 1px solid rgba(102, 126, 234, 0.2);
-            color: var(--primary);
-        }
-
-        .form-control {
-            border: 1px solid rgba(102, 126, 234, 0.2);
-            border-radius: 8px;
-            font-size: 0.875rem;
-        }
-
-        .table {
-            --bs-table-hover-bg: var(--light);
-        }
-
-        .table th {
+        .doctor-card p {
             font-size: 0.875rem;
             color: var(--text-muted);
-            font-weight: 500;
-        }
-
-        .table td {
-            font-size: 0.875rem;
-            color: var(--text-dark);
-            vertical-align: middle;
-        }
-
-        .action-buttons {
-            display: flex;
-            gap: 0.5rem;
+            margin-bottom: 0.5rem;
         }
 
         .btn-view {
-            width: 32px;
-            height: 32px;
-            border: none;
+            background: var(--primary);
+            color: white;
+            padding: 0.5rem 1.5rem;
             border-radius: 8px;
-            cursor: pointer;
-            display: flex;
-            align-items: center;
-            justify-content: center;
             font-size: 0.875rem;
+            border: none;
             transition: all 0.3s ease;
-            background: #e0f2fe;
-            color: #0284c7;
-            text-decoration: none;
+            margin-right: 0.5rem;
         }
 
         .btn-view:hover {
-            background: #bae6fd;
+            background: var(--secondary);
+            transform: translateY(-2px);
         }
 
-        .pagination {
-            display: flex;
-            gap: 0.5rem;
-            margin-top: 1rem;
-            justify-content: center;
-        }
-
-        .pagination button {
-            padding: 0.5rem 1rem;
-            border: 1px solid rgba(102, 126, 234, 0.2);
+        .btn-book {
+            background: var(--success-color);
+            color: white;
+            padding: 0.5rem 1.5rem;
             border-radius: 8px;
-            background: var(--bg-white);
-            cursor: pointer;
             font-size: 0.875rem;
+            text-decoration: none;
             transition: all 0.3s ease;
         }
 
-        .pagination button:hover {
-            background: var(--light);
+        .btn-book:hover {
+            background: #059669;
+            transform: translateY(-2px);
         }
 
-        .pagination button:disabled {
-            cursor: not-allowed;
-            opacity: 0.5;
+        /* Modal */
+        .modal-content {
+            border-radius: 16px;
+            border: 1px solid rgba(102, 126, 234, 0.1);
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+        }
+
+        .modal-header {
+            border-bottom: 1px solid rgba(102, 126, 234, 0.1);
+            padding: 1.5rem;
+        }
+
+        .modal-title {
+            font-size: 1.25rem;
+            font-weight: 600;
+            color: var(--text-dark);
+        }
+
+        .modal-body {
+            padding: 1.5rem;
+        }
+
+        .detail-item {
+            margin-bottom: 1rem;
+        }
+
+        .detail-label {
+            font-size: 0.875rem;
+            font-weight: 500;
+            color: var(--text-muted);
+            display: block;
+            margin-bottom: 0.25rem;
+        }
+
+        .detail-value {
+            font-size: 0.875rem;
+            color: var(--text-dark);
         }
 
         /* Responsive Design */
@@ -379,28 +379,27 @@
                 padding: 0 1rem;
             }
 
-            .card {
+            .doctor-card {
                 padding: 1rem;
-            }
-
-            .form-control {
-                width: 100%;
             }
         }
 
         @media (max-width: 576px) {
-            .card-body {
-                padding: 1rem;
+            .doctor-card img {
+                width: 80px;
+                height: 80px;
             }
 
-            .table td, .table th {
+            .doctor-card h3 {
+                font-size: 1rem;
+            }
+
+            .doctor-card p, .btn-view, .btn-book {
                 font-size: 0.75rem;
             }
 
-            .btn-view {
-                width: 28px;
-                height: 28px;
-                font-size: 0.75rem;
+            .btn-view, .btn-book {
+                padding: 0.5rem 1rem;
             }
         }
 
@@ -435,45 +434,53 @@
                     </div>
                 </a>
             </div>
-            <a href="new_appointment.jsp" class="btn btn-light mx-3 mb-3">
-                <i class="fas fa-plus"></i> New Appointment
-            </a>
             <nav class="sidebar-nav">
                 <div class="nav-section-title">Navigation</div>
                 <ul class="nav flex-column">
                     <li class="nav-item">
-                        <a href="dashboard.jsp" class="nav-link"><i class="fas fa-th-large"></i> Dashboard</a>
+                        <a href="/receptionist/dashboard" class="nav-link"><i class="fas fa-th-large"></i>
+                            Dashboard</a>
                     </li>
                     <div class="nav-section-title">Medical Services</div>
                     <ul class="nav flex-column">
                         <li class="nav-item">
-                            <a href="appointments.jsp" class="nav-link"><i class="fas fa-calendar-alt"></i> Appointments</a>
+                            <a href="/receptionist/appointments" class="nav-link"><i class="fas fa-calendar-alt"></i>
+                                Appointments</a>
                         </li>
                         <li class="nav-item">
-                            <a href="doctors.jsp" class="nav-link"><i class="fas fa-user-md"></i> Doctors</a>
+                            <a href="/receptionist/doctors" class="nav-link"><i class="fas fa-user-md"></i> Doctors</a>
                         </li>
                         <li class="nav-item">
-                            <a href="patients.jsp" class="nav-link active"><i class="fas fa-users"></i> Patients</a>
+                            <a href="/receptionist/patients" class="nav-link active"><i class="fas fa-users"></i> Patients</a>
                         </li>
                         <li class="nav-item">
-                            <a href="reports.jsp" class="nav-link"><i class="fas fa-chart-bar"></i> Reports</a>
+                            <a href="/receptionist/payments" class="nav-link"><i class="fas fa-money-bill-wave"></i> Payments</a>
+                        </li>
+                        <li class="nav-item">
+                            <a href="/receptionist/reports" class="nav-link"><i class="fas fa-chart-bar"></i>
+                                Reports</a>
                         </li>
                     </ul>
+
                     <div class="nav-section-title">Account</div>
                     <ul class="nav flex-column">
                         <li class="nav-item">
-                            <a href="profile.jsp" class="nav-link"><i class="fas fa-stethoscope"></i> Profile</a>
+                            <a href="/receptionist/profile" class="nav-link"><i class="fas fa-stethoscope"></i> Profile</a>
                         </li>
                     </ul>
                     <div class="nav-section-title">System</div>
                     <ul class="nav flex-column">
                         <li class="nav-item">
-                            <a href="settings.jsp" class="nav-link"><i class="fas fa-cog"></i> Settings</a>
-                        </li>
-                        <li class="nav-item">
-                            <a href="logout.jsp" class="nav-link"><i class="fas fa-sign-out-alt"></i> Logout</a>
+                            <a href="/receptionist/settings" class="nav-link"><i class="fas fa-cog"></i> Settings</a>
                         </li>
                     </ul>
+                    <form class="nav-item" th:action="@{/auth/logout}" method="post">
+                        <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
+                        <button type="submit" class="nav-link logout-btn">
+                            <i class="fas fa-sign-out-alt"></i>
+                            Logout
+                        </button>
+                    </form>
                 </ul>
             </nav>
         </nav>
@@ -492,43 +499,72 @@
                         <i class="fas fa-bell fs-5"></i>
                         <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger" id="notificationCount">0</span>
                     </div>
-                    <img src="images/profile.jpg" alt="Profile" class="rounded-circle" onerror="this.src='https://via.placeholder.com/40';">
+                    <img src="images/profile.jpg" alt="Profile" class="rounded-circle">
                 </div>
             </header>
 
             <!-- Notification Modal -->
-            <div id="notificationModal" class="notification-modal" style="display: none;">
-                <h5>System Notifications</h5>
-                <div id="notificationList"></div>
+            <div class="notification-modal" id="notificationModal">
+                <h5>Notifications</h5>
+                <div class="notification-item">
+                    <p><strong>New Payment:</strong> INV-001 completed.</p>
+                    <small>2 hours ago</small>
+                </div>
+                <div class="notification-item">
+                    <p><strong>Pending Payment:</strong> INV-002 awaiting confirmation.</p>
+                    <small>1 day ago</small>
+                </div>
             </div>
 
-            <!-- Patient List -->
-            <div class="card">
-                <div class="card-header">
-                    <h5 class="card-title">Patient List</h5>
+            <!-- Doctors Grid -->
+            <div class="row row-cols-1 row-cols-md-2 row-cols-lg-3 g-4" id="doctorsGrid"></div>
+        </main>
+    </div>
+</div>
+
+<!-- Doctor Details Modal -->
+<div class="modal fade" id="doctorModal" tabindex="-1" aria-labelledby="doctorModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="doctorModalLabel"></h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <div class="detail-item">
+                    <span class="detail-label">Specialty</span>
+                    <span class="detail-value" id="modalSpecialty"></span>
                 </div>
-                <div class="card-body">
-                    <div class="input-group mb-3">
-                        <span class="input-group-text"><i class="fas fa-search"></i></span>
-                        <input type="text" class="form-control" id="search-input" placeholder="Search by Name, Citizen ID, or Phone">
-                    </div>
-                    <div class="table-responsive">
-                        <table class="table table-hover">
-                            <thead>
-                            <tr>
-                                <th>Name</th>
-                                <th>Citizen ID</th>
-                                <th>Phone</th>
-                                <th>Actions</th>
-                            </tr>
-                            </thead>
-                            <tbody id="patient-list"></tbody>
-                        </table>
-                    </div>
-                    <div class="pagination" id="pagination"></div>
+                <div class="detail-item">
+                    <span class="detail-label">Qualifications</span>
+                    <span class="detail-value" id="modalQualifications"></span>
+                </div>
+                <div class="detail-item">
+                    <span class="detail-label">Contact Phone Number</span>
+                    <span class="detail-value" id="modalPhone"></span>
+                </div>
+                <div class="detail-item">
+                    <span class="detail-label">Email</span>
+                    <span class="detail-value" id="modalEmail"></span>
+                </div>
+                <div class="detail-item">
+                    <span class="detail-label">Office Location</span>
+                    <span class="detail-value" id="modalOffice"></span>
+                </div>
+                <div class="detail-item">
+                    <span class="detail-label">Years of Experience</span>
+                    <span class="detail-value" id="modalExperience"></span>
+                </div>
+                <div class="detail-item">
+                    <span class="detail-label">Bio</span>
+                    <span class="detail-value" id="modalBio"></span>
+                </div>
+                <div class="detail-item">
+                    <span class="detail-label">Votes</span>
+                    <span class="detail-value" id="modalVotes"></span>
                 </div>
             </div>
-        </main>
+        </div>
     </div>
 </div>
 
@@ -563,117 +599,95 @@
     window.addEventListener('load', checkScreenSize);
     window.addEventListener('resize', checkScreenSize);
 
+    // Modal handling
+    const doctorModal = new bootstrap.Modal(document.getElementById('doctorModal'));
+
+    // Fetch doctors from server
+    async function fetchDoctors() {
+        try {
+            const response = await fetch('/api/doctors');
+            if (!response.ok) throw new Error('Failed to fetch doctors');
+            const data = await response.json();
+            return data; // Expected format: [{ id, name, specialty, rating, votes, imageUrl, qualifications, phone, email, office, experience, bio }]
+        } catch (error) {
+            console.error('Error fetching doctors:', error);
+            return [];
+        }
+    }
+
+    // Render doctors
+    async function renderDoctors() {
+        const grid = document.getElementById('doctorsGrid');
+        const doctors = await fetchDoctors();
+        grid.innerHTML = '';
+
+        if (doctors.length === 0) {
+            grid.innerHTML = '<p class="text-center text-muted col-12">No doctors available.</p>';
+            return;
+        }
+
+        doctors.forEach(doctor => {
+            const col = document.createElement('div');
+            col.className = 'col';
+            col.innerHTML = `
+
+                <div class="doctor-card">
+                    // <img src="${doctor.imageUrl || 'https://via.placeholder.com/100'}" alt="${doctor.name}" onerror="this.src;">
+                    <h3>${doctor.name}</h3>
+                    <p>${doctor.specialty}</p>
+                    <p><i class="fas fa-star text-warning"></i> ${doctor.rating} (${doctor.votes} votes)</p>
+                    <div>
+                        <button class="btn-view" onclick="openDoctorModal(${doctor.id})">View</button>
+                        <a href="new_appointment?doctorId=${doctor.id}&doctorName=${encodeURIComponent(doctor.name)}" class="btn-book">Book</a>
+                    </div>
+                </div>
+            `;
+            grid.appendChild(col);
+        });
+    }
+
+    // Fetch doctor details
+    async function fetchDoctorDetails(id) {
+        try {
+            const response = await fetch(`/api/doctors/${id}`);
+            if (!response.ok) throw new Error('Failed to fetch doctor details');
+            const data = await response.json();
+            return data;
+        } catch (error) {
+            console.error('Error fetching doctor details:', error);
+            return null;
+        }
+    }
+
+    // Open doctor modal
+    async function openDoctorModal(id) {
+        const doctor = await fetchDoctorDetails(id);
+        if (!doctor) {
+            alert('Failed to load doctor details.');
+            return;
+        }
+
+        document.getElementById('doctorModalLabel').textContent = doctor.name;
+        document.getElementById('modalSpecialty').textContent = doctor.specialty || 'N/A';
+        document.getElementById('modalQualifications').textContent = doctor.qualifications || 'N/A';
+        document.getElementById('modalPhone').textContent = doctor.phone || 'N/A';
+        document.getElementById('modalEmail').textContent = doctor.email || 'N/A';
+        document.getElementById('modalOffice').textContent = doctor.office || 'N/A';
+        document.getElementById('modalExperience').textContent = doctor.experience || 'N/A';
+        document.getElementById('modalBio').textContent = doctor.bio || 'N/A';
+        document.getElementById('modalVotes').innerHTML = `<i class="fas fa-star text-warning"></i> ${doctor.rating || 'N/A'} (${doctor.votes || 0} votes)`;
+
+        doctorModal.show();
+    }
+
     // Notification modal toggle (placeholder)
     function toggleNotificationModal() {
         const modal = document.getElementById('notificationModal');
         modal.style.display = modal.style.display === 'block' ? 'none' : 'block';
     }
 
-    // Pagination settings
-    const itemsPerPage = 12;
-    let currentPage = 1;
-    let searchTerm = '';
-
-    // Debounce function to limit search calls
-    function debounce(func, wait) {
-        let timeout;
-        return function executedFunction(...args) {
-            const later = () => {
-                clearTimeout(timeout);
-                func(...args);
-            };
-            clearTimeout(timeout);
-            timeout = setTimeout(later, wait);
-        };
-    }
-
-    // Fetch patients from server
-    async function fetchPatients(page, search = '') {
-        try {
-            const response = await fetch(`/api/patients?page=${page}&search=${encodeURIComponent(search)}`);
-            if (!response.ok) throw new Error('Failed to fetch patients');
-            const data = await response.json();
-            return data; // Expected format: { patients: [{ id, name, citizenId, phone }], total: number }
-        } catch (error) {
-            console.error('Error fetching patients:', error);
-            return { patients: [], total: 0 };
-        }
-    }
-
-    // Render patients
-    async function renderPatients() {
-        const tbody = document.getElementById('patient-list');
-        const pagination = document.getElementById('pagination');
-        const { patients, total } = await fetchPatients(currentPage, searchTerm);
-        tbody.innerHTML = '';
-
-        if (patients.length === 0) {
-            tbody.innerHTML = '<tr><td colspan="4" class="text-center text-muted">No patients found.</td></tr>';
-            pagination.innerHTML = '';
-            return;
-        }
-
-        patients.forEach(patient => {
-            const row = document.createElement('tr');
-            row.innerHTML = `
-                <td>${patient.name}</td>
-                <td>${patient.citizenId}</td>
-                <td>${patient.phone}</td>
-                <td class="action-buttons">
-                    <a href="patient_details.jsp?patientId=${patient.id}&patientName=${encodeURIComponent(patient.name)}" class="btn-view"><i class="fas fa-eye"></i></a>
-                </td>
-            `;
-            tbody.appendChild(row);
-        });
-
-        // Render pagination
-        const totalPages = Math.ceil(total / itemsPerPage);
-        pagination.innerHTML = '';
-
-        if (totalPages > 1) {
-            const prevButton = document.createElement('button');
-            prevButton.textContent = 'Previous';
-            prevButton.disabled = currentPage === 1;
-            prevButton.onclick = () => {
-                currentPage--;
-                renderPatients();
-            };
-            pagination.appendChild(prevButton);
-
-            for (let i = 1; i <= totalPages; i++) {
-                const pageButton = document.createElement('button');
-                pageButton.textContent = i;
-                pageButton.disabled = i === currentPage;
-                pageButton.onclick = () => {
-                    currentPage = i;
-                    renderPatients();
-                };
-                pagination.appendChild(pageButton);
-            }
-
-            const nextButton = document.createElement('button');
-            nextButton.textContent = 'Next';
-            nextButton.disabled = currentPage === totalPages;
-            nextButton.onclick = () => {
-                currentPage++;
-                renderPatients();
-            };
-            pagination.appendChild(nextButton);
-        }
-    }
-
-    // Search patients
-    const searchPatients = debounce(function() {
-        searchTerm = document.getElementById('search-input').value;
-        currentPage = 1;
-        renderPatients();
-    }, 300);
-
-    // Attach search event listener
-    document.getElementById('search-input').addEventListener('input', searchPatients);
-
     // Initialize
-    document.addEventListener('DOMContentLoaded', renderPatients);
+    document.addEventListener('DOMContentLoaded', renderDoctors);
 </script>
 </body>
 </html>

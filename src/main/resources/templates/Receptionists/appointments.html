@@ -475,45 +475,53 @@
                     </div>
                 </a>
             </div>
-            <a href="new_appointment.jsp" class="btn btn-light mx-3 mb-3">
-                <i class="fas fa-plus"></i> New Appointment
-            </a>
             <nav class="sidebar-nav">
                 <div class="nav-section-title">Navigation</div>
                 <ul class="nav flex-column">
                     <li class="nav-item">
-                        <a href="dashboard.jsp" class="nav-link"><i class="fas fa-th-large"></i> Dashboard</a>
+                        <a href="/receptionist/dashboard" class="nav-link"><i class="fas fa-th-large"></i>
+                            Dashboard</a>
                     </li>
                     <div class="nav-section-title">Medical Services</div>
                     <ul class="nav flex-column">
                         <li class="nav-item">
-                            <a href="appointments.jsp" class="nav-link active"><i class="fas fa-calendar-alt"></i> Appointments</a>
+                            <a href="/receptionist/appointments" class="nav-link active"><i class="fas fa-calendar-alt"></i>
+                                Appointments</a>
                         </li>
                         <li class="nav-item">
-                            <a href="doctors.jsp" class="nav-link"><i class="fas fa-user-md"></i> Doctors</a>
+                            <a href="/receptionist/doctors" class="nav-link"><i class="fas fa-user-md"></i> Doctors</a>
                         </li>
                         <li class="nav-item">
-                            <a href="patients.jsp" class="nav-link"><i class="fas fa-users"></i> Patients</a>
+                            <a href="/receptionist/patients" class="nav-link"><i class="fas fa-users"></i> Patients</a>
                         </li>
                         <li class="nav-item">
-                            <a href="reports.jsp" class="nav-link"><i class="fas fa-chart-bar"></i> Reports</a>
+                            <a href="/receptionist/payments" class="nav-link"><i class="fas fa-money-bill-wave"></i> Payments</a>
+                        </li>
+                        <li class="nav-item">
+                            <a href="/receptionist/reports" class="nav-link"><i class="fas fa-chart-bar"></i>
+                                Reports</a>
                         </li>
                     </ul>
+
                     <div class="nav-section-title">Account</div>
                     <ul class="nav flex-column">
                         <li class="nav-item">
-                            <a href="profile.jsp" class="nav-link"><i class="fas fa-stethoscope"></i> Profile</a>
+                            <a href="/receptionist/profile" class="nav-link"><i class="fas fa-stethoscope"></i> Profile</a>
                         </li>
                     </ul>
                     <div class="nav-section-title">System</div>
                     <ul class="nav flex-column">
                         <li class="nav-item">
-                            <a href="settings.jsp" class="nav-link"><i class="fas fa-cog"></i> Settings</a>
-                        </li>
-                        <li class="nav-item">
-                            <a href="logout.jsp" class="nav-link"><i class="fas fa-sign-out-alt"></i> Logout</a>
+                            <a href="/receptionist/settings" class="nav-link"><i class="fas fa-cog"></i> Settings</a>
                         </li>
                     </ul>
+                    <form class="nav-item" th:action="@{/auth/logout}" method="post">
+                        <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
+                        <button type="submit" class="nav-link logout-btn">
+                            <i class="fas fa-sign-out-alt"></i>
+                            Logout
+                        </button>
+                    </form>
                 </ul>
             </nav>
         </nav>
@@ -728,15 +736,23 @@
     }
 
     // Fetch appointments from server
-    async function fetchAppointments(status, page, searchTerm = '') {
+    async function fetchAppointments(status, page, searchTerm = '', fetchAll = false) {
         try {
-            const response = await fetch(`/api/appointments?status=${status}&page=${page}&search=${encodeURIComponent(searchTerm)}`);
-            if (!response.ok) throw new Error('Failed to fetch appointments');
+            let url = `/api/appointments?status=${status}&page=${page}&search=${encodeURIComponent(searchTerm)}`;
+            if (fetchAll) {
+                url += '&fetchAll=true';
+            }
+
+            const response = await fetch(url);
+            if (!response.ok) {
+                const errorText = await response.text();
+                throw new Error(`Failed to fetch appointments: ${errorText || response.statusText}`);
+            }
             const data = await response.json();
             return data; // Expected format: { appointments: [], total: number }
         } catch (error) {
             console.error(`Error fetching ${status} appointments:`, error);
-            return { appointments: [], total: 0 };
+            throw error; // Propagate the error to caller for better error handling
         }
     }
 
@@ -746,62 +762,66 @@
         const pagination = document.getElementById(`${status}-pagination`);
         const { searchTerm } = paginationStates[status];
 
-        const { appointments, total } = await fetchAppointments(status, page, searchTerm);
-        tbody.innerHTML = '';
+        try {
+            const { appointments, total } = await fetchAppointments(status, page, searchTerm);
+            tbody.innerHTML = '';
 
-        appointments.forEach(appt => {
-            const row = document.createElement('tr');
-            const actionsHtml = `
-                <a href="appointment-details.jsp?stt=${appt.stt}" class="btn-view"><i class="fas fa-eye"></i></a>
-                ${status === 'in-progress' ? `
-                    <button class="btn-confirm" onclick="updateStatus(${appt.stt}, 'completed')"><i class="fas fa-check"></i></button>
-                    <button class="btn-reject" onclick="updateStatus(${appt.stt}, 'rejected')"><i class="fas fa-times"></i></button>
-                ` : ''}
-            `;
-            row.innerHTML = `
-                <td>${appt.stt}</td>
-                <td>${appt.name}</td>
-                <td>${appt.citizenId}</td>
-                <td>${appt.phone}</td>
-                <td>${appt.time}</td>
-                <td>${appt.doctor}</td>
-                <td class="action-buttons">${actionsHtml}</td>
-            `;
-            tbody.appendChild(row);
-        });
+            appointments.forEach(appt => {
+                const row = document.createElement('tr');
+                const actionsHtml = `
+                    <a href="appointment-details.jsp?stt=${appt.stt}" class="btn-view"><i class="fas fa-eye"></i></a>
+                    ${status === 'in-progress' ? `
+                        <button class="btn-confirm" onclick="updateStatus(${appt.stt}, 'completed')"><i class="fas fa-check"></i></button>
+                        <button class="btn-reject" onclick="updateStatus(${appt.stt}, 'rejected')"><i class="fas fa-times"></i></button>
+                    ` : ''}
+                `;
+                row.innerHTML = `
+                    <td>${appt.stt}</td>
+                    <td>${appt.name}</td>
+                    <td>${appt.citizenId}</td>
+                    <td>${appt.phone}</td>
+                    <td>${appt.time}</td>
+                    <td>${appt.doctor}</td>
+                    <td class="action-buttons">${actionsHtml}</td>
+                `;
+                tbody.appendChild(row);
+            });
 
-        // Render pagination
-        const totalPages = Math.ceil(total / itemsPerPage);
-        pagination.innerHTML = '';
-        if (totalPages > 1) {
-            const prevButton = document.createElement('button');
-            prevButton.textContent = 'Previous';
-            prevButton.disabled = page === 1;
-            prevButton.onclick = () => {
-                paginationStates[status].currentPage--;
-                renderAppointments(status, paginationStates[status].currentPage);
-            };
-            pagination.appendChild(prevButton);
-
-            for (let j = 1; j <= totalPages; j++) {
-                const pageButton = document.createElement('button');
-                pageButton.textContent = j;
-                pageButton.disabled = j === page;
-                pageButton.onclick = () => {
-                    paginationStates[status].currentPage = j;
-                    renderAppointments(status, j);
+            // Render pagination
+            const totalPages = Math.ceil(total / itemsPerPage);
+            pagination.innerHTML = '';
+            if (totalPages > 1) {
+                const prevButton = document.createElement('button');
+                prevButton.textContent = 'Previous';
+                prevButton.disabled = page === 1;
+                prevButton.onclick = () => {
+                    paginationStates[status].currentPage--;
+                    renderAppointments(status, paginationStates[status].currentPage);
                 };
-                pagination.appendChild(pageButton);
-            }
+                pagination.appendChild(prevButton);
 
-            const nextButton = document.createElement('button');
-            nextButton.textContent = 'Next';
-            nextButton.disabled = page === totalPages;
-            nextButton.onclick = () => {
-                paginationStates[status].currentPage++;
-                renderAppointments(status, paginationStates[status].currentPage);
-            };
-            pagination.appendChild(nextButton);
+                for (let j = 1; j <= totalPages; j++) {
+                    const pageButton = document.createElement('button');
+                    pageButton.textContent = j;
+                    pageButton.disabled = j === page;
+                    pageButton.onclick = () => {
+                        paginationStates[status].currentPage = j;
+                        renderAppointments(status, j);
+                    };
+                    pagination.appendChild(pageButton);
+                }
+
+                const nextButton = document.createElement('button');
+                nextButton.textContent = 'Next';
+                nextButton.disabled = page === totalPages;
+                nextButton.onclick = () => {
+                    paginationStates[status].currentPage++;
+                    renderAppointments(status, paginationStates[status].currentPage);
+                };
+                pagination.appendChild(nextButton);
+            }
+        } catch (error) {
+            console.error(`Error rendering ${status} appointments:`, error);
         }
     }
 
@@ -906,3 +926,4 @@
 </script>
 </body>
 </html>
+
