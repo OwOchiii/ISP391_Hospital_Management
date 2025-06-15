@@ -745,16 +745,19 @@ EXEC sp_addextendedproperty
      @level0type = N'Schema', @level0name = 'dbo',
      @level1type = N'Table',  @level1name = 'Feedback';
 
-CREATE TRIGGER trg_DeleteSpecializationCascade
-    ON Specialization
-    AFTER DELETE
+CREATE OR ALTER TRIGGER trg_DeleteSpecializationCascade
+ON Specialization
+AFTER DELETE
 AS
 BEGIN
-
+    SET NOCOUNT ON;
 DELETE FROM DoctorSpecialization
 WHERE SpecID IN (SELECT SpecID FROM DELETED);
-
-
 DELETE FROM Service
 WHERE SpecID IN (SELECT SpecID FROM DELETED);
+
+IF @@ROWCOUNT = 0
+        PRINT 'No dependent records found or deleted.';
+ELSE
+        PRINT 'Deleted dependent records from DoctorSpecialization and Service.';
 END;
