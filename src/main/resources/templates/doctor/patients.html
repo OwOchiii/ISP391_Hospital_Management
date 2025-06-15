@@ -57,7 +57,6 @@
             z-index: 1000;
             transition: transform 0.3s ease;
             overflow-y: auto;
-            overflow-x: hidden;
         }
 
         .sidebar.collapsed {
@@ -65,17 +64,16 @@
         }
 
         .sidebar-header {
-            padding: 1.25rem 1.5rem; /* Reduced from 1.5rem */
+            padding: 1.5rem;
             border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-            background: rgba(255, 255, 255, 0.05);
         }
 
         .brand-logo {
-            font-size: 1.4rem; /* Reduced from 1.5rem */
+            font-size: 1.5rem;
             font-weight: 700;
             display: flex;
             align-items: center;
-            gap: 0.75rem;
+            gap: 0.5rem;
             color: white;
             text-decoration: none;
         }
@@ -94,7 +92,7 @@
         }
 
         .sidebar-nav {
-            padding: 1rem 0; /* Reduced from 1.5rem */
+            padding: 1.5rem 0;
         }
 
         .nav-section {
@@ -102,67 +100,33 @@
         }
 
         .nav-section-title {
-            padding: 0.5rem 1.5rem; /* Reduced from 0.75rem */
+            padding: 0.75rem 1.5rem;
             font-size: 0.75rem;
             text-transform: uppercase;
             letter-spacing: 0.05em;
             color: rgba(255, 255, 255, 0.6);
             font-weight: 600;
-            margin-bottom: 0.25rem; /* Reduced from 0.5rem */
         }
 
         .nav-item {
-            margin: 0.125rem 1rem; /* Reduced from 0.25rem */
+            margin: 0.25rem 1rem;
         }
 
         .nav-link {
             color: rgba(255, 255, 255, 0.8);
-            padding: 0.625rem 1rem; /* Reduced from 0.875rem 1.25rem */
-            border-radius: 10px; /* Reduced from 12px */
+            padding: 0.75rem 1rem;
+            border-radius: 10px;
             display: flex;
             align-items: center;
-            gap: 0.75rem; /* Reduced from 0.875rem */
+            gap: 0.75rem;
             text-decoration: none;
-            font-weight: 500;
             transition: all 0.3s ease;
-            position: relative;
-            font-size: 0.875rem;
-            border: none;
-            background: transparent;
-            width: 100%;
-            text-align: left;
         }
 
-        .nav-link:hover {
+        .nav-link:hover,
+        .nav-link.active {
             background: rgba(255, 255, 255, 0.1);
             color: white;
-            transform: translateX(4px);
-            text-decoration: none;
-        }
-
-        .nav-link.active {
-            background: rgba(255, 255, 255, 0.15);
-            color: white;
-            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
-        }
-
-        .nav-link.active::before {
-            content: '';
-            position: absolute;
-            left: 0;
-            top: 50%;
-            transform: translateY(-50%);
-            width: 4px;
-            height: 24px;
-            background: #34d399;
-            border-radius: 0 4px 4px 0;
-        }
-
-        .nav-link i {
-            font-size: 1.125rem;
-            width: 20px;
-            text-align: center;
-            flex-shrink: 0;
         }
 
         /* Main Content */
@@ -868,25 +832,28 @@
             </div>
 
             <!-- Search and Basic Controls -->
-            <div class="d-flex justify-content-between align-items-center flex-wrap gap-3">
-                <div class="search-container">
-                    <i class="bi bi-search search-icon"></i>
-                    <input type="text" class="search-input" placeholder="Search patients by name, ID, or phone..."
-                           id="searchInput" name="name">
-                    <input type="hidden" name="doctorId" th:value="${doctorId}">
-                </div>
+            <form id="searchForm" th:action="@{/doctor/patients}" method="get">
+                <div class="d-flex justify-content-between align-items-center flex-wrap gap-3">
+                    <div class="search-container">
+                        <i class="bi bi-search search-icon"></i>
+                        <input type="text" class="search-input" placeholder="Search patients by name, ID, or phone..."
+                               id="searchInput" name="searchTerm">
+                        <input type="hidden" name="doctorId" th:value="${doctorId}">
+                        <input type="hidden" name="status" th:value="${param.status}" id="statusInput">
+                    </div>
 
-                <div class="d-flex gap-2">
-                    <button class="btn-outline-primary-custom btn-sm" onclick="toggleAdvancedFilters()">
-                        <i class="bi bi-funnel"></i>
-                        Advanced Filters
-                    </button>
-                    <button class="btn-outline-primary-custom btn-sm" onclick="exportPatients()">
-                        <i class="bi bi-download"></i>
-                        Export
-                    </button>
+                    <div class="d-flex gap-2">
+                        <button class="btn-outline-primary-custom btn-sm" type="button" onclick="toggleAdvancedFilters()">
+                            <i class="bi bi-funnel"></i>
+                            Advanced Filters
+                        </button>
+                        <button class="btn-outline-primary-custom btn-sm" type="button" onclick="exportPatients()">
+                            <i class="bi bi-download"></i>
+                            Export
+                        </button>
+                    </div>
                 </div>
-            </div>
+            </form>
 
             <!-- Advanced Filters -->
             <div class="advanced-filters" id="advancedFilters">
@@ -997,7 +964,12 @@
                 </div>
 
                 <div class="patient-actions">
-                    <a th:href="@{/doctor/patients/{id}(id=${patient.patientId}, doctorId=${doctorId})}" class="btn-primary-custom btn-sm">
+                    <a th:href="@{/doctor/patients/{id}(id=${patient.patientId}, doctorId=${doctorId},
+                        status=${selectedStatus},
+                        gender=${selectedGender},
+                        ageRange=${selectedAgeRange},
+                        lastVisit=${selectedLastVisit},
+                        searchTerm=${searchTerm})}" class="btn-primary-custom btn-sm">
                         <i class="bi bi-eye"></i>
                         View Details
                     </a>
@@ -1006,75 +978,6 @@
                         Schedule
                     </a>
                     <a th:href="@{/doctor/patients/{id}/history(id=${patient.patientId}, doctorId=${doctorId})}" class="btn-outline-primary-custom btn-sm">
-                        <i class="bi bi-clock-history"></i>
-                        History
-                    </a>
-                </div>
-            </div>
-
-            <!-- Default patient if none exist -->
-            <div th:if="${#lists.isEmpty(patients)}" class="patient-card">
-                <div class="patient-header">
-                    <div class="patient-info">
-                        <div class="patient-name">
-                            Sarah Johnson
-                            <span class="gender-icon gender-female">♀</span>
-                            <span class="status-badge status-active">ACTIVE</span>
-                        </div>
-                        <div class="patient-id">Patient ID: P001234</div>
-                    </div>
-                    <div class="patient-avatar">SJ</div>
-                </div>
-
-                <div class="patient-details">
-                    <div class="detail-item">
-                        <span class="detail-label">Date of Birth</span>
-                        <span class="detail-value">Mar 22, 1990</span>
-                    </div>
-                    <div class="detail-item">
-                        <span class="detail-label">Age</span>
-                        <span class="detail-value">33 years</span>
-                    </div>
-                    <div class="detail-item">
-                        <span class="detail-label">Phone</span>
-                        <span class="detail-value">+1 (555) 234-5678</span>
-                    </div>
-                    <div class="detail-item">
-                        <span class="detail-label">Email</span>
-                        <span class="detail-value">sarah.johnson@email.com</span>
-                    </div>
-                </div>
-
-                <div class="patient-description">
-                    <h6><i class="bi bi-clipboard-pulse me-2"></i>Medical Summary</h6>
-                    <p>Regular patient for annual checkups. No significant medical history. Maintains healthy lifestyle.</p>
-                </div>
-
-                <div class="patient-stats">
-                    <div class="stat-item">
-                        <div class="stat-value">8</div>
-                        <div class="stat-label">Total Visits</div>
-                    </div>
-                    <div class="stat-item">
-                        <div class="stat-value">1</div>
-                        <div class="stat-label">Upcoming</div>
-                    </div>
-                    <div class="stat-item">
-                        <div class="stat-value">1 week ago</div>
-                        <div class="stat-label">Last Visit</div>
-                    </div>
-                </div>
-
-                <div class="patient-actions">
-                    <a href="#" class="btn-primary-custom btn-sm">
-                        <i class="bi bi-eye"></i>
-                        View Details
-                    </a>
-                    <a href="#" class="btn-outline-primary-custom btn-sm">
-                        <i class="bi bi-calendar-plus"></i>
-                        Schedule
-                    </a>
-                    <a href="#" class="btn-outline-primary-custom btn-sm">
                         <i class="bi bi-clock-history"></i>
                         History
                     </a>
@@ -1114,10 +1017,10 @@
         <div class="empty-state" id="emptyState" style="display: none;">
             <i class="bi bi-people"></i>
             <h3>No Patients Found</h3>
-            <p>No patients match your current search criteria. Try adjusting your filters or search terms.</p>
-            <a th:href="@{/doctor/patients/new(doctorId=${doctorId})}" class="btn-primary-custom">
-                <i class="bi bi-plus-circle"></i>
-                Add First Patient
+            <p>No patients match your current search criteria or the patient list is empty. Try adjusting your filters or search terms.</p>
+            <a th:href="@{/doctor/patients(doctorId=${doctorId})}" class="btn-outline-primary-custom">
+                <i class="bi bi-arrow-counterclockwise"></i>
+                Reset Filters
             </a>
         </div>
     </div>
@@ -1152,34 +1055,97 @@
         }
     }
 
-    function performSearch(event) {
-        event.preventDefault();
-        const searchTerm = document.getElementById('searchInput').value.toLowerCase();
-        clientSideSearch(searchTerm);
-        return false;
-    }
-
     document.addEventListener('DOMContentLoaded', function() {
         checkScreenSize();
 
         // Search functionality
         const searchInput = document.getElementById('searchInput');
+        const searchForm = document.getElementById('searchForm');
         const patientsContainer = document.getElementById('patientsContainer');
         const emptyState = document.getElementById('emptyState');
 
-        searchInput.addEventListener('input', function() {
-            const searchTerm = this.value.toLowerCase();
+        // Set up search input event
+        if (searchInput) {
+            searchInput.addEventListener('input', function() {
+                const searchTerm = this.value.toLowerCase();
+
+                // Only do client-side filtering for immediate feedback
+                clientSideSearch(searchTerm);
+            });
+
+            searchInput.addEventListener('keydown', function(e) {
+                if (e.key === 'Enter') {
+                    e.preventDefault();
+                    searchForm.submit();
+                }
+            });
+        }
+
+        // Advanced filters functionality
+        function applyFilters() {
+            const gender = document.getElementById('genderFilter').value;
+            const age = document.getElementById('ageFilter').value;
+            const lastVisit = document.getElementById('lastVisitFilter').value;
+            const status = document.getElementById('statusInput').value || 'all';
+            const doctorId = document.querySelector('input[name="doctorId"]').value;
+            const searchTerm = document.getElementById('searchInput').value;
+
+            // Build the URL with all filter parameters
+            let url = `/doctor/patients?doctorId=${doctorId}`;
+
+            if (status && status !== 'null') {
+                url += `&status=${status}`;
+            }
+
+            if (gender) {
+                url += `&gender=${gender}`;
+            }
+
+            if (age) {
+                url += `&ageRange=${age}`;
+            }
+
+            if (lastVisit) {
+                url += `&lastVisit=${lastVisit}`;
+            }
+
+            if (searchTerm) {
+                url += `&searchTerm=${encodeURIComponent(searchTerm)}`;
+            }
+
+            // Navigate to the filtered URL
+            window.location.href = url;
+        }
+
+        // Make applyFilters accessible globally
+        window.applyFilters = applyFilters;
+
+        // Client-side search function for immediate feedback
+        function clientSideSearch(searchTerm) {
             const patientCards = patientsContainer.querySelectorAll('.patient-card');
             let visibleCount = 0;
 
             patientCards.forEach(card => {
                 const patientName = card.querySelector('.patient-name').textContent.toLowerCase();
                 const patientId = card.querySelector('.patient-id').textContent.toLowerCase();
-                const phoneNumber = card.querySelector('.detail-value').textContent.toLowerCase();
 
-                if (patientName.includes(searchTerm) ||
-                    patientId.includes(searchTerm) ||
-                    phoneNumber.includes(searchTerm)) {
+                // Get all detail values (phone, email, etc.)
+                const detailValues = card.querySelectorAll('.detail-value');
+                let matchFound = false;
+
+                // Check if search term is in patient name or ID
+                if (patientName.includes(searchTerm) || patientId.includes(searchTerm)) {
+                    matchFound = true;
+                } else {
+                    // Check if search term is in any detail value
+                    detailValues.forEach(detail => {
+                        if (detail.textContent.toLowerCase().includes(searchTerm)) {
+                            matchFound = true;
+                        }
+                    });
+                }
+
+                if (matchFound) {
                     card.style.display = 'block';
                     visibleCount++;
                 } else {
@@ -1195,71 +1161,10 @@
                 emptyState.style.display = 'none';
                 patientsContainer.style.display = 'grid';
             }
-        });
-
-        // Filter tabs functionality
-        const filterTabs = document.querySelectorAll('.filter-tab');
-        filterTabs.forEach(tab => {
-            tab.addEventListener('click', function(e) {
-                // Don't prevent default if we want the link to actually navigate
-                // e.preventDefault();
-
-                // Update active tab
-                filterTabs.forEach(t => t.classList.remove('active'));
-                this.classList.add('active');
-
-                // If we want to do client-side filtering as well:
-                const filter = this.getAttribute('data-filter') || this.href.split('status=')[1];
-                if (filter) {
-                    // Only do client-side filtering if we're not changing pages
-                    e.preventDefault();
-                    filterPatients(filter);
-                }
-            });
-        });
-
-        function filterPatients(filter) {
-            const patientCards = patientsContainer.querySelectorAll('.patient-card');
-            let visibleCount = 0;
-
-            patientCards.forEach(card => {
-                const statusBadge = card.querySelector('.status-badge');
-                const status = statusBadge ? statusBadge.textContent.toLowerCase() : 'active';
-
-                let shouldShow = false;
-
-                switch(filter) {
-                    case 'all':
-                        shouldShow = true;
-                        break;
-                    case 'active':
-                        shouldShow = status === 'active';
-                        break;
-                    case 'new':
-                        shouldShow = status === 'new';
-                        break;
-                    case 'inactive':
-                        shouldShow = status === 'inactive';
-                        break;
-                }
-
-                if (shouldShow) {
-                    card.style.display = 'block';
-                    visibleCount++;
-                } else {
-                    card.style.display = 'none';
-                }
-            });
-
-            // Show/hide empty state
-            if (visibleCount === 0) {
-                emptyState.style.display = 'block';
-                patientsContainer.style.display = 'none';
-            } else {
-                emptyState.style.display = 'none';
-                patientsContainer.style.display = 'grid';
-            }
         }
+
+        // Make clientSideSearch accessible globally
+        window.clientSideSearch = clientSideSearch;
     });
 
     window.addEventListener('resize', checkScreenSize);
@@ -1269,73 +1174,12 @@
         advancedFilters.classList.toggle('show');
     }
 
-    function applyFilters() {
-        const gender = document.getElementById('genderFilter').value;
-        const age = document.getElementById('ageFilter').value;
-        const lastVisit = document.getElementById('lastVisitFilter').value;
-
-        // Apply filters logic here
-        console.log('Applying filters:', { gender, age, lastVisit });
-    }
-
     function exportPatients() {
+        const doctorId = document.querySelector('input[name="doctorId"]').value;
+        const status = document.getElementById('statusInput').value || 'all';
+
         // Export functionality
-        window.location.href = '/doctor/patients/export?doctorId=' + /*[[${doctorId}]]*/ '123';
-    }
-
-    // Search functionality
-    const searchInput = document.getElementById('searchInput');
-    const searchForm = document.getElementById('searchForm');
-    const patientsContainer = document.getElementById('patientsContainer');
-    const emptyState = document.getElementById('emptyState');
-
-    searchInput.addEventListener('input', function() {
-        const searchTerm = this.value.toLowerCase();
-
-        // Only do client-side filtering for short queries
-        if (searchTerm.length > 0 && searchTerm.length < 3) {
-            clientSideSearch(searchTerm);
-        }
-    });
-
-    searchInput.addEventListener('keydown', function(e) {
-        if (e.key === 'Enter') {
-            e.preventDefault();
-            if (this.value.length >= 3) {
-                searchForm.submit();
-            } else {
-                clientSideSearch(this.value.toLowerCase());
-            }
-        }
-    });
-
-    function clientSideSearch(searchTerm) {
-        const patientCards = patientsContainer.querySelectorAll('.patient-card');
-        let visibleCount = 0;
-
-        patientCards.forEach(card => {
-            const patientName = card.querySelector('.patient-name').textContent.toLowerCase();
-            const patientId = card.querySelector('.patient-id').textContent.toLowerCase();
-            const phoneNumber = card.querySelector('.detail-value').textContent.toLowerCase();
-
-            if (patientName.includes(searchTerm) ||
-                patientId.includes(searchTerm) ||
-                phoneNumber.includes(searchTerm)) {
-                card.style.display = 'block';
-                visibleCount++;
-            } else {
-                card.style.display = 'none';
-            }
-        });
-
-        // Show/hide empty state
-        if (visibleCount === 0 && searchTerm !== '') {
-            emptyState.style.display = 'block';
-            patientsContainer.style.display = 'none';
-        } else {
-            emptyState.style.display = 'none';
-            patientsContainer.style.display = 'grid';
-        }
+        window.location.href = `/doctor/patients/export?doctorId=${doctorId}&status=${status}`;
     }
     /*]]>*/
 </script>
