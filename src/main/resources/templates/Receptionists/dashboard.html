@@ -179,6 +179,42 @@
             transform: translateY(-2px);
         }
 
+        /* Quick Access Action Bar */
+        .quick-access {
+            background: var(--bg-white);
+            border-radius: 16px;
+            padding: 1.5rem;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+            border: 1px solid rgba(102, 126, 234, 0.1);
+            margin-bottom: 2rem;
+        }
+
+        .quick-access h5 {
+            font-size: 1.25rem;
+            font-weight: 600;
+            color: var(--text-dark);
+            margin-bottom: 1rem;
+        }
+
+        .quick-access .btn-primary {
+            background: linear-gradient(135deg, var(--primary), var(--accent));
+            border: none;
+            padding: 0.75rem 1.5rem;
+            border-radius: 12px;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            color: white;
+        }
+
+        .quick-access .btn-primary:hover {
+            background: linear-gradient(135deg, var(--accent), var(--primary));
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
+        }
+
         /* Main Content */
         .main-content {
             margin-left: var(--sidebar-width);
@@ -325,47 +361,70 @@
         /* Stat Cards */
         .stat-card {
             background: var(--bg-white);
-            padding: 1.5rem;
-            border-radius: 16px;
-            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+            padding: 5px 1rem;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
             transition: all 0.3s ease;
             border: 1px solid rgba(102, 126, 234, 0.1);
+            display: flex;
+            /*align-items: center;*/
+            /*justify-content: space-between;*/
+            min-height: 20px;
+            height: auto;
+            background: linear-gradient(135deg, rgba(102, 126, 234, 0.05), rgba(167, 139, 250, 0.05));
         }
 
         .stat-card:hover {
-            transform: translateY(-4px);
-            box-shadow: 0 8px 30px rgba(102, 126, 234, 0.15);
+            transform: translateY(-2px);
+            box-shadow: 0 4px 15px rgba(102, 126, 234, 0.1);
         }
 
         .stat-icon {
-            width: 60px;
-            height: 60px;
-            border-radius: 16px;
+            width: 3rem;
+            height: 3rem;
+            border-radius: 6px;
             display: flex;
             align-items: center;
             justify-content: center;
-            font-size: 1.5rem;
+            font-size: 1.2rem;
             color: white;
-            margin-right: 1rem;
+            margin-right: 0.5rem;
         }
 
-        .new-patient .stat-icon { background: linear-gradient(135deg, #667eea, #764ba2); }
-        .our-doctors .stat-icon { background: linear-gradient(135deg, #f093fb, #f5576c); }
-        .income .stat-icon { background: linear-gradient(135deg, #4facfe, #00f2fe); }
-        .ambulance .stat-icon { background: linear-gradient(135deg, #43e97b, #38f9d7); }
-        .active-staff .stat-icon { background: linear-gradient(135deg, #fa709a, #fee140); }
+        .new-patient .stat-icon {
+            background: linear-gradient(135deg, #667eea, #764ba2);
+        }
+
+        .our-doctors .stat-icon {
+            background: linear-gradient(135deg, #f093fb, #f5576c);
+        }
+
+        .total-appointments .stat-icon {
+            background: linear-gradient(135deg, #4facfe, #00f2fe);
+        }
+
+        .active-staff .stat-icon {
+            background: linear-gradient(135deg, #fa709a, #fee140);
+        }
+
+        .stat-content {
+            display: flex;
+            align-items: center;
+            gap: 0.25rem;
+        }
 
         .card-title {
-            font-size: 0.875rem;
+            font-size: 0.7rem;
             color: var(--text-muted);
             font-weight: 500;
-            margin-bottom: 0.5rem;
+            margin: 0;
         }
 
         .card-text {
-            font-size: 2rem;
-            font-weight: 700;
+            font-size: 1rem;
+            font-weight: 600;
             color: var(--primary);
+            margin: 0;
         }
 
         /* Chart Container */
@@ -399,31 +458,45 @@
             margin-right: 0.5rem;
         }
 
-        .legend-color.recovered { background: #3b82f6; }
-        .legend-color.income { background: #10b981; }
+        .legend-color.scheduled {
+            background: #f59e0b;
+        }
+
+        .legend-color.completed {
+            background: #10b981;
+        }
+
+        .legend-color.cancelled {
+            background: #ef4444;
+        }
 
         /* Tables */
         .card {
-            background: var(--bg-white);
-            border-radius: 16px;
-            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
-            border: 1px solid rgba(102, 126, 234, 0.1);
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 2px 15px rgba(0, 0, 0, 0.08);
+            border: 2px solid rgba(102, 126, 234, 0.2);
+            transition: all 0.3s ease;
+        }
+
+        .card:hover {
+            box-shadow: 0 8px 30px rgba(102, 126, 234, 0.25);
         }
 
         .card-header {
-            background: none;
-            border-bottom: 1px solid rgba(102, 126, 234, 0.1);
-            padding: 1.5rem;
+            background: linear-gradient(135deg, rgba(102, 126, 234, 0.05), rgba(167, 139, 250, 0.05));
+            border-bottom: 1px solid rgba(102, 126, 234, 0.2);
+            padding: 1.75rem;
         }
 
         .card-title {
-            font-size: 1.25rem;
+            font-size:1.25rem;
             font-weight: 600;
             color: var(--text-dark);
         }
 
         .card-body {
-            padding: 1.5rem;
+            padding: 0.8rem;
         }
 
         .input-group-text {
@@ -534,12 +607,17 @@
             }
 
             .card {
-                padding: 1rem;
+                padding: 1.25rem;
+            }
+
+            .quick-access .btn-primary {
+                width: 100%;
+                margin-bottom: 0.5rem;
             }
         }
 
         @media (max-width: 576px) {
-            .row-cols-xl-5 > .col {
+            .row-cols-xl-4 > .col {
                 flex: 0 0 100%;
                 max-width: 100%;
             }
@@ -549,17 +627,17 @@
             }
 
             .stat-card {
-                padding: 1rem;
+                padding: 0.25rem;
             }
 
             .stat-icon {
-                width: 50px;
-                height: 50px;
-                font-size: 1.25rem;
+                width: 20px;
+                height: 20px;
+                font-size: 0.75rem;
             }
 
             .card-text {
-                font-size: 1.5rem;
+                font-size: 0.875rem;
             }
         }
 
@@ -594,49 +672,51 @@
                     </div>
                 </a>
             </div>
-            <a href="/receptionist/new_appointment" class="btn btn-light mx-3 mb-3">
-                <i class="fas fa-plus"></i> New Appointment
-            </a>
             <nav class="sidebar-nav">
                 <div class="nav-section-title">Navigation</div>
                 <ul class="nav flex-column">
                     <li class="nav-item">
-                        <a href="/receptionist/dashboard" class="nav-link active"><i class="fas fa-th-large"></i> Dashboard</a>
+                        <a href="/receptionist/dashboard" class="nav-link active"><i class="fas fa-th-large"></i>
+                            Dashboard</a>
                     </li>
                     <div class="nav-section-title">Medical Services</div>
                     <ul class="nav flex-column">
-                    <li class="nav-item">
-                        <a href="/receptionist/appointments" class="nav-link"><i class="fas fa-calendar-alt"></i> Appointments</a>
-                    </li>
-                    <li class="nav-item">
-                        <a href="/receptionist/doctors" class="nav-link"><i class="fas fa-user-md"></i> Doctors</a>
-                    </li>
-                    <li class="nav-item">
-                        <a href="/receptionist/patients" class="nav-link"><i class="fas fa-users"></i> Patients</a>
-                    </li>
-
-                    <li class="nav-item">
-                        <a href="/receptionist/reports" class="nav-link"><i class="fas fa-chart-bar"></i> Reports</a>
-                    </li>
+                        <li class="nav-item">
+                            <a href="/receptionist/appointments" class="nav-link"><i class="fas fa-calendar-alt"></i>
+                                Appointments</a>
+                        </li>
+                        <li class="nav-item">
+                            <a href="/receptionist/doctors" class="nav-link"><i class="fas fa-user-md"></i> Doctors</a>
+                        </li>
+                        <li class="nav-item">
+                            <a href="/receptionist/patients" class="nav-link"><i class="fas fa-users"></i> Patients</a>
+                        </li>
+                        <li class="nav-item">
+                            <a href="/receptionist/payments" class="nav-link"><i class="fas fa-money-bill-wave"></i> Payments</a>
+                        </li>
+                        <li class="nav-item">
+                            <a href="/receptionist/reports" class="nav-link"><i class="fas fa-chart-bar"></i>
+                                Reports</a>
+                        </li>
                     </ul>
 
-                        <div class="nav-section-title">Account</div>
-                        <ul class="nav flex-column">
-                    <li class="nav-item">
-                        <a href="/receptionist/profile" class="nav-link"><i class="fas fa-stethoscope"></i> Profile</a>
-                    </li>
-                        </ul>
-                            <div class="nav-section-title">System</div>
-                            <ul class="nav flex-column">
-                    <li class="nav-item">
-                        <a href="/receptionist/settings" class="nav-link"><i class="fas fa-cog"></i> Settings</a>
-                    </li>
-                            </ul>
-                    <form th:action="@{/auth/logout}" method="post">
-                        <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}" />
-                        <button type="submit" class="logout-btn">
-                            <i class="bi bi-box-arrow-right"></i>
-                            Logout Securely
+                    <div class="nav-section-title">Account</div>
+                    <ul class="nav flex-column">
+                        <li class="nav-item">
+                            <a href="/receptionist/profile" class="nav-link"><i class="fas fa-stethoscope"></i> Profile</a>
+                        </li>
+                    </ul>
+                    <div class="nav-section-title">System</div>
+                    <ul class="nav flex-column">
+                        <li class="nav-item">
+                            <a href="/receptionist/settings" class="nav-link"><i class="fas fa-cog"></i> Settings</a>
+                        </li>
+                    </ul>
+                    <form class="nav-item" th:action="@{/auth/logout}" method="post">
+                        <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
+                        <button type="submit" class="nav-link logout-btn">
+                            <i class="fas fa-sign-out-alt"></i>
+                            Logout
                         </button>
                     </form>
                 </ul>
@@ -655,71 +735,89 @@
                 <div class="profile-info">
                     <div class="notification-bell" role="button" onclick="toggleNotificationModal()">
                         <i class="fas fa-bell fs-5"></i>
-                        <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger" id="notificationCount">0</span>
+                        <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger"
+                              id="notificationCount">0</span>
                     </div>
-                    <img src="images/profile.jpg" alt="Profile" class="rounded-circle" onerror="this.src='https://via.placeholder.com/40';">
+                    <img src="images/profile.jpg" alt="Profile" class="rounded-circle">
                 </div>
             </header>
 
             <!-- Notification Modal -->
-            <div id="notificationModal" class="notification-modal">
-                <h5>System Notifications</h5>
-                <div id="notificationList"></div>
+            <div class="notification-modal" id="notificationModal">
+                <h5>Notifications</h5>
+                <div class="notification-item">
+                    <p><strong>New Payment:</strong> INV-001 completed.</p>
+                    <small>2 hours ago</small>
+                </div>
+                <div class="notification-item">
+                    <p><strong>Pending Payment:</strong> INV-002 awaiting confirmation.</p>
+                    <small>1 day ago</small>
+                </div>
+            </div>
+
+            <!-- Quick Access Action Bar -->
+            <div class="quick-access">
+                <h5>Quick Access</h5>
+                <div class="d-flex gap-3 flex-wrap">
+                    <a href="/receptionist/new_appointment" class="btn btn-primary">
+                        <i class="fas fa-calendar-plus"></i> Book Appointment
+                    </a>
+                    <a href="/receptionist/patient_register" class="btn btn-primary">
+                        <i class="fas fa-user-plus"></i> Register Patient
+                    </a>
+                </div>
             </div>
 
             <!-- Stats Cards -->
-            <div class="row row-cols-1 row-cols-md-2 row-cols-lg-3 row-cols-xl-5 g-4 mb-4">
+            <div class="row row-cols-1 row-cols-md-2 row-cols-lg-3 row-cols-xl-4 g-2 mb-2">
                 <div class="col">
                     <div class="card stat-card new-patient h-100">
-                        <div class="card-body d-flex align-items-center">
-                            <div class="stat-icon"><i class="fas fa-user-plus"></i></div>
-                            <div>
-                                <h6 class="card-title">New Patients</h6>
-                                <p class="card-text" id="newPatients">0</p>
+                        <div class="card-body d-flex align-items-center justify-content-between">
+                            <div class="stat-content">
+                                <div class="stat-icon"><i class="fas fa-user-plus"></i></div>
+                                <div>
+                                    <h6 class="card-title">New Patients</h6>
+                                    <p class="card-text" id="newPatients">0</p>
+                                </div>
                             </div>
                         </div>
                     </div>
                 </div>
                 <div class="col">
                     <div class="card stat-card our-doctors h-100">
-                        <div class="card-body d-flex align-items-center">
-                            <div class="stat-icon"><i class="fas fa-user-md"></i></div>
-                            <div>
-                                <h6 class="card-title">Our Doctors</h6>
-                                <p class="card-text" id="doctors">0</p>
+                        <div class="card-body d-flex align-items-center justify-content-between">
+                            <div class="stat-content">
+                                <div class="stat-icon"><i class="fas fa-user-md"></i></div>
+                                <div>
+                                    <h6 class="card-title">Our Doctors</h6>
+                                    <p class="card-text" id="doctors">0</p>
+                                </div>
                             </div>
                         </div>
                     </div>
                 </div>
                 <div class="col">
-                    <div class="card stat-card income h-100">
-                        <div class="card-body d-flex align-items-center">
-                            <div class="stat-icon"><i class="fas fa-dollar-sign"></i></div>
-                            <div>
-                                <h6 class="card-title">Income</h6>
-                                <p class="card-text" id="income">$0</p>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-                <div class="col">
-                    <div class="card stat-card ambulance h-100">
-                        <div class="card-body d-flex align-items-center">
-                            <div class="stat-icon"><i class="fas fa-ambulance"></i></div>
-                            <div>
-                                <h6 class="card-title">Ambulances</h6>
-                                <p class="card-text" id="ambulances">0</p>
+                    <div class="card stat-card total-appointments h-100">
+                        <div class="card-body d-flex align-items-center justify-content-between">
+                            <div class="stat-content">
+                                <div class="stat-icon"><i class="fas fa-calendar-check"></i></div>
+                                <div>
+                                    <h6 class="card-title">Total Appointments</h6>
+                                    <p class="card-text" id="totalAppointments">0</p>
+                                </div>
                             </div>
                         </div>
                     </div>
                 </div>
                 <div class="col">
                     <div class="card stat-card active-staff h-100">
-                        <div class="card-body d-flex align-items-center">
-                            <div class="stat-icon"><i class="fas fa-users"></i></div>
-                            <div>
-                                <h6 class="card-title">Active Staff</h6>
-                                <p class="card-text" id="activeStaff">0</p>
+                        <div class="card-body d-flex align-items-center justify-content-between">
+                            <div class="stat-content">
+                                <div class="stat-icon"><i class="fas fa-users"></i></div>
+                                <div>
+                                    <h6 class="card-title">Active Staff</h6>
+                                    <p class="card-text" id="activeStaff">0</p>
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -727,7 +825,7 @@
             </div>
 
             <!-- Charts -->
-            <div class="row g-4 mb-4">
+            <div class="row g-4 mb-3">
                 <div class="col-lg-6">
                     <div class="chart-container">
                         <div class="d-flex justify-content-between align-items-center mb-3">
@@ -747,16 +845,18 @@
                 <div class="col-lg-6">
                     <div class="chart-container">
                         <div class="d-flex justify-content-between align-items-center mb-3">
-                            <h5>Financial Statistics</h5>
-                            <select class="form-select w-auto" id="incomePeriod">
+                            <h5>Appointment Statistics</h5>
+                            <select class="form-select w-auto" id="appointmentStatsPeriod">
                                 <option value="day">Day</option>
                                 <option value="month">Month</option>
                                 <option value="5years">Last 5 Years</option>
                             </select>
                         </div>
-                        <canvas id="patientsGenderChart" height="300"></canvas>
+                        <canvas id="appointmentStatusChart" height="300"></canvas>
                         <div class="d-flex justify-content-center gap-3 mt-3">
-                            <div><span class="legend-color income"></span> Financial</div>
+                            <div><span class="legend-color scheduled"></span> Scheduled</div>
+                            <div><span class="legend-color completed"></span> Completed</div>
+                            <div><span class="legend-color cancelled"></span> Cancelled</div>
                         </div>
                     </div>
                 </div>
@@ -774,7 +874,8 @@
                         <div class="card-body">
                             <div class="input-group mb-3">
                                 <span class="input-group-text"><i class="fas fa-search"></i></span>
-                                <input type="text" class="form-control" id="patientSearch" placeholder="Search by patient name" onkeyup="searchPatients()">
+                                <input type="text" class="form-control" id="patientSearch"
+                                       placeholder="Search by patient name" onkeyup="searchPatients()">
                             </div>
                             <div class="table-responsive">
                                 <table class="table table-hover" id="appointmentTable">
@@ -804,7 +905,8 @@
                         <div class="card-body">
                             <div class="input-group mb-3">
                                 <span class="input-group-text"><i class="fas fa-search"></i></span>
-                                <input type="text" class="form-control" id="doctorSearch" placeholder="Search by doctor name" onkeyup="searchDoctors()">
+                                <input type="text" class="form-control" id="doctorSearch"
+                                       placeholder="Search by doctor name" onkeyup="searchDoctors()">
                             </div>
                             <div id="reviewsList"></div>
                         </div>
@@ -827,7 +929,8 @@
             <div class="modal-body">
                 <div class="input-group mb-3">
                     <span class="input-group-text"><i class="fas fa-search"></i></span>
-                    <input type="text" class="form-control" id="modalPatientSearch" placeholder="Search by patient name" onkeyup="searchModalPatients()">
+                    <input type="text" class="form-control" id="modalPatientSearch" placeholder="Search by patient name"
+                           onkeyup="searchModalPatients()">
                 </div>
                 <div class="table-responsive">
                     <table class="table table-hover" id="modalAppointmentTable">
@@ -911,9 +1014,9 @@
     window.addEventListener('load', checkScreenSize);
     window.addEventListener('resize', checkScreenSize);
 
-    // Original JavaScript from your code
+    // Chart variables
     let patientStatusChart = null;
-    let patientsGenderChart = null;
+    let appointmentStatusChart = null;
 
     const appointmentModal = new bootstrap.Modal(document.getElementById('appointmentModal'));
     const detailsModal = new bootstrap.Modal(document.getElementById('detailsModal'));
@@ -931,11 +1034,11 @@
         };
     }
 
-    document.addEventListener('DOMContentLoaded', function() {
+    document.addEventListener('DOMContentLoaded', function () {
         fetchDashboardData();
         addEventListeners();
         initPatientStatusChart();
-        initPatientsGenderChart();
+        initAppointmentStatusChart();
     });
 
     function displayNoDataMessage(ctx, message) {
@@ -971,7 +1074,7 @@
                 responsive: true,
                 maintainAspectRatio: false,
                 plugins: {
-                    legend: { display: false },
+                    legend: {display: false},
                     tooltip: {
                         backgroundColor: 'rgba(0, 0, 0, 0.8)',
                         cornerRadius: 8
@@ -979,12 +1082,12 @@
                 },
                 scales: {
                     x: {
-                        grid: { display: false },
-                        title: { display: true, text: 'Month' }
+                        grid: {display: false},
+                        title: {display: true, text: 'Month'}
                     },
                     y: {
-                        grid: { color: '#e9ecef' },
-                        title: { display: true, text: 'Number of Patients' }
+                        grid: {color: '#e9ecef'},
+                        title: {display: true, text: 'Number of Patients'}
                     }
                 }
             }
@@ -993,7 +1096,7 @@
         updatePatientStatusChart('month');
     }
 
-    const updatePatientStatusChart = debounce(function(period) {
+    const updatePatientStatusChart = debounce(function (period) {
         console.log(`Fetching patient stats for period: ${period}`);
         const ctx = document.getElementById('patientStatusChart');
         if (!ctx) return;
@@ -1005,7 +1108,7 @@
             })
             .then(data => {
                 if (!data.patientStats || !data.patientStats.data || data.patientStats.data.length === 0) {
-                    displayNoDataMessage(ctx, 'Waiting for patient statistics data...');
+                    displayNoDataMessage(ctx, 'Waiting for patient statistics...');
                     return;
                 }
 
@@ -1018,7 +1121,7 @@
                 if (patientStatusChart) {
                     patientStatusChart.data.datasets[0].data = data.patientStats.data;
                     if (period === 'day') {
-                        patientStatusChart.data.labels = Array.from({ length: 30 }, (_, i) => (i + 1).toString());
+                        patientStatusChart.data.labels = Array.from({length: 30}, (_, i) => (i + 1).toString());
                         patientStatusChart.options.scales.x.title.text = 'Day';
                     } else if (period === 'month') {
                         patientStatusChart.data.labels = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
@@ -1037,30 +1140,42 @@
             });
     }, 500);
 
-    function initPatientsGenderChart() {
-        const ctx = document.getElementById('patientsGenderChart');
+    function initAppointmentStatusChart() {
+        const ctx = document.getElementById('appointmentStatusChart');
         if (!ctx) return;
 
-        if (patientsGenderChart) {
-            patientsGenderChart.destroy();
+        if (appointmentStatusChart) {
+            appointmentStatusChart.destroy();
         }
 
-        patientsGenderChart = new Chart(ctx.getContext('2d'), {
-            type: 'bar',
+        appointmentStatusChart = new Chart(ctx.getContext('2d'), {
+            type: 'line',
             data: {
-                labels: Array.from({ length: 30 }, (_, i) => (i + 1).toString()),
+                labels: Array.from({length: 30}, (_, i) => (i + 1).toString()),
                 datasets: [
                     {
-                        label: 'Male',
+                        label: 'Scheduled',
                         data: [],
-                        backgroundColor: '#3b82f6',
-                        borderRadius: 8
+                        borderColor: '#f59e0b',
+                        backgroundColor: 'rgba(245, 158, 11, 0.2)',
+                        fill: true,
+                        tension: 0.4
                     },
                     {
-                        label: 'Female',
+                        label: 'Completed',
                         data: [],
-                        backgroundColor: '#ec4899',
-                        borderRadius: 8
+                        borderColor: '#10b981',
+                        backgroundColor: 'rgba(16, 185, 129, 0.2)',
+                        fill: true,
+                        tension: 0.4
+                    },
+                    {
+                        label: 'Cancelled',
+                        data: [],
+                        borderColor: '#ef4444',
+                        backgroundColor: 'rgba(239, 68, 68, 0.2)',
+                        fill: true,
+                        tension: 0.4
                     }
                 ]
             },
@@ -1068,7 +1183,7 @@
                 responsive: true,
                 maintainAspectRatio: false,
                 plugins: {
-                    legend: { display: false },
+                    legend: {display: false},
                     tooltip: {
                         backgroundColor: 'rgba(0, 0, 0, 0.8)',
                         cornerRadius: 8
@@ -1076,69 +1191,70 @@
                 },
                 scales: {
                     x: {
-                        grid: { display: false },
-                        title: { display: true, text: 'Day' }
+                        grid: {display: false},
+                        title: {display: true, text: 'Day'}
                     },
                     y: {
-                        grid: { color: '#e9ecef' },
-                        title: { display: true, text: 'Number of Patients' }
+                        grid: {color: '#e9ecef'},
+                        title: {display: true, text: 'Number of Appointments'}
                     }
                 }
             }
         });
 
-        updatePatientsGenderChart('day');
+        updateAppointmentStatusChart('day');
     }
 
-    const updatePatientsGenderChart = debounce(function(period) {
-        console.log(`Fetching gender stats for period: ${period}`);
-        const ctx = document.getElementById('patientsGenderChart');
+    const updateAppointmentStatusChart = debounce(function (period) {
+        console.log(`Fetching appointment stats for period: ${period}`);
+        const ctx = document.getElementById('appointmentStatusChart');
         if (!ctx) return;
 
-        fetch(`/DashboardDataServlet?dataType=genderStats&period=${period}`)
+        fetch(`/DashboardDataServlet?dataType=appointmentStatus&period=${period}`)
             .then(response => {
-                if (!response.ok) throw new Error('Failed to fetch gender stats');
+                if (!response.ok) throw new Error('Failed to fetch appointment stats');
                 return response.json();
             })
             .then(data => {
-                if (!data.genderStats || (!data.genderStats.male && !data.genderStats.female) ||
-                    (data.genderStats.male.length === 0 && data.genderStats.female.length === 0)) {
-                    displayNoDataMessage(ctx, 'Waiting for gender statistics data...');
+                if (!data.appointmentStatus || (!data.appointmentStatus.scheduled && !data.appointmentStatus.completed && !data.appointmentStatus.cancelled) ||
+                    (!data.appointmentStatus.scheduled.length && !data.appointmentStatus.completed.length && !data.appointmentStatus.cancelled.length)) {
+                    displayNoDataMessage(ctx, 'Waiting for appointment statistics data...');
                     return;
                 }
 
                 if (!ctx.getContext) {
                     const parent = ctx.parentNode;
-                    parent.innerHTML = '<canvas id="patientsGenderChart" height="300"></canvas>';
-                    initPatientsGenderChart();
+                    parent.innerHTML = '<canvas id="appointmentStatusChart" height="300"></canvas>';
+                    initAppointmentStatusChart();
                 }
 
-                if (patientsGenderChart) {
-                    patientsGenderChart.data.datasets[0].data = data.genderStats.male || [];
-                    patientsGenderChart.data.datasets[1].data = data.genderStats.female || [];
+                if (appointmentStatusChart) {
+                    appointmentStatusChart.data.datasets[0].data = data.appointmentStatus.scheduled || [];
+                    appointmentStatusChart.data.datasets[1].data = data.appointmentStatus.completed || [];
+                    appointmentStatusChart.data.datasets[2].data = data.appointmentStatus.cancelled || [];
                     if (period === 'day') {
-                        patientsGenderChart.data.labels = Array.from({ length: 30 }, (_, i) => (i + 1).toString());
-                        patientsGenderChart.options.scales.x.title.text = 'Day';
+                        appointmentStatusChart.data.labels = Array.from({length: 30}, (_, i) => (i + 1).toString());
+                        appointmentStatusChart.options.scales.x.title.text = 'Day';
                     } else if (period === 'month') {
-                        patientsGenderChart.data.labels = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
-                        patientsGenderChart.options.scales.x.title.text = 'Month';
+                        appointmentStatusChart.data.labels = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+                        appointmentStatusChart.options.scales.x.title.text = 'Month';
                     } else {
-                        patientsGenderChart.data.labels = ['2021', '2022', '2023', '2024', '2025'];
-                        patientsGenderChart.options.scales.x.title.text = 'Year';
+                        appointmentStatusChart.data.labels = ['2021', '2022', '2023', '2024', '2025'];
+                        appointmentStatusChart.options.scales.x.title.text = 'Year';
                     }
-                    patientsGenderChart.update();
+                    appointmentStatusChart.update();
                 }
             })
             .catch(error => {
-                console.error('Error fetching gender stats:', error);
-                displayNoDataMessage(ctx, 'Error loading gender statistics. Please try again later.');
-                showNotification('Failed to load gender statistics', 'error');
+                console.error('Error fetching appointment stats:', error);
+                displayNoDataMessage(ctx, 'Error loading appointment statistics. Please try again later.');
+                showNotification('Failed to load appointment statistics', 'error');
             });
     }, 500);
 
     function addEventListeners() {
         document.querySelectorAll('.nav-link').forEach(item => {
-            item.addEventListener('click', function(e) {
+            item.addEventListener('click', function (e) {
                 if (this.getAttribute('href').startsWith('#') || this.getAttribute('href') === '') {
                     e.preventDefault();
                     document.querySelectorAll('.nav-link').forEach(nav => nav.classList.remove('active'));
@@ -1153,18 +1269,18 @@
         const patientStatsPeriod = document.getElementById('patientStatsPeriod');
         const patientStatsClone = patientStatsPeriod.cloneNode(true);
         patientStatsPeriod.parentNode.replaceChild(patientStatsClone, patientStatsPeriod);
-        patientStatsClone.addEventListener('change', function() {
+        patientStatsClone.addEventListener('change', function () {
             updatePatientStatusChart(this.value);
         });
 
-        const incomePeriod = document.getElementById('incomePeriod');
-        const incomePeriodClone = incomePeriod.cloneNode(true);
-        incomePeriod.parentNode.replaceChild(incomePeriodClone, incomePeriod);
-        incomePeriodClone.addEventListener('change', function() {
-            updatePatientsGenderChart(this.value);
+        const appointmentStatsPeriod = document.getElementById('appointmentStatsPeriod');
+        const appointmentStatsClone = appointmentStatsPeriod.cloneNode(true);
+        appointmentStatsPeriod.parentNode.replaceChild(appointmentStatsClone, appointmentStatsPeriod);
+        appointmentStatsClone.addEventListener('change', function () {
+            updateAppointmentStatusChart(this.value);
         });
 
-        window.onclick = function(event) {
+        window.onclick = function (event) {
             const notificationModal = document.getElementById('notificationModal');
             if (event.target !== notificationModal &&
                 !notificationModal.contains(event.target) &&
@@ -1175,9 +1291,9 @@
 
         setInterval(() => {
             const patientPeriod = document.getElementById('patientStatsPeriod').value;
-            const incomePeriod = document.getElementById('incomePeriod').value;
+            const appointmentPeriod = document.getElementById('appointmentStatsPeriod').value;
             updatePatientStatusChart(patientPeriod);
-            updatePatientsGenderChart(incomePeriod);
+            updateAppointmentStatusChart(appointmentPeriod);
         }, 30000);
     }
 </script>

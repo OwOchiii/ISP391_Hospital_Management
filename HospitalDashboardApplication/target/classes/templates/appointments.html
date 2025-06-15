@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="_csrf" th:content="${_csrf.token}"/>
+    <meta name="_csrf_header" th:content="${_csrf.headerName}"/>
+    <title>Appointments</title>
+    <link rel="stylesheet" th:href="@{/css/dashboard.css}">
+</head>
+<body>
+    <div class="container">
+        <aside class="sidebar">
+            <h2>Hospital Dashboard</h2>
+            <ul class="nav-list">
+                <li><a href="/">Dashboard</a></li>
+                <li><a href="/appointments">Appointments</a></li>
+                <li><a href="/verify-appointments">Verify Appointments</a></li>
+            </ul>
+        </aside>
+        <main class="main-content">
+            <header class="header">
+                <h1>Appointments</h1>
+            </header>
+
+            <section class="table-container">
+                <h2 class="section-title">All Appointments</h2>
+                <form th:action="@{/appointments/add}" method="post" style="margin-bottom: 2rem;">
+                    <input type="hidden" name="_csrf" th:value="${_csrf.token}"/>
+                    <input type="text" name="patientName" placeholder="Patient Name" required>
+                    <input type="text" name="doctorName" placeholder="Doctor Name" required>
+                    <input type="text" name="phone" placeholder="Phone" required>
+                    <input type="date" name="date" required>
+                    <input type="time" name="time" required>
+                    <select name="status" required>
+                        <option value="Pending">Pending</option>
+                        <option value="Confirmed">Confirmed</option>
+                        <option value="Rejected">Rejected</option>
+                    </select>
+                    <input type="text" name="department" placeholder="Department" required>
+                    <button type="submit" class="action-btn btn-approve">Add Appointment</button>
+                </form>
+                <table class="table">
+                    <thead>
+                        <tr>
+                            <th>Patient</th>
+                            <th>Doctor</th>
+                            <th>Phone</th>
+                            <th>Date</th>
+                            <th>Time</th>
+                            <th>Department</th>
+                            <th>Status</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr th:each="appointment : ${appointments}" class="table-row">
+                            <td th:text="${appointment.patientName}"></td>
+                            <td th:text="${appointment.doctorName}"></td>
+                            <td th:text="${appointment.phone}"></td>
+                            <td th:text="${appointment.date}"></td>
+                            <td th:text="${appointment.time}"></td>
+                            <td th:text="${appointment.department}"></td>
+                            <td>
+                                <span class="status-badge" th:classappend="'status-' + ${appointment.status.toLowerCase()}" th:text="${appointment.status}"></span>
+                            </td>
+                            <td>
+                                <button class="action-btn btn-delete" th:data-id="${appointment.id}">Delete</button>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </section>
+        </main>
+    </div>
+    <script th:src="@{/js/dashboard.js}"></script>
+</body>
+</html>

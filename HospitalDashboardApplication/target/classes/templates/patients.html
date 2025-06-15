@@ -1,0 +1,288 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Patients - Hospital</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        :root {
+            --primary-color: #3b82f6;
+            --secondary-color: #10b981;
+            --background-light: #f8fafc;
+            --background-dark: #1e293b;
+            --text-light: #1e293b;
+            --text-dark: #e2e8f0;
+            --card-bg-light: rgba(255, 255, 255, 0.7);
+            --card-bg-dark: rgba(30, 41, 59, 0.7);
+            --shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            --backdrop-blur: blur(10px);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Inter', sans-serif;
+        }
+
+        body {
+            background: var(--background-light);
+            color: var(--text-light);
+            transition: background 0.3s, color 0.3s;
+            min-height: 100vh;
+        }
+
+        body.dark-theme {
+            background: var(--background-dark);
+            color: var(--text-dark);
+        }
+
+        .container {
+            display: flex;
+            min-height: 100vh;
+        }
+
+        .sidebar {
+            width: 250px;
+            padding: 20px;
+            background: var(--card-bg-light);
+            backdrop-filter: var(--backdrop-blur);
+            border-right: 1px solid rgba(255, 255, 255, 0.2);
+            transition: transform 0.3s;
+        }
+
+        .dark-theme .sidebar {
+            background: var(--card-bg-dark);
+            border-right: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .sidebar-header {
+            margin-bottom: 30px;
+        }
+
+        .sidebar-header h2 {
+            font-size: 1.5rem;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .sidebar nav ul li {
+            margin: 15px 0;
+        }
+
+        .sidebar nav ul li a {
+            color: var(--text-light);
+            text-decoration: none;
+            font-weight: 500;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 10px;
+            border-radius: 8px;
+            transition: background 0.3s, color 0.3s;
+        }
+
+        .dark-theme .sidebar nav ul li a {
+            color: var(--text-dark);
+        }
+
+        .sidebar nav ul li a:hover,
+        .sidebar nav ul li a.active {
+            background: var(--primary-color);
+            color: #fff;
+        }
+
+        .theme-toggle {
+            margin-top: auto;
+            padding-top: 20px;
+        }
+
+        .theme-toggle button {
+            background: none;
+            border: none;
+            color: var(--text-light);
+            font-size: 1.2rem;
+            cursor: pointer;
+            transition: color 0.3s;
+        }
+
+        .dark-theme .theme-toggle button {
+            color: var(--text-dark);
+        }
+
+        .content {
+            flex: 1;
+            padding: 20px;
+        }
+
+        header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 15px 20px;
+            background: var(--card-bg-light);
+            backdrop-filter: var(--backdrop-blur);
+            border-radius: 12px;
+            margin-bottom: 20px;
+            box-shadow: var(--shadow);
+        }
+
+        .dark-theme header {
+            background: var(--card-bg-dark);
+        }
+
+        header h1 {
+            font-size: 1.8rem;
+        }
+
+        .user-profile {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .user-profile span {
+            font-weight: 500;
+        }
+
+        .table-container {
+            background: var(--card-bg-light);
+            backdrop-filter: var(--backdrop-blur);
+            border-radius: 12px;
+            padding: 20px;
+            box-shadow: var(--shadow);
+            overflow-x: auto;
+        }
+
+        .dark-theme .table-container {
+            background: var(--card-bg-dark);
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        th, td {
+            padding: 12px;
+            text-align: left;
+            border-bottom: 1px solid rgba(0, 0, 0, 0.1);
+        }
+
+        .dark-theme th,
+        .dark-theme td {
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        th {
+            font-weight: 600;
+            background: rgba(0, 0, 0, 0.05);
+        }
+
+        .dark-theme th {
+            background: rgba(255, 255, 255, 0.05);
+        }
+
+        .table-row:hover {
+            background: rgba(0, 0, 0, 0.05);
+        }
+
+        .dark-theme .table-row:hover {
+            background: rgba(255, 255, 255, 0.05);
+        }
+
+        @media (max-width: 768px) {
+            .container {
+                flex-direction: column;
+            }
+
+            .sidebar {
+                width: 100%;
+                transform: translateY(-100%);
+                position: fixed;
+                top: 0;
+                left: 0;
+                z-index: 1000;
+            }
+
+            .sidebar.active {
+                transform: translateY(0);
+            }
+
+            .content {
+                margin-top: 60px;
+            }
+        }
+    </style>
+</head>
+<body class="light-theme">
+<div class="container">
+    <aside class="sidebar">
+        <div class="sidebar-header">
+            <h2><i class="fas fa-hospital"></i> Hospital</h2>
+        </div>
+        <nav>
+            <ul>
+                <li><a th:href="@{/dashboard}"><i class="fas fa-tachometer-alt"></i> Dashboard</a></li>
+                <li><a th:href="@{/patients}" class="active"><i class="fas fa-users"></i> Patients</a></li>
+                <li><a th:href="@{/appointments}"><i class="fas fa-calendar-alt"></i> Appointments</a></li>
+                <li><a th:href="@{/verify-appointments}"><i class="fas fa-check-circle"></i> Verify Appointments</a></li>
+            </ul>
+        </nav>
+        <div class="theme-toggle">
+            <button id="themeToggle" title="Toggle Theme">
+                <i class="fas fa-moon"></i>
+            </button>
+        </div>
+    </aside>
+    <main class="content">
+        <header>
+            <h1>Patients</h1>
+            <div class="user-profile">
+                <span>Admin</span>
+                <i class="fas fa-user-circle fa-2x"></i>
+            </div>
+        </header>
+        <section class="patient-list">
+            <h2>Patient List</h2>
+            <div class="table-container">
+                <table>
+                    <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>Name</th>
+                        <th>Email</th>
+                        <th>Phone</th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                    <tr th:each="patient : ${patients}" class="table-row">
+                        <td th:text="${patient.id}">1</td>
+                        <td th:text="${patient.name ?: 'N/A'}">Name</td>
+                        <td th:text="${patient.email ?: 'N/A'}">Email</td>
+                        <td th:text="${patient.phone ?: 'N/A'}">Phone</td>
+                    </tr>
+                    </tbody>
+                </table>
+            </div>
+        </section>
+    </main>
+</div>
+<script>
+    // Theme Toggle
+    document.addEventListener('DOMContentLoaded', function() {
+        const themeToggle = document.getElementById('themeToggle');
+        const body = document.body;
+
+        themeToggle.addEventListener('click', () => {
+            body.classList.toggle('dark-theme');
+            const isDarkTheme = body.classList.contains('dark-theme');
+            themeToggle.innerHTML = `<i class="fas ${isDarkTheme ? 'fa-sun' : 'fa-moon'}"></i>`;
+        });
+    });
+</script>
+</body>
+</html>

@@ -1,0 +1,15 @@
+package orochi.repository;
+
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import orochi.model.Feedback;
+import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.stereotype.Repository;
+
+import java.time.LocalDateTime;
+
+@Repository
+public interface FeedbackRepository extends JpaRepository<Feedback, Integer> {
+    Page<Feedback> findByUserId(Integer userId, Pageable pageable);
+    Page<Feedback> findByUserIdAndCreatedAtBetween(Integer userId, LocalDateTime start, LocalDateTime end, Pageable pageable);
+}

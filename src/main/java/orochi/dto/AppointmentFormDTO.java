@@ -11,6 +11,7 @@ import java.time.LocalDate;
 
 @Data
 public class AppointmentFormDTO {
+    private Integer appointmentId;
 
     @NotNull(message = "Patient ID is required")
     private Integer patientId;

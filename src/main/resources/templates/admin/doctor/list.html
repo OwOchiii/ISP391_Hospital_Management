@@ -2,39 +2,31 @@
 <html lang="en" xmlns:th="http://www.thymeleaf.org">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="_csrf" th:content="${_csrf.token}"/>
+    <meta name="_csrf_header" th:content="${_csrf.headerName}"/>
     <title>Doctor Management - MediCare Plus</title>
+
     <!-- Bootstrap CSS -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <!-- Bootstrap Icons -->
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css">
     <!-- Google Fonts -->
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
-    <!-- Dashboard CSS -->
+
     <style>
         :root {
             --admin-primary: #7c3aed;
             --admin-secondary: #5b21b6;
             --admin-accent: #a855f7;
             --admin-light: #f3e8ff;
-            --admin-dark: #4c1d95;
             --text-dark: #1f2937;
             --text-light: #6b7280;
-            --text-muted: #9ca3af;
-            --bg-light: #fafbfc;
-            --bg-white: #ffffff;
-            --success-color: #059669;
-            --warning-color: #d97706;
-            --error-color: #dc2626;
-            --info-color: #0284c7;
-            --sidebar-width: 300px;
-            --header-height: 70px;
-        }
-
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
+            --bg-light: #f8fafc;
+            --success-color: #10b981;
+            --error-color: #ef4444;
+            --warning-color: #f59e0b;
+            --sidebar-width: 280px;
         }
 
         body {
@@ -42,67 +34,57 @@
             line-height: 1.6;
             color: var(--text-dark);
             background: var(--bg-light);
-            overflow-x: hidden;
         }
 
-        .admin-sidebar {
+        .sidebar {
             position: fixed;
             top: 0;
             left: 0;
             height: 100vh;
             width: var(--sidebar-width);
-            background: linear-gradient(180deg, var(--admin-primary) 0%, var(--admin-secondary) 100%);
+            background: linear-gradient(135deg, var(--admin-primary) 0%, var(--admin-secondary) 100%);
             color: white;
             z-index: 1000;
             transition: transform 0.3s ease;
             overflow-y: auto;
-            box-shadow: 4px 0 20px rgba(124, 58, 237, 0.15);
+            scrollbar-width: none;
+            -ms-overflow-style: none;
         }
 
-        .admin-sidebar.collapsed {
+        .sidebar::-webkit-scrollbar {
+            display: none;
+        }
+
+        .sidebar.collapsed {
             transform: translateX(-100%);
         }
 
         .sidebar-header {
             padding: 1.5rem;
             border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-            background: rgba(255, 255, 255, 0.05);
         }
 
-        .admin-brand {
+        .brand-logo {
             font-size: 1.5rem;
-            font-weight: 800;
+            font-weight: 700;
             display: flex;
             align-items: center;
-            gap: 0.75rem;
+            gap: 0.5rem;
             color: white;
             text-decoration: none;
-        }
-
-        .admin-brand i {
-            font-size: 2rem;
-            background: linear-gradient(45deg, #fbbf24, #f59e0b);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            background-clip: text;
         }
 
         .sidebar-nav {
             padding: 1.5rem 0;
         }
 
-        .nav-section {
-            margin-bottom: 2rem;
-        }
-
         .nav-section-title {
+            padding: 0.75rem 1.5rem;
             font-size: 0.75rem;
-            font-weight: 600;
             text-transform: uppercase;
             letter-spacing: 0.05em;
             color: rgba(255, 255, 255, 0.6);
-            padding: 0 1.5rem;
-            margin-bottom: 0.75rem;
+            font-weight: 600;
         }
 
         .nav-item {
@@ -111,45 +93,19 @@
 
         .nav-link {
             color: rgba(255, 255, 255, 0.8);
-            padding: 0.875rem 1.25rem;
-            border-radius: 12px;
+            padding: 0.75rem 1rem;
+            border-radius: 10px;
             display: flex;
             align-items: center;
-            gap: 0.875rem;
+            gap: 0.75rem;
             text-decoration: none;
-            font-weight: 500;
             transition: all 0.3s ease;
-            position: relative;
         }
 
-        .nav-link:hover {
+        .nav-link:hover,
+        .nav-link.active {
             background: rgba(255, 255, 255, 0.1);
             color: white;
-            transform: translateX(4px);
-        }
-
-        .nav-link.active {
-            background: rgba(255, 255, 255, 0.15);
-            color: white;
-            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
-        }
-
-        .nav-link.active::before {
-            content: '';
-            position: absolute;
-            left: 0;
-            top: 50%;
-            transform: translateY(-50%);
-            width: 4px;
-            height: 24px;
-            background: #fbbf24;
-            border-radius: 0 4px 4px 0;
-        }
-
-        .nav-link i {
-            font-size: 1.125rem;
-            width: 20px;
-            text-align: center;
         }
 
         .main-content {
@@ -162,11 +118,10 @@
             margin-left: 0;
         }
 
-        .admin-header {
-            background: var(--bg-white);
-            height: var(--header-height);
-            padding: 0 2rem;
-            box-shadow: 0 2px 20px rgba(0, 0, 0, 0.08);
+        .top-header {
+            background: white;
+            padding: 1rem 2rem;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
             display: flex;
             justify-content: space-between;
             align-items: center;
@@ -184,77 +139,21 @@
         .sidebar-toggle {
             background: none;
             border: none;
-            font-size: 1.25rem;
+            font-size: 1.2rem;
             color: var(--text-dark);
             cursor: pointer;
-            padding: 0.5rem;
-            border-radius: 8px;
-            transition: all 0.3s ease;
-        }
-
-        .sidebar-toggle:hover {
-            background: var(--admin-light);
-            color: var(--admin-primary);
-        }
-
-        .page-title {
-            font-size: 1.5rem;
-            font-weight: 700;
-            color: var(--text-dark);
-            margin: 0;
         }
 
         .header-right {
             display: flex;
             align-items: center;
-            gap: 1.5rem;
-        }
-
-        .header-actions {
-            display: flex;
-            align-items: center;
             gap: 1rem;
-        }
-
-        .notification-btn {
-            position: relative;
-            background: none;
-            border: none;
-            font-size: 1.25rem;
-            color: var(--text-light);
-            cursor: pointer;
-            padding: 0.5rem;
-            border-radius: 8px;
-            transition: all 0.3s ease;
-        }
-
-        .notification-btn:hover {
-            background: var(--admin-light);
-            color: var(--admin-primary);
-        }
-
-        .notification-badge {
-            position: absolute;
-            top: 0.25rem;
-            right: 0.25rem;
-            width: 8px;
-            height: 8px;
-            background: var(--error-color);
-            border-radius: 50%;
         }
 
         .admin-info {
             display: flex;
             align-items: center;
             gap: 0.75rem;
-            padding: 0.5rem;
-            border-radius: 12px;
-            transition: all 0.3s ease;
-            cursor: pointer;
-        }
-
-        .admin-info:hover {
-            background: var(--admin-light);
         }
 
         .admin-avatar {
@@ -266,32 +165,255 @@
             align-items: center;
             justify-content: center;
             color: white;
-            font-weight: 700;
-            font-size: 0.875rem;
-        }
-
-        .admin-details {
-            display: flex;
-            flex-direction: column;
-        }
-
-        .admin-name {
             font-weight: 600;
-            color: var(--text-dark);
-            font-size: 0.875rem;
-        }
-
-        .admin-role {
-            font-size: 0.75rem;
-            color: var(--text-muted);
         }
 
         .content-area {
             padding: 2rem;
         }
 
+        .page-header {
+            background: white;
+            padding: 2rem;
+            border-radius: 15px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.08);
+            margin-bottom: 2rem;
+        }
+
+        .search-filters {
+            background: white;
+            padding: 1.5rem;
+            border-radius: 15px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.08);
+            margin-bottom: 2rem;
+        }
+
+        .doctors-container {
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.08);
+            overflow: hidden;
+        }
+
+        .doctors-header {
+            padding: 1.5rem;
+            border-bottom: 1px solid #e5e7eb;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .doctors-title {
+            font-size: 1.25rem;
+            font-weight: 600;
+            margin: 0;
+            color: var(--text-dark);
+        }
+
+        .doctor-card {
+            border-bottom: 1px solid #e5e7eb;
+            padding: 1.5rem;
+            margin: 1.5rem;
+            border-radius: 10px;
+            transition: all 0.3s ease;
+            background: white;
+        }
+
+        .doctor-card:hover {
+            background: var(--bg-light);
+        }
+
+        .doctor-card:last-child {
+            border-bottom: none;
+        }
+
+        .doctor-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 1rem;
+        }
+
+        .doctor-id {
+            background: var(--admin-primary);
+            color: white;
+            padding: 0.5rem 1rem;
+            border-radius: 8px;
+            font-weight: 600;
+            font-size: 0.9rem;
+        }
+
+        .status-badge {
+            padding: 0.25rem 0.75rem;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            font-weight: 500;
+        }
+
+        .status-active {
+            background: rgba(16, 185, 129, 0.1);
+            color: var(--success-color);
+        }
+
+        .status-locked {
+            background: rgba(239, 68, 68, 0.1);
+            color: var(--error-color);
+        }
+
+        .doctor-info {
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr;
+            gap: 1rem;
+            margin-bottom: 1rem;
+        }
+
+        .initial-info {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1rem;
+            margin-bottom: 1rem;
+        }
+
+        .info-item {
+            display: flex;
+            flex-direction: column;
+            gap: 0.25rem;
+        }
+
+        .info-label {
+            font-size: 0.8rem;
+            color: var(--text-light);
+            font-weight: 500;
+        }
+
+        .info-value {
+            font-weight: 600;
+            color: var(--text-dark);
+        }
+
+        .doctor-actions {
+            display: flex;
+            gap: 1rem;
+            align-items: center;
+        }
+
+        .btn-primary-custom {
+            background: linear-gradient(135deg, var(--admin-primary), var(--admin-secondary));
+            border: none;
+            padding: 0.5rem 1rem;
+            border-radius: 8px;
+            color: white;
+            font-weight: 500;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            transition: all 0.3s ease;
+        }
+
+        .btn-primary-custom:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(124, 58, 237, 0.3);
+            color: white;
+        }
+
+        .btn-outline-custom {
+            border: 2px solid var(--admin-primary);
+            color: var(--admin-primary);
+            padding: 0.5rem 1rem;
+            border-radius: 8px;
+            background: transparent;
+            font-weight: 500;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            transition: all 0.3s ease;
+        }
+
+        .btn-outline-custom:hover {
+            background: var(--admin-primary);
+            color: white;
+        }
+
+        .btn-success-custom {
+            background: var(--success-color);
+            border: none;
+            color: white;
+        }
+
+        .btn-success-custom:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(16, 185, 129, 0.3);
+            color: white;
+        }
+
+        .btn-warning-custom {
+            background: var(--warning-color);
+            border: none;
+            color: white;
+        }
+
+        .btn-warning-custom:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(245, 158, 11, 0.3);
+            color: white;
+        }
+
+        .btn-sm {
+            padding: 0.375rem 0.75rem;
+            font-size: 0.875rem;
+        }
+
+        .form-control {
+            border: 2px solid #e5e7eb;
+            border-radius: 8px;
+            padding: 0.75rem;
+            transition: all 0.3s ease;
+        }
+
+        .form-control:focus {
+            border-color: var(--admin-primary);
+            box-shadow: 0 0 0 0.2rem rgba(124, 58, 237, 0.25);
+        }
+
+        .alert-custom {
+            border: none;
+            border-radius: 12px;
+            padding: 1rem;
+            margin-bottom: 1rem;
+        }
+
+        .alert-success-custom {
+            background: rgba(16, 185, 129, 0.1);
+            color: var(--success-color);
+            border-left: 4px solid var(--success-color);
+        }
+
+        .alert-error-custom {
+            background: rgba(239, 68, 68, 0.1);
+            color: var(--error-color);
+            border-left: 4px solid var(--error-color);
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 3rem;
+            color: var(--text-light);
+        }
+
+        .empty-state i {
+            font-size: 4rem;
+            margin-bottom: 1rem;
+            opacity: 0.5;
+        }
+
+        .collapse {
+            transition: height 0.3s ease;
+        }
+
         @media (max-width: 768px) {
-            .admin-sidebar {
+            .sidebar {
                 transform: translateX(-100%);
             }
 
@@ -303,21 +425,39 @@
                 padding: 1rem;
             }
 
-            .admin-header {
-                padding: 0 1rem;
+            .doctor-info,
+            .initial-info {
+                grid-template-columns: 1fr;
+                gap: 0.5rem;
             }
 
-            .admin-details {
+            .doctor-actions {
+                flex-direction: column;
+                align-items: stretch;
+            }
+
+            .top-header {
+                padding: 1rem;
+            }
+
+            .admin-info span {
                 display: none;
+            }
+        }
+
+        @media (max-width: 576px) {
+            .doctor-header {
+                flex-direction: column;
+                gap: 1rem;
             }
         }
     </style>
 </head>
 <body>
 <!-- Admin Sidebar -->
-<div class="admin-sidebar" id="adminSidebar">
+<div class="sidebar" id="sidebar">
     <div class="sidebar-header">
-        <a href="#" class="admin-brand">
+        <a href="#" class="brand-logo">
             <i class="bi bi-shield-check"></i>
             <div>
                 <div>MediCare Plus</div>
@@ -440,10 +580,13 @@
                 </a>
             </div>
             <div class="nav-item">
-                <a th:href="@{/auth/logout}" class="nav-link">
-                    <i class="bi bi-box-arrow-right"></i>
-                    Logout
-                </a>
+                <form th:action="@{/auth/logout}" method="post">
+                    <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}" />
+                    <button type="submit" class="nav-link w-100 text-start border-0 bg-transparent">
+                        <i class="bi bi-box-arrow-right"></i>
+                        Logout
+                    </button>
+                </form>
             </div>
         </div>
     </nav>
@@ -451,33 +594,23 @@
 
 <!-- Main Content -->
 <div class="main-content" id="mainContent">
-    <!-- Admin Header -->
-    <div class="admin-header">
+    <!-- Top Header -->
+    <div class="top-header">
         <div class="header-left">
             <button class="sidebar-toggle" onclick="toggleSidebar()">
                 <i class="bi bi-list"></i>
             </button>
-            <h1 class="page-title">Doctor Management</h1>
+            <h4 class="mb-0">Doctor Management</h4>
         </div>
 
         <div class="header-right">
-            <div class="header-actions">
-                <button class="notification-btn">
-                    <i class="bi bi-bell"></i>
-                    <div class="notification-badge"></div>
-                </button>
-                <button class="notification-btn">
-                    <i class="bi bi-envelope"></i>
-                </button>
-            </div>
-
             <div class="admin-info">
                 <div class="admin-avatar">
                     <span th:text="${adminName != null ? #strings.substring(adminName, 0, 2).toUpperCase() : 'AD'}">AD</span>
                 </div>
-                <div class="admin-details">
-                    <div class="admin-name" th:text="${adminName != null ? adminName : 'Administrator'}">Administrator</div>
-                    <div class="admin-role">System Admin</div>
+                <div>
+                    <div class="fw-semibold" th:text="${adminName != null ? adminName : 'Administrator'}">Administrator</div>
+                    <small class="text-muted">System Admin</small>
                 </div>
             </div>
         </div>
@@ -485,90 +618,139 @@
 
     <!-- Content Area -->
     <div class="content-area">
-        <!-- Doctor Management Content -->
-        <div class="d-flex justify-content-between align-items-center mb-3">
-            <div>
-                <button type="button" class="btn btn-success me-2" data-bs-toggle="modal" data-bs-target="#doctorModal" data-mode="add">
-                    <i class="bi bi-plus-lg"></i> Add Doctor
-                </button>
-                <a th:href="@{/admin/dashboard(adminId=${adminId})}" class="btn btn-outline-primary me-2">
-                    <i class="bi bi-house-door-fill"></i> Back to Dashboard
-                </a>
-                <a th:href="@{/admin/doctors(adminId=${adminId})}" class="btn btn-primary">
-                    <i class="bi bi-arrow-clockwise"></i> Refresh
-                </a>
+        <!-- Page Header -->
+        <div class="page-header">
+            <div class="row align-items-center">
+                <div class="col-md-6">
+                    <h2 class="mb-2">Doctor Management</h2>
+                    <p class="text-muted mb-0">Manage and track all doctor records</p>
+                </div>
+                <div class="col-md-6 text-md-end">
+                    <a th:href="@{/admin/dashboard(adminId=${adminId})}" class="btn-outline-custom me-2">
+                        <i class="bi bi-house-door-fill"></i> Back to Dashboard
+                    </a>
+                    <a th:href="@{/admin/doctors(adminId=${adminId})}" class="btn-primary-custom">
+                        <i class="bi bi-arrow-clockwise"></i> Refresh
+                    </a>
+                </div>
             </div>
         </div>
 
-        <!-- Search & Filter -->
-        <div class="card mb-3">
-            <div class="card-body">
-                <form th:action="@{/admin/doctors}" method="get" class="row g-2 align-items-end">
-                    <input type="hidden" name="adminId" th:value="${adminId}"/>
-                    <div class="col-md-4">
-                        <label for="search" class="form-label">Search Name / Email</label>
-                        <input type="text" id="search" name="search" th:value="${search}" class="form-control" placeholder="Enter keyword…" />
-                    </div>
-                    <div class="col-md-3">
-                        <label for="statusFilter" class="form-label">Filter by Status</label>
-                        <select id="statusFilter" name="statusFilter" class="form-select">
-                            <option value="" th:selected="${statusFilter == null}">All</option>
-                            <option value="ACTIVE" th:selected="${statusFilter == 'ACTIVE'}">Active</option>
-                            <option value="LOCKED" th:selected="${statusFilter == 'LOCKED'}">Locked</option>
-                        </select>
-                    </div>
-                    <div class="col-auto">
-                        <button type="submit" class="btn btn-success">
-                            <i class="bi bi-search"></i> Search
-                        </button>
-                    </div>
-                    <div class="col-auto">
-                        <a th:href="@{/admin/doctors(adminId=${adminId})}" class="btn btn-secondary">
-                            <i class="bi bi-x-circle"></i> Clear
-                        </a>
-                    </div>
-                </form>
-            </div>
+        <!-- Alert Messages -->
+        <div id="successAlert" class="alert-custom alert-success-custom" style="display: none;">
+            <i class="bi bi-check-circle me-2"></i>
+            <span id="successMessage"></span>
         </div>
 
-        <!-- Table -->
-        <div class="card shadow-sm">
-            <div class="card-body">
-                <div class="table-responsive">
-                    <table class="table table-striped table-hover align-middle">
-                        <thead class="table-light">
-                        <tr>
-                            <th>ID</th>
-                            <th>Name</th>
-                            <th>Email</th>
-                            <th>Phone</th>
-                            <th>Bio</th>
-                            <th>Status</th>
-                            <th>Actions</th>
-                        </tr>
-                        </thead>
-                        <tbody>
-                        <tr th:each="d : ${doctors}">
-                            <td th:text="${d.doctorId}">1</td>
-                            <td th:text="${d.user.fullName}">Dr. Alice Smith</td>
-                            <td th:text="${d.user.email}">alice@example.com</td>
-                            <td th:text="${d.user.phoneNumber}">0123456789</td>
-                            <td th:text="${d.bioDescription}">Mô tả chuyên khoa…</td>
-                            <td>
-                                <span th:classappend="${d.user.status == 'LOCKED'} ? 'badge bg-danger' : 'badge bg-success'" th:text="${d.user.status}"></span>
-                            </td>
-                            <td>
-                                <button type="button" class="btn btn-sm btn-outline-secondary me-1" data-bs-toggle="modal" data-bs-target="#doctorModal" data-mode="edit" th:attr="data-id=${d.doctorId}, data-fullname=${d.user.fullName}, data-email=${d.user.email}, data-phone=${d.user.phoneNumber}, data-bio=${d.bioDescription}, data-status=${d.user.status}">
-                                    <i class="bi bi-pencil-square"></i>
-                                </button>
-                                <form th:action="@{/admin/doctors/{id}/toggleLock(id=${d.doctorId},adminId=${adminId})}" method="post" style="display:inline">
-                                    <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
-                                    <button type="submit" class="btn btn-sm" th:classappend="${d.user.status == 'LOCKED'} ? 'btn-success' : 'btn-warning'" th:text="${d.user.status == 'LOCKED'} ? 'Unlock' : 'Lock'"></button>
-                                </form>
-                            </td>
-                        </tr>
-                        </tbody>
-                    </table>
+        <div id="errorAlert" class="alert-custom alert-error-custom" style="display: none;">
+            <i class="bi bi-exclamation-circle me-2"></i>
+            <span id="errorMessage"></span>
+        </div>
+
+        <!-- Search and Filters -->
+        <div class="search-filters">
+            <form class="row g-3" method="get" th:action="@{/admin/doctors}">
+                <input type="hidden" name="adminId" th:value="${adminId}"/>
+                <div class="col-md-4">
+                    <label for="search" class="form-label">Search by Name/Email</label>
+                    <input type="text" id="search" name="search" th:value="${search}" class="form-control" placeholder="Enter keyword..."/>
+                </div>
+                <div class="col-md-3">
+                    <label for="statusFilter" class="form-label">Filter by Status</label>
+                    <select id="statusFilter" name="statusFilter" class="form-control">
+                        <option value="" th:selected="${statusFilter == null}">All</option>
+                        <option value="ACTIVE" th:selected="${statusFilter == 'ACTIVE'}">Active</option>
+                        <option value="LOCKED" th:selected="${statusFilter == 'LOCKED'}">Locked</option>
+                    </select>
+                </div>
+                <div class="col-md-3">
+                    <label for="dateFrom" class="form-label">Date of Birth</label>
+                    <input type="date" id="dateFrom" name="dateFrom" th:value="${param.dateFrom}" class="form-control"/>
+                </div>
+                <div class="col-md-2">
+                    <label class="form-label"> </label>
+                    <button type="submit" class="btn-primary-custom w-100">
+                        <i class="bi bi-search"></i> Search
+                    </button>
+                </div>
+            </form>
+        </div>
+
+        <!-- Doctors List -->
+        <div class="doctors-container">
+            <div class="doctors-header">
+                <h3 class="doctors-title">All Doctors</h3>
+                <div class="d-flex gap-2">
+                    <button class="btn-outline-custom btn-sm" data-bs-toggle="modal" data-bs-target="#doctorModal" data-mode="add">
+                        <i class="bi bi-plus-lg"></i> Add Doctor
+                    </button>
+                    <button class="btn-outline-custom btn-sm" onclick="refreshDoctors()">
+                        <i class="bi bi-arrow-clockwise"></i> Refresh
+                    </button>
+                </div>
+            </div>
+
+            <div class="doctors-body">
+                <!-- Empty State -->
+                <div th:if="${doctors == null || doctors.isEmpty()}" class="empty-state">
+                    <i class="bi bi-person-badge"></i>
+                    <h4>No Doctors Found</h4>
+                    <p>No doctors match your current filters.</p>
+                </div>
+
+                <!-- Doctors List -->
+                <div th:if="${doctors != null && !doctors.isEmpty()}">
+                    <div th:each="d : ${doctors}" class="doctor-card" th:data-doctor-id="${d.doctorId}">
+                        <div class="doctor-header">
+                            <div class="d-flex align-items-center gap-3">
+                                <div class="doctor-id" th:text="${d.doctorId}">1</div>
+                                <div>
+                                    <h5 class="mb-1" th:text="${d.user.fullName}">Dr. Alice Smith</h5>
+                                    <small class="text-muted" th:text="${d.user.email}">alice@example.com</small>
+                                </div>
+                            </div>
+                            <div class="status-badge" th:classappend="${d.user.status=='LOCKED'} ? 'status-locked' : 'status-active'"
+                                 th:text="${d.user.status}">Active</div>
+                        </div>
+
+                        <div class="initial-info">
+                            <div class="info-item">
+                                <span class="info-label">Phone</span>
+                                <span class="info-value" th:text="${d.user.phoneNumber}">0123456789</span>
+                            </div>
+                        </div>
+
+                        <div class="doctor-actions">
+                            <button class="btn-outline-custom btn-sm" type="button" data-bs-toggle="modal" data-bs-target="#doctorModal" data-mode="edit"
+                                    th:attr="data-id=${d.doctorId}, data-fullname=${d.user.fullName}, data-email=${d.user.email}, data-phone=${d.user.phoneNumber}, data-bio=${d.bioDescription}, data-status=${d.user.status}">
+                                <i class="bi bi-pencil-square"></i> Edit
+                            </button>
+                            <button class="btn-outline-custom btn-sm" type="button" data-bs-toggle="collapse"
+                                    th:attr="data-bs-target='#details-' + ${d.doctorId}" aria-expanded="false"
+                                    th:attrappend="aria-controls='details-' + ${d.doctorId}">
+                                <i class="bi bi-eye"></i> View Details
+                            </button>
+                            <form th:action="@{/admin/doctors/{id}/toggleLock(id=${d.doctorId},adminId=${adminId})}" method="post" style="display:inline">
+                                <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
+                                <button type="submit" class="btn-sm"
+                                        th:classappend="${d.user.status=='LOCKED'} ? 'btn-success-custom' : 'btn-warning-custom'"
+                                        th:text="${d.user.status=='LOCKED'} ? 'Unlock' : 'Lock'"></button>
+                            </form>
+                        </div>
+
+                        <div class="collapse" th:id="'details-' + ${d.doctorId}">
+                            <div class="doctor-info pt-3">
+                                <div class="info-item">
+                                    <span class="info-label">Bio</span>
+                                    <span class="info-value" th:text="${d.bioDescription}">Mô tả chuyên khoa…</span>
+                                </div>
+                                <div class="info-item">
+                                    <span class="info-label">Created At</span>
+                                    <span class="info-value" th:text="${#temporals.format(d.user.createdAt,'yyyy-MM-dd HH:mm')}">2025-06-12 15:45</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
@@ -587,28 +769,22 @@
 
                             <div class="mb-3">
                                 <label for="fullName" class="form-label">Full Name</label>
-                                <input type="text" class="form-control" id="fullName" name="fullName"
-                                       required oninput="this.value = this.value.trimStart()" />
+                                <input type="text" class="form-control" id="fullName" name="fullName" required oninput="this.value = this.value.trimStart()" />
                             </div>
 
                             <div class="mb-3">
                                 <label for="email" class="form-label">Email</label>
-                                <input type="email" class="form-control" id="email" name="email"
-                                       required oninput="this.value = this.value.trimStart()" />
+                                <input type="email" class="form-control" id="email" name="email" required oninput="this.value = this.value.trimStart()" />
                             </div>
 
                             <div class="mb-3">
                                 <label for="phoneNumber" class="form-label">Phone Number</label>
-                                <input type="text" class="form-control" id="phoneNumber" name="phoneNumber"
-                                       required oninput="this.value = this.value.replace(/\s/g, '')"
-                                       pattern="^[0-9]{10,15}$"
-                                       title="Phone number must be 10–15 digits and not contain spaces." />
+                                <input type="text" class="form-control" id="phoneNumber" name="phoneNumber" required oninput="this.value = this.value.replace(/\s/g, '')" pattern="^[0-9]{10,15}$" title="Phone number must be 10–15 digits and not contain spaces." />
                             </div>
 
                             <div class="mb-3">
                                 <label for="bioDescription" class="form-label">Bio Description</label>
-                                <textarea class="form-control" id="bioDescription" name="bioDescription" rows="3"
-                                          oninput="this.value = this.value.trimStart()"></textarea>
+                                <textarea class="form-control" id="bioDescription" name="bioDescription" rows="3" oninput="this.value = this.value.trimStart()"></textarea>
                             </div>
 
                             <div class="mb-3">
@@ -633,9 +809,76 @@
 
 <script th:inline="javascript">
     /*<![CDATA[*/
+    // Get admin ID from Thymeleaf
+    const adminId = /*[[${adminId}]]*/ 0;
+
+    document.addEventListener('DOMContentLoaded', function() {
+        // Set doctors tab as active
+        const currentPath = window.location.pathname;
+        if (currentPath.includes('/doctors')) {
+            document.querySelectorAll('.nav-link').forEach(link => {
+                link.classList.remove('active');
+            });
+            document.querySelector('.nav-link[href*="doctors"]').classList.add('active');
+        }
+
+        // Initialize Bootstrap collapse
+        const collapseElements = document.querySelectorAll('.collapse');
+        collapseElements.forEach(collapse => {
+            new bootstrap.Collapse(collapse, {
+                toggle: false
+            });
+        });
+
+        // Add click event to toggle collapse
+        document.querySelectorAll('[data-bs-toggle="collapse"]').forEach(button => {
+            button.addEventListener('click', function (e) {
+                const target = this.getAttribute('data-bs-target');
+                const collapse = document.querySelector(target);
+                if (collapse) {
+                    const bsCollapse = bootstrap.Collapse.getOrCreateInstance(collapse);
+                    bsCollapse.toggle();
+                }
+            });
+        });
+
+        // Doctor Modal Handler
+        var doctorModalEl = document.getElementById('doctorModal');
+        doctorModalEl.addEventListener('show.bs.modal', function (event) {
+            var button = event.relatedTarget;
+            var mode = button.getAttribute('data-mode');
+            var modalTitle = doctorModalEl.querySelector('.modal-title');
+            var form = doctorModalEl.querySelector('#doctorForm');
+            var inputId = form.querySelector('#doctorId');
+            var inputFullName = form.querySelector('#fullName');
+            var inputEmail = form.querySelector('#email');
+            var inputPhone = form.querySelector('#phoneNumber');
+            var inputBio = form.querySelector('#bioDescription');
+            var selectStatus = form.querySelector('#status');
+
+            if (mode === 'add') {
+                modalTitle.textContent = 'Add New Doctor';
+                inputId.value = '';
+                inputFullName.value = '';
+                inputEmail.value = '';
+                inputPhone.value = '';
+                inputBio.value = '';
+                selectStatus.value = 'ACTIVE';
+            } else if (mode === 'edit') {
+                modalTitle.textContent = 'Edit Doctor';
+                inputId.value = button.getAttribute('data-id') || '';
+                inputFullName.value = button.getAttribute('data-fullname') || '';
+                inputEmail.value = button.getAttribute('data-email') || '';
+                inputPhone.value = button.getAttribute('data-phone') || '';
+                inputBio.value = button.getAttribute('data-bio') || '';
+                selectStatus.value = button.getAttribute('data-status') || 'ACTIVE';
+            }
+        });
+    });
+
     // Sidebar toggle functionality
     function toggleSidebar() {
-        const sidebar = document.getElementById('adminSidebar');
+        const sidebar = document.getElementById('sidebar');
         const mainContent = document.getElementById('mainContent');
         sidebar.classList.toggle('collapsed');
         mainContent.classList.toggle('expanded');
@@ -643,7 +886,7 @@
 
     // Auto-hide sidebar on mobile
     function checkScreenSize() {
-        const sidebar = document.getElementById('adminSidebar');
+        const sidebar = document.getElementById('sidebar');
         const mainContent = document.getElementById('mainContent');
         if (window.innerWidth <= 768) {
             sidebar.classList.add('collapsed');
@@ -654,57 +897,16 @@
         }
     }
 
-    // Initialize
-    checkScreenSize();
+    // Check screen size on load and resize
     window.addEventListener('load', checkScreenSize);
     window.addEventListener('resize', checkScreenSize);
 
-    // Navigation link handlers
-    document.querySelectorAll('.nav-link').forEach(link => {
-        link.addEventListener('click', function(e) {
-            if (this.getAttribute('href') === '#') {
-                e.preventDefault();
-            }
-            document.querySelectorAll('.nav-link').forEach(l => l.classList.remove('active'));
-            this.classList.add('active');
-        });
-    });
+    // Refresh doctors
+    function refreshDoctors() {
+        window.location.reload();
+    }
 
-    // Doctor Modal Handler
-    var doctorModalEl = document.getElementById('doctorModal');
-    doctorModalEl.addEventListener('show.bs.modal', function (event) {
-        var button = event.relatedTarget;
-        var mode = button.getAttribute('data-mode');
-        var modalTitle = doctorModalEl.querySelector('.modal-title');
-        var form = doctorModalEl.querySelector('#doctorForm');
-        var inputId = form.querySelector('#doctorId');
-        var inputFullName = form.querySelector('#fullName');
-        var inputEmail = form.querySelector('#email');
-        var inputPhone = form.querySelector('#phoneNumber');
-        var inputBio = form.querySelector('#bioDescription');
-        var selectStatus = form.querySelector('#status');
-
-        if (mode === 'add') {
-            modalTitle.textContent = 'Add New Doctor';
-            inputId.value = '';
-            inputFullName.value = '';
-            inputEmail.value = '';
-            inputPhone.value = '';
-            inputBio.value = '';
-            selectStatus.value = 'ACTIVE';
-        } else if (mode === 'edit') {
-            modalTitle.textContent = 'Edit Doctor';
-            inputId.value = button.getAttribute('data-id');
-            inputFullName.value = button.getAttribute('data-fullname');
-            inputEmail.value = button.getAttribute('data-email');
-            inputPhone.value = button.getAttribute('data-phone');
-            inputBio.value = button.getAttribute('data-bio');
-            selectStatus.value = button.getAttribute('data-status');
-        }
-    });
-    /*]]>*/
-</script>
-<script>
+    // Validate doctor form
     function validateDoctorForm() {
         const fullName = document.getElementById("fullName").value.trim();
         const email = document.getElementById("email").value.trim();
@@ -727,6 +929,19 @@
 
         return true;
     }
+
+    // Navigation link handlers
+    document.querySelectorAll('.nav-link').forEach(link => {
+        link.addEventListener('click', function(e) {
+            if (this.getAttribute('href') === '#') {
+                e.preventDefault();
+            }
+        });
+    });
+
+    // Initialize
+    hideAlerts();
+    /*]]>*/
 </script>
 </body>
 </html>

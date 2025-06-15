@@ -70,6 +70,7 @@ public class ReceptionistController {
         return "Receptionists/new_appointment";
     }
 
+
     @GetMapping("/appointments")
     public String appointments(Authentication authentication) {
         // Ensure authentication is not null
@@ -97,7 +98,14 @@ public class ReceptionistController {
 
         return "Receptionists/patients";
     }
+    @GetMapping("/payments")
+    public String payments(Authentication authentication) {
+        if (authentication == null || !authentication.isAuthenticated()) {
+            return "redirect:/login";
+        }
 
+        return "Receptionists/payments";
+    }
     @GetMapping("/reports")
     public String reports(Authentication authentication) {
         if (authentication == null || !authentication.isAuthenticated()) {
@@ -131,5 +139,60 @@ public class ReceptionistController {
     public String registerPatient(@ModelAttribute("newUser") Users user) {
         receptionistService.registerPatient(user);
         return "redirect:/receptionist/dashboard";
+    }
+
+    @GetMapping("/patient_register")
+    public String patientRegister(Authentication authentication) {
+        // Ensure authentication is not null
+        if (authentication == null || !authentication.isAuthenticated()) {
+            return "redirect:/login";
+        }
+
+        // Get patient registration form data, initialize registration process ...
+        return "Receptionists/patient_register";
+    }
+
+    @GetMapping("/payment_history")
+    public String paymentHistory(Authentication authentication) {
+        // Ensure authentication is not null
+        if (authentication == null || !authentication.isAuthenticated()) {
+            return "redirect:/login";
+        }
+
+        // Fetch payment history data, filter or paginate payments ...
+        return "Receptionists/payment_history";
+    }
+
+    @GetMapping("/view_payment_details")
+    public String viewPaymentDetails(Authentication authentication) {
+        // Ensure authentication is not null
+        if (authentication == null || !authentication.isAuthenticated()) {
+            return "redirect:/login";
+        }
+
+        // Fetch payment details based on payment ID from request parameter ...
+        return "Receptionists/view_payment_details";
+    }
+
+    @GetMapping("/view_patient_details")
+    public String viewPatientDetails(Authentication authentication) {
+        // Ensure authentication is not null
+        if (authentication == null || !authentication.isAuthenticated()) {
+            return "redirect:/login";
+        }
+
+        // Fetch patient details based on patient ID from request parameter ...
+        return "Receptionists/view_patient_details";
+    }
+
+    @GetMapping("/pay_invoice")
+    public String payInvoice(Authentication authentication) {
+        // Ensure authentication is not null
+        if (authentication == null || !authentication.isAuthenticated()) {
+            return "redirect:/login";
+        }
+
+        // Fetch invoice details based on invoice ID from request parameter ...
+        return "Receptionists/pay_invoice";
     }
 }
