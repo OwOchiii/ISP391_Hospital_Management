@@ -18,15 +18,15 @@ public class AdminSpecializationController {
     public String showSpecializations(@RequestParam("adminId") Integer adminId, Model model) {
         model.addAttribute("specializations", specializationService.getAllSpecializations());
         model.addAttribute("adminId", adminId);
-        model.addAttribute("isAddMode", false); // Giá trị mặc định khi chỉ xem danh sách
+        model.addAttribute("isAddMode", false);
         return "admin/specialization/list";
     }
 
     @GetMapping("/add")
     public String showAddForm(@RequestParam("adminId") Integer adminId, Model model) {
         model.addAttribute("adminId", adminId);
-        model.addAttribute("specialization", new Specialization()); // Tạo đối tượng mới
-        model.addAttribute("isAddMode", true); // Thêm biến để phân biệt chế độ thêm
+        model.addAttribute("specialization", new Specialization());
+        model.addAttribute("isAddMode", true);
         return "admin/specialization/list";
     }
 
@@ -43,11 +43,10 @@ public class AdminSpecializationController {
                                Model model) {
         Specialization specialization = specializationService.getSpecializationById(specId);
         if (specialization == null) {
-            return "redirect:/admin/specializations?adminId=" + adminId; // Xử lý nếu không tìm thấy
         }
         model.addAttribute("adminId", adminId);
         model.addAttribute("specialization", specialization);
-        model.addAttribute("isAddMode", false); // Thêm biến để phân biệt chế độ chỉnh sửa
+        model.addAttribute("isAddMode", false);
         return "admin/specialization/list";
     }
 
