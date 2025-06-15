@@ -689,31 +689,31 @@
                     <div class="info-grid">
                         <div class="info-item">
                             <div class="info-label">Appointment Date</div>
-                            <div class="info-value" th:text="${#temporals.format(appointment?.dateTime, 'MMMM d, yyyy')}">June 15, 2023</div>
+                            <div class="info-value" th:text="${#temporals.format(appointment?.dateTime, 'MMMM d, yyyy')}">N/A</div>
                         </div>
                         <div class="info-item">
                             <div class="info-label">Appointment Time</div>
-                            <div class="info-value" th:text="${#temporals.format(appointment?.dateTime, 'h:mm a')}">10:30 AM</div>
+                            <div class="info-value" th:text="${#temporals.format(appointment?.dateTime, 'h:mm a')}">N/A</div>
                         </div>
                         <div class="info-item">
                             <div class="info-label">Doctor</div>
-                            <div class="info-value" th:text="${doctorName ?: 'Dr. John Smith'}">Dr. John Smith</div>
+                            <div class="info-value" th:text="${doctor != null ? doctor.getUser().getFullName() : 'N/A'}">N/A</div>
                         </div>
                         <div class="info-item">
                             <div class="info-label">Patient</div>
-                            <div class="info-value" th:text="${patientName ?: 'Jane Doe'}">Jane Doe</div>
+                            <div class="info-value" th:text="${patient != null ? patient.getFullName() : 'N/A'}">N/A</div>
                         </div>
                         <div class="info-item">
                             <div class="info-label">Room</div>
-                            <div class="info-value" th:text="${roomNumber ?: 'Examination Room 3'}">Examination Room 3</div>
+                            <div class="info-value" th:text="${appointment != null && appointment.getRoom() != null ? appointment.getRoom().getRoomName() : 'N/A'}">N/A</div>
                         </div>
                         <div class="info-item">
                             <div class="info-label">Contact Email</div>
-                            <div class="info-value" th:text="${appointment?.email ?: 'patient@example.com'}">patient@example.com</div>
+                            <div class="info-value" th:text="${appointment?.email ?: 'N/A'}">N/A</div>
                         </div>
                         <div class="info-item">
                             <div class="info-label">Contact Phone</div>
-                            <div class="info-value" th:text="${appointment?.phoneNumber ?: '+1 (555) 123-4567'}">+1 (555) 123-4567</div>
+                            <div class="info-value" th:text="${appointment?.phoneNumber ?: 'N/A'}">+N/A</div>
                         </div>
                     </div>
 
@@ -751,13 +751,17 @@
                     <div class="notes-section mt-4">
                         <h6><i class="bi bi-card-text me-2"></i>Previous Notes</h6>
 
-                        <div class="note-item">
-                            <div class="note-header">
-                                <span class="note-author">Dr. John Smith</span>
-                                <span class="note-timestamp">June 10, 2023 at 11:45 AM</span>
-                            </div>
-                            <div class="note-content">
-                                Patient reported mild improvements after starting new medication. Recommended continuing current treatment plan with follow-up in 2 weeks.
+                        <!-- This container will be populated by the doctor-notes.js -->
+                        <div id="previousNotesContainer">
+                            <!-- Example note structure for reference, will be replaced by JavaScript -->
+                            <div class="note-item">
+                                <div class="note-header">
+                                    <span class="note-author">N/A</span>
+                                    <span class="note-timestamp">N/A</span>
+                                </div>
+                                <div class="note-content">
+                                    N/A
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -765,29 +769,6 @@
 
                 <!-- Medical Info Tab -->
                 <div class="tab-pane fade" id="medical" role="tabpanel" aria-labelledby="medical-tab">
-                    <div class="vitals-grid">
-                        <div class="vital-item">
-                            <div class="vital-value">120/80</div>
-                            <div class="vital-label">Blood Pressure</div>
-                        </div>
-                        <div class="vital-item">
-                            <div class="vital-value">72</div>
-                            <div class="vital-label">Heart Rate (bpm)</div>
-                        </div>
-                        <div class="vital-item">
-                            <div class="vital-value">98.6°F</div>
-                            <div class="vital-label">Temperature</div>
-                        </div>
-                        <div class="vital-item">
-                            <div class="vital-value">18</div>
-                            <div class="vital-label">Respiration Rate</div>
-                        </div>
-                        <div class="vital-item">
-                            <div class="vital-value">98%</div>
-                            <div class="vital-label">Oxygen Saturation</div>
-                        </div>
-                    </div>
-
                     <div class="medical-history">
                         <h6><i class="bi bi-clock-history me-2"></i>Medical History</h6>
 
@@ -1067,27 +1048,27 @@
 
                 <div class="mb-3">
                     <div class="text-muted small mb-1">Full Name</div>
-                    <div class="fw-semibold" th:text="${patientName ?: 'Jane Doe'}">Jane Doe</div>
+                    <div class="fw-semibold" th:text="${patient.getFullName() ?: 'N/A'}">N/A</div>
                 </div>
 
                 <div class="mb-3">
                     <div class="text-muted small mb-1">Date of Birth</div>
-                    <div class="fw-semibold" th:text="${patientDOB ?: 'January 15, 1985'}">January 15, 1985</div>
+                    <div class="fw-semibold" th:text="${patient.getDateOfBirth() ?: 'N/A'}">N/A</div>
                 </div>
 
                 <div class="mb-3">
                     <div class="text-muted small mb-1">Gender</div>
-                    <div class="fw-semibold" th:text="${patientGender ?: 'Female'}">Female</div>
+                    <div class="fw-semibold" th:text="${patient.getGender() ?: 'N/A'}">N/A</div>
                 </div>
 
                 <div class="mb-3">
-                    <div class="text-muted small mb-1">Contact Number</div>
-                    <div class="fw-semibold" th:text="${patientPhone ?: '+1 (555) 123-4567'}">+1 (555) 123-4567</div>
+                    <div class="text-muted small mb-1">Emergency Contact Number</div>
+                    <div class="fw-semibold" th:text="${appointment.getPhoneNumber() ?: 'N/A'}">N/A</div>
                 </div>
 
                 <div>
-                    <div class="text-muted small mb-1">Email Address</div>
-                    <div class="fw-semibold" th:text="${patientEmail ?: 'jane.doe@example.com'}">jane.doe@example.com</div>
+                    <div class="text-muted small mb-1">Emergency Email Address</div>
+                    <div class="fw-semibold" th:text="${appointment.getEmail() ?: 'N/A'}">N/A</div>
                 </div>
 
                 <a th:href="@{/doctor/patients/{patientId}(patientId=${appointment.patientId}, doctorId=${doctorId})}" class="btn btn-outline-primary-custom w-100 mt-3">

@@ -497,7 +497,7 @@
         <div class="nav-section">
             <div class="nav-section-title">Patient Care</div>
             <div class="nav-item">
-                <a th:href="@{/doctor/appointments(doctorId=${doctorId})}" class="nav-link active">
+                <a th:href="@{/doctor/appointments(doctorId=${doctorId})}" class="nav-link">
                     <i class="bi bi-calendar-check"></i>
                     Appointments
                 </a>
@@ -525,9 +525,9 @@
                 </a>
             </div>
             <div class="nav-item">
-                <a href="#" class="nav-link">
+                <a th:href="@{/doctor/support-request}" class="nav-link">
                     <i class="bi bi-chat-dots"></i>
-                    Messages
+                    Support Ticket Submission
                 </a>
             </div>
         </div>

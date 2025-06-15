@@ -177,6 +177,109 @@ public class FileDownloadController {
     }
 
     /**
+     * Download a support ticket attachment by filename
+     * @param filename The name of the file to download
+     * @param inline If true, view the file inline; if false (default), download the file
+     */
+    @GetMapping("/support-tickets/{filename:.+}")
+    @ResponseBody
+    public ResponseEntity<Resource> downloadSupportTicketAttachment(
+            @PathVariable String filename,
+            @RequestParam(required = false, defaultValue = "false") boolean inline) {
+        try {
+            logger.info("Requested support ticket attachment: {}", filename);
+
+            // If the filename contains a full URL, extract just the filename part
+            if (filename.contains("http://") || filename.contains("https://")) {
+                // Extract the path part after the last slash in the URL
+                String[] parts = filename.split("/");
+                filename = parts[parts.length - 1];
+                logger.info("Extracted filename from full URL: {}", filename);
+            } else if (filename.contains("/")) {
+                filename = filename.substring(filename.lastIndexOf("/") + 1);
+                logger.info("Extracted filename from path: {}", filename);
+            }
+
+            // Create a new array of subdirectories that includes support-tickets
+            String[] subdirs = {"support-tickets", "medical-results", "reports", ""};
+
+            // Create a list of possible file paths using the configured uploadDir as the base
+            Path[] possiblePaths = new Path[subdirs.length * 2];
+
+            int index = 0;
+            // Try with the primary uploadDir first
+            for (String subdir : subdirs) {
+                possiblePaths[index++] = Paths.get(uploadDir, subdir, filename).normalize();
+            }
+
+            // Try with a fallback "upload-dir" directory in case uploadDir is configured differently
+            for (String subdir : subdirs) {
+                possiblePaths[index++] = Paths.get("upload-dir", subdir, filename).normalize();
+            }
+
+            // Try each path until we find the file
+            Path filePath = null;
+            for (Path path : possiblePaths) {
+                logger.debug("Looking for file at: {}", path.toAbsolutePath());
+                if (Files.exists(path)) {
+                    filePath = path;
+                    logger.info("Found file at: {}", path.toAbsolutePath());
+                    break;
+                }
+            }
+
+            // If we couldn't find the file, return 404
+            if (filePath == null) {
+                logger.error("Support ticket attachment not found in any location: {}", filename);
+                return ResponseEntity.notFound().build();
+            }
+
+            Resource resource = new UrlResource(filePath.toUri());
+
+            // Determine content type based on file extension
+            String contentType = determineContentType(filename);
+
+            // Set content disposition based on inline parameter
+            String contentDisposition = inline
+                    ? "inline; filename=\"" + filename + "\""
+                    : "attachment; filename=\"" + filename + "\"";
+
+            // Log download attempt
+            logger.info("Serving support ticket attachment '{}' with disposition: {}", filename, contentDisposition);
+
+            return ResponseEntity.ok()
+                    .contentType(MediaType.parseMediaType(contentType))
+                    .header(HttpHeaders.CONTENT_DISPOSITION, contentDisposition)
+                    .body(resource);
+        } catch (MalformedURLException e) {
+            logger.error("Error creating URL for file: {}", filename, e);
+            return ResponseEntity.badRequest().build();
+        }
+    }
+
+    /**
+     * Helper method to determine content type based on file extension
+     */
+    private String determineContentType(String fileName) {
+        String lowerCaseFileName = fileName.toLowerCase();
+        if (lowerCaseFileName.endsWith(".pdf")) {
+            return MediaType.APPLICATION_PDF_VALUE;
+        } else if (lowerCaseFileName.endsWith(".jpg") || lowerCaseFileName.endsWith(".jpeg")) {
+            return MediaType.IMAGE_JPEG_VALUE;
+        } else if (lowerCaseFileName.endsWith(".png")) {
+            return MediaType.IMAGE_PNG_VALUE;
+        } else if (lowerCaseFileName.endsWith(".docx")) {
+            return "application/vnd.openxmlformats-officedocument.wordprocessingml.document";
+        } else if (lowerCaseFileName.endsWith(".mp3")) {
+            return "audio/mpeg";
+        } else if (lowerCaseFileName.endsWith(".ipynb")) {
+            return "application/json";
+        } else {
+            return MediaType.APPLICATION_OCTET_STREAM_VALUE;
+        }
+    }
+
+    /**
      * Helper method to serve a file from the medical-results directory
      * @param fileName The name of the file to serve
      * @param inline Whether to display the file inline or as an attachment

@@ -725,3 +725,37 @@ ALTER TABLE [Patient] DROP COLUMN [address];
         FOREIGN KEY (PatientID) REFERENCES Patient(PatientID);
 
     Alter table Schedule add IsCompleted bit NOT NULL DEFAULT 0;
+
+    CREATE TABLE doctor_support_tickets (
+                id BIGINT PRIMARY KEY IDENTITY(1,1),
+                doctor_id INT NOT NULL,
+                request_type VARCHAR(50) NOT NULL,
+                other_request_type VARCHAR(100),
+                ticket_title VARCHAR(200) NOT NULL,
+                affected_module VARCHAR(50) NOT NULL,
+                other_module VARCHAR(100),
+                priority_level VARCHAR(20) NOT NULL,
+                description VARCHAR(MAX) NOT NULL,
+                justification VARCHAR(MAX) NOT NULL,
+                attachment_path VARCHAR(255),
+                follow_up_needed BIT NOT NULL DEFAULT 0,
+                preferred_contact_method VARCHAR(20),
+                contact_email VARCHAR(100),
+                contact_phone VARCHAR(20),
+                preferred_contact_times VARCHAR(100),
+                additional_contact_info VARCHAR(MAX),
+                ticket_status VARCHAR(20) NOT NULL DEFAULT 'PENDING',
+                submission_date DATETIME2 NOT NULL DEFAULT GETDATE(),
+
+                CONSTRAINT FK_doctor_support_tickets_doctor FOREIGN KEY (doctor_id) REFERENCES Doctor(DoctorID)
+    )
+GO
+
+CREATE INDEX IDX_doctor_support_doctor_id ON doctor_support_tickets(doctor_id)
+GO
+
+CREATE INDEX IDX_doctor_support_status ON doctor_support_tickets(ticket_status)
+GO
+
+CREATE INDEX IDX_doctor_support_date ON doctor_support_tickets(submission_date)
+GO
