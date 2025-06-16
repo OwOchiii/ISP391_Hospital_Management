@@ -875,7 +875,7 @@
         <form id="cancelForm" th:action="@{/patient/appointment-list/{id}/cancel(id=${appointment.appointmentId}, patientId=${patientId})}" method="post">
           <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}" />
           <input type="hidden" name="patientId" th:value="${patientId}" />
-          <textarea class="description-input" name="description" maxlength="250" placeholder="Enter reason for cancellation" th:text="${appointment.description}"></textarea>
+          <textarea class="description-input" name="description" maxlength="250" placeholder="Enter reason for cancellation" style="resize: none;" oninput="sanitizeOnInput(this); autoResize(this)"></textarea>
           <div class="mt-3 d-flex gap-2">
             <button type="button" class="btn-danger-custom" onclick="showCancelModal()">
               <i class="bi bi-x-circle"></i>
