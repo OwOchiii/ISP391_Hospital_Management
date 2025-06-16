@@ -224,7 +224,7 @@ public class PatientDashboardController {
             }
 
             // Check if appointment is cancellable
-            if (!"Scheduled".equals(appointment.getStatus())) {
+            if (!"Scheduled".equals(appointment.getStatus()) && !"Pending".equals(appointment.getStatus())) {
                 logger.warn("Attempt to cancel non-scheduled appointment ID: {}", appointmentId);
                 model.addAttribute("errorMessage", "Only scheduled appointments can be cancelled");
                 return "error";
@@ -272,7 +272,7 @@ public class PatientDashboardController {
             }
 
             // Check if appointment is cancellable
-            if (!"Scheduled".equals(appointment.getStatus())) {
+            if (!"Scheduled".equals(appointment.getStatus()) && !"Pending".equals(appointment.getStatus())) {
                 logger.warn("Attempt to cancel non-scheduled appointment ID: {}", appointmentId);
                 redirectAttributes.addFlashAttribute("errorMessage", "Only scheduled appointments can be cancelled");
                 return "redirect:/patient/appointment-list";

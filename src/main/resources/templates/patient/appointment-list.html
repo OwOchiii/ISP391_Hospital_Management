@@ -1171,6 +1171,26 @@
 
         <div class="appointment-actions">
           <!-- Actions based on status -->
+          <div th:if="${appointment.status == 'Pending'}">
+            <a th:href="@{/patient/appointment-list/{id}/details(id=${appointment.appointmentId}, patientId=${patientId})}"
+               class="btn-primary-custom btn-sm">
+              <i class="bi bi-eye"></i>
+              View Details
+            </a>
+            <button class="btn-warning-custom btn-sm"
+                    th:onclick="'showUpdateModal(' + ${appointment.appointmentId} + ')'">
+              <i class="bi bi-pencil"></i>
+              Update
+            </button>
+            <a th:href="@{/patient/appointment-list/{id}/cancel(id=${appointment.appointmentId}, patientId=${patientId})}"
+               class="btn-danger-custom btn-sm">
+              <i class="bi bi-x-circle"></i>
+              Cancel
+            </a>
+          </div>
+
+        <div class="appointment-actions">
+          <!-- Actions based on status -->
           <div th:if="${appointment.status == 'Scheduled'}">
             <a th:href="@{/patient/appointment-list/{id}/details(id=${appointment.appointmentId}, patientId=${patientId})}"
                class="btn-primary-custom btn-sm">
