@@ -212,26 +212,20 @@ public class ScheduleServiceImpl implements ScheduleService {
      */
     private Schedule convertToEntity(ScheduleDTO dto) {
         Schedule schedule = new Schedule();
-
-        // If scheduleId is provided, this is an update operation
         if (dto.getScheduleId() != null) {
             Optional<Schedule> existingSchedule = scheduleRepository.findById(dto.getScheduleId());
             if (existingSchedule.isPresent()) {
                 schedule = existingSchedule.get();
             }
         }
-
         schedule.setDoctorId(dto.getDoctorId());
         schedule.setRoomId(dto.getRoomId());
-        schedule.setPatientId(dto.getPatientId());
-        schedule.setAppointmentId(dto.getAppointmentId());
         schedule.setScheduleDate(dto.getScheduleDate());
         schedule.setStartTime(dto.getStartTime());
         schedule.setEndTime(dto.getEndTime());
         schedule.setEventType(dto.getEventType());
         schedule.setDescription(dto.getDescription());
-        schedule.setIsCompleted(dto.getIsCompleted());
-
+        schedule.setIsCompleted(dto.getIsCompleted() != null ? dto.getIsCompleted() : false);
         return schedule;
     }
 
