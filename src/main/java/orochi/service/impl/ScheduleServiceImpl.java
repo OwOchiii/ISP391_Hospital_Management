@@ -37,76 +37,55 @@ public class ScheduleServiceImpl implements ScheduleService {
 
     @Override
     public List<ScheduleDTO> getDoctorScheduleForWeek(Integer doctorId, LocalDate weekStart) {
-        // If weekStart is null, use current week's Monday
         if (weekStart == null) {
             weekStart = LocalDate.now().with(TemporalAdjusters.previousOrSame(DayOfWeek.MONDAY));
         }
-
-        // Calculate week end (Sunday)
         LocalDate weekEnd = weekStart.plusDays(6);
-
-        // Get schedules for the date range
-        List<Schedule> schedules = scheduleRepository.findByDoctorIdAndScheduleDateBetweenOrderByScheduleDateAscStartTimeAsc(
-                doctorId, weekStart, weekEnd);
-
-        // Convert to DTOs
+        List<Schedule> schedules = scheduleRepository.findByDoctorIdAndScheduleDateBetweenOrderByScheduleDateAscStartTimeAsc(doctorId, weekStart, weekEnd);
         return schedules.stream()
+                .filter(s -> s.getPatientId() != null || s.getAppointmentId() != null)
                 .map(this::convertToDTO)
                 .collect(Collectors.toList());
     }
 
     @Override
     public List<ScheduleDTO> getDoctorScheduleForDay(Integer doctorId, LocalDate date) {
-        // Get schedules for the specific date
         List<Schedule> schedules = scheduleRepository.findByDoctorIdAndScheduleDateOrderByStartTimeAsc(doctorId, date);
-
-        // Convert to DTOs
         return schedules.stream()
+                .filter(s -> s.getPatientId() != null || s.getAppointmentId() != null)
                 .map(this::convertToDTO)
                 .collect(Collectors.toList());
     }
 
     @Override
     public ScheduleStatistics getDoctorScheduleStatistics(Integer doctorId, LocalDate weekStart) {
-        // If weekStart is null, use current week's Monday
         if (weekStart == null) {
             weekStart = LocalDate.now().with(TemporalAdjusters.previousOrSame(DayOfWeek.MONDAY));
         }
-
-        // Calculate week end (Sunday)
         LocalDate weekEnd = weekStart.plusDays(6);
-
-        // Get statistics from repository
         Integer weeklyAppointments = scheduleRepository.countAppointmentsInDateRange(doctorId, weekStart, weekEnd);
         Integer onCallHours = scheduleRepository.sumOnCallHoursInDateRange(doctorId, weekStart, weekEnd);
         Integer roomsAssigned = scheduleRepository.countDistinctRoomsInDateRange(doctorId, weekStart, weekEnd);
         Integer totalHours = scheduleRepository.sumTotalHoursInDateRange(doctorId, weekStart, weekEnd);
-
-        // Handle null values
         if (weeklyAppointments == null) weeklyAppointments = 0;
         if (onCallHours == null) onCallHours = 0;
         if (roomsAssigned == null) roomsAssigned = 0;
         if (totalHours == null) totalHours = 0;
-
-        // Create and populate statistics object
         ScheduleStatistics stats = new ScheduleStatistics();
         stats.setWeeklyAppointments(weeklyAppointments);
         stats.setOnCallHours(onCallHours);
         stats.setRoomsAssigned(roomsAssigned);
         stats.setTotalHours(totalHours);
-
         return stats;
     }
 
     @Override
     public ScheduleDTO saveSchedule(ScheduleDTO scheduleDTO) {
-        // Convert DTO to entity
         Schedule schedule = convertToEntity(scheduleDTO);
-
-        // Save the entity
+        if (schedule.getPatientId() == null && schedule.getAppointmentId() == null) {
+            throw new IllegalArgumentException("Either PatientID or AppointmentID must be provided");
+        }
         schedule = scheduleRepository.save(schedule);
-
-        // Return updated DTO
         return convertToDTO(schedule);
     }
 
@@ -124,6 +103,7 @@ public class ScheduleServiceImpl implements ScheduleService {
     @Override
     public List<ScheduleDTO> getAllSchedules() {
         return scheduleRepository.findAll().stream()
+                .filter(s -> s.getPatientId() != null || s.getAppointmentId() != null)
                 .map(this::convertToDTO)
                 .collect(Collectors.toList());
     }
@@ -131,7 +111,6 @@ public class ScheduleServiceImpl implements ScheduleService {
     @Override
     public List<ScheduleDTO> searchSchedules(String keyword, LocalDate startDate, LocalDate endDate) {
         List<Schedule> schedules;
-
         if (keyword != null && startDate != null && endDate != null) {
             schedules = scheduleRepository.findByKeywordAndDateRange(keyword, startDate, endDate);
         } else if (startDate != null && endDate != null) {
@@ -141,8 +120,8 @@ public class ScheduleServiceImpl implements ScheduleService {
         } else {
             schedules = scheduleRepository.findAll();
         }
-
         return schedules.stream()
+                .filter(s -> s.getPatientId() != null || s.getAppointmentId() != null) // Filter valid schedules
                 .map(this::convertToDTO)
                 .collect(Collectors.toList());
     }
