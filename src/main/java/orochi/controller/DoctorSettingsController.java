@@ -92,7 +92,7 @@ public class DoctorSettingsController {
             String specializationText = "Not specified";
             if (doctor.getSpecializations() != null && !doctor.getSpecializations().isEmpty()) {
                 specializationText = doctor.getSpecializations().stream()
-                    .map(Specialization::getName)
+                    .map(Specialization::getSpecName)
                     .collect(Collectors.joining(", "));
             }
             model.addAttribute("doctorSpecialization", specializationText);

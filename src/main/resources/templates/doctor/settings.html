@@ -999,6 +999,9 @@
             strengthText.textContent = 'Strong password';
             strengthText.style.color = 'var(--success-color)';
         }
+
+        // Return the strength count for validation
+        return strength;
     }
 
     // Password match checker
@@ -1045,33 +1048,22 @@
             return;
         }
 
-        // Submit password change
-        const formData = {
-            doctorId: doctorId,
-            currentPassword: currentPassword,
-            newPassword: newPassword
-        };
+        // Check for at least 3 out of 4 password strength conditions
+        const passwordStrength = checkPasswordStrength();
+        if (passwordStrength < 3) {
+            showAlert('Password must meet at least 3 of the 4 requirements: uppercase, lowercase, numbers, and special characters.', 'danger');
+            return;
+        }
 
-        fetch('/doctor/settings/change-password', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-            },
-            body: JSON.stringify(formData)
-        })
-            .then(response => response.json())
-            .then(data => {
-                if (data.success) {
-                    showAlert('Password updated successfully!', 'success');
-                    resetPasswordForm();
-                } else {
-                    showAlert(data.message || 'Failed to update password.', 'danger');
-                }
-            })
-            .catch(error => {
-                console.error('Error:', error);
-                showAlert('An error occurred while updating password.', 'danger');
-            });
+        // Get the CSRF token
+        const csrfToken = document.querySelector('meta[name="_csrf"]')?.getAttribute('content') ||
+                         document.querySelector('input[name="_csrf"]')?.value;
+
+        // If the form has a CSRF input field
+        const csrfInput = document.querySelector('input[name="_csrf"]');
+
+        // Use the native form submission instead of fetch to handle CSRF properly
+        this.submit();
     });
 
     // Utility functions
