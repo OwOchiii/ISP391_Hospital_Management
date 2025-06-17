@@ -13,42 +13,33 @@ import java.util.Optional;
 @Repository
 public interface ScheduleRepository extends JpaRepository<Schedule, Integer> {
 
-    // Find schedules by doctor ID
+    // Existing methods (unchanged)
     List<Schedule> findByDoctorId(Integer doctorId);
 
-    // Find schedules by doctor ID and date range
     List<Schedule> findByDoctorIdAndScheduleDateBetweenOrderByScheduleDateAscStartTimeAsc(
             Integer doctorId, LocalDate startDate, LocalDate endDate);
 
-    // Find schedules by doctor ID and specific date
     List<Schedule> findByDoctorIdAndScheduleDateOrderByStartTimeAsc(
             Integer doctorId, LocalDate date);
 
-    // Find schedules by patient ID (new column)
     List<Schedule> findByPatientId(Integer patientId);
 
-    // Find schedule by appointment ID (new column)
     Optional<Schedule> findByAppointmentId(Integer appointmentId);
 
-    // Count appointments for a doctor in a date range (using AppointmentID)
-    @Query("SELECT COUNT(s) FROM Schedule s WHERE s.doctorId = :doctorId AND s.appointmentId IS NOT NULL AND s.scheduleDate BETWEEN :startDate AND :endDate")
+    @Query("SELECT COUNT(s) FROM Schedule s WHERE s.doctorId = :doctorId AND s.eventType = 'appointment' AND s.scheduleDate BETWEEN :startDate AND :endDate")
     Integer countAppointmentsInDateRange(@Param("doctorId") Integer doctorId, @Param("startDate") LocalDate startDate, @Param("endDate") LocalDate endDate);
 
-    // Calculate total on-call hours for a doctor in a date range (using EventType)
     @Query(value = "SELECT COALESCE(SUM(DATEDIFF(MINUTE, CONCAT(ScheduleDate, ' ', startTime), CONCAT(ScheduleDate, ' ', endTime)) / 60.0), 0) FROM Schedule " +
             "WHERE DoctorID = :doctorId AND EventType = 'oncall' AND ScheduleDate BETWEEN :startDate AND :endDate", nativeQuery = true)
     Integer sumOnCallHoursInDateRange(@Param("doctorId") Integer doctorId, @Param("startDate") LocalDate startDate, @Param("endDate") LocalDate endDate);
 
-    // Count distinct rooms assigned to a doctor in a date range
     @Query("SELECT COUNT(DISTINCT s.roomId) FROM Schedule s WHERE s.doctorId = :doctorId AND s.scheduleDate BETWEEN :startDate AND :endDate")
     Integer countDistinctRoomsInDateRange(@Param("doctorId") Integer doctorId, @Param("startDate") LocalDate startDate, @Param("endDate") LocalDate endDate);
 
-    // Calculate total working hours for a doctor in a date range
     @Query(value = "SELECT COALESCE(SUM(DATEDIFF(MINUTE, CONCAT(ScheduleDate, ' ', startTime), CONCAT(ScheduleDate, ' ', endTime)) / 60.0), 0) FROM Schedule " +
             "WHERE DoctorID = :doctorId AND ScheduleDate BETWEEN :startDate AND :endDate", nativeQuery = true)
     Integer sumTotalHoursInDateRange(@Param("doctorId") Integer doctorId, @Param("startDate") LocalDate startDate, @Param("endDate") LocalDate endDate);
 
-    // Search schedules by keyword and date range (using Description)
     @Query("SELECT s FROM Schedule s WHERE " +
             "(LOWER(s.eventType) LIKE LOWER(CONCAT('%', :keyword, '%')) OR " +
             "LOWER(s.description) LIKE LOWER(CONCAT('%', :keyword, '%')) OR " +
@@ -59,11 +50,9 @@ public interface ScheduleRepository extends JpaRepository<Schedule, Integer> {
             "ORDER BY s.scheduleDate, s.startTime")
     List<Schedule> findByKeywordAndDateRange(@Param("keyword") String keyword, @Param("startDate") LocalDate startDate, @Param("endDate") LocalDate endDate);
 
-    // Search schedules by date range only
     @Query("SELECT s FROM Schedule s WHERE s.scheduleDate BETWEEN :startDate AND :endDate ORDER BY s.scheduleDate, s.startTime")
     List<Schedule> findByDateRange(@Param("startDate") LocalDate startDate, @Param("endDate") LocalDate endDate);
 
-    // Search schedules by keyword and specific date (or all dates if date is null)
     @Query("SELECT s FROM Schedule s WHERE " +
             "(LOWER(s.eventType) LIKE LOWER(CONCAT('%', :keyword, '%')) OR " +
             "LOWER(s.description) LIKE LOWER(CONCAT('%', :keyword, '%')) OR " +
@@ -73,4 +62,12 @@ public interface ScheduleRepository extends JpaRepository<Schedule, Integer> {
             "AND (:date IS NULL OR s.scheduleDate = :date) " +
             "ORDER BY s.scheduleDate, s.startTime")
     List<Schedule> findByKeywordAndDate(@Param("keyword") String keyword, @Param("date") LocalDate date);
+
+    // New methods for EventType and IsCompleted
+    List<Schedule> findByDoctorIdAndEventType(Integer doctorId, String eventType);
+
+    List<Schedule> findByDoctorIdAndIsCompleted(Integer doctorId, Boolean isCompleted);
+
+    @Query("SELECT COUNT(s) FROM Schedule s WHERE s.doctorId = :doctorId AND s.isCompleted = true AND s.scheduleDate BETWEEN :startDate AND :endDate")
+    Integer countCompletedSchedulesInDateRange(@Param("doctorId") Integer doctorId, @Param("startDate") LocalDate startDate, @Param("endDate") LocalDate endDate);
 }
