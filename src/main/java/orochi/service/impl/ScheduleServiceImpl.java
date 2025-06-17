@@ -42,19 +42,13 @@ public class ScheduleServiceImpl implements ScheduleService {
         }
         LocalDate weekEnd = weekStart.plusDays(6);
         List<Schedule> schedules = scheduleRepository.findByDoctorIdAndScheduleDateBetweenOrderByScheduleDateAscStartTimeAsc(doctorId, weekStart, weekEnd);
-        return schedules.stream()
-                .filter(s -> s.getPatientId() != null || s.getAppointmentId() != null)
-                .map(this::convertToDTO)
-                .collect(Collectors.toList());
+        return schedules.stream().map(this::convertToDTO).collect(Collectors.toList());
     }
 
     @Override
     public List<ScheduleDTO> getDoctorScheduleForDay(Integer doctorId, LocalDate date) {
         List<Schedule> schedules = scheduleRepository.findByDoctorIdAndScheduleDateOrderByStartTimeAsc(doctorId, date);
-        return schedules.stream()
-                .filter(s -> s.getPatientId() != null || s.getAppointmentId() != null)
-                .map(this::convertToDTO)
-                .collect(Collectors.toList());
+        return schedules.stream().map(this::convertToDTO).collect(Collectors.toList());
     }
 
     @Override
@@ -67,24 +61,26 @@ public class ScheduleServiceImpl implements ScheduleService {
         Integer onCallHours = scheduleRepository.sumOnCallHoursInDateRange(doctorId, weekStart, weekEnd);
         Integer roomsAssigned = scheduleRepository.countDistinctRoomsInDateRange(doctorId, weekStart, weekEnd);
         Integer totalHours = scheduleRepository.sumTotalHoursInDateRange(doctorId, weekStart, weekEnd);
+        Integer completedSchedules = scheduleRepository.countCompletedSchedulesInDateRange(doctorId, weekStart, weekEnd);
+
         if (weeklyAppointments == null) weeklyAppointments = 0;
         if (onCallHours == null) onCallHours = 0;
         if (roomsAssigned == null) roomsAssigned = 0;
         if (totalHours == null) totalHours = 0;
+        if (completedSchedules == null) completedSchedules = 0;
+
         ScheduleStatistics stats = new ScheduleStatistics();
         stats.setWeeklyAppointments(weeklyAppointments);
         stats.setOnCallHours(onCallHours);
         stats.setRoomsAssigned(roomsAssigned);
         stats.setTotalHours(totalHours);
+        stats.setCompletedSchedules(completedSchedules);
         return stats;
     }
 
     @Override
     public ScheduleDTO saveSchedule(ScheduleDTO scheduleDTO) {
         Schedule schedule = convertToEntity(scheduleDTO);
-        if (schedule.getPatientId() == null && schedule.getAppointmentId() == null) {
-            throw new IllegalArgumentException("Either PatientID or AppointmentID must be provided");
-        }
         schedule = scheduleRepository.save(schedule);
         return convertToDTO(schedule);
     }
@@ -102,10 +98,7 @@ public class ScheduleServiceImpl implements ScheduleService {
 
     @Override
     public List<ScheduleDTO> getAllSchedules() {
-        return scheduleRepository.findAll().stream()
-                .filter(s -> s.getPatientId() != null || s.getAppointmentId() != null)
-                .map(this::convertToDTO)
-                .collect(Collectors.toList());
+        return scheduleRepository.findAll().stream().map(this::convertToDTO).collect(Collectors.toList());
     }
 
     @Override
@@ -120,17 +113,12 @@ public class ScheduleServiceImpl implements ScheduleService {
         } else {
             schedules = scheduleRepository.findAll();
         }
-        return schedules.stream()
-                .filter(s -> s.getPatientId() != null || s.getAppointmentId() != null) // Filter valid schedules
-                .map(this::convertToDTO)
-                .collect(Collectors.toList());
+        return schedules.stream().map(this::convertToDTO).collect(Collectors.toList());
     }
-
 
     public List<Doctor> getAllDoctors() {
         return doctorRepository.findAll();
     }
-
 
     public List<Room> getAllRooms() {
         return roomRepository.findAll();
@@ -145,9 +133,6 @@ public class ScheduleServiceImpl implements ScheduleService {
                 endDate.getYear());
     }
 
-    /**
-     * Convert Schedule entity to DTO
-     */
     private ScheduleDTO convertToDTO(Schedule schedule) {
         ScheduleDTO dto = new ScheduleDTO();
         dto.setScheduleId(schedule.getScheduleId());
@@ -183,12 +168,10 @@ public class ScheduleServiceImpl implements ScheduleService {
             patientRepository.findById(schedule.getPatientId())
                     .ifPresent(patient -> dto.setPatientName(patient.getFullName()));
         }
+
         return dto;
     }
 
-    /**
-     * Convert DTO to Schedule entity
-     */
     private Schedule convertToEntity(ScheduleDTO dto) {
         Schedule schedule = new Schedule();
         if (dto.getScheduleId() != null) {
@@ -212,45 +195,27 @@ public class ScheduleServiceImpl implements ScheduleService {
 
     @Override
     public boolean toggleScheduleCompletion(Integer scheduleId, Integer doctorId) {
-        // Find the schedule by ID
         Schedule schedule = scheduleRepository.findById(scheduleId)
                 .orElseThrow(() -> new RuntimeException("Schedule not found with ID: " + scheduleId));
-
-        // Verify the schedule belongs to the doctor
         if (!schedule.getDoctorId().equals(doctorId)) {
             throw new RuntimeException("Schedule does not belong to the specified doctor");
         }
-
-        // Toggle the completion status
         boolean newStatus = !schedule.getIsCompleted();
         schedule.setIsCompleted(newStatus);
-
-        // Save the updated schedule
         scheduleRepository.save(schedule);
-
-        // Return the new status
         return newStatus;
     }
 
     @Override
     public boolean toggleAppointmentCompletion(Integer appointmentId, Integer doctorId) {
-        // Find the schedule associated with this appointment
         Schedule schedule = scheduleRepository.findByAppointmentId(appointmentId)
                 .orElseThrow(() -> new RuntimeException("Schedule not found for appointment with ID: " + appointmentId));
-
-        // Verify the schedule belongs to the doctor
         if (!schedule.getDoctorId().equals(doctorId)) {
             throw new RuntimeException("Appointment does not belong to the specified doctor");
         }
-
-        // Toggle the completion status
         boolean newStatus = !schedule.getIsCompleted();
         schedule.setIsCompleted(newStatus);
-
-        // Save the updated schedule
         scheduleRepository.save(schedule);
-
-        // Return the new status
         return newStatus;
     }
 }

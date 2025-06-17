@@ -74,6 +74,7 @@ public interface ScheduleService {
         private int onCallHours;
         private int roomsAssigned;
         private int totalHours;
+        private int completedSchedules;
 
         public int getWeeklyAppointments() {
             return weeklyAppointments;
@@ -105,6 +106,10 @@ public interface ScheduleService {
 
         public void setTotalHours(int totalHours) {
             this.totalHours = totalHours;
+        }
+
+        public void setCompletedSchedules(Integer completedSchedules) {
+            this.completedSchedules = completedSchedules;
         }
     }
 }
