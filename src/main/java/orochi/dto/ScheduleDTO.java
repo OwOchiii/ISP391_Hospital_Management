@@ -30,4 +30,7 @@ public class ScheduleDTO {
     private String roomName;
     private String patientEmail;
     private String patientPhone;
+    private String specializationName;
+    public String getSpecializationName() { return specializationName; }
+    public void setSpecializationName(String specializationName) { this.specializationName = specializationName; }
 }

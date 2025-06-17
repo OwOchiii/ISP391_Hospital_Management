@@ -7,7 +7,6 @@ import org.springframework.web.bind.annotation.*;
 import orochi.dto.ScheduleDTO;
 import orochi.model.Doctor;
 import orochi.model.Room;
-import orochi.model.Schedule;
 import orochi.service.impl.ScheduleServiceImpl;
 
 import java.time.LocalDate;
@@ -37,7 +36,7 @@ public class AdminScheduleController {
         model.addAttribute("endDate", endDateStr);
         model.addAttribute("doctors", scheduleService.getAllDoctors());
         model.addAttribute("rooms", scheduleService.getAllRooms());
-        return "admin/schedules";
+        return "admin/schedule/list";
     }
 
     @GetMapping("/{id}/delete")

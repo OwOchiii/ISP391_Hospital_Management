@@ -149,9 +149,21 @@ public class ScheduleServiceImpl implements ScheduleService {
 
         if (schedule.getDoctor() != null) {
             dto.setDoctorName(schedule.getDoctor().getUser().getFullName());
+            if (!schedule.getDoctor().getSpecializations().isEmpty()) {
+                dto.setSpecializationName(schedule.getDoctor().getSpecializations().get(0).getSpecName()); 
+            } else {
+                dto.setSpecializationName("N/A");
+            }
         } else if (schedule.getDoctorId() != null) {
             doctorRepository.findById(schedule.getDoctorId())
-                    .ifPresent(doctor -> dto.setDoctorName(doctor.getUser().getFullName()));
+                    .ifPresent(doctor -> {
+                        dto.setDoctorName(doctor.getUser().getFullName());
+                        if (!doctor.getSpecializations().isEmpty()) {
+                            dto.setSpecializationName(doctor.getSpecializations().get(0).getSpecName());
+                        } else {
+                            dto.setSpecializationName("N/A");
+                        }
+                    });
         }
 
         if (schedule.getRoom() != null) {
@@ -159,7 +171,10 @@ public class ScheduleServiceImpl implements ScheduleService {
             dto.setRoomNumber(schedule.getRoom().getRoomNumber());
         } else if (schedule.getRoomId() != null) {
             roomRepository.findById(schedule.getRoomId())
-                    .ifPresent(room -> dto.setRoomName(room.getRoomName()));
+                    .ifPresent(room -> {
+                        dto.setRoomName(room.getRoomName());
+                        dto.setRoomNumber(room.getRoomNumber());
+                    });
         }
 
         if (schedule.getPatient() != null) {
