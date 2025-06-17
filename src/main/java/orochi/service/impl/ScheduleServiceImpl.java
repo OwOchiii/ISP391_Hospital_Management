@@ -183,12 +183,11 @@ public class ScheduleServiceImpl implements ScheduleService {
         dto.setDescription(schedule.getDescription());
         dto.setIsCompleted(schedule.getIsCompleted());
 
-        // Get related entity names if available
         if (schedule.getDoctor() != null) {
             dto.setDoctorName(schedule.getDoctor().getUser().getFullName());
         } else if (schedule.getDoctorId() != null) {
             doctorRepository.findById(schedule.getDoctorId())
-                .ifPresent(doctor -> dto.setDoctorName(doctor.getUser().getFullName()));
+                    .ifPresent(doctor -> dto.setDoctorName(doctor.getUser().getFullName()));
         }
 
         if (schedule.getRoom() != null) {
@@ -196,16 +195,15 @@ public class ScheduleServiceImpl implements ScheduleService {
             dto.setRoomNumber(schedule.getRoom().getRoomNumber());
         } else if (schedule.getRoomId() != null) {
             roomRepository.findById(schedule.getRoomId())
-                .ifPresent(room -> dto.setRoomName(room.getRoomName()));
+                    .ifPresent(room -> dto.setRoomName(room.getRoomName()));
         }
 
         if (schedule.getPatient() != null) {
             dto.setPatientName(schedule.getPatient().getFullName());
         } else if (schedule.getPatientId() != null) {
             patientRepository.findById(schedule.getPatientId())
-                .ifPresent(patient -> dto.setPatientName(patient.getFullName()));
+                    .ifPresent(patient -> dto.setPatientName(patient.getFullName()));
         }
-
         return dto;
     }
 
