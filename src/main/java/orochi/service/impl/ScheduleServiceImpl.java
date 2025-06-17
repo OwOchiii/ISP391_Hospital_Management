@@ -220,6 +220,8 @@ public class ScheduleServiceImpl implements ScheduleService {
         }
         schedule.setDoctorId(dto.getDoctorId());
         schedule.setRoomId(dto.getRoomId());
+        schedule.setPatientId(dto.getPatientId());
+        schedule.setAppointmentId(dto.getAppointmentId());
         schedule.setScheduleDate(dto.getScheduleDate());
         schedule.setStartTime(dto.getStartTime());
         schedule.setEndTime(dto.getEndTime());
