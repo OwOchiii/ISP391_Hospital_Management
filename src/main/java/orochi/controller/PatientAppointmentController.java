@@ -82,7 +82,6 @@ public class PatientAppointmentController {
             appointmentForm.setEmail(appointment.getEmail() != null ? appointment.getEmail() : patient.getUser().getEmail());
             appointmentForm.setPhoneNumber(appointment.getPhoneNumber() != null ? appointment.getPhoneNumber() : patient.getUser().getPhoneNumber());
             appointmentForm.setDescription(appointment.getDescription());
-            appointmentForm.setEmergencyContact(null);
         } else {
             appointmentForm = new AppointmentFormDTO();
             appointmentForm.setPatientId(patientId);
@@ -166,8 +165,7 @@ public class PatientAppointmentController {
                         appointmentForm.getAppointmentTime(),
                         appointmentForm.getEmail(),
                         appointmentForm.getPhoneNumber(),
-                        appointmentForm.getDescription(),
-                        appointmentForm.getEmergencyContact()
+                        appointmentForm.getDescription()
                 );
                 redirectAttributes.addFlashAttribute("successMessage", "Your appointment has been successfully updated.");
             } else {
@@ -178,8 +176,7 @@ public class PatientAppointmentController {
                         appointmentForm.getAppointmentTime(),
                         appointmentForm.getEmail(),
                         appointmentForm.getPhoneNumber(),
-                        appointmentForm.getDescription(),
-                        appointmentForm.getEmergencyContact()
+                        appointmentForm.getDescription()
                 );
                 redirectAttributes.addFlashAttribute("successMessage",
                         "Your appointment has been successfully booked for " +

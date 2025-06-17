@@ -915,6 +915,22 @@
     .modal-actions button {
       pointer-events: auto;
     }
+
+    .date-range-container {
+      display: flex;
+      gap: 10px;
+      align-items: center;
+    }
+    .date-input {
+      padding: 8px;
+      border: 1px solid #ced4da;
+      border-radius: 4px;
+      font-size: 14px;
+      width: 150px;
+    }
+    .date-input:invalid  {
+      color: #dc3545;
+    }
   </style>
 </head>
 <body>
@@ -1080,9 +1096,17 @@
 
       <!-- Search and Controls -->
       <div class="d-flex justify-content-between align-items-center flex-wrap gap-3">
-        <div class="search-container">
-          <i class="bi bi-search search-icon"></i>
-          <input type="text" class="search-input" maxlength="50" placeholder="Search appointments by doctor, specialty, or date..." id="searchInput">
+        <div class="d-flex gap-3 align-items-center">
+          <div class="search-container">
+            <i class="bi bi-search search-icon"></i>
+            <input type="text" class="search-input" maxlength="50" placeholder="Search appointments by doctor, specialty, or date..." id="searchInput">
+          </div>
+          <div class="date-range-container">
+            <input type="date" class="date-input" id="fromDate" placeholder="From Date">
+            <i class="bi bi-calendar date-icon"></i>
+            <input type="date" class="date-input" id="toDate" placeholder="To Date">
+            <i class="bi bi-calendar date-icon"></i>
+          </div>
         </div>
 
         <div class="d-flex gap-2">
@@ -1189,8 +1213,6 @@
             </a>
           </div>
 
-        <div class="appointment-actions">
-          <!-- Actions based on status -->
           <div th:if="${appointment.status == 'Scheduled'}">
             <a th:href="@{/patient/appointment-list/{id}/details(id=${appointment.appointmentId}, patientId=${patientId})}"
                class="btn-primary-custom btn-sm">
@@ -1227,7 +1249,7 @@
             </button>
           </div>
 
-          <div th:if="${appointment.status == 'Cancel' || appointment.status == 'Cancelled'}">
+          <div th:if="${appointment.status == 'Cancel' || appointment.status == 'Cancelled' || appointment.status == 'Completed'}">
             <a th:href="@{/patient/appointment-list/{id}/details(id=${appointment.appointmentId}, patientId=${patientId})}"
                class="btn-outline-custom btn-sm">
               <i class="bi bi-eye"></i>
@@ -1399,7 +1421,7 @@
     </div>
 
     <!-- Empty State -->
-    <div class="empty-state" id="emptyState" style="display: none;">
+    <div class="empty-state" id="emptyState">
       <i class="bi bi-calendar-x"></i>
       <h3>No Appointments Found</h3>
       <p>No appointments match your current search criteria. Try adjusting your filters or search terms.</p>
@@ -1467,6 +1489,30 @@
   let currentAppointmentId = null;
   const patientId = /*[[${patientId}]]*/ '';
 
+  // Function to remove diacritics for search
+  function removeDiacritics(str) {
+    return str.normalize('NFD')
+      .replace(/[\u0300-\u036f]/g, '')
+      .replace(/đ/g, 'd')
+      .replace(/Đ/g, 'D');
+  }
+
+  // Function to normalize multiple spaces
+  function normalizeSpaces(str) {
+    return str.replace(/\s+/g, ' ').trim();
+  }
+
+  // Parse date string in format "Day, Month d, yyyy" to Date object
+  function parseAppointmentDate(dateStr) {
+    if (dateStr === 'Date TBD') return null;
+    try {
+      return new Date(dateStr);
+    } catch (e) {
+      console.error('Error parsing date:', dateStr, e);
+      return null;
+    }
+  }
+
   // Sidebar toggle functionality
   function toggleSidebar() {
     const sidebar = document.getElementById('sidebar');
@@ -1492,10 +1538,27 @@
 
   function initializeSearchAndFilters() {
     const searchInput = document.getElementById('searchInput');
+    const fromDateInput = document.getElementById('fromDate');
+    const toDateInput = document.getElementById('toDate');
     const filterTabs = document.querySelectorAll('.filter-tab');
     const appointmentsContainer = document.getElementById('appointmentsContainer');
     const emptyState = document.getElementById('emptyState');
     let activeFilter = 'all';
+
+    // Validate "from date" is before "to date"
+    function validateDateRange() {
+      const fromDate = fromDateInput.value ? new Date(fromDateInput.value) : null;
+      const toDate = toDateInput.value ? new Date(toDateInput.value) : null;
+
+      if (fromDate && toDate && fromDate > toDate) {
+        toDateInput.setCustomValidity('To date must be after from date');
+        toDateInput.reportValidity();
+        return false;
+      } else {
+        toDateInput.setCustomValidity('');
+        return true;
+      }
+    }
 
     // Update filter tabs
     filterTabs.forEach(tab => {
@@ -1508,21 +1571,40 @@
       });
     });
 
-    // Update on search input, including spaces
+    // Update on search input
     searchInput.addEventListener('input', function() {
       updateAppointments();
     });
 
+    // Update on date input
+    fromDateInput.addEventListener('change', function() {
+      if (validateDateRange()) {
+        updateAppointments();
+      }
+    });
+    toDateInput.addEventListener('change', function() {
+      if (validateDateRange()) {
+        updateAppointments();
+      }
+    });
+
     function updateAppointments() {
-      const searchTerm = searchInput.value.toLowerCase().trim();
+      // Normalize search input: remove diacritics and multiple spaces
+      let searchTerm = searchInput.value.toLowerCase();
+      searchTerm = normalizeSpaces(removeDiacritics(searchTerm));
+
+      // Get date range
+      const fromDate = fromDateInput.value ? new Date(fromDateInput.value) : null;
+      const toDate = toDateInput.value ? new Date(toDateInput.value) : null;
+
       const appointmentCards = appointmentsContainer.querySelectorAll('.appointment-card');
       let visibleCount = 0;
 
       appointmentCards.forEach(card => {
-        // Search criteria
-        const doctorName = card.querySelector('.appointment-title').textContent.toLowerCase();
-        const appointmentId = card.querySelector('.appointment-id').textContent.toLowerCase();
-        const specialty = card.querySelector('.detail-value').textContent.toLowerCase();
+        // Search criteria with diacritic-insensitive comparison
+        const doctorName = removeDiacritics(card.querySelector('.appointment-title').textContent).toLowerCase();
+        const appointmentId = removeDiacritics(card.querySelector('.appointment-id').textContent).toLowerCase();
+        const specialty = removeDiacritics(card.querySelector('.detail-value').textContent).toLowerCase();
         const matchesSearch = doctorName.includes(searchTerm) ||
                               appointmentId.includes(searchTerm) ||
                               specialty.includes(searchTerm);
@@ -1550,8 +1632,30 @@
             break;
         }
 
-        // Show card only if it matches both search and filter
-        if (matchesSearch && matchesFilter) {
+        // Date range filtering
+        const dateElement = card.querySelector('.appointment-datetime h6');
+        const appointmentDate = dateElement ? parseAppointmentDate(dateElement.textContent) : null;
+        let matchesDate = true;
+
+        if (appointmentDate && (fromDate || toDate)) {
+          if (fromDate && appointmentDate < fromDate) {
+            matchesDate = false;
+          }
+          if (toDate) {
+            // Set toDate to end of day for inclusive filtering
+            const endOfToDate = new Date(toDate);
+            endOfToDate.setHours(23, 59, 59, 999);
+            if (appointmentDate > endOfToDate) {
+              matchesDate = false;
+            }
+          }
+        } else if (!appointmentDate && (fromDate || toDate)) {
+          // If date is TBD and any date filter is applied, hide the card
+          matchesDate = false;
+        }
+
+        // Show card only if it matches search, filter, and date
+        if (matchesSearch && matchesFilter && matchesDate) {
           card.style.display = 'block';
           visibleCount++;
         } else {
@@ -1560,13 +1664,8 @@
       });
 
       // Show/hide empty state
-      if (visibleCount === 0) {
-        emptyState.style.display = 'block';
-        appointmentsContainer.style.display = 'none';
-      } else {
-        emptyState.style.display = 'none';
-        appointmentsContainer.style.display = 'grid';
-      }
+      emptyState.style.display = visibleCount === 0 ? 'flex' : 'none';
+      appointmentsContainer.style.display = visibleCount === 0 ? 'none' : 'grid';
     }
 
     // Initial update
