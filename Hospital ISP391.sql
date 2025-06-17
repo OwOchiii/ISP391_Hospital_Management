@@ -797,3 +797,20 @@ GO
 
 CREATE INDEX IDX_doctor_support_date ON doctor_support_tickets(submission_date)
 GO
+
+CREATE OR ALTER TRIGGER trg_DeleteSpecializationCascade
+ON Specialization
+AFTER DELETE
+AS
+BEGIN
+    SET NOCOUNT ON;
+DELETE FROM DoctorSpecialization
+WHERE SpecID IN (SELECT SpecID FROM DELETED);
+DELETE FROM Service
+WHERE SpecID IN (SELECT SpecID FROM DELETED);
+
+IF @@ROWCOUNT = 0
+        PRINT 'No dependent records found or deleted.';
+ELSE
+        PRINT 'Deleted dependent records from DoctorSpecialization and Service.';
+END;
