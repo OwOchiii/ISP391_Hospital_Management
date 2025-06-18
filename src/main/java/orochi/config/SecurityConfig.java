@@ -44,7 +44,7 @@ public class SecurityConfig {
                 .addFilterBefore(captchaFilter, UsernamePasswordAuthenticationFilter.class)
                 .authorizeHttpRequests(authorizeRequests ->
                         authorizeRequests
-                                .requestMatchers("/auth/**","/auth/reset-password", "/css/**", "/js/**", "/images/**", "/").permitAll()
+                                .requestMatchers("/auth/**","/auth/reset-password", "/css/**", "/js/**", "/images/**", "/", "/test/url-sanitizer", "/test/xss").permitAll()
                                 .requestMatchers("/admin/**").hasAuthority("ADMIN")
                                 .requestMatchers("/doctor/**").hasAuthority("DOCTOR")
                                 .requestMatchers("/receptionist/**").hasAuthority("RECEPTIONIST")

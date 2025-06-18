@@ -451,7 +451,7 @@
                                 <label for="fullName" class="form-label">
                                     <i class="bi bi-person me-2"></i>Full Name
                                 </label>
-                                <input type="text" class="form-control" id="fullName" name="fullName" required>
+                                <input type="text" class="form-control" id="fullName" name="fullName" required autofocus>
                                 <div class="invalid-feedback">
                                     Full name is required.
                                 </div>
@@ -676,6 +676,15 @@
                 }
             }
 
+            // Full Name validation - no special characters or numbers allowed
+            const fullName = document.getElementById('fullName');
+            const nameRegex = /^[A-Za-z\s]+$/;  // Only letters and spaces
+            if (!nameRegex.test(fullName.value.trim())) {
+                fullName.classList.add('is-invalid');
+                showAlert('error', 'Full name should contain only letters and spaces.');
+                return false;
+            }
+
             // Email validation
             const email = document.getElementById('email');
             if (!email.validity.valid) {
@@ -684,12 +693,12 @@
                 return false;
             }
 
-            // Phone validation
+            // Phone validation - only digits and + allowed
             const phone = document.getElementById('phoneNumber');
             const phoneRegex = /^\+?[\d]{10,15}$/;
             if (!phoneRegex.test(phone.value.replace(/\s/g, ''))) {
                 phone.classList.add('is-invalid');
-                showAlert('error', 'Please enter a valid phone number.');
+                showAlert('error', 'Please enter a valid phone number (digits only).');
                 return false;
             }
         }
@@ -723,6 +732,15 @@
             } else {
                 field.classList.remove('is-invalid');
             }
+        }
+
+        // Full Name validation - no special characters or numbers allowed
+        const fullName = document.getElementById('fullName');
+        const nameRegex = /^[A-Za-z\s]+$/;  // Only letters and spaces
+        if (fullName.value.trim() && !nameRegex.test(fullName.value.trim())) {
+            fullName.classList.add('is-invalid');
+            isValid = false;
+            errorMessage = 'Full name should contain only letters and spaces.';
         }
 
         // Email validation
@@ -913,6 +931,24 @@
                 } else if (this.value.trim()) {
                     this.classList.remove('is-valid');
                     this.classList.add('is-invalid');
+                }
+            } else if (this.id === 'fullName') {
+                const nameRegex = /^[A-Za-z\s]*$/;  // Only letters and spaces
+                if (nameRegex.test(this.value) && this.value.trim()) {
+                    this.classList.remove('is-invalid');
+                    this.classList.add('is-valid');
+                } else if (this.value.trim()) {
+                    this.classList.remove('is-valid');
+                    this.classList.add('is-invalid');
+
+                    // Only show error message if invalid character is entered
+                    if (!nameRegex.test(this.value)) {
+                        // Find or create an error message element
+                        let errorMsg = this.parentElement.querySelector('.invalid-feedback');
+                        if (errorMsg) {
+                            errorMsg.textContent = 'Full name should contain only letters and spaces.';
+                        }
+                    }
                 }
             } else if (this.id === 'password') {
                 updatePasswordStrength(this.value);

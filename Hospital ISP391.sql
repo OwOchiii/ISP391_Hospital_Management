@@ -678,8 +678,8 @@ BEGIN
                             -- Keep the Doctor record but also add Patient record
                             IF NOT EXISTS (SELECT 1 FROM [Patient] WHERE [UserID] = @UserID)
                                 BEGIN
-                                    INSERT INTO [Patient] ([UserID], [dateOfBirth], [gender], [address], [description])
-                                    VALUES (@UserID, NULL, NULL, NULL, NULL);
+                                    INSERT INTO [Patient] ([UserID], [dateOfBirth], [gender], [description])
+                                    VALUES (@UserID, NULL,  NULL, NULL);
                                 END
                         END
                         -- If changing to any other role, just keep existing records
@@ -688,8 +688,8 @@ BEGIN
                             -- Make sure appropriate role-specific record exists
                             IF @NewRoleID = @RoleIDForPatient AND NOT EXISTS (SELECT 1 FROM [Patient] WHERE [UserID] = @UserID)
                                 BEGIN
-                                    INSERT INTO [Patient] ([UserID], [dateOfBirth], [gender], [address], [description])
-                                    VALUES (@UserID, NULL, NULL, NULL, NULL);
+                                    INSERT INTO [Patient] ([UserID], [dateOfBirth], [gender], [description])
+                                    VALUES (@UserID, NULL,  NULL, NULL);
                                 END
                             ELSE IF @NewRoleID = @RoleIDForDoctor AND NOT EXISTS (SELECT 1 FROM [Doctor] WHERE [UserID] = @UserID)
                                 BEGIN
@@ -744,6 +744,59 @@ EXEC sp_addextendedproperty
      @value = 'Stores user feedback for the Medicare system',
      @level0type = N'Schema', @level0name = 'dbo',
      @level1type = N'Table',  @level1name = 'Feedback';
+
+-- Create Feedback table
+CREATE TABLE [Feedback] (
+    [FeedbackID] int PRIMARY KEY IDENTITY(1,1),
+    [UserID] int NOT NULL,
+    [description] varchar(max) NOT NULL,
+    [created_at] DATETIME NOT NULL DEFAULT GETDATE(),
+    FOREIGN KEY ([UserID]) REFERENCES [Users] ([UserID])
+);
+
+-- Add index for faster queries on UserID
+CREATE INDEX [IX_Feedback_UserID] ON [Feedback] ([UserID]);
+
+-- Add table description
+EXEC sp_addextendedproperty
+     @name = N'Table_Description',
+     @value = 'Stores user feedback for the Medicare system',
+     @level0type = N'Schema', @level0name = 'dbo',
+     @level1type = N'Table',  @level1name = 'Feedback';
+
+    CREATE TABLE doctor_support_tickets (
+                id BIGINT PRIMARY KEY IDENTITY(1,1),
+                doctor_id INT NOT NULL,
+                request_type VARCHAR(50) NOT NULL,
+                other_request_type VARCHAR(100),
+                ticket_title VARCHAR(200) NOT NULL,
+                affected_module VARCHAR(50) NOT NULL,
+                other_module VARCHAR(100),
+                priority_level VARCHAR(20) NOT NULL,
+                description VARCHAR(MAX) NOT NULL,
+                justification VARCHAR(MAX) NOT NULL,
+                attachment_path VARCHAR(255),
+                follow_up_needed BIT NOT NULL DEFAULT 0,
+                preferred_contact_method VARCHAR(20),
+                contact_email VARCHAR(100),
+                contact_phone VARCHAR(20),
+                preferred_contact_times VARCHAR(100),
+                additional_contact_info VARCHAR(MAX),
+                ticket_status VARCHAR(20) NOT NULL DEFAULT 'PENDING',
+                submission_date DATETIME2 NOT NULL DEFAULT GETDATE(),
+
+                CONSTRAINT FK_doctor_support_tickets_doctor FOREIGN KEY (doctor_id) REFERENCES Doctor(DoctorID)
+    )
+GO
+
+CREATE INDEX IDX_doctor_support_doctor_id ON doctor_support_tickets(doctor_id)
+GO
+
+CREATE INDEX IDX_doctor_support_status ON doctor_support_tickets(ticket_status)
+GO
+
+CREATE INDEX IDX_doctor_support_date ON doctor_support_tickets(submission_date)
+GO
 
 CREATE OR ALTER TRIGGER trg_DeleteSpecializationCascade
 ON Specialization

@@ -675,6 +675,7 @@
 </head>
 <body>
 <!-- Updated Sidebar with Organized Sections -->
+<!-- Sidebar -->
 <div class="sidebar" id="sidebar">
   <div class="sidebar-header">
     <a href="#" class="brand-logo">
@@ -690,7 +691,7 @@
     <div class="nav-section">
       <div class="nav-section-title">Dashboard</div>
       <div class="nav-item">
-        <a th:href="@{/doctor/dashboard(doctorId=${doctorId})}" class="nav-link">
+        <a th:href="@{/doctor/dashboard(doctorId=${doctorId})}" class="nav-link active">
           <i class="bi bi-speedometer2"></i>
           Dashboard
         </a>
@@ -706,7 +707,7 @@
         </a>
       </div>
       <div class="nav-item">
-        <a th:href="@{/doctor/patients(doctorId=${doctorId})}" class="nav-link active">
+        <a th:href="@{/doctor/patients(doctorId=${doctorId})}" class="nav-link">
           <i class="bi bi-people"></i>
           Patients
         </a>
@@ -728,9 +729,9 @@
         </a>
       </div>
       <div class="nav-item">
-        <a href="#" class="nav-link">
+        <a th:href="@{/doctor/support-request}" class="nav-link">
           <i class="bi bi-chat-dots"></i>
-          Messages
+          Support Ticket Submission
         </a>
       </div>
     </div>
@@ -738,7 +739,7 @@
     <div class="nav-section">
       <div class="nav-section-title">System</div>
       <div class="nav-item">
-        <a href="#" class="nav-link">
+        <a th:href="@{/doctor/settings}" class="nav-link">
           <i class="bi bi-gear"></i>
           Settings
         </a>
