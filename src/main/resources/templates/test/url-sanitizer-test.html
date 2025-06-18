@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <title>URL Sanitizer Test</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        .result-box {
+            border: 1px solid #ddd;
+            padding: 15px;
+            margin: 15px 0;
+            border-radius: 5px;
+        }
+        .original {
+            color: #c00;
+            word-break: break-all;
+        }
+        .sanitized {
+            color: #080;
+            word-break: break-all;
+        }
+        pre {
+            background: #f5f5f5;
+            padding: 10px;
+            border-radius: 4px;
+            overflow-x: auto;
+        }
+        .test-case {
+            margin-bottom: 20px;
+            padding: 10px;
+            background: #f9f9f9;
+            border-radius: 5px;
+        }
+    </style>
+</head>
+<body>
+    <h1>URL Sanitizer Test</h1>
+    <p>This page lets you test the URL sanitization function to see how it protects against malicious links.</p>
+
+    <form id="test-form">
+        <div>
+            <label for="url-input">Enter a URL to test (try some malicious ones!):</label><br>
+            <input type="text" id="url-input" style="width: 80%; padding: 8px;"
+                placeholder="javascript:alert('XSS Attack!')">
+            <button type="submit">Test Sanitization</button>
+        </div>
+    </form>
+
+    <div class="result-box" id="result" style="display: none;">
+        <h3>Sanitization Result:</h3>
+        <div>
+            <strong>Original URL:</strong> <span id="original-url" class="original"></span>
+        </div>
+        <div>
+            <strong>Sanitized URL:</strong> <span id="sanitized-url" class="sanitized"></span>
+        </div>
+        <div>
+            <strong>Result Link:</strong> <a id="result-link" href="#">Click this sanitized link</a>
+        </div>
+    </div>
+
+    <h2>Common Malicious URL Patterns to Test</h2>
+    <div class="test-case">
+        <h3>JavaScript Protocol</h3>
+        <pre>javascript:alert('XSS Attack!');</pre>
+        <button class="test-button" data-url="javascript:alert('XSS Attack!');">Test This</button>
+    </div>
+
+    <div class="test-case">
+        <h3>Data URI</h3>
+        <pre>data:text/html;base64,PHNjcmlwdD5hbGVydCgnWFNTIEF0dGFjayEnKTwvc2NyaXB0Pg==</pre>
+        <button class="test-button" data-url="data:text/html;base64,PHNjcmlwdD5hbGVydCgnWFNTIEF0dGFjayEnKTwvc2NyaXB0Pg==">Test This</button>
+    </div>
+
+    <div class="test-case">
+        <h3>HTML Injection in URL</h3>
+        <pre>https://example.com/&lt;script&gt;alert('XSS')&lt;/script&gt;</pre>
+        <button class="test-button" data-url="https://example.com/<script>alert('XSS')</script>">Test This</button>
+    </div>
+
+    <div class="test-case">
+        <h3>On-event Handlers</h3>
+        <pre>https://example.com/' onclick='alert(\"XSS\")'</pre>
+        <button class="test-button" data-url="https://example.com/' onclick='alert(\"XSS\")'">Test This</button>
+    </div>
+
+    <div class="test-case">
+        <h3>Safe URL</h3>
+        <pre>https://www.google.com</pre>
+        <button class="test-button" data-url="https://www.google.com">Test This</button>
+    </div>
+
+    <script src="/js/url-sanitizer.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const testForm = document.getElementById('test-form');
+            const urlInput = document.getElementById('url-input');
+            const resultDiv = document.getElementById('result');
+            const originalUrlSpan = document.getElementById('original-url');
+            const sanitizedUrlSpan = document.getElementById('sanitized-url');
+            const resultLink = document.getElementById('result-link');
+
+            // Handle form submission
+            testForm.addEventListener('submit', function(e) {
+                e.preventDefault();
+                testUrl(urlInput.value);
+            });
+
+            // Handle test buttons
+            document.querySelectorAll('.test-button').forEach(button => {
+                button.addEventListener('click', function() {
+                    const url = this.getAttribute('data-url');
+                    urlInput.value = url;
+                    testUrl(url);
+                });
+            });
+
+            function testUrl(url) {
+                const sanitizedUrl = window.orochiSecurity.sanitizeUrl(url);
+
+                // Display results
+                originalUrlSpan.textContent = url;
+                sanitizedUrlSpan.textContent = sanitizedUrl;
+                resultLink.setAttribute('href', sanitizedUrl);
+
+                // Make the link safe (redundant but demonstrates the makeLinkSafe function)
+                window.orochiSecurity.makeLinkSafe(resultLink);
+
+                resultDiv.style.display = 'block';
+            }
+        });
+    </script>
+</body>
+</html>
+

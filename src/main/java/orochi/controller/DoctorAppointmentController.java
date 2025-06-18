@@ -378,6 +378,9 @@ public class DoctorAppointmentController {
             if (appointment.isPresent()) {
                 Optional<Patient> patient = doctorService.getPatientDetails(appointment.get().getPatientId());
 
+                // Fetch the doctor information for this appointment
+                Optional<Doctor> doctor = doctorRepository.findById(appointment.get().getDoctorId());
+                model.addAttribute("doctor", doctor.orElse(null));
 
                 // Get patient's prescription history for this appointment
                 List<Prescription> prescriptions = prescriptionRepository.findByAppointmentId(appointmentId);
