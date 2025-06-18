@@ -1,5 +1,7 @@
 package orochi.repository;
 
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -63,11 +65,55 @@ public interface ScheduleRepository extends JpaRepository<Schedule, Integer> {
             "ORDER BY s.scheduleDate, s.startTime")
     List<Schedule> findByKeywordAndDate(@Param("keyword") String keyword, @Param("date") LocalDate date);
 
-    // New methods for EventType and IsCompleted
     List<Schedule> findByDoctorIdAndEventType(Integer doctorId, String eventType);
 
     List<Schedule> findByDoctorIdAndIsCompleted(Integer doctorId, Boolean isCompleted);
 
     @Query("SELECT COUNT(s) FROM Schedule s WHERE s.doctorId = :doctorId AND s.isCompleted = true AND s.scheduleDate BETWEEN :startDate AND :endDate")
     Integer countCompletedSchedulesInDateRange(@Param("doctorId") Integer doctorId, @Param("startDate") LocalDate startDate, @Param("endDate") LocalDate endDate);
+
+    // New pagination methods
+    @Query("SELECT s FROM Schedule s WHERE " +
+            "(LOWER(s.eventType) LIKE LOWER(CONCAT('%', :keyword, '%')) OR " +
+            "LOWER(s.description) LIKE LOWER(CONCAT('%', :keyword, '%')) OR " +
+            "EXISTS (SELECT d FROM Doctor d JOIN d.user u WHERE d.doctorId = s.doctorId AND LOWER(u.fullName) LIKE LOWER(CONCAT('%', :keyword, '%'))) OR " +
+            "EXISTS (SELECT p FROM Patient p JOIN p.user u WHERE p.patientId = s.patientId AND LOWER(u.fullName) LIKE LOWER(CONCAT('%', :keyword, '%'))) OR " +
+            "EXISTS (SELECT r FROM Room r WHERE r.roomId = s.roomId AND LOWER(r.roomName) LIKE LOWER(CONCAT('%', :keyword, '%')))) " +
+            "AND s.scheduleDate BETWEEN :startDate AND :endDate " +
+            "ORDER BY s.scheduleDate, s.startTime")
+    Page<Schedule> findByKeywordAndDateRangePaginated(@Param("keyword") String keyword, @Param("startDate") LocalDate startDate, @Param("endDate") LocalDate endDate, Pageable pageable);
+
+    @Query("SELECT s FROM Schedule s WHERE s.scheduleDate BETWEEN :startDate AND :endDate ORDER BY s.scheduleDate, s.startTime")
+    Page<Schedule> findByDateRangePaginated(@Param("startDate") LocalDate startDate, @Param("endDate") LocalDate endDate, Pageable pageable);
+
+    @Query("SELECT s FROM Schedule s WHERE " +
+            "(LOWER(s.eventType) LIKE LOWER(CONCAT('%', :keyword, '%')) OR " +
+            "LOWER(s.description) LIKE LOWER(CONCAT('%', :keyword, '%')) OR " +
+            "EXISTS (SELECT d FROM Doctor d JOIN d.user u WHERE d.doctorId = s.doctorId AND LOWER(u.fullName) LIKE LOWER(CONCAT('%', :keyword, '%'))) OR " +
+            "EXISTS (SELECT p FROM Patient p JOIN p.user u WHERE p.patientId = s.patientId AND LOWER(u.fullName) LIKE LOWER(CONCAT('%', :keyword, '%'))) OR " +
+            "EXISTS (SELECT r FROM Room r WHERE r.roomId = s.roomId AND LOWER(r.roomName) LIKE LOWER(CONCAT('%', :keyword, '%')))) " +
+            "AND (:date IS NULL OR s.scheduleDate = :date) " +
+            "ORDER BY s.scheduleDate, s.startTime")
+    Page<Schedule> findByKeywordAndDatePaginated(@Param("keyword") String keyword, @Param("date") LocalDate date, Pageable pageable);
+
+    @Query("SELECT COUNT(s) FROM Schedule s WHERE " +
+            "(LOWER(s.eventType) LIKE LOWER(CONCAT('%', :keyword, '%')) OR " +
+            "LOWER(s.description) LIKE LOWER(CONCAT('%', :keyword, '%')) OR " +
+            "EXISTS (SELECT d FROM Doctor d JOIN d.user u WHERE d.doctorId = s.doctorId AND LOWER(u.fullName) LIKE LOWER(CONCAT('%', :keyword, '%'))) OR " +
+            "EXISTS (SELECT p FROM Patient p JOIN p.user u WHERE p.patientId = s.patientId AND LOWER(u.fullName) LIKE LOWER(CONCAT('%', :keyword, '%'))) OR " +
+            "EXISTS (SELECT r FROM Room r WHERE r.roomId = s.roomId AND LOWER(r.roomName) LIKE LOWER(CONCAT('%', :keyword, '%')))) " +
+            "AND s.scheduleDate BETWEEN :startDate AND :endDate")
+    long countByKeywordAndDateRange(@Param("keyword") String keyword, @Param("startDate") LocalDate startDate, @Param("endDate") LocalDate endDate);
+
+    @Query("SELECT COUNT(s) FROM Schedule s WHERE s.scheduleDate BETWEEN :startDate AND :endDate")
+    long countByDateRange(@Param("startDate") LocalDate startDate, @Param("endDate") LocalDate endDate);
+
+    @Query("SELECT COUNT(s) FROM Schedule s WHERE " +
+            "(LOWER(s.eventType) LIKE LOWER(CONCAT('%', :keyword, '%')) OR " +
+            "LOWER(s.description) LIKE LOWER(CONCAT('%', :keyword, '%')) OR " +
+            "EXISTS (SELECT d FROM Doctor d JOIN d.user u WHERE d.doctorId = s.doctorId AND LOWER(u.fullName) LIKE LOWER(CONCAT('%', :keyword, '%'))) OR " +
+            "EXISTS (SELECT p FROM Patient p JOIN p.user u WHERE p.patientId = s.patientId AND LOWER(u.fullName) LIKE LOWER(CONCAT('%', :keyword, '%'))) OR " +
+            "EXISTS (SELECT r FROM Room r WHERE r.roomId = s.roomId AND LOWER(r.roomName) LIKE LOWER(CONCAT('%', :keyword, '%')))) " +
+            "AND (:date IS NULL OR s.scheduleDate = :date)")
+    long countByKeywordAndDate(@Param("keyword") String keyword, @Param("date") LocalDate date);
 }
