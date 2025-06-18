@@ -1,6 +1,9 @@
 package orochi.service.impl;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import orochi.dto.ScheduleDTO;
 import orochi.model.Doctor;
@@ -116,6 +119,35 @@ public class ScheduleServiceImpl implements ScheduleService {
         return schedules.stream().map(this::convertToDTO).collect(Collectors.toList());
     }
 
+    @Override
+    public List<ScheduleDTO> searchSchedulesPaginated(String keyword, LocalDate startDate, LocalDate endDate, int page, int size) {
+        Pageable pageable = PageRequest.of(page, size);
+        Page<Schedule> schedulePage;
+        if (keyword != null && startDate != null && endDate != null) {
+            schedulePage = scheduleRepository.findByKeywordAndDateRangePaginated(keyword, startDate, endDate, pageable);
+        } else if (startDate != null && endDate != null) {
+            schedulePage = scheduleRepository.findByDateRangePaginated(startDate, endDate, pageable);
+        } else if (keyword != null) {
+            schedulePage = scheduleRepository.findByKeywordAndDatePaginated(keyword, null, pageable);
+        } else {
+            schedulePage = scheduleRepository.findAll(pageable);
+        }
+        return schedulePage.getContent().stream().map(this::convertToDTO).collect(Collectors.toList());
+    }
+
+    @Override
+    public long countSchedules(String keyword, LocalDate startDate, LocalDate endDate) {
+        if (keyword != null && startDate != null && endDate != null) {
+            return scheduleRepository.countByKeywordAndDateRange(keyword, startDate, endDate);
+        } else if (startDate != null && endDate != null) {
+            return scheduleRepository.countByDateRange(startDate, endDate);
+        } else if (keyword != null) {
+            return scheduleRepository.countByKeywordAndDate(keyword, null);
+        } else {
+            return scheduleRepository.count();
+        }
+    }
+
     public List<Doctor> getAllDoctors() {
         return doctorRepository.findAll();
     }
@@ -150,7 +182,7 @@ public class ScheduleServiceImpl implements ScheduleService {
         if (schedule.getDoctor() != null) {
             dto.setDoctorName(schedule.getDoctor().getUser().getFullName());
             if (!schedule.getDoctor().getSpecializations().isEmpty()) {
-                dto.setSpecializationName(schedule.getDoctor().getSpecializations().get(0).getSpecName()); 
+                dto.setSpecializationName(schedule.getDoctor().getSpecializations().get(0).getSpecName());
             } else {
                 dto.setSpecializationName("N/A");
             }
