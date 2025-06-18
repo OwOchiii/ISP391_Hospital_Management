@@ -1,6 +1,8 @@
 package orochi.repository;
 
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 import orochi.model.DoctorNote;
 
@@ -13,12 +15,13 @@ import java.util.List;
 public interface DoctorNoteRepository extends JpaRepository<DoctorNote, Integer> {
 
     /**
-     * Find all notes for a specific appointment.
+     * Find all notes for a specific appointment with eager loading of doctor and user information.
      *
      * @param appointmentId The ID of the appointment
      * @return List of doctor notes for the appointment
      */
-    List<DoctorNote> findByAppointmentIdOrderByCreatedAtDesc(Integer appointmentId);
+    @Query("SELECT n FROM DoctorNote n LEFT JOIN FETCH n.doctor d LEFT JOIN FETCH d.user WHERE n.appointmentId = :appointmentId ORDER BY n.createdAt DESC")
+    List<DoctorNote> findByAppointmentIdOrderByCreatedAtDesc(@Param("appointmentId") Integer appointmentId);
 
     /**
      * Find all notes created by a specific doctor.
