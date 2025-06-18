@@ -132,20 +132,25 @@ public class ScheduleServiceImpl implements ScheduleService {
         } else {
             schedulePage = scheduleRepository.findAll(pageable);
         }
+        System.out.println("Page content size: " + schedulePage.getContent().size()); // Debug
+        System.out.println("Total elements from Page: " + schedulePage.getTotalElements()); // Debug
         return schedulePage.getContent().stream().map(this::convertToDTO).collect(Collectors.toList());
     }
 
     @Override
     public long countSchedules(String keyword, LocalDate startDate, LocalDate endDate) {
+        long count = 0;
         if (keyword != null && startDate != null && endDate != null) {
-            return scheduleRepository.countByKeywordAndDateRange(keyword, startDate, endDate);
+            count = scheduleRepository.countByKeywordAndDateRange(keyword, startDate, endDate);
         } else if (startDate != null && endDate != null) {
-            return scheduleRepository.countByDateRange(startDate, endDate);
+            count = scheduleRepository.countByDateRange(startDate, endDate);
         } else if (keyword != null) {
-            return scheduleRepository.countByKeywordAndDate(keyword, null);
+            count = scheduleRepository.countByKeywordAndDate(keyword, null);
         } else {
-            return scheduleRepository.count();
+            count = scheduleRepository.count();
         }
+        System.out.println("Count Schedules: " + count); // Debug
+        return count;
     }
 
     public List<Doctor> getAllDoctors() {
@@ -187,33 +192,35 @@ public class ScheduleServiceImpl implements ScheduleService {
                 dto.setSpecializationName("N/A");
             }
         } else if (schedule.getDoctorId() != null) {
-            doctorRepository.findById(schedule.getDoctorId())
-                    .ifPresent(doctor -> {
-                        dto.setDoctorName(doctor.getUser().getFullName());
-                        if (!doctor.getSpecializations().isEmpty()) {
-                            dto.setSpecializationName(doctor.getSpecializations().get(0).getSpecName());
-                        } else {
-                            dto.setSpecializationName("N/A");
-                        }
-                    });
+            doctorRepository.findById(schedule.getDoctorId()).ifPresentOrElse(doctor -> {
+                System.out.println("Found doctor: " + doctor.getUser().getFullName());
+                dto.setDoctorName(doctor.getUser().getFullName());
+                if (!doctor.getSpecializations().isEmpty()) {
+                    dto.setSpecializationName(doctor.getSpecializations().get(0).getSpecName());
+                } else {
+                    dto.setSpecializationName("N/A");
+                }
+            }, () -> System.out.println("Doctor ID " + schedule.getDoctorId() + " not found"));
         }
 
         if (schedule.getRoom() != null) {
             dto.setRoomName(schedule.getRoom().getRoomName());
             dto.setRoomNumber(schedule.getRoom().getRoomNumber());
         } else if (schedule.getRoomId() != null) {
-            roomRepository.findById(schedule.getRoomId())
-                    .ifPresent(room -> {
-                        dto.setRoomName(room.getRoomName());
-                        dto.setRoomNumber(room.getRoomNumber());
-                    });
+            roomRepository.findById(schedule.getRoomId()).ifPresentOrElse(room -> {
+                System.out.println("Found room: " + room.getRoomNumber());
+                dto.setRoomName(room.getRoomName());
+                dto.setRoomNumber(room.getRoomNumber());
+            }, () -> System.out.println("Room ID " + schedule.getRoomId() + " not found"));
         }
 
         if (schedule.getPatient() != null) {
             dto.setPatientName(schedule.getPatient().getFullName());
         } else if (schedule.getPatientId() != null) {
-            patientRepository.findById(schedule.getPatientId())
-                    .ifPresent(patient -> dto.setPatientName(patient.getFullName()));
+            patientRepository.findById(schedule.getPatientId()).ifPresentOrElse(patient -> {
+                System.out.println("Found patient: " + patient.getFullName());
+                dto.setPatientName(patient.getFullName());
+            }, () -> System.out.println("Patient ID " + schedule.getPatientId() + " not found"));
         }
 
         return dto;

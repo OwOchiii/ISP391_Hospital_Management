@@ -24,35 +24,30 @@ public class AdminScheduleController {
                                 @RequestParam(value = "search", required = false) String search,
                                 @RequestParam(value = "startDate", required = false) String startDateStr,
                                 @RequestParam(value = "endDate", required = false) String endDateStr,
+                                @RequestParam(value = "page", defaultValue = "0") int page,
+                                @RequestParam(value = "size", defaultValue = "6") int size,
                                 Model model) {
-        LocalDate startDate = startDateStr != null ? LocalDate.parse(startDateStr) : null;
-        LocalDate endDate = endDateStr != null ? LocalDate.parse(endDateStr) : null;
+        System.out.println("Accessed /admin/schedules with adminId: " + adminId + ", page: " + page + ", size: " + size);
+        LocalDate startDate = null;
+        LocalDate endDate = null;
 
-        List<ScheduleDTO> schedules = scheduleService.searchSchedules(search, startDate, endDate);
-        model.addAttribute("schedules", schedules);
-        model.addAttribute("adminId", adminId);
-        model.addAttribute("search", search);
-        model.addAttribute("startDate", startDateStr);
-        model.addAttribute("endDate", endDateStr);
-        model.addAttribute("doctors", scheduleService.getAllDoctors());
-        model.addAttribute("rooms", scheduleService.getAllRooms());
-        return "admin/schedule/list";
-    }
-
-    @GetMapping("/page")
-    public String showSchedulesPaginated(@RequestParam(value = "adminId", required = true) Integer adminId,
-                                         @RequestParam(value = "search", required = false) String search,
-                                         @RequestParam(value = "startDate", required = false) String startDateStr,
-                                         @RequestParam(value = "endDate", required = false) String endDateStr,
-                                         @RequestParam(value = "page", defaultValue = "0") int page,
-                                         @RequestParam(value = "size", defaultValue = "6") int size,
-                                         Model model) {
-        LocalDate startDate = startDateStr != null ? LocalDate.parse(startDateStr) : null;
-        LocalDate endDate = endDateStr != null ? LocalDate.parse(endDateStr) : null;
+        // Kiểm tra và phân tích startDateStr
+        if (startDateStr != null && !startDateStr.isEmpty()) {
+            startDate = LocalDate.parse(startDateStr);
+        }
+        // Kiểm tra và phân tích endDateStr
+        if (endDateStr != null && !endDateStr.isEmpty()) {
+            endDate = LocalDate.parse(endDateStr);
+        }
 
         List<ScheduleDTO> schedules = scheduleService.searchSchedulesPaginated(search, startDate, endDate, page, size);
         long totalSchedules = scheduleService.countSchedules(search, startDate, endDate);
         int totalPages = (int) Math.ceil((double) totalSchedules / size);
+
+        System.out.println("Total Schedules: " + totalSchedules);
+        System.out.println("Total Pages: " + totalPages);
+        System.out.println("Current Page: " + page);
+        System.out.println("Page Size: " + size);
 
         model.addAttribute("schedules", schedules);
         model.addAttribute("adminId", adminId);
@@ -70,12 +65,12 @@ public class AdminScheduleController {
     @GetMapping("/{id}/delete")
     public String deleteSchedule(@PathVariable Integer id, @RequestParam("adminId") Integer adminId, Model model) {
         scheduleService.deleteSchedule(id);
-        return "redirect:/admin/schedules/page?adminId=" + adminId;
+        return "redirect:/admin/schedules?adminId=" + adminId + "&page=0&size=6";
     }
 
     @PostMapping("/save")
     public String saveSchedule(@ModelAttribute ScheduleDTO scheduleDTO, @RequestParam("adminId") Integer adminId, Model model) {
         scheduleService.saveSchedule(scheduleDTO);
-        return "redirect:/admin/schedules/page?adminId=" + adminId;
+        return "redirect:/admin/schedules?adminId=" + adminId + "&page=0&size=6";
     }
 }
