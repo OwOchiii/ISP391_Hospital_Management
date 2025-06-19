@@ -9,6 +9,7 @@ import org.springframework.stereotype.Repository;
 import orochi.model.Schedule;
 
 import java.time.LocalDate;
+import java.time.LocalTime;
 import java.util.List;
 import java.util.Optional;
 
@@ -116,4 +117,50 @@ public interface ScheduleRepository extends JpaRepository<Schedule, Integer> {
             "EXISTS (SELECT r FROM Room r WHERE r.roomId = s.roomId AND LOWER(r.roomName) LIKE LOWER(CONCAT('%', :keyword, '%')))) " +
             "AND (:date IS NULL OR s.scheduleDate = :date)")
     long countByKeywordAndDate(@Param("keyword") String keyword, @Param("date") LocalDate date);
+
+    // New methods for advanced filtering
+    @Query("SELECT s FROM Schedule s WHERE s.scheduleId = :scheduleId")
+    Optional<Schedule> findByScheduleId(@Param("scheduleId") Integer scheduleId);
+
+    @Query("SELECT s FROM Schedule s WHERE s.eventType = :eventType AND s.scheduleDate BETWEEN :startDate AND :endDate ORDER BY s.scheduleDate, s.startTime")
+    List<Schedule> findByEventTypeAndDateRange(@Param("eventType") String eventType, @Param("startDate") LocalDate startDate, @Param("endDate") LocalDate endDate);
+
+    @Query("SELECT s FROM Schedule s WHERE s.roomId = :roomId AND s.scheduleDate BETWEEN :startDate AND :endDate ORDER BY s.scheduleDate, s.startTime")
+    List<Schedule> findByRoomIdAndDateRange(@Param("roomId") Integer roomId, @Param("startDate") LocalDate startDate, @Param("endDate") LocalDate endDate);
+
+    @Query("SELECT s FROM Schedule s WHERE s.startTime = :startTime AND s.scheduleDate BETWEEN :startDate AND :endDate ORDER BY s.scheduleDate, s.startTime")
+    List<Schedule> findByStartTimeAndDateRange(@Param("startTime") LocalTime startTime, @Param("startDate") LocalDate startDate, @Param("endDate") LocalDate endDate);
+
+    @Query("SELECT s FROM Schedule s WHERE s.endTime = :endTime AND s.scheduleDate BETWEEN :startDate AND :endDate ORDER BY s.scheduleDate, s.startTime")
+    List<Schedule> findByEndTimeAndDateRange(@Param("endTime") LocalTime endTime, @Param("startDate") LocalDate startDate, @Param("endDate") LocalDate endDate);
+
+    @Query("SELECT s FROM Schedule s WHERE s.scheduleId = :scheduleId AND s.scheduleDate BETWEEN :startDate AND :endDate ORDER BY s.scheduleDate, s.startTime")
+    Page<Schedule> findByScheduleIdAndDateRangePaginated(@Param("scheduleId") Integer scheduleId, @Param("startDate") LocalDate startDate, @Param("endDate") LocalDate endDate, Pageable pageable);
+
+    @Query("SELECT s FROM Schedule s WHERE s.eventType = :eventType AND s.scheduleDate BETWEEN :startDate AND :endDate ORDER BY s.scheduleDate, s.startTime")
+    Page<Schedule> findByEventTypeAndDateRangePaginated(@Param("eventType") String eventType, @Param("startDate") LocalDate startDate, @Param("endDate") LocalDate endDate, Pageable pageable);
+
+    @Query("SELECT s FROM Schedule s WHERE s.roomId = :roomId AND s.scheduleDate BETWEEN :startDate AND :endDate ORDER BY s.scheduleDate, s.startTime")
+    Page<Schedule> findByRoomIdAndDateRangePaginated(@Param("roomId") Integer roomId, @Param("startDate") LocalDate startDate, @Param("endDate") LocalDate endDate, Pageable pageable);
+
+    @Query("SELECT s FROM Schedule s WHERE s.startTime = :startTime AND s.scheduleDate BETWEEN :startDate AND :endDate ORDER BY s.scheduleDate, s.startTime")
+    Page<Schedule> findByStartTimeAndDateRangePaginated(@Param("startTime") LocalTime startTime, @Param("startDate") LocalDate startDate, @Param("endDate") LocalDate endDate, Pageable pageable);
+
+    @Query("SELECT s FROM Schedule s WHERE s.endTime = :endTime AND s.scheduleDate BETWEEN :startDate AND :endDate ORDER BY s.scheduleDate, s.startTime")
+    Page<Schedule> findByEndTimeAndDateRangePaginated(@Param("endTime") LocalTime endTime, @Param("startDate") LocalDate startDate, @Param("endDate") LocalDate endDate, Pageable pageable);
+
+    @Query("SELECT COUNT(s) FROM Schedule s WHERE s.scheduleId = :scheduleId AND s.scheduleDate BETWEEN :startDate AND :endDate")
+    long countByScheduleIdAndDateRange(@Param("scheduleId") Integer scheduleId, @Param("startDate") LocalDate startDate, @Param("endDate") LocalDate endDate);
+
+    @Query("SELECT COUNT(s) FROM Schedule s WHERE s.eventType = :eventType AND s.scheduleDate BETWEEN :startDate AND :endDate")
+    long countByEventTypeAndDateRange(@Param("eventType") String eventType, @Param("startDate") LocalDate startDate, @Param("endDate") LocalDate endDate);
+
+    @Query("SELECT COUNT(s) FROM Schedule s WHERE s.roomId = :roomId AND s.scheduleDate BETWEEN :startDate AND :endDate")
+    long countByRoomIdAndDateRange(@Param("roomId") Integer roomId, @Param("startDate") LocalDate startDate, @Param("endDate") LocalDate endDate);
+
+    @Query("SELECT COUNT(s) FROM Schedule s WHERE s.startTime = :startTime AND s.scheduleDate BETWEEN :startDate AND :endDate")
+    long countByStartTimeAndDateRange(@Param("startTime") LocalTime startTime, @Param("startDate") LocalDate startDate, @Param("endDate") LocalDate endDate);
+
+    @Query("SELECT COUNT(s) FROM Schedule s WHERE s.endTime = :endTime AND s.scheduleDate BETWEEN :startDate AND :endDate")
+    long countByEndTimeAndDateRange(@Param("endTime") LocalTime endTime, @Param("startDate") LocalDate startDate, @Param("endDate") LocalDate endDate);
 }
