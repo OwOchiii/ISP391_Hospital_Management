@@ -174,6 +174,90 @@
             gap: 1.5rem;
         }
 
+        .notification-dropdown {
+            position: relative;
+        }
+
+        .notification-btn {
+            background: none;
+            border: none;
+            cursor: pointer;
+            font-size: 1.25rem;
+            color: var(--text-dark);
+            position: relative;
+        }
+
+        .notification-badge {
+            position: absolute;
+            top: -5px;
+            right: -10px;
+            background: var(--primary-color);
+            color: white;
+            border-radius: 50%;
+            padding: 0.2rem 0.6rem;
+            font-size: 0.75rem;
+            font-weight: 600;
+        }
+
+        .dropdown-menu {
+            width: 350px;
+            border-radius: 12px;
+            overflow: hidden;
+            margin-top: 0.5rem;
+            border: 1px solid var(--border-color);
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+        }
+
+        .dropdown-header {
+            background: var(--primary-color);
+            color: white;
+            padding: 1rem;
+            font-weight: 600;
+            font-size: 0.875rem;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        .notification-list {
+            max-height: 300px;
+            overflow-y: auto;
+        }
+
+        .notification-item {
+            padding: 0.75rem 1rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            transition: background 0.3s ease;
+        }
+
+        .notification-item:hover {
+            background: rgba(0, 0, 0, 0.03);
+        }
+
+        .notification-content {
+            flex: 1;
+            margin-right: 0.5rem;
+        }
+
+        .notification-message {
+            font-size: 0.875rem;
+            color: var(--text-dark);
+        }
+
+        .notification-time {
+            font-size: 0.75rem;
+            color: var(--text-muted);
+        }
+
+        .mark-read-btn {
+            background: none;
+            border: none;
+            cursor: pointer;
+            color: var(--primary-color);
+            font-size: 1rem;
+        }
+
         .doctor-info {
             display: flex;
             align-items: center;
@@ -773,6 +857,35 @@
         </div>
 
         <div class="header-right">
+            <!-- Add notification dropdown -->
+            <div class="notification-dropdown dropdown">
+                <button class="notification-btn" id="notificationDropdown" data-bs-toggle="dropdown" aria-expanded="false">
+                    <i class="bi bi-bell"></i>
+                    <span class="notification-badge" th:if="${unreadNotifications > 0}" th:text="${unreadNotifications}">0</span>
+                </button>
+                <ul class="dropdown-menu dropdown-menu-end notification-menu" aria-labelledby="notificationDropdown">
+                    <li class="dropdown-header">Notifications</li>
+                    <div class="notification-list" th:if="${notifications != null && !notifications.isEmpty()}">
+                        <li th:each="notification : ${notifications}" class="notification-item" th:classappend="${!notification.isRead ? 'unread' : ''}">
+                            <div class="notification-content">
+                                <div class="notification-message" th:text="${notification.message}">Notification message</div>
+                                <div class="notification-time" th:text="${#temporals.format(notification.createdAt, 'MMM dd, yyyy HH:mm')}">Jun 18, 2025</div>
+                            </div>
+                            <button th:if="${!notification.isRead}" class="mark-read-btn" th:data-id="${notification.notificationId}">
+                                <i class="bi bi-check-circle"></i>
+                            </button>
+                        </li>
+                    </div>
+                    <li class="empty-notification" th:if="${notifications == null || notifications.isEmpty()}">
+                        <div class="text-center py-3">
+                            <i class="bi bi-bell-slash"></i>
+                            <p>No notifications</p>
+                        </div>
+                    </li>
+                    <li><hr class="dropdown-divider"></li>
+                    <li class="text-center"><a href="#" class="dropdown-item text-primary">View all notifications</a></li>
+                </ul>
+            </div>
             <div class="doctor-info">
                 <div class="doctor-avatar">
                     <span th:text="${doctorName != null ? #strings.substring(doctorName, 0, 2).toUpperCase() : 'DR'}">DR</span>
@@ -1293,6 +1406,58 @@
             patientsContainer.style.display = 'grid';
         }
     }
+
+    // Notification functionality
+    document.addEventListener('DOMContentLoaded', function() {
+        // Initialize Bootstrap dropdowns
+        var dropdownElementList = [].slice.call(document.querySelectorAll('.dropdown-toggle'))
+        dropdownElementList.map(function (dropdownToggleEl) {
+            return new bootstrap.Dropdown(dropdownToggleEl)
+        });
+
+        // Mark notification as read
+        document.querySelectorAll('.mark-read-btn').forEach(button => {
+            button.addEventListener('click', function(e) {
+                e.stopPropagation(); // Prevent dropdown from closing
+                const notificationId = this.getAttribute('data-id');
+                markNotificationAsRead(notificationId, this);
+            });
+        });
+    });
+
+    // Function to mark notification as read
+    function markNotificationAsRead(notificationId, buttonElement) {
+        fetch(`/api/notifications/${notificationId}/read`, {
+            method: 'PUT',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRF-TOKEN': document.querySelector('meta[name="_csrf"]').getAttribute('content')
+            }
+        })
+            .then(response => {
+                if (response.ok) {
+                    // Update UI
+                    const notificationItem = buttonElement.closest('.notification-item');
+                    notificationItem.classList.remove('unread');
+                    buttonElement.style.display = 'none';
+
+                    // Update badge count
+                    const badge = document.querySelector('.notification-badge');
+                    if (badge) {
+                        const currentCount = parseInt(badge.textContent);
+                        if (currentCount > 1) {
+                            badge.textContent = currentCount - 1;
+                        } else {
+                            badge.style.display = 'none';
+                        }
+                    }
+                }
+            })
+            .catch(error => {
+                console.error('Error marking notification as read:', error);
+            });
+    }
+
     /*]]>*/
 </script>
 </body>
