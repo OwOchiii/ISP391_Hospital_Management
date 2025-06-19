@@ -15,5 +15,5 @@ public interface ServiceRepository extends JpaRepository<MedicalService, Integer
     @Query("DELETE FROM MedicalService s WHERE s.specialization.specId = :specId")
     void deleteBySpecId(@Param("specId") Integer specId);
 
-    Page<MedicalService> findAllByOrderByServiceNameAsc(Pageable pageable);
+//    Page<MedicalService> findAllByOrderByServiceNameAsc(Pageable pageable);
 }

@@ -51,6 +51,6 @@ public class ServiceServiceImpl {
 
     public Page<MedicalService> getServicesPage(int page, int size) {
         Pageable pageable = PageRequest.of(page, size, Sort.by("serviceName"));
-        return serviceRepository.findAllByOrderByServiceNameAsc(pageable);
+        return serviceRepository.findAll(pageable);
     }
 }
