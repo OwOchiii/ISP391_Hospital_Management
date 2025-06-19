@@ -591,6 +591,34 @@
             </div>
         </div>
 
+        <div class="pagination-container mt-4" th:if="${totalPages > 1}">
+            <nav aria-label="Service page navigation">
+                <ul class="pagination justify-content-center">
+                    <li class="page-item" th:classappend="${currentPage == 0} ? 'disabled'">
+                        <a class="page-link"
+                           th:href="@{/admin/services(adminId=${adminId},page=${currentPage-1},size=${pageSize})}"
+                           aria-label="Previous">
+                            <span aria-hidden="true">&laquo;</span>
+                        </a>
+                    </li>
+                    <li class="page-item"
+                        th:each="i : ${#numbers.sequence(0, totalPages - 1)}"
+                        th:classappend="${i == currentPage} ? 'active'">
+                        <a class="page-link"
+                           th:href="@{/admin/services(adminId=${adminId},page=${i},size=${pageSize})}"
+                           th:text="${i + 1}">1</a>
+                    </li>
+                    <li class="page-item" th:classappend="${currentPage == totalPages - 1} ? 'disabled'">
+                        <a class="page-link"
+                           th:href="@{/admin/services(adminId=${adminId},page=${currentPage+1},size=${pageSize})}"
+                           aria-label="Next">
+                            <span aria-hidden="true">&raquo;</span>
+                        </a>
+                    </li>
+                </ul>
+            </nav>
+        </div>
+
         <!-- Modal (Add/Edit Form) -->
         <div class="modal fade" id="serviceModal" tabindex="-1" aria-labelledby="serviceModalLabel" aria-hidden="true">
             <div class="modal-dialog modal-lg modal-dialog-centered">

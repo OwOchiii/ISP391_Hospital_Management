@@ -7,6 +7,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.data.domain.Page;
 
 import java.util.List;
 
@@ -18,10 +19,19 @@ public class AdminServiceController {
     private ServiceServiceImpl serviceService;
 
     @GetMapping
-    public String showServices(@RequestParam("adminId") Integer adminId, Model model) {
-        model.addAttribute("services", serviceService.getAllServices());
-        model.addAttribute("specializations", serviceService.getAllSpecializations()); // Thêm dòng này
+    public String showServices(
+            @RequestParam("adminId") Integer adminId,
+            @RequestParam(value="page", defaultValue="0") int page,
+            @RequestParam(value="size", defaultValue="6") int size,
+            Model model) {
+        Page<MedicalService> servicePage = serviceService.getServicesPage(page, size);
+
+        model.addAttribute("services", servicePage.getContent());
+        model.addAttribute("currentPage", servicePage.getNumber());
+        model.addAttribute("totalPages", servicePage.getTotalPages());
+        model.addAttribute("pageSize", servicePage.getSize());
         model.addAttribute("adminId", adminId);
+        model.addAttribute("specializations", serviceService.getAllSpecializations());
         model.addAttribute("isAddMode", false);
         return "admin/service/list";
     }
