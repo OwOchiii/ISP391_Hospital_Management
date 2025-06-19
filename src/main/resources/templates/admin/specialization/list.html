@@ -557,6 +557,11 @@
       </div>
     </div>
 
+    <!-- Display error message if present -->
+    <div th:if="${errorMessage}" class="alert alert-danger" role="alert">
+      <span th:text="${errorMessage}"></span> <!-- ADDED: Show error message from controller -->
+    </div>
+
     <!-- Specialty Cards -->
     <div class="row g-4">
       <div th:if="${#lists.isEmpty(specializations)}" class="col-12">
@@ -569,7 +574,7 @@
           <div class="card-body d-flex flex-column">
             <div class="d-flex align-items-start mb-3">
               <div class="flex-grow-1">
-                <h5 class="card-title mb-2" th:text="${s.specName}">Cardiology</h5>
+                <h5 class="card-title mb-2" th:text="${s.specName}">Specialty Name</h5>
                 <div class="specialization-info">
                   <p class="mb-1" th:text="'Symptoms: ' + ${s.symptom != null ? s.symptom : 'None'}">Symptoms: None</p>
                   <p class="mb-1" th:text="'Price: ' + ${#numbers.formatDecimal(s.price, 0, 'COMMA', 2, 'POINT')} + ' VND'">Price: 0 VND</p>
@@ -596,7 +601,7 @@
             <a class="page-link"
                th:href="@{/admin/specializations(adminId=${adminId}, page=${currentPage-1}, size=${pageSize})}"
                aria-label="Previous">
-              &laquo;
+              «
             </a>
           </li>
 
@@ -614,7 +619,7 @@
             <a class="page-link"
                th:href="@{/admin/specializations(adminId=${adminId}, page=${currentPage+1}, size=${pageSize})}"
                aria-label="Next">
-              &raquo;
+              »
             </a>
           </li>
         </ul>
@@ -629,23 +634,26 @@
             <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
           </div>
           <div class="modal-body">
-            <form id="specializationForm" th:action="@{/admin/specializations/save(adminId=${adminId})}" method="post" onsubmit="return validateSpecializationForm()">
+            <form id="specializationForm" th:object="${specialization}" th:action="@{/admin/specializations/save(adminId=${adminId},page=${currentPage},size=${pageSize})}" method="post" onsubmit="return validateSpecializationForm()"> <!-- MODIFIED: Added th:object for form binding -->
               <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
-              <input type="hidden" id="specId" name="specId" th:value="${specialization != null ? specialization.specId : ''}"/>
+              <input type="hidden" id="specId" name="specId" th:field="*{specId}"/> <!-- MODIFIED: Used th:field for binding -->
 
               <div class="container-fluid">
                 <div class="row g-3">
                   <div class="col-md-6">
                     <label for="specName" class="form-label">Specialty Name *</label>
-                    <input type="text" class="form-control" id="specName" name="specName" th:value="${specialization != null ? specialization.specName : ''}" required/>
+                    <input type="text" class="form-control" id="specName" name="specName" th:field="*{specName}" required/> <!-- MODIFIED: Used th:field for binding -->
+                    <div th:errors="*{specName}" class="text-danger"></div> <!-- MODIFIED: Corrected th:errors syntax -->
                   </div>
                   <div class="col-md-6">
                     <label for="symptom" class="form-label">Symptoms</label>
-                    <input type="text" class="form-control" id="symptom" name="symptom" th:value="${specialization != null ? specialization.symptom : ''}"/>
+                    <input type="text" class="form-control" id="symptom" name="symptom" th:field="*{symptom}"/> <!-- MODIFIED: Used th:field for binding -->
+                    <div th:errors="*{symptom}" class="text-danger"></div> <!-- ADDED: Error display for symptom -->
                   </div>
                   <div class="col-md-6">
                     <label for="price" class="form-label">Price (VND) *</label>
-                    <input type="number" class="form-control" id="price" name="price" step="0.01" th:value="${specialization != null ? specialization.price : ''}" required/>
+                    <input type="number" class="form-control" id="price" name="price" step="0.01" th:field="*{price}" required/> <!-- MODIFIED: Used th:field for binding -->
+                    <div th:errors="*{price}" class="text-danger"></div> <!-- MODIFIED: Corrected th:errors syntax -->
                   </div>
                 </div>
               </div>
@@ -729,15 +737,15 @@
 
 <script>
   function validateSpecializationForm() {
-    const specName = document.getElementById("specName").value;
-    const price = document.getElementById("price").value;
+    const specName = document.getElementById("specName").value.trim();
+    const price = parseFloat(document.getElementById("price").value);
 
     if (!specName) {
       alert("Specialty name cannot be empty.");
       return false;
     }
 
-    if (!price || price <= 0) {
+    if (isNaN(price) || price <= 0) {
       alert("Price must be a positive number.");
       return false;
     }
