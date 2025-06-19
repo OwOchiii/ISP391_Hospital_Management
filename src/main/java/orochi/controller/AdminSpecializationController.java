@@ -6,6 +6,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.data.domain.Page;
 
 @Controller
 @RequestMapping("/admin/specializations")
@@ -15,8 +16,17 @@ public class AdminSpecializationController {
     private SpecializationServiceImpl specializationService;
 
     @GetMapping
-    public String showSpecializations(@RequestParam("adminId") Integer adminId, Model model) {
-        model.addAttribute("specializations", specializationService.getAllSpecializations());
+    public String showSpecializations(
+            @RequestParam("adminId") Integer adminId,
+            @RequestParam(value="page", defaultValue="0") int page,
+            @RequestParam(value="size", defaultValue="6") int size,
+            Model model) {
+
+        Page<Specialization> specPage = specializationService.getSpecializationsPage(page, size);
+        model.addAttribute("specializations", specPage.getContent());
+        model.addAttribute("currentPage", page);
+        model.addAttribute("totalPages", specPage.getTotalPages());
+        model.addAttribute("pageSize", size);
         model.addAttribute("adminId", adminId);
         model.addAttribute("isAddMode", false);
         return "admin/specialization/list";
