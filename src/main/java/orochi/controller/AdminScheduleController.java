@@ -1,15 +1,16 @@
 package orochi.controller;
 
+import orochi.dto.ScheduleDTO;
+import orochi.service.ScheduleService;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
+import org.springframework.util.StringUtils;
 import org.springframework.web.bind.annotation.*;
-import orochi.dto.ScheduleDTO;
-import orochi.model.Doctor;
-import orochi.model.Room;
-import orochi.service.impl.ScheduleServiceImpl;
 
 import java.time.LocalDate;
+import java.time.LocalTime;
 import java.util.List;
 
 @Controller
@@ -17,60 +18,72 @@ import java.util.List;
 public class AdminScheduleController {
 
     @Autowired
-    private ScheduleServiceImpl scheduleService;
+    private ScheduleService scheduleService;
 
     @GetMapping
-    public String showSchedules(@RequestParam(value = "adminId", required = true) Integer adminId,
-                                @RequestParam(value = "search", required = false) String search,
-                                @RequestParam(value = "startDate", required = false) String startDateStr,
-                                @RequestParam(value = "endDate", required = false) String endDateStr,
-                                @RequestParam(value = "page", defaultValue = "0") int page,
-                                @RequestParam(value = "size", defaultValue = "6") int size,
-                                Model model) {
-        System.out.println("Accessed /admin/schedules with adminId: " + adminId + ", page: " + page + ", size: " + size);
-        LocalDate startDate = null;
-        LocalDate endDate = null;
+    public String showSchedules(
+            @RequestParam("adminId") Integer adminId,
+            @RequestParam(value="scheduleId", required=false) Integer scheduleId,
+            @RequestParam(value="eventType",  required=false) String  eventType,
+            @RequestParam(value="roomId",     required=false) Integer roomId,
+            @RequestParam(value="startTime",  required=false) String  startTimeStr,
+            @RequestParam(value="endTime",    required=false) String  endTimeStr,
+            @RequestParam(value="startDate",  required=false) String  startDateStr,
+            @RequestParam(value="endDate",    required=false) String  endDateStr,
+            @RequestParam(value="page", defaultValue="0") int page,
+            @RequestParam(value="size", defaultValue="6") int size,
+            Model model) {
 
-        // Kiểm tra và phân tích startDateStr
-        if (startDateStr != null && !startDateStr.isEmpty()) {
-            startDate = LocalDate.parse(startDateStr);
-        }
-        // Kiểm tra và phân tích endDateStr
-        if (endDateStr != null && !endDateStr.isEmpty()) {
-            endDate = LocalDate.parse(endDateStr);
-        }
+        // parse params
+        LocalDate startDate = StringUtils.hasText(startDateStr) ? LocalDate.parse(startDateStr) : null;
+        LocalDate endDate   = StringUtils.hasText(endDateStr)   ? LocalDate.parse(endDateStr)   : null;
+        LocalTime startTime = StringUtils.hasText(startTimeStr) ? LocalTime.parse(startTimeStr) : null;
+        LocalTime endTime   = StringUtils.hasText(endTimeStr)   ? LocalTime.parse(endTimeStr)   : null;
 
-        List<ScheduleDTO> schedules = scheduleService.searchSchedulesPaginated(search, startDate, endDate, page, size);
-        long totalSchedules = scheduleService.countSchedules(search, startDate, endDate);
-        int totalPages = (int) Math.ceil((double) totalSchedules / size);
+        // gọi service duy nhất với Specification + pagination
+        Page<ScheduleDTO> pageResult = scheduleService.findSchedulesFiltered(
+                scheduleId, eventType, roomId,
+                startTime, endTime,
+                startDate, endDate,
+                page, size
+        );
 
-        System.out.println("Total Schedules: " + totalSchedules);
-        System.out.println("Total Pages: " + totalPages);
-        System.out.println("Current Page: " + page);
-        System.out.println("Page Size: " + size);
+        List<ScheduleDTO> schedules = pageResult.getContent();
+        int totalPages = pageResult.getTotalPages();
 
-        model.addAttribute("schedules", schedules);
-        model.addAttribute("adminId", adminId);
-        model.addAttribute("search", search);
-        model.addAttribute("startDate", startDateStr);
-        model.addAttribute("endDate", endDateStr);
-        model.addAttribute("doctors", scheduleService.getAllDoctors());
-        model.addAttribute("rooms", scheduleService.getAllRooms());
+        // đẩy data lên view
+        model.addAttribute("schedules",   schedules);
         model.addAttribute("currentPage", page);
-        model.addAttribute("totalPages", totalPages);
-        model.addAttribute("pageSize", size);
+        model.addAttribute("totalPages",  totalPages);
+        model.addAttribute("pageSize",    size);
+
+        // giữ lại giá trị filter trên form
+        model.addAttribute("scheduleId", scheduleId);
+        model.addAttribute("eventType",  eventType);
+        model.addAttribute("roomId",     roomId);
+        model.addAttribute("startDate",  startDateStr);
+        model.addAttribute("endDate",    endDateStr);
+        model.addAttribute("startTime",  startTimeStr);
+        model.addAttribute("endTime",    endTimeStr);
+        model.addAttribute("adminId",    adminId);
+
+        // danh sách room để render dropdown
+        model.addAttribute("rooms", scheduleService.getAllRooms());
+
         return "admin/schedule/list";
     }
 
     @GetMapping("/{id}/delete")
-    public String deleteSchedule(@PathVariable Integer id, @RequestParam("adminId") Integer adminId, Model model) {
+    public String deleteSchedule(@PathVariable Integer id,
+                                 @RequestParam("adminId") Integer adminId) {
         scheduleService.deleteSchedule(id);
         return "redirect:/admin/schedules?adminId=" + adminId + "&page=0&size=6";
     }
 
     @PostMapping("/save")
-    public String saveSchedule(@ModelAttribute ScheduleDTO scheduleDTO, @RequestParam("adminId") Integer adminId, Model model) {
-        scheduleService.saveSchedule(scheduleDTO);
+    public String saveSchedule(@ModelAttribute ScheduleDTO dto,
+                               @RequestParam("adminId") Integer adminId) {
+        scheduleService.saveSchedule(dto);
         return "redirect:/admin/schedules?adminId=" + adminId + "&page=0&size=6";
     }
 }
