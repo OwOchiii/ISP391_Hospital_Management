@@ -5,6 +5,13 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
+import org.springframework.data.domain.Sort;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.domain.Specification;
+import jakarta.persistence.criteria.Predicate;
+import java.util.ArrayList;
+import org.springframework.util.StringUtils;
 import orochi.dto.ScheduleDTO;
 import orochi.model.Doctor;
 import orochi.model.Patient;
@@ -15,9 +22,11 @@ import orochi.repository.PatientRepository;
 import orochi.repository.RoomRepository;
 import orochi.repository.ScheduleRepository;
 import orochi.service.ScheduleService;
-
+import org.springframework.data.jpa.domain.Specification;
+import jakarta.persistence.criteria.Predicate;
 import java.time.DayOfWeek;
 import java.time.LocalDate;
+import java.time.LocalTime;
 import java.time.temporal.TemporalAdjusters;
 import java.util.List;
 import java.util.Optional;
@@ -271,5 +280,104 @@ public class ScheduleServiceImpl implements ScheduleService {
         schedule.setIsCompleted(newStatus);
         scheduleRepository.save(schedule);
         return newStatus;
+    }
+
+    // Updated methods with pagination
+    public Page<ScheduleDTO> searchByScheduleId(Integer scheduleId, LocalDate startDate, LocalDate endDate, Pageable pageable) {
+        Page<Schedule> schedules = scheduleRepository.findByScheduleIdAndDateRangePaginated(scheduleId, startDate, endDate, pageable);
+        return schedules.map(this::convertToDTO);
+    }
+
+    public Page<ScheduleDTO> searchByEventType(String eventType, LocalDate startDate, LocalDate endDate, Pageable pageable) {
+        Page<Schedule> schedules = scheduleRepository.findByEventTypeAndDateRangePaginated(eventType, startDate, endDate, pageable);
+        return schedules.map(this::convertToDTO);
+    }
+
+    public Page<ScheduleDTO> searchByRoomId(Integer roomId, LocalDate startDate, LocalDate endDate, Pageable pageable) {
+        Page<Schedule> schedules = scheduleRepository.findByRoomIdAndDateRangePaginated(roomId, startDate, endDate, pageable);
+        return schedules.map(this::convertToDTO);
+    }
+
+    public Page<ScheduleDTO> searchByStartTime(LocalTime startTime, LocalDate startDate, LocalDate endDate, Pageable pageable) {
+        Page<Schedule> schedules = scheduleRepository.findByStartTimeAndDateRangePaginated(startTime, startDate, endDate, pageable);
+        return schedules.map(this::convertToDTO);
+    }
+
+    public Page<ScheduleDTO> searchByEndTime(LocalTime endTime, LocalDate startDate, LocalDate endDate, Pageable pageable) {
+        Page<Schedule> schedules = scheduleRepository.findByEndTimeAndDateRangePaginated(endTime, startDate, endDate, pageable);
+        return schedules.map(this::convertToDTO);
+    }
+
+    public long countByScheduleId(Integer scheduleId, LocalDate startDate, LocalDate endDate) {
+        return scheduleRepository.countByScheduleIdAndDateRange(scheduleId, startDate, endDate);
+    }
+
+    public long countByEventType(String eventType, LocalDate startDate, LocalDate endDate) {
+        return scheduleRepository.countByEventTypeAndDateRange(eventType, startDate, endDate);
+    }
+
+    public long countByRoomId(Integer roomId, LocalDate startDate, LocalDate endDate) {
+        return scheduleRepository.countByRoomIdAndDateRange(roomId, startDate, endDate);
+    }
+
+    public long countByStartTime(LocalTime startTime, LocalDate startDate, LocalDate endDate) {
+        return scheduleRepository.countByStartTimeAndDateRange(startTime, startDate, endDate);
+    }
+
+    public long countByEndTime(LocalTime endTime, LocalDate startDate, LocalDate endDate) {
+        return scheduleRepository.countByEndTimeAndDateRange(endTime, startDate, endDate);
+    }
+
+    @Override
+    public Page<ScheduleDTO> findSchedulesFiltered(
+            Integer scheduleId,
+            String eventType,
+            Integer roomId,
+            LocalTime startTime,
+            LocalTime endTime,
+            LocalDate startDate,
+            LocalDate endDate,
+            int page,
+            int size) {
+
+        // tạo Pageable với sort mặc định trên scheduleDate, startTime
+        Pageable pageable = PageRequest.of(page, size,
+                Sort.by("scheduleDate").ascending()
+                        .and(Sort.by("startTime")));
+
+        // build Specification động
+        Specification<Schedule> spec = (root, query, cb) -> {
+            List<Predicate> preds = new ArrayList<>();
+
+            if (scheduleId != null) {
+                preds.add(cb.equal(root.get("scheduleId"), scheduleId));
+            }
+            if (StringUtils.hasText(eventType)) {
+                preds.add(cb.equal(root.get("eventType"), eventType));
+            }
+            if (roomId != null) {
+                preds.add(cb.equal(root.get("roomId"), roomId));
+            }
+            if (startTime != null) {
+                preds.add(cb.equal(root.get("startTime"), startTime));
+            }
+            if (endTime != null) {
+                preds.add(cb.equal(root.get("endTime"), endTime));
+            }
+            if (startDate != null) {
+                preds.add(cb.greaterThanOrEqualTo(root.get("scheduleDate"), startDate));
+            }
+            if (endDate != null) {
+                preds.add(cb.lessThanOrEqualTo(root.get("scheduleDate"), endDate));
+            }
+
+            return cb.and(preds.toArray(new Predicate[0]));
+        };
+
+        // thực thi query + pagination
+        Page<Schedule> pageEnt = scheduleRepository.findAll(spec, pageable);
+
+        // map sang DTO và trả về
+        return pageEnt.map(this::convertToDTO);
     }
 }
