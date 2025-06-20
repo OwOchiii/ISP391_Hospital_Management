@@ -194,7 +194,7 @@ document.addEventListener('DOMContentLoaded', function() {
             notesHtml += `
                 <div class="note-item" data-note-id="${note.noteId}">
                     <div class="note-header">
-                        <span class="note-author">Dr. ${note.doctor ? note.doctor.user.fullName : 'Unknown'}</span>
+                        <span class="note-author">${note.doctorName || 'N/A'}</span>
                         <span class="note-timestamp">${formattedDate}</span>
                     </div>
                     <div class="note-content">${note.noteContent}</div>

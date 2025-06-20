@@ -5,6 +5,8 @@ import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.Positive;
 import java.math.BigDecimal;
 import java.util.List;
 
@@ -22,12 +24,14 @@ public class Specialization {
     private Integer specId;
 
     @Column(name = "SpecName", nullable = false)
+    @NotBlank(message = "Specialty name cannot be empty")
     private String specName;
 
     @Column(name = "Symptom")
     private String symptom;
 
     @Column(name = "Price", precision = 10, scale = 2)
+    @Positive(message = "Price must be positive")
     private BigDecimal price;
 
     @ManyToMany(mappedBy = "specializations")

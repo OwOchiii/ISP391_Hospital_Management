@@ -4,12 +4,14 @@ import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import org.hibernate.annotations.DynamicUpdate;
 
 @Entity
 @Table(name = "PatientContact")
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
+@DynamicUpdate
 public class PatientContact {
 
     @Id
@@ -41,4 +43,16 @@ public class PatientContact {
     @ManyToOne
     @JoinColumn(name = "PatientID", insertable = false, updatable = false)
     private Patient patient;
+
+    @Override
+    public String toString() {
+        return "PatientContact{" +
+                "contactId=" + contactId +
+                ", patientId=" + patientId +
+                ", addressType='" + addressType + '\'' +
+                ", streetAddress='" + streetAddress + '\'' +
+                ", city='" + city + '\'' +
+                ", country='" + country + '\'' +
+                '}';
+    }
 }

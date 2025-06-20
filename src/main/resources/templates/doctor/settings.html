@@ -1,0 +1,1131 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Settings - MediCare Plus</title>
+
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Bootstrap Icons -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css">
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+
+    <style>
+        :root {
+            --primary-color: #2563eb;
+            --secondary-color: #1e40af;
+            --accent-color: #06b6d4;
+            --text-dark: #1f2937;
+            --text-light: #6b7280;
+            --bg-light: #f8fafc;
+            --success-color: #10b981;
+            --error-color: #ef4444;
+            --warning-color: #f59e0b;
+            --sidebar-width: 280px;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            line-height: 1.6;
+            color: var(--text-dark);
+            background: var(--bg-light);
+        }
+
+        .sidebar {
+            position: fixed;
+            top: 0;
+            left: 0;
+            height: 100vh;
+            width: var(--sidebar-width);
+            background: linear-gradient(135deg, var(--primary-color) 0%, var(--secondary-color) 100%);
+            color: white;
+            z-index: 1000;
+            transition: transform 0.3s ease;
+            overflow-y: auto;
+        }
+
+        .sidebar.collapsed {
+            transform: translateX(-100%);
+        }
+
+        .sidebar-header {
+            padding: 1.5rem;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .brand-logo {
+            font-size: 1.5rem;
+            font-weight: 700;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            color: white;
+            text-decoration: none;
+        }
+
+        .sidebar-nav {
+            padding: 1rem 0;
+        }
+
+        .nav-section-title {
+            padding: 0.75rem 1.5rem;
+            font-size: 0.75rem;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            color: rgba(255, 255, 255, 0.6);
+            font-weight: 600;
+        }
+
+        .nav-item {
+            margin: 0.25rem 1rem;
+        }
+
+        .nav-link {
+            color: rgba(255, 255, 255, 0.8);
+            padding: 0.75rem 1rem;
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            text-decoration: none;
+            transition: all 0.3s ease;
+        }
+
+        .nav-link:hover,
+        .nav-link.active {
+            background: rgba(255, 255, 255, 0.1);
+            color: white;
+        }
+
+        .main-content {
+            margin-left: var(--sidebar-width);
+            min-height: 100vh;
+            transition: margin-left 0.3s ease;
+        }
+
+        .main-content.expanded {
+            margin-left: 0;
+        }
+
+        .top-header {
+            background: white;
+            padding: 1rem 2rem;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .header-left {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        .sidebar-toggle {
+            background: none;
+            border: none;
+            font-size: 1.2rem;
+            color: var(--text-dark);
+            cursor: pointer;
+        }
+
+        .header-right {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        .doctor-info {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+
+        .doctor-avatar {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, var(--primary-color), var(--accent-color));
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: 600;
+        }
+
+        .content-area {
+            padding: 2rem;
+        }
+
+        .page-header {
+            background: linear-gradient(135deg, var(--primary-color) 0%, var(--secondary-color) 100%);
+            color: white;
+            padding: 2rem;
+            border-radius: 15px;
+            margin-bottom: 2rem;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .page-header::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><circle cx="50" cy="50" r="2" fill="rgba(255,255,255,0.1)"/></svg>');
+            opacity: 0.5;
+        }
+
+        .page-header-content {
+            position: relative;
+            z-index: 2;
+        }
+
+        .settings-container {
+            display: grid;
+            grid-template-columns: 300px 1fr;
+            gap: 2rem;
+            margin-bottom: 2rem;
+        }
+
+        .settings-sidebar {
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.08);
+            padding: 1.5rem;
+            height: fit-content;
+            position: sticky;
+            top: 2rem;
+        }
+
+        .settings-nav {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+        }
+
+        .settings-nav-item {
+            margin-bottom: 0.5rem;
+        }
+
+        .settings-nav-link {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            padding: 0.75rem 1rem;
+            border-radius: 10px;
+            text-decoration: none;
+            color: var(--text-dark);
+            transition: all 0.3s ease;
+            cursor: pointer;
+        }
+
+        .settings-nav-link:hover,
+        .settings-nav-link.active {
+            background: var(--bg-light);
+            color: var(--primary-color);
+        }
+
+        .settings-nav-link.active {
+            background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+            color: white;
+        }
+
+        .settings-content {
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.08);
+            overflow: hidden;
+        }
+
+        .settings-section {
+            display: none;
+            padding: 2rem;
+        }
+
+        .settings-section.active {
+            display: block;
+        }
+
+        .section-header {
+            margin-bottom: 2rem;
+            padding-bottom: 1rem;
+            border-bottom: 1px solid #e5e7eb;
+        }
+
+        .section-title {
+            font-size: 1.5rem;
+            font-weight: 600;
+            color: var(--text-dark);
+            margin-bottom: 0.5rem;
+        }
+
+        .section-description {
+            color: var(--text-light);
+            margin: 0;
+        }
+
+        .form-group {
+            margin-bottom: 1.5rem;
+        }
+
+        .form-label {
+            font-weight: 500;
+            color: var(--text-dark);
+            margin-bottom: 0.5rem;
+            display: block;
+        }
+
+        .form-control {
+            border: 2px solid #e5e7eb;
+            border-radius: 8px;
+            padding: 0.75rem 1rem;
+            font-size: 1rem;
+            transition: all 0.3s ease;
+        }
+
+        .form-control:focus {
+            border-color: var(--primary-color);
+            box-shadow: 0 0 0 0.2rem rgba(37, 99, 235, 0.25);
+            outline: none;
+        }
+
+        .form-text {
+            font-size: 0.875rem;
+            color: var(--text-light);
+            margin-top: 0.5rem;
+        }
+
+        .btn-primary-custom {
+            background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+            border: none;
+            padding: 0.75rem 1.5rem;
+            border-radius: 8px;
+            color: white;
+            font-weight: 500;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            transition: all 0.3s ease;
+            cursor: pointer;
+        }
+
+        .btn-primary-custom:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(37, 99, 235, 0.3);
+            color: white;
+        }
+
+        .btn-outline-custom {
+            border: 2px solid var(--primary-color);
+            color: var(--primary-color);
+            padding: 0.75rem 1.5rem;
+            border-radius: 8px;
+            background: transparent;
+            font-weight: 500;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            transition: all 0.3s ease;
+            cursor: pointer;
+        }
+
+        .btn-outline-custom:hover {
+            background: var(--primary-color);
+            color: white;
+        }
+
+        .alert {
+            border: none;
+            border-radius: 10px;
+            padding: 1rem 1.5rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .alert-success {
+            background: #dcfce7;
+            color: #166534;
+            border-left: 4px solid var(--success-color);
+        }
+
+        .alert-danger {
+            background: #fee2e2;
+            color: #b91c1c;
+            border-left: 4px solid var(--error-color);
+        }
+
+        .alert-warning {
+            background: #fef3c7;
+            color: #92400e;
+            border-left: 4px solid var(--warning-color);
+        }
+
+        .password-strength {
+            margin-top: 0.5rem;
+        }
+
+        .strength-bar {
+            height: 4px;
+            background: #e5e7eb;
+            border-radius: 2px;
+            overflow: hidden;
+            margin-bottom: 0.5rem;
+        }
+
+        .strength-fill {
+            height: 100%;
+            transition: all 0.3s ease;
+            border-radius: 2px;
+        }
+
+        .strength-weak { background: var(--error-color); width: 25%; }
+        .strength-fair { background: var(--warning-color); width: 50%; }
+        .strength-good { background: var(--accent-color); width: 75%; }
+        .strength-strong { background: var(--success-color); width: 100%; }
+
+        .strength-text {
+            font-size: 0.875rem;
+            font-weight: 500;
+        }
+
+        .profile-section {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 2rem;
+            margin-bottom: 2rem;
+        }
+
+        .profile-avatar-section {
+            text-align: center;
+            padding: 2rem;
+            background: var(--bg-light);
+            border-radius: 10px;
+        }
+
+        .profile-avatar-large {
+            width: 120px;
+            height: 120px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, var(--primary-color), var(--accent-color));
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 2.5rem;
+            font-weight: 700;
+            margin: 0 auto 1rem;
+        }
+
+        .notification-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 1rem;
+            border: 1px solid #e5e7eb;
+            border-radius: 8px;
+            margin-bottom: 1rem;
+        }
+
+        .notification-info {
+            flex: 1;
+        }
+
+        .notification-title {
+            font-weight: 600;
+            color: var(--text-dark);
+            margin-bottom: 0.25rem;
+        }
+
+        .notification-description {
+            color: var(--text-light);
+            font-size: 0.9rem;
+        }
+
+        .form-switch {
+            display: flex;
+            align-items: center;
+        }
+
+        .form-switch input[type="checkbox"] {
+            width: 50px;
+            height: 25px;
+            appearance: none;
+            background: #e5e7eb;
+            border-radius: 25px;
+            position: relative;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .form-switch input[type="checkbox"]:checked {
+            background: var(--primary-color);
+        }
+
+        .form-switch input[type="checkbox"]::before {
+            content: '';
+            position: absolute;
+            width: 21px;
+            height: 21px;
+            border-radius: 50%;
+            background: white;
+            top: 2px;
+            left: 2px;
+            transition: all 0.3s ease;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+        }
+
+        .form-switch input[type="checkbox"]:checked::before {
+            transform: translateX(25px);
+        }
+
+        @media (max-width: 768px) {
+            .sidebar {
+                transform: translateX(-100%);
+            }
+
+            .main-content {
+                margin-left: 0;
+            }
+
+            .settings-container {
+                grid-template-columns: 1fr;
+            }
+
+            .settings-sidebar {
+                position: static;
+                margin-bottom: 1rem;
+            }
+
+            .profile-section {
+                grid-template-columns: 1fr;
+            }
+
+            .content-area {
+                padding: 1rem;
+            }
+
+            .doctor-info span {
+                display: none;
+            }
+
+            .top-header {
+                padding: 1rem;
+            }
+        }
+    </style>
+</head>
+<body>
+<!-- Sidebar -->
+<div class="sidebar" id="sidebar">
+    <div class="sidebar-header">
+        <a href="#" class="brand-logo">
+            <i class="bi bi-heart-pulse"></i>
+            <div>
+                <div>MediCare Plus</div>
+                <small style="font-size: 0.75rem; font-weight: 400; opacity: 0.8;">Doctor Portal</small>
+            </div>
+        </a>
+    </div>
+
+    <nav class="sidebar-nav">
+        <div class="nav-section">
+            <div class="nav-section-title">Dashboard</div>
+            <div class="nav-item">
+                <a th:href="@{/doctor/dashboard(doctorId=${doctorId})}" class="nav-link">
+                    <i class="bi bi-speedometer2"></i>
+                    Dashboard
+                </a>
+            </div>
+        </div>
+
+        <div class="nav-section">
+            <div class="nav-section-title">Patient Care</div>
+            <div class="nav-item">
+                <a th:href="@{/doctor/appointments(doctorId=${doctorId})}" class="nav-link">
+                    <i class="bi bi-calendar-check"></i>
+                    Appointments
+                </a>
+            </div>
+            <div class="nav-item">
+                <a th:href="@{/doctor/patients(doctorId=${doctorId})}" class="nav-link">
+                    <i class="bi bi-people"></i>
+                    Patients
+                </a>
+            </div>
+            <div class="nav-item">
+                <a th:href="@{/doctor/medical-orders(doctorId=${doctorId})}" class="nav-link">
+                    <i class="bi bi-prescription2"></i>
+                    Medical Orders
+                </a>
+            </div>
+        </div>
+
+        <div class="nav-section">
+            <div class="nav-section-title">Management</div>
+            <div class="nav-item">
+                <a th:href="@{/doctor/schedule(doctorId=${doctorId})}" class="nav-link">
+                    <i class="bi bi-calendar-week"></i>
+                    View Schedule
+                </a>
+            </div>
+            <div class="nav-item">
+                <a href="#" class="nav-link">
+                    <i class="bi bi-chat-dots"></i>
+                    Messages
+                </a>
+            </div>
+        </div>
+
+        <div class="nav-section">
+            <div class="nav-section-title">System</div>
+            <div class="nav-item">
+                <a th:href="@{/doctor/settings(doctorId=${doctorId})}" class="nav-link active">
+                    <i class="bi bi-gear"></i>
+                    Settings
+                </a>
+            </div>
+            <div class="nav-item">
+                <form th:action="@{/auth/logout}" method="post">
+                    <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}" />
+                    <button type="submit" class="nav-link w-100 text-start border-0 bg-transparent">
+                        <i class="bi bi-box-arrow-right"></i>
+                        Logout
+                    </button>
+                </form>
+            </div>
+        </div>
+    </nav>
+</div>
+
+<!-- Main Content -->
+<div class="main-content" id="mainContent">
+    <!-- Top Header -->
+    <div class="top-header">
+        <div class="header-left">
+            <button class="sidebar-toggle" onclick="toggleSidebar()">
+                <i class="bi bi-list"></i>
+            </button>
+            <h4 class="mb-0">Settings</h4>
+        </div>
+
+        <div class="header-right">
+            <div class="doctor-info">
+                <div class="doctor-avatar">
+                    <span th:text="${doctorName != null ? #strings.substring(doctorName, 0, 2).toUpperCase() : 'DR'}">DR</span>
+                </div>
+                <div>
+                    <div class="fw-semibold" th:text="${doctorName != null ? doctorName : 'Doctor'}">Doctor</div>
+                    <small class="text-muted" th:text="${'ID: ' + doctorId}">ID: 123</small>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Content Area -->
+    <div class="content-area">
+        <!-- Page Header -->
+        <div class="page-header">
+            <div class="page-header-content">
+                <div class="row align-items-center">
+                    <div class="col-md-8">
+                        <h2 class="mb-2">Account Settings</h2>
+                        <p class="mb-0 lead">Manage your account preferences and security settings.</p>
+                    </div>
+                    <div class="col-md-4 text-md-end">
+                        <div class="fs-1">
+                            <i class="bi bi-gear"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Settings Container -->
+        <div class="settings-container">
+            <!-- Settings Sidebar -->
+            <div class="settings-sidebar">
+                <ul class="settings-nav">
+                    <li class="settings-nav-item">
+                        <a class="settings-nav-link active" onclick="showSection('profile')">
+                            <i class="bi bi-person"></i>
+                            Profile Information
+                        </a>
+                    </li>
+                    <li class="settings-nav-item">
+                        <a class="settings-nav-link" onclick="showSection('security')">
+                            <i class="bi bi-shield-lock"></i>
+                            Security & Password
+                        </a>
+                    </li>
+                    <!--
+                    <li class="settings-nav-item">
+                        <a class="settings-nav-link" onclick="showSection('notifications')">
+                            <i class="bi bi-bell"></i>
+                            Notifications
+                        </a>
+                    </li>
+                    -->
+                </ul>
+            </div>
+
+            <!-- Settings Content -->
+            <div class="settings-content">
+                <!-- Profile Information Section -->
+                <div id="profile-section" class="settings-section active">
+                    <div class="section-header">
+                        <h3 class="section-title">Profile Information</h3>
+                        <p class="section-description">Update your personal information and profile details.</p>
+                    </div>
+
+                    <div class="profile-section">
+                        <div class="profile-avatar-section">
+                            <div class="profile-avatar-large">
+                                <span th:text="${doctorName != null ? #strings.substring(doctorName, 0, 2).toUpperCase() : 'DR'}">DR</span>
+                            </div>
+                        </div>
+
+                        <div>
+                            <form id="profileForm">
+                                <div class="form-group">
+                                    <label class="form-label">Full Name</label>
+                                    <input type="text" class="form-control" th:value="${doctorName}"  readonly>
+                                    <div class="form-text">Contact administration to update your personal information.</div>
+                                </div>
+
+                                <div class="form-group">
+                                    <label class="form-label">Email Address</label>
+                                    <input type="email" class="form-control" th:value="${doctorEmail}"  readonly>
+                                    <div class="form-text">This email is used for notifications and account recovery.</div>
+                                </div>
+
+                                <div class="form-group">
+                                    <label class="form-label">Phone Number</label>
+                                    <input type="tel" class="form-control" th:value="${doctorPhone}"  readonly>
+                                </div>
+
+                                <div class="form-group">
+                                    <label class="form-label">Specialization</label>
+                                    <input type="text" class="form-control" th:value="${doctorSpecialization}" readonly>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Security & Password Section -->
+                <div id="security-section" class="settings-section">
+                    <div class="section-header">
+                        <h3 class="section-title">Security & Password</h3>
+                        <p class="section-description">Manage your password and security settings to keep your account safe.</p>
+                    </div>
+
+                    <!-- Change Password Form -->
+                    <form id="passwordForm" th:action="@{/doctor/settings/change-password}" method="post">
+                        <input type="hidden" name="doctorId" th:value="${doctorId}">
+
+                        <!-- Display success message if any -->
+                        <div th:if="${successMessage}" class="alert alert-success">
+                            <i class="bi bi-check-circle"></i>
+                            <span th:text="${successMessage}">Password updated successfully!</span>
+                        </div>
+
+                        <!-- Display error message if any -->
+                        <div th:if="${errorMessage}" class="alert alert-danger">
+                            <i class="bi bi-exclamation-triangle"></i>
+                            <span th:text="${errorMessage}">Error message</span>
+                        </div>
+
+                        <div class="form-group">
+                            <label class="form-label">Current Password</label>
+                            <input type="password" class="form-control" name="currentPassword" id="currentPassword" placeholder="Enter your current password" required>
+                        </div>
+
+                        <div class="form-group">
+                            <label class="form-label">New Password</label>
+                            <input type="password" class="form-control" name="newPassword" id="newPassword" placeholder="Enter your new password" required oninput="checkPasswordStrength()">
+                            <div class="password-strength" id="passwordStrength" style="display: none;">
+                                <div class="strength-bar">
+                                    <div class="strength-fill" id="strengthFill"></div>
+                                </div>
+                                <div class="strength-text" id="strengthText"></div>
+                            </div>
+                            <div class="form-text">
+                                Password must be at least 8 characters long and contain 3 of the 4 following conditions: uppercase, lowercase, numbers, and special characters.
+                            </div>
+                        </div>
+
+                        <div class="form-group">
+                            <label class="form-label">Confirm New Password</label>
+                            <input type="password" class="form-control" name="confirmPassword" id="confirmPassword" placeholder="Confirm your new password" required oninput="checkPasswordMatch()">
+                            <div class="form-text" id="passwordMatch"></div>
+                        </div>
+
+                        <div class="d-flex gap-3">
+                            <button type="submit" class="btn-primary-custom">
+                                <i class="bi bi-shield-check"></i>
+                                Update Password
+                            </button>
+                            <button type="button" class="btn-outline-custom" onclick="resetPasswordForm()">
+                                <i class="bi bi-x"></i>
+                                Cancel
+                            </button>
+                        </div>
+                    </form>
+
+                    <!-- Security Options
+                    <hr class="my-4">
+                    <h5 class="mb-3">Security Options</h5>
+
+                    <div class="notification-item">
+                        <div class="notification-info">
+                            <div class="notification-title">Two-Factor Authentication</div>
+                            <div class="notification-description">Add an extra layer of security to your account</div>
+                        </div>
+                        <div class="form-switch">
+                            <input type="checkbox" id="twoFactorAuth">
+                        </div>
+                    </div>
+
+                    <div class="notification-item">
+                        <div class="notification-info">
+                            <div class="notification-title">Login Notifications</div>
+                            <div class="notification-description">Get notified when someone logs into your account</div>
+                        </div>
+                        <div class="form-switch">
+                            <input type="checkbox" id="loginNotifications" checked>
+                        </div>
+                    </div>
+                    -->
+                </div>
+
+                <!-- Notifications Section
+                <div id="notifications-section" class="settings-section">
+                    <div class="section-header">
+                        <h3 class="section-title">Notification Preferences</h3>
+                        <p class="section-description">Choose what notifications you want to receive and how you want to receive them.</p>
+                    </div>
+
+                    <h5 class="mb-3">Email Notifications</h5>
+
+                    <div class="notification-item">
+                        <div class="notification-info">
+                            <div class="notification-title">Appointment Reminders</div>
+                            <div class="notification-description">Receive email reminders for upcoming appointments</div>
+                        </div>
+                        <div class="form-switch">
+                            <input type="checkbox" id="appointmentReminders" checked>
+                        </div>
+                    </div>
+
+                    <div class="notification-item">
+                        <div class="notification-info">
+                            <div class="notification-title">Schedule Changes</div>
+                            <div class="notification-description">Get notified when your schedule is updated</div>
+                        </div>
+                        <div class="form-switch">
+                            <input type="checkbox" id="scheduleChanges" checked>
+                        </div>
+                    </div>
+
+                    <div class="notification-item">
+                        <div class="notification-info">
+                            <div class="notification-title">New Patient Assignments</div>
+                            <div class="notification-description">Receive notifications for new patient assignments</div>
+                        </div>
+                        <div class="form-switch">
+                            <input type="checkbox" id="newPatients" checked>
+                        </div>
+                    </div>
+
+                    <div class="notification-item">
+                        <div class="notification-info">
+                            <div class="notification-title">System Updates</div>
+                            <div class="notification-description">Get notified about system maintenance and updates</div>
+                        </div>
+                        <div class="form-switch">
+                            <input type="checkbox" id="systemUpdates">
+                        </div>
+                    </div>
+
+                    <hr class="my-4">
+                    <h5 class="mb-3">Push Notifications</h5>
+
+                    <div class="notification-item">
+                        <div class="notification-info">
+                            <div class="notification-title">Emergency Alerts</div>
+                            <div class="notification-description">Receive immediate notifications for emergency situations</div>
+                        </div>
+                        <div class="form-switch">
+                            <input type="checkbox" id="emergencyAlerts" checked>
+                        </div>
+                    </div>
+
+                    <div class="notification-item">
+                        <div class="notification-info">
+                            <div class="notification-title">On-Call Notifications</div>
+                            <div class="notification-description">Get notified when you're called for on-call duties</div>
+                        </div>
+                        <div class="form-switch">
+                            <input type="checkbox" id="onCallNotifications" checked>
+                        </div>
+                    </div>
+
+                    <div class="d-flex gap-3 mt-4">
+                        <button class="btn-primary-custom" onclick="saveNotificationSettings()">
+                            <i class="bi bi-check"></i>
+                            Save Preferences
+                        </button>
+                    </div>
+                </div>
+                -->
+                <!-- Preferences Section -->
+
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Bootstrap JS -->
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+<script th:inline="javascript">
+    /*<![CDATA[*/
+    // Get doctor ID from Thymeleaf
+    const doctorId = /*[[${doctorId}]]*/ 0;
+
+    // Sidebar toggle functionality
+    function toggleSidebar() {
+        const sidebar = document.getElementById('sidebar');
+        const mainContent = document.getElementById('mainContent');
+        sidebar.classList.toggle('collapsed');
+        mainContent.classList.toggle('expanded');
+    }
+
+    // Auto-hide sidebar on mobile
+    function checkScreenSize() {
+        const sidebar = document.getElementById('sidebar');
+        const mainContent = document.getElementById('mainContent');
+        if (window.innerWidth <= 768) {
+            sidebar.classList.add('collapsed');
+            mainContent.classList.add('expanded');
+        } else {
+            sidebar.classList.remove('collapsed');
+            mainContent.classList.remove('expanded');
+        }
+    }
+
+    // Check screen size on load and resize
+    window.addEventListener('load', checkScreenSize);
+    window.addEventListener('resize', checkScreenSize);
+
+    // Settings navigation
+    function showSection(sectionName) {
+        // Hide all sections
+        document.querySelectorAll('.settings-section').forEach(section => {
+            section.classList.remove('active');
+        });
+
+        // Remove active class from all nav links
+        document.querySelectorAll('.settings-nav-link').forEach(link => {
+            link.classList.remove('active');
+        });
+
+        // Show selected section
+        document.getElementById(sectionName + '-section').classList.add('active');
+
+        // Add active class to clicked nav link
+        event.target.classList.add('active');
+    }
+
+    // Password strength checker
+    function checkPasswordStrength() {
+        const password = document.getElementById('newPassword').value;
+        const strengthDiv = document.getElementById('passwordStrength');
+        const strengthFill = document.getElementById('strengthFill');
+        const strengthText = document.getElementById('strengthText');
+
+        if (password.length === 0) {
+            strengthDiv.style.display = 'none';
+            return;
+        }
+
+        strengthDiv.style.display = 'block';
+
+        let strength = 0;
+        let feedback = [];
+
+        // Length check
+        if (password.length >= 8) strength++;
+        else feedback.push('at least 8 characters');
+
+        // Uppercase check
+        if (/[A-Z]/.test(password)) strength++;
+        else feedback.push('uppercase letter');
+
+        // Lowercase check
+        if (/[a-z]/.test(password)) strength++;
+        else feedback.push('lowercase letter');
+
+        // Number check
+        if (/\d/.test(password)) strength++;
+        else feedback.push('number');
+
+        // Special character check
+        if (/[!@#$%^&*(),.?":{}|<>]/.test(password)) strength++;
+        else feedback.push('special character');
+
+        // Update strength indicator
+        strengthFill.className = 'strength-fill';
+        if (strength <= 2) {
+            strengthFill.classList.add('strength-weak');
+            strengthText.textContent = 'Weak password';
+            strengthText.style.color = 'var(--error-color)';
+        } else if (strength === 3) {
+            strengthFill.classList.add('strength-fair');
+            strengthText.textContent = 'Fair password';
+            strengthText.style.color = 'var(--warning-color)';
+        } else if (strength === 4) {
+            strengthFill.classList.add('strength-good');
+            strengthText.textContent = 'Good password';
+            strengthText.style.color = 'var(--accent-color)';
+        } else {
+            strengthFill.classList.add('strength-strong');
+            strengthText.textContent = 'Strong password';
+            strengthText.style.color = 'var(--success-color)';
+        }
+
+        // Return the strength count for validation
+        return strength;
+    }
+
+    // Password match checker
+    function checkPasswordMatch() {
+        const newPassword = document.getElementById('newPassword').value;
+        const confirmPassword = document.getElementById('confirmPassword').value;
+        const matchDiv = document.getElementById('passwordMatch');
+
+        if (confirmPassword.length === 0) {
+            matchDiv.textContent = '';
+            return;
+        }
+
+        if (newPassword === confirmPassword) {
+            matchDiv.textContent = 'Passwords match';
+            matchDiv.style.color = 'var(--success-color)';
+        } else {
+            matchDiv.textContent = 'Passwords do not match';
+            matchDiv.style.color = 'var(--error-color)';
+        }
+    }
+
+    // Form submission handlers
+    document.getElementById('passwordForm').addEventListener('submit', function(e) {
+        e.preventDefault();
+
+        const currentPassword = document.getElementById('currentPassword').value;
+        const newPassword = document.getElementById('newPassword').value;
+        const confirmPassword = document.getElementById('confirmPassword').value;
+
+        // Validation
+        if (!currentPassword || !newPassword || !confirmPassword) {
+            showAlert('Please fill in all password fields.', 'danger');
+            return;
+        }
+
+        if (newPassword !== confirmPassword) {
+            showAlert('New passwords do not match.', 'danger');
+            return;
+        }
+
+        if (newPassword.length < 8) {
+            showAlert('New password must be at least 8 characters long.', 'danger');
+            return;
+        }
+
+        // Check for at least 3 out of 4 password strength conditions
+        const passwordStrength = checkPasswordStrength();
+        if (passwordStrength < 3) {
+            showAlert('Password must meet at least 3 of the 4 requirements: uppercase, lowercase, numbers, and special characters.', 'danger');
+            return;
+        }
+
+        // Get the CSRF token
+        const csrfToken = document.querySelector('meta[name="_csrf"]')?.getAttribute('content') ||
+                         document.querySelector('input[name="_csrf"]')?.value;
+
+        // If the form has a CSRF input field
+        const csrfInput = document.querySelector('input[name="_csrf"]');
+
+        // Use the native form submission instead of fetch to handle CSRF properly
+        this.submit();
+    });
+
+    // Utility functions
+    function resetPasswordForm() {
+        document.getElementById('passwordForm').reset();
+        document.getElementById('passwordStrength').style.display = 'none';
+        document.getElementById('passwordMatch').textContent = '';
+    }
+
+    function saveProfile() {
+        showAlert('Profile updated successfully!', 'success');
+    }
+
+    function resetProfile() {
+        document.getElementById('profileForm').reset();
+    }
+
+    function saveNotificationSettings() {
+        showAlert('Notification preferences saved!', 'success');
+    }
+
+    function savePreferences() {
+        showAlert('Preferences saved successfully!', 'success');
+    }
+
+    function resetPreferences() {
+        document.getElementById('preferencesForm').reset();
+        showAlert('Preferences reset to default values.', 'warning');
+    }
+
+    function showAlert(message, type) {
+        // Remove existing alerts
+        const existingAlerts = document.querySelectorAll('.alert');
+        existingAlerts.forEach(alert => alert.remove());
+
+        // Create new alert
+        const alertDiv = document.createElement('div');
+        alertDiv.className = `alert alert-${type}`;
+        alertDiv.innerHTML = `
+                <i class="bi bi-${type === 'success' ? 'check-circle' : type === 'danger' ? 'exclamation-triangle' : 'info-circle'}"></i>
+                ${message}
+            `;
+
+        // Insert at the top of the active section
+        const activeSection = document.querySelector('.settings-section.active');
+        activeSection.insertBefore(alertDiv, activeSection.firstChild);
+
+        // Auto-remove after 5 seconds
+        setTimeout(() => {
+            alertDiv.remove();
+        }, 5000);
+    }
+
+    // Navigation link handlers
+    document.querySelectorAll('.nav-link').forEach(link => {
+        link.addEventListener('click', function(e) {
+            if (this.getAttribute('href') === '#') {
+                e.preventDefault();
+            }
+        });
+    });
+    /*]]>*/
+</script>
+</body>
+</html>

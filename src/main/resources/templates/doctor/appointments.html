@@ -497,7 +497,7 @@
         <div class="nav-section">
             <div class="nav-section-title">Patient Care</div>
             <div class="nav-item">
-                <a th:href="@{/doctor/appointments(doctorId=${doctorId})}" class="nav-link active">
+                <a th:href="@{/doctor/appointments(doctorId=${doctorId})}" class="nav-link">
                     <i class="bi bi-calendar-check"></i>
                     Appointments
                 </a>
@@ -525,9 +525,9 @@
                 </a>
             </div>
             <div class="nav-item">
-                <a href="#" class="nav-link">
+                <a th:href="@{/doctor/support-request}" class="nav-link">
                     <i class="bi bi-chat-dots"></i>
-                    Messages
+                    Support Ticket Submission
                 </a>
             </div>
         </div>
@@ -535,7 +535,7 @@
         <div class="nav-section">
             <div class="nav-section-title">System</div>
             <div class="nav-item">
-                <a href="#" class="nav-link">
+                <a th:href="@{/doctor/settings}" class="nav-link">
                     <i class="bi bi-gear"></i>
                     Settings
                 </a>
@@ -635,7 +635,7 @@
                         <label class="form-label">Search Patient</label>
                         <input type="text" class="form-control" name="search"
                                th:value="${searchTerm}"
-                               placeholder="Search by patient name...">
+                               placeholder="Search by patient name..." autofocus>
                     </div>
                     <div class="col-md-3">
                         <label class="form-label">Status</label>
@@ -722,7 +722,7 @@
                                 </span>
                             </div>
                             <div class="info-item">
-                                <span class="info-label">Duration</span>
+                                <span class="info-label">Appointment ID</span>
                                 <span class="info-value" th:text="${appointment.appointmentId}">
                                     30 minutes
                                 </span>

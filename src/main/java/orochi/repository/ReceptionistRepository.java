@@ -3,6 +3,8 @@ package orochi.repository;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.repository.query.Param;
 import org.springframework.transaction.annotation.Transactional;
 import orochi.model.Users;
@@ -13,9 +15,15 @@ import java.util.Optional;
 
 public interface ReceptionistRepository extends JpaRepository<Users, Integer> {
 
-    // Fetch all Receptionists (RoleID = 3)
-    @Query("SELECT u FROM Users u WHERE u.roleId = 3")
-    List<Users> findAllReceptionists();
+    // Fetch all Receptionists (RoleID = 3) with pagination and filtering
+    @Query("SELECT u FROM Users u WHERE u.roleId = 3 " +
+            "AND (:search IS NULL OR LOWER(u.fullName) LIKE LOWER(CONCAT('%', :search, '%')) " +
+            "OR LOWER(u.email) LIKE LOWER(CONCAT('%', :search, '%'))) " +
+            "AND (:statusFilter IS NULL OR u.status = :statusFilter)")
+    Page<Users> findAllReceptionistsFiltered(
+            @Param("search") String search,
+            @Param("statusFilter") String statusFilter,
+            Pageable pageable);
 
     // Fetch a Receptionist by email for login purposes
     @Query("SELECT u FROM Users u WHERE u.email = :email AND u.roleId = 3")

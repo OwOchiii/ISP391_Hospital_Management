@@ -1,0 +1,324 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Support Request Form</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">>
+    <style>
+        .card {
+            border-radius: 10px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+        }
+        .required-field::after {
+            content: " *";
+            color: red;
+        }
+        .form-select, .form-control {
+            border-radius: 5px;
+        }
+        .btn-primary {
+            background-color: #0d6efd;
+            border: none;
+        }
+        .btn-primary:hover {
+            background-color: #0b5ed7;
+        }
+    </style>
+</head>
+<body>
+<div class="container py-5">
+    <div class="row justify-content-center">
+        <div class="col-md-8">
+            <!-- Back to Dashboard Button -->
+            <div class="mb-3">
+                <a th:href="@{/doctor/dashboard}" class="btn btn-outline-secondary">
+                    <i class="fas fa-arrow-left me-2"></i>Back to Dashboard
+                </a>
+            </div>
+
+            <div class="card">
+                <div class="card-header bg-primary text-white">
+                    <h3 class="mb-0"><i class="fas fa-ticket-alt me-2"></i>Support Request / System Enhancement</h3>
+                </div>
+                <div class="card-body">
+                    <form th:action="@{/doctor/support-request/submit}" method="post" class="needs-validation" novalidate>
+
+                        <div class="alert alert-info">
+                            <i class="fas fa-info-circle me-2">
+                                Use this form to request new features, suggest improvements, or report issues with the hospital management system.
+                                <br>
+                                Please note that you won't get contacted by the IT/Admin team unless you check the "Request follow-up discussion" option below.
+
+                            </i>
+
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="requestType" class="form-label required-field">Request Type</label>
+                            <select class="form-select" id="requestType" name="requestType" required>
+                                <option value="" selected disabled>-- Select Request Type --</option>
+                                <option value="FEATURE_REQUEST">New Feature Request</option>
+                                <option value="IMPROVEMENT">Improvement Suggestion</option>
+                                <option value="BUG_REPORT">Bug Report</option>
+                                <option value="TRAINING">Training Request</option>
+                                <option value="OTHER">Other</option>
+                            </select>
+                            <div class="invalid-feedback">
+                                Please select a request type.
+                            </div>
+                        </div>
+
+                        <!-- Other Request Type Field (conditional) -->
+                        <div class="mb-3" id="otherRequestTypeDiv" style="display: none;">
+                            <label for="otherRequestType" class="form-label required-field">Specify Request Type</label>
+                            <input type="text" class="form-control" id="otherRequestType" name="otherRequestType"
+                                   placeholder="Please specify your request type">
+                            <div class="invalid-feedback">
+                                Please specify your request type.
+                            </div>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="requestTitle" class="form-label required-field">Request Title</label>
+                            <input type="text" class="form-control" id="requestTitle" name="requestTitle"
+                                   placeholder="Brief summary of your request" required>
+                            <div class="invalid-feedback">
+                                Please provide a title for your request.
+                            </div>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="affectedModule" class="form-label required-field">Affected Module/Area</label>
+                            <select class="form-select" id="affectedModule" name="affectedModule" required>
+                                <option value="" selected disabled>-- Select Module --</option>
+                                <option value="APPOINTMENTS">Appointments</option>
+                                <option value="PATIENT_RECORDS">Patient Records</option>
+                                <option value="MEDICAL_ORDERS">Medical Orders</option>
+                                <option value="SCHEDULING">Scheduling</option>
+                                <option value="REPORTING">Reporting</option>
+                                <option value="USER_INTERFACE">User Interface</option>
+                                <option value="OTHER">Other</option>
+                            </select>
+                            <div class="invalid-feedback">
+                                Please select which module is affected.
+                            </div>
+                        </div>
+
+                        <!-- Other Module Field (conditional) -->
+                        <div class="mb-3" id="otherModuleDiv" style="display: none;">
+                            <label for="otherModule" class="form-label required-field">Specify Module/Area</label>
+                            <input type="text" class="form-control" id="otherModule" name="otherModule"
+                                   placeholder="Please specify the affected module or area">
+                            <div class="invalid-feedback">
+                                Please specify the affected module or area.
+                            </div>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="priorityLevel" class="form-label required-field">Priority Level</label>
+                            <select class="form-select" id="priorityLevel" name="priorityLevel" required>
+                                <option value="" selected disabled>-- Select Priority --</option>
+                                <option value="LOW">Low - Nice to have</option>
+                                <option value="MEDIUM">Medium - Important but not urgent</option>
+                                <option value="HIGH">High - Significantly affects workflow</option>
+                                <option value="CRITICAL">Critical - Prevents essential tasks</option>
+                            </select>
+                            <div class="invalid-feedback">
+                                Please select a priority level.
+                            </div>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="description" class="form-label required-field">Detailed Description</label>
+                            <textarea class="form-control" id="description" name="description" rows="5"
+                                      placeholder="Please describe your request in detail..." required></textarea>
+                            <div class="invalid-feedback">
+                                Please provide a detailed description.
+                            </div>
+                            <small class="text-muted">
+                                Include specific examples, current behavior, and expected behavior when applicable.
+                            </small>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="justification" class="form-label required-field">Justification/Benefits</label>
+                            <textarea class="form-control" id="justification" name="justification" rows="3"
+                                      placeholder="Explain why this request is important and how it would benefit the hospital operations..." required></textarea>
+                            <div class="invalid-feedback">
+                                Please provide justification for your request.
+                            </div>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="attachment" class="form-label">Attachment (Optional)</label>
+                            <input type="file" class="form-control" id="attachment" name="attachment">
+                            <small class="text-muted">
+                                You can upload screenshots, documents, or other relevant files (max 10MB).
+                            </small>
+                        </div>
+
+                        <div class="mb-3 form-check">
+                            <input type="checkbox" class="form-check-input" id="followUpNeeded" name="followUpNeeded">
+                            <label class="form-check-label" for="followUpNeeded">
+                                Request follow-up discussion with IT/Admin team
+                            </label>
+                        </div>
+
+                        <!-- Contact Information Section (conditional) -->
+                        <div id="contactInfoSection" style="display: none;">
+                            <div class="card mb-3">
+                                <div class="card-header bg-light">
+                                    <h5 class="mb-0">Contact Information for Follow-up</h5>
+                                </div>
+                                <div class="card-body">
+                                    <div class="mb-3">
+                                        <label for="preferredContactMethod" class="form-label">Preferred Contact Method</label>
+                                        <select class="form-select" id="preferredContactMethod" name="preferredContactMethod">
+                                            <option value="EMAIL">Email</option>
+                                            <option value="PHONE">Phone</option>
+                                            <option value="IN_PERSON">In-person meeting</option>
+                                        </select>
+                                    </div>
+
+                                    <div class="mb-3">
+                                        <label for="contactEmail" class="form-label">Email</label>
+                                        <input type="email" class="form-control" id="contactEmail" name="contactEmail"
+                                               placeholder="Your email address">
+                                    </div>
+
+                                    <div class="mb-3">
+                                        <label for="contactPhone" class="form-label">Phone Number</label>
+                                        <input type="tel" class="form-control" id="contactPhone" name="contactPhone"
+                                               placeholder="Your phone number">
+                                    </div>
+
+                                    <div class="mb-3">
+                                        <label for="preferredTimes" class="form-label">Preferred Contact Times</label>
+                                        <input type="text" class="form-control" id="preferredTimes" name="preferredTimes"
+                                               placeholder="e.g., weekdays after 3 PM">
+                                    </div>
+
+                                    <div class="mb-3">
+                                        <label for="additionalContactInfo" class="form-label">Additional Contact Information</label>
+                                        <textarea class="form-control" id="additionalContactInfo" name="additionalContactInfo"
+                                                  rows="2" placeholder="Any additional information for contacting you"></textarea>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="d-grid gap-2 d-md-flex justify-content-md-end">
+                            <button type="button" class="btn btn-secondary" onclick="window.history.back()">
+                                <i class="fas fa-arrow-left me-2"></i>Cancel
+                            </button>
+                            <button type="submit" class="btn btn-primary">
+                                <i class="fas fa-paper-plane me-2"></i>Submit Request
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+
+            <div class="card mt-4">
+                <div class="card-header bg-info text-white">
+                    <h4 class="mb-0"><i class="fas fa-history me-2"></i>My Previous Requests</h4>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-hover">
+                            <thead>
+                            <tr>
+                                <th>ID</th>
+                                <th>Title</th>
+                                <th>Type</th>
+                                <th>Date Submitted</th>
+                                <th>Status</th>
+                            </tr>
+                            </thead>
+                            <tbody>
+                            <tr th:if="${requests == null || requests.empty}">
+                                <td colspan="6" class="text-center">No previous requests found</td>
+                            </tr>
+                            <tr th:each="request : ${requests}" th:if="${requests != null && !requests.empty}">
+                                <td th:text="${request.id}">123</td>
+                                <td th:text="${request.getRequestTitle()}">Add new medication tracking</td>
+                                <td th:text="${request.requestType}">FEATURE_REQUEST</td>
+                                <td th:text="${#temporals.format(request.submissionDate, 'yyyy-MM-dd')}">2025-06-10</td>
+                                <td>
+                                            <span th:class="${'badge ' +
+                                                (request.getTicketStatus() == 'PENDING' ? 'bg-warning' :
+                                                (request.getTicketStatus() == 'IN_PROGRESS' ? 'bg-info' :
+                                                (request.getTicketStatus() == 'COMPLETED' ? 'bg-success' :
+                                                (request.getTicketStatus()== 'REJECTED' ? 'bg-danger' : 'bg-secondary'))))}">
+                                                <span th:text="${request.getTicketStatus()}">PENDING</span>
+                                            </span>
+                                </td>
+                            </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+<script>
+    // Form validation
+    (function () {
+        'use strict'
+
+        // Fetch all the forms we want to apply custom Bootstrap validation styles to
+        const forms = document.querySelectorAll('.needs-validation')
+
+        // Loop over them and prevent submission
+        Array.from(forms).forEach(form => {
+            form.addEventListener('submit', event => {
+                if (!form.checkValidity()) {
+                    event.preventDefault()
+                    event.stopPropagation()
+                }
+
+                form.classList.add('was-validated')
+            }, false)
+        })
+    })()
+
+    // Show/hide "Other" input fields based on selection
+    document.getElementById('requestType').addEventListener('change', function() {
+        const otherDiv = document.getElementById('otherRequestTypeDiv');
+        if (this.value === 'OTHER') {
+            otherDiv.style.display = 'block';
+            document.getElementById('otherRequestType').setAttribute('required', '');
+        } else {
+            otherDiv.style.display = 'none';
+            document.getElementById('otherRequestType').removeAttribute('required');
+        }
+    });
+
+    document.getElementById('affectedModule').addEventListener('change', function() {
+        const otherDiv = document.getElementById('otherModuleDiv');
+        if (this.value === 'OTHER') {
+            otherDiv.style.display = 'block';
+            document.getElementById('otherModule').setAttribute('required', '');
+        } else {
+            otherDiv.style.display = 'none';
+            document.getElementById('otherModule').removeAttribute('required');
+        }
+    });
+
+    // Show/hide contact information section based on follow-up checkbox
+    document.getElementById('followUpNeeded').addEventListener('change', function() {
+        const contactSection = document.getElementById('contactInfoSection');
+        if (this.checked) {
+            contactSection.style.display = 'block';
+        } else {
+            contactSection.style.display = 'none';
+        }
+    });
+</script>
+</body>
+</html>
