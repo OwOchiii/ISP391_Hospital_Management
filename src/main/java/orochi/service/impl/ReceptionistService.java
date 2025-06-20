@@ -1,5 +1,4 @@
 package orochi.service.impl;
-
 import java.util.ArrayList;
 import java.util.HashMap;
 import org.springframework.data.domain.Page;
@@ -90,11 +89,6 @@ public class ReceptionistService {
 
     public Page<Users> getAllReceptionists(String search, String statusFilter, Pageable pageable) {
         return receptionistRepository.findAllReceptionistsFiltered(search, statusFilter, pageable);
-    }
-
-//    public int newPatients(){
-//        return receptionistRepository.newPatients();
-//    }
 
     public int ourDoctors(){
         return receptionistRepository.ourDoctors();
