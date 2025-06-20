@@ -258,7 +258,7 @@
             border: 1px solid rgba(102, 126, 234, 0.1);
             border-top: 4px solid var(--primary);
             padding: 1.5rem;
-            text-align: center;
+            text-align: left;
             transition: all 0.3s ease;
         }
 
@@ -267,11 +267,17 @@
             box-shadow: 0 8px 30px rgba(102, 126, 234, 0.15);
         }
 
-        .doctor-card img {
-            width: 100px;
-            height: 100px;
-            border-radius: 50%;
+        .doctor-card .doctor-info {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
             margin-bottom: 1rem;
+        }
+
+        .doctor-card img {
+            width: 80px;
+            height: 80px;
+            border-radius: 50%;
             object-fit: cover;
         }
 
@@ -279,13 +285,18 @@
             font-size: 1.125rem;
             font-weight: 600;
             color: var(--text-dark);
-            margin-bottom: 0.5rem;
+            margin-bottom: 0.25rem;
         }
 
         .doctor-card p {
             font-size: 0.875rem;
             color: var(--text-muted);
-            margin-bottom: 0.5rem;
+            margin-bottom: 0;
+        }
+
+        .doctor-card .btn-container {
+            text-align: center;
+            margin-top: 1rem;
         }
 
         .btn-view {
@@ -383,8 +394,8 @@
 
         @media (max-width: 576px) {
             .doctor-card img {
-                width: 80px;
-                height: 80px;
+                width: 60px;
+                height: 60px;
             }
 
             .doctor-card h3 {
@@ -495,15 +506,7 @@
 
             <!-- Notification Modal -->
             <div class="notification-modal" id="notificationModal">
-                <h5>Notifications</h5>
-                <div class="notification-item">
-                    <p><strong>New Payment:</strong> INV-001 completed.</p>
-                    <small>2 hours ago</small>
-                </div>
-                <div class="notification-item">
-                    <p><strong>Pending Payment:</strong> INV-002 awaiting confirmation.</p>
-                    <small>1 day ago</small>
-                </div>
+
             </div>
 
             <div class="row row-cols-1 row-cols-md-2 row-cols-lg-3 g-4" id="doctorsGrid">
@@ -522,36 +525,32 @@
             </div>
             <div class="modal-body">
                 <div class="detail-item">
-                    <span class="detail-label">Specialty</span>
-                    <span class="detail-value" id="modalSpecialty"></span>
-                </div>
-                <div class="detail-item">
-                    <span class="detail-label">Qualifications</span>
-                    <span class="detail-value" id="modalQualifications"></span>
-                </div>
-                <div class="detail-item">
-                    <span class="detail-label">Contact Phone Number</span>
-                    <span class="detail-value" id="modalPhone"></span>
+                    <span class="detail-label">Full Name</span>
+                    <span class="detail-value" id="modalFullName"></span>
                 </div>
                 <div class="detail-item">
                     <span class="detail-label">Email</span>
                     <span class="detail-value" id="modalEmail"></span>
                 </div>
                 <div class="detail-item">
-                    <span class="detail-label">Office Location</span>
-                    <span class="detail-value" id="modalOffice"></span>
+                    <span class="detail-label">Phone Number</span>
+                    <span class="detail-value" id="modalPhone"></span>
                 </div>
                 <div class="detail-item">
-                    <span class="detail-label">Years of Experience</span>
-                    <span class="detail-value" id="modalExperience"></span>
-                </div>
-                <div class="detail-item">
-                    <span class="detail-label">Bio</span>
+                    <span class="detail-label">Bio Description</span>
                     <span class="detail-value" id="modalBio"></span>
                 </div>
                 <div class="detail-item">
-                    <span class="detail-label">Votes</span>
-                    <span class="detail-value" id="modalVotes"></span>
+                    <span class="detail-label">Specialty</span>
+                    <span class="detail-value" id="modalSpecialty"></span>
+                </div>
+                <div class="detail-item">
+                    <span class="detail-label">Degree</span>
+                    <span class="detail-value" id="modalDegree"></span>
+                </div>
+                <div class="detail-item">
+                    <span class="detail-label">Institution</span>
+                    <span class="detail-value" id="modalInstitution"></span>
                 </div>
             </div>
         </div>
@@ -616,11 +615,14 @@
                 col.className = 'col';
                 col.innerHTML = `
                     <div class="doctor-card">
-
-                        <h3>${doctor.name}</h3>
-                        <p>${doctor.specialty}</p>
-                        <p><i class="fas fa-star text-warning"></i> ${doctor.rating} (${doctor.votes} votes)</p>
-                        <div>
+                        <div class="doctor-info">
+                            <img src="${doctor.avatar || 'https://img.freepik.com/free-vector/doctor-character-background_1270-84.jpg'}" alt="${doctor.name}" />
+                            <div>
+                                <h3>${doctor.name}</h3>
+                                <p>${doctor.specialty}</p>
+                            </div>
+                        </div>
+                        <div class="btn-container">
                             <button class="btn-view" onclick="openDoctorModal(${doctor.id})">View</button>
                             <a href="new_appointment?doctorId=${doctor.id}&doctorName=${encodeURIComponent(doctor.name)}" class="btn-book">Book</a>
                         </div>
@@ -654,14 +656,13 @@
         }
 
         document.getElementById('doctorModalLabel').textContent = doctor.name;
-        document.getElementById('modalSpecialty').textContent = doctor.specialty || 'N/A';
-        document.getElementById('modalQualifications').textContent = doctor.qualifications || 'N/A';
-        document.getElementById('modalPhone').textContent = doctor.phone || 'N/A';
+        document.getElementById('modalFullName').textContent = doctor.name || 'N/A';
         document.getElementById('modalEmail').textContent = doctor.email || 'N/A';
-        document.getElementById('modalOffice').textContent = doctor.office || 'N/A';
-        document.getElementById('modalExperience').textContent = doctor.experience || 'N/A';
+        document.getElementById('modalPhone').textContent = doctor.phone || 'N/A';
         document.getElementById('modalBio').textContent = doctor.bio || 'N/A';
-        document.getElementById('modalVotes').innerHTML = `<i class="fas fa-star text-warning"></i> ${doctor.rating || 'N/A'} (${doctor.votes || 0} votes)`;
+        document.getElementById('modalSpecialty').textContent = doctor.specialty || 'N/A';
+        document.getElementById('modalDegree').textContent = doctor.degree || 'N/A';
+        document.getElementById('modalInstitution').textContent = doctor.institution || 'N/A';
 
         const doctorModal = new bootstrap.Modal(document.getElementById('doctorModal'));
         doctorModal.show();
