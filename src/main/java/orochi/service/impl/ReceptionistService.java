@@ -1,6 +1,9 @@
 package orochi.service.impl;
 
+import java.util.ArrayList;
+import java.util.HashMap;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import orochi.model.Appointment;
 import orochi.model.Patient;
 import orochi.model.Role;
@@ -11,7 +14,9 @@ import orochi.repository.ReceptionistRepository;
 import orochi.repository.UserRepository;
 
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
+import org.springframework.beans.factory.annotation.Autowired;
 
 @Service
 public class ReceptionistService {
@@ -83,8 +88,65 @@ public class ReceptionistService {
     private boolean isValidAppointmentStatus(String status) {
         return status != null && (
                 status.equals("Scheduled") ||
-                status.equals("Completed") ||
-                status.equals("Cancel") ||
-                status.equals("Pending"));
+                        status.equals("Completed") ||
+                        status.equals("Cancel") ||
+                        status.equals("Pending"));
     }
+
+//    public int newPatients(){
+//        return receptionistRepository.newPatients();
+//    }
+
+    public int ourDoctors(){
+        return receptionistRepository.ourDoctors();
+    }
+
+    public int totalAppointment(){
+        return receptionistRepository.totalAppointments();
+    }
+
+    public int activeStaff(){
+        return receptionistRepository.activeStaff();
+    }
+
+    public int newPatients(){
+        return receptionistRepository.newPatients();
+    }
+
+    public Map<String, Object> getPatientStatusChartData(String period) {
+
+        List<Object[]> results = new ArrayList<>();
+
+        switch (period) {
+            case "day" -> results = receptionistRepository.getPatientStatsByDay();
+            case "month" -> results = receptionistRepository.getPatientStatsByMonth();
+            case "year" -> results = receptionistRepository.getPatientStatsByYear();
+            default -> results = receptionistRepository.getPatientStatsByMonth();
+        }
+
+        List<String> labels = new ArrayList<>();
+        List<Integer> data = new ArrayList<>();
+
+        for (Object[] row : results) {
+            labels.add((String) row[0]);  // yyyy-MM t? SQL Server tr? v?
+            data.add(((Number) row[1]).intValue());
+        }
+
+        Map<String, Object> response = new HashMap<>();
+        response.put("labels", labels);
+        response.put("data", data);
+
+        return response;
+    }
+
+    public List<Map<String, Object>> getAppointmentTableData() {
+        // G?i repository ?? l?y d? li?u
+        return receptionistRepository.fetchAppointmentTableData();
+    }
+
+    @Transactional
+    public boolean confirmAppointment(Integer appointmentId) {
+        return receptionistRepository.confirmAppointment(appointmentId) > 0;
+    }
+
 }
