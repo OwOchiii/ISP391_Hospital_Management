@@ -674,8 +674,8 @@
                                     required
                                     step="0.01"
                                     min="0.01"
-                                    max="999999999.99"
-                                    title="Giá phải ≥ 0.01 và ≤ 999 999 999 />
+                                    max="99999999.99"
+                                    title="Giá phải ≥ 0.01 và ≤ 999 999 99.99" />
                         </div>
                     </div>
                     <div class="modal-footer">
@@ -756,22 +756,22 @@
 <script>
     function validateServiceForm() {
         const serviceName = document.getElementById("serviceName").value;
-        const price       = document.getElementById("price").value;
+        const priceStr    = document.getElementById("price").value;
+        const price       = parseFloat(priceStr);
 
-        // Tên dịch vụ: 1–50 ký tự, không khoảng trắng
-        if (!/^\S{1,50}$/.test(serviceName)) {
-            alert("Tên dịch vụ không được chứa khoảng trắng và tối đa 50 ký tự.");
+        // 1) Tên dịch vụ: không được bắt đầu bằng space, độ dài 1–50
+        if (!/^(?!\s).{1,50}$/.test(serviceName)) {
+            alert("Tên dịch vụ không được bắt đầu bằng khoảng trắng và tối đa 50 ký tự.");
             return false;
         }
 
-        // Giá: 1–9 chữ số, số nguyên
-        if (!/^\d{1,9}$/.test(price)) {
-            alert("Giá phải là số nguyên, từ 1 đến 9 chữ số.");
+        // 2) Giá: phải là số, ≥ 0.01 và ≤ 999999999.99
+        if (isNaN(price)) {
+            alert("Giá phải là một con số hợp lệ.");
             return false;
         }
-        const num = Number(price);
-        if (num < 1 || num > 999999999) {
-            alert("Giá phải nằm trong khoảng 1 đến 999 999 999.");
+        if (price < 0.01 || price > 999999999.99) {
+            alert("Giá phải nằm từ 0.01 đến 999 999 999.99.");
             return false;
         }
 
