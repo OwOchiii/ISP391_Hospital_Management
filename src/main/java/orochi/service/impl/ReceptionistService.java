@@ -144,4 +144,9 @@ public class ReceptionistService implements UserService {
     public Users save(Users user) {
         return receptionistRepository.save(user);
     }
+
+    public boolean hasPatientRecords(Integer userId) {
+        return patientRepository.existsByUserId(userId);
+    }
+
 }

@@ -23,4 +23,5 @@ public interface UserService {
     Page<Users> getAllReceptionists(String search, String statusFilter, Pageable pageable);
     Optional<Users> findById(Integer userId);
     Users save(Users user);
+    boolean hasPatientRecords(Integer userId);
 }
