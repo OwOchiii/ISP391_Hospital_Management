@@ -592,20 +592,31 @@
         <div class="mt-4" th:if="${totalPages > 1}">
             <nav aria-label="Page navigation">
                 <ul class="pagination justify-content-center">
-                    <li class="page-item" th:classappend="${currentPage == 0} ? 'disabled'">
-                        <a class="page-link" th:href="@{/admin/services(adminId=${adminId},page=${currentPage-1},size=${pageSize})}" aria-label="Previous">
+                    <!-- Previous -->
+                    <li class="page-item"
+                        th:classappend="${currentPage == 0} ? 'disabled' : ''">
+                        <a class="page-link"
+                           th:href="@{/admin/services(adminId=${adminId}, page=${currentPage - 1}, size=${pageSize})}"
+                           aria-label="Previous">
                             <span aria-hidden="true">&laquo;</span>
                         </a>
                     </li>
+
+                    <!-- Số trang -->
                     <li class="page-item"
                         th:each="i : ${#numbers.sequence(0, totalPages - 1)}"
-                        th:classappend="${i == currentPage} ? 'active'">
+                        th:classappend="${i == currentPage} ? 'active' : ''">
                         <a class="page-link"
-                           th:href="@{/admin/services(adminId=${adminId},page=${i},size=${pageSize})}"
+                           th:href="@{/admin/services(adminId=${adminId}, page=${i}, size=${pageSize})}"
                            th:text="${i + 1}">1</a>
                     </li>
-                    <li class="page-item" th:classappend="${currentPage == totalPages - 1} ? 'disabled'">
-                        <a class="page-link" th:href="@{/admin/services(adminId=${adminId},page=${currentPage+1},size=${pageSize})}" aria-label="Next">
+
+                    <!-- Next -->
+                    <li class="page-item"
+                        th:classappend="${currentPage == totalPages - 1} ? 'disabled' : ''">
+                        <a class="page-link"
+                           th:href="@{/admin/services(adminId=${adminId}, page=${currentPage + 1}, size=${pageSize})}"
+                           aria-label="Next">
                             <span aria-hidden="true">&raquo;</span>
                         </a>
                     </li>
@@ -641,11 +652,30 @@
                         </div>
                         <div class="mb-3">
                             <label for="serviceName" class="form-label">Tên Dịch Vụ</label> <!-- Dịch nhãn sang tiếng Việt -->
-                            <input type="text" id="serviceName" name="serviceName" class="form-control" th:value="${service?.serviceName}" required /> <!-- SỬA: Thêm ?. để xử lý null -->
+                            <input
+                                    type="text"
+                                    id="serviceName"
+                                    name="serviceName"
+                                    class="form-control"
+                                    th:value="${service?.serviceName}"
+                                    required
+                                    maxlength="50"
+                                    pattern="^(?!\s).{1,50}$"
+                                    title="Không được bắt đầu bằng khoảng trắng và tối đa 50 ký tự" />
                         </div>
                         <div class="mb-3">
                             <label for="price" class="form-label">Giá (VND)</label> <!-- Dịch nhãn sang tiếng Việt -->
-                            <input type="number" id="price" name="price" class="form-control" step="0.01" th:value="${service?.price}" required /> <!-- SỬA: Thêm ?. để xử lý null -->
+                            <input
+                                    type="number"
+                                    id="price"
+                                    name="price"
+                                    class="form-control"
+                                    th:value="${service?.price}"
+                                    required
+                                    step="0.01"
+                                    min="0.01"
+                                    max="999999999.99"
+                                    title="Giá phải ≥ 0.01 và ≤ 999 999 999 />
                         </div>
                     </div>
                     <div class="modal-footer">
@@ -726,15 +756,22 @@
 <script>
     function validateServiceForm() {
         const serviceName = document.getElementById("serviceName").value;
-        const price = document.getElementById("price").value;
+        const price       = document.getElementById("price").value;
 
-        if (!serviceName) {
-            alert("Service name cannot be empty.");
+        // Tên dịch vụ: 1–50 ký tự, không khoảng trắng
+        if (!/^\S{1,50}$/.test(serviceName)) {
+            alert("Tên dịch vụ không được chứa khoảng trắng và tối đa 50 ký tự.");
             return false;
         }
 
-        if (!price || price <= 0) {
-            alert("Price must be a positive number.");
+        // Giá: 1–9 chữ số, số nguyên
+        if (!/^\d{1,9}$/.test(price)) {
+            alert("Giá phải là số nguyên, từ 1 đến 9 chữ số.");
+            return false;
+        }
+        const num = Number(price);
+        if (num < 1 || num > 999999999) {
+            alert("Giá phải nằm trong khoảng 1 đến 999 999 999.");
             return false;
         }
 
