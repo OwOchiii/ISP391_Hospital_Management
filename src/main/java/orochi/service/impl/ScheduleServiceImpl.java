@@ -9,6 +9,10 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.data.domain.Sort;
+import orochi.model.Appointment;
+import orochi.model.Patient;
+import java.sql.Time;
+import java.time.format.DateTimeFormatter;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
@@ -35,6 +39,8 @@ import java.time.temporal.TemporalAdjusters;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
+import jakarta.persistence.criteria.Expression;
+
 
 @Service
 public class ScheduleServiceImpl implements ScheduleService {
@@ -227,6 +233,16 @@ public class ScheduleServiceImpl implements ScheduleService {
     }
 
     @Override
+    public List<Appointment> getAllAppointments() {
+        return appointmentRepository.findAll();
+    }
+
+    @Override
+    public List<Patient> getAllPatients() {
+        return patientRepository.findAll();
+    }
+
+    @Override
     public String formatWeekDateRange(LocalDate startDate) {
         LocalDate endDate = startDate.plusDays(6);
         return String.format("%s - %s, %d",
@@ -376,54 +392,38 @@ public class ScheduleServiceImpl implements ScheduleService {
 
     @Override
     public Page<ScheduleDTO> findSchedulesFiltered(
-            Integer scheduleId,
-            String eventType,
-            Integer roomId,
-            LocalTime startTime,
-            LocalTime endTime,
-            LocalDate startDate,
-            LocalDate endDate,
-            int page,
-            int size) {
-
-        // tạo Pageable với sort mặc định trên scheduleDate, startTime
-        Pageable pageable = PageRequest.of(page, size,
+            Integer    scheduleId,
+            String     eventType,
+            Integer    roomId,
+            LocalDate  startDate,
+            LocalDate  endDate,
+            LocalTime  startTime,
+            LocalTime  endTime,
+            int        page,
+            int        size
+    ) {
+        // Tạo pageable với sort
+        Pageable pageable = PageRequest.of(
+                page,
+                size,
                 Sort.by("scheduleDate").ascending()
-                        .and(Sort.by("startTime")));
+                        .and(Sort.by("startTime").ascending())
+        );
 
-        // build Specification động
-        Specification<Schedule> spec = (root, query, cb) -> {
-            List<Predicate> preds = new ArrayList<>();
+        // Gọi repository trực tiếp với LocalDate/LocalTime
+        Page<Schedule> pageEntity = scheduleRepository.findSchedulesFiltered(
+                scheduleId,
+                eventType,
+                roomId,
+                startDate,
+                endDate,
+                startTime,
+                endTime,
+                pageable
+        );
 
-            if (scheduleId != null) {
-                preds.add(cb.equal(root.get("scheduleId"), scheduleId));
-            }
-            if (StringUtils.hasText(eventType)) {
-                preds.add(cb.equal(root.get("eventType"), eventType));
-            }
-            if (roomId != null) {
-                preds.add(cb.equal(root.get("roomId"), roomId));
-            }
-            if (startTime != null) {
-                preds.add(cb.equal(root.get("startTime"), startTime));
-            }
-            if (endTime != null) {
-                preds.add(cb.equal(root.get("endTime"), endTime));
-            }
-            if (startDate != null) {
-                preds.add(cb.greaterThanOrEqualTo(root.get("scheduleDate"), startDate));
-            }
-            if (endDate != null) {
-                preds.add(cb.lessThanOrEqualTo(root.get("scheduleDate"), endDate));
-            }
-
-            return cb.and(preds.toArray(new Predicate[0]));
-        };
-
-        // thực thi query + pagination
-        Page<Schedule> pageEnt = scheduleRepository.findAll(spec, pageable);
-
-        // map sang DTO và trả về
-        return pageEnt.map(this::convertToDTO);
+        // Map sang DTO
+        return pageEntity.map(this::convertToDTO);
     }
+
 }

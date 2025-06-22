@@ -3,7 +3,10 @@ package orochi.service;
 import orochi.dto.ScheduleDTO;
 import orochi.model.Doctor;
 import orochi.model.Room;
+import orochi.model.Appointment;
+import orochi.model.Patient;
 import org.springframework.data.domain.Page;
+
 import java.time.LocalTime;
 import java.time.LocalDate;
 import java.util.List;
@@ -77,18 +80,42 @@ public interface ScheduleService {
      * @return list of schedules for the specified page
      */
     List<ScheduleDTO> searchSchedulesPaginated(String keyword, LocalDate startDate, LocalDate endDate, int page, int size);
+
+    /**
+     * Get all rooms (for dropdown)
+     */
     List<Room> getAllRooms();
+
+    /**
+     * Get all doctors (for dropdown)
+     */
+    List<Doctor> getAllDoctors();
+
+    /**
+     * Get all appointments (cho dropdown)
+     */
+    List<Appointment> getAllAppointments();
+
+    /**
+     * Get all patients (cho dropdown)
+     */
+    List<Patient> getAllPatients();
+
+    /**
+     * Paginated, filtered find
+     */
     Page<ScheduleDTO> findSchedulesFiltered(
             Integer scheduleId,
-            String eventType,
+            String  eventType,
             Integer roomId,
-            LocalTime startTime,
-            LocalTime endTime,
             LocalDate startDate,
             LocalDate endDate,
-            int page,
-            int size
+            LocalTime startTime,
+            LocalTime endTime,
+            int     page,
+            int     size
     );
+
     /**
      * Get total number of schedules for search and date range
      * @param keyword search term

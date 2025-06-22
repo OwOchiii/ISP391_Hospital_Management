@@ -16,6 +16,40 @@ import java.util.Optional;
 
 @Repository
 public interface ScheduleRepository extends JpaRepository<Schedule, Integer>,JpaSpecificationExecutor<Schedule> {
+    @Query(value = """
+    SELECT *
+      FROM Schedule s
+     WHERE (:scheduleId   IS NULL OR s.ScheduleID   = :scheduleId)
+       AND (:eventType    IS NULL OR s.EventType    = :eventType)
+       AND (:roomId       IS NULL OR s.RoomID       = :roomId)
+       AND (:startDate    IS NULL OR s.ScheduleDate >= :startDate)
+       AND (:endDate      IS NULL OR s.ScheduleDate <= :endDate)
+       AND (:startTime IS NULL OR CONVERT(time, s.startTime) >= CONVERT(time, :startTime))
+       AND (:endTime   IS NULL OR CONVERT(time, s.endTime)   <= CONVERT(time, :endTime))
+    """,
+            countQuery = """
+    SELECT COUNT(*)
+      FROM Schedule s
+     WHERE (:scheduleId   IS NULL OR s.ScheduleID   = :scheduleId)
+       AND (:eventType    IS NULL OR s.EventType    = :eventType)
+       AND (:roomId       IS NULL OR s.RoomID       = :roomId)
+       AND (:startDate    IS NULL OR s.ScheduleDate >= :startDate)
+       AND (:endDate      IS NULL OR s.ScheduleDate <= :endDate)
+       AND (:startTime IS NULL OR CONVERT(time, s.startTime) >= CONVERT(time, :startTime))
+       AND (:endTime   IS NULL OR CONVERT(time, s.endTime)   <= CONVERT(time, :endTime))
+    """,
+            nativeQuery = true
+    )
+    Page<Schedule> findSchedulesFiltered(
+            @Param("scheduleId") Integer   scheduleId,
+            @Param("eventType")  String    eventType,
+            @Param("roomId")     Integer   roomId,
+            @Param("startDate")  LocalDate startDate,
+            @Param("endDate")    LocalDate endDate,
+            @Param("startTime")  LocalTime startTime,
+            @Param("endTime")    LocalTime endTime,
+            Pageable pageable
+    );
 
     // Existing methods (unchanged)
     List<Schedule> findByDoctorId(Integer doctorId);
