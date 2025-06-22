@@ -137,11 +137,11 @@ public class ReceptionistService implements UserService {
 
     @Override
     public Optional<Users> findById(Integer userId) {
-        throw new UnsupportedOperationException("Not implemented in ReceptionistService");
+        return receptionistRepository.findById(userId);
     }
 
     @Override
     public Users save(Users user) {
-        throw new UnsupportedOperationException("Not implemented in ReceptionistService");
+        return receptionistRepository.save(user);
     }
 }
