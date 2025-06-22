@@ -73,7 +73,7 @@ public class AdminScheduleController {
         return "admin/schedule/list";
     }
 
-    @GetMapping("/{id}/delete")
+    @PostMapping("/{id}/delete")
     public String deleteSchedule(@PathVariable Integer id,
                                  @RequestParam("adminId") Integer adminId) {
         scheduleService.deleteSchedule(id);

@@ -1,6 +1,9 @@
 package orochi.service.impl;
-
+import org.hibernate.Hibernate;
+import jakarta.persistence.EntityManager;
+import jakarta.persistence.PersistenceContext;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -22,6 +25,7 @@ import orochi.repository.PatientRepository;
 import orochi.repository.RoomRepository;
 import orochi.repository.ScheduleRepository;
 import orochi.service.ScheduleService;
+import orochi.repository.AppointmentRepository;
 import org.springframework.data.jpa.domain.Specification;
 import jakarta.persistence.criteria.Predicate;
 import java.time.DayOfWeek;
@@ -46,6 +50,12 @@ public class ScheduleServiceImpl implements ScheduleService {
 
     @Autowired
     private RoomRepository roomRepository;
+
+    @Autowired
+    private AppointmentRepository appointmentRepository;
+
+    @PersistenceContext
+    private EntityManager entityManager;
 
     @Override
     public List<ScheduleDTO> getDoctorScheduleForWeek(Integer doctorId, LocalDate weekStart) {
@@ -91,15 +101,61 @@ public class ScheduleServiceImpl implements ScheduleService {
     }
 
     @Override
+    @Transactional
     public ScheduleDTO saveSchedule(ScheduleDTO scheduleDTO) {
-        Schedule schedule = convertToEntity(scheduleDTO);
-        schedule = scheduleRepository.save(schedule);
+        Schedule schedule;
+        if (scheduleDTO.getScheduleId() != null) {
+            schedule = scheduleRepository.findById(scheduleDTO.getScheduleId())
+                    .orElseThrow(() -> new RuntimeException("Schedule not found with ID: " + scheduleDTO.getScheduleId()));
+        } else {
+            schedule = new Schedule();
+        }
+        schedule.setScheduleDate(scheduleDTO.getScheduleDate());
+        schedule.setStartTime(scheduleDTO.getStartTime());
+        schedule.setEndTime(scheduleDTO.getEndTime());
+        schedule.setEventType(scheduleDTO.getEventType());
+        schedule.setDescription(scheduleDTO.getDescription());
+        schedule.setIsCompleted(scheduleDTO.getIsCompleted() != null ? scheduleDTO.getIsCompleted() : false);
+
+        if (scheduleDTO.getDoctorId() != null) {
+            schedule.setDoctor(doctorRepository.findById(scheduleDTO.getDoctorId())
+                    .orElseThrow(() -> new RuntimeException("Doctor not found with ID: " + scheduleDTO.getDoctorId())));
+        } else {
+            schedule.setDoctor(null);
+        }
+        if (scheduleDTO.getRoomId() != null) {
+            schedule.setRoom(roomRepository.findById(scheduleDTO.getRoomId())
+                    .orElseThrow(() -> new RuntimeException("Room not found with ID: " + scheduleDTO.getRoomId())));
+        } else {
+            schedule.setRoom(null);
+        }
+        if (scheduleDTO.getPatientId() != null) {
+            schedule.setPatient(patientRepository.findById(scheduleDTO.getPatientId())
+                    .orElseThrow(() -> new RuntimeException("Patient not found with ID: " + scheduleDTO.getPatientId())));
+        } else {
+            schedule.setPatient(null);
+        }
+        if (scheduleDTO.getAppointmentId() != null) {
+            schedule.setAppointment(appointmentRepository.findById(scheduleDTO.getAppointmentId())
+                    .orElseThrow(() -> new RuntimeException("Appointment not found with ID: " + scheduleDTO.getAppointmentId())));
+        } else {
+            schedule.setAppointment(null);
+        }
+        schedule = scheduleRepository.saveAndFlush(schedule);
         return convertToDTO(schedule);
     }
 
     @Override
     public void deleteSchedule(Integer scheduleId) {
-        scheduleRepository.deleteById(scheduleId);
+        Optional<Schedule> scheduleOpt = scheduleRepository.findById(scheduleId);
+        scheduleOpt.ifPresent(schedule -> {
+            Hibernate.initialize(schedule.getDoctor());
+            Hibernate.initialize(schedule.getRoom());
+            Hibernate.initialize(schedule.getPatient());
+            Hibernate.initialize(schedule.getAppointment());
+            entityManager.detach(schedule);
+            scheduleRepository.deleteById(scheduleId);
+        });
     }
 
     @Override
@@ -237,16 +293,6 @@ public class ScheduleServiceImpl implements ScheduleService {
 
     private Schedule convertToEntity(ScheduleDTO dto) {
         Schedule schedule = new Schedule();
-        if (dto.getScheduleId() != null) {
-            Optional<Schedule> existingSchedule = scheduleRepository.findById(dto.getScheduleId());
-            if (existingSchedule.isPresent()) {
-                schedule = existingSchedule.get();
-            }
-        }
-        schedule.setDoctorId(dto.getDoctorId());
-        schedule.setRoomId(dto.getRoomId());
-        schedule.setPatientId(dto.getPatientId());
-        schedule.setAppointmentId(dto.getAppointmentId());
         schedule.setScheduleDate(dto.getScheduleDate());
         schedule.setStartTime(dto.getStartTime());
         schedule.setEndTime(dto.getEndTime());
