@@ -209,10 +209,10 @@ public class UserServiceImpl implements UserService {
 //        return userRepository.findByRoleId(3);
 //    }
 
-    @Override
-    public Page<Users> getAllReceptionists(Pageable pageable) {
-        return userRepository.findAllByRoleId(3, pageable);
-    }
+//    @Override
+//    public Page<Users> getAllReceptionists(Pageable pageable) {
+//        return userRepository.findAllByRoleId(3, pageable);
+//    }
 
     @Override
     public Page<Users> getAllReceptionists(String search, String statusFilter, Pageable pageable) {

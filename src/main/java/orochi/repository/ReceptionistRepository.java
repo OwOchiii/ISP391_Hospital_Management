@@ -12,10 +12,17 @@ import java.util.Optional;
 public interface ReceptionistRepository extends JpaRepository<Users, Integer> {
 
     // Fetch all Receptionists (RoleID = 3) with pagination and filtering
-    @Query("SELECT u FROM Users u WHERE u.roleId = 3 " +
-            "AND (:search IS NULL OR LOWER(u.fullName) LIKE LOWER(CONCAT('%', :search, '%')) " +
-            "OR LOWER(u.email) LIKE LOWER(CONCAT('%', :search, '%'))) " +
-            "AND (:statusFilter IS NULL OR u.status = :statusFilter)")
+    @Query("""
+        SELECT u
+          FROM Users u
+         WHERE u.roleId = 3
+           AND (
+               (:search IS NULL OR :search = '')
+               AND (:statusFilter IS NULL OR u.status = :statusFilter)
+               OR (LOWER(u.fullName) LIKE LOWER(CONCAT('%', :search, '%'))
+                   OR LOWER(u.email) LIKE LOWER(CONCAT('%', :search, '%')))
+           )
+        """)
     Page<Users> findAllReceptionistsFiltered(
             @Param("search") String search,
             @Param("statusFilter") String statusFilter,

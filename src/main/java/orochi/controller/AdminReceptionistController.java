@@ -1,12 +1,14 @@
 package orochi.controller;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.util.StringUtils;
 
 import orochi.model.Users;
 import orochi.service.UserService;
@@ -16,6 +18,7 @@ import orochi.service.UserService;
 public class AdminReceptionistController {
 
     @Autowired
+    @Qualifier("receptionistService")
     private UserService userService;
 
     @GetMapping
@@ -27,10 +30,10 @@ public class AdminReceptionistController {
             @RequestParam(value = "size", defaultValue = "5") int size,
             Model model) {
 
-        // Tạo Pageable object cho phân trang
-        Pageable pageable = PageRequest.of(page, size);
+        search = StringUtils.hasText(search) ? search.trim() : "";
+        statusFilter = StringUtils.hasText(statusFilter) ? statusFilter : null;
 
-        // Lấy danh sách lễ tân theo phân trang và lọc
+        Pageable pageable = PageRequest.of(page, size);
         Page<Users> receptionistPage = userService.getAllReceptionists(search, statusFilter, pageable);
 
         model.addAttribute("receptionists", receptionistPage.getContent());
@@ -40,6 +43,7 @@ public class AdminReceptionistController {
         model.addAttribute("currentPage", page);
         model.addAttribute("totalPages", receptionistPage.getTotalPages());
         model.addAttribute("pageSize", size);
+
         return "admin/receptionist/list";
     }
 
