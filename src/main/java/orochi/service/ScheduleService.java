@@ -3,7 +3,11 @@ package orochi.service;
 import orochi.dto.ScheduleDTO;
 import orochi.model.Doctor;
 import orochi.model.Room;
+import orochi.model.Appointment;
+import orochi.model.Patient;
+import org.springframework.data.domain.Page;
 
+import java.time.LocalTime;
 import java.time.LocalDate;
 import java.util.List;
 
@@ -67,6 +71,61 @@ public interface ScheduleService {
     String formatWeekDateRange(LocalDate startDate);
 
     /**
+     * Get paginated schedules with search and date range filtering
+     * @param keyword search term
+     * @param startDate start date for filtering
+     * @param endDate end date for filtering
+     * @param page page number (0-based)
+     * @param size number of items per page
+     * @return list of schedules for the specified page
+     */
+    List<ScheduleDTO> searchSchedulesPaginated(String keyword, LocalDate startDate, LocalDate endDate, int page, int size);
+
+    /**
+     * Get all rooms (for dropdown)
+     */
+    List<Room> getAllRooms();
+
+    /**
+     * Get all doctors (for dropdown)
+     */
+    List<Doctor> getAllDoctors();
+
+    /**
+     * Get all appointments (cho dropdown)
+     */
+    List<Appointment> getAllAppointments();
+
+    /**
+     * Get all patients (cho dropdown)
+     */
+    List<Patient> getAllPatients();
+
+    /**
+     * Paginated, filtered find
+     */
+    Page<ScheduleDTO> findSchedulesFiltered(
+            Integer scheduleId,
+            String  eventType,
+            Integer roomId,
+            LocalDate startDate,
+            LocalDate endDate,
+            LocalTime startTime,
+            LocalTime endTime,
+            int     page,
+            int     size
+    );
+
+    /**
+     * Get total number of schedules for search and date range
+     * @param keyword search term
+     * @param startDate start date for filtering
+     * @param endDate end date for filtering
+     * @return total number of matching schedules
+     */
+    long countSchedules(String keyword, LocalDate startDate, LocalDate endDate);
+
+    /**
      * Inner class for schedule statistics
      */
     class ScheduleStatistics {
@@ -74,6 +133,7 @@ public interface ScheduleService {
         private int onCallHours;
         private int roomsAssigned;
         private int totalHours;
+        private int completedSchedules;
 
         public int getWeeklyAppointments() {
             return weeklyAppointments;
@@ -106,6 +166,9 @@ public interface ScheduleService {
         public void setTotalHours(int totalHours) {
             this.totalHours = totalHours;
         }
+
+        public void setCompletedSchedules(Integer completedSchedules) {
+            this.completedSchedules = completedSchedules;
+        }
     }
 }
-

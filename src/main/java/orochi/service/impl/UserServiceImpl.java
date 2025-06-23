@@ -3,6 +3,9 @@ package orochi.service.impl;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -10,11 +13,16 @@ import orochi.model.PasswordResetToken;
 import orochi.model.Users;
 import orochi.repository.PasswordResetTokenRepository;
 import orochi.repository.UserRepository;
+import orochi.repository.PatientRepository;
 import orochi.service.UserService;
 
+import jakarta.persistence.criteria.CriteriaBuilder;
+import jakarta.persistence.criteria.CriteriaQuery;
+import jakarta.persistence.criteria.Predicate;
+import jakarta.persistence.criteria.Root;
 import java.time.LocalDateTime;
-import java.util.List;
 import java.time.YearMonth;
+import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -23,13 +31,15 @@ public class UserServiceImpl implements UserService {
     private static final Logger logger = LoggerFactory.getLogger(UserServiceImpl.class);
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
+    private final PatientRepository patientRepository;
     private final PasswordResetTokenRepository tokenRepository;
 
     @Autowired
-    public UserServiceImpl(UserRepository userRepository, PasswordEncoder passwordEncoder, PasswordResetTokenRepository tokenRepository) {
+    public UserServiceImpl(UserRepository userRepository, PasswordEncoder passwordEncoder, PasswordResetTokenRepository tokenRepository, PatientRepository patientRepository) {
         this.userRepository = userRepository;
         this.passwordEncoder = passwordEncoder;
         this.tokenRepository = tokenRepository;
+        this.patientRepository = patientRepository;
     }
 
     @Override
@@ -95,19 +105,14 @@ public class UserServiceImpl implements UserService {
         Optional<Users> existingUser = userRepository.findByEmail(user.getEmail());
         boolean phoneNumberExists = userRepository.existsByPhoneNumber(user.getPhoneNumber());
         if (existingUser.isPresent()) {
-            // Consider creating a custom exception for better error handling
             throw new RuntimeException("User with email " + user.getEmail() + " already exists.");
         }
 
         if (phoneNumberExists) {
-            // Consider creating a custom exception for better error handling
             throw new RuntimeException("User with phone number " + user.getPhoneNumber() + " already exists.");
         }
 
         user.setPasswordHash(passwordEncoder.encode(user.getPasswordHash()));
-        // Ensure RoleID is set if it's a required field and not handled elsewhere
-        // For example, set a default role or get it from the registration form.
-        // user.setRoleId(1); // Example: setting a default RoleID
         return userRepository.save(user);
     }
 
@@ -123,10 +128,7 @@ public class UserServiceImpl implements UserService {
         String token = UUID.randomUUID().toString();
         LocalDateTime expiryDate = LocalDateTime.now().plusMinutes(10);
 
-        // Check if user already has a token
         Optional<PasswordResetToken> existingToken = tokenRepository.findByUserId(user.getUserId());
-
-        // If token exists, update it instead of creating a new one
         if (existingToken.isPresent()) {
             PasswordResetToken resetToken = existingToken.get();
             resetToken.setToken(token);
@@ -134,7 +136,6 @@ public class UserServiceImpl implements UserService {
             resetToken.setUsed(false);
             tokenRepository.save(resetToken);
         } else {
-            // Create new token
             PasswordResetToken resetToken = new PasswordResetToken(user.getUserId(), token, expiryDate);
             tokenRepository.save(resetToken);
         }
@@ -153,27 +154,22 @@ public class UserServiceImpl implements UserService {
 
         Users user = userOptional.get();
         Optional<PasswordResetToken> tokenOptional = tokenRepository.findByToken(token);
-
         if (tokenOptional.isEmpty()) {
             logger.warn("Token validation failed: Token not found: {}", token);
             return false;
         }
 
         PasswordResetToken resetToken = tokenOptional.get();
-
-        // Check if token belongs to the correct user
         if (!resetToken.getUserId().equals(user.getUserId())) {
             logger.warn("Token validation failed: Token does not belong to user: {}", email);
             return false;
         }
 
-        // Check if token is expired
         if (resetToken.isExpired()) {
             logger.warn("Token validation failed: Token expired for user: {}", email);
             return false;
         }
 
-        // Check if token is already used
         if (resetToken.isUsed()) {
             logger.warn("Token validation failed: Token already used for user: {}", email);
             return false;
@@ -185,29 +181,23 @@ public class UserServiceImpl implements UserService {
     @Override
     @Transactional
     public void resetPassword(String token, String email, String newPassword) {
-        // Validate token
         if (!validatePasswordResetToken(token, email)) {
             throw new RuntimeException("Invalid or expired password reset token");
         }
 
-        // Get user
         Optional<Users> userOptional = userRepository.findByEmail(email);
         if (userOptional.isEmpty()) {
             throw new RuntimeException("User not found with email: " + email);
         }
 
         Users user = userOptional.get();
-
-        // Check if new password is the same as the old one
         if (passwordEncoder.matches(newPassword, user.getPasswordHash())) {
             throw new RuntimeException("New password cannot be the same as your current password");
         }
 
-        // Update password
         user.setPasswordHash(passwordEncoder.encode(newPassword));
         userRepository.save(user);
 
-        // Mark token as used
         Optional<PasswordResetToken> tokenOptional = tokenRepository.findByToken(token);
         tokenOptional.ifPresent(resetToken -> {
             resetToken.setUsed(true);
@@ -216,9 +206,38 @@ public class UserServiceImpl implements UserService {
 
         logger.info("Password reset successful for user: {}", email);
     }
+
+//    @Override
+//    public List<Users> getAllReceptionists() {
+//        return userRepository.findByRoleId(3);
+//    }
+
+//    @Override
+//    public Page<Users> getAllReceptionists(Pageable pageable) {
+//        return userRepository.findAllByRoleId(3, pageable);
+//    }
+
     @Override
-    public List<Users> getAllReceptionists() {
-        return userRepository.findByRoleId(3);
+    public Page<Users> getAllReceptionists(String search, String statusFilter, Pageable pageable) {
+        if (search == null && statusFilter == null) {
+            return userRepository.findAllByRoleId(3, pageable);
+        }
+
+        return userRepository.findAll(new Specification<Users>() {
+            @Override
+            public Predicate toPredicate(Root<Users> root, CriteriaQuery<?> query, CriteriaBuilder cb) {
+                Predicate predicates = cb.equal(root.get("roleId"), 3);
+                if (search != null && !search.isEmpty()) {
+                    predicates = cb.or(predicates,
+                            cb.like(cb.lower(root.get("fullName")), "%" + search.toLowerCase() + "%"),
+                            cb.like(cb.lower(root.get("email")), "%" + search.toLowerCase() + "%"));
+                }
+                if (statusFilter != null && !statusFilter.isEmpty()) {
+                    predicates = cb.and(predicates, cb.equal(cb.lower(root.get("status")), statusFilter.toLowerCase()));
+                }
+                return predicates;
+            }
+        }, pageable);
     }
 
     @Override
@@ -229,6 +248,11 @@ public class UserServiceImpl implements UserService {
     @Override
     public Users save(Users user) {
         return userRepository.save(user);
+    }
+
+    @Override
+    public boolean hasPatientRecords(Integer userId) {
+        return patientRepository.existsByUserId(userId);
     }
 
 }
