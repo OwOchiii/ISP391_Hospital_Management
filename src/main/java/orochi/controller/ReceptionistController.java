@@ -227,7 +227,8 @@ public class ReceptionistController {
             @RequestParam int appointId
     ){
         try {
-            boolean isSuccess = receptionistService.confirmAppointment(appointId);
+            // Update status to "Scheduled"
+            boolean isSuccess = receptionistService.updateAppointmentStatus(appointId, "Scheduled");
             if(isSuccess) {
                 return ResponseEntity.ok("Update successfully");
             } else {
