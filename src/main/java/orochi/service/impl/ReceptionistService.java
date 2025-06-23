@@ -8,11 +8,9 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import orochi.model.Appointment;
 import orochi.model.Patient;
+import orochi.model.PatientContact;
 import orochi.model.Users;
-import orochi.repository.AppointmentRepository;
-import orochi.repository.PatientRepository;
-import orochi.repository.ReceptionistRepository;
-import orochi.repository.UserRepository;
+import orochi.repository.*;
 
 import java.util.List;
 import java.util.Map;
@@ -26,16 +24,18 @@ public class ReceptionistService {
     private final AppointmentRepository appointmentRepository;
     private final PatientRepository patientRepository;
     private final ReceptionistRepository receptionistRepository;
+    private final PatientContactRepository patientContactRepository;
 
     public ReceptionistService(
             UserRepository userRepository,
             AppointmentRepository appointmentRepository,
             PatientRepository patientRepository,
-            ReceptionistRepository receptionistRepository) {
+            ReceptionistRepository receptionistRepository, PatientContactRepository patientContactRepository) {
         this.userRepository = userRepository;
         this.appointmentRepository = appointmentRepository;
         this.patientRepository = patientRepository;
         this.receptionistRepository = receptionistRepository;
+        this.patientContactRepository = patientContactRepository;
     }
 
     // Fetch all appointments for scheduling purposes
@@ -58,6 +58,11 @@ public class ReceptionistService {
         return patientRepository.findAll();
     }
 
+    public List<PatientContact> getAllPatientContacts() {return patientContactRepository.findAll();}
+
+    public List<PatientContact> getPatientContactsByPatientId(Integer patientId) {
+        return patientContactRepository.findByPatientId(patientId);
+    }
     // Check if the user is a Receptionist
     public boolean isReceptionist(Users user) {
         return user.getRole().getRoleName().equals("RECEPTIONIST");
@@ -96,7 +101,8 @@ public class ReceptionistService {
 //        return receptionistRepository.newPatients();
 //    }
 
-    public int ourDoctors(){
+    public int ourDoctors() {
+        // Get the number of doctors from the database, similar to activeStaff() and newPatients()
         return receptionistRepository.ourDoctors();
     }
 
@@ -141,11 +147,6 @@ public class ReceptionistService {
     public List<Map<String, Object>> getAppointmentTableData() {
         // G?i repository ?? l?y d? li?u
         return receptionistRepository.fetchAppointmentTableData();
-    }
-
-    @Transactional
-    public boolean confirmAppointment(Integer appointmentId) {
-        return receptionistRepository.confirmAppointment(appointmentId) > 0;
     }
 
 }
