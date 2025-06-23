@@ -6,6 +6,7 @@ import org.springframework.web.bind.annotation.*;
 import orochi.config.CustomUserDetails;
 import orochi.model.Appointment;
 import orochi.model.Patient;
+import orochi.model.PatientContact;
 import orochi.model.Users;
 import orochi.repository.UserRepository;
 import orochi.service.impl.DoctorServiceImpl;
@@ -122,7 +123,6 @@ public class ReceptionistApiController {
             // Implementing pagination and search
             int itemsPerPage = 12;
             List<Patient> allPatients = receptionistService.getAllPatients();
-
             // Filter by search term if provided
             if (!search.isEmpty()) {
                 String searchLower = search.toLowerCase();
@@ -139,10 +139,27 @@ public class ReceptionistApiController {
 
             List<Map<String, Object>> paginatedPatients = allPatients.subList(start, end).stream()
                     .map(patient -> {
+                        List<PatientContact> contactsById = receptionistService.getPatientContactsByPatientId(patient.getPatientId());
                         Map<String, Object> patientMap = new HashMap<>();
                         patientMap.put("id", patient.getPatientId());
                         patientMap.put("name", patient.getUser().getFullName());
                         patientMap.put("phone", patient.getUser().getPhoneNumber());
+                        patientMap.put("email", patient.getUser().getEmail());
+                        patientMap.put("dateOfBirth", patient.getDateOfBirth());
+                        patientMap.put("gender", patient.getGender());
+                        patientMap.put("address", patient.getAddress());
+                        // Find contact info for this patient
+                        PatientContact contact = contactsById.stream()
+                            .filter(c -> c.getPatientId().equals(patient.getPatientId()))
+                            .findFirst().orElse(null);
+                        if (contact != null) {
+                            patientMap.put("country", contact.getCountry());
+                            patientMap.put("province", contact.getCity());
+                            patientMap.put("district", contact.getState());
+                            patientMap.put("streetAddress", contact.getStreetAddress());
+                            patientMap.put("postalCode", contact.getPostalCode());
+                            patientMap.put("addressType", contact.getAddressType());
+                        }
                         return patientMap;
                     })
                     .collect(Collectors.toList());
