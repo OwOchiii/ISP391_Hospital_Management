@@ -11,8 +11,10 @@ import orochi.dto.ScheduleDTO;
 import orochi.model.Doctor;
 import orochi.model.Patient;
 import orochi.model.Room;
+import orochi.repository.DoctorRepository;
 import orochi.repository.PatientRepository;
 import orochi.repository.RoomRepository;
+import orochi.service.DoctorService;
 import orochi.service.ScheduleService;
 
 import java.time.DayOfWeek;
@@ -34,6 +36,9 @@ public class ScheduleController {
 
     @Autowired
     private PatientRepository patientRepository;
+
+    @Autowired
+    private DoctorRepository doctorRepository;
 
     /**
      * Display the doctor's schedule page
@@ -59,6 +64,9 @@ public class ScheduleController {
         String currentWeek = scheduleService.formatWeekDateRange(weekStart);
 
         // Add data to model
+        Doctor doctor = doctorRepository.findById(doctorId)
+                .orElseThrow(() -> new RuntimeException("Doctor not found with ID: " + doctorId));
+        model.addAttribute("doctor", doctor);
         model.addAttribute("doctorId", doctorId);
         model.addAttribute("currentWeek", currentWeek);
         model.addAttribute("weeklyAppointments", stats.getWeeklyAppointments());

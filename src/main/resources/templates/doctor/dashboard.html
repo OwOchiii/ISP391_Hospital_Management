@@ -987,11 +987,14 @@
 
     // Function to mark notification as read
     function markNotificationAsRead(notificationId, buttonElement) {
+        // Get CSRF token from the input in the logout form
+        const csrfToken = document.querySelector('input[name="_csrf"]').value;
+
         fetch(`/api/notifications/${notificationId}/read`, {
             method: 'PUT',
             headers: {
                 'Content-Type': 'application/json',
-                'X-CSRF-TOKEN': document.querySelector('meta[name="_csrf"]').getAttribute('content')
+                'X-CSRF-TOKEN': csrfToken
             }
         })
         .then(response => {
@@ -999,41 +1002,133 @@
                 // Update UI
                 const notificationItem = buttonElement.closest('.notification-item');
                 notificationItem.classList.remove('unread');
-                buttonElement.style.display = 'none';
+                buttonElement.remove();
 
                 // Update badge count
                 const badge = document.querySelector('.notification-badge');
-                if (badge) {
-                    const currentCount = parseInt(badge.textContent);
-                    if (currentCount > 1) {
-                        badge.textContent = currentCount - 1;
-                    } else {
-                        badge.style.display = 'none';
-                    }
+                let count = parseInt(badge.textContent);
+                count--;
+
+                if (count <= 0) {
+                    badge.style.display = 'none';
+                } else {
+                    badge.textContent = count;
                 }
             }
         })
-        .catch(error => {
-            console.error('Error marking notification as read:', error);
+        .catch(error => console.error('Error marking notification as read:', error));
+    }
+
+    // Function to fetch notifications
+    function fetchNotifications() {
+
+        if (!userId) {
+            console.error('No user ID available for fetching notifications');
+            return;
+        }
+
+        fetch(`/api/notifications?userId=${userId}`)
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error('Failed to fetch notifications');
+                }
+                return response.json();
+            })
+            .then(notifications => {
+                updateNotificationsUI(notifications);
+            })
+            .catch(error => {
+                console.error('Error fetching notifications:', error);
+            });
+    }
+
+    // Function to update notifications UI
+    function updateNotificationsUI(notifications) {
+        const notificationList = document.querySelector('.notification-list');
+        const emptyNotification = document.querySelector('.empty-notification');
+        const badge = document.querySelector('.notification-badge');
+
+        if (!notifications || notifications.length === 0) {
+            if (notificationList) {
+                notificationList.style.display = 'none';
+            }
+            if (emptyNotification) {
+                emptyNotification.style.display = 'block';
+            }
+            if (badge) {
+                badge.style.display = 'none';
+            }
+            return;
+        }
+
+        // Show notification list, hide empty message
+        if (notificationList) {
+            notificationList.style.display = 'block';
+            notificationList.innerHTML = '';
+        }
+        if (emptyNotification) {
+            emptyNotification.style.display = 'none';
+        }
+
+        // Count unread notifications
+        const unreadCount = notifications.filter(notification => !notification.read).length;
+
+        // Update badge
+        if (badge) {
+            if (unreadCount > 0) {
+                badge.textContent = unreadCount;
+                badge.style.display = 'flex';
+            } else {
+                badge.style.display = 'none';
+            }
+        }
+
+        // Create notification elements
+        notifications.forEach(notification => {
+            const notificationItem = document.createElement('li');
+            notificationItem.className = `notification-item ${notification.read ? '' : 'unread'}`;
+
+            const date = new Date(notification.createdAt);
+            const formattedDate = `${date.toLocaleString('default', { month: 'short' })} ${date.getDate()}, ${date.getFullYear()} ${date.getHours().toString().padStart(2, '0')}:${date.getMinutes().toString().padStart(2, '0')}`;
+
+            notificationItem.innerHTML = `
+                <div class="notification-content">
+                    <div class="notification-message">${notification.message}</div>
+                    <div class="notification-time">${formattedDate}</div>
+                </div>
+            `;
+
+            // Add mark as read button for unread notifications
+            if (!notification.read) {
+                const markReadBtn = document.createElement('button');
+                markReadBtn.className = 'mark-read-btn';
+                markReadBtn.setAttribute('data-id', notification.notificationId);
+                markReadBtn.innerHTML = '<i class="bi bi-check-circle"></i>';
+
+                markReadBtn.addEventListener('click', function(e) {
+                    e.stopPropagation();
+                    markNotificationAsRead(notification.notificationId, this);
+                });
+
+                notificationItem.appendChild(markReadBtn);
+            }
+
+            if (notificationList) {
+                notificationList.appendChild(notificationItem);
+            }
         });
     }
 
-    // Initialize
-    updateGreeting();
+    // Fetch notifications when page loads and periodically
+    document.addEventListener('DOMContentLoaded', function() {
+        // Initial fetch
+        fetchNotifications();
 
-    // Navigation link handlers
-    document.querySelectorAll('.nav-link').forEach(link => {
-        link.addEventListener('click', function(e) {
-            if (this.getAttribute('href') === '#') {
-                e.preventDefault();
-            }
+        // Fetch every 30 seconds
+        setInterval(fetchNotifications, 30000);
 
-            // Remove active class from all links
-            document.querySelectorAll('.nav-link').forEach(l => l.classList.remove('active'));
-
-            // Add active class to clicked link
-            this.classList.add('active');
-        });
+        // Update greeting
+        updateGreeting();
     });
     /*]]>*/
 </script>

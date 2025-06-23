@@ -799,11 +799,11 @@
       </div>
       <div class="doctor-info">
         <div class="doctor-avatar">
-          <span th:text="${doctorName != null ? #strings.substring(doctorName, 0, 2).toUpperCase() : 'DR'}">DR</span>
+          <span th:text="${doctor != null && doctor.getUser() != null && doctor.getUser().getFullName() != null ? #strings.substring(doctor.getUser().getFullName(), 0, 2).toUpperCase() : 'DR'}">DR</span>
         </div>
         <div>
-          <div class="fw-semibold" th:text="${doctorName != null ? doctorName : 'Doctor'}">Doctor</div>
-          <small class="text-muted" th:text="${'ID: ' + doctorId}">ID: 123</small>
+          <div class="fw-semibold" th:text="${doctor != null && doctor.getUser() != null && doctor.getUser().getFullName() != null ? doctor.getUser().getFullName() : 'Doctor'}">Doctor</div>
+          <small class="text-muted" th:text="${'ID: ' + (doctorId != null ? doctorId : 'N/A')}">ID: 123</small>
         </div>
       </div>
     </div>
@@ -858,7 +858,6 @@
     <div class="schedule-header">
       <div class="schedule-controls">
         <div class="view-toggle">
-          <button class="view-btn active" onclick="switchView('week')">Week View</button>
 
         </div>
 
@@ -880,10 +879,7 @@
           </div>
         </div>
 
-        <button class="btn-primary-custom" data-bs-toggle="modal" data-bs-target="#addScheduleModal">
-          <i class="bi bi-plus"></i>
-          Add Schedule
-        </button>
+        <div></div>
       </div>
 
       <div class="schedule-legend">
