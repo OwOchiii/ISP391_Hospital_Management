@@ -233,6 +233,31 @@
             font-weight: 600;
             border: none;
             padding: 1rem;
+            cursor: pointer;
+            position: relative;
+        }
+
+        .table th:hover {
+            background: var(--secondary);
+        }
+
+        .table th .sort-icon::after {
+            content: '\f0dc';
+            font-family: 'Font Awesome 6 Free';
+            font-weight: 900;
+            margin-left: 0.5rem;
+            font-size: 0.8rem;
+            opacity: 0.5;
+        }
+
+        .table th.asc .sort-icon::after {
+            content: '\f0de';
+            opacity: 1;
+        }
+
+        .table th.desc .sort-icon::after {
+            content: '\f0dd';
+            opacity: 1;
         }
 
         .table td {
@@ -262,6 +287,12 @@
             box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
         }
 
+        .input-group-text {
+            background: var(--light);
+            border: 1px solid #d1d5db;
+            border-radius: 8px 0 0 8px;
+        }
+
         .btn-view {
             background: var(--primary);
             color: white;
@@ -277,45 +308,19 @@
             transform: translateY(-1px);
         }
 
-        .modal-content {
-            border-radius: 12px;
-            border: none;
-            box-shadow: 0 8px 30px rgba(0, 0, 0, 0.1);
-        }
-
-        .modal-header {
-            border-bottom: 1px solid #e5e7eb;
-            padding: 1.5rem;
-            background: var(--bg-white);
-            border-radius: 12px 12px 0 0;
-        }
-
-        .modal-title {
-            font-size: 1.25rem;
-            font-weight: 600;
-            color: var(--text-dark);
-        }
-
-        .modal-body {
-            padding: 1.5rem;
-            background: var(--bg-white);
-        }
-
-        .detail-item {
-            margin-bottom: 1.25rem;
-        }
-
-        .detail-label {
+        .btn-reset {
+            border: 1px solid var(--primary);
+            color: var(--primary);
+            padding: 0.5rem 1rem;
+            border-radius: 6px;
             font-size: 0.875rem;
-            font-weight: 500;
-            color: var(--text-muted);
-            margin-bottom: 0.25rem;
+            transition: all 0.3s ease;
         }
 
-        .detail-value {
-            font-size: 0.875rem;
-            color: var(--text-dark);
-            font-weight: 400;
+        .btn-reset:hover {
+            background: var(--primary);
+            color: white;
+            transform: translateY(-1px);
         }
 
         .pagination .page-link {
@@ -337,6 +342,34 @@
             color: var(--secondary);
         }
 
+        .filter-group {
+            background: var(--bg-white);
+            padding: 1rem;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+        }
+
+        .filter-group select, .filter-group input {
+            height: 38px;
+        }
+
+        .filter-group .form-label {
+            font-size: 0.875rem;
+            font-weight: 500;
+            color: var(--text-dark);
+        }
+
+        .status-badge {
+            padding: 0.25rem 0.75rem;
+            border-radius: 12px;
+            font-size: 0.75rem;
+            font-weight: 500;
+        }
+
+        .status-examined { background: var(--success-color); color: white; }
+        .status-pending { background: #f59e0b; color: white; }
+        .status-waiting { background: #3b82f6; color: white; }
+
         @media (max-width: 768px) {
             .sidebar {
                 transform: translateX(-100%);
@@ -354,20 +387,21 @@
             .table th, .table td {
                 padding: 0.75rem;
             }
+
+            .filter-group {
+                padding: 0.75rem;
+            }
         }
 
         @media (max-width: 576px) {
-            .form-control {
+            .form-control, .filter-group select, .filter-group input {
                 padding: 0.5rem;
+                font-size: 0.875rem;
             }
 
-            .btn-view {
+            .btn-view, .btn-reset {
                 padding: 0.5rem;
                 font-size: 0.75rem;
-            }
-
-            .modal-body {
-                padding: 1rem;
             }
         }
 
@@ -390,7 +424,7 @@
 <body>
 <div class="container-fluid">
     <div class="row">
-        <nav class="sidebar col-lg-3 col-xl-2 d-none d-lg-block" id="patientSidebar">
+        <nav class="sidebar col-lg-3 col-xl-2 d-none d-lg-block" id="sidebar">
             <div class="logo">
                 <a href="#">
                     <i class="fas fa-user-md"></i>
@@ -465,12 +499,58 @@
 
             <div class="card mb-4 fade-in">
                 <div class="card-body">
-                    <div class="row g-3">
+                    <div class="row g-3 align-items-center">
                         <div class="col-md-6">
-                            <input type="text" class="form-control" id="searchName" placeholder="Search by name">
+                            <div class="input-group">
+                                <span class="input-group-text"><i class="fas fa-search"></i></span>
+                                <input type="text" class="form-control" id="searchInput" placeholder="Search by Name, Phone, or Patient ID">
+                            </div>
                         </div>
-                        <div class="col-md-6">
-                            <input type="text" class="form-control" id="searchPhone" placeholder="Search by phone">
+                        <div class="col-md-6 text-md-end">
+                            <button class="btn btn-outline-primary me-2" type="button" data-bs-toggle="collapse" data-bs-target="#filterCollapse" aria-expanded="false" aria-controls="filterCollapse">
+                                <i class="fas fa-filter"></i> Filters
+                            </button>
+                            <button class="btn btn-reset" type="button" onclick="resetFilters()">
+                                <i class="fas fa-undo"></i> Reset
+                            </button>
+                        </div>
+                    </div>
+                    <div class="collapse mt-3" id="filterCollapse">
+                        <div class="filter-group">
+                            <div class="row g-3">
+                                <div class="col-md-3">
+                                    <label for="filterGender" class="form-label">Gender</label>
+                                    <select id="filterGender" class="form-select">
+                                        <option value="">All</option>
+                                        <option value="Male">Male</option>
+                                        <option value="Female">Female</option>
+                                        <option value="Other">Other</option>
+                                    </select>
+                                </div>
+                                <div class="col-md-3">
+                                    <label for="filterAge" class="form-label">Age Group</label>
+                                    <select id="filterAge" class="form-select">
+                                        <option value="">All</option>
+                                        <option value="0-18">Under 18</option>
+                                        <option value="18-40">18–40</option>
+                                        <option value="40-60">40–60</option>
+                                        <option value="60+">Over 60</option>
+                                    </select>
+                                </div>
+                                <div class="col-md-3">
+                                    <label for="filterLastVisit" class="form-label">Last Visit</label>
+                                    <input type="date" id="filterLastVisit" class="form-control">
+                                </div>
+                                <div class="col-md-3">
+                                    <label for="filterStatus" class="form-label">Status</label>
+                                    <select id="filterStatus" class="form-select">
+                                        <option value="">All</option>
+                                        <option value="Examined">Examined</option>
+                                        <option value="Pending">Pending</option>
+                                        <option value="Waiting">Waiting</option>
+                                    </select>
+                                </div>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -481,9 +561,13 @@
                     <table class="table table-hover">
                         <thead>
                         <tr>
-                            <th>#</th>
-                            <th>Full Name</th>
-                            <th>Phone Number</th>
+                            <th onclick="sortTable('PatientID')"><span class="sort-icon">Patient ID</span></th>
+                            <th onclick="sortTable('FullName')"><span class="sort-icon">Full Name</span></th>
+                            <th onclick="sortTable('Age')"><span class="sort-icon">Age</span></th>
+                            <th onclick="sortTable('Gender')"><span class="sort-icon">Gender</span></th>
+                            <th onclick="sortTable('PhoneNumber')"><span class="sort-icon">Phone</span></th>
+                            <th onclick="sortTable('LastVisit')"><span class="sort-icon">Last Visit</span></th>
+                            <th onclick="sortTable('Status')"><span class="sort-icon">Status</span></th>
                             <th>Action</th>
                         </tr>
                         </thead>
@@ -500,63 +584,118 @@
     </div>
 </div>
 
-<div class="modal fade" id="patientModal" tabindex="-1" aria-labelledby="patientModalLabel" aria-hidden="true">
-    <div class="modal-dialog modal-lg">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title" id="patientModalLabel"></h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-            </div>
-            <div class="modal-body">
-                <div class="detail-item">
-                    <span class="detail-label">Full Name</span>
-                    <span class="detail-value" id="modalFullName"></span>
-                </div>
-                <div class="detail-item">
-                    <span class="detail-label">Phone Number</span>
-                    <span class="detail-value" id="modalPhoneNumber"></span>
-                </div>
-                <div class="detail-item">
-                    <span class="detail-label">Email</span>
-                    <span class="detail-value" id="modalEmail"></span>
-                </div>
-                <div class="detail-item">
-                    <span class="detail-label">Address</span>
-                    <span class="detail-value" id="modalAddress"></span>
-                </div>
-                <div class="detail-item">
-                    <span class="detail-label">Date of Birth</span>
-                    <span class="detail-value" id="modalDateOfBirth"></span>
-                </div>
-                <div class="detail-item">
-                    <span class="detail-label">Gender</span>
-                    <span class="detail-value" id="modalGender"></span>
-                </div>
-                <div class="detail-item">
-                    <span class="detail-label">Description</span>
-                    <span class="detail-value" id="modalDescription"></span>
-                </div>
-            </div>
-        </div>
-    </div>
-</div>
-
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
 <script>
     const patientsPerPage = 12;
     let currentPage = 1;
     let patients = [];
     let filteredPatients = [];
+    let sortColumn = '';
+    let sortDirection = 'asc';
+
+    // Sample data for 5 patients
+    const samplePatients = [
+        {
+            PatientID: 1,
+            FullName: "Nguyễn Văn Hùng",
+            PhoneNumber: "0905123456",
+            Email: "hung.nguyen@example.com",
+            dateOfBirth: "1988-04-12",
+            gender: "Male",
+            Status: "Examined",
+            LastVisit: "2025-06-10",
+            description: "Bệnh nhân có tiền sử viêm dạ dày.",
+            address: {
+                StreetAddress: "123 Phạm Văn Đồng",
+                City: "Hà Nội",
+                State: "",
+                PostalCode: "100000",
+                Country: "Vietnam"
+            }
+        },
+        {
+            PatientID: 2,
+            FullName: "Trần Thị Lan",
+            PhoneNumber: "0916234567",
+            Email: "lan.tran@example.com",
+            dateOfBirth: "1995-07-20",
+            gender: "Female",
+            Status: "Pending",
+            LastVisit: "2025-06-15",
+            description: "Chờ kết quả xét nghiệm viêm gan B.",
+            address: {
+                StreetAddress: "45 Lê Văn Sỹ",
+                City: "Hồ Chí Minh",
+                State: "",
+                PostalCode: "700000",
+                Country: "Vietnam"
+            }
+        },
+        {
+            PatientID: 3,
+            FullName: "Lê Minh Tuấn",
+            PhoneNumber: "0927345678",
+            Email: "tuan.le@example.com",
+            dateOfBirth: "2008-09-05",
+            gender: "Male",
+            Status: "Waiting",
+            LastVisit: "2025-06-20",
+            description: "Đăng ký khám sức khỏe định kỳ.",
+            address: {
+                StreetAddress: "67 Nguyễn Trãi",
+                City: "Đà Nẵng",
+                State: "",
+                PostalCode: "550000",
+                Country: "Vietnam"
+            }
+        },
+        {
+            PatientID: 4,
+            FullName: "Phạm Thị Hoa",
+            PhoneNumber: "0938456789",
+            Email: "hoa.pham@example.com",
+            dateOfBirth: "1970-12-15",
+            gender: "Female",
+            Status: "Examined",
+            LastVisit: "2025-06-05",
+            description: "Bệnh nhân tiểu đường tuýp 2.",
+            address: {
+                StreetAddress: "89 Trần Hưng Đạo",
+                City: "Huế",
+                State: "",
+                PostalCode: "530000",
+                Country: "Vietnam"
+            }
+        },
+        {
+            PatientID: 5,
+            FullName: "Hoàng Văn Nam",
+            PhoneNumber: "0949567890",
+            Email: "nam.hoang@example.com",
+            dateOfBirth: "1965-03-25",
+            gender: "Male",
+            Status: "Waiting",
+            LastVisit: "2025-06-18",
+            description: "Cần kiểm tra huyết áp cao.",
+            address: {
+                StreetAddress: "34 Nguyễn Văn Cừ",
+                City: "Cần Thơ",
+                State: "",
+                PostalCode: "900000",
+                Country: "Vietnam"
+            }
+        }
+    ];
 
     function toggleSidebar() {
-        const sidebar = document.getElementById('patientSidebar');
+        const sidebar = document.getElementById('sidebar');
         const mainContent = document.getElementById('mainContent');
         sidebar.classList.toggle('collapsed');
         mainContent.classList.toggle('expanded');
     }
 
     function checkScreenSize() {
-        const sidebar = document.getElementById('patientSidebar');
+        const sidebar = document.getElementById('sidebar');
         const mainContent = document.getElementById('mainContent');
         if (window.innerWidth <= 768) {
             sidebar.classList.add('collapsed');
@@ -567,38 +706,68 @@
         }
     }
 
-    async function fetchPatients() {
-        try {
-            const response = await fetch('/api/patients');
-            if (!response.ok) throw new Error('Failed to fetch patients');
-            const data = await response.json();
-            return data; // Expected format: [{ PatientID, UserID, FullName, Email, PhoneNumber, dateOfBirth, gender, description, address: { StreetAddress, City, State, PostalCode, Country } }]
-        } catch (error) {
-            console.error('Error fetching patients:', error);
-            return [];
-        }
+    function fetchPatients() {
+        // Use sample data
+        return Promise.resolve(samplePatients.map(patient => ({
+            ...patient,
+            Age: calculateAge(patient.dateOfBirth)
+        })));
     }
 
-    async function fetchPatientDetails(id) {
-        try {
-            const response = await fetch(`/api/patients/${id}`);
-            if (!response.ok) throw new Error('Failed to fetch patient details');
-            const data = await response.json();
-            return data;
-        } catch (error) {
-            console.error('Error fetching patient details:', error);
-            return null;
+    function calculateAge(dateOfBirth) {
+        if (!dateOfBirth) return 'N/A';
+        const dob = new Date(dateOfBirth);
+        const today = new Date();
+        let age = today.getFullYear() - dob.getFullYear();
+        const monthDiff = today.getMonth() - dob.getMonth();
+        if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < dob.getDate())) {
+            age--;
         }
+        return age;
+    }
+
+    function resetFilters() {
+        document.getElementById('searchInput').value = '';
+        document.getElementById('filterGender').value = '';
+        document.getElementById('filterAge').value = '';
+        document.getElementById('filterLastVisit').value = '';
+        document.getElementById('filterStatus').value = '';
+        filterPatients();
     }
 
     function filterPatients() {
-        const searchName = document.getElementById('searchName').value.toLowerCase();
-        const searchPhone = document.getElementById('searchPhone').value.toLowerCase();
+        const searchInput = document.getElementById('searchInput').value.toLowerCase();
+        const filterGender = document.getElementById('filterGender').value;
+        const filterAge = document.getElementById('filterAge').value;
+        const filterLastVisit = document.getElementById('filterLastVisit').value;
+        const filterStatus = document.getElementById('filterStatus').value;
 
-        filteredPatients = patients.filter(patient =>
-            patient.FullName.toLowerCase().includes(searchName) &&
-            patient.PhoneNumber.toLowerCase().includes(searchPhone)
-        );
+        filteredPatients = patients.filter(patient => {
+            const matchesSearch = (
+                (patient.FullName && patient.FullName.toLowerCase().includes(searchInput)) ||
+                (patient.PhoneNumber && patient.PhoneNumber.toLowerCase().includes(searchInput)) ||
+                (patient.PatientID && patient.PatientID.toString().includes(searchInput))
+            );
+
+            const matchesGender = !filterGender || (patient.gender && patient.gender === filterGender);
+
+            const matchesAge = !filterAge || (
+                filterAge === '0-18' && patient.Age < 18 ||
+                filterAge === '18-40' && patient.Age >= 18 && patient.Age <= 40 ||
+                filterAge === '40-60' && patient.Age > 40 && patient.Age <= 60 ||
+                filterAge === '60+' && patient.Age > 60
+            );
+
+            const matchesLastVisit = !filterLastVisit || (
+                patient.LastVisit !== 'N/A' &&
+                new Date(patient.LastVisit).toISOString().split('T')[0] === filterLastVisit
+            );
+
+            const matchesStatus = !filterStatus || (patient.Status && patient.Status === filterStatus);
+
+            return matchesSearch && matchesGender && matchesAge && matchesLastVisit && matchesStatus;
+        });
+
         currentPage = 1;
         renderPatients();
     }
@@ -608,7 +777,7 @@
         table.innerHTML = '';
 
         if (filteredPatients.length === 0) {
-            table.innerHTML = '<tr><td colspan="4" class="text-center text-muted">No patients found.</td></tr>';
+            table.innerHTML = '<tr><td colspan="8" class="text-center text-muted">No patients found.</td></tr>';
             renderPagination();
             return;
         }
@@ -620,11 +789,15 @@
         paginatedPatients.forEach((patient, index) => {
             const row = document.createElement('tr');
             row.innerHTML = `
-                <td>${start + index + 1}</td>
-                <td>${patient.FullName}</td>
-                <td>${patient.PhoneNumber}</td>
+                <td>${patient.PatientID}</td>
+                <td>${patient.FullName || 'N/A'}</td>
+                <td>${patient.Age}</td>
+                <td>${patient.gender || 'N/A'}</td>
+                <td>${patient.PhoneNumber || 'N/A'}</td>
+                <td>${patient.LastVisit || 'N/A'}</td>
+                <td><span class="status-badge status-${(patient.Status || 'pending').toLowerCase()}">${patient.Status || 'Pending'}</span></td>
                 <td>
-                    <button class="btn-view" onclick="openPatientModal(${patient.PatientID})">View</button>
+                    <button class="btn-view" onclick="viewPatientDetails(${patient.PatientID})">View</button>
                 </td>
             `;
             table.appendChild(row);
@@ -642,19 +815,19 @@
 
         const prevItem = document.createElement('li');
         prevItem.className = `page-item ${currentPage === 1 ? 'disabled' : ''}`;
-        prevItem.innerHTML = `<a class="page-link" href="#" onclick="changePage(${currentPage - 1})">Previous</a>`;
+        prevItem.innerHTML = `<a class="page-link" href="#" onclick="changePage(${currentPage - 1}); event.preventDefault();">Previous</a>`;
         pagination.appendChild(prevItem);
 
         for (let i = 1; i <= pageCount; i++) {
             const pageItem = document.createElement('li');
             pageItem.className = `page-item ${i === currentPage ? 'active' : ''}`;
-            pageItem.innerHTML = `<a class="page-link" href="#" onclick="changePage(${i})">${i}</a>`;
+            pageItem.innerHTML = `<a class="page-link" href="#" onclick="changePage(${i}); event.preventDefault();">${i}</a>`;
             pagination.appendChild(pageItem);
         }
 
         const nextItem = document.createElement('li');
         nextItem.className = `page-item ${currentPage === pageCount ? 'disabled' : ''}`;
-        nextItem.innerHTML = `<a class="page-link" href="#" onclick="changePage(${currentPage + 1})">Next</a>`;
+        nextItem.innerHTML = `<a class="page-link" href="#" onclick="changePage(${currentPage + 1}); event.preventDefault();">Next</a>`;
         pagination.appendChild(nextItem);
     }
 
@@ -664,29 +837,51 @@
         renderPatients();
     }
 
-    async function openPatientModal(id) {
-        const patient = await fetchPatientDetails(id);
-        if (!patient) {
-            alert('Failed to load patient details.');
-            return;
+    function sortTable(column) {
+        if (sortColumn === column) {
+            sortDirection = sortDirection === 'asc' ? 'desc' : 'asc';
+        } else {
+            sortColumn = column;
+            sortDirection = 'asc';
         }
 
-        document.getElementById('patientModalLabel').textContent = patient.FullName;
-        document.getElementById('modalFullName').textContent = patient.FullName || 'N/A';
-        document.getElementById('modalPhoneNumber').textContent = patient.PhoneNumber || 'N/A';
-        document.getElementById('modalEmail').textContent = patient.Email || 'N/A';
-        document.getElementById('modalAddress').textContent = patient.address ? `${patient.address.StreetAddress}, ${patient.address.City}, ${patient.address.State || ''} ${patient.address.PostalCode || ''}, ${patient.address.Country}` : 'N/A';
-        document.getElementById('modalDateOfBirth').textContent = patient.dateOfBirth || 'N/A';
-        document.getElementById('modalGender').textContent = patient.gender || 'N/A';
-        document.getElementById('modalDescription').textContent = patient.description || 'N/A';
+        const thElements = document.querySelectorAll('th');
+        thElements.forEach(th => {
+            th.classList.remove('asc', 'desc');
+            if (th.querySelector('.sort-icon').textContent === column) {
+                th.classList.add(sortDirection);
+            }
+        });
 
-        const patientModal = new bootstrap.Modal(document.getElementById('patientModal'));
-        patientModal.show();
+        filteredPatients.sort((a, b) => {
+            let valA = a[column] || '';
+            let valB = b[column] || '';
+            if (column === 'Age') {
+                valA = parseInt(valA) || 0;
+                valB = parseInt(valB) || 0;
+            } else if (column === 'LastVisit' && valA !== 'N/A') {
+                valA = new Date(valA).getTime();
+                valB = new Date(valB).getTime();
+            }
+            if (sortDirection === 'asc') {
+                return valA > valB ? 1 : -1;
+            } else {
+                return valA < valB ? 1 : -1;
+            }
+        });
+
+        renderPatients();
+    }
+
+    function viewPatientDetails(id) {
+        window.location.href = `/receptionist/patients/${id}`;
     }
 
     function toggleNotificationModal() {
         const modal = document.getElementById('notificationModal');
-        modal.style.display = modal.style.display === 'block' ? 'none' : 'block';
+        if (modal) {
+            modal.style.display = modal.style.display === 'block' ? 'none' : 'block';
+        }
     }
 
     async function initialize() {
@@ -695,8 +890,12 @@
         filteredPatients = [...patients];
         renderPatients();
 
-        document.getElementById('searchName').addEventListener('input', filterPatients);
-        document.getElementById('searchPhone').addEventListener('input', filterPatients);
+        // Add event listeners for search and filters
+        document.getElementById('searchInput').addEventListener('input', filterPatients);
+        document.getElementById('filterGender').addEventListener('change', filterPatients);
+        document.getElementById('filterAge').addEventListener('change', filterPatients);
+        document.getElementById('filterLastVisit').addEventListener('change', filterPatients);
+        document.getElementById('filterStatus').addEventListener('change', filterPatients);
     }
 
     window.addEventListener('load', initialize);
