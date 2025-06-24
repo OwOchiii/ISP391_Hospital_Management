@@ -1219,11 +1219,11 @@
               <i class="bi bi-eye"></i>
               View Details
             </a>
-            <button class="btn-warning-custom btn-sm"
-                    th:onclick="'showUpdateModal(' + ${appointment.appointmentId} + ')'">
-              <i class="bi bi-pencil"></i>
-              Update
-            </button>
+            <a th:href="@{/patient/appointment-list/{id}/reschedule(id=${appointment.appointmentId}, patientId=${patientId})}"
+               class="btn-warning-custom btn-sm">
+              <i class="bi bi-calendar-event"></i>
+              Reschedule
+            </a>
             <a th:href="@{/patient/appointment-list/{id}/cancel(id=${appointment.appointmentId}, patientId=${patientId})}"
                class="btn-danger-custom btn-sm">
               <i class="bi bi-x-circle"></i>
@@ -1331,10 +1331,10 @@
               <i class="bi bi-eye"></i>
               View Details
             </a>
-            <button class="btn-warning-custom btn-sm" onclick="showUpdateModal(1)">
-              <i class="bi bi-pencil"></i>
-              Update
-            </button>
+            <a th:href="@{/patient/appointment-list/1/reschedule(patientId=${patientId})}" class="btn-warning-custom btn-sm">
+              <i class="bi bi-calendar-event"></i>
+              Reschedule
+            </a>
             <a th:href="@{/patient/appointment-list/1/cancel(patientId=${patientId})}" class="btn-danger-custom btn-sm">
               <i class="bi bi-x-circle"></i>
               Cancel
