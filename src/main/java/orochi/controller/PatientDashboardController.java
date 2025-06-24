@@ -55,6 +55,9 @@ public class PatientDashboardController {
     private MedicalOrderRepository medicalOrderRepository;
 
     @Autowired
+    private PrescriptionRepository prescriptionRepository;
+
+    @Autowired
     private PatientService patientService;
 
     @Autowired
@@ -762,6 +765,60 @@ public class PatientDashboardController {
         } catch (Exception e) {
             logger.error("Error rescheduling appointment ID: {}", appointmentId, e);
             redirectAttributes.addFlashAttribute("errorMessage", "Failed to reschedule appointment: " + e.getMessage());
+            return "redirect:/patient/appointment-list";
+        }
+    }
+
+    @GetMapping("/appointment-list/{id}/report")
+    public String getMedicalReport(@PathVariable("id") Integer appointmentId,
+                                   @RequestParam("patientId") Integer patientId,
+                                   Model model,
+                                   RedirectAttributes redirectAttributes) {
+        try {
+            Integer currentPatientId = getCurrentPatientId();
+            if (currentPatientId == null || !currentPatientId.equals(patientId)) {
+                logger.error("Unauthorized access attempt for patient ID: {}", patientId);
+                redirectAttributes.addFlashAttribute("errorMessage", "Unauthorized access");
+                return "redirect:/patient/appointment-list";
+            }
+
+            Optional<Appointment> appointmentOpt = appointmentRepository.findById(appointmentId);
+            if (!appointmentOpt.isPresent()) {
+                logger.error("Appointment not found for ID: {}", appointmentId);
+                redirectAttributes.addFlashAttribute("errorMessage", "Appointment not found");
+                return "redirect:/patient/appointment-list";
+            }
+            Appointment appointment = appointmentOpt.get();
+
+            if (!appointment.getPatientId().equals(patientId)) {
+                logger.error("Appointment ID: {} does not belong to patient ID: {}", appointmentId, patientId);
+                redirectAttributes.addFlashAttribute("errorMessage", "You are not authorized to view this report");
+                return "redirect:/patient/appointment-list";
+            }
+
+            if (!"Completed".equals(appointment.getStatus())) {
+                logger.warn("Attempt to view medical report for non-completed appointment ID: {}", appointmentId);
+                redirectAttributes.addFlashAttribute("errorMessage", "Medical report available only for completed appointments");
+                return "redirect:/patient/appointment-list";
+            }
+
+            // Fetch prescriptions for the appointment
+            List<Prescription> prescriptions = prescriptionRepository.findByAppointmentId(appointmentId);
+            Prescription prescription = prescriptions.isEmpty() ? null : prescriptions.get(0);
+
+            // Get medicines from the prescription, if it exists
+            List<Medicine> medicines = prescription != null ? prescription.getMedicines() : List.of();
+
+            // Add data to model
+            model.addAttribute("patientId", patientId);
+            model.addAttribute("patientName", appointment.getPatient().getFullName());
+            model.addAttribute("prescription", prescription);
+            model.addAttribute("medicines", medicines);
+
+            return "patient/medical-report";
+        } catch (Exception e) {
+            logger.error("Error retrieving medical report for appointment ID: {}", appointmentId, e);
+            redirectAttributes.addFlashAttribute("errorMessage", "Failed to load medical report: " + e.getMessage());
             return "redirect:/patient/appointment-list";
         }
     }
