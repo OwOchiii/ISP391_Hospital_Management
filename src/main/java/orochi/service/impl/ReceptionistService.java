@@ -10,12 +10,16 @@ import orochi.repository.AppointmentRepository;
 import orochi.repository.PatientRepository;
 import orochi.repository.ReceptionistRepository;
 import orochi.repository.UserRepository;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import orochi.service.UserService;
 
 import java.util.List;
 import java.util.Optional;
 
-@Service
-public class ReceptionistService {
+@Service("receptionistService")
+public class ReceptionistService implements UserService {
+    private static final Logger LOGGER = LoggerFactory.getLogger(ReceptionistService.class);
 
     private final UserRepository userRepository;
     private final AppointmentRepository appointmentRepository;
@@ -84,6 +88,65 @@ public class ReceptionistService {
     }
 
     public Page<Users> getAllReceptionists(String search, String statusFilter, Pageable pageable) {
-        return receptionistRepository.findAllReceptionistsFiltered(search, statusFilter, pageable);
+        LOGGER.info("Search parameter: {}, StatusFilter: {}", search, statusFilter);
+        Page<Users> receptionistPage = receptionistRepository.findAllReceptionistsFiltered(search, statusFilter, pageable);
+        LOGGER.info("Number of receptionists returned: {}", receptionistPage.getTotalElements());
+        return receptionistPage;
     }
+
+    // Triển khai các phương thức từ UserService chưa có
+    @Override
+    public Integer getTotalUsers() {
+        throw new UnsupportedOperationException("Not implemented in ReceptionistService");
+    }
+
+    @Override
+    public Integer getGuestUsers() {
+        throw new UnsupportedOperationException("Not implemented in ReceptionistService");
+    }
+
+    @Override
+    public Integer getNewUsersToday() {
+        throw new UnsupportedOperationException("Not implemented in ReceptionistService");
+    }
+
+    @Override
+    public Integer getGrowthPercentage() {
+        throw new UnsupportedOperationException("Not implemented in ReceptionistService");
+    }
+
+    @Override
+    public Users registerNewUser(Users user) {
+        throw new UnsupportedOperationException("Not implemented in ReceptionistService");
+    }
+
+    @Override
+    public String generatePasswordResetToken(String email) {
+        throw new UnsupportedOperationException("Not implemented in ReceptionistService");
+    }
+
+    @Override
+    public boolean validatePasswordResetToken(String token, String email) {
+        throw new UnsupportedOperationException("Not implemented in ReceptionistService");
+    }
+
+    @Override
+    public void resetPassword(String token, String email, String newPassword) {
+        throw new UnsupportedOperationException("Not implemented in ReceptionistService");
+    }
+
+    @Override
+    public Optional<Users> findById(Integer userId) {
+        return receptionistRepository.findById(userId);
+    }
+
+    @Override
+    public Users save(Users user) {
+        return receptionistRepository.save(user);
+    }
+
+    public boolean hasPatientRecords(Integer userId) {
+        return patientRepository.existsByUserId(userId);
+    }
+
 }

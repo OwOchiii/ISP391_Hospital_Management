@@ -13,6 +13,7 @@ import orochi.model.PasswordResetToken;
 import orochi.model.Users;
 import orochi.repository.PasswordResetTokenRepository;
 import orochi.repository.UserRepository;
+import orochi.repository.PatientRepository;
 import orochi.service.UserService;
 
 import jakarta.persistence.criteria.CriteriaBuilder;
@@ -30,13 +31,15 @@ public class UserServiceImpl implements UserService {
     private static final Logger logger = LoggerFactory.getLogger(UserServiceImpl.class);
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
+    private final PatientRepository patientRepository;
     private final PasswordResetTokenRepository tokenRepository;
 
     @Autowired
-    public UserServiceImpl(UserRepository userRepository, PasswordEncoder passwordEncoder, PasswordResetTokenRepository tokenRepository) {
+    public UserServiceImpl(UserRepository userRepository, PasswordEncoder passwordEncoder, PasswordResetTokenRepository tokenRepository, PatientRepository patientRepository) {
         this.userRepository = userRepository;
         this.passwordEncoder = passwordEncoder;
         this.tokenRepository = tokenRepository;
+        this.patientRepository = patientRepository;
     }
 
     @Override
@@ -209,10 +212,10 @@ public class UserServiceImpl implements UserService {
 //        return userRepository.findByRoleId(3);
 //    }
 
-    @Override
-    public Page<Users> getAllReceptionists(Pageable pageable) {
-        return userRepository.findAllByRoleId(3, pageable);
-    }
+//    @Override
+//    public Page<Users> getAllReceptionists(Pageable pageable) {
+//        return userRepository.findAllByRoleId(3, pageable);
+//    }
 
     @Override
     public Page<Users> getAllReceptionists(String search, String statusFilter, Pageable pageable) {
@@ -246,4 +249,10 @@ public class UserServiceImpl implements UserService {
     public Users save(Users user) {
         return userRepository.save(user);
     }
+
+    @Override
+    public boolean hasPatientRecords(Integer userId) {
+        return patientRepository.existsByUserId(userId);
+    }
+
 }

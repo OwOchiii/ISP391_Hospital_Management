@@ -607,7 +607,7 @@
         <div class="schedule-list">
             <div th:each="s : ${schedules}">
                 <!-- summary row -->
-                <div class="schedule-row">
+                <div class="schedule-row" th:id="'schedule-' + ${s.scheduleId}">
                     <div class="schedule-info">
                         <p><strong>Schedule ID:</strong> <span th:text="${s.scheduleId}"></span></p>
                         <p><i class="bi bi-person-badge"></i>
@@ -724,9 +724,15 @@
                         <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                     </div>
                     <div class="modal-body">
-                        <form id="scheduleForm" th:action="@{/admin/schedules(save=true,adminId=${adminId})}" method="post" onsubmit="return validateScheduleForm()">
+                        <form id="scheduleForm"
+                              th:action="@{/admin/schedules/save(adminId=${adminId})}"
+                              method="post"
+                              onsubmit="return validateScheduleForm()">
                             <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
+                            <input type="hidden" name="adminId" th:value="${adminId}"/>
                             <input type="hidden" id="scheduleId" name="scheduleId" value=""/>
+                            <input type="hidden" name="page" th:value="${currentPage}" />
+                            <input type="hidden" name="size" th:value="${pageSize}" />
 
                             <div class="container-fluid">
                                 <div class="row g-3">
@@ -761,16 +767,30 @@
                                         <input type="time" class="form-control" id="endTime" name="endTime" required/>
                                     </div>
                                     <div class="col-md-6">
-                                        <label for="appointmentId" class="form-label">Appointment ID</label>
-                                        <input type="number" class="form-control" id="appointmentId" name="appointmentId" placeholder="Enter Appointment ID…"/>
+                                        <label for="appointmentId" class="form-label">Appointment *</label>
+                                        <select id="appointmentId" name="appointmentId" class="form-select" required>
+                                            <option value="" disabled selected>Select Appointment</option>
+                                            <option th:each="a : ${appointments}"
+                                                    th:value="${a.appointmentId}"
+                                                    th:text="${a.appointmentId} + ' – ' + a.patient.user.fullName">
+                                            </option>
+                                        </select>
                                     </div>
+
                                     <div class="col-md-6">
                                         <label for="description" class="form-label">Description</label>
                                         <input type="text" class="form-control" id="description" name="description" placeholder="Enter description…"/>
                                     </div>
                                     <div class="col-md-6">
-                                        <label for="patientId" class="form-label">Patient ID</label>
-                                        <input type="number" class="form-control" id="patientId" name="patientId" placeholder="Enter Patient ID…"/>
+                                        <label for="patientId" class="form-label">Patient *</label>
+                                        <select id="patientId" name="patientId" class="form-select" required>
+                                            <option value="" disabled selected>Select Patient</option>
+                                            <option th:each="p : ${patients}"
+                                                    th:value="${p.patientId}"
+                                                    th:text="${p.patientId} + ' – ' + ${p.user.fullName}">
+                                                <!-- ví dụ: 3 – Jane Smith -->
+                                            </option>
+                                        </select>
                                     </div>
                                     <div class="col-md-6">
                                         <label for="eventType" class="form-label">Event Type *</label>
@@ -846,66 +866,57 @@
         var mode = button.getAttribute('data-mode');
         var modalTitle = scheduleModalEl.querySelector('.modal-title');
         var form = document.getElementById('scheduleForm');
-        var inputScheduleId = form.querySelector('#scheduleId');
-        var selectDoctorId = form.querySelector('#doctorId');
-        var selectRoomId = form.querySelector('#roomId');
-        var inputScheduleDate = form.querySelector('#scheduleDate');
-        var inputStartTime = form.querySelector('#startTime');
-        var inputEndTime = form.querySelector('#endTime');
-        var inputAppointmentId = form.querySelector('#appointmentId');
-        var inputDescription = form.querySelector('#description');
-        var inputPatientId = form.querySelector('#patientId');
-        var selectEventType = form.querySelector('#eventType');
-        var selectIsCompleted = form.querySelector('#isCompleted');
+
+        var inputScheduleId      = form.querySelector('#scheduleId');
+        var selectDoctorId       = form.querySelector('#doctorId');
+        var selectRoomId         = form.querySelector('#roomId');
+        var inputScheduleDate    = form.querySelector('#scheduleDate');
+        var inputStartTime       = form.querySelector('#startTime');
+        var inputEndTime         = form.querySelector('#endTime');
+        var selectAppointmentId  = form.querySelector('#appointmentId');
+        var inputDescription     = form.querySelector('#description');
+        var selectPatientId      = form.querySelector('#patientId');
+        var selectEventType      = form.querySelector('#eventType');
+        var selectIsCompleted    = form.querySelector('#isCompleted');
 
         if (mode === 'add') {
             modalTitle.textContent = 'Add New Schedule';
-            inputScheduleId.value = '';
-            selectDoctorId.value = '';
-            selectRoomId.value = '';
-            inputScheduleDate.value = '';
-            inputStartTime.value = '';
-            inputEndTime.value = '';
-            inputAppointmentId.value = '';
-            inputDescription.value = '';
-            inputPatientId.value = '';
-            selectEventType.value = '';
+            form.reset();
             selectIsCompleted.value = 'false';
-        } else if (mode === 'edit') {
+        }
+        else if (mode === 'edit') {
             modalTitle.textContent = 'Edit Schedule';
-            inputScheduleId.value = button.getAttribute('data-id');
-            selectDoctorId.value = button.getAttribute('data-doctorId');
-            selectRoomId.value = button.getAttribute('data-roomId');
-            inputScheduleDate.value = button.getAttribute('data-scheduleDate');
-            inputStartTime.value = button.getAttribute('data-startTime');
-            inputEndTime.value = button.getAttribute('data-endTime');
-            inputAppointmentId.value = button.getAttribute('data-appointmentId') || '';
-            inputDescription.value = button.getAttribute('data-description') || '';
-            inputPatientId.value = button.getAttribute('data-patientId') || '';
-            selectEventType.value = button.getAttribute('data-eventType') || 'appointment';
-            selectIsCompleted.value = button.getAttribute('data-isCompleted') || 'false';
+            inputScheduleId.value     = button.getAttribute('data-id');
+            selectDoctorId.value      = button.getAttribute('data-doctorId')    || '';
+            selectRoomId.value        = button.getAttribute('data-roomId')      || '';
+            inputScheduleDate.value   = button.getAttribute('data-scheduleDate')|| '';
+            inputStartTime.value      = button.getAttribute('data-startTime')   || '';
+            inputEndTime.value        = button.getAttribute('data-endTime')     || '';
+            selectAppointmentId.value = button.getAttribute('data-appointmentId')|| '';
+            inputDescription.value    = button.getAttribute('data-description') || '';
+            selectPatientId.value     = button.getAttribute('data-patientId')   || '';
+            selectEventType.value     = button.getAttribute('data-eventType')   || '';
+            selectIsCompleted.value   = button.getAttribute('data-isCompleted') || 'false';
         }
     });
 
     function validateScheduleForm() {
         const scheduleDate = document.getElementById("scheduleDate").value;
-        const startTime = document.getElementById("startTime").value;
-        const endTime = document.getElementById("endTime").value;
+        const startTime    = document.getElementById("startTime").value;
+        const endTime      = document.getElementById("endTime").value;
 
         const today = new Date();
-        today.setHours(0, 0, 0, 0);
+        today.setHours(0,0,0,0);
         const selectedDate = new Date(scheduleDate);
 
         if (selectedDate < today) {
             alert("Schedule date cannot be in the past.");
             return false;
         }
-
         if (startTime >= endTime) {
             alert("End time must be after start time.");
             return false;
         }
-
         return true;
     }
     /*]]>*/
