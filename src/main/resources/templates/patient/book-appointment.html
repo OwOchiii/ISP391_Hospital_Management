@@ -978,37 +978,29 @@
             </div>
           </div>
 
-          <!-- Emergency Contact -->
-          <div class="col-md-6 mb-3">
-            <label for="emergencyContact" class="form-label">Emergency Contact (Optional)</label>
-            <input type="tel" id="emergencyContact" th:field="*{emergencyContact}"
-                   class="form-control" placeholder="Emergency contact number" />
+          <!-- Description/Reason -->
+          <div class="mb-4">
+            <label for="description" class="form-label">
+              Reason for Visit / Symptoms (Optional)
+            </label>
+            <textarea id="description" th:field="*{description}" class="form-control"
+                      rows="4" maxlength="250" placeholder="Please describe your symptoms or reason for the appointment..."
+                      style="resize: none;" oninput="sanitizeOnInput(this); autoResize(this)"></textarea>
+            <small class="text-muted">Maximum 250 characters. HTML, scripts, and links are not allowed.</small>
+            <div th:if="${#fields.hasErrors('description')}" class="error-message">
+              <i class="bi bi-exclamation-circle"></i>
+              <span th:errors="*{description}">Description is too long</span>
+            </div>
           </div>
-        </div>
 
-        <!-- Description/Reason -->
-        <div class="mb-4">
-          <label for="description" class="form-label">
-            Reason for Visit / Symptoms (Optional)
-          </label>
-          <textarea id="description" th:field="*{description}" class="form-control"
-                    rows="4" maxlength="250" placeholder="Please describe your symptoms or reason for the appointment..."
-                    style="resize: none;" oninput="sanitizeOnInput(this); autoResize(this)"></textarea>
-          <small class="text-muted">Maximum 250 characters. HTML, scripts, and links are not allowed.</small>
-          <div th:if="${#fields.hasErrors('description')}" class="error-message">
-            <i class="bi bi-exclamation-circle"></i>
-            <span th:errors="*{description}">Description is too long</span>
+          <!-- Submit Button -->
+          <div class="text-center">
+            <button type="button" class="btn-primary-custom" onclick="showConfirmation()">
+              <i class="bi bi-calendar-check"></i>
+              <span th:if="${isUpdate}">Update Appointment</span>
+              <span th:unless="${isUpdate}">Book Appointment</span>
+            </button>
           </div>
-        </div>
-
-        <!-- Submit Button -->
-        <div class="text-center">
-          <button type="button" class="btn-primary-custom" onclick="showConfirmation()">
-            <i class="bi bi-calendar-check"></i>
-            <span th:if="${isUpdate}">Update Appointment</span>
-            <span th:unless="${isUpdate}">Book Appointment</span>
-          </button>
-        </div>
       </form>
     </div>
   </div>

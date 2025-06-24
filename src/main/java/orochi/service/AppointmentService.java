@@ -103,17 +103,17 @@ public class AppointmentService {
         LocalDateTime endOfDay = date.atTime(23, 59, 59);
 
         List<Appointment> bookedAppointments = appointmentRepository
-            .findByDoctorIdAndDateTimeBetweenOrderByDateTime(doctorId, startOfDay, endOfDay);
+                .findByDoctorIdAndDateTimeBetweenOrderByDateTime(doctorId, startOfDay, endOfDay);
 
         return bookedAppointments.stream()
-            .map(appointment -> appointment.getDateTime().toLocalTime().format(DateTimeFormatter.ofPattern("HH:mm:ss")))
-            .collect(Collectors.toList());
+                .map(appointment -> appointment.getDateTime().toLocalTime().format(DateTimeFormatter.ofPattern("HH:mm:ss")))
+                .collect(Collectors.toList());
     }
 
     @Transactional
     public Appointment bookAppointment(Integer patientId, Integer doctorId, LocalDate appointmentDate,
                                        String appointmentTime, String email, String phoneNumber,
-                                       String description, String emergencyContact) {
+                                       String description) {
         if (email == null || email.isEmpty()) {
             throw new RuntimeException("Email is required.");
         }
@@ -142,7 +142,7 @@ public class AppointmentService {
         appointment.setPatientId(patientId);
         appointment.setDoctorId(doctorId);
         appointment.setDateTime(dateTime);
-        appointment.setStatus("Scheduled");
+        appointment.setStatus("Pending");
         appointment.setEmail(email);
         appointment.setPhoneNumber(phoneNumber);
         appointment.setDescription(description);
@@ -153,8 +153,7 @@ public class AppointmentService {
     @Transactional
     public Appointment updateAppointment(Integer appointmentId, Integer patientId, Integer doctorId,
                                          LocalDate appointmentDate, String appointmentTime,
-                                         String email, String phoneNumber, String description,
-                                         String emergencyContact) {
+                                         String email, String phoneNumber, String description) {
         if (email == null || email.isEmpty()) {
             throw new RuntimeException("Email is required.");
         }
@@ -195,7 +194,7 @@ public class AppointmentService {
     //public abstract Appointment bookAppointment(AppointmentFormDTO appointmentDTO);
     public Appointment updateAppointmentStatus(Integer appointmentId, String status) {
         Appointment appointment = appointmentRepository.findById(appointmentId)
-            .orElseThrow(() -> new RuntimeException("Appointment not found with ID: " + appointmentId));
+                .orElseThrow(() -> new RuntimeException("Appointment not found with ID: " + appointmentId));
         appointment.setStatus(status); // Direct assignment of enum value instead of toString()
         appointmentRepository.save(appointment);
         return appointment;
@@ -241,10 +240,10 @@ public class AppointmentService {
     public Appointment bookAppointment(AppointmentFormDTO appointmentDTO) {
         // Validate doctor and patient existence
         Doctor doctor = doctorRepository.findById(appointmentDTO.getDoctorId())
-            .orElseThrow(() -> new RuntimeException("Doctor not found with ID: " + appointmentDTO.getDoctorId()));
+                .orElseThrow(() -> new RuntimeException("Doctor not found with ID: " + appointmentDTO.getDoctorId()));
 
         Patient patient = patientRepository.findById(appointmentDTO.getPatientId())
-            .orElseThrow(() -> new RuntimeException("Patient not found with ID: " + appointmentDTO.getPatientId()));
+                .orElseThrow(() -> new RuntimeException("Patient not found with ID: " + appointmentDTO.getPatientId()));
 
         // Get date and time
         LocalDate appointmentDate = appointmentDTO.getAppointmentDate(); // Already a LocalDate, no need to parse

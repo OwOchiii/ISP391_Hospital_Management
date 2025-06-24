@@ -37,7 +37,5 @@ public class AppointmentFormDTO {
     @Pattern(regexp = "^0\\d{9}$|^0\\d{11}$", message = "Phone number must start with 0 and be either 10 or 12 digits")
     private String phoneNumber;
 
-    private String emergencyContact;
-
     private String description;
 }
