@@ -58,6 +58,9 @@ public class PatientDashboardController {
     private PrescriptionRepository prescriptionRepository;
 
     @Autowired
+    private TransactionRepository transactionRepository;
+
+    @Autowired
     private PatientService patientService;
 
     @Autowired
@@ -478,21 +481,6 @@ public class PatientDashboardController {
         }
     }
 
-    @GetMapping("/customer-support")
-    public String customerSupport(Model model) {
-        try {
-            Integer patientId = getCurrentPatientId();
-            if (patientId != null) {
-                model.addAttribute("patientId", patientId);
-            }
-            return "patient/customer-support";
-        } catch (Exception e) {
-            logger.error("Error loading customer support page", e);
-            model.addAttribute("errorMessage", "An error occurred: " + e.getMessage());
-            return "error";
-        }
-    }
-
     @GetMapping("/feedback")
     public String feedback(Model model) {
         try {
@@ -820,6 +808,72 @@ public class PatientDashboardController {
             logger.error("Error retrieving medical report for appointment ID: {}", appointmentId, e);
             redirectAttributes.addFlashAttribute("errorMessage", "Failed to load medical report: " + e.getMessage());
             return "redirect:/patient/appointment-list";
+        }
+    }
+
+    @GetMapping("/payment-history")
+    public String paymentHistory(Model model) {
+        try {
+            Integer patientId = getCurrentPatientId();
+            if (patientId == null) {
+                logger.error("No patientId found for authenticated user");
+                model.addAttribute("errorMessage", "Patient ID is required. Please contact support.");
+                return "error";
+            }
+
+            Optional<Patient> patientOpt = patientRepository.findById(patientId);
+            if (!patientOpt.isPresent()) {
+                logger.error("Patient not found for ID: {}", patientId);
+                model.addAttribute("errorMessage", "Patient not found");
+                return "error";
+            }
+
+            Patient patient = patientOpt.get();
+            Integer userId = patient.getUser().getUserId();
+
+            // Get all transactions for the patient
+            List<Transaction> transactions = transactionRepository.findByUserIdOrderByTimeOfPaymentDesc(userId);
+
+            // Count transactions by status
+            long paidCount = transactions.stream()
+                    .filter(t -> "Paid".equals(t.getStatus()))
+                    .count();
+
+            long refundedCount = transactions.stream()
+                    .filter(t -> "Refunded".equals(t.getStatus()))
+                    .count();
+
+            long pendingCount = transactions.stream()
+                    .filter(t -> "Pending".equals(t.getStatus()))
+                    .count();
+
+            // Count transactions by method
+            long cashCount = transactions.stream()
+                    .filter(t -> "Cash".equals(t.getMethod()))
+                    .count();
+
+            long bankingCount = transactions.stream()
+                    .filter(t -> "Banking".equals(t.getMethod()))
+                    .count();
+
+            // Add attributes to model
+            model.addAttribute("userId", userId);
+            model.addAttribute("patientId", patientId);
+            model.addAttribute("patientName", patient.getUser() != null ? patient.getUser().getFullName() : "Patient");
+            model.addAttribute("transactions", transactions);
+            model.addAttribute("totalTransactions", transactions.size());
+            model.addAttribute("paidTransactions", paidCount);
+            model.addAttribute("refundedTransactions", refundedCount);
+            model.addAttribute("pendingTransactions", pendingCount);
+            model.addAttribute("cashTransactions", cashCount);
+            model.addAttribute("bankingTransactions", bankingCount);
+
+            logger.info("Payment history loaded successfully for patient ID: {}", patientId);
+            return "patient/payment-history";
+        } catch (Exception e) {
+            logger.error("Error loading payment history for patient ID: {}", getCurrentPatientId(), e);
+            model.addAttribute("errorMessage", "An error occurred while loading the payment history: " + e.getMessage());
+            return "error";
         }
     }
 
