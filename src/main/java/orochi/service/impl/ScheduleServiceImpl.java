@@ -1,18 +1,11 @@
 package orochi.service.impl;
-import org.hibernate.Hibernate;
-import jakarta.persistence.EntityManager;
-import jakarta.persistence.PersistenceContext;
+
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.transaction.annotation.Transactional;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.data.domain.Sort;
-import orochi.model.Appointment;
-import orochi.model.Patient;
-import java.sql.Time;
-import java.time.format.DateTimeFormatter;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
@@ -29,7 +22,6 @@ import orochi.repository.PatientRepository;
 import orochi.repository.RoomRepository;
 import orochi.repository.ScheduleRepository;
 import orochi.service.ScheduleService;
-import orochi.repository.AppointmentRepository;
 import org.springframework.data.jpa.domain.Specification;
 import jakarta.persistence.criteria.Predicate;
 import java.time.DayOfWeek;
@@ -39,8 +31,6 @@ import java.time.temporal.TemporalAdjusters;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
-import jakarta.persistence.criteria.Expression;
-
 
 @Service
 public class ScheduleServiceImpl implements ScheduleService {
@@ -56,12 +46,6 @@ public class ScheduleServiceImpl implements ScheduleService {
 
     @Autowired
     private RoomRepository roomRepository;
-
-    @Autowired
-    private AppointmentRepository appointmentRepository;
-
-    @PersistenceContext
-    private EntityManager entityManager;
 
     @Override
     public List<ScheduleDTO> getDoctorScheduleForWeek(Integer doctorId, LocalDate weekStart) {
@@ -107,61 +91,15 @@ public class ScheduleServiceImpl implements ScheduleService {
     }
 
     @Override
-    @Transactional
     public ScheduleDTO saveSchedule(ScheduleDTO scheduleDTO) {
-        Schedule schedule;
-        if (scheduleDTO.getScheduleId() != null) {
-            schedule = scheduleRepository.findById(scheduleDTO.getScheduleId())
-                    .orElseThrow(() -> new RuntimeException("Schedule not found with ID: " + scheduleDTO.getScheduleId()));
-        } else {
-            schedule = new Schedule();
-        }
-        schedule.setScheduleDate(scheduleDTO.getScheduleDate());
-        schedule.setStartTime(scheduleDTO.getStartTime());
-        schedule.setEndTime(scheduleDTO.getEndTime());
-        schedule.setEventType(scheduleDTO.getEventType());
-        schedule.setDescription(scheduleDTO.getDescription());
-        schedule.setIsCompleted(scheduleDTO.getIsCompleted() != null ? scheduleDTO.getIsCompleted() : false);
-
-        if (scheduleDTO.getDoctorId() != null) {
-            schedule.setDoctor(doctorRepository.findById(scheduleDTO.getDoctorId())
-                    .orElseThrow(() -> new RuntimeException("Doctor not found with ID: " + scheduleDTO.getDoctorId())));
-        } else {
-            schedule.setDoctor(null);
-        }
-        if (scheduleDTO.getRoomId() != null) {
-            schedule.setRoom(roomRepository.findById(scheduleDTO.getRoomId())
-                    .orElseThrow(() -> new RuntimeException("Room not found with ID: " + scheduleDTO.getRoomId())));
-        } else {
-            schedule.setRoom(null);
-        }
-        if (scheduleDTO.getPatientId() != null) {
-            schedule.setPatient(patientRepository.findById(scheduleDTO.getPatientId())
-                    .orElseThrow(() -> new RuntimeException("Patient not found with ID: " + scheduleDTO.getPatientId())));
-        } else {
-            schedule.setPatient(null);
-        }
-        if (scheduleDTO.getAppointmentId() != null) {
-            schedule.setAppointment(appointmentRepository.findById(scheduleDTO.getAppointmentId())
-                    .orElseThrow(() -> new RuntimeException("Appointment not found with ID: " + scheduleDTO.getAppointmentId())));
-        } else {
-            schedule.setAppointment(null);
-        }
-        schedule = scheduleRepository.saveAndFlush(schedule);
+        Schedule schedule = convertToEntity(scheduleDTO);
+        schedule = scheduleRepository.save(schedule);
         return convertToDTO(schedule);
     }
 
     @Override
     public void deleteSchedule(Integer scheduleId) {
-        Optional<Schedule> scheduleOpt = scheduleRepository.findById(scheduleId);
-        scheduleOpt.ifPresent(schedule -> {
-            Hibernate.initialize(schedule.getDoctor());
-            Hibernate.initialize(schedule.getRoom());
-            Hibernate.initialize(schedule.getPatient());
-            Hibernate.initialize(schedule.getAppointment());
-            entityManager.detach(schedule);
-            scheduleRepository.deleteById(scheduleId);
-        });
+        scheduleRepository.deleteById(scheduleId);
     }
 
     @Override
@@ -233,16 +171,6 @@ public class ScheduleServiceImpl implements ScheduleService {
     }
 
     @Override
-    public List<Appointment> getAllAppointments() {
-        return appointmentRepository.findAll();
-    }
-
-    @Override
-    public List<Patient> getAllPatients() {
-        return patientRepository.findAll();
-    }
-
-    @Override
     public String formatWeekDateRange(LocalDate startDate) {
         LocalDate endDate = startDate.plusDays(6);
         return String.format("%s - %s, %d",
@@ -309,6 +237,16 @@ public class ScheduleServiceImpl implements ScheduleService {
 
     private Schedule convertToEntity(ScheduleDTO dto) {
         Schedule schedule = new Schedule();
+        if (dto.getScheduleId() != null) {
+            Optional<Schedule> existingSchedule = scheduleRepository.findById(dto.getScheduleId());
+            if (existingSchedule.isPresent()) {
+                schedule = existingSchedule.get();
+            }
+        }
+        schedule.setDoctorId(dto.getDoctorId());
+        schedule.setRoomId(dto.getRoomId());
+        schedule.setPatientId(dto.getPatientId());
+        schedule.setAppointmentId(dto.getAppointmentId());
         schedule.setScheduleDate(dto.getScheduleDate());
         schedule.setStartTime(dto.getStartTime());
         schedule.setEndTime(dto.getEndTime());
@@ -392,38 +330,54 @@ public class ScheduleServiceImpl implements ScheduleService {
 
     @Override
     public Page<ScheduleDTO> findSchedulesFiltered(
-            Integer    scheduleId,
-            String     eventType,
-            Integer    roomId,
-            LocalDate  startDate,
-            LocalDate  endDate,
-            LocalTime  startTime,
-            LocalTime  endTime,
-            int        page,
-            int        size
-    ) {
-        // Tạo pageable với sort
-        Pageable pageable = PageRequest.of(
-                page,
-                size,
+            Integer scheduleId,
+            String eventType,
+            Integer roomId,
+            LocalTime startTime,
+            LocalTime endTime,
+            LocalDate startDate,
+            LocalDate endDate,
+            int page,
+            int size) {
+
+        // tạo Pageable với sort mặc định trên scheduleDate, startTime
+        Pageable pageable = PageRequest.of(page, size,
                 Sort.by("scheduleDate").ascending()
-                        .and(Sort.by("startTime").ascending())
-        );
+                        .and(Sort.by("startTime")));
 
-        // Gọi repository trực tiếp với LocalDate/LocalTime
-        Page<Schedule> pageEntity = scheduleRepository.findSchedulesFiltered(
-                scheduleId,
-                eventType,
-                roomId,
-                startDate,
-                endDate,
-                startTime,
-                endTime,
-                pageable
-        );
+        // build Specification động
+        Specification<Schedule> spec = (root, query, cb) -> {
+            List<Predicate> preds = new ArrayList<>();
 
-        // Map sang DTO
-        return pageEntity.map(this::convertToDTO);
+            if (scheduleId != null) {
+                preds.add(cb.equal(root.get("scheduleId"), scheduleId));
+            }
+            if (StringUtils.hasText(eventType)) {
+                preds.add(cb.equal(root.get("eventType"), eventType));
+            }
+            if (roomId != null) {
+                preds.add(cb.equal(root.get("roomId"), roomId));
+            }
+            if (startTime != null) {
+                preds.add(cb.equal(root.get("startTime"), startTime));
+            }
+            if (endTime != null) {
+                preds.add(cb.equal(root.get("endTime"), endTime));
+            }
+            if (startDate != null) {
+                preds.add(cb.greaterThanOrEqualTo(root.get("scheduleDate"), startDate));
+            }
+            if (endDate != null) {
+                preds.add(cb.lessThanOrEqualTo(root.get("scheduleDate"), endDate));
+            }
+
+            return cb.and(preds.toArray(new Predicate[0]));
+        };
+
+        // thực thi query + pagination
+        Page<Schedule> pageEnt = scheduleRepository.findAll(spec, pageable);
+
+        // map sang DTO và trả về
+        return pageEnt.map(this::convertToDTO);
     }
-
 }

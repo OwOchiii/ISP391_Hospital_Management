@@ -1,10 +1,8 @@
-// src/main/java/orochi/controller/AdminRoomController.java
+// src/main/java/orochi/controller/RoomController.java
 package orochi.controller;
 
 import orochi.model.Room;
-import orochi.model.Department;
 import orochi.service.RoomService;
-import orochi.service.DepartmentService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
@@ -20,28 +18,27 @@ public class AdminRoomController {
     @Autowired
     private RoomService roomService;
 
-    @Autowired
-    private DepartmentService departmentService;  // Thêm DepartmentService để lấy danh sách phòng ban
-
     /**
      * GET /admin/rooms?adminId=...
      * Hiển thị danh sách các phòng, hỗ trợ search (tìm theo roomNumber hoặc roomName),
-     * filter theo status (Available/Occupied), và phân trang.
+     * và filter theo status (Available/Occupied).
      */
     @GetMapping
     public String listRooms(
             @RequestParam("adminId") Integer adminId,
             @RequestParam(value = "search", required = false) String search,
             @RequestParam(value = "statusFilter", required = false) String statusFilter,
-            @RequestParam(value = "page", defaultValue = "0") int page,
-            @RequestParam(value = "size", defaultValue = "6") int size,
             Model model) {
 
-        // 1. Lấy danh sách phòng có filter/search
+        // 1. Lấy danh sách phòng
         List<Room> rooms = roomService.getAllRooms();
+
+        // 2. Nếu có search, filter trước
         if (search != null && !search.isBlank()) {
             rooms = roomService.searchRooms(search);
         }
+
+        // 3. Nếu có filter theo status
         if (statusFilter != null && !statusFilter.isBlank()) {
             String sf = statusFilter.trim();
             rooms = rooms.stream()
@@ -49,34 +46,18 @@ public class AdminRoomController {
                     .toList();
         }
 
-        // 2. Phân trang trên List<Room>
-        int totalItems = rooms.size();
-        int totalPages = totalItems > 0 ? (int) Math.ceil((double) totalItems / size) : 1;
-        if (page < 0) page = 0;
-        if (page >= totalPages) page = totalPages - 1;
-        int fromIndex = page * size;
-        int toIndex = Math.min(fromIndex + size, totalItems);
-        List<Room> pageRooms = rooms.subList(fromIndex, toIndex);
-
-        // 3. Lấy danh sách departments
-        List<Department> departments = departmentService.getAllDepartments();
-
-        // 4. Đẩy dữ liệu lên model
-        model.addAttribute("rooms", pageRooms);
-        model.addAttribute("departments", departments);
+        // Đẩy lên model
+        model.addAttribute("rooms", rooms);
         model.addAttribute("adminId", adminId);
         model.addAttribute("search", search);
         model.addAttribute("statusFilter", statusFilter);
-        model.addAttribute("currentPage", page);
-        model.addAttribute("totalPages", totalPages);
-        model.addAttribute("pageSize", size);
 
-        return "admin/room/list";
+        return "admin/room/list";  // Thymeleaf sẽ tìm file: templates/admin/room/list.html
     }
 
     /**
      * POST /admin/rooms/{id}/toggleStatus?adminId=...
-     * Đổi trạng thái phòng: Available <-> Occupied.
+     * Chuyển trạng thái phòng: nếu "Available" thì sang "Occupied", ngược lại nếu là "Occupied" thì sang "Available".
      */
     @PostMapping("/{id}/toggleStatus")
     public String toggleRoomStatus(
@@ -86,7 +67,9 @@ public class AdminRoomController {
         Optional<Room> roomOpt = roomService.findById(roomId);
         if (roomOpt.isPresent()) {
             Room r = roomOpt.get();
-            String newStatus = r.getStatus().equalsIgnoreCase("Available") ? "Occupied" : "Available";
+            // Giả sử chỉ có hai trạng thái chính: "Available" / "Occupied"
+            String newStatus = r.getStatus().equalsIgnoreCase("Available")
+                    ? "Occupied" : "Available";
             r.setStatus(newStatus);
             roomService.save(r);
         }
@@ -95,14 +78,17 @@ public class AdminRoomController {
 
     /**
      * POST /admin/rooms/save?adminId=...
-     * Lưu (tạo mới hoặc cập nhật) phòng.
+     * Lưu thông tin phòng (cả tạo mới và cập nhật).
      */
     @PostMapping("/save")
     public String saveRoom(
             @RequestParam("adminId") Integer adminId,
             @ModelAttribute Room room) {
 
+        // Nếu là edit, thì Room sẽ có roomId, nếu là add thì roomId==null
+        // Lưu vào database
         roomService.save(room);
+
         return "redirect:/admin/rooms?adminId=" + adminId;
     }
 }

@@ -59,6 +59,6 @@ public interface PatientRepository extends JpaRepository<Patient, Integer> {
             @Param("statusFilter") String statusFilter
     );
 
-    boolean existsByUserId(Integer userId);
+
 
 }
