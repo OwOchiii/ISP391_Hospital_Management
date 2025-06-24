@@ -187,52 +187,47 @@ public class PatientDashboardController {
     @GetMapping("/appointment-list/{id}/cancel")
     public String showCancelAppointmentPage(@PathVariable("id") Integer appointmentId,
                                             @RequestParam("patientId") Integer patientId,
-                                            Model model,
-                                            RedirectAttributes redirectAttributes) {
+                                            Model model) {
         try {
             Integer currentPatientId = getCurrentPatientId();
             if (currentPatientId == null || !currentPatientId.equals(patientId)) {
                 logger.error("Unauthorized access attempt for patient ID: {}", patientId);
-                redirectAttributes.addFlashAttribute("successMessage", "Invalid patient ID! Please try again.");
-                return "redirect:/patient/appointment-list";
+                model.addAttribute("errorMessage", "Unauthorized access or invalid patient ID");
+                return "error";
             }
 
             // Get patient info
-            Patient patient;
-            try {
-                patient = patientRepository.findById(patientId)
-                        .orElseThrow(() -> new RuntimeException("Patient not found for ID: " + patientId));
-            } catch (RuntimeException e) {
+            Optional<Patient> patientOpt = patientRepository.findById(patientId);
+            if (!patientOpt.isPresent()) {
                 logger.error("Patient not found for ID: {}", patientId);
-                redirectAttributes.addFlashAttribute("successMessage", "Invalid patient ID! Please try again.");
-                return "redirect:/patient/appointment-list";
+                model.addAttribute("errorMessage", "Patient not found");
+                return "error";
             }
+            Patient patient = patientOpt.get();
             model.addAttribute("patientName", patient.getUser().getFullName());
             model.addAttribute("patientId", patientId);
 
             // Get appointment info
-            Appointment appointment;
-            try {
-                appointment = appointmentRepository.findById(appointmentId)
-                        .orElseThrow(() -> new RuntimeException("Appointment not found for ID: " + appointmentId));
-            } catch (RuntimeException e) {
+            Optional<Appointment> appointmentOpt = appointmentRepository.findById(appointmentId);
+            if (!appointmentOpt.isPresent()) {
                 logger.error("Appointment not found for ID: {}", appointmentId);
-                redirectAttributes.addFlashAttribute("successMessage", "Invalid appointment ID or patient ID! Please try again.");
-                return "redirect:/patient/appointment-list";
+                model.addAttribute("errorMessage", "Appointment not found");
+                return "error";
             }
+            Appointment appointment = appointmentOpt.get();
 
             // Verify appointment belongs to the patient
             if (!appointment.getPatient().getPatientId().equals(patientId)) {
                 logger.error("Appointment ID: {} does not belong to patient ID: {}", appointmentId, patientId);
-                redirectAttributes.addFlashAttribute("successMessage", "Invalid appointment ID or patient ID! Please try again.");
-                return "redirect:/patient/appointment-list";
+                model.addAttribute("errorMessage", "You are not authorized to cancel this appointment");
+                return "error";
             }
 
             // Check if appointment is cancellable
-            if (!"Scheduled".equals(appointment.getStatus()) && !"Pending".equals(appointment.getStatus())) {
+            if (!"Scheduled".equals(appointment.getStatus())) {
                 logger.warn("Attempt to cancel non-scheduled appointment ID: {}", appointmentId);
-                redirectAttributes.addFlashAttribute("successMessage", "Only scheduled or pending appointments can be cancelled.");
-                return "redirect:/patient/appointment-list";
+                model.addAttribute("errorMessage", "Only scheduled appointments can be cancelled");
+                return "error";
             }
 
             model.addAttribute("appointment", appointment);
@@ -242,8 +237,8 @@ public class PatientDashboardController {
             return "patient/cancel-appointment";
         } catch (Exception e) {
             logger.error("Error loading cancel appointment page for appointment ID: {}", appointmentId, e);
-            redirectAttributes.addFlashAttribute("successMessage", "An error occurred while loading the cancellation page. Please try again.");
-            return "redirect:/patient/appointment-list";
+            model.addAttribute("errorMessage", "An error occurred while loading the cancellation page: " + e.getMessage());
+            return "error";
         }
     }
 
@@ -277,7 +272,7 @@ public class PatientDashboardController {
             }
 
             // Check if appointment is cancellable
-            if (!"Scheduled".equals(appointment.getStatus()) && !"Pending".equals(appointment.getStatus())) {
+            if (!"Scheduled".equals(appointment.getStatus())) {
                 logger.warn("Attempt to cancel non-scheduled appointment ID: {}", appointmentId);
                 redirectAttributes.addFlashAttribute("errorMessage", "Only scheduled appointments can be cancelled");
                 return "redirect:/patient/appointment-list";

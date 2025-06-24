@@ -875,7 +875,7 @@
         <form id="cancelForm" th:action="@{/patient/appointment-list/{id}/cancel(id=${appointment.appointmentId}, patientId=${patientId})}" method="post">
           <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}" />
           <input type="hidden" name="patientId" th:value="${patientId}" />
-          <textarea id="description" class="description-input" name="description" maxlength="250" placeholder="Enter reason for cancellation" style="resize: none;" oninput="sanitizeOnInput(this); autoResize(this)"></textarea>
+          <textarea class="description-input" name="description" placeholder="Enter reason for cancellation" th:text="${appointment.description}"></textarea>
           <div class="mt-3 d-flex gap-2">
             <button type="button" class="btn-danger-custom" onclick="showCancelModal()">
               <i class="bi bi-x-circle"></i>
@@ -963,55 +963,6 @@
     }
     closeModal('cancelModal');
   }
-
-  // Sanitize Description input to prevent XSS, HTML, and malicious URLs
-  function sanitizeDescription(input) {
-    // Step 1: Encode HTML characters to prevent HTML rendering
-    const encoded = input.replace(/</g, '&lt;').replace(/>/g, '&gt;')
-                         .replace(/"/g, '&quot;').replace(/'/g, '&#39;');
-
-    // Step 2: Remove or encode potential script tags and dangerous URLs
-    const div = document.createElement('div');
-    div.innerText = encoded; // Use innerText to ensure no HTML/script execution
-    let sanitized = div.innerHTML;
-
-    // Step 3: Remove any remaining <a> tags or URLs with dangerous protocols
-    sanitized = sanitized.replace(/<a\b[^>]*>(.*?)<\/a>/gi, '$1'); // Remove <a> tags, keep content
-    sanitized = sanitized.replace(/\b(javascript|data):/gi, ''); // Remove dangerous protocols
-
-    // Step 4: Normalize whitespace and trim
-    sanitized = sanitized.trim().replace(/\s+/g, ' ');
-
-    return sanitized;
-  }
-
-  // Trim and clean input fields on blur
-  function cleanInputOnBlur(id, isStrict = false) {
-    const element = document.getElementById(id);
-    if (!element) return;
-
-    element.addEventListener('blur', () => {
-      let value = element.value.trim();
-
-      if (isStrict) {
-        // Remove all spaces for strict fields (phone/email)
-        value = value.replace(/\s+/g, '');
-      } else {
-        // Sanitize Description field
-        if (id === 'description') {
-          value = sanitizeDescription(value);
-        } else {
-          // Normalize spacing between words (one space only)
-          value = value.replace(/\s+/g, ' ');
-        }
-      }
-
-      element.value = value;
-    });
-  }
-
-  // Apply trimming logic to input fields
-  cleanInputOnBlur('description', false); // sanitize and normalize spaces
 
   document.addEventListener('DOMContentLoaded', function() {
     console.log('Page loaded, initializing...');

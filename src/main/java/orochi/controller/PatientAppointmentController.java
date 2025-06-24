@@ -44,59 +44,45 @@ public class PatientAppointmentController {
     public String showBookAppointmentForm(
             @RequestParam(required = false) Integer patientId,
             @RequestParam(required = false) Integer appointmentId,
-            Model model,
-            RedirectAttributes redirectAttributes) {
+            Model model) {
         if (patientId == null) {
             Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
             if (authentication != null && authentication.getPrincipal() instanceof CustomUserDetails) {
                 CustomUserDetails userDetails = (CustomUserDetails) authentication.getPrincipal();
                 patientId = userDetails.getPatientId();
                 if (patientId == null) {
-                    redirectAttributes.addFlashAttribute("successMessage", "No patient ID found. Please login as a patient.");
-                    return "redirect:/patient/appointment-list";
+                    return "redirect:/error?message=No patient ID found. Please login as a patient.";
                 }
             } else {
-                redirectAttributes.addFlashAttribute("successMessage", "Authentication required to book an appointment.");
-                return "redirect:/patient/appointment-list";
+                return "redirect:/error?message=Authentication required to book an appointment.";
             }
         }
 
         Integer finalPatientId = patientId;
-        Patient patient;
-        try {
-            patient = patientRepository.findById(patientId)
-                    .orElseThrow(() -> new RuntimeException("Patient not found with ID: " + finalPatientId));
-        } catch (RuntimeException e) {
-            redirectAttributes.addFlashAttribute("successMessage", "Invalid patient ID! Please try again.");
-            return "redirect:/patient/appointment-list";
-        }
+        Patient patient = patientRepository.findById(patientId)
+                .orElseThrow(() -> new RuntimeException("Patient not found with ID: " + finalPatientId));
 
         AppointmentFormDTO appointmentForm;
         boolean isUpdate = appointmentId != null;
         if (isUpdate) {
-            try {
-                Appointment appointment = appointmentRepository.findById(appointmentId)
-                        .orElseThrow(() -> new RuntimeException("Appointment not found with ID: " + appointmentId));
-                if (!appointment.getPatientId().equals(patientId)) {
-                    redirectAttributes.addFlashAttribute("successMessage", "Invalid appointment ID or patient ID! Please try again.");
-                    return "redirect:/patient/appointment-list";
-                }
-                DoctorSpecialization doctorSpecialization = doctorSpecializationRepository.findByDoctorId(appointment.getDoctorId())
-                        .orElseThrow(() -> new RuntimeException("Specialization not found for doctor ID: " + appointment.getDoctorId()));
-                appointmentForm = new AppointmentFormDTO();
-                appointmentForm.setAppointmentId(appointmentId);
-                appointmentForm.setPatientId(patientId);
-                appointmentForm.setSpecialtyId(doctorSpecialization.getSpecialization().getSpecId());
-                appointmentForm.setDoctorId(appointment.getDoctorId());
-                appointmentForm.setAppointmentDate(appointment.getDateTime().toLocalDate());
-                appointmentForm.setAppointmentTime(appointment.getDateTime().toLocalTime().toString());
-                appointmentForm.setEmail(appointment.getEmail() != null ? appointment.getEmail() : patient.getUser().getEmail());
-                appointmentForm.setPhoneNumber(appointment.getPhoneNumber() != null ? appointment.getPhoneNumber() : patient.getUser().getPhoneNumber());
-                appointmentForm.setDescription(appointment.getDescription());
-            } catch (RuntimeException e) {
-                redirectAttributes.addFlashAttribute("successMessage", "Invalid appointment ID or patient ID! Please try again.");
-                return "redirect:/patient/appointment-list";
+            Appointment appointment = appointmentRepository.findById(appointmentId)
+                    .orElseThrow(() -> new RuntimeException("Appointment not found with ID: " + appointmentId));
+            if (!appointment.getPatientId().equals(patientId)) {
+                throw new RuntimeException("You do not have permission to update this appointment.");
             }
+            DoctorSpecialization doctorSpecialization = doctorSpecializationRepository.findByDoctorId(appointment.getDoctorId())
+                    .orElseThrow(() -> new RuntimeException("Specialization not found for doctor ID: " + appointment.getDoctorId()));
+            appointmentForm = new AppointmentFormDTO();
+            appointmentForm.setAppointmentId(appointmentId);
+            appointmentForm.setPatientId(patientId);
+            appointmentForm.setSpecialtyId(doctorSpecialization.getSpecialization().getSpecId());
+            appointmentForm.setDoctorId(appointment.getDoctorId());
+            appointmentForm.setAppointmentDate(appointment.getDateTime().toLocalDate());
+            appointmentForm.setAppointmentTime(appointment.getDateTime().toLocalTime().toString());
+            appointmentForm.setEmail(appointment.getEmail() != null ? appointment.getEmail() : patient.getUser().getEmail());
+            appointmentForm.setPhoneNumber(appointment.getPhoneNumber() != null ? appointment.getPhoneNumber() : patient.getUser().getPhoneNumber());
+            appointmentForm.setDescription(appointment.getDescription());
+            appointmentForm.setEmergencyContact(null);
         } else {
             appointmentForm = new AppointmentFormDTO();
             appointmentForm.setPatientId(patientId);
@@ -180,7 +166,8 @@ public class PatientAppointmentController {
                         appointmentForm.getAppointmentTime(),
                         appointmentForm.getEmail(),
                         appointmentForm.getPhoneNumber(),
-                        appointmentForm.getDescription()
+                        appointmentForm.getDescription(),
+                        appointmentForm.getEmergencyContact()
                 );
                 redirectAttributes.addFlashAttribute("successMessage", "Your appointment has been successfully updated.");
             } else {
@@ -191,7 +178,8 @@ public class PatientAppointmentController {
                         appointmentForm.getAppointmentTime(),
                         appointmentForm.getEmail(),
                         appointmentForm.getPhoneNumber(),
-                        appointmentForm.getDescription()
+                        appointmentForm.getDescription(),
+                        appointmentForm.getEmergencyContact()
                 );
                 redirectAttributes.addFlashAttribute("successMessage",
                         "Your appointment has been successfully booked for " +
