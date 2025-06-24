@@ -45,7 +45,7 @@
             overflow-x: hidden;
         }
 
-        /* Updated Compact Sidebar Styles */
+        /* Updated Sidebar Styles to match dashboard */
         .sidebar {
             position: fixed;
             top: 0;
@@ -57,7 +57,6 @@
             z-index: 1000;
             transition: transform 0.3s ease;
             overflow-y: auto;
-            overflow-x: hidden;
         }
 
         .sidebar.collapsed {
@@ -65,17 +64,16 @@
         }
 
         .sidebar-header {
-            padding: 1.25rem 1.5rem; /* Reduced from 1.5rem */
+            padding: 1.5rem;
             border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-            background: rgba(255, 255, 255, 0.05);
         }
 
         .brand-logo {
-            font-size: 1.4rem; /* Reduced from 1.5rem */
+            font-size: 1.5rem;
             font-weight: 700;
             display: flex;
             align-items: center;
-            gap: 0.75rem;
+            gap: 0.5rem;
             color: white;
             text-decoration: none;
         }
@@ -85,84 +83,42 @@
             text-decoration: none;
         }
 
-        .brand-logo i {
-            font-size: 1.8rem; /* Reduced from 2rem */
-            background: linear-gradient(45deg, #34d399, #10b981);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            background-clip: text;
-        }
-
         .sidebar-nav {
-            padding: 1rem 0; /* Reduced from 1.5rem */
+            padding: 1rem 0;
         }
 
         .nav-section {
-            margin-bottom: 1rem; /* Reduced from 1.5rem */
+            margin-bottom: 1rem;
         }
 
         .nav-section-title {
-            padding: 0.5rem 1.5rem; /* Reduced from 0.75rem */
+            padding: 0.75rem 1.5rem;
             font-size: 0.75rem;
             text-transform: uppercase;
             letter-spacing: 0.05em;
             color: rgba(255, 255, 255, 0.6);
             font-weight: 600;
-            margin-bottom: 0.25rem; /* Reduced from 0.5rem */
         }
 
         .nav-item {
-            margin: 0.125rem 1rem; /* Reduced from 0.25rem */
+            margin: 0.25rem 1rem;
         }
 
         .nav-link {
             color: rgba(255, 255, 255, 0.8);
-            padding: 0.625rem 1rem; /* Reduced from 0.875rem 1.25rem */
-            border-radius: 10px; /* Reduced from 12px */
+            padding: 0.75rem 1rem;
+            border-radius: 10px;
             display: flex;
             align-items: center;
-            gap: 0.75rem; /* Reduced from 0.875rem */
+            gap: 0.75rem;
             text-decoration: none;
-            font-weight: 500;
             transition: all 0.3s ease;
-            position: relative;
-            font-size: 0.875rem;
-            border: none;
-            background: transparent;
-            width: 100%;
-            text-align: left;
         }
 
-        .nav-link:hover {
+        .nav-link:hover,
+        .nav-link.active {
             background: rgba(255, 255, 255, 0.1);
             color: white;
-            transform: translateX(4px);
-            text-decoration: none;
-        }
-
-        .nav-link.active {
-            background: rgba(255, 255, 255, 0.15);
-            color: white;
-            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
-        }
-
-        .nav-link.active::before {
-            content: '';
-            position: absolute;
-            left: 0;
-            top: 50%;
-            transform: translateY(-50%);
-            width: 4px;
-            height: 24px;
-            background: #34d399;
-            border-radius: 0 4px 4px 0;
-        }
-
-        .nav-link i {
-            font-size: 1.125rem;
-            width: 20px;
-            text-align: center;
-            flex-shrink: 0;
         }
 
         /* Main Content */
@@ -216,6 +172,90 @@
             display: flex;
             align-items: center;
             gap: 1.5rem;
+        }
+
+        .notification-dropdown {
+            position: relative;
+        }
+
+        .notification-btn {
+            background: none;
+            border: none;
+            cursor: pointer;
+            font-size: 1.25rem;
+            color: var(--text-dark);
+            position: relative;
+        }
+
+        .notification-badge {
+            position: absolute;
+            top: -5px;
+            right: -10px;
+            background: var(--primary-color);
+            color: white;
+            border-radius: 50%;
+            padding: 0.2rem 0.6rem;
+            font-size: 0.75rem;
+            font-weight: 600;
+        }
+
+        .dropdown-menu {
+            width: 350px;
+            border-radius: 12px;
+            overflow: hidden;
+            margin-top: 0.5rem;
+            border: 1px solid var(--border-color);
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+        }
+
+        .dropdown-header {
+            background: var(--primary-color);
+            color: white;
+            padding: 1rem;
+            font-weight: 600;
+            font-size: 0.875rem;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        .notification-list {
+            max-height: 300px;
+            overflow-y: auto;
+        }
+
+        .notification-item {
+            padding: 0.75rem 1rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            transition: background 0.3s ease;
+        }
+
+        .notification-item:hover {
+            background: rgba(0, 0, 0, 0.03);
+        }
+
+        .notification-content {
+            flex: 1;
+            margin-right: 0.5rem;
+        }
+
+        .notification-message {
+            font-size: 0.875rem;
+            color: var(--text-dark);
+        }
+
+        .notification-time {
+            font-size: 0.75rem;
+            color: var(--text-muted);
+        }
+
+        .mark-read-btn {
+            background: none;
+            border: none;
+            cursor: pointer;
+            color: var(--primary-color);
+            font-size: 1rem;
         }
 
         .doctor-info {
@@ -778,7 +818,7 @@
                 </a>
             </div>
             <div class="nav-item">
-                <a th:href="@{//doctor/support-request}" class="nav-link">
+                <a th:href="@{/doctor/support-request}" class="nav-link">
                     <i class="bi bi-chat-dots"></i>
                     Support Ticket Submission
                 </a>
@@ -817,6 +857,35 @@
         </div>
 
         <div class="header-right">
+            <!-- Add notification dropdown -->
+            <div class="notification-dropdown dropdown">
+                <button class="notification-btn" id="notificationDropdown" data-bs-toggle="dropdown" aria-expanded="false">
+                    <i class="bi bi-bell"></i>
+                    <span class="notification-badge" th:if="${unreadNotifications > 0}" th:text="${unreadNotifications}">0</span>
+                </button>
+                <ul class="dropdown-menu dropdown-menu-end notification-menu" aria-labelledby="notificationDropdown">
+                    <li class="dropdown-header">Notifications</li>
+                    <div class="notification-list" th:if="${notifications != null && !notifications.isEmpty()}">
+                        <li th:each="notification : ${notifications}" class="notification-item" th:classappend="${!notification.isRead ? 'unread' : ''}">
+                            <div class="notification-content">
+                                <div class="notification-message" th:text="${notification.message}">Notification message</div>
+                                <div class="notification-time" th:text="${#temporals.format(notification.createdAt, 'MMM dd, yyyy HH:mm')}">Jun 18, 2025</div>
+                            </div>
+                            <button th:if="${!notification.isRead}" class="mark-read-btn" th:data-id="${notification.notificationId}">
+                                <i class="bi bi-check-circle"></i>
+                            </button>
+                        </li>
+                    </div>
+                    <li class="empty-notification" th:if="${notifications == null || notifications.isEmpty()}">
+                        <div class="text-center py-3">
+                            <i class="bi bi-bell-slash"></i>
+                            <p>No notifications</p>
+                        </div>
+                    </li>
+                    <li><hr class="dropdown-divider"></li>
+                    <li class="text-center"><a href="#" class="dropdown-item text-primary">View all notifications</a></li>
+                </ul>
+            </div>
             <div class="doctor-info">
                 <div class="doctor-avatar">
                     <span th:text="${doctorName != null ? #strings.substring(doctorName, 0, 2).toUpperCase() : 'DR'}">DR</span>
@@ -1337,6 +1406,58 @@
             patientsContainer.style.display = 'grid';
         }
     }
+
+    // Notification functionality
+    document.addEventListener('DOMContentLoaded', function() {
+        // Initialize Bootstrap dropdowns
+        var dropdownElementList = [].slice.call(document.querySelectorAll('.dropdown-toggle'))
+        dropdownElementList.map(function (dropdownToggleEl) {
+            return new bootstrap.Dropdown(dropdownToggleEl)
+        });
+
+        // Mark notification as read
+        document.querySelectorAll('.mark-read-btn').forEach(button => {
+            button.addEventListener('click', function(e) {
+                e.stopPropagation(); // Prevent dropdown from closing
+                const notificationId = this.getAttribute('data-id');
+                markNotificationAsRead(notificationId, this);
+            });
+        });
+    });
+
+    // Function to mark notification as read
+    function markNotificationAsRead(notificationId, buttonElement) {
+        fetch(`/api/notifications/${notificationId}/read`, {
+            method: 'PUT',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRF-TOKEN': document.querySelector('meta[name="_csrf"]').getAttribute('content')
+            }
+        })
+            .then(response => {
+                if (response.ok) {
+                    // Update UI
+                    const notificationItem = buttonElement.closest('.notification-item');
+                    notificationItem.classList.remove('unread');
+                    buttonElement.style.display = 'none';
+
+                    // Update badge count
+                    const badge = document.querySelector('.notification-badge');
+                    if (badge) {
+                        const currentCount = parseInt(badge.textContent);
+                        if (currentCount > 1) {
+                            badge.textContent = currentCount - 1;
+                        } else {
+                            badge.style.display = 'none';
+                        }
+                    }
+                }
+            })
+            .catch(error => {
+                console.error('Error marking notification as read:', error);
+            });
+    }
+
     /*]]>*/
 </script>
 </body>

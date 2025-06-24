@@ -76,7 +76,8 @@ public class FileDownloadController {
                 fileName = fileUrl.substring(fileUrl.lastIndexOf("/") + 1);
             }
 
-            return serveFile(fileName, !download); // Invert the boolean - inline is now default
+            // Use inline by default (when download=false)
+            return serveFile(fileName, !download);
         } catch (Exception e) {
             logger.error("Error downloading report by ID: {}", reportId, e);
             return ResponseEntity.internalServerError().build();
@@ -357,10 +358,21 @@ public class FileDownloadController {
             // Log download attempt
             logger.info("Serving file '{}' with disposition: {}", fileName, contentDisposition);
 
-            return ResponseEntity.ok()
+            // Build response with appropriate headers
+            ResponseEntity.BodyBuilder responseBuilder = ResponseEntity.ok()
                     .contentType(MediaType.parseMediaType(contentType))
-                    .header(HttpHeaders.CONTENT_DISPOSITION, contentDisposition)
-                    .body(resource);
+                    .header(HttpHeaders.CONTENT_DISPOSITION, contentDisposition);
+
+            // Special handling for PDFs - add headers to encourage browser display
+            if (lowerCaseFileName.endsWith(".pdf") && inline) {
+                responseBuilder
+                    .header("Cache-Control", "no-store")
+                    .header("Pragma", "no-cache")
+                    .header("Expires", "0")
+                    .header("X-Content-Type-Options", "nosniff");
+            }
+
+            return responseBuilder.body(resource);
         } catch (MalformedURLException e) {
             logger.error("Error creating URL for file: {}", fileName, e);
             return ResponseEntity.badRequest().build();
