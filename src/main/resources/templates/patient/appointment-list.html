@@ -982,14 +982,14 @@
         My Profile
       </a>
     </div>
-
-    <div class="nav-section-title">Support</div>
     <div class="nav-item">
-      <a th:href="@{/patient/customer-support(patientId=${patientId})}" class="nav-link">
-        <i class="bi bi-headset"></i>
-        Customer Support
+      <a th:href="@{/patient/payment-history}" class="nav-link">
+        <i class="bi bi-credit-card"></i>
+        Payment History
       </a>
     </div>
+
+    <div class="nav-section-title">Support</div>
     <div class="nav-item">
       <a th:href="@{/patient/feedback}" class="nav-link">
         <i class="bi bi-chat-square-text"></i>
@@ -1108,13 +1108,6 @@
             <i class="bi bi-calendar date-icon"></i>
           </div>
         </div>
-
-        <div class="d-flex gap-2">
-          <button class="btn-outline-custom btn-sm" onclick="exportAppointments()">
-            <i class="bi bi-download"></i>
-            Export
-          </button>
-        </div>
       </div>
     </div>
 
@@ -1196,11 +1189,6 @@
         <div class="appointment-actions">
           <!-- Actions based on status -->
           <div th:if="${appointment.status == 'Pending'}">
-            <a th:href="@{/patient/appointment-list/{id}/details(id=${appointment.appointmentId}, patientId=${patientId})}"
-               class="btn-primary-custom btn-sm">
-              <i class="bi bi-eye"></i>
-              View Details
-            </a>
             <button class="btn-warning-custom btn-sm"
                     th:onclick="'showUpdateModal(' + ${appointment.appointmentId} + ')'">
               <i class="bi bi-pencil"></i>
@@ -1214,16 +1202,11 @@
           </div>
 
           <div th:if="${appointment.status == 'Scheduled'}">
-            <a th:href="@{/patient/appointment-list/{id}/details(id=${appointment.appointmentId}, patientId=${patientId})}"
-               class="btn-primary-custom btn-sm">
-              <i class="bi bi-eye"></i>
-              View Details
+            <a th:href="@{/patient/appointment-list/{id}/reschedule(id=${appointment.appointmentId}, patientId=${patientId})}"
+               class="btn-warning-custom btn-sm">
+              <i class="bi bi-calendar-event"></i>
+              Reschedule
             </a>
-            <button class="btn-warning-custom btn-sm"
-                    th:onclick="'showUpdateModal(' + ${appointment.appointmentId} + ')'">
-              <i class="bi bi-pencil"></i>
-              Update
-            </button>
             <a th:href="@{/patient/appointment-list/{id}/cancel(id=${appointment.appointmentId}, patientId=${patientId})}"
                class="btn-danger-custom btn-sm">
               <i class="bi bi-x-circle"></i>
@@ -1232,29 +1215,14 @@
           </div>
 
           <div th:if="${appointment.status == 'Completed'}">
-            <a th:href="@{/patient/appointment-list/{id}/details(id=${appointment.appointmentId}, patientId=${patientId})}"
-               class="btn-primary-custom btn-sm">
-              <i class="bi bi-eye"></i>
-              View Details
-            </a>
             <a th:href="@{/patient/appointment-list/{id}/report(id=${appointment.appointmentId}, patientId=${patientId})}"
                class="btn-outline-custom btn-sm">
               <i class="bi bi-file-medical"></i>
               Medical Report
             </a>
-            <button class="btn-outline-custom btn-sm"
-                    th:onclick="'showFeedbackModal(' + ${appointment.appointmentId} + ')'">
-              <i class="bi bi-star"></i>
-              Leave Review
-            </button>
           </div>
 
           <div th:if="${appointment.status == 'Cancel' || appointment.status == 'Cancelled' || appointment.status == 'Completed'}">
-            <a th:href="@{/patient/appointment-list/{id}/details(id=${appointment.appointmentId}, patientId=${patientId})}"
-               class="btn-outline-custom btn-sm">
-              <i class="bi bi-eye"></i>
-              View Details
-            </a>
             <a th:href="@{/patient/book-appointment}"
                class="btn-primary-custom btn-sm">
               <i class="bi bi-calendar-plus"></i>
@@ -1331,10 +1299,10 @@
               <i class="bi bi-eye"></i>
               View Details
             </a>
-            <button class="btn-warning-custom btn-sm" onclick="showUpdateModal(1)">
-              <i class="bi bi-pencil"></i>
-              Update
-            </button>
+            <a th:href="@{/patient/appointment-list/1/reschedule(patientId=${patientId})}" class="btn-warning-custom btn-sm">
+              <i class="bi bi-calendar-event"></i>
+              Reschedule
+            </a>
             <a th:href="@{/patient/appointment-list/1/cancel(patientId=${patientId})}" class="btn-danger-custom btn-sm">
               <i class="bi bi-x-circle"></i>
               Cancel
@@ -1700,11 +1668,6 @@
       console.error('Update failed: currentAppointmentId or patientId is missing', { currentAppointmentId, patientId });
     }
     closeModal('updateModal');
-  }
-
-  function exportAppointments() {
-    console.log('Exporting appointments for patient ID:', patientId);
-    window.location.href = `/patient/appointments/export?patientId=${patientId}`;
   }
 
   // Initialize page

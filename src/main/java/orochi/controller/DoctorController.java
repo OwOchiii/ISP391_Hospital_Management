@@ -14,6 +14,7 @@ import org.springframework.web.bind.annotation.*;
 import orochi.model.*;
 import orochi.repository.DoctorRepository;
 import orochi.repository.MedicalOrderRepository;
+import orochi.repository.NotificationRepository;
 import orochi.service.DoctorService;
 import orochi.config.CustomUserDetails;
 
@@ -35,6 +36,9 @@ public class DoctorController {
 
     @Autowired
     private MedicalOrderRepository medicalOrderRepository;
+
+    @Autowired
+    private NotificationRepository notificationRepository;
 
     @GetMapping("/dashboard")
     public String getDashboard(@RequestParam(required = false) Integer doctorId,
@@ -104,6 +108,16 @@ public class DoctorController {
                 patients = new ArrayList<>();
             }
 
+            // Fetch notifications for the doctor
+            List<Notification> notifications = notificationRepository.findByUserIdOrderByCreatedAtDesc(doctor.getUserId());
+            if (notifications == null) {
+                notifications = new ArrayList<>();
+            }
+
+            // Count unread notifications
+            long unreadNotifications = notifications.stream()
+                    .filter(notification -> !notification.isRead())
+                    .count();
 
 
             model.addAttribute("todayAppointments", todayAppointments);
@@ -111,6 +125,8 @@ public class DoctorController {
             model.addAttribute("pendingOrders", pendingOrders);
             model.addAttribute("patientCount", patients.size());
             model.addAttribute("doctorId", doctorId);
+            model.addAttribute("notifications", notifications);
+            model.addAttribute("unreadNotifications", unreadNotifications);
 
             logger.debug("Dashboard loaded successfully for doctor ID: {}", doctorId);
             return "doctor/dashboard";
@@ -591,3 +607,4 @@ public class DoctorController {
         }
     }
 }
+

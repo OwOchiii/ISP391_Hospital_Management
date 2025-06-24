@@ -1,0 +1,995 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Payment History - MediCare Plus</title>
+  <!-- Bootstrap CSS -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+  <!-- Bootstrap Icons -->
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css">
+  <!-- Google Fonts -->
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --patient-primary: #059669;
+      --patient-secondary: #047857;
+      --patient-accent: #10b981;
+      --patient-light: #ecfdf5;
+      --patient-dark: #064e3b;
+      --text-dark: #1f2937;
+      --text-light: #6b7280;
+      --text-muted: #9ca3af;
+      --bg-light: #f8fafc;
+      --bg-white: #ffffff;
+      --success-color: #059669;
+      --warning-color: #d97706;
+      --error-color: #dc2626;
+      --info-color: #0284c7;
+      --border-color: #e5e7eb;
+      --sidebar-width: 280px;
+      --header-height: 70px;
+    }
+
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: 'Inter', sans-serif;
+      line-height: 1.6;
+      color: var(--text-dark);
+      background: var(--bg-light);
+      overflow-x: hidden;
+    }
+
+    /* Sidebar Styles (same as Appointment List) */
+    .patient-sidebar {
+      position: fixed;
+      top: 0;
+      left: 0;
+      height: 100vh;
+      width: var(--sidebar-width);
+      background: linear-gradient(180deg, var(--patient-primary) 0%, var(--patient-secondary) 100%);
+      color: white;
+      z-index: 1000;
+      transition: transform 0.3s ease;
+      overflow-y: auto;
+      box-shadow: 4px 0 20px rgba(5, 150, 105, 0.15);
+    }
+
+    .patient-sidebar.collapsed {
+      transform: translateX(-100%);
+    }
+
+    .sidebar-header {
+      padding: 1.5rem;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+      background: rgba(255, 255, 255, 0.05);
+    }
+
+    .patient-brand {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      color: white;
+      text-decoration: none;
+      transition: all 0.3s ease;
+    }
+
+    .patient-brand:hover {
+      color: white;
+      text-decoration: none;
+      transform: translateX(2px);
+    }
+
+    .patient-brand i {
+      font-size: 2rem;
+      color: #34d399;
+      background: linear-gradient(45deg, #34d399, #10b981);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+
+    .patient-brand > div > div:first-child {
+      font-size: 1.5rem;
+      font-weight: 700;
+      line-height: 1.2;
+    }
+
+    .patient-brand small {
+      font-size: 0.75rem;
+      font-weight: 400;
+      opacity: 0.8;
+      color: #a7f3d0;
+    }
+
+    .sidebar-nav {
+      padding: 1.5rem 0;
+    }
+
+    .nav-section-title {
+      font-size: 0.75rem;
+      font-weight: 700;
+      color: rgba(255, 255, 255, 0.6);
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      margin: 1.5rem 1rem 0.75rem 1rem;
+      padding-bottom: 0.5rem;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    }
+
+    .nav-section-title:first-child {
+      margin-top: 0;
+    }
+
+    .nav-item {
+      margin: 0.25rem 1rem;
+    }
+
+    .nav-link {
+      color: rgba(255, 255, 255, 0.8);
+      padding: 0.875rem 1.25rem;
+      border-radius: 12px;
+      display: flex;
+      align-items: center;
+      gap: 0.875rem;
+      text-decoration: none;
+      font-weight: 500;
+      transition: all 0.3s ease;
+      position: relative;
+    }
+
+    .nav-link:hover {
+      background: rgba(255, 255, 255, 0.1);
+      color: white;
+      transform: translateX(4px);
+      text-decoration: none;
+    }
+
+    .nav-link.active {
+      background: rgba(255, 255, 255, 0.15);
+      color: white;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    }
+
+    .nav-link.active::before {
+      content: '';
+      position: absolute;
+      left: 0;
+      top: 50%;
+      transform: translateY(-50%);
+      width: 4px;
+      height: 24px;
+      background: #34d399;
+      border-radius: 0 4px 4px 0;
+    }
+
+    .nav-link i {
+      font-size: 1.125rem;
+      width: 20px;
+      text-align: center;
+      flex-shrink: 0;
+    }
+
+    /* Main Content */
+    .main-content {
+      margin-left: var(--sidebar-width);
+      min-height: 100vh;
+      transition: margin-left 0.3s ease;
+    }
+
+    .main-content.expanded {
+      margin-left: 0;
+    }
+
+    /* Top Header */
+    .top-header {
+      background: var(--bg-white);
+      height: var(--header-height);
+      padding: 0 2rem;
+      box-shadow: 0 2px 20px rgba(0, 0, 0, 0.08);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      position: sticky;
+      top: 0;
+      z-index: 999;
+    }
+
+    .header-left {
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+    }
+
+    .sidebar-toggle {
+      background: none;
+      border: none;
+      font-size: 1.25rem;
+      color: var(--text-dark);
+      cursor: pointer;
+      padding: 0.5rem;
+      border-radius: 8px;
+      transition: all 0.3s ease;
+    }
+
+    .sidebar-toggle:hover {
+      background: var(--bg-light);
+      color: var(--patient-primary);
+    }
+
+    .header-right {
+      display: flex;
+      align-items: center;
+      gap: 1.5rem;
+    }
+
+    .patient-info {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      padding: 0.5rem;
+      border-radius: 12px;
+      transition: all 0.3s ease;
+      cursor: pointer;
+    }
+
+    .patient-info:hover {
+      background: var(--bg-light);
+    }
+
+    .patient-avatar {
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, var(--patient-primary), var(--patient-accent));
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: white;
+      font-weight: 700;
+      font-size: 0.875rem;
+    }
+
+    /* Page Content */
+    .page-content {
+      padding: 2rem;
+    }
+
+    .page-header {
+      margin-bottom: 2rem;
+    }
+
+    .page-title {
+      font-size: 2rem;
+      font-weight: 700;
+      color: var(--text-dark);
+      margin-bottom: 0.5rem;
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+    }
+
+    .page-title i {
+      color: var(--patient-primary);
+    }
+
+    .breadcrumb {
+      background: none;
+      padding: 0;
+      margin: 0;
+    }
+
+    .breadcrumb-item a {
+      color: var(--patient-primary);
+      text-decoration: none;
+    }
+
+    .breadcrumb-item.active {
+      color: var(--text-muted);
+    }
+
+    /* Controls Section */
+    .controls-section {
+      background: var(--bg-white);
+      border-radius: 16px;
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+      padding: 2rem;
+      margin-bottom: 2rem;
+    }
+
+    .filter-tabs {
+      display: flex;
+      gap: 0.5rem;
+      margin-bottom: 1.5rem;
+      flex-wrap: wrap;
+    }
+
+    .filter-tab {
+      padding: 0.75rem 1.5rem;
+      border: 2px solid var(--border-color);
+      background: var(--bg-white);
+      color: var(--text-light);
+      border-radius: 25px;
+      text-decoration: none;
+      font-weight: 600;
+      transition: all 0.3s ease;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    .filter-tab:hover {
+      border-color: var(--patient-primary);
+      color: var(--patient-primary);
+      text-decoration: none;
+    }
+
+    .filter-tab.active {
+      background: var(--patient-primary);
+      border-color: var(--patient-primary);
+      color: white;
+    }
+
+    .search-container {
+      position: relative;
+      flex: 1;
+      max-width: 400px;
+    }
+
+    .search-input {
+      border: 2px solid var(--border-color);
+      border-radius: 12px;
+      padding: 0.875rem 1rem 0.875rem 3rem;
+      font-size: 1rem;
+      transition: all 0.3s ease;
+      width: 100%;
+    }
+
+    .search-input:focus {
+      border-color: var(--patient-primary);
+      box-shadow: 0 0 0 0.2rem rgba(5, 150, 105, 0.25);
+    }
+
+    .search-icon {
+      position: absolute;
+      left: 1rem;
+      top: 50%;
+      transform: translateY(-50%);
+      color: var(--text-light);
+      z-index: 3;
+    }
+
+    .date-range-container {
+      display: flex;
+      gap: 10px;
+      align-items: center;
+    }
+
+    .date-input {
+      padding: 8px;
+      border: 1px solid #ced4da;
+      border-radius: 4px;
+      font-size: 14px;
+      width: 150px;
+    }
+
+    /* Transaction Cards */
+    .transactions-container {
+      display: grid;
+      gap: 1.5rem;
+    }
+
+    .transaction-card {
+      background: var(--bg-white);
+      border-radius: 16px;
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+      padding: 2rem;
+      transition: all 0.3s ease;
+      border-left: 4px solid transparent;
+    }
+
+    .transaction-card:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 8px 30px rgba(0, 0, 0, 0.12);
+    }
+
+    .transaction-card.paid {
+      border-left-color: var(--success-color);
+    }
+
+    .transaction-card.refunded {
+      border-left-color: var(--warning-color);
+    }
+
+    .transaction-card.pending {
+      border-left-color: var(--info-color);
+    }
+
+    .transaction-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      margin-bottom: 1.5rem;
+      gap: 1rem;
+    }
+
+    .transaction-info {
+      flex: 1;
+    }
+
+    .transaction-id {
+      font-size: 1.25rem;
+      font-weight: 700;
+      color: var(--text-dark);
+      margin-bottom: 0.5rem;
+    }
+
+    .appointment-id {
+      font-size: 0.875rem;
+      color: var(--text-muted);
+      font-weight: 500;
+    }
+
+    .transaction-status {
+      display: flex;
+      align-items: center;
+    }
+
+    .status-badge {
+      padding: 0.5rem 1rem;
+      border-radius: 20px;
+      font-weight: 600;
+      font-size: 0.75rem;
+      text-transform: uppercase;
+      letter-spacing: 0.025em;
+      display: flex;
+      align-items: center;
+      gap: 0.25rem;
+    }
+
+    .status-paid {
+      background: #d1fae5;
+      color: #065f46;
+    }
+
+    .status-refunded {
+      background: #fef3c7;
+      color: #92400e;
+    }
+
+    .status-pending {
+      background: #dbeafe;
+      color: #1e40af;
+    }
+
+    .transaction-details {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 1rem;
+      margin-bottom: 1.5rem;
+    }
+
+    .detail-item {
+      display: flex;
+      flex-direction: column;
+      gap: 0.25rem;
+    }
+
+    .detail-label {
+      font-size: 0.875rem;
+      font-weight: 600;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.025em;
+    }
+
+    .detail-value {
+      font-size: 1rem;
+      font-weight: 500;
+      color: var(--text-dark);
+    }
+
+    .transaction-actions {
+      display: flex;
+      gap: 0.75rem;
+      flex-wrap: wrap;
+    }
+
+    .btn-primary-custom {
+      background: linear-gradient(135deg, var(--patient-primary), var(--patient-secondary));
+      border: none;
+      padding: 0.75rem 1.5rem;
+      border-radius: 8px;
+      color: white;
+      font-weight: 600;
+      text-decoration: none;
+      transition: all 0.3s ease;
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+      cursor: pointer;
+    }
+
+    .btn-primary-custom:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 6px 20px rgba(5, 150, 105, 0.3);
+      color: white;
+      text-decoration: none;
+    }
+
+    .btn-sm {
+      padding: 0.5rem 1rem;
+      font-size: 0.875rem;
+    }
+
+    /* Empty State */
+    .empty-state {
+      text-align: center;
+      padding: 4rem 2rem;
+      background: var(--bg-white);
+      border-radius: 16px;
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+      display: none;
+    }
+
+    .empty-state i {
+      font-size: 4rem;
+      color: var(--text-muted);
+      margin-bottom: 1rem;
+    }
+
+    .empty-state h3 {
+      color: var(--text-dark);
+      margin-bottom: 0.5rem;
+    }
+
+    .empty-state p {
+      color: var(--text-light);
+      margin-bottom: 0;
+    }
+
+    /* Responsive Design */
+    @media (max-width: 768px) {
+      .patient-sidebar {
+        transform: translateX(-100%);
+      }
+
+      .main-content {
+        margin-left: 0;
+      }
+
+      .page-content {
+        padding: 1rem;
+      }
+
+      .controls-section {
+        padding: 1.5rem;
+      }
+
+      .filter-tabs {
+        justify-content: center;
+      }
+
+      .transaction-card {
+        padding: 1.5rem;
+      }
+
+      .transaction-header {
+        flex-direction: column;
+        gap: 1rem;
+      }
+
+      .transaction-details {
+        grid-template-columns: 1fr;
+      }
+
+      .transaction-actions {
+        justify-content: center;
+      }
+
+      .top-header {
+        padding: 0 1rem;
+      }
+
+      .patient-info > div {
+        display: none;
+      }
+
+      .page-title {
+        font-size: 1.5rem;
+      }
+    }
+
+    /* Animation */
+    .transactions-container {
+      animation: fadeInUp 0.6s ease-out;
+    }
+
+    @keyframes fadeInUp {
+      from {
+        opacity: 0;
+        transform: translateY(30px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+  </style>
+</head>
+<body>
+<!-- Patient Sidebar Navigation (same as Appointment List) -->
+<div class="patient-sidebar" id="sidebar">
+  <div class="sidebar-header">
+    <a href="#" class="patient-brand">
+      <i class="bi bi-heart-pulse"></i>
+      <div>
+        <div>MediCare Plus</div>
+        <small>Patient Portal</small>
+      </div>
+    </a>
+  </div>
+  <nav class="sidebar-nav">
+    <div class="nav-section-title">Dashboard</div>
+    <div class="nav-item">
+      <a th:href="@{/patient/dashboard}" class="nav-link">
+        <i class="bi bi-speedometer2"></i>
+        Dashboard
+      </a>
+    </div>
+    <div class="nav-section-title">Medical Services</div>
+    <div class="nav-item">
+      <a th:href="@{/patient/search-doctor(patientId=${patientId})}" class="nav-link">
+        <i class="bi bi-search"></i>
+        Search Doctors
+      </a>
+    </div>
+    <div class="nav-item">
+      <a th:href="@{/patient/book-appointment}" class="nav-link">
+        <i class="bi bi-calendar-plus"></i>
+        Book Appointment
+      </a>
+    </div>
+    <div class="nav-item">
+      <a th:href="@{/patient/appointment-list}" class="nav-link">
+        <i class="bi bi-calendar-check"></i>
+        My Appointments
+      </a>
+    </div>
+    <div class="nav-section-title">Account</div>
+    <div class="nav-item">
+      <a th:href="@{/patient/profile}" class="nav-link">
+        <i class="bi bi-person"></i>
+        My Profile
+      </a>
+    </div>
+    <div class="nav-item">
+      <a th:href="@{/patient/payment-history}" class="nav-link active">
+        <i class="bi bi-credit-card"></i>
+        Payment History
+      </a>
+    </div>
+    <div class="nav-section-title">Support</div>
+    <div class="nav-item">
+      <a th:href="@{/patient/feedback}" class="nav-link">
+        <i class="bi bi-chat-square-text"></i>
+        Feedback
+      </a>
+    </div>
+    <div class="nav-section-title">System</div>
+    <div class="nav-item">
+      <form th:action="@{/auth/logout}" method="post">
+        <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}" />
+        <button type="submit" class="nav-link w-100 text-start border-0 bg-transparent">
+          <i class="bi bi-box-arrow-right"></i>
+          Logout
+        </button>
+      </form>
+    </div>
+  </nav>
+</div>
+
+<div class="main-content" id="mainContent">
+  <!-- Top Header -->
+  <div class="top-header">
+    <div class="header-left">
+      <button class="sidebar-toggle" onclick="toggleSidebar()">
+        <i class="bi bi-list"></i>
+      </button>
+      <h4 class="mb-0">Payment History</h4>
+    </div>
+    <div class="header-right">
+      <div class="patient-info">
+        <div class="patient-avatar">
+          <span th:text="${patientName != null ? #strings.substring(patientName, 0, 2).toUpperCase() : 'PT'}">PT</span>
+        </div>
+        <div>
+          <div class="fw-semibold" th:text="${patientName != null ? patientName : 'Patient'}">Patient</div>
+          <small class="text-muted" th:text="${'ID: ' + patientId}">ID: 123</small>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Page Content -->
+  <div class="page-content">
+    <!-- Page Header -->
+    <div class="page-header">
+      <h1 class="page-title">
+        <i class="bi bi-credit-card"></i>
+        Payment History
+      </h1>
+      <nav>
+        <ol class="breadcrumb">
+          <li class="breadcrumb-item"><a th:href="@{/patient/dashboard}">Dashboard</a></li>
+          <li class="breadcrumb-item active">Payment History</li>
+        </ol>
+      </nav>
+    </div>
+
+    <!-- Controls Section -->
+    <div class="controls-section">
+      <!-- Status Filter Tabs -->
+      <div class="filter-tabs" id="statusFilter">
+        <a href="#" class="filter-tab active" data-filter="all">All Payments<span class="count"></span></a>
+        <a href="#" class="filter-tab" data-filter="paid">Paid<span class="count"></span></a>
+        <a href="#" class="filter-tab" data-filter="refunded">Refunded<span class="count"></span></a>
+        <a href="#" class="filter-tab" data-filter="pending">Pending<span class="count"></span></a>
+      </div>
+      <!-- Method Filter Tabs -->
+      <div class="filter-tabs" id="methodFilter">
+        <a href="#" class="filter-tab active" data-filter="all">All Methods<span class="count"></span></a>
+        <a href="#" class="filter-tab" data-filter="cash">Cash<span class="count"></span></a>
+        <a href="#" class="filter-tab" data-filter="banking">Banking<span class="count"></span></a>
+      </div>
+      <!-- Search and Date Range -->
+      <div class="d-flex justify-content-between align-items-center flex-wrap gap-3">
+        <div class="search-container">
+          <i class="bi bi-search search-icon"></i>
+          <input type="text" class="search-input" placeholder="Search by Transaction ID or Appointment ID..." id="searchInput">
+        </div>
+        <div class="date-range-container">
+          <input type="date" class="date-input" id="fromDate">
+          <i class="bi bi-calendar date-icon"></i>
+          <input type="date" class="date-input" id="toDate">
+          <i class="bi bi-calendar date-icon"></i>
+        </div>
+      </div>
+    </div>
+
+    <!-- Transactions Container -->
+    <div class="transactions-container" id="transactionsContainer">
+      <div th:each="transaction : ${transactions}" class="transaction-card" th:classappend="${transaction.status.toLowerCase()}">
+        <div class="transaction-header">
+          <div class="transaction-info">
+            <div class="transaction-id">Transaction ID: <span th:text="${'TRX' + transaction.transactionId}">TRX001</span></div>
+            <div th:if="${transaction.appointmentId != null}" class="appointment-id">Appointment ID: <span th:text="${'APT' + transaction.appointmentId}">APT001</span></div>
+          </div>
+          <div class="transaction-status">
+              <span class="status-badge" th:classappend="${transaction.status == 'Paid' ? 'status-paid' : transaction.status == 'Refunded' ? 'status-refunded' : 'status-pending'}">
+                <i class="bi" th:classappend="${transaction.status == 'Paid' ? 'bi-check-circle' : transaction.status == 'Refunded' ? 'bi-arrow-counterclockwise' : 'bi-hourglass-split'}"></i>
+                <span th:text="${transaction.status ?: 'Pending'}">Pending</span>
+              </span>
+          </div>
+        </div>
+        <div class="transaction-details">
+          <div class="detail-item">
+            <span class="detail-label">Method</span>
+            <span class="detail-value" th:text="${transaction.method ?: 'N/A'}">Cash</span>
+          </div>
+          <div class="detail-item">
+            <span class="detail-label">Time of Payment</span>
+            <h6 th:text="${transaction.timeOfPayment != null ? #temporals.format(transaction.timeOfPayment, 'EEEE, MMMM d, yyyy h:mm a') : 'Date TBD'}">Monday, June 15, 2024</h6>
+          </div>
+          <div class="detail-item" th:if="${transaction.refundReason != null and transaction.status == 'Refunded'}">
+            <span class="detail-label">Refund Reason</span>
+            <span class="detail-value" th:text="${transaction.refundReason}">N/A</span>
+          </div>
+        </div>
+        <div class="transaction-actions">
+          <a href="#" class="btn-primary-custom btn-sm">
+            <i class="bi bi-eye"></i>
+            View Details
+          </a>
+        </div>
+      </div>
+    </div>
+
+    <!-- Empty State -->
+    <div class="empty-state" id="emptyState">
+      <i class="bi bi-wallet2"></i>
+      <h3>No Payment Records Found</h3>
+      <p>There are no payment records that match your current search criteria.</p>
+    </div>
+  </div>
+</div>
+
+<!-- Bootstrap JS -->
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+<script th:inline="javascript">
+  /*<![CDATA[*/
+  function toggleSidebar() {
+    const sidebar = document.getElementById('sidebar');
+    const mainContent = document.getElementById('mainContent');
+    sidebar.classList.toggle('collapsed');
+    mainContent.classList.toggle('expanded');
+  }
+
+  function checkScreenSize() {
+    const sidebar = document.getElementById('sidebar');
+    const mainContent = document.getElementById('mainContent');
+    if (window.innerWidth <= 768) {
+      sidebar.classList.add('collapsed');
+      mainContent.classList.add('expanded');
+    } else {
+      sidebar.classList.remove('collapsed');
+      mainContent.classList.remove('expanded');
+    }
+  }
+
+  // Parse date string in format "Day, Month d, yyyy" to Date object
+  function parseAppointmentDate(dateStr) {
+    if (dateStr === 'Date TBD') return null;
+    try {
+      return new Date(dateStr);
+    } catch (e) {
+      console.error('Error parsing date:', dateStr, e);
+      return null;
+    }
+  }
+
+  function initializeSearchAndFilters() {
+    const searchInput = document.getElementById('searchInput');
+    const fromDateInput = document.getElementById('fromDate');
+    const toDateInput = document.getElementById('toDate');
+    const statusFilterTabs = document.querySelectorAll('#statusFilter .filter-tab');
+    const methodFilterTabs = document.querySelectorAll('#methodFilter .filter-tab');
+    const transactionsContainer = document.getElementById('transactionsContainer');
+    const emptyState = document.getElementById('emptyState');
+    let activeStatusFilter = 'all';
+    let activeMethodFilter = 'all';
+
+    // Validate "from date" is before "to date"
+    function validateDateRange() {
+      const fromDate = fromDateInput.value ? new Date(fromDateInput.value) : null;
+      const toDate = toDateInput.value ? new Date(toDateInput.value) : null;
+
+      if (fromDate && toDate && fromDate > toDate) {
+        toDateInput.setCustomValidity('To date must be after from date');
+        toDateInput.reportValidity();
+        return false;
+      } else {
+        toDateInput.setCustomValidity('');
+        return true;
+      }
+    }
+
+    // Update filter tab counts
+    function updateFilterCounts() {
+      const transactionCards = transactionsContainer.querySelectorAll('.transaction-card');
+      const counts = {
+        all: 0, paid: 0, refunded: 0, pending: 0,
+        allMethod: 0, cash: 0, banking: 0
+      };
+
+      transactionCards.forEach(card => {
+        const status = card.querySelector('.status-badge').textContent.toLowerCase().trim();
+        const method = card.querySelector('.detail-value').textContent.toLowerCase().trim();
+        counts.all++;
+        switch (status) {
+          case 'paid': counts.paid++; break;
+          case 'refunded': counts.refunded++; break;
+          case 'pending': counts.pending++; break;
+        }
+        switch (method) {
+          case 'cash': counts.cash++; break;
+          case 'banking': counts.banking++; break;
+        }
+        counts.allMethod++;
+      });
+
+      statusFilterTabs.forEach(tab => {
+        const filter = tab.getAttribute('data-filter');
+        const countSpan = tab.querySelector('.count');
+        if (countSpan) countSpan.textContent = ` (${counts[filter]} records)`;
+      });
+      methodFilterTabs.forEach(tab => {
+        const filter = tab.getAttribute('data-filter');
+        const countSpan = tab.querySelector('.count');
+        if (countSpan) countSpan.textContent = ` (${counts[filter]} records)`;
+      });
+    }
+
+    statusFilterTabs.forEach(tab => {
+      tab.addEventListener('click', function(e) {
+        e.preventDefault();
+        statusFilterTabs.forEach(t => t.classList.remove('active'));
+        this.classList.add('active');
+        activeStatusFilter = this.getAttribute('data-filter');
+        updateTransactions();
+      });
+    });
+
+    methodFilterTabs.forEach(tab => {
+      tab.addEventListener('click', function(e) {
+        e.preventDefault();
+        methodFilterTabs.forEach(t => t.classList.remove('active'));
+        this.classList.add('active');
+        activeMethodFilter = this.getAttribute('data-filter');
+        updateTransactions();
+      });
+    });
+
+    searchInput.addEventListener('input', updateTransactions);
+    fromDateInput.addEventListener('change', function() {
+      if (validateDateRange()) updateTransactions();
+    });
+    toDateInput.addEventListener('change', function() {
+      if (validateDateRange()) updateTransactions();
+    });
+
+    function updateTransactions() {
+      const searchTerm = searchInput.value.toLowerCase().trim();
+      const fromDate = fromDateInput.value ? new Date(fromDateInput.value) : null;
+      const toDate = toDateInput.value ? new Date(toDateInput.value) : null;
+      const transactionCards = transactionsContainer.querySelectorAll('.transaction-card');
+      let visibleCount = 0;
+
+      transactionCards.forEach(card => {
+        const transactionId = card.querySelector('.transaction-id').textContent.toLowerCase();
+        const appointmentIdElement = card.querySelector('.appointment-id');
+        const appointmentId = appointmentIdElement ? appointmentIdElement.textContent.toLowerCase() : '';
+        const matchesSearch = transactionId.includes(searchTerm) || appointmentId.includes(searchTerm);
+
+        const status = card.querySelector('.status-badge').textContent.toLowerCase().trim();
+        const matchesStatus = activeStatusFilter === 'all' || status.includes(activeStatusFilter);
+
+        const method = card.querySelector('.detail-value').textContent.toLowerCase().trim();
+        const matchesMethod = activeMethodFilter === 'all' || method === activeMethodFilter;
+
+        const dateElement = card.querySelector('.transaction-details h6');
+        const transactionDate = dateElement ? parseAppointmentDate(dateElement.textContent) : null;
+        let matchesDate = true;
+
+        if ((fromDate || toDate) && transactionDate) {
+          if (fromDate && transactionDate < fromDate) matchesDate = false;
+          if (toDate) {
+            const endOfToDate = new Date(toDate);
+            endOfToDate.setHours(23, 59, 59, 999);
+            if (transactionDate > endOfToDate) matchesDate = false;
+          }
+        } else if ((fromDate || toDate) && !transactionDate) {
+          matchesDate = false; // Hide if no valid date and filters are applied
+        }
+
+        if (matchesSearch && matchesStatus && matchesMethod && matchesDate) {
+          card.style.display = 'block';
+          visibleCount++;
+        } else {
+          card.style.display = 'none';
+        }
+      });
+
+      emptyState.style.display = visibleCount === 0 ? 'flex' : 'none';
+      transactionsContainer.style.display = visibleCount === 0 ? 'none' : 'grid';
+      updateFilterCounts();
+    }
+
+    updateTransactions();
+  }
+
+  document.addEventListener('DOMContentLoaded', function() {
+    checkScreenSize();
+    initializeSearchAndFilters();
+  });
+
+  window.addEventListener('resize', checkScreenSize);
+  /*]]>*/
+</script>
+</body>
+</html>

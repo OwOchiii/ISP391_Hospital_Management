@@ -11,6 +11,7 @@ import org.springframework.http.MediaType;
 import org.springframework.http.converter.HttpMessageConverter;
 import org.springframework.http.converter.StringHttpMessageConverter;
 import org.springframework.http.converter.json.MappingJackson2HttpMessageConverter;
+import org.springframework.web.servlet.config.annotation.ContentNegotiationConfigurer;
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 
 import java.nio.charset.StandardCharsets;
@@ -54,6 +55,14 @@ public class JacksonConfig implements WebMvcConfigurer {
     public StringHttpMessageConverter stringHttpMessageConverter() {
         StringHttpMessageConverter converter = new StringHttpMessageConverter(StandardCharsets.UTF_8);
         converter.setWriteAcceptCharset(false);  // to improve performance and not include charset parameter in Content-Type header
+
+        // Add explicit support for HTML and plain text with UTF-8
+        converter.setSupportedMediaTypes(Arrays.asList(
+            MediaType.TEXT_PLAIN,
+            MediaType.TEXT_HTML,
+            new MediaType("text", "html", StandardCharsets.UTF_8)
+        ));
+
         return converter;
     }
 
@@ -62,5 +71,13 @@ public class JacksonConfig implements WebMvcConfigurer {
         // Order is important - add the most specific converters first
         converters.add(0, stringHttpMessageConverter());
         converters.add(0, mappingJackson2HttpMessageConverter());
+    }
+
+    @Override
+    public void configureContentNegotiation(ContentNegotiationConfigurer configurer) {
+        configurer
+            .defaultContentType(MediaType.APPLICATION_JSON)
+            .mediaType("json", MediaType.APPLICATION_JSON)
+            .mediaType("html", MediaType.TEXT_HTML);
     }
 }

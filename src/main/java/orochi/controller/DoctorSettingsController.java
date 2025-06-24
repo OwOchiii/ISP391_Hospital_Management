@@ -158,9 +158,17 @@ public class DoctorSettingsController {
                 return "redirect:/doctor/settings?doctorId=" + doctorId;
             }
 
+            if (passwordEncoder.matches(newPassword, user.getPasswordHash())) {
+                redirectAttributes.addFlashAttribute("errorMessage", "New password cannot be the same as the current password");
+                return "redirect:/doctor/settings?doctorId=" + doctorId;
+            }
+
             // Update password
             user.setPasswordHash(passwordEncoder.encode(newPassword));
             userRepository.save(user);
+
+
+
 
             redirectAttributes.addFlashAttribute("successMessage", "Password updated successfully!");
             return "redirect:/doctor/settings?doctorId=" + doctorId + "#security";

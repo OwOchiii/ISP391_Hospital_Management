@@ -534,10 +534,13 @@
     <div class="nav-item">
       <a th:href="@{/patient/profile}" class="nav-link active"><i class="bi bi-person"></i> My Profile</a>
     </div>
-    <div class="nav-section-title">Support</div>
     <div class="nav-item">
-      <a th:href="@{/patient/customer-support(patientId=${patientId})}" class="nav-link"><i class="bi bi-headset"></i> Customer Support</a>
+      <a th:href="@{/patient/payment-history}" class="nav-link">
+        <i class="bi bi-credit-card"></i>
+        Payment History
+      </a>
     </div>
+    <div class="nav-section-title">Support</div>
     <div class="nav-item">
       <a th:href="@{/patient/feedback}" class="nav-link"><i class="bi bi-chat-square-text"></i> Feedback</a>
     </div>
