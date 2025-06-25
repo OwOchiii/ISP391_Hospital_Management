@@ -10,6 +10,7 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Controller;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.ui.Model;
@@ -65,6 +66,9 @@ public class PatientDashboardController {
 
     @Autowired
     private FeedbackService feedbackService;
+
+    @Autowired
+    private PasswordEncoder passwordEncoder;
 
     @GetMapping("/dashboard")
     public String dashboard(Model model) {
@@ -798,6 +802,7 @@ public class PatientDashboardController {
             List<Medicine> medicines = prescription != null ? prescription.getMedicines() : List.of();
 
             // Add data to model
+            model.addAttribute("appointmentId", appointmentId);
             model.addAttribute("patientId", patientId);
             model.addAttribute("patientName", appointment.getPatient().getFullName());
             model.addAttribute("prescription", prescription);
@@ -877,6 +882,137 @@ public class PatientDashboardController {
         }
     }
 
+    @GetMapping("/payment-details/{transactionId}")
+    public String paymentDetails(@PathVariable("transactionId") Integer transactionId, Model model, RedirectAttributes redirectAttributes) {
+        try {
+            Integer patientId = getCurrentPatientId();
+            if (patientId == null) {
+                logger.error("No patientId found for authenticated user");
+                redirectAttributes.addFlashAttribute("errorMessage", "Patient ID is required. Please contact support.");
+                return "redirect:/patient/payment-history";
+            }
+
+            Optional<Patient> patientOpt = patientRepository.findById(patientId);
+            if (!patientOpt.isPresent()) {
+                logger.error("Patient not found for ID: {}", patientId);
+                redirectAttributes.addFlashAttribute("errorMessage", "Patient not found");
+                return "redirect:/patient/payment-history";
+            }
+            Patient patient = patientOpt.get();
+            Integer userId = patient.getUser().getUserId();
+
+            Optional<Transaction> transactionOpt = transactionRepository.findById(transactionId);
+            if (!transactionOpt.isPresent()) {
+                logger.error("Transaction not found for ID: {}", transactionId);
+                redirectAttributes.addFlashAttribute("errorMessage", "Transaction not found");
+                return "redirect:/patient/payment-history";
+            }
+            Transaction transaction = transactionOpt.get();
+
+            if (!transaction.getUserId().equals(userId)) {
+                logger.error("Transaction ID: {} does not belong to patient ID: {}", transactionId, patientId);
+                redirectAttributes.addFlashAttribute("errorMessage", "You are not authorized to view this transaction's details");
+                return "redirect:/patient/payment-history";
+            }
+
+            Receipt receipt = transaction.getReceipt();
+            if (receipt == null) {
+                logger.warn("No receipt found for transaction ID: {}", transactionId);
+                model.addAttribute("errorMessage", "No receipt available for this transaction");
+            } else {
+                model.addAttribute("receipt", receipt);
+            }
+
+            model.addAttribute("patientName", patient.getUser().getFullName());
+            model.addAttribute("patientId", patientId);
+
+            return "patient/payment-details";
+        } catch (Exception e) {
+            logger.error("Error loading payment details for transaction ID: {}", transactionId, e);
+            redirectAttributes.addFlashAttribute("errorMessage", "An error occurred while loading the payment details: " + e.getMessage());
+            return "redirect:/patient/payment-history";
+        }
+    }
+
+    @GetMapping("/security-password")
+    public String securityPassword(Model model) {
+        Integer patientId = getCurrentPatientId(); // Assume this method exists to get authenticated patient ID
+        if (patientId == null) {
+            model.addAttribute("errorMessage", "Patient ID is required");
+            return "error";
+        }
+
+        Optional<Patient> patientOpt = patientRepository.findById(patientId);
+        if (!patientOpt.isPresent()) {
+            model.addAttribute("errorMessage", "Patient not found");
+            return "error";
+        }
+
+        Patient patient = patientOpt.get();
+        model.addAttribute("patientId", patientId);
+        model.addAttribute("patientName", patient.getUser().getFullName());
+
+        return "patient/security-password";
+    }
+
+    @PostMapping("/security-password")
+    public String changePassword(@RequestParam Integer patientId,
+                                 @RequestParam String currentPassword,
+                                 @RequestParam String newPassword,
+                                 @RequestParam String confirmPassword,
+                                 RedirectAttributes redirectAttributes) {
+        try {
+            // Validate input data
+            if (currentPassword == null || newPassword == null || confirmPassword == null) {
+                redirectAttributes.addFlashAttribute("errorMessage", "All password fields are required");
+                return "redirect:/patient/security-password";
+            }
+
+            if (!newPassword.equals(confirmPassword)) {
+                redirectAttributes.addFlashAttribute("errorMessage", "New passwords do not match");
+                return "redirect:/patient/security-password";
+            }
+
+            if (newPassword.length() < 8) {
+                redirectAttributes.addFlashAttribute("errorMessage", "New password must be at least 8 characters long");
+                return "redirect:/patient/security-password";
+            }
+
+            Optional<Patient> patientOpt = patientRepository.findById(patientId);
+            if (!patientOpt.isPresent()) {
+                redirectAttributes.addFlashAttribute("errorMessage", "Patient not found");
+                return "redirect:/patient/security-password";
+            }
+
+            Patient patient = patientOpt.get();
+            Users user = patient.getUser();
+            if (user == null) {
+                redirectAttributes.addFlashAttribute("errorMessage", "User account not found");
+                return "redirect:/patient/security-password";
+            }
+
+            if (!passwordEncoder.matches(currentPassword, user.getPasswordHash())) {
+                redirectAttributes.addFlashAttribute("errorMessage", "Current password is incorrect");
+                return "redirect:/patient/security-password";
+            }
+
+            if (passwordEncoder.matches(newPassword, user.getPasswordHash())) {
+                redirectAttributes.addFlashAttribute("errorMessage", "New password cannot be the same as the current password");
+                return "redirect:/patient/security-password";
+            }
+
+            user.setPasswordHash(passwordEncoder.encode(newPassword));
+            userRepository.save(user);
+
+            redirectAttributes.addFlashAttribute("successMessage", "Password updated successfully!");
+            return "redirect:/patient/security-password";
+        } catch (Exception e) {
+            logger.error("Error changing password", e);
+            redirectAttributes.addFlashAttribute("errorMessage", "An error occurred while changing password");
+            return "redirect:/patient/security-password";
+        }
+    }
+
     private Integer getCurrentPatientId() {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         if (authentication != null && authentication.getPrincipal() instanceof CustomUserDetails) {
@@ -904,4 +1040,22 @@ public class PatientDashboardController {
             return dateTime.format(formatter);
         }
     }
+}
+
+// New form-backing object
+class PasswordForm {
+    private Integer patientId;
+    private String currentPassword;
+    private String newPassword;
+    private String confirmPassword;
+
+    // Getters and setters
+    public Integer getPatientId() { return patientId; }
+    public void setPatientId(Integer patientId) { this.patientId = patientId; }
+    public String getCurrentPassword() { return currentPassword; }
+    public void setCurrentPassword(String currentPassword) { this.currentPassword = currentPassword; }
+    public String getNewPassword() { return newPassword; }
+    public void setNewPassword(String newPassword) { this.newPassword = newPassword; }
+    public String getConfirmPassword() { return confirmPassword; }
+    public void setConfirmPassword(String confirmPassword) { this.confirmPassword = confirmPassword; }
 }

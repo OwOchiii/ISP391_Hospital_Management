@@ -674,6 +674,12 @@
         Payment History
       </a>
     </div>
+    <div class="nav-item">
+      <a th:href="@{/patient/security-password}" class="nav-link">
+        <i class="bi bi-shield-lock"></i>
+        Security & Password
+      </a>
+    </div>
     <div class="nav-section-title">Support</div>
     <div class="nav-item">
       <a th:href="@{/patient/feedback}" class="nav-link">
@@ -792,7 +798,7 @@
           </div>
         </div>
         <div class="transaction-actions">
-          <a href="#" class="btn-primary-custom btn-sm">
+          <a th:href="@{/patient/payment-details/{id}(id=${transaction.transactionId})}" class="btn-primary-custom btn-sm">
             <i class="bi bi-eye"></i>
             View Details
           </a>

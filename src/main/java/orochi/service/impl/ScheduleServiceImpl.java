@@ -13,14 +13,8 @@ import jakarta.persistence.criteria.Predicate;
 import java.util.ArrayList;
 import org.springframework.util.StringUtils;
 import orochi.dto.ScheduleDTO;
-import orochi.model.Doctor;
-import orochi.model.Patient;
-import orochi.model.Room;
-import orochi.model.Schedule;
-import orochi.repository.DoctorRepository;
-import orochi.repository.PatientRepository;
-import orochi.repository.RoomRepository;
-import orochi.repository.ScheduleRepository;
+import orochi.model.*;
+import orochi.repository.*;
 import orochi.service.ScheduleService;
 import org.springframework.data.jpa.domain.Specification;
 import jakarta.persistence.criteria.Predicate;
@@ -46,6 +40,9 @@ public class ScheduleServiceImpl implements ScheduleService {
 
     @Autowired
     private RoomRepository roomRepository;
+
+    @Autowired
+    private AppointmentRepository appointmentRepository;
 
     @Override
     public List<ScheduleDTO> getDoctorScheduleForWeek(Integer doctorId, LocalDate weekStart) {
@@ -271,8 +268,26 @@ public class ScheduleServiceImpl implements ScheduleService {
 
     @Override
     public boolean toggleAppointmentCompletion(Integer appointmentId, Integer doctorId) {
-        Schedule schedule = scheduleRepository.findByAppointmentId(appointmentId)
-                .orElseThrow(() -> new RuntimeException("Schedule not found for appointment with ID: " + appointmentId));
+        // First check if there's a schedule for this appointment
+        Optional<Schedule> optionalSchedule = scheduleRepository.findByAppointmentId(appointmentId);
+
+        // If there's no schedule for this appointment, we need to handle the appointment directly
+        if (optionalSchedule.isEmpty()) {
+            // Fetch the appointment directly
+            Appointment appointment = appointmentRepository.findById(appointmentId)
+                    .orElseThrow(() -> new RuntimeException("Appointment not found with ID: " + appointmentId));
+
+            // Check if appointment belongs to the doctor
+            if (!appointment.getDoctorId().equals(doctorId)) {
+                throw new RuntimeException("Appointment does not belong to the specified doctor");
+            }
+
+            // Toggle status on the appointment
+
+        }
+
+        // If we have a schedule, proceed with the original logic
+        Schedule schedule = optionalSchedule.get();
         if (!schedule.getDoctorId().equals(doctorId)) {
             throw new RuntimeException("Appointment does not belong to the specified doctor");
         }
