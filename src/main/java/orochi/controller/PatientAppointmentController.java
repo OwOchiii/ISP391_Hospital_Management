@@ -43,6 +43,9 @@ public class PatientAppointmentController {
     @Autowired
     private orochi.repository.MedicalReportRepository medicalReportRepository;
 
+    @Autowired
+    private orochi.repository.PrescriptionRepository prescriptionRepository;
+
     @GetMapping("/book-appointment")
     public String showBookAppointmentForm(
             @RequestParam(required = false) Integer patientId,
@@ -236,6 +239,65 @@ public class PatientAppointmentController {
             @PathVariable Integer id,
             @RequestParam(required = false) Integer patientId,
             Model model,
+            RedirectAttributes redirectAttributes) {
+
+        // Validate patient authorization
+        if (patientId == null) {
+            Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+            if (authentication != null && authentication.getPrincipal() instanceof CustomUserDetails) {
+                CustomUserDetails userDetails = (CustomUserDetails) authentication.getPrincipal();
+                patientId = userDetails.getPatientId();
+            }
+        }
+
+        if (patientId == null) {
+            redirectAttributes.addFlashAttribute("errorMessage", "Patient authentication required");
+            return "redirect:/patient/appointment-list";
+        }
+
+        // Check if appointment exists and belongs to the patient
+        Appointment appointment = appointmentRepository.findById(id).orElse(null);
+        if (appointment == null) {
+            redirectAttributes.addFlashAttribute("errorMessage", "Appointment not found");
+            return "redirect:/patient/appointment-list";
+        }
+
+        if (!appointment.getPatientId().equals(patientId)) {
+            redirectAttributes.addFlashAttribute("errorMessage", "Unauthorized access to this appointment");
+            return "redirect:/patient/appointment-list";
+        }
+
+        // Get the latest medical report for this appointment
+        List<MedicalReport> reports = medicalReportRepository.findByAppointmentIdOrderByReportDateDesc(id);
+        MedicalReport latestReport = reports.isEmpty() ? null : reports.get(0);
+
+        // Get the latest prescription for this appointment
+        List<Prescription> prescriptions = prescriptionRepository.findByAppointmentIdOrderByPrescriptionDateDesc(id);
+        Prescription latestPrescription = prescriptions.isEmpty() ? null : prescriptions.get(0);
+
+        // Prepare the model for the report template
+        Patient patient = patientRepository.findById(patientId).orElse(null);
+        String patientName = patient != null && patient.getUser() != null ? patient.getUser().getFullName() : "Patient";
+
+        model.addAttribute("appointment", appointment);
+        model.addAttribute("medicalReport", latestReport);
+        model.addAttribute("prescription", latestPrescription);
+        model.addAttribute("patientId", patientId);
+        model.addAttribute("patientName", patientName);
+
+        return "patient/medical-report";
+    }
+
+    /**
+     * Download medical report PDF for an appointment
+     * @param id The appointment ID
+     * @param patientId The patient ID for authorization
+     * @return The medical report PDF or an error page
+     */
+    @GetMapping("/appointment-list/{id}/download-report")
+    public String downloadMedicalReportPdf(
+            @PathVariable Integer id,
+            @RequestParam(required = false) Integer patientId,
             RedirectAttributes redirectAttributes) {
 
         // Validate patient authorization
