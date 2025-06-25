@@ -802,6 +802,7 @@ public class PatientDashboardController {
             List<Medicine> medicines = prescription != null ? prescription.getMedicines() : List.of();
 
             // Add data to model
+            model.addAttribute("appointmentId", appointmentId);
             model.addAttribute("patientId", patientId);
             model.addAttribute("patientName", appointment.getPatient().getFullName());
             model.addAttribute("prescription", prescription);
