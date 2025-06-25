@@ -19,9 +19,8 @@ public interface UserService {
     boolean validatePasswordResetToken(String token, String email);
     void resetPassword(String token, String email, String newPassword);
 
-//    Page<Users> getAllReceptionists(Pageable pageable);
+    Page<Users> getAllReceptionists(Pageable pageable);
     Page<Users> getAllReceptionists(String search, String statusFilter, Pageable pageable);
     Optional<Users> findById(Integer userId);
     Users save(Users user);
-    boolean hasPatientRecords(Integer userId);
 }

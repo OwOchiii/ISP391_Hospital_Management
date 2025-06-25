@@ -367,8 +367,6 @@
             transition: all 0.3s ease;
             border: 1px solid rgba(102, 126, 234, 0.1);
             display: flex;
-            /*align-items: center;*/
-            /*justify-content: space-between;*/
             min-height: 20px;
             height: auto;
             background: linear-gradient(135deg, rgba(102, 126, 234, 0.05), rgba(167, 139, 250, 0.05));
@@ -490,7 +488,7 @@
         }
 
         .card-title {
-            font-size:1.25rem;
+            font-size: 1.25rem;
             font-weight: 600;
             color: var(--text-dark);
         }
@@ -549,6 +547,26 @@
             color: #b91c1c;
         }
 
+        /* Action Icons */
+        .action-icon {
+            font-size: 1rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            margin-right: 0.5rem;
+        }
+
+        .action-icon:hover {
+            transform: scale(1.1);
+        }
+
+        .view-icon {
+            color: var(--primary);
+        }
+
+        .confirm-icon {
+            color: var(--success-color);
+        }
+
         /* Modals */
         .modal-content {
             border-radius: 16px;
@@ -569,6 +587,47 @@
 
         .modal-body {
             padding: 1.5rem;
+        }
+
+        /* Scrollable Modal Table */
+        .modal-table-container {
+            max-height: 700px; /* Adjusted to fit ~16 rows */
+            overflow-y: auto;
+        }
+
+        /* Pagination */
+        .pagination-container {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            margin-top: 1rem;
+            gap: 0.5rem;
+        }
+
+        .pagination-btn {
+            padding: 0.5rem 1rem;
+            border: 1px solid rgba(102, 126, 234, 0.2);
+            border-radius: 8px;
+            background: var(--bg-white);
+            color: var(--primary);
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .pagination-btn:hover {
+            background: var(--light);
+            transform: translateY(-2px);
+        }
+
+        .pagination-btn:disabled {
+            color: var(--text-muted);
+            cursor: not-allowed;
+            background: var(--bg-white);
+        }
+
+        .pagination-info {
+            font-size: 0.875rem;
+            color: var(--text-muted);
         }
 
         /* Review Items */
@@ -777,7 +836,7 @@
                                 <div class="stat-icon"><i class="fas fa-user-plus"></i></div>
                                 <div>
                                     <h6 class="card-title">New Patients</h6>
-                                    <p class="card-text" id="newPatients">0</p>
+                                    <p class="card-text" id="newPatients" th:text="${newPatients != null ? newPatients : 0}" >0</p>
                                 </div>
                             </div>
                         </div>
@@ -790,7 +849,7 @@
                                 <div class="stat-icon"><i class="fas fa-user-md"></i></div>
                                 <div>
                                     <h6 class="card-title">Our Doctors</h6>
-                                    <p class="card-text" id="doctors">0</p>
+                                    <p class="card-text" id="doctors" th:text="${ourDoctor != null ? ourDoctor : 0}" >0</p>
                                 </div>
                             </div>
                         </div>
@@ -803,7 +862,7 @@
                                 <div class="stat-icon"><i class="fas fa-calendar-check"></i></div>
                                 <div>
                                     <h6 class="card-title">Total Appointments</h6>
-                                    <p class="card-text" id="totalAppointments">0</p>
+                                    <p class="card-text" id="totalAppointments" th:text="${totalAppointments != null ? totalAppointments : 0}" >0</p>
                                 </div>
                             </div>
                         </div>
@@ -815,8 +874,8 @@
                             <div class="stat-content">
                                 <div class="stat-icon"><i class="fas fa-users"></i></div>
                                 <div>
-                                    <h6 class="card-title">Active Staff</h6>
-                                    <p class="card-text" id="activeStaff">0</p>
+                                    <h6 class="card-title">Staff</h6>
+                                    <p class="card-text" id="activeStaff" th:text="${activeStaff != null ? activeStaff : 0}" >0</p>
                                 </div>
                             </div>
                         </div>
@@ -875,14 +934,13 @@
                             <div class="input-group mb-3">
                                 <span class="input-group-text"><i class="fas fa-search"></i></span>
                                 <input type="text" class="form-control" id="patientSearch"
-                                       placeholder="Search by patient name" onkeyup="searchPatients()">
+                                       placeholder="Search by patient name or phone" onkeyup="searchPatients()">
                             </div>
                             <div class="table-responsive">
                                 <table class="table table-hover" id="appointmentTable">
                                     <thead>
                                     <tr>
                                         <th>Name</th>
-                                        <th>Gender</th>
                                         <th>Date</th>
                                         <th>Time</th>
                                         <th>Status</th>
@@ -891,6 +949,11 @@
                                     </thead>
                                     <tbody id="appointmentTableBody"></tbody>
                                 </table>
+                            </div>
+                            <div class="pagination-container">
+                                <button class="pagination-btn" id="prevPage" onclick="changePage(-1)">Previous</button>
+                                <span class="pagination-info" id="pageInfo">Page 1 of 1</span>
+                                <button class="pagination-btn" id="nextPage" onclick="changePage(1)">Next</button>
                             </div>
                         </div>
                     </div>
@@ -929,14 +992,15 @@
             <div class="modal-body">
                 <div class="input-group mb-3">
                     <span class="input-group-text"><i class="fas fa-search"></i></span>
-                    <input type="text" class="form-control" id="modalPatientSearch" placeholder="Search by patient name"
+                    <input type="text" class="form-control" id="modalPatientSearch" placeholder="Search by patient name or phone"
                            onkeyup="searchModalPatients()">
                 </div>
-                <div class="table-responsive">
+                <div class="table-responsive modal-table-container">
                     <table class="table table-hover" id="modalAppointmentTable">
                         <thead>
                         <tr>
                             <th>Name</th>
+                            <th>Phone</th>
                             <th>Gender</th>
                             <th>Date</th>
                             <th>Time</th>
@@ -1022,6 +1086,11 @@
     const detailsModal = new bootstrap.Modal(document.getElementById('detailsModal'));
     const reviewModal = new bootstrap.Modal(document.getElementById('reviewModal'));
 
+    // Pagination variables
+    let currentPage = 1;
+    const itemsPerPage = 5;
+    let appointmentData = [];
+
     function debounce(func, wait) {
         let timeout;
         return function executedFunction(...args) {
@@ -1034,12 +1103,218 @@
         };
     }
 
-    document.addEventListener('DOMContentLoaded', function () {
-        fetchDashboardData();
-        addEventListeners();
-        initPatientStatusChart();
-        initAppointmentStatusChart();
-    });
+    function showNotification(message, type) {
+        const toast = document.getElementById('statusNotification');
+        toast.textContent = message;
+        toast.className = `notification-toast ${type}`;
+        toast.style.display = 'block';
+        setTimeout(() => {
+            toast.style.display = 'none';
+        }, 3000);
+    }
+
+    function viewAppointmentDetails(appointmentId) {
+        fetch(`/receptionist/appointmentDetails?id=${appointmentId}`)
+            .then(response => response.json())
+            .then(data => {
+                document.getElementById('detailsContent').innerHTML = `
+                    <p><strong>Name:</strong> ${data.name}</p>
+                    <p><strong>Phone:</strong> ${data.phone}</p>
+                    <p><strong>Gender:</strong> ${data.gender}</p>
+                    <p><strong>Date:</strong> ${data.date}</p>
+                    <p><strong>Time:</strong> ${data.time}</p>
+                    <p><strong>Status:</strong> ${data.status}</p>
+                `;
+                detailsModal.show();
+            })
+            .catch(error => {
+                console.error('Error fetching appointment details:', error);
+                showNotification('Failed to load appointment details', 'error');
+            });
+    }
+
+    function confirmAppointment(appointmentId) {
+        fetch(`/receptionist/confirmAppointment?id=${appointmentId}`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            }
+        })
+            .then(response => {
+                if (!response.ok) throw new Error('Failed to confirm appointment');
+                return response.json();
+            })
+            .then(data => {
+                showNotification('Appointment confirmed successfully', 'success');
+                addAppointmentRequestData(); // Refresh table data
+                addModalAppointmentRequestData(); // Refresh modal table data
+            })
+            .catch(error => {
+                console.error('Error confirming appointment:', error);
+                showNotification('Failed to confirm appointment', 'error');
+            });
+    }
+
+    function renderAppointmentTable(data, page = 1) {
+        const tableBody = document.getElementById('appointmentTableBody');
+        tableBody.innerHTML = '';
+
+        if (data.length === 0) {
+            tableBody.innerHTML = '<tr><td colspan="5" class="text-center">No appointments found</td></tr>';
+            document.getElementById('pageInfo').textContent = 'Page 1 of 1';
+            document.getElementById('prevPage').disabled = true;
+            document.getElementById('nextPage').disabled = true;
+            return;
+        }
+
+        const start = (page - 1) * itemsPerPage;
+        const end = start + itemsPerPage;
+        const paginatedData = data.slice(start, end);
+
+        paginatedData.forEach(row => {
+            const tr = document.createElement('tr');
+            tr.innerHTML = `
+                <td>${row.name || ''}</td>
+                <td>${row.date || ''}</td>
+                <td>${row.time || ''}</td>
+                <td>${row.status || ''}</td>
+                <td>
+                    <i class="fas fa-eye action-icon view-icon" onclick="viewAppointmentDetails(${row.id})" title="View Details"></i>
+                    <i class="fas fa-check action-icon confirm-icon" onclick="confirmAppointment(${row.id})" title="Confirm Appointment"></i>
+                </td>
+            `;
+            tableBody.appendChild(tr);
+        });
+
+        const totalPages = Math.ceil(data.length / itemsPerPage);
+        document.getElementById('pageInfo').textContent = `Page ${page} of ${totalPages}`;
+        document.getElementById('prevPage').disabled = page === 1;
+        document.getElementById('nextPage').disabled = page === totalPages;
+    }
+
+    function changePage(direction) {
+        currentPage += direction;
+        renderAppointmentTable(appointmentData, currentPage);
+    }
+
+    function addAppointmentRequestData() {
+        fetch("/receptionist/appointmentRequest")
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error('Failed to fetch appointment table data');
+                }
+                return response.json();
+            })
+            .then(data => {
+                appointmentData = data;
+                currentPage = 1;
+                renderAppointmentTable(appointmentData, currentPage);
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                showNotification('Failed to load appointment data', 'error');
+            });
+    }
+
+    function searchPatients() {
+        const searchTerm = document.getElementById('patientSearch').value.toLowerCase();
+        const filteredData = appointmentData.filter(row =>
+            (row.name && row.name.toLowerCase().includes(searchTerm)) ||
+            (row.phone && row.phone.toLowerCase().includes(searchTerm))
+        );
+        currentPage = 1;
+        renderAppointmentTable(filteredData, currentPage);
+    }
+
+    function addModalAppointmentRequestData() {
+        fetch("/receptionist/appointmentRequest")
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error('Failed to fetch appointment table data');
+                }
+                return response.json();
+            })
+            .then(data => {
+                const tableBody = document.getElementById('modalAppointmentTableBody');
+                tableBody.innerHTML = '';
+
+                if (data.length === 0) {
+                    tableBody.innerHTML = '<tr><td colspan="7" class="text-center">No appointments found</td></tr>';
+                    return;
+                }
+
+                data.forEach(row => {
+                    const tr = document.createElement('tr');
+                    tr.innerHTML = `
+                        <td>${row.name || ''}</td>
+                        <td>${row.phone || ''}</td>
+                        <td>${row.gender || ''}</td>
+                        <td>${row.date || ''}</td>
+                        <td>${row.time || ''}</td>
+                        <td>${row.status || ''}</td>
+                        <td>
+                            <i class="fas fa-eye action-icon view-icon" onclick="viewAppointmentDetails(${row.id})" title="View Details"></i>
+                            <i class="fas fa-check action-icon confirm-icon" onclick="confirmAppointment(${row.id})" title="Confirm Appointment"></i>
+                        </td>
+                    `;
+                    tableBody.appendChild(tr);
+                });
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                showNotification('Failed to load appointment data', 'error');
+            });
+    }
+
+    function searchModalPatients() {
+        const searchTerm = document.getElementById('modalPatientSearch').value.toLowerCase();
+        fetch("/receptionist/appointmentRequest")
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error('Failed to fetch appointment table data');
+                }
+                return response.json();
+            })
+            .then(data => {
+                const filteredData = data.filter(row =>
+                    (row.name && row.name.toLowerCase().includes(searchTerm)) ||
+                    (row.phone && row.phone.toLowerCase().includes(searchTerm))
+                );
+                const tableBody = document.getElementById('modalAppointmentTableBody');
+                tableBody.innerHTML = '';
+
+                if (filteredData.length === 0) {
+                    tableBody.innerHTML = '<tr><td colspan="7" class="text-center">No appointments found</td></tr>';
+                    return;
+                }
+
+                filteredData.forEach(row => {
+                    const tr = document.createElement('tr');
+                    tr.innerHTML = `
+                        <td>${row.name || ''}</td>
+                        <td>${row.phone || ''}</td>
+                        <td>${row.gender || ''}</td>
+                        <td>${row.date || ''}</td>
+                        <td>${row.time || ''}</td>
+                        <td>${row.status || ''}</td>
+                        <td>
+                            <i class="fas fa-eye action-icon view-icon" onclick="viewAppointmentDetails(${row.id})" title="View Details"></i>
+                            <i class="fas fa-check action-icon confirm-icon" onclick="confirmAppointment(${row.id})" title="Confirm Appointment"></i>
+                        </td>
+                    `;
+                    tableBody.appendChild(tr);
+                });
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                showNotification('Failed to load appointment data', 'error');
+            });
+    }
+
+    function openAppointmentModal() {
+        addModalAppointmentRequestData();
+        appointmentModal.show();
+    }
 
     function displayNoDataMessage(ctx, message) {
         ctx.canvas.parentNode.innerHTML = `
@@ -1101,12 +1376,13 @@
         const ctx = document.getElementById('patientStatusChart');
         if (!ctx) return;
 
-        fetch(`/DashboardDataServlet?dataType=patientStats&period=${period}`)
+        fetch(`/receptionist/patientStatus?period=${period}`)
             .then(response => {
                 if (!response.ok) throw new Error('Failed to fetch patient stats');
                 return response.json();
             })
             .then(data => {
+                console.log("data: ", data);
                 if (!data.patientStats || !data.patientStats.data || data.patientStats.data.length === 0) {
                     displayNoDataMessage(ctx, 'Waiting for patient statistics...');
                     return;
@@ -1124,7 +1400,16 @@
                         patientStatusChart.data.labels = Array.from({length: 30}, (_, i) => (i + 1).toString());
                         patientStatusChart.options.scales.x.title.text = 'Day';
                     } else if (period === 'month') {
-                        patientStatusChart.data.labels = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+                        const allMonths = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+                        const dataMap = {};
+                        data.labels.forEach((label, index) => {
+                            dataMap[label] = data.data[index];
+                        });
+                        const finalData = allMonths.map(month => dataMap[month] || 0);
+
+                        patientStatusChart.data.labels = allMonths;
+                        patientStatusChart.data.datasets[0].data = finalData;
+                        console.log("data log: ", allMonths, finalData);
                         patientStatusChart.options.scales.x.title.text = 'Month';
                     } else {
                         patientStatusChart.data.labels = ['2021', '2022', '2023', '2024', '2025'];
@@ -1296,6 +1581,18 @@
             updateAppointmentStatusChart(appointmentPeriod);
         }, 30000);
     }
+
+    function toggleNotificationModal() {
+        const modal = document.getElementById('notificationModal');
+        modal.style.display = modal.style.display === 'block' ? 'none' : 'block';
+    }
+
+    document.addEventListener('DOMContentLoaded', function () {
+        addEventListeners();
+        addAppointmentRequestData();
+        // initPatientStatusChart();
+        // initAppointmentStatusChart();
+    });
 </script>
 </body>
 </html>

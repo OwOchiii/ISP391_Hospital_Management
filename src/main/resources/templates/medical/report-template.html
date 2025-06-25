@@ -554,6 +554,73 @@
         </div>
     </div>
 
+    <!-- Prescriptions Section -->
+    <div class="section" th:if="${not #lists.isEmpty(prescriptions)}">
+        <div class="section-header">
+            <div class="section-title">Prescriptions</div>
+        </div>
+        <div class="section-content">
+            <div th:each="prescription : ${prescriptions}" class="result-item">
+                <div class="result-header">
+                    <table class="result-header-table">
+                        <tr>
+                            <td>
+                                <div class="result-title">Prescription</div>
+                            </td>
+                            <td>
+                                <div class="result-date" th:text="${prescription.prescriptionDate != null ? #temporals.format(prescription.prescriptionDate, 'MMM d, yyyy - HH:mm') : 'N/A'}">June 24, 2025 - 14:30</div>
+                            </td>
+                        </tr>
+                    </table>
+                </div>
+                <div class="result-body">
+                    <div class="result-meta">
+                        <div class="result-meta-item">
+                            <span class="result-meta-label">Prescribed By:</span>
+                            <span th:text="${prescription.doctor != null && prescription.doctor.user != null ? prescription.doctor.user.fullName : 'N/A'}">Dr. John Smith</span>
+                        </div>
+                        <div class="result-meta-item" th:if="${prescription.appointment != null}">
+                            <span class="result-meta-label">For Appointment:</span>
+                            <span th:text="${prescription.appointment.dateTime != null ? #temporals.format(prescription.appointment.dateTime, 'MMM d, yyyy') : 'N/A'}">June 20, 2025</span>
+                        </div>
+                    </div>
+                    <div class="result-content" th:text="${prescription.notes != null ? prescription.notes : 'No instructions available.'}">
+                        Take all medications as directed. Complete the full course of antibiotics.
+                    </div>
+
+                    <!-- Medicines List -->
+                    <div class="mt-10" th:if="${not #lists.isEmpty(prescription.medicines)}">
+                        <div class="bold mb-10">Prescribed Medications:</div>
+                        <table class="layout-table" style="width: 100%; border: 1px solid #e5e7eb; border-collapse: collapse;">
+                            <thead>
+                                <tr style="background-color: #f8fafc;">
+                                    <th style="border: 1px solid #e5e7eb; padding: 8px; text-align: left;">Medication</th>
+                                    <th style="border: 1px solid #e5e7eb; padding: 8px; text-align: left;">Dosage</th>
+                                    <th style="border: 1px solid #e5e7eb; padding: 8px; text-align: left;">Frequency</th>
+                                    <th style="border: 1px solid #e5e7eb; padding: 8px; text-align: left;">Duration</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr th:each="medicine : ${prescription.medicines}" style="border-bottom: 1px solid #e5e7eb;">
+                                    <td style="border: 1px solid #e5e7eb; padding: 8px;" th:text="${medicine.inventory != null ? medicine.inventory.medicineName : 'N/A'}">Amoxicillin</td>
+                                    <td style="border: 1px solid #e5e7eb; padding: 8px;" th:text="${medicine.dosage}">500mg</td>
+                                    <td style="border: 1px solid #e5e7eb; padding: 8px;" th:text="${medicine.frequency}">3 times daily</td>
+                                    <td style="border: 1px solid #e5e7eb; padding: 8px;" th:text="${medicine.duration}">7 days</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                        <div class="mt-10" th:if="${prescription.medicines[0].instructions != null}">
+                            <div class="bold mb-10">Special Instructions:</div>
+                            <div class="result-content" th:text="${prescription.medicines[0].instructions}">
+                                Take with food. Avoid alcohol while taking this medication.
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <!-- Additional Notes -->
     <div class="additional-notes" th:if="${additionalNotes != null and !additionalNotes.isEmpty()}">
         <div class="section-title">Additional Notes</div>
@@ -588,8 +655,7 @@
     <div class="report-footer">
         <table class="footer-table">
             <tr>
-                <td class="report-id">Report ID: MCP-2024-001234</td>
-                <td class="page-number">Page 1 of 1</td>
+
             </tr>
         </table>
     </div>
