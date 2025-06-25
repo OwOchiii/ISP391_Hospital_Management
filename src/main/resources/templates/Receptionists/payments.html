@@ -335,7 +335,7 @@
             color: var(--primary);
         }
 
-        .form-control {
+        .form-control, .form-select {
             border: 1px solid rgba(102, 126, 234, 0.2);
             border-radius: 8px;
             font-size: 0.875rem;
@@ -386,6 +386,53 @@
             transform: translateY(-2px);
         }
 
+        /* New Styles for Search and Filters */
+        .search-bar {
+            background: var(--bg-white);
+            padding: 1rem;
+            border-radius: 12px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+            margin-bottom: 1.5rem;
+        }
+
+        .filter-group {
+            display: flex;
+            gap: 1rem;
+            flex-wrap: wrap;
+            align-items: center;
+        }
+
+        .filter-header {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            font-weight: 600;
+            color: var(--text-dark);
+            margin-bottom: 0.5rem;
+        }
+
+        .status-unpaid {
+            color: var(--error-color);
+            font-weight: 500;
+        }
+
+        .status-paid {
+            color: var(--success-color);
+            font-weight: 500;
+        }
+
+        .daily-total {
+            background: var(--primary);
+            color: white;
+            padding: 0.75rem 1.5rem;
+            border-radius: 8px;
+            font-weight: 600;
+            position: sticky;
+            top: var(--header-height);
+            z-index: 998;
+            margin-bottom: 1rem;
+        }
+
         /* Responsive Design */
         @media (max-width: 768px) {
             .sidebar {
@@ -412,6 +459,11 @@
             .quick-action-bar .btn {
                 width: 100%;
                 margin-bottom: 0.5rem;
+            }
+
+            .filter-group {
+                flex-direction: column;
+                align-items: stretch;
             }
         }
 
@@ -483,7 +535,6 @@
                                 Reports</a>
                         </li>
                     </ul>
-
                     <div class="nav-section-title">Account</div>
                     <ul class="nav flex-column">
                         <li class="nav-item">
@@ -513,7 +564,7 @@
                     <button class="sidebar-toggle" onclick="toggleSidebar()">
                         <i class="fas fa-list"></i>
                     </button>
-                    <h1 class="h3">Payment</h1>
+                    <h1 class="h3">Payments</h1>
                 </div>
                 <div class="profile-info">
                     <div class="notification-bell" role="button" onclick="toggleNotificationModal()">
@@ -524,6 +575,37 @@
                 </div>
             </header>
             <div class="container-fluid p-4">
+                <!-- Daily Total -->
+                <div class="daily-total">
+                    Total Revenue Today: <span id="dailyTotal">0 VND</span>
+                </div>
+                <!-- Search Bar -->
+                <div class="search-bar">
+                    <div class="input-group mb-3">
+                        <span class="input-group-text"><i class="fas fa-search"></i></span>
+                        <input type="text" class="form-control" id="searchInput" placeholder="Search by Name, Patient ID, Phone, or Visit Date...">
+                    </div>
+                    <!-- Filters -->
+                    <div class="filter-header">
+                        <i class="fas fa-filter"></i>
+                        <span>Filters</span>
+                    </div>
+                    <div class="filter-group">
+                        <select class="form-select" id="statusFilter">
+                            <option value="">All Status</option>
+                            <option value="unpaid">Unpaid</option>
+                            <option value="paid">Paid</option>
+                        </select>
+                        <input type="date" class="form-control" id="dateFilter" placeholder="Select Date">
+                        <select class="form-select" id="departmentFilter">
+                            <option value="">All Departments</option>
+                            <option value="internal">Internal Medicine</option>
+                            <option value="surgery">Surgery</option>
+                            <option value="pediatrics">Pediatrics</option>
+                        </select>
+                        <button class="btn btn-secondary" onclick="resetFilters()"><i class="fas fa-undo"></i> Reset</button>
+                    </div>
+                </div>
                 <!-- Quick Action Bar -->
                 <div class="card mb-4">
                     <div class="card-body quick-action-bar d-flex gap-3">
@@ -531,30 +613,27 @@
                         <a href="/receptionist/view_payment_details" class="btn btn-quick-action"><i class="fas fa-file-invoice-dollar me-2"></i>Payment Details</a>
                     </div>
                 </div>
-                <!-- Unpaid Patient List -->
+                <!-- Payment List -->
                 <div class="card">
-                    <div class="card-header d-flex justify-content-between align-items-center">
-                        <h5 class="card-title">Unpaid Patient Invoices</h5>
-                        <div class="input-group" style="width: 250px;">
-                            <span class="input-group-text"><i class="fas fa-search"></i></span>
-                            <input type="text" class="form-control" id="searchInput" placeholder="Search by name or phone...">
-                        </div>
+                    <div class="card-header">
+                        <h5 class="card-title">Payment List</h5>
                     </div>
                     <div class="card-body">
                         <div class="table-responsive">
                             <table class="table table-hover" id="patientTable">
                                 <thead>
                                 <tr>
+                                    <th>#</th>
+                                    <th>Patient ID</th>
                                     <th>Patient Name</th>
-                                    <th>Phone Number</th>
-                                    <th>Invoice ID</th>
-                                    <th>Amount</th>
-                                    <th>Due Date</th>
+                                    <th>Visit Date</th>
+                                    <th>Amount (VND)</th>
+                                    <th>Status</th>
                                     <th>Action</th>
                                 </tr>
                                 </thead>
                                 <tbody id="patientTableBody">
-                                <!-- Unpaid invoice data will be inserted here -->
+                                <!-- Payment data will be inserted here -->
                                 </tbody>
                             </table>
                         </div>
@@ -581,11 +660,11 @@
 <div class="notification-modal" id="notificationModal">
     <h5>Notifications</h5>
     <div class="notification-item">
-        <p><strong>New Payment:</strong> INV-001 completed.</p>
+        <p><strong>New Payment:</strong> BN-001 completed.</p>
         <small>2 hours ago</small>
     </div>
     <div class="notification-item">
-        <p><strong>Pending Payment:</strong> INV-002 awaiting confirmation.</p>
+        <p><strong>Pending Payment:</strong> BN-002 awaiting confirmation.</p>
         <small>1 day ago</small>
     </div>
 </div>
@@ -602,50 +681,39 @@
         modal.style.display = modal.style.display === 'block' ? 'none' : 'block';
     }
 
-    // Placeholder for database fetch
-    // *** INSERT DATABASE FETCH CODE HERE ***
-    // To use database fetch, uncomment the following and replace with your API call:
-    /*
-    async function fetchUnpaidInvoices() {
-        const response = await fetch('/api/invoices/unpaid');
-        return await response.json();
-    }
-    fetchUnpaidInvoices().then(data => {
-        unpaidInvoices = data;
-        filteredInvoices = [...unpaidInvoices];
-        renderTable(filteredInvoices, currentPage);
-    }).catch(error => {
-        console.error('Error fetching invoices:', error);
-    });
-    */
-
-    // --- SAMPLE DATA START ---
-    // Comment out or remove this section to disable sample data
-    let unpaidInvoices = [
-        { invoiceId: 'INV-001', patientName: 'Nguyen Van A', phone: '0123456789', amount: '$150.00', dueDate: '2025-06-15' },
-        { invoiceId: 'INV-002', patientName: 'Tran Thi B', phone: '0987654321', amount: '$200.00', dueDate: '2025-06-14' },
-        { invoiceId: 'INV-003', patientName: 'Le Van C', phone: '0912345678', amount: '$120.00', dueDate: '2025-06-16' },
-        { invoiceId: 'INV-004', patientName: 'Pham Thi D', phone: '0932145678', amount: '$180.00', dueDate: '2025-06-13' },
-        { invoiceId: 'INV-005', patientName: 'Hoang Van E', phone: '0901234567', amount: '$250.00', dueDate: '2025-06-17' },
-        { invoiceId: 'INV-006', patientName: 'Vo Thi F', phone: '0923456789', amount: '$100.00', dueDate: '2025-06-15' },
-        { invoiceId: 'INV-007', patientName: 'Bui Van G', phone: '0945678901', amount: '$300.00', dueDate: '2025-06-14' },
-        { invoiceId: 'INV-008', patientName: 'Nguyen Thi H', phone: '0967890123', amount: '$170.00', dueDate: '2025-06-16' },
-        { invoiceId: 'INV-009', patientName: 'Tran Van I', phone: '0978901234', amount: '$140.00', dueDate: '2025-06-13' },
-        { invoiceId: 'INV-010', patientName: 'Le Thi K', phone: '0990123456', amount: '$220.00', dueDate: '2025-06-17' },
-        { invoiceId: 'INV-011', patientName: 'Pham Van L', phone: '0911122334', amount: '$190.00', dueDate: '2025-06-15' },
-        { invoiceId: 'INV-012', patientName: 'Hoang Thi M', phone: '0933344556', amount: '$160.00', dueDate: '2025-06-14' },
-        { invoiceId: 'INV-013', patientName: 'Vo Van N', phone: '0955566778', amount: '$210.00', dueDate: '2025-06-16' },
-        { invoiceId: 'INV-014', patientName: 'Bui Thi O', phone: '0977788990', amount: '$130.00', dueDate: '2025-06-13' },
-        { invoiceId: 'INV-015', patientName: 'Nguyen Van P', phone: '0999900112', amount: '$280.00', dueDate: '2025-06-17' }
+    // Sample data
+    let payments = [
+        { patientId: 'BN001', patientName: 'Nguyen Van A', visitDate: '2025-06-22', amount: 1200000, status: 'unpaid', department: 'internal' },
+        { patientId: 'BN002', patientName: 'Tran Thi B', visitDate: '2025-06-21', amount: 750000, status: 'paid', department: 'surgery' },
+        { patientId: 'BN003', patientName: 'Le Van C', visitDate: '2025-06-20', amount: 1500000, status: 'unpaid', department: 'pediatrics' },
+        { patientId: 'BN004', patientName: 'Pham Thi D', visitDate: '2025-06-19', amount: 900000, status: 'paid', department: 'internal' },
+        { patientId: 'BN005', patientName: 'Hoang Van E', visitDate: '2025-06-18', amount: 2000000, status: 'unpaid', department: 'surgery' },
+        { patientId: 'BN006', patientName: 'Vo Thi F', visitDate: '2025-06-17', amount: 600000, status: 'paid', department: 'pediatrics' },
+        { patientId: 'BN007', patientName: 'Bui Van G', visitDate: '2025-06-16', amount: 1800000, status: 'unpaid', department: 'internal' },
+        { patientId: 'BN008', patientName: 'Nguyen Thi H', visitDate: '2025-06-15', amount: 850000, status: 'paid', department: 'surgery' },
+        { patientId: 'BN009', patientName: 'Tran Van I', visitDate: '2025-06-14', amount: 1100000, status: 'unpaid', department: 'pediatrics' },
+        { patientId: 'BN010', patientName: 'Le Thi K', visitDate: '2025-06-13', amount: 950000, status: 'paid', department: 'internal' },
+        { patientId: 'BN011', patientName: 'Pham Van L', visitDate: '2025-06-12', amount: 1300000, status: 'unpaid', department: 'surgery' },
+        { patientId: 'BN012', patientName: 'Hoang Thi M', visitDate: '2025-06-11', amount: 700000, status: 'paid', department: 'pediatrics' },
+        { patientId: 'BN013', patientName: 'Vo Van N', visitDate: '2025-06-10', amount: 1600000, status: 'unpaid', department: 'internal' },
+        { patientId: 'BN014', patientName: 'Bui Thi O', visitDate: '2025-06-09', amount: 800000, status: 'paid', department: 'surgery' },
+        { patientId: 'BN015', patientName: 'Nguyen Van P', visitDate: '2025-06-08', amount: 1400000, status: 'unpaid', department: 'pediatrics' }
     ];
-    // --- SAMPLE DATA END ---
 
     let currentPage = 1;
     const rowsPerPage = 10;
-    let filteredInvoices = [...unpaidInvoices];
+    let filteredPayments = [...payments];
+
+    // Calculate daily total
+    function calculateDailyTotal() {
+        const today = new Date().toISOString().split('T')[0];
+        const dailyTotal = payments
+            .filter(p => p.visitDate === today && p.status === 'paid')
+            .reduce((sum, p) => sum + p.amount, 0);
+        document.getElementById('dailyTotal').textContent = dailyTotal.toLocaleString('en-US') + ' VND';
+    }
 
     function renderTable(data, page) {
-        console.log('Rendering table with data:', data); // Debug log
         const tableBody = document.getElementById('patientTableBody');
         if (!tableBody) {
             console.error('Table body element not found');
@@ -657,16 +725,20 @@
         const end = start + rowsPerPage;
         const paginatedData = data.slice(start, end);
 
-        paginatedData.forEach(invoice => {
+        paginatedData.forEach((payment, index) => {
             const row = document.createElement('tr');
             row.innerHTML = `
-            <td>${invoice.patientName}</td>
-            <td>${invoice.phone}</td>
-            <td>${invoice.invoiceId}</td>
-            <td>${invoice.amount}</td>
-            <td>${invoice.dueDate}</td>
-            <td><a href="/receptionist/pay_invoice?invoiceId=${invoice.invoiceId}" class="btn btn-sm btn-primary"><i class="fas fa-money-check-alt"></i> Pay</a></td>
-        `;
+                <td>${start + index + 1}</td>
+                <td>${payment.patientId}</td>
+                <td>${payment.patientName}</td>
+                <td>${payment.visitDate}</td>
+                <td>${payment.amount.toLocaleString('en-US')}</td>
+                <td><span class="${payment.status === 'unpaid' ? 'status-unpaid' : 'status-paid'}">${payment.status === 'unpaid' ? 'Unpaid' : 'Paid'}</span></td>
+                <td>
+                    <button class="btn btn-sm btn-primary me-1" onclick="showInvoiceDetails('${payment.patientId}')"><i class="fas fa-eye"></i> Details</button>
+                    ${payment.status === 'unpaid' ? `<button class="btn btn-sm btn-success" onclick="payInvoice('${payment.patientId}')"><i class="fas fa-money-check-alt"></i> Pay</button>` : ''}
+                </td>
+            `;
             tableBody.appendChild(row);
         });
 
@@ -681,54 +753,81 @@
             return;
         }
         pagination.innerHTML = `
-        <li class="page-item ${page === 1 ? 'disabled' : ''}"><a class="page-link" href="#" onclick="changePage(${page - 1}); return false;">Previous</a></li>
-    `;
+            <li class="page-item ${page === 1 ? 'disabled' : ''}"><a class="page-link" href="#" onclick="changePage(${page - 1}); return false;">Previous</a></li>
+        `;
         const totalPages = Math.ceil(data.length / rowsPerPage);
         for (let i = 1; i <= totalPages; i++) {
             pagination.innerHTML += `
-            <li class="page-item ${i === page ? 'active' : ''}"><a class="page-link" href="#" onclick="changePage(${i}); return false;">${i}</a></li>
-        `;
+                <li class="page-item ${i === page ? 'active' : ''}"><a class="page-link" href="#" onclick="changePage(${i}); return false;">${i}</a></li>
+            `;
         }
         pagination.innerHTML += `
-        <li class="page-item ${page === totalPages ? 'disabled' : ''}"><a class="page-link" href="#" onclick="changePage(${page + 1}); return false;">Next</a></li>
-    `;
+            <li class="page-item ${page === totalPages ? 'disabled' : ''}"><a class="page-link" href="#" onclick="changePage(${page + 1}); return false;">Next</a></li>
+        `;
     }
 
     function changePage(page) {
-        if (page < 1 || page > Math.ceil(filteredInvoices.length / rowsPerPage)) return;
+        if (page < 1 || page > Math.ceil(filteredPayments.length / rowsPerPage)) return;
         currentPage = page;
-        renderTable(filteredInvoices, currentPage);
+        renderTable(filteredPayments, currentPage);
     }
 
-    function filterInvoices() {
-        const searchInput = document.getElementById('searchInput');
-        if (!searchInput) {
-            console.error('Search input element not found');
-            return;
-        }
-        const searchValue = searchInput.value.trim().toLowerCase();
-        filteredInvoices = unpaidInvoices.filter(invoice =>
-            invoice.patientName.toLowerCase().includes(searchValue) ||
-            invoice.phone.includes(searchValue)
-        );
+    function filterPayments() {
+        const searchValue = document.getElementById('searchInput').value.trim().toLowerCase();
+        const statusFilter = document.getElementById('statusFilter').value;
+        const dateFilter = document.getElementById('dateFilter').value;
+        const departmentFilter = document.getElementById('departmentFilter').value;
+
+        filteredPayments = payments.filter(payment => {
+            const matchesSearch = (
+                payment.patientName.toLowerCase().includes(searchValue) ||
+                payment.patientId.toLowerCase().includes(searchValue) ||
+                payment.visitDate.includes(searchValue)
+            );
+            const matchesStatus = !statusFilter || payment.status === statusFilter;
+            const matchesDate = !dateFilter || payment.visitDate === dateFilter;
+            const matchesDepartment = !departmentFilter || payment.department === departmentFilter;
+
+            return matchesSearch && matchesStatus && matchesDate && matchesDepartment;
+        });
+
         currentPage = 1;
-        renderTable(filteredInvoices, currentPage);
+        renderTable(filteredPayments, currentPage);
+    }
+
+    function resetFilters() {
+        document.getElementById('searchInput').value = '';
+        document.getElementById('statusFilter').value = '';
+        document.getElementById('dateFilter').value = '';
+        document.getElementById('departmentFilter').value = '';
+        filterPayments();
+    }
+
+    function showInvoiceDetails(patientId) {
+        window.location.href = `/receptionist/view_payment_details?patientId=${patientId}`;
+    }
+
+    function payInvoice(patientId) {
+        window.location.href = `/receptionist/pay_invoice?patientId=${patientId}`;
     }
 
     // Event listeners
-    document.getElementById('searchInput').addEventListener('input', filterInvoices);
+    document.getElementById('searchInput').addEventListener('input', filterPayments);
+    document.getElementById('statusFilter').addEventListener('change', filterPayments);
+    document.getElementById('dateFilter').addEventListener('input', filterPayments);
+    document.getElementById('departmentFilter').addEventListener('change', filterPayments);
 
-    // Render sample data after DOM is loaded
+    // Initialize
     document.addEventListener('DOMContentLoaded', () => {
-        console.log('DOM loaded, rendering sample data');
         try {
-            renderTable(filteredInvoices, currentPage);
+            calculateDailyTotal();
+            renderTable(filteredPayments, currentPage);
         } catch (error) {
-            console.error('Error rendering table:', error);
+            console.error('Error initializing:', error);
         }
     });
 </script>
-<!-- Bootstrap JS for modal functionality -->
+<!-- Bootstrap JS -->
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
 </body>
 </html>

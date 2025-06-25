@@ -12,9 +12,6 @@
   <link rel="stylesheet" href="https://code.jquery.com/ui/1.12.1/themes/base/jquery-ui.css">
   <style>
     :root {
-      --primary-color: #2563eb;
-      --secondary-color: #1e40af;
-      --accent-color: #06b6d4;
       --patient-primary: #059669;
       --patient-secondary: #047857;
       --patient-accent: #10b981;
@@ -25,25 +22,19 @@
       --text-muted: #9ca3af;
       --bg-light: #f8fafc;
       --bg-white: #ffffff;
-      --success-color: #10b981;
-      --warning-color: #f59e0b;
-      --error-color: #ef4444;
-      --info-color: #3b82f6;
+      --success-color: #059669;
+      --warning-color: #d97706;
+      --error-color: #dc2626;
+      --info-color: #0284c7;
       --border-color: #e5e7eb;
       --sidebar-width: 280px;
       --header-height: 70px;
     }
 
-    .error-message {
-      color: var(--error-color);
-      font-size: 0.875rem;
-      margin-bottom: 1rem;
-      display: flex;
-      align-items: center;
-      gap: 0.25rem;
-      background: rgba(239, 68, 68, 0.1);
-      padding: 0.75rem;
-      border-radius: 8px;
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
     }
 
     body {
@@ -89,17 +80,24 @@
 
     .patient-brand:hover {
       color: white;
+      text-decoration: none;
       transform: translateX(2px);
     }
 
     .patient-brand i {
       font-size: 2rem;
       color: #34d399;
+      background: linear-gradient(45deg, #34d399, #10b981);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.1));
     }
 
     .patient-brand > div > div:first-child {
       font-size: 1.5rem;
       font-weight: 700;
+      line-height: 1.2;
     }
 
     .patient-brand small {
@@ -111,6 +109,21 @@
 
     .sidebar-nav {
       padding: 1.5rem 0;
+    }
+
+    .nav-section-title {
+      font-size: 0.75rem;
+      font-weight: 700;
+      color: rgba(255, 255, 255, 0.6);
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      margin: 1.5rem 1rem 0.75rem 1rem;
+      padding-bottom: 0.5rem;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    }
+
+    .nav-section-title:first-child {
+      margin-top: 0;
     }
 
     .nav-item {
@@ -127,21 +140,43 @@
       text-decoration: none;
       font-weight: 500;
       transition: all 0.3s ease;
+      position: relative;
+      border: none;
+      background: transparent;
+      width: 100%;
+      text-align: left;
     }
 
     .nav-link:hover {
       background: rgba(255, 255, 255, 0.1);
       color: white;
       transform: translateX(4px);
+      text-decoration: none;
     }
 
     .nav-link.active {
       background: rgba(255, 255, 255, 0.15);
       color: white;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    }
+
+    .nav-link.active::before {
+      content: '';
+      position: absolute;
+      left: 0;
+      top: 50%;
+      transform: translateY(-50%);
+      width: 4px;
+      height: 24px;
+      background: #34d399;
+      border-radius: 0 4px 4px 0;
     }
 
     .nav-link i {
       font-size: 1.125rem;
+      width: 20px;
+      text-align: center;
+      flex-shrink: 0;
     }
 
     .main-content {
@@ -167,6 +202,12 @@
       z-index: 999;
     }
 
+    .header-left {
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+    }
+
     .sidebar-toggle {
       background: none;
       border: none;
@@ -175,29 +216,45 @@
       cursor: pointer;
       padding: 0.5rem;
       border-radius: 8px;
+      transition: all 0.3s ease;
     }
 
     .sidebar-toggle:hover {
       background: var(--bg-light);
-      color: var(--success-color);
+      color: var(--patient-primary);
+    }
+
+    .header-right {
+      display: flex;
+      align-items: center;
+      gap: 1.5rem;
     }
 
     .patient-info {
       display: flex;
       align-items: center;
       gap: 0.75rem;
+      padding: 0.5rem;
+      border-radius: 12px;
+      transition: all 0.3s ease;
+      cursor: pointer;
+    }
+
+    .patient-info:hover {
+      background: var(--bg-light);
     }
 
     .patient-avatar {
       width: 40px;
       height: 40px;
       border-radius: 50%;
-      background: linear-gradient(135deg, var(--success-color), var(--accent-color));
+      background: linear-gradient(135deg, var(--patient-primary), var(--patient-accent));
       display: flex;
       align-items: center;
       justify-content: center;
       color: white;
       font-weight: 700;
+      font-size: 0.875rem;
     }
 
     .page-content {
@@ -214,22 +271,24 @@
       font-size: 2rem;
       font-weight: 700;
       color: var(--text-dark);
+      margin-bottom: 0.5rem;
       display: flex;
       align-items: center;
       gap: 0.75rem;
     }
 
     .page-title i {
-      color: var(--success-color);
+      color: var(--patient-primary);
     }
 
     .breadcrumb {
       background: none;
       padding: 0;
+      margin: 0;
     }
 
     .breadcrumb-item a {
-      color: var(--success-color);
+      color: var(--patient-primary);
       text-decoration: none;
     }
 
@@ -242,11 +301,12 @@
       border-radius: 16px;
       box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
       padding: 2rem;
+      border-left: 4px solid var(--patient-primary);
     }
 
     .section-title {
-      font-size: 1.5rem;
-      font-weight: 600;
+      font-size: 1.25rem;
+      font-weight: 700;
       color: var(--text-dark);
       margin-bottom: 1.5rem;
       display: flex;
@@ -255,12 +315,15 @@
     }
 
     .section-title i {
-      color: var(--success-color);
+      color: var(--patient-primary);
     }
 
     .form-label {
+      font-size: 0.875rem;
       font-weight: 600;
-      color: var(--text-dark);
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.025em;
       margin-bottom: 0.5rem;
     }
 
@@ -271,15 +334,17 @@
 
     .form-control {
       border: 2px solid var(--border-color);
-      border-radius: 12px;
-      padding: 0.875rem 1rem;
+      border-radius: 8px;
+      padding: 0.5rem 0.75rem;
       font-size: 1rem;
+      background: var(--bg-light);
       transition: all 0.3s ease;
     }
 
     .form-control:focus {
-      border-color: var(--success-color);
-      box-shadow: 0 0 0 0.2rem rgba(16, 185, 129, 0.25);
+      border-color: var(--patient-primary);
+      box-shadow: 0 0 0 0.2rem rgba(5, 150, 105, 0.25);
+      background: var(--bg-white);
     }
 
     .contact-field {
@@ -303,7 +368,7 @@
 
     .reset-btn:hover {
       background: var(--bg-light);
-      color: var(--success-color);
+      color: var(--patient-primary);
     }
 
     .error-message {
@@ -313,46 +378,52 @@
       display: flex;
       align-items: center;
       gap: 0.25rem;
+      background: rgba(220, 38, 38, 0.1);
+      padding: 0.5rem;
+      border-radius: 8px;
     }
 
     .btn-primary-custom {
-      background: linear-gradient(135deg, var(--success-color), #059669);
+      background: linear-gradient(135deg, var(--patient-primary), var(--patient-secondary));
       border: none;
-      padding: 1rem 2rem;
-      border-radius: 12px;
+      padding: 0.75rem 1.5rem;
+      border-radius: 8px;
       color: white;
       font-weight: 600;
-      font-size: 1.1rem;
+      font-size: 1rem;
       transition: all 0.3s ease;
       display: inline-flex;
       align-items: center;
-      gap: 0.75rem;
+      gap: 0.5rem;
       cursor: pointer;
     }
 
     .btn-primary-custom:hover {
       transform: translateY(-2px);
-      box-shadow: 0 8px 25px rgba(16, 185, 129, 0.3);
+      box-shadow: 0 6px 20px rgba(5, 150, 105, 0.3);
       color: white;
     }
 
     .btn-outline-custom {
-      border: 2px solid var(--success-color);
-      color: var(--success-color);
+      border: 2px solid var(--patient-primary);
+      color: var(--patient-primary);
       background: transparent;
       padding: 0.75rem 1.5rem;
-      border-radius: 12px;
+      border-radius: 8px;
       font-weight: 600;
+      font-size: 1rem;
       transition: all 0.3s ease;
       display: inline-flex;
       align-items: center;
       gap: 0.5rem;
+      text-decoration: none;
     }
 
     .btn-outline-custom:hover {
-      background: var(--success-color);
+      background: var(--patient-primary);
       color: white;
       transform: translateY(-2px);
+      text-decoration: none;
     }
 
     .confirmation-overlay {
@@ -374,11 +445,12 @@
 
     .confirmation-dialog {
       background: var(--bg-white);
-      border-radius: 20px;
+      border-radius: 16px;
       padding: 2rem;
       max-width: 500px;
       width: 90%;
       box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+      border-left: 4px solid var(--patient-primary);
       text-align: center;
       animation: slideIn 0.3s ease-out;
     }
@@ -389,28 +461,29 @@
     }
 
     .confirmation-icon {
-      width: 80px;
-      height: 80px;
+      width: 60px;
+      height: 60px;
       border-radius: 50%;
-      background: linear-gradient(135deg, var(--success-color), #059669);
+      background: linear-gradient(135deg, var(--patient-primary), var(--patient-secondary));
       display: flex;
       align-items: center;
       justify-content: center;
-      margin: 0 auto 1.5rem;
+      margin: 0 auto 1rem;
       color: white;
-      font-size: 2rem;
+      font-size: 1.5rem;
     }
 
     .confirmation-title {
-      font-size: 1.5rem;
+      font-size: 1.25rem;
       font-weight: 700;
       color: var(--text-dark);
-      margin-bottom: 1rem;
+      margin-bottom: 0.75rem;
     }
 
     .confirmation-message {
       color: var(--text-light);
-      margin-bottom: 2rem;
+      margin-bottom: 1.5rem;
+      font-size: 0.875rem;
     }
 
     .confirmation-actions {
@@ -425,6 +498,9 @@
       .page-content { padding: 1rem; }
       .form-section { padding: 1.5rem; }
       .confirmation-actions { flex-direction: column; }
+      .patient-info > div { display: none; }
+      .page-title { font-size: 1.5rem; }
+      .top-header { padding: 0 1rem; }
     }
   </style>
 </head>
@@ -440,9 +516,11 @@
     </a>
   </div>
   <nav class="sidebar-nav">
+    <div class="nav-section-title">Dashboard</div>
     <div class="nav-item">
       <a th:href="@{/patient/dashboard}" class="nav-link"><i class="bi bi-speedometer2"></i> Dashboard</a>
     </div>
+    <div class="nav-section-title">Medical Services</div>
     <div class="nav-item">
       <a th:href="@{/patient/search-doctor(patientId=${patientId})}" class="nav-link"><i class="bi bi-search"></i> Search Doctors</a>
     </div>
@@ -452,9 +530,21 @@
     <div class="nav-item">
       <a th:href="@{/patient/appointment-list}" class="nav-link"><i class="bi bi-calendar-check"></i> My Appointments</a>
     </div>
+    <div class="nav-section-title">Account</div>
     <div class="nav-item">
       <a th:href="@{/patient/profile}" class="nav-link active"><i class="bi bi-person"></i> My Profile</a>
     </div>
+    <div class="nav-item">
+      <a th:href="@{/patient/payment-history}" class="nav-link">
+        <i class="bi bi-credit-card"></i>
+        Payment History
+      </a>
+    </div>
+    <div class="nav-section-title">Support</div>
+    <div class="nav-item">
+      <a th:href="@{/patient/feedback}" class="nav-link"><i class="bi bi-chat-square-text"></i> Feedback</a>
+    </div>
+    <div class="nav-section-title">System</div>
     <div class="nav-item">
       <form th:action="@{/auth/logout}" method="post">
         <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}" />
@@ -471,6 +561,7 @@
       <h4 class="mb-0">Update Profile</h4>
     </div>
     <div class="header-right">
+      <a th:href="@{/patient/profile}" class="btn-outline-custom"><i class="bi bi-arrow-left"></i> Back to Profile</a>
       <div class="patient-info">
         <div class="patient-avatar" th:text="${#strings.substring(profileForm.fullName, 0, 2).toUpperCase()}">PT</div>
         <div>
@@ -483,28 +574,33 @@
 
   <div class="page-content">
     <div class="page-header">
-      <h1 class="page-title"><i class="bi bi-person"></i> Update Profile</h1>
-      <nav>
-        <ol class="breadcrumb">
-          <li class="breadcrumb-item"><a th:href="@{/patient/profile}">Profile</a></li>
-          <li class="breadcrumb-item active">Update Profile</li>
-        </ol>
-      </nav>
+      <div class="d-flex justify-content-between align-items-center">
+        <div>
+          <h1 class="page-title"><i class="bi bi-person"></i> Update Profile</h1>
+          <nav>
+            <ol class="breadcrumb">
+              <li class="breadcrumb-item"><a th:href="@{/patient/profile}">Profile</a></li>
+              <li class="breadcrumb-item active">Update Profile</li>
+            </ol>
+          </nav>
+        </div>
+      </div>
     </div>
 
-    <div th:if="${errorMessage}" class="error-message">
-      <i class="bi bi-exclamation-circle-fill"></i>
+    <div th:if="${errorMessage}" class="alert alert-danger alert-dismissible fade show" role="alert">
+      <i class="bi bi-exclamation-circle"></i>
       <span th:text="${errorMessage}">Error occurred</span>
+      <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
     </div>
 
     <div class="form-section">
-      <h2 class="section-title"><i class="bi bi-person-lines-fill"></i> Personal Information</h2>
+      <div class="section-title"><i class="bi bi-person-lines-fill"></i> Personal Information</div>
       <form th:action="@{/patient/update-profile}" th:object="${profileForm}" method="post" id="profileForm">
         <div class="row">
           <div class="col-md-6 mb-3">
             <label for="fullName" class="form-label">Full Name <span class="required-asterisk">*</span></label>
             <div class="contact-field">
-              <input type="text" id="fullName" th:field="*{fullName}" class="form-control" required />
+              <input type="text" id="fullName" th:field="*{fullName}" class="form-control" maxlength="50" required />
               <button type="button" class="reset-btn" onclick="resetField('fullName')"><i class="bi bi-arrow-clockwise"></i></button>
             </div>
             <div th:if="${#fields.hasErrors('fullName')}" class="error-message"><i class="bi bi-exclamation-circle"></i> <span th:errors="*{fullName}"></span></div>
@@ -512,7 +608,7 @@
           <div class="col-md-6 mb-3">
             <label for="email" class="form-label">Email Address <span class="required-asterisk">*</span></label>
             <div class="contact-field">
-              <input type="email" id="email" th:field="*{email}" class="form-control" required />
+              <input type="email" id="email" th:field="*{email}" class="form-control" maxlength="50" required />
               <button type="button" class="reset-btn" onclick="resetField('email')"><i class="bi bi-arrow-clockwise"></i></button>
             </div>
             <div th:if="${#fields.hasErrors('email')}" class="error-message"><i class="bi bi-exclamation-circle"></i> <span th:errors="*{email}"></span></div>
@@ -550,6 +646,14 @@
           <div th:if="${#fields.hasErrors('gender')}" class="error-message"><i class="bi bi-exclamation-circle"></i> <span th:errors="*{gender}"></span></div>
         </div>
         <div class="mb-3">
+          <label for="streetAddress" class="form-label">Street Address <span class="required-asterisk">*</span></label>
+          <div class="contact-field">
+            <input type="text" id="streetAddress" th:field="*{streetAddress}" class="form-control" maxlength="250" required />
+            <button type="button" class="reset-btn" onclick="resetField('streetAddress')"><i class="bi bi-arrow-clockwise"></i></button>
+          </div>
+          <div th:if="${#fields.hasErrors('streetAddress')}" class="error-message"><i class="bi bi-exclamation-circle"></i> <span th:errors="*{streetAddress}"></span></div>
+        </div>
+        <div class="mb-3">
           <label for="description" class="form-label">Description (Optional)</label>
           <div class="contact-field">
             <textarea id="description" th:field="*{description}" class="form-control" rows="4" maxlength="250" style="resize: none;" oninput="autoResize(this)"></textarea>
@@ -558,17 +662,9 @@
           <small class="text-muted">Maximum 250 characters</small>
           <div th:if="${#fields.hasErrors('description')}" class="error-message"><i class="bi bi-exclamation-circle"></i> <span th:errors="*{description}"></span></div>
         </div>
-        <div class="mb-3">
-          <label for="streetAddress" class="form-label">Street Address <span class="required-asterisk">*</span></label>
-          <div class="contact-field">
-            <input type="text" id="streetAddress" th:field="*{streetAddress}" class="form-control" required />
-            <button type="button" class="reset-btn" onclick="resetField('streetAddress')"><i class="bi bi-arrow-clockwise"></i></button>
-          </div>
-          <div th:if="${#fields.hasErrors('streetAddress')}" class="error-message"><i class="bi bi-exclamation-circle"></i> <span th:errors="*{streetAddress}"></span></div>
-        </div>
-        <div class="text-center">
+        <div class="d-flex gap-2 justify-content-center">
           <button type="button" class="btn-primary-custom" onclick="showConfirmation()"><i class="bi bi-check-circle"></i> Update Profile</button>
-          <a th:href="@{/patient/profile}" class="btn-outline-custom ms-3"><i class="bi bi-arrow-left"></i> Back to Profile</a>
+          <a th:href="@{/patient/profile}" class="btn-outline-custom"><i class="bi bi-arrow-left"></i> Back to Profile</a>
         </div>
       </form>
     </div>
@@ -606,6 +702,18 @@
     const mainContent = document.getElementById('mainContent');
     sidebar.classList.toggle('collapsed');
     mainContent.classList.toggle('expanded');
+  }
+
+  function checkScreenSize() {
+    const sidebar = document.getElementById('sidebar');
+    const mainContent = document.getElementById('mainContent');
+    if (window.innerWidth <= 768) {
+      sidebar.classList.add('collapsed');
+      mainContent.classList.add('expanded');
+    } else {
+      sidebar.classList.remove('collapsed');
+      mainContent.classList.remove('expanded');
+    }
   }
 
   function showConfirmation() {
@@ -669,6 +777,55 @@
     }
   }
 
+  // Sanitize Description input to prevent XSS, HTML, and malicious URLs
+  function sanitizeDescription(input) {
+    // Step 1: Encode HTML characters to prevent HTML rendering
+    const encoded = input.replace(/</g, '&lt;').replace(/>/g, '&gt;')
+                         .replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+
+    // Step 2: Remove or encode potential script tags and dangerous URLs
+    const div = document.createElement('div');
+    div.innerText = encoded; // Use innerText to ensure no HTML/script execution
+    let sanitized = div.innerHTML;
+
+    // Step 3: Remove any remaining <a> tags or URLs with dangerous protocols
+    sanitized = sanitized.replace(/<a\b[^>]*>(.*?)<\/a>/gi, '$1'); // Remove <a> tags, keep content
+    sanitized = sanitized.replace(/\b(javascript|data):/gi, ''); // Remove dangerous protocols
+
+    // Step 4: Normalize whitespace and trim
+    sanitized = sanitized.trim().replace(/\s+/g, ' ');
+
+    return sanitized;
+  }
+
+  // Trim and clean input fields on blur
+  function cleanInputOnBlur(id, isStrict = false) {
+    const element = document.getElementById(id);
+    if (!element) return;
+
+    element.addEventListener('blur', () => {
+      let value = element.value.trim();
+
+      if (isStrict) {
+        // Remove all spaces for strict fields (phone/email)
+        value = value.replace(/\s+/g, '');
+      } else {
+        // Sanitize Description field
+        if (id === 'description') {
+          value = sanitizeDescription(value);
+        } else {
+          // Normalize spacing between words (one space only)
+          value = value.replace(/\s+/g, ' ');
+        }
+      }
+
+      element.value = value;
+    });
+  }
+
+  // Apply trimming logic to input fields
+  cleanInputOnBlur('description', false); // sanitize and normalize spaces
+
   document.addEventListener('DOMContentLoaded', function() {
     const dateInput = document.getElementById('dateOfBirth');
     if (dateInput) {
@@ -687,7 +844,11 @@
     if (dateInput) {
       dateInput.setAttribute('max', yesterday.toISOString().split('T')[0]);
     }
+
+    checkScreenSize();
   });
+
+  window.addEventListener('resize', checkScreenSize);
 
   function autoResize(textarea) {
     textarea.style.height = 'auto';
