@@ -757,7 +757,7 @@ public class PatientDashboardController {
         }
     }
 
-    @GetMapping("/appointment-list/{id}/report")
+    @GetMapping("/appointment-list-legacy/{id}/report")
     public String getMedicalReport(@PathVariable("id") Integer appointmentId,
                                    @RequestParam("patientId") Integer patientId,
                                    Model model,

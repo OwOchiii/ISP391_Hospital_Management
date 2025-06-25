@@ -147,7 +147,6 @@ public class ReceptionistApiController {
                         patientMap.put("email", patient.getUser().getEmail());
                         patientMap.put("dateOfBirth", patient.getDateOfBirth());
                         patientMap.put("gender", patient.getGender());
-                        patientMap.put("address", patient.getAddress());
                         // Find contact info for this patient
                         PatientContact contact = contactsById.stream()
                             .filter(c -> c.getPatientId().equals(patient.getPatientId()))

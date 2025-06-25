@@ -13,14 +13,8 @@ import jakarta.persistence.criteria.Predicate;
 import java.util.ArrayList;
 import org.springframework.util.StringUtils;
 import orochi.dto.ScheduleDTO;
-import orochi.model.Doctor;
-import orochi.model.Patient;
-import orochi.model.Room;
-import orochi.model.Schedule;
-import orochi.repository.DoctorRepository;
-import orochi.repository.PatientRepository;
-import orochi.repository.RoomRepository;
-import orochi.repository.ScheduleRepository;
+import orochi.model.*;
+import orochi.repository.*;
 import orochi.service.ScheduleService;
 import org.springframework.data.jpa.domain.Specification;
 import jakarta.persistence.criteria.Predicate;
@@ -46,6 +40,9 @@ public class ScheduleServiceImpl implements ScheduleService {
 
     @Autowired
     private RoomRepository roomRepository;
+
+    @Autowired
+    private AppointmentRepository appointmentRepository;
 
     @Override
     public List<ScheduleDTO> getDoctorScheduleForWeek(Integer doctorId, LocalDate weekStart) {
