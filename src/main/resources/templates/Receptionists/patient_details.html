@@ -10,158 +10,154 @@
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     <style>
         body {
-            background-color: #f1f4f8;
+            background-color: #f8f9fa;
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-            color: #2d3748;
-            padding: 20px 0;
+            color: #212529;
         }
 
         .container {
-            max-width: 1200px;
-        }
-
-        h1 {
-            color: #007bff;
-            font-weight: 700;
-            text-align: center;
-            margin-bottom: 30px;
+            padding: 2rem;
         }
 
         .card {
-            border: none;
-            border-radius: 12px;
-            margin-bottom: 20px;
-            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-            transition: transform 0.2s;
-            background-color: #e6f3ff; /* Màu thống nhất từ Personal Information */
-        }
-
-        .card:hover {
-            transform: translateY(-5px);
-        }
-
-        .card-header {
-            background-color: transparent;
-            border-bottom: none;
-            padding: 15px 20px;
-            cursor: pointer;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
-
-        .card-header h2 {
-            margin: 0;
-            font-size: 1.5rem;
-            font-weight: 600;
-            color: #007bff;
-            position: relative;
-            padding-bottom: 5px;
-        }
-
-        .card-header h2::after {
-            content: '';
-            position: absolute;
-            bottom: 0;
-            left: 0;
-            width: 50px;
-            height: 3px;
-            background-color: #007bff;
+            border-top: 4px solid #0d6efd;
+            border-radius: 0.5rem;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            max-width: 900px;
+            margin: 0 auto;
         }
 
         .card-body {
-            padding: 20px;
+            padding: 2rem;
+        }
+
+        h1 {
+            font-size: 1.75rem;
+            font-weight: 700;
+            color: #212529;
+            text-align: center;
+            margin-bottom: 0;
+        }
+
+        h2 {
+            font-size: 1.25rem;
+            font-weight: 600;
+            color: #212529;
+            margin-bottom: 1.5rem;
         }
 
         .form-group {
-            margin-bottom: 20px;
+            margin-bottom: 1rem;
         }
 
         .form-label {
+            font-size: 0.875rem;
             font-weight: 500;
-            color: #2d3748;
+            color: #495057;
         }
 
         .form-control, .form-select {
-            border-radius: 8px;
-            border: 1px solid #ced4da;
-            padding: 10px;
-            transition: border-color 0.3s, box-shadow 0.3s;
+            border-radius: 0.375rem;
+            font-size: 0.9rem;
+            padding: 0.75rem;
         }
 
         .form-control:focus, .form-select:focus {
-            border-color: #007bff;
-            box-shadow: 0 0 8px rgba(0, 123, 255, 0.2);
-            outline: none;
-        }
-
-        .edit-link {
-            color: #007bff;
-            text-decoration: none;
-            font-weight: 500;
-        }
-
-        .edit-link:hover {
-            color: #0056b3;
-            text-decoration: underline;
-        }
-
-        .btn-primary {
-            background-color: #007bff;
-            border: none;
-            border-radius: 8px;
-            padding: 8px 16px;
-            font-weight: 500;
-            transition: background-color 0.3s, transform 0.2s;
-        }
-
-        .btn-primary:hover {
-            background-color: #0056b3;
-            transform: translateY(-2px);
-        }
-
-        .btn-secondary {
-            background-color: #6c757d;
-            border: none;
-            border-radius: 8px;
-            padding: 8px 16px;
-            font-weight: 500;
-            transition: background-color 0.3s, transform 0.2s;
-        }
-
-        .btn-secondary:hover {
-            background-color: #5a6268;
-            transform: translateY(-2px);
-        }
-
-        .alert {
-            border-radius: 8px;
-            padding: 15px;
-            margin-bottom: 20px;
-            animation: fadeIn 0.5s ease-in-out;
-        }
-
-        @keyframes fadeIn {
-            from { opacity: 0; }
-            to { opacity: 1; }
+            border-color: #0d6efd;
+            box-shadow: 0 0 0 0.2rem rgba(13, 110, 253, 0.25);
         }
 
         .invalid-feedback {
-            font-size: 0.875rem;
             color: #dc3545;
+            font-size: 0.75rem;
+            display: none;
         }
 
-        .is-valid {
-            border-color: #28a745 !important;
+        .is-invalid .invalid-feedback {
+            display: block;
         }
 
         .is-invalid {
             border-color: #dc3545 !important;
         }
 
-        .section-icon {
-            margin-right: 10px;
-            color: #007bff;
+        .is-valid {
+            border-color: #28a745 !important;
+        }
+
+        .btn-primary {
+            background-color: #0d6efd;
+            border-color: #0d6efd;
+            padding: 0.75rem 2rem;
+            font-size: 0.9rem;
+            font-weight: 500;
+        }
+
+        .btn-primary:hover {
+            background-color: #0b5ed7;
+            border-color: #0a58ca;
+        }
+
+        .btn-secondary {
+            background-color: #6c757d;
+            border-color: #6c757d;
+            padding: 0.75rem 2rem;
+            font-size: 0.9rem;
+            font-weight: 500;
+        }
+
+        .btn-secondary:hover {
+            background-color: #5c636a;
+            border-color: #565e64;
+        }
+
+        .btn-sm {
+            padding: 0.5rem 1rem;
+            font-size: 0.875rem;
+        }
+
+        .alert {
+            margin-bottom: 1.5rem;
+            font-size: 0.9rem;
+        }
+
+        .d-none {
+            display: none !important;
+        }
+
+        .edit-link {
+            color: #0d6efd;
+            text-decoration: none;
+            font-size: 0.875rem;
+            font-weight: 500;
+        }
+
+        .edit-link:hover {
+            color: #0b5ed7;
+            text-decoration: underline;
+        }
+
+        @media (max-width: 767.98px) {
+            .card-body {
+                padding: 1.5rem;
+            }
+
+            h1 {
+                font-size: 1.5rem;
+            }
+
+            h2 {
+                font-size: 1rem;
+            }
+
+            .btn-primary, .btn-secondary {
+                padding: 0.5rem 1.5rem;
+                font-size: 0.85rem;
+            }
+
+            .edit-link {
+                font-size: 0.75rem;
+            }
         }
     </style>
 </head>
@@ -173,236 +169,255 @@
             <h1>Patient Details</h1>
             <div style="width: 70px;"></div>
         </div>
+        <div id="patientDetails" class="card">
+            <div class="card-body">
+                <!-- Success/Error Messages -->
+                <div id="successMessage" class="alert alert-success d-none" role="alert"></div>
+                <div id="errorMessage" class="alert alert-danger d-none" role="alert"></div>
 
-        <!-- Success/Error Messages -->
-        <div id="successMessage" class="alert alert-success d-none" role="alert"></div>
-        <div id="errorMessage" class="alert alert-danger d-none" role="alert"></div>
-
-        <!-- Personal Information -->
-        <div class="mb-4" id="personalInfo">
-            <div class="card">
-                <div class="card-header" data-bs-toggle="collapse" data-bs-target="#personalInfoCollapse" aria-expanded="true" aria-controls="personalInfoCollapse">
-                    <h2><i class="fas fa-user section-icon"></i>Personal Information</h2>
-                    <a href="#" id="editPersonalInfo" class="edit-link">Edit</a>
-                </div>
-                <div id="personalInfoCollapse" class="collapse show">
-                    <div class="card-body">
-                        <div class="row g-3">
-                            <div class="col-md-6">
-                                <div class="form-group">
-                                    <label for="fullName" class="form-label">Full Name*</label>
-                                    <p id="fullName" class="mt-1 mb-0"></p>
-                                    <input id="fullNameInput" type="text" class="form-control d-none" required>
-                                    <div id="fullNameError" class="invalid-feedback">Full Name is required.</div>
-                                </div>
-                            </div>
-                            <div class="col-md-6">
-                                <div class="form-group">
-                                    <label for="patientID" class="form-label">Patient ID*</label>
-                                    <p id="patientID" class="mt-1 mb-0"></p>
-                                    <input id="patientIDInput" type="text" class="form-control d-none" readonly>
-                                </div>
-                            </div>
-                            <div class="col-md-6">
-                                <div class="form-group">
-                                    <label for="gender" class="form-label">Gender*</label>
-                                    <p id="gender" class="mt-1 mb-0"></p>
-                                    <select id="genderInput" class="form-select d-none" required>
-                                        <option value="">Select Gender</option>
-                                        <option value="Male">Male</option>
-                                        <option value="Female">Female</option>
-                                        <option value="Other">Other</option>
-                                    </select>
-                                    <div id="genderError" class="invalid-feedback">Gender is required.</div>
-                                </div>
-                            </div>
-                            <div class="col-md-6">
-                                <div class="form-group">
-                                    <label for="dob" class="form-label">Date of Birth*</label>
-                                    <p id="dob" class="mt-1 mb-0"></p>
-                                    <input id="dobInput" type="date" class="form-control d-none" max="2025-06-22" required>
-                                    <div id="dobError" class="invalid-feedback">Date of Birth cannot be in the future.</div>
-                                </div>
-                            </div>
-                            <div class="col-md-6">
-                                <div class="form-group">
-                                    <label for="phone" class="form-label">Phone Number*</label>
-                                    <p id="phone" class="mt-1 mb-0"></p>
-                                    <input id="phoneInput" type="tel" class="form-control d-none" pattern="\d{10}" required>
-                                    <div id="phoneError" class="invalid-feedback">Phone Number must be exactly 10 digits.</div>
-                                </div>
-                            </div>
-                            <div class="col-md-6">
-                                <div class="form-group">
-                                    <label for="email" class="form-label">Email</label>
-                                    <p id="email" class="mt-1 mb-0"></p>
-                                    <input id="emailInput" type="email" class="form-control d-none" pattern=".*@gmail\.com">
-                                    <div id="emailError" class="invalid-feedback">Email must end with @gmail.com.</div>
-                                </div>
-                            </div>
-                            <div class="col-md-12">
-                                <div class="form-group">
-                                    <label for="description" class="form-label">Description/Notes</label>
-                                    <p id="description" class="mt-1 mb-0"></p>
-                                    <textarea id="descriptionInput" class="form-control d-none" rows="4"></textarea>
-                                </div>
+                <!-- Personal Information -->
+                <div class="mb-4" id="personalInfo">
+                    <div class="d-flex justify-content-between align-items-center mb-3">
+                        <h2>1. Personal Information</h2>
+                        <a href="#" id="editPersonalInfo" class="edit-link">Edit</a>
+                    </div>
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label for="fullName" class="form-label">Full Name*</label>
+                                <p id="fullName" class="mt-1 mb-0"></p>
+                                <input id="fullNameInput" type="text" class="form-control d-none" required>
+                                <div id="fullNameError" class="invalid-feedback">Full Name is required.</div>
                             </div>
                         </div>
-                        <div id="savePersonalInfo" class="d-none mt-3">
-                            <button type="button" class="btn btn-primary btn-sm">Save Changes</button>
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label for="gender" class="form-label">Gender*</label>
+                                <p id="gender" class="mt-1 mb-0"></p>
+                                <select id="genderInput" class="form-select d-none" required>
+                                    <option value="">Select Gender</option>
+                                    <option value="Male">Male</option>
+                                    <option value="Female">Female</option>
+                                    <option value="Other">Other</option>
+                                </select>
+                                <div id="genderError" class="invalid-feedback">Gender is required.</div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label for="dob" class="form-label">Date of Birth*</label>
+                                <p id="dob" class="mt-1 mb-0"></p>
+                                <input id="dobInput" type="date" class="form-control d-none" max="2025-06-05" required>
+                                <div id="dobError" class="invalid-feedback">Date of Birth cannot be in the future.</div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label for="idNumber" class="form-label">Citizen Identification Card*</label>
+                                <p id="idNumber" class="mt-1 mb-0"></p>
+                                <input id="idNumberInput" type="text" class="form-control d-none" pattern="\d{12}" required>
+                                <div id="idNumberError" class="invalid-feedback">Citizen ID must be exactly 12 digits.</div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label for="insuranceNumber" class="form-label">Health Insurance Number</label>
+                                <p id="insuranceNumber" class="mt-1 mb-0"></p>
+                                <input id="insuranceNumberInput" type="text" class="form-control d-none">
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label for="phone" class="form-label">Phone Number*</label>
+                                <p id="phone" class="mt-1 mb-0"></p>
+                                <input id="phoneInput" type="tel" class="form-control d-none" pattern="\d{10}" required>
+                                <div id="phoneError" class="invalid-feedback">Phone Number must be exactly 10 digits.</div>
+                            </div>
+                        </div>
+                        <div class="col-md-12">
+                            <div class="form-group">
+                                <label for="address" class="form-label">Contact Address</label>
+                                <p id="address" class="mt-1 mb-0"></p>
+                                <input id="addressInput" type="text" class="form-control d-none">
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label for="email" class="form-label">Email</label>
+                                <p id="email" class="mt-1 mb-0"></p>
+                                <input id="emailInput" type="email" class="form-control d-none" pattern=".*@gmail\.com">
+                                <div id="emailError" class="invalid-feedback">Email must end with @gmail.com.</div>
+                            </div>
                         </div>
                     </div>
-                </div>
-            </div>
-        </div>
-
-        <!-- Contact Information -->
-        <div class="mb-4" id="contactInfo">
-            <div class="card">
-                <div class="card-header" data-bs-toggle="collapse" data-bs-target="#contactInfoCollapse" aria-expanded="true" aria-controls="contactInfoCollapse">
-                    <h2><i class="fas fa-map-marker-alt section-icon"></i>Contact Information</h2>
-                    <a href="#" id="editContactInfo" class="edit-link">Edit</a>
-                </div>
-                <div id="contactInfoCollapse" class="collapse show">
-                    <div class="card-body">
-                        <div class="row g-3">
-                            <div class="col-md-6">
-                                <div class="form-group">
-                                    <label for="addressType" class="form-label">Address Type</label>
-                                    <p id="addressType" class="mt-1 mb-0"></p>
-                                    <select id="addressTypeInput" class="form-select d-none">
-                                        <option value="">Select Address Type</option>
-                                        <option value="Home">Home</option>
-                                        <option value="Work">Work</option>
-                                        <option value="Other">Other</option>
-                                    </select>
-                                </div>
-                            </div>
-                            <div class="col-md-6">
-                                <div class="form-group">
-                                    <label for="streetAddress" class="form-label">Street Address</label>
-                                    <p id="streetAddress" class="mt-1 mb-0"></p>
-                                    <input id="streetAddressInput" type="text" class="form-control d-none">
-                                </div>
-                            </div>
-                            <div class="col-md-6">
-                                <div class="form-group">
-                                    <label for="city" class="form-label">City</label>
-                                    <p id="city" class="mt-1 mb-0"></p>
-                                    <input id="cityInput" type="text" class="form-control d-none">
-                                </div>
-                            </div>
-                            <div class="col-md-6">
-                                <div class="form-group">
-                                    <label for="state" class="form-label">State/Province</label>
-                                    <p id="state" class="mt-1 mb-0"></p>
-                                    <input id="stateInput" type="text" class="form-control d-none">
-                                </div>
-                            </div>
-                            <div class="col-md-6">
-                                <div class="form-group">
-                                    <label for="postalCode" class="form-label">Postal Code</label>
-                                    <p id="postalCode" class="mt-1 mb-0"></p>
-                                    <input id="postalCodeInput" type="text" class="form-control d-none">
-                                </div>
-                            </div>
-                            <div class="col-md-6">
-                                <div class="form-group">
-                                    <label for="country" class="form-label">Country</label>
-                                    <p id="country" class="mt-1 mb-0"></p>
-                                    <input id="countryInput" type="text" class="form-control d-none">
-                                </div>
-                            </div>
-                        </div>
-                        <div id="saveContactInfo" class="d-none mt-3">
-                            <button type="button" class="btn btn-primary btn-sm">Save Changes</button>
-                        </div>
+                    <div id="savePersonalInfo" class="d-none mt-3">
+                        <button type="button" class="btn btn-primary btn-sm">Save Changes</button>
                     </div>
                 </div>
-            </div>
-        </div>
 
-        <!-- Appointment History -->
-        <div class="mb-4" id="appointmentInfo">
-            <div class="card">
-                <div class="card-header" data-bs-toggle="collapse" data-bs-target="#appointmentInfoCollapse" aria-expanded="true" aria-controls="appointmentInfoCollapse">
-                    <h2><i class="fas fa-calendar-alt section-icon"></i>Appointment History</h2>
-                    <a href="#" id="editAppointmentInfo" class="edit-link">Edit</a>
-                </div>
-                <div id="appointmentInfoCollapse" class="collapse show">
-                    <div class="card-body">
-                        <div class="row g-3">
-                            <div class="col-md-6">
-                                <div class="form-group">
-                                    <label for="appointmentTime" class="form-label">Appointment Date and Time*</label>
-                                    <p id="appointmentTime" class="mt-1 mb-0"></p>
-                                    <input id="appointmentTimeInput" type="datetime-local" class="form-control d-none" min="2025-06-22T23:01" max="2025-07-22T23:59" required>
-                                    <div id="appointmentTimeError" class="invalid-feedback">Date and Time must be between now and 30 days in the future.</div>
-                                </div>
-                            </div>
-                            <div class="col-md-6">
-                                <div class="form-group">
-                                    <label for="doctor" class="form-label">Assigned Doctor</label>
-                                    <p id="doctor" class="mt-1 mb-0"></p>
-                                    <input id="doctorInput" type="text" class="form-control d-none">
-                                </div>
-                            </div>
-                            <div class="col-md-6">
-                                <div class="form-group">
-                                    <label for="appointmentStatus" class="form-label">Appointment Status</label>
-                                    <p id="appointmentStatus" class="mt-1 mb-0"></p>
-                                    <select id="appointmentStatusInput" class="form-select d-none">
-                                        <option value="">Select Status</option>
-                                        <option value="Scheduled">Scheduled</option>
-                                        <option value="Completed">Completed</option>
-                                        <option value="Cancelled">Cancelled</option>
-                                    </select>
-                                </div>
-                            </div>
-                            <div class="col-md-12">
-                                <div class="form-group">
-                                    <label for="reason" class="form-label">Reason for Visit*</label>
-                                    <p id="reason" class="mt-1 mb-0"></p>
-                                    <textarea id="reasonInput" class="form-control d-none" rows="4" required></textarea>
-                                    <div id="reasonError" class="invalid-feedback">Reason cannot exceed 100 words.</div>
-                                </div>
+                <!-- Appointment Information -->
+                <div class="mb-4" id="appointmentInfo">
+                    <div class="d-flex justify-content-between align-items-center mb-3">
+                        <h2>2. Appointment Information</h2>
+                        <a href="#" id="editAppointmentInfo" class="edit-link">Edit</a>
+                    </div>
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label for="department" class="form-label">Department/Clinic*</label>
+                                <p id="department" class="mt-1 mb-0"></p>
+                                <select id="departmentInput" class="form-select d-none" required>
+                                    <option value="">Select Department</option>
+                                    <option value="General Internal Medicine">General Internal Medicine</option>
+                                    <option value="Surgery">Surgery</option>
+                                    <option value="Obstetrics">Obstetrics</option>
+                                    <option value="ENT">ENT</option>
+                                    <option value="Pediatrics">Pediatrics</option>
+                                    <option value="Dermatology">Dermatology</option>
+                                </select>
+                                <div id="departmentError" class="invalid-feedback">Department is required.</div>
                             </div>
                         </div>
-                        <div id="saveAppointmentInfo" class="d-none mt-3">
-                            <button type="button" class="btn btn-primary btn-sm">Save Changes</button>
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label for="visitType" class="form-label">Type of Visit*</label>
+                                <p id="visitType" class="mt-1 mb-0"></p>
+                                <select id="visitTypeInput" class="form-select d-none" required>
+                                    <option value="">Select Type</option>
+                                    <option value="Regular Visit">Regular Visit</option>
+                                    <option value="On-Demand Visit">On-Demand Visit</option>
+                                    <option value="Follow-Up Visit">Follow-Up Visit</option>
+                                </select>
+                                <div id="visitTypeError" class="invalid-feedback">Type of Visit is required.</div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label for="appointmentTime" class="form-label">Preferred Date and Time*</label>
+                                <p id="appointmentTime" class="mt-1 mb-0"></p>
+                                <input id="appointmentTimeInput" type="datetime-local" class="form-control d-none" min="2025-06-05T10:51" max="2025-07-05T23:59" required>
+                                <div id="appointmentTimeError" class="invalid-feedback">Date and Time must be between now and 30 days in the future.</div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label for="doctor" class="form-label">Preferred Doctor</label>
+                                <p id="doctor" class="mt-1 mb-0"></p>
+                                <input id="doctorInput" type="text" class="form-control d-none">
+                            </div>
+                        </div>
+                        <div class="col-md-12">
+                            <div class="form-group">
+                                <label for="reason" class="form-label">Reason for Visit*</label>
+                                <p id="reason" class="mt-1 mb-0"></p>
+                                <textarea id="reasonInput" class="form-control d-none" rows="4" required></textarea>
+                                <div id="reasonError" class="invalid-feedback">Reason cannot exceed 100 words.</div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label for="referral" class="form-label">Referral Letter</label>
+                                <p id="referral" class="mt-1 mb-0"></p>
+                                <input id="referralInput" type="text" class="form-control d-none">
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label for="lastVisit" class="form-label">Last Visit Date (if Follow-Up)</label>
+                                <p id="lastVisit" class="mt-1 mb-0"></p>
+                                <input id="lastVisitInput" type="date" class="form-control d-none">
+                            </div>
                         </div>
                     </div>
+                    <div id="saveAppointmentInfo" class="d-none mt-3">
+                        <button type="button" class="btn btn-primary btn-sm">Save Changes</button>
+                    </div>
                 </div>
-            </div>
-        </div>
 
-        <!-- Payment Transactions -->
-        <div class="mb-4" id="transactionInfo">
-            <div class="card">
-                <div class="card-header" data-bs-toggle="collapse" data-bs-target="#transactionInfoCollapse" aria-expanded="true" aria-controls="transactionInfoCollapse">
-                    <h2><i class="fas fa-credit-card section-icon"></i>Payment Transactions</h2>
-                    <a href="#" id="editTransactionInfo" class="edit-link">Edit</a>
-                </div>
-                <div id="transactionInfoCollapse" class="collapse show">
-                    <div class="card-body">
-                        <div class="row g-3">
-                            <div class="col-md-6">
-                                <div class="form-group">
-                                    <label for="paymentStatus" class="form-label">Payment Status</label>
-                                    <p id="paymentStatus" class="mt-1 mb-0"></p>
-                                    <select id="paymentStatusInput" class="form-select d-none">
-                                        <option value="">Select Status</option>
-                                        <option value="Pending">Pending</option>
-                                        <option value="Completed">Completed</option>
-                                        <option value="Failed">Failed</option>
-                                    </select>
-                                </div>
+                <!-- Representative Information -->
+                <div class="mb-4" id="representativeInfo">
+                    <div class="d-flex justify-content-between align-items-center mb-3">
+                        <h2>3. Representative Information</h2>
+                        <a href="#" id="editRepresentativeInfo" class="edit-link">Edit</a>
+                    </div>
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label for="repName" class="form-label">Representative Full Name</label>
+                                <p id="repName" class="mt-1 mb-0"></p>
+                                <input id="repNameInput" type="text" class="form-control d-none">
                             </div>
                         </div>
-                        <div id="saveTransactionInfo" class="d-none mt-3">
-                            <button type="button" class="btn btn-primary btn-sm">Save Changes</button>
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label for="repRelation" class="form-label">Relationship to Patient</label>
+                                <p id="repRelation" class="mt-1 mb-0"></p>
+                                <input id="repRelationInput" type="text" class="form-control d-none">
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label for="repPhone" class="form-label">Representative Phone Number</label>
+                                <p id="repPhone" class="mt-1 mb-0"></p>
+                                <input id="repPhoneInput" type="tel" class="form-control d-none" pattern="\d{10}">
+                                <div id="repPhoneError" class="invalid-feedback">Phone Number must be exactly 10 digits.</div>
+                            </div>
                         </div>
                     </div>
+                    <div id="saveRepresentativeInfo" class="d-none mt-3">
+                        <button type="button" class="btn btn-primary btn-sm">Save Changes</button>
+                    </div>
+                </div>
+
+                <!-- Special Notes -->
+                <div class="mb-4" id="specialNotes">
+                    <div class="d-flex justify-content-between align-items-center mb-3">
+                        <h2>4. Special Notes</h2>
+                        <a href="#" id="editSpecialNotes" class="edit-link">Edit</a>
+                    </div>
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label for="assistance" class="form-label">Special Assistance Requirements</label>
+                                <p id="assistance" class="mt-1 mb-0"></p>
+                                <input id="assistanceInput" type="text" class="form-control d-none">
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label for="language" class="form-label">Language Support</label>
+                                <p id="language" class="mt-1 mb-0"></p>
+                                <input id="languageInput" type="text" class="form-control d-none">
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label for="vatInvoice" class="form-label">VAT Invoice Required</label>
+                                <p id="vatInvoice" class="mt-1 mb-0"></p>
+                                <input id="vatInvoiceInput" type="checkbox" class="form-check-input d-none mt-2">
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label for="privateInsurance" class="form-label">Private Insurance Information</label>
+                                <p id="privateInsurance" class="mt-1 mb-0"></p>
+                                <input id="privateInsuranceInput" type="text" class="form-control d-none">
+                            </div>
+                        </div>
+                    </div>
+                    <div id="saveSpecialNotes" class="d-none mt-3">
+                        <button type="button" class="btn btn-primary btn-sm">Save Changes</button>
+                    </div>
+                </div>
+
+                <!-- Visit Confirmation -->
+                <div class="mb-4">
+                    <h2>5. Visit Confirmation</h2>
+                    <div class="form-check mb-2">
+                        <input id="visitCompleted" type="checkbox" class="form-check-input">
+                        <label for="visitCompleted" class="form-check-label">Mark as Visit Completed</label>
+                    </div>
+                    <p id="completionTime" class="mt-2 text-muted d-none">Completed on: <span id="completionTimestamp"></span></p>
                 </div>
             </div>
         </div>
@@ -418,53 +433,57 @@
             const response = await fetch('/api/patient'); // Replace with your API endpoint
             if (response.ok) {
                 const data = await response.json();
-
-                // Personal Information
                 document.getElementById('fullName').textContent = data.fullName || '-';
-                document.getElementById('patientID').textContent = data.patientID || '-';
                 document.getElementById('gender').textContent = data.gender || '-';
-                document.getElementById('dob').textContent = data.dateOfBirth ? new Date(data.dateOfBirth).toLocaleDateString('en-GB') : '-';
-                document.getElementById('phone').textContent = data.phoneNumber || '-';
+                document.getElementById('dob').textContent = data.dob ? new Date(data.dob).toLocaleDateString('en-GB') : '-';
+                document.getElementById('idNumber').textContent = data.idNumber || '-';
+                document.getElementById('insuranceNumber').textContent = data.insuranceNumber || '-';
+                document.getElementById('phone').textContent = data.phone || '-';
+                document.getElementById('address').textContent = data.address || '-';
                 document.getElementById('email').textContent = data.email || '-';
-                document.getElementById('description').textContent = data.description || '-';
-
-                document.getElementById('fullNameInput').value = data.fullName || '';
-                document.getElementById('patientIDInput').value = data.patientID || '';
-                document.getElementById('genderInput').value = data.gender || '';
-                document.getElementById('dobInput').value = data.dateOfBirth || '';
-                document.getElementById('phoneInput').value = data.phoneNumber || '';
-                document.getElementById('emailInput').value = data.email || '';
-                document.getElementById('descriptionInput').value = data.description || '';
-
-                // Contact Information
-                document.getElementById('addressType').textContent = data.addressType || '-';
-                document.getElementById('streetAddress').textContent = data.streetAddress || '-';
-                document.getElementById('city').textContent = data.city || '-';
-                document.getElementById('state').textContent = data.state || '-';
-                document.getElementById('postalCode').textContent = data.postalCode || '-';
-                document.getElementById('country').textContent = data.country || '-';
-
-                document.getElementById('addressTypeInput').value = data.addressType || '';
-                document.getElementById('streetAddressInput').value = data.streetAddress || '';
-                document.getElementById('cityInput').value = data.city || '';
-                document.getElementById('stateInput').value = data.state || '';
-                document.getElementById('postalCodeInput').value = data.postalCode || '';
-                document.getElementById('countryInput').value = data.country || '';
-
-                // Appointment Information
+                document.getElementById('department').textContent = data.department || '-';
+                document.getElementById('visitType').textContent = data.visitType || '-';
                 document.getElementById('appointmentTime').textContent = data.appointmentTime ? new Date(data.appointmentTime).toLocaleString('en-GB') : '-';
                 document.getElementById('doctor').textContent = data.doctor || '-';
-                document.getElementById('appointmentStatus').textContent = data.appointmentStatus || '-';
                 document.getElementById('reason').textContent = data.reason || '-';
+                document.getElementById('referral').textContent = data.referral || '-';
+                document.getElementById('lastVisit').textContent = data.lastVisit ? new Date(data.lastVisit).toLocaleDateString('en-GB') : '-';
+                document.getElementById('repName').textContent = data.repName || '-';
+                document.getElementById('repRelation').textContent = data.repRelation || '-';
+                document.getElementById('repPhone').textContent = data.repPhone || '-';
+                document.getElementById('assistance').textContent = data.assistance || '-';
+                document.getElementById('language').textContent = data.language || '-';
+                document.getElementById('vatInvoice').textContent = data.vatInvoice ? 'Yes' : 'No';
+                document.getElementById('privateInsurance').textContent = data.privateInsurance || '-';
 
+                document.getElementById('fullNameInput').value = data.fullName || '';
+                document.getElementById('genderInput').value = data.gender || '';
+                document.getElementById('dobInput').value = data.dob || '';
+                document.getElementById('idNumberInput').value = data.idNumber || '';
+                document.getElementById('insuranceNumberInput').value = data.insuranceNumber || '';
+                document.getElementById('phoneInput').value = data.phone || '';
+                document.getElementById('addressInput').value = data.address || '';
+                document.getElementById('emailInput').value = data.email || '';
+                document.getElementById('departmentInput').value = data.department || '';
+                document.getElementById('visitTypeInput').value = data.visitType || '';
                 document.getElementById('appointmentTimeInput').value = data.appointmentTime || '';
                 document.getElementById('doctorInput').value = data.doctor || '';
-                document.getElementById('appointmentStatusInput').value = data.appointmentStatus || '';
                 document.getElementById('reasonInput').value = data.reason || '';
+                document.getElementById('referralInput').value = data.referral || '';
+                document.getElementById('lastVisitInput').value = data.lastVisit || '';
+                document.getElementById('repNameInput').value = data.repName || '';
+                document.getElementById('repRelationInput').value = data.repRelation || '';
+                document.getElementById('repPhoneInput').value = data.repPhone || '';
+                document.getElementById('assistanceInput').value = data.assistance || '';
+                document.getElementById('languageInput').value = data.language || '';
+                document.getElementById('vatInvoiceInput').checked = data.vatInvoice || false;
+                document.getElementById('privateInsuranceInput').value = data.privateInsurance || '';
 
-                // Transaction Information
-                document.getElementById('paymentStatus').textContent = data.paymentStatus || '-';
-                document.getElementById('paymentStatusInput').value = data.paymentStatus || '';
+                if (data.visitCompleted) {
+                    document.getElementById('visitCompleted').checked = true;
+                    document.getElementById('completionTime').classList.remove('d-none');
+                    document.getElementById('completionTimestamp').textContent = data.completionTimestamp || '-';
+                }
             } else {
                 showError('Failed to load patient data.');
             }
@@ -476,14 +495,14 @@
     // Save patient data to database
     async function savePatientData(sectionId, data) {
         try {
-            const response = await fetch('/api/patient', {
+            const response = await fetch('/api/patient', { // Replace with your API endpoint
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(data)
             });
             if (response.ok) {
                 showSuccess('Updated successfully!');
-                loadPatientData();
+                loadPatientData(); // Reload data to ensure consistency
             } else {
                 throw new Error('Failed to save data');
             }
@@ -509,6 +528,27 @@
     }
 
     // Real-time validation functions
+    function validateIdNumber() {
+        const input = document.getElementById('idNumberInput');
+        const error = document.getElementById('idNumberError');
+        const value = input.value.trim();
+        const isValid = /^\d{12}$/.test(value);
+
+        if (value === '') {
+            input.classList.remove('is-invalid', 'is-valid');
+            error.style.display = 'none';
+        } else if (isValid) {
+            input.classList.remove('is-invalid');
+            input.classList.add('is-valid');
+            error.style.display = 'none';
+        } else {
+            input.classList.remove('is-valid');
+            input.classList.add('is-invalid');
+            error.style.display = 'block';
+        }
+        return isValid || value === '';
+    }
+
     function validatePhoneNumber() {
         const input = document.getElementById('phoneInput');
         const error = document.getElementById('phoneError');
@@ -551,6 +591,27 @@
         return isValid;
     }
 
+    function validateRepPhone() {
+        const input = document.getElementById('repPhoneInput');
+        const error = document.getElementById('repPhoneError');
+        const value = input.value.trim();
+        const isValid = value === '' || /^\d{10}$/.test(value);
+
+        if (value === '') {
+            input.classList.remove('is-invalid', 'is-valid');
+            error.style.display = 'none';
+        } else if (isValid) {
+            input.classList.remove('is-invalid');
+            input.classList.add('is-valid');
+            error.style.display = 'none';
+        } else {
+            input.classList.remove('is-valid');
+            input.classList.add('is-invalid');
+            error.style.display = 'block';
+        }
+        return isValid;
+    }
+
     // Toggle edit mode with validation
     function toggleEdit(sectionId, buttonId, saveId) {
         const editButton = document.getElementById(buttonId);
@@ -564,14 +625,20 @@
             saveSection.classList.remove('d-none');
             editButton.classList.add('d-none');
 
+            // Attach real-time validation listeners
             if (sectionId === 'personalInfo') {
+                document.getElementById('idNumberInput').addEventListener('input', validateIdNumber);
                 document.getElementById('phoneInput').addEventListener('input', validatePhoneNumber);
                 document.getElementById('emailInput').addEventListener('input', validateEmail);
+            } else if (sectionId === 'representativeInfo') {
+                document.getElementById('repPhoneInput').addEventListener('input', validateRepPhone);
             }
         });
 
         saveSection.querySelector('button').addEventListener('click', async () => {
             let isValid = true;
+
+            // Reset error messages
             section.querySelectorAll('.invalid-feedback').forEach(error => error.style.display = 'none');
 
             let data = {};
@@ -581,9 +648,11 @@
                 const fullName = document.getElementById('fullNameInput').value.trim();
                 const gender = document.getElementById('genderInput').value;
                 const dob = document.getElementById('dobInput').value;
+                const idNumber = document.getElementById('idNumberInput').value.trim();
                 const phone = document.getElementById('phoneInput').value.trim();
                 const email = document.getElementById('emailInput').value.trim();
-                const description = document.getElementById('descriptionInput').value.trim();
+                const insuranceNumber = document.getElementById('insuranceNumberInput').value.trim();
+                const address = document.getElementById('addressInput').value.trim();
 
                 if (!fullName) {
                     document.getElementById('fullNameError').style.display = 'block';
@@ -599,7 +668,7 @@
                 } else {
                     document.getElementById('genderInput').classList.add('is-valid');
                 }
-                const today = new Date('2025-06-22');
+                const today = new Date('2025-06-05');
                 const dobDate = new Date(dob);
                 if (!dob || dobDate > today) {
                     document.getElementById('dobError').style.display = 'block';
@@ -608,6 +677,9 @@
                 } else {
                     document.getElementById('dobInput').classList.add('is-valid');
                 }
+                if (!validateIdNumber()) {
+                    isValid = false;
+                }
                 if (!validatePhoneNumber()) {
                     isValid = false;
                 }
@@ -615,29 +687,34 @@
                     isValid = false;
                 }
 
-                data = { fullName, gender, dateOfBirth: dob, phoneNumber: phone, email, description };
-            }
-
-            // Validation for Contact Information
-            if (sectionId === 'contactInfo') {
-                const addressType = document.getElementById('addressTypeInput').value;
-                const streetAddress = document.getElementById('streetAddressInput').value.trim();
-                const city = document.getElementById('cityInput').value.trim();
-                const state = document.getElementById('stateInput').value.trim();
-                const postalCode = document.getElementById('postalCodeInput').value.trim();
-                const country = document.getElementById('countryInput').value.trim();
-
-                data = { addressType, streetAddress, city, state, postalCode, country };
+                data = { fullName, gender, dob, idNumber, phone, email, insuranceNumber, address };
             }
 
             // Validation for Appointment Information
             if (sectionId === 'appointmentInfo') {
+                const department = document.getElementById('departmentInput').value;
+                const visitType = document.getElementById('visitTypeInput').value;
                 const appointmentTime = document.getElementById('appointmentTimeInput').value;
-                const doctor = document.getElementById('doctorInput').value.trim();
-                const appointmentStatus = document.getElementById('appointmentStatusInput').value;
                 const reason = document.getElementById('reasonInput').value.trim();
+                const doctor = document.getElementById('doctorInput').value.trim();
+                const referral = document.getElementById('referralInput').value.trim();
+                const lastVisit = document.getElementById('lastVisitInput').value;
 
-                const now = new Date('2025-06-22T23:01:00+07:00');
+                if (!department) {
+                    document.getElementById('departmentError').style.display = 'block';
+                    document.getElementById('departmentInput').classList.add('is-invalid');
+                    isValid = false;
+                } else {
+                    document.getElementById('departmentInput').classList.add('is-valid');
+                }
+                if (!visitType) {
+                    document.getElementById('visitTypeError').style.display = 'block';
+                    document.getElementById('visitTypeInput').classList.add('is-invalid');
+                    isValid = false;
+                } else {
+                    document.getElementById('visitTypeInput').classList.add('is-valid');
+                }
+                const now = new Date('2025-06-05T10:51:00+07:00');
                 const oneMonthLater = new Date(now);
                 oneMonthLater.setDate(now.getDate() + 30);
                 const preferred = new Date(appointmentTime);
@@ -657,15 +734,33 @@
                     document.getElementById('reasonInput').classList.add('is-valid');
                 }
 
-                data = { appointmentTime, doctor, appointmentStatus, reason };
+                data = { department, visitType, appointmentTime, reason, doctor, referral, lastVisit };
             }
 
-            // Validation for Transaction Information
-            if (sectionId === 'transactionInfo') {
-                const paymentStatus = document.getElementById('paymentStatusInput').value;
-                data = { paymentStatus };
+            // Validation for Representative Information
+            if (sectionId === 'representativeInfo') {
+                const repName = document.getElementById('repNameInput').value.trim();
+                const repRelation = document.getElementById('repRelationInput').value.trim();
+                const repPhone = document.getElementById('repPhoneInput').value.trim();
+
+                if (!validateRepPhone()) {
+                    isValid = false;
+                }
+
+                data = { repName, repRelation, repPhone };
             }
 
+            // Validation for Special Notes
+            if (sectionId === 'specialNotes') {
+                const assistance = document.getElementById('assistanceInput').value.trim();
+                const language = document.getElementById('languageInput').value.trim();
+                const vatInvoice = document.getElementById('vatInvoiceInput').checked;
+                const privateInsurance = document.getElementById('privateInsuranceInput').value.trim();
+
+                data = { assistance, language, vatInvoice, privateInsurance };
+            }
+
+            // Save changes if valid
             if (isValid) {
                 await savePatientData(sectionId, data);
                 section.querySelectorAll('p').forEach(p => p.classList.remove('d-none'));
@@ -681,13 +776,54 @@
 
     // Initialize edit toggles
     toggleEdit('personalInfo', 'editPersonalInfo', 'savePersonalInfo');
-    toggleEdit('contactInfo', 'editContactInfo', 'saveContactInfo');
     toggleEdit('appointmentInfo', 'editAppointmentInfo', 'saveAppointmentInfo');
-    toggleEdit('transactionInfo', 'editTransactionInfo', 'saveTransactionInfo');
+    toggleEdit('representativeInfo', 'editRepresentativeInfo', 'saveRepresentativeInfo');
+    toggleEdit('specialNotes', 'editSpecialNotes', 'saveSpecialNotes');
+
+    // Visit completion
+    document.getElementById('visitCompleted').addEventListener('change', async function() {
+        const completionTime = document.getElementById('completionTime');
+        const completionTimestamp = document.getElementById('completionTimestamp');
+        if (this.checked) {
+            const timestamp = new Date().toLocaleString('en-US', { timeZone: 'Asia/Ho_Chi_Minh' });
+            completionTime.classList.remove('d-none');
+            completionTimestamp.textContent = timestamp;
+            try {
+                await fetch('/api/patient/visit', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ visitCompleted: true, completionTimestamp: timestamp })
+                });
+                showSuccess('Visit marked as completed!');
+            } catch (error) {
+                showError('Error marking visit as completed.');
+                this.checked = false;
+                completionTime.classList.add('d-none');
+            }
+        } else {
+            completionTime.classList.add('d-none');
+            try {
+                await fetch('/api/patient/visit', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ visitCompleted: false })
+                });
+                showSuccess('Visit completion unmarked.');
+            } catch (error) {
+                showError('Error unmarking visit completion.');
+                this.checked = true;
+                completionTime.classList.remove('d-none');
+            }
+        }
+    });
 
     // Navigation
     document.getElementById('backButton').addEventListener('click', () => {
         window.history.back();
+    });
+
+    document.getElementById('goToPayment').addEventListener('click', () => {
+        window.location.href = 'payment.html'; // Update to your payment page
     });
 
     // Load data on page load

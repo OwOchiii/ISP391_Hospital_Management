@@ -1,13 +1,12 @@
 package orochi.controller;
 
-import java.util.List;
-import java.util.Map;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.ModelAttribute;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestMapping;
 import orochi.config.CustomUserDetails;
 import orochi.model.Users;
 import orochi.repository.UserRepository;
@@ -57,10 +56,6 @@ public class ReceptionistController {
         model.addAttribute("appointments", receptionistService.getAllAppointments());
         model.addAttribute("patients", receptionistService.getAllPatients());
         model.addAttribute("newUser", new Users());
-        model.addAttribute("newPatients", receptionistService.newPatients());
-        model.addAttribute("ourDoctor", receptionistService.ourDoctors());
-        model.addAttribute("totalAppointments", receptionistService.totalAppointment());
-        model.addAttribute("activeStaff", receptionistService.activeStaff());
         return "Receptionists/dashboard";
     }
 
@@ -200,43 +195,4 @@ public class ReceptionistController {
         // Fetch invoice details based on invoice ID from request parameter ...
         return "Receptionists/pay_invoice";
     }
-
-    @GetMapping("/patientStatus")
-    public ResponseEntity<?> getPatientStatusChartData(String period) {
-        try {
-            Map<String, Object> data = receptionistService.getPatientStatusChartData(period);
-            return ResponseEntity.ok(data);
-        } catch (Exception e) {
-            return ResponseEntity.badRequest().body("Error fetching patient status: " + e.getMessage());
-        }
-    }
-
-    @GetMapping("/appointmentRequest")
-    public ResponseEntity<?> getAppointmentTableData(){
-        try {
-            List<Map<String, Object>> appointmentTableData = receptionistService.getAppointmentTableData();
-            return ResponseEntity.ok(appointmentTableData);
-        } catch (Exception e) {
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                    .body("Error retrieving appointment table data: " + e.getMessage());
-        }
-    }
-
-    @PostMapping("/confirmAppointment")
-    public ResponseEntity<?> updateAppointmentStatus(
-            @RequestParam int appointId
-    ){
-        try {
-            // Update status to "Scheduled"
-            boolean isSuccess = receptionistService.updateAppointmentStatus(appointId, "Scheduled");
-            if(isSuccess) {
-                return ResponseEntity.ok("Update successfully");
-            } else {
-                return ResponseEntity.badRequest().body("Update failed");
-            }
-        } catch (Exception e) {
-            return ResponseEntity.badRequest().body("Error update appointment status: " + e.getMessage());
-        }
-    }
-
 }

@@ -1,41 +1,40 @@
 package orochi.service.impl;
 
-import java.util.ArrayList;
-import java.util.HashMap;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 import orochi.model.Appointment;
 import orochi.model.Patient;
-import orochi.model.PatientContact;
 import orochi.model.Users;
-import orochi.repository.*;
+import orochi.repository.AppointmentRepository;
+import orochi.repository.PatientRepository;
+import orochi.repository.ReceptionistRepository;
+import orochi.repository.UserRepository;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import orochi.service.UserService;
 
 import java.util.List;
-import java.util.Map;
 import java.util.Optional;
-import org.springframework.beans.factory.annotation.Autowired;
 
-@Service
-public class ReceptionistService {
+@Service("receptionistService")
+public class ReceptionistService implements UserService {
+    private static final Logger LOGGER = LoggerFactory.getLogger(ReceptionistService.class);
 
     private final UserRepository userRepository;
     private final AppointmentRepository appointmentRepository;
     private final PatientRepository patientRepository;
     private final ReceptionistRepository receptionistRepository;
-    private final PatientContactRepository patientContactRepository;
 
     public ReceptionistService(
             UserRepository userRepository,
             AppointmentRepository appointmentRepository,
             PatientRepository patientRepository,
-            ReceptionistRepository receptionistRepository, PatientContactRepository patientContactRepository) {
+            ReceptionistRepository receptionistRepository) {
         this.userRepository = userRepository;
         this.appointmentRepository = appointmentRepository;
         this.patientRepository = patientRepository;
         this.receptionistRepository = receptionistRepository;
-        this.patientContactRepository = patientContactRepository;
     }
 
     // Fetch all appointments for scheduling purposes
@@ -58,11 +57,6 @@ public class ReceptionistService {
         return patientRepository.findAll();
     }
 
-    public List<PatientContact> getAllPatientContacts() {return patientContactRepository.findAll();}
-
-    public List<PatientContact> getPatientContactsByPatientId(Integer patientId) {
-        return patientContactRepository.findByPatientId(patientId);
-    }
     // Check if the user is a Receptionist
     public boolean isReceptionist(Users user) {
         return user.getRole().getRoleName().equals("RECEPTIONIST");
@@ -94,59 +88,65 @@ public class ReceptionistService {
     }
 
     public Page<Users> getAllReceptionists(String search, String statusFilter, Pageable pageable) {
-        return receptionistRepository.findAllReceptionistsFiltered(search, statusFilter, pageable);
+        LOGGER.info("Search parameter: {}, StatusFilter: {}", search, statusFilter);
+        Page<Users> receptionistPage = receptionistRepository.findAllReceptionistsFiltered(search, statusFilter, pageable);
+        LOGGER.info("Number of receptionists returned: {}", receptionistPage.getTotalElements());
+        return receptionistPage;
     }
 
-//    public int newPatients(){
-//        return receptionistRepository.newPatients();
-//    }
-
-    public int ourDoctors() {
-        // Get the number of doctors from the database, similar to activeStaff() and newPatients()
-        return receptionistRepository.ourDoctors();
+    // Triển khai các phương thức từ UserService chưa có
+    @Override
+    public Integer getTotalUsers() {
+        throw new UnsupportedOperationException("Not implemented in ReceptionistService");
     }
 
-    public int totalAppointment(){
-        return receptionistRepository.totalAppointments();
+    @Override
+    public Integer getGuestUsers() {
+        throw new UnsupportedOperationException("Not implemented in ReceptionistService");
     }
 
-    public int activeStaff(){
-        return receptionistRepository.activeStaff();
+    @Override
+    public Integer getNewUsersToday() {
+        throw new UnsupportedOperationException("Not implemented in ReceptionistService");
     }
 
-    public int newPatients(){
-        return receptionistRepository.newPatients();
+    @Override
+    public Integer getGrowthPercentage() {
+        throw new UnsupportedOperationException("Not implemented in ReceptionistService");
     }
 
-    public Map<String, Object> getPatientStatusChartData(String period) {
-
-        List<Object[]> results = new ArrayList<>();
-
-        switch (period) {
-            case "day" -> results = receptionistRepository.getPatientStatsByDay();
-            case "month" -> results = receptionistRepository.getPatientStatsByMonth();
-            case "year" -> results = receptionistRepository.getPatientStatsByYear();
-            default -> results = receptionistRepository.getPatientStatsByMonth();
-        }
-
-        List<String> labels = new ArrayList<>();
-        List<Integer> data = new ArrayList<>();
-
-        for (Object[] row : results) {
-            labels.add((String) row[0]);  // yyyy-MM t? SQL Server tr? v?
-            data.add(((Number) row[1]).intValue());
-        }
-
-        Map<String, Object> response = new HashMap<>();
-        response.put("labels", labels);
-        response.put("data", data);
-
-        return response;
+    @Override
+    public Users registerNewUser(Users user) {
+        throw new UnsupportedOperationException("Not implemented in ReceptionistService");
     }
 
-    public List<Map<String, Object>> getAppointmentTableData() {
-        // G?i repository ?? l?y d? li?u
-        return receptionistRepository.fetchAppointmentTableData();
+    @Override
+    public String generatePasswordResetToken(String email) {
+        throw new UnsupportedOperationException("Not implemented in ReceptionistService");
+    }
+
+    @Override
+    public boolean validatePasswordResetToken(String token, String email) {
+        throw new UnsupportedOperationException("Not implemented in ReceptionistService");
+    }
+
+    @Override
+    public void resetPassword(String token, String email, String newPassword) {
+        throw new UnsupportedOperationException("Not implemented in ReceptionistService");
+    }
+
+    @Override
+    public Optional<Users> findById(Integer userId) {
+        return receptionistRepository.findById(userId);
+    }
+
+    @Override
+    public Users save(Users user) {
+        return receptionistRepository.save(user);
+    }
+
+    public boolean hasPatientRecords(Integer userId) {
+        return patientRepository.existsByUserId(userId);
     }
 
 }

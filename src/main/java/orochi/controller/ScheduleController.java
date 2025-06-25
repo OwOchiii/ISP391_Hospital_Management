@@ -192,9 +192,6 @@ public class ScheduleController {
         ScheduleDTO workEntry = scheduleService.getScheduleById(scheduleId);
 
         // Add data to model
-        Doctor doctor = doctorRepository.findById(doctorId)
-                .orElseThrow(() -> new RuntimeException("Doctor not found with ID: " + doctorId));
-        model.addAttribute("doctor", doctor);
         model.addAttribute("doctorId", doctorId);
         model.addAttribute("workEntry", workEntry);
 

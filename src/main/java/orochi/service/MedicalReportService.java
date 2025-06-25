@@ -58,9 +58,6 @@ public class MedicalReportService {
     @Autowired
     private ReportResultRepository reportResultRepository;
 
-    @Autowired
-    private PrescriptionRepository prescriptionRepository;
-
     /**
      * Generates a PDF medical report for an appointment
      *
@@ -105,9 +102,6 @@ public class MedicalReportService {
             // Get all medical results for this appointment
             List<MedicalResult> results = medicalResultRepository.findByAppointmentIdOrderByResultDateDesc(appointmentId);
 
-            // Get all prescriptions for this appointment
-            List<Prescription> prescriptions = prescriptionRepository.findByAppointmentId(appointmentId);
-
             // Create a PDF file
             String fileName = generateFileName(appointmentId);
 
@@ -127,7 +121,6 @@ public class MedicalReportService {
             context.setVariable("patient", patient);
             context.setVariable("orders", orders);
             context.setVariable("results", results);
-            context.setVariable("prescriptions", prescriptions);
             context.setVariable("additionalNotes", additionalNotes);
             context.setVariable("generatedDate", LocalDateTime.now());
 

@@ -409,30 +409,6 @@
             padding: 1.5rem;
         }
 
-        /* Scrollable Table in Modal */
-        .table-responsive {
-            max-height: 500px; /* Adjust as needed */
-            overflow-y: auto;
-        }
-
-        .table-responsive::-webkit-scrollbar {
-            width: 8px;
-        }
-
-        .table-responsive::-webkit-scrollbar-track {
-            background: var(--light);
-            border-radius: 4px;
-        }
-
-        .table-responsive::-webkit-scrollbar-thumb {
-            background: var(--primary);
-            border-radius: 4px;
-        }
-
-        .table-responsive::-webkit-scrollbar-thumb:hover {
-            background: var(--secondary);
-        }
-
         /* Responsive Design */
         @media (max-width: 768px) {
             .sidebar {
@@ -564,7 +540,7 @@
                         <i class="fas fa-bell fs-5"></i>
                         <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger" id="notificationCount">0</span>
                     </div>
-                    <img src="images/profile.jpg" alt="Profile" class="rounded-circle" onerror="this.src='https://www.vietnamworks.com/hrinsider/wp-content/uploads/2023/12/hinh-anh-thien-nhien-3d-tuyet-dep-003.jpg';">
+                    <img src="images/profile.jpg" alt="Profile" class="rounded-circle" onerror="this.src='https://via.placeholder.com/40';">
                 </div>
             </header>
 
@@ -583,7 +559,7 @@
                 <div class="card-body">
                     <div class="input-group mb-3">
                         <span class="input-group-text"><i class="fas fa-search"></i></span>
-                        <input type="text" class="form-control" id="search-in-progress" placeholder="Search by Name or Phone" onkeyup="searchAppointments('in-progress')">
+                        <input type="text" class="form-control" id="search-in-progress" placeholder="Search by Name, Citizen ID, or Phone" onkeyup="searchAppointments('in-progress')">
                     </div>
                     <div class="table-responsive">
                         <table class="table table-hover">
@@ -591,7 +567,7 @@
                             <tr>
                                 <th>STT</th>
                                 <th>Name</th>
-                                <th>Age</th>
+                                <th>Citizen ID</th>
                                 <th>Phone</th>
                                 <th>Time</th>
                                 <th>Doctor</th>
@@ -614,7 +590,7 @@
                 <div class="card-body">
                     <div class="input-group mb-3">
                         <span class="input-group-text"><i class="fas fa-search"></i></span>
-                        <input type="text" class="form-control" id="search-completed" placeholder="Search by Name, or Phone" onkeyup="searchAppointments('completed')">
+                        <input type="text" class="form-control" id="search-completed" placeholder="Search by Name, Citizen ID, or Phone" onkeyup="searchAppointments('completed')">
                     </div>
                     <div class="table-responsive">
                         <table class="table table-hover">
@@ -622,7 +598,7 @@
                             <tr>
                                 <th>STT</th>
                                 <th>Name</th>
-                                <th>Age</th>
+                                <th>Citizen ID</th>
                                 <th>Phone</th>
                                 <th>Time</th>
                                 <th>Doctor</th>
@@ -645,7 +621,7 @@
                 <div class="card-body">
                     <div class="input-group mb-3">
                         <span class="input-group-text"><i class="fas fa-search"></i></span>
-                        <input type="text" class="form-control" id="search-rejected" placeholder="Search by Name, or Phone" onkeyup="searchAppointments('rejected')">
+                        <input type="text" class="form-control" id="search-rejected" placeholder="Search by Name, Citizen ID, or Phone" onkeyup="searchAppointments('rejected')">
                     </div>
                     <div class="table-responsive">
                         <table class="table table-hover">
@@ -653,7 +629,7 @@
                             <tr>
                                 <th>STT</th>
                                 <th>Name</th>
-                                <th>Age</th>
+                                <th>Citizen ID</th>
                                 <th>Phone</th>
                                 <th>Time</th>
                                 <th>Doctor</th>
@@ -681,7 +657,7 @@
             <div class="modal-body">
                 <div class="input-group mb-3">
                     <span class="input-group-text"><i class="fas fa-search"></i></span>
-                    <input type="text" class="form-control" id="modalSearch" placeholder="Search by Name, or Phone" onkeyup="searchModalAppointments()">
+                    <input type="text" class="form-control" id="modalSearch" placeholder="Search by Name, Citizen ID, or Phone" onkeyup="searchModalAppointments()">
                 </div>
                 <div class="table-responsive">
                     <table class="table table-hover">
@@ -689,7 +665,7 @@
                         <tr>
                             <th>STT</th>
                             <th>Name</th>
-                            <th>Age</th>
+                            <th>Citizen ID</th>
                             <th>Phone</th>
                             <th>Time</th>
                             <th>Doctor</th>
@@ -707,11 +683,6 @@
 <!-- Bootstrap JS -->
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
 <script>
-    const statusMap = {
-        'in-progress': 'Scheduled',
-        'completed': 'Completed',
-        'rejected': 'Cancel'
-    };
     // Sidebar toggle functionality
     function toggleSidebar() {
         const sidebar = document.getElementById('patientSidebar');
@@ -745,7 +716,6 @@
 
     // Pagination settings
     const itemsPerPage = 5;
-    const maxModalItems = 16; // Maximum items to display in modal
     const paginationStates = {
         'in-progress': { currentPage: 1, searchTerm: '' },
         'completed': { currentPage: 1, searchTerm: '' },
@@ -768,11 +738,7 @@
     // Fetch appointments from server
     async function fetchAppointments(status, page, searchTerm = '', fetchAll = false) {
         try {
-            const apiStatus = statusMap[status];
-            if (!apiStatus) {
-                throw new Error(`Invalid status provided: ${status}`);
-            }
-            let url = `/api/appointments?status=${apiStatus}&page=${page}&search=${encodeURIComponent(searchTerm)}`;
+            let url = `/api/appointments?status=${status}&page=${page}&search=${encodeURIComponent(searchTerm)}`;
             if (fetchAll) {
                 url += '&fetchAll=true';
             }
@@ -785,7 +751,7 @@
             const data = await response.json();
             return data; // Expected format: { appointments: [], total: number }
         } catch (error) {
-            console.error(`Error fetching ${apiStatus} appointments:`, error);
+            console.error(`Error fetching ${status} appointments:`, error);
             throw error; // Propagate the error to caller for better error handling
         }
     }
@@ -805,12 +771,14 @@
                 const actionsHtml = `
                     <a href="appointment-details.jsp?stt=${appt.stt}" class="btn-view"><i class="fas fa-eye"></i></a>
                     ${status === 'in-progress' ? `
+                        <button class="btn-confirm" onclick="updateStatus(${appt.stt}, 'completed')"><i class="fas fa-check"></i></button>
+                        <button class="btn-reject" onclick="updateStatus(${appt.stt}, 'rejected')"><i class="fas fa-times"></i></button>
                     ` : ''}
                 `;
                 row.innerHTML = `
                     <td>${appt.stt}</td>
                     <td>${appt.name}</td>
-                    <td>${calculateAge(appt.dob)}</td>
+                    <td>${appt.citizenId}</td>
                     <td>${appt.phone}</td>
                     <td>${appt.time}</td>
                     <td>${appt.doctor}</td>
@@ -860,13 +828,11 @@
     // Update appointment status
     async function updateStatus(stt, newStatus) {
         try {
-            const newApiStatus = statusMap[newStatus];
             const response = await fetch('/api/appointments/update', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ stt, status: newApiStatus })
+                body: JSON.stringify({ stt, status: newStatus })
             });
-            console.log(response)
             if (!response.ok) throw new Error('Failed to update status');
             // Refresh all tables
             await Promise.all([
@@ -895,20 +861,19 @@
         const { appointments } = await fetchAppointments(status, 1, '', true); // Fetch all
         modalList.innerHTML = '';
 
-        // Limit to maxModalItems (16)
-        const limitedAppointments = appointments.slice(0, maxModalItems);
-
-        limitedAppointments.forEach(appt => {
+        appointments.forEach(appt => {
             const row = document.createElement('tr');
             const actionsHtml = `
                 <a href="appointment-details.jsp?stt=${appt.stt}" class="btn-view"><i class="fas fa-eye"></i></a>
                 ${status === 'in-progress' ? `
+                    <button class="btn-confirm" onclick="updateStatus(${appt.stt}, 'completed')"><i class="fas fa-check"></i></button>
+                    <button class="btn-reject" onclick="updateStatus(${appt.stt}, 'rejected')"><i class="fas fa-times"></i></button>
                 ` : ''}
             `;
             row.innerHTML = `
                 <td>${appt.stt}</td>
                 <td>${appt.name}</td>
-                <td>${calculateAge(appt.dob)}</td>
+                <td>${appt.citizenId}</td>
                 <td>${appt.phone}</td>
                 <td>${appt.time}</td>
                 <td>${appt.doctor}</td>
@@ -930,20 +895,19 @@
         const { appointments } = await fetchAppointments(status, 1, searchTerm, true);
         modalList.innerHTML = '';
 
-        // Limit to maxModalItems (16)
-        const limitedAppointments = appointments.slice(0, maxModalItems);
-
-        limitedAppointments.forEach(appt => {
+        appointments.forEach(appt => {
             const row = document.createElement('tr');
             const actionsHtml = `
                 <a href="appointment-details.jsp?stt=${appt.stt}" class="btn-view"><i class="fas fa-eye"></i></a>
                 ${status === 'in-progress' ? `
+                    <button class="btn-confirm" onclick="updateStatus(${appt.stt}, 'completed')"><i class="fas fa-check"></i></button>
+                    <button class="btn-reject" onclick="updateStatus(${appt.stt}, 'rejected')"><i class="fas fa-times"></i></button>
                 ` : ''}
             `;
             row.innerHTML = `
                 <td>${appt.stt}</td>
                 <td>${appt.name}</td>
-                <td>${calculateAge(appt.dob)}</td>
+                <td>${appt.citizenId}</td>
                 <td>${appt.phone}</td>
                 <td>${appt.time}</td>
                 <td>${appt.doctor}</td>
@@ -952,23 +916,6 @@
             modalList.appendChild(row);
         });
     }, 300);
-
-    function calculateAge(birthDate) {
-        const today = new Date();
-        const birth = new Date(birthDate);
-
-        let age = today.getFullYear() - birth.getFullYear();
-
-        const hasBirthdayPassedThisYear =
-            today.getMonth() > birth.getMonth() ||
-            (today.getMonth() === birth.getMonth() && today.getDate() >= birth.getDate());
-
-        if (!hasBirthdayPassedThisYear) {
-            age--;
-        }
-
-        return age;
-    }
 
     // Initialize tables
     document.addEventListener('DOMContentLoaded', () => {
@@ -979,3 +926,4 @@
 </script>
 </body>
 </html>
+

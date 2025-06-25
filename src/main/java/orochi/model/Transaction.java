@@ -36,9 +36,6 @@ public class Transaction {
     @Column(name = "Status", nullable = false, columnDefinition = "varchar(20) DEFAULT 'Pending'")
     private String status;
 
-    @Column(name = "IsPaid", nullable = false, columnDefinition = "bit DEFAULT 0")
-    private Boolean isPaid = false;
-
     @Column(name = "RefundReason", length = Integer.MAX_VALUE)
     private String refundReason;
 

@@ -3,1418 +3,593 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Book Appointment - MediCare Plus</title>
-    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
-    <script src="https://code.jquery.com/ui/1.12.1/jquery-ui.min.js"></script>
-    <link rel="stylesheet" href="https://code.jquery.com/ui/1.12.1/themes/base/jquery-ui.css">
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/dompurify/2.4.5/purify.min.js"></script>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css">
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;700&display=swap" rel="stylesheet">
-
+    <title>New Appointment</title>
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Font Awesome -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     <style>
-        :root {
-            --primary-color: #2563eb;
-            --secondary-color: #1e40af;
-            --accent-color: #06b6d4;
-            --patient-primary: #059669;
-            --patient-secondary: #047857;
-            --patient-accent: #10b981;
-            --patient-light: #ecfdf5;
-            --patient-dark: #06454b;
-            --text-dark: #1f2937;
-            --text-light: #6c757d;
-            --text-muted: #9ca3af;
-            --bg-light: #f8f9fa;
-            --bg-white: #ffffff;
-            --success-color: #10b981;
-            --warning-color: #f59e0b;
-            --error-color: #ef4444;
-            --info-color: #3b82f6;
-            --border-color: #e5e7eb;
-            --header-height: 70px;
-        }
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-        .char-counter {
-            font-size: 0.75rem;
-            color: var(--text-muted);
-            text-align: right;
-            margin-top: 0.25rem;
-        }
-        .char-counter.warning {
-            color: var(--warning-color);
-        }
         body {
-            font-family: 'Inter', sans-serif;
-            line-height: 1.6;
-            color: var(--text-dark);
-            background: var(--bg-light);
-            overflow-x: hidden;
+            background-color: #f8f9fa;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            color: #212529;
         }
-        .main-content {
-            min-height: 100vh;
-        }
-        .top-header {
-            background: var(--bg-white);
-            height: var(--header-height);
-            padding: 0 2rem;
-            box-shadow: 0 2px 20px rgba(0, 0, 0, 0.08);
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            position: sticky;
-            top: 0;
-            z-index: 999;
-        }
-        .header-left {
-            display: flex;
-            align-items: center;
-            gap: 1rem;
-        }
-        .header-right {
-            display: flex;
-            align-items: center;
-            gap: 1.5rem;
-        }
-        .page-content {
+
+        .container {
             padding: 2rem;
-            max-width: 1200px;
+        }
+
+        .card {
+            border-top: 4px solid #0d6efd;
+            border-radius: 0.5rem;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            max-width: 900px;
             margin: 0 auto;
         }
-        .page-header {
-            margin-bottom: 2rem;
+
+        .card-body {
+            padding: 2rem;
         }
-        .page-title {
-            font-size: 2rem;
+
+        h1 {
+            font-size: 1.75rem;
             font-weight: 700;
-            color: var(--text-dark);
-            margin-bottom: 0.5rem;
-            display: flex;
-            align-items: center;
-            gap: 0.75rem;
-        }
-        .page-title i {
-            color: var(--success-color);
-        }
-        .breadcrumb {
-            background: none;
-            padding: 0;
-            margin: 0;
-        }
-        .breadcrumb-item a {
-            color: var(--success-color);
-            text-decoration: none;
-        }
-        .breadcrumb-item.active {
-            color: var(--text-muted);
-        }
-        .search-section {
-            background: var(--bg-white);
-            border-radius: 16px;
-            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
-            padding: 2rem;
-            margin-bottom: 2rem;
-        }
-        .search-bar {
-            position: relative;
-        }
-        .search-bar input {
-            padding-right: 3rem;
-        }
-        .search-bar button {
-            position: absolute;
-            right: 0.5rem;
-            top: 50%;
-            transform: translateY(-50%);
-            background: none;
-            border: none;
-            color: var(--success-color);
-            font-size: 1.25rem;
-            cursor: pointer;
-            padding: 0.5rem;
-        }
-        .search-results {
-            margin-top: 1.5rem;
-            max-height: 300px;
-            overflow-y: auto;
-            border: 1px solid var(--border-color);
-            border-radius: 12px;
-        }
-        .search-results table {
-            width: 100%;
-            border-collapse: collapse;
-        }
-        .search-results th, .search-results td {
-            padding: 0.75rem;
-            text-align: left;
-            border-bottom: 1px solid var(--border-color);
-        }
-        .search-results th {
-            background: var(--bg-light);
-            font-weight: 600;
-        }
-        .search-results tr {
-            cursor: pointer;
-            transition: background 0.3s ease;
-        }
-        .search-results tr:hover {
-            background: var(--patient-light);
-        }
-        .form-section {
-            background: var(--bg-white);
-            border-radius: 16px;
-            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
-            padding: 2rem;
-            margin-bottom: 2rem;
-        }
-        .section-title {
-            font-size: 1.5rem;
-            font-weight: 600;
-            color: var(--text-dark);
+            color: #212529;
+            text-align: center;
             margin-bottom: 1.5rem;
-            display: flex;
-            align-items: center;
-            gap: 0.5rem;
         }
-        .section-title i {
-            color: var(--success-color);
-        }
-        .form-label {
+
+        h2 {
+            font-size: 1.25rem;
             font-weight: 600;
-            color: var(--text-dark);
-            margin-bottom: 0.5rem;
-            display: flex;
-            align-items: center;
-            gap: 0.25rem;
+            color: #212529;
+            margin-bottom: 1.5rem;
         }
-        .required-asterisk {
-            color: var(--error-color);
-            font-weight: 700;
-        }
-        .form-control, .form-select {
-            border: 2px solid var(--border-color);
-            border-radius: 12px;
-            padding: 0.875rem 1rem;
-            font-size: 1rem;
-            transition: all 0.3s ease;
-            background: var(--bg-white);
-        }
-        .form-control:focus, .form-select:focus {
-            border-color: var(--success-color);
-            box-shadow: 0 0 0 0.2rem rgba(16, 185, 129, 0.25);
-            background: var(--bg-white);
-        }
-        .form-control:read-only {
-            background: var(--bg-light);
-            color: var(--text-muted);
-        }
-        .time-selection {
-            margin-top: 1rem;
-        }
-        .time-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(100px, 1fr));
-            gap: 0.75rem;
-            margin-top: 1rem;
-        }
-        .time-slot {
-            padding: 0.3rem 0.9rem;
-            border: 2px solid var(--border-color);
-            border-radius: 12px;
-            background: var(--bg-white);
-            color: var(--text-dark);
-            font-weight: 500;
-            text-align: center;
-            cursor: pointer;
-            transition: all 0.3s ease;
-            position: relative;
-        }
-        .time-slot:hover:not(.disabled) {
-            border-color: var(--success-color);
-            background: rgba(16, 185, 129, 0.1);
-            transform: translateY(-2px);
-        }
-        .time-slot.selected {
-            background: var(--success-color);
-            border-color: var(--success-color);
-            color: white;
-            box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);
-        }
-        .time-slot.disabled {
-            background: #f3f4f6;
-            border-color: #d1d5db;
-            color: #9ca3af;
-            cursor: not-allowed;
-        }
-        .time-slot.disabled::after {
-            content: '✕';
-            position: absolute;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            color: var(--error-color);
-            font-weight: 700;
-        }
-        .contact-field {
-            position: relative;
-        }
-        .reset-btn {
-            position: absolute;
-            right: 0.75rem;
-            top: 50%;
-            transform: translateY(-50%);
-            background: none;
-            border: none;
-            color: var(--text-light);
-            font-size: 0.875rem;
-            cursor: pointer;
-            padding: 0.25rem 0.5rem;
-            border-radius: 6px;
-            transition: all 0.3s ease;
-        }
-        .reset-btn:hover {
-            background: var(--bg-light);
-            color: var(--success-color);
-        }
-        .error-message {
-            color: var(--error-color);
-            font-size: 0.875rem;
-            margin-top: 0.5rem;
-            display: flex;
-            align-items: center;
-            gap: 0.25rem;
-        }
-        .error-message i {
-            font-size: 1rem;
-        }
-        .btn-primary-custom {
-            background: linear-gradient(135deg, var(--success-color), #059669);
-            border: none;
-            padding: 1rem 2rem;
-            border-radius: 12px;
-            color: white;
-            font-weight: 600;
-            font-size: 1.1rem;
-            text-decoration: none;
-            transition: all 0.3s ease;
-            display: inline-flex;
-            align-items: center;
-            gap: 0.75rem;
-            cursor: pointer;
-        }
-        .btn-primary-custom:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 8px 25px rgba(16, 185, 129, 0.3);
-            color: white;
-        }
-        .btn-outline-custom {
-            border: 2px solid var(--success-color);
-            color: var(--success-color);
-            background: transparent;
-            padding: 0.75rem 1.5rem;
-            border-radius: 12px;
-            font-weight: 600;
-            text-decoration: none;
-            transition: all 0.3s ease;
-            display: inline-flex;
-            align-items: center;
-            gap: 0.5rem;
-        }
-        .btn-outline-custom:hover {
-            background: var(--success-color);
-            color: white;
-            transform: translateY(-2px);
-            text-decoration: none;
-        }
-        .confirmation-overlay {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: rgba(0, 0, 0, 0.5);
-            z-index: 2000;
-            display: none;
-            align-items: center;
-            justify-content: center;
-        }
-        .confirmation-overlay.active {
-            display: flex;
-        }
-        .confirmation-dialog {
-            background: var(--bg-white);
-            border-radius: 20px;
-            padding: 2rem;
-            max-width: 500px;
-            width: 90%;
-            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
-            text-align: center;
-            animation: slideIn 0.3s ease-out;
-        }
-        @keyframes slideIn {
-            from {
-                opacity: 0;
-                transform: translateY(-30px);
-            }
-            to {
-                opacity: 1;
-                transform: translateY(0);
-            }
-        }
-        .confirmation-icon {
-            width: 80px;
-            height: 80px;
-            border-radius: 50%;
-            background: linear-gradient(135deg, var(--success-color), #059669);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            margin: 0 auto 1.5rem;
-            color: white;
-            font-size: 2rem;
-        }
-        .confirmation-title {
-            font-size: 1.5rem;
-            font-weight: 700;
-            color: var(--text-dark);
+
+        .form-group {
             margin-bottom: 1rem;
         }
-        .confirmation-message {
-            color: var(--text-light);
-            margin-bottom: 2rem;
-            line-height: 1.6;
+
+        .form-label {
+            font-size: 0.875rem;
+            font-weight: 500;
+            color: #495057;
         }
-        .confirmation-actions {
-            display: flex;
-            gap: 1rem;
-            justify-content: center;
+
+        .form-control, .form-select {
+            border-radius: 0.375rem;
+            font-size: 0.9rem;
+            padding: 0.75rem;
         }
-        .doctor-info-display {
-            background: var(--bg-light);
-            border-radius: 12px;
-            padding: 1rem;
-            margin-top: 0.5rem;
+
+        .form-control:focus, .form-select:focus {
+            border-color: #0d6efd;
+            box-shadow: 0 0 0 0.2rem rgba(13, 110, 253, 0.25);
+        }
+
+        .invalid-feedback {
+            color: #dc3545;
+            font-size: 0.75rem;
             display: none;
         }
-        .doctor-info-display.show {
+
+        .is-invalid .invalid-feedback {
             display: block;
         }
-        .doctor-card {
-            display: flex;
-            align-items: center;
-            gap: 1rem;
+
+        .is-invalid {
+            border-color: #dc3545 !important;
         }
-        .doctor-avatar {
-            width: 50px;
-            height: 50px;
-            border-radius: 50%;
-            background: linear-gradient(135deg, var(--primary-color), var(--accent-color));
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            color: white;
-            font-weight: 700;
+
+        .is-valid {
+            border-color: #28a745 !important;
         }
-        .doctor-details h6 {
-            margin: 0;
-            font-weight: 600;
-            color: var(--text-dark);
+
+        .btn-primary {
+            background-color: #0d6efd;
+            border-color: #0d6efd;
+            padding: 0.75rem 2rem;
+            font-size: 0.9rem;
+            font-weight: 500;
         }
-        .doctor-details p {
-            margin: 0;
-            font-size: 0.875rem;
-            color: var(--text-light);
+
+        .btn-primary:hover {
+            background-color: #0b5ed7;
+            border-color: #0a58ca;
         }
-        @media (max-width: 768px) {
-            .page-content {
-                padding: 1rem;
-            }
-            .form-section, .search-section {
+
+        .btn-secondary {
+            background-color: #6c757d;
+            border-color: #6c757d;
+            padding: 0.75rem 2rem;
+            font-size: 0.9rem;
+            font-weight: 500;
+        }
+
+        .btn-secondary:hover {
+            background-color: #5c636a;
+            border-color: #565e64;
+        }
+
+        .alert {
+            margin-bottom: 1.5rem;
+            font-size: 0.9rem;
+        }
+
+        @media (max-width: 767.98px) {
+            .card-body {
                 padding: 1.5rem;
             }
-            .top-header {
-                padding: 0 1rem;
-            }
-            .time-grid {
-                grid-template-columns: repeat(2, 1fr);
-            }
-            .confirmation-actions {
-                flex-direction: column;
-            }
-            .page-title {
+
+            h1 {
                 font-size: 1.5rem;
             }
-        }
-        .loading {
-            opacity: 0.6;
-            pointer-events: none;
-        }
-        .spinner {
-            display: inline-block;
-            width: 20px;
-            height: 20px;
-            border: 2px solid #f3f3f3;
-            border-top: 2px solid var(--success-color);
-            border-radius: 50%;
-            animation: spin 1s linear infinite;
-        }
-        @keyframes spin {
-            0% { transform: rotate(0deg); }
-            100% { transform: rotate(360deg); }
-        }
-        .success-message {
-            background: #d1fae5;
-            border: 1px solid #a7f3d0;
-            border-radius: 12px;
-            padding: 1rem;
-            margin-bottom: 1rem;
-            color: #065f46;
-            display: flex;
-            align-items: center;
-            gap: 0.5rem;
-        }
-        .success-message i {
-            color: var(--success-color);
-        }
-        .readonly {
-            background: #f8f9fa;
-            color: #6c757d;
-            pointer-events: none;
+
+            h2 {
+                font-size: 1rem;
+            }
+
+            .btn-primary, .btn {
+                padding: 0.5rem 1.5rem;
+                font-size: 0.85rem;
+            }
         }
     </style>
 </head>
 <body>
-<div class="main-content" id="mainContent">
-    <div class="top-header">
-        <div class="header-left">
-            <h4 class="mb-0">Book Appointment</h4>
-        </div>
-        <div class="header-right">
-            <a href="javascript:history.back()" class="btn-outline-custom">
-                <i class="bi bi-arrow-left"></i>
-                Back to Dashboard
-            </a>
-        </div>
-    </div>
+<div class="container">
+    <h1>New Appointment Registration</h1>
+    <form id="appointmentForm" class="card">
+        <div class="card-body">
+            <!-- Success/Error Messages -->
+            <div id="successMessage" class="alert alert-success d-none" role="alert"></div>
+            <div id="errorMessage" class="alert alert-danger d-none" role="alert"></div>
 
-    <div class="page-content">
-        <div class="page-header">
-            <h1 class="page-title">
-                <i class="bi bi-calendar-plus"></i>
-                Book New Appointment
-            </h1>
-            <nav>
-                <ol class="breadcrumb">
-                    <li class="breadcrumb-item"><a href="javascript:history.back()">Dashboard</a></li>
-                    <li class="breadcrumb-item active">Book Appointment</li>
-                </ol>
-            </nav>
-        </div>
-
-        <div id="successMessage" class="success-message d-none">
-            <i class="bi bi-check-circle-fill"></i>
-            <span>Appointment booked successfully!</span>
-        </div>
-
-        <div class="search-section">
-            <h2 class="section-title">
-                <i class="bi bi-search"></i>
-                Search Patient
-            </h2>
-            <form id="searchPatientForm" onsubmit="searchPatients(event)">
-                <div class="row">
-                    <div class="col-md-12 mb-3">
-                        <label for="searchQuery" class="form-label">Search by Name, Phone, or Patient ID</label>
-                        <div class="search-bar">
-                            <input type="text" id="searchQuery" class="form-control" placeholder="Enter name, phone, or patient ID" />
-                            <button type="submit">
-                                <i class="bi bi-search"></i>
-                            </button>
+            <!-- Personal Information -->
+            <div class="mb-4">
+                <h2>1. Personal Information</h2>
+                <div class="row g-3">
+                    <div class="col-md-6">
+                        <div class="form-group">
+                            <label for="fullName" class="form-label">Full Name*</label>
+                            <input type="text" class="form-control" id="fullName" name="fullName" required placeholder="John Doe">
+                            <div id="fullNameError" class="invalid-feedback">Full Name is required.</div>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="form-group">
+                            <label for="gender" class="form-label">Gender*</label>
+                            <select class="form-select" id="gender" name="gender" required>
+                                <option value="">Select Gender</option>
+                                <option value="Male">Male</option>
+                                <option value="Female">Female</option>
+                                <option value="Other">Other</option>
+                            </select>
+                            <div class="invalid-feedback">Gender is required.</div>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="form-group">
+                            <label for="dateOfBirth" class="form-label">Date of Birth*</label>
+                            <input type="date" class="form-control" id="dateOfBirth" name="dateOfBirth" required max="2025-06-05">
+                            <div id="dateOfBirthError" class="invalid-feedback">Date of Birth cannot be in the future.</div>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="form-group">
+                            <label for="citizenId" class="form-label">Citizen Identification Card*</label>
+                            <input type="text" class="form-control" id="citizenId" name="citizenId" required pattern="\d{12}" placeholder="030303000999">
+                            <div id="citizenIdError" class="invalid-feedback">Citizen ID must be exactly 12 digits.</div>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="form-group">
+                            <label for="healthInsuranceNumber" class="form-label">Health Insurance Number</label>
+                            <input type="text" class="form-control" id="healthInsuranceNumber" name="healthInsuranceNumber" placeholder="AA4303028889999">
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="form-group">
+                            <label for="phoneNumber" class="form-label">Phone Number*</label>
+                            <input type="tel" class="form-control" id="phoneNumber" name="phoneNumber" required pattern="\d{10}" placeholder="0901234567">
+                            <div id="phoneNumberError" class="invalid-feedback">Phone Number must be exactly 10 digits.</div>
+                        </div>
+                    </div>
+                    <div class="col-md-12">
+                        <div class="form-group">
+                            <label for="contactAddress" class="form-label">Contact Address</label>
+                            <input type="text" class="form-control" id="contactAddress" name="contactAddress" placeholder="123 Lang Street, Dong Da, Hanoi">
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="form-group">
+                            <label for="email" class="form-label">Email</label>
+                            <input type="email" class="form-control" id="email" name="email" pattern=".*@gmail\.com" placeholder="example@gmail.com">
+                            <div id="emailError" class="invalid-feedback">Email must end with @gmail.com (e.g., example@gmail.com).</div>
                         </div>
                     </div>
                 </div>
-            </form>
-            <div class="search-results d-none" id="searchResults">
-                <table>
-                    <thead>
-                    <tr>
-                        <th>Patient ID</th>
-                        <th>Name</th>
-                        <th>Phone</th>
-                        <th>Email</th>
-                    </tr>
-                    </thead>
-                    <tbody id="searchResultsBody"></tbody>
-                </table>
             </div>
-        </div>
 
-        <div class="form-section">
-            <h2 class="section-title">
-                <i class="bi bi-clipboard2-pulse"></i>
-                Appointment Details
-            </h2>
-
-            <form id="appointmentForm" onsubmit="submitForm(event)">
-                <input type="hidden" name="appointmentId" id="appointmentId" />
-                <input type="hidden" name="patientId" id="patientIdInput" />
-
-                <div class="row">
-                    <div class="col-md-6 mb-3">
-                        <label for="specialtyId" class="form-label">
-                            Medical Specialty <span class="required-asterisk">*</span>
-                        </label>
-                        <select id="specialtyId" name="specialtyId" class="form-select" onchange="updateDoctors()" required>
-                            <option value="">Select Medical Specialty</option>
-                            <option value="1" data-price="150">Cardiology - $150</option>
-                            <option value="2" data-price="120">Dermatology - $120</option>
-                            <option value="3" data-price="100">Pediatrics - $100</option>
-                        </select>
-                        <div id="specialtyIdError" class="error-message d-none">
-                            <i class="bi bi-exclamation-circle"></i>
-                            <span>Specialty is required</span>
+            <!-- Appointment Information -->
+            <div class="mb-4">
+                <h2>2. Appointment Information</h2>
+                <div class="row g-3">
+                    <div class="col-md-6">
+                        <div class="form-group">
+                            <label for="department" class="form-label">Department/Clinic*</label>
+                            <select class="form-select" id="department" name="department" required>
+                                <option value="">Select Department</option>
+                                <option value="General Internal Medicine">General Internal Medicine</option>
+                                <option value="Surgery">Surgery</option>
+                                <option value="Obstetrics">Obstetrics</option>
+                                <option value="ENT">ENT</option>
+                                <option value="Pediatrics">Pediatrics</option>
+                                <option value="Dermatology">Dermatology</option>
+                            </select>
+                            <div class="invalid-feedback">Department is required.</div>
                         </div>
                     </div>
-
-                    <div class="col-md-6 mb-3">
-                        <label for="doctorId" class="form-label">
-                            Select Doctor <span class="required-asterisk">*</span>
-                        </label>
-                        <select id="doctorId" name="doctorId" class="form-select" onchange="updateDoctorsAndTimeSlots()" required>
-                            <option value="">Choose a Doctor</option>
-                        </select>
-                        <div id="doctorIdError" class="error-message d-none">
-                            <i class="bi bi-exclamation-circle"></i>
-                            <span>Doctor selection is required</span>
+                    <div class="col-md-6">
+                        <div class="form-group">
+                            <label for="typeOfVisit" class="form-label">Type of Visit*</label>
+                            <select class="form-select" id="typeOfVisit" name="typeOfVisit" required>
+                                <option value="">Select Type</option>
+                                <option value="Regular Visit">Regular Visit</option>
+                                <option value="On-Demand Visit">On-Demand Visit</option>
+                                <option value="Follow-Up Visit">Follow-Up Visit</option>
+                            </select>
+                            <div class="invalid-feedback">Type of Visit is required.</div>
                         </div>
-                        <div class="doctor-info-display" id="doctorInfoDisplay">
-                            <div class="doctor-card">
-                                <div class="doctor-avatar" id="doctorAvatar">DR</div>
-                                <div class="doctor-details">
-                                    <h6 id="doctorName"></h6>
-                                    <p id="doctorSpecialty"></p>
-                                    <p id="doctorBio"></p>
-                                </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="form-group">
+                            <label for="preferredDateTime" class="form-label">Preferred Date and Time*</label>
+                            <input type="datetime-local" class="form-control" id="preferredDateTime" name="preferredDateTime" required min="2025-06-05T05:08" max="2025-07-05T23:59">
+                            <div id="preferredDateTimeError" class="invalid-feedback">Preferred Date and Time must be between now and 30 days in the future.</div>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="form-group">
+                            <label for="preferredDoctor" class="form-label">Preferred Doctor</label>
+                            <input type="text" class="form-control" id="preferredDoctor" name="preferredDoctor" placeholder="Dr. John Smith">
+                        </div>
+                    </div>
+                    <div class="col-md-12">
+                        <div class="form-group">
+                            <label for="reasonForVisit" class="form-label">Reason for Visit*</label>
+                            <textarea class="form-control" id="reasonForVisit" name="reasonForVisit" required rows="4" placeholder="Headache, fever, persistent cough..."></textarea>
+                            <div id="reasonForVisitError" class="invalid-feedback">Reason for Visit cannot exceed 100 words.</div>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="form-group">
+                            <label for="referralLetter" class="form-label">Referral Letter?</label>
+                            <input type="text" class="form-control" id="referralLetter" name="referralLetter" placeholder="Referring Facility Name">
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="form-group">
+                            <label for="lastVisitDate" class="form-label">Last Visit Date (if Follow-Up)</label>
+                            <input type="date" class="form-control" id="lastVisitDate" name="lastVisitDate">
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Representative Information -->
+            <div class="mb-4">
+                <h2>3. Representative Information (if applicable)</h2>
+                <div class="row g-3">
+                    <div class="col-md-6">
+                        <div class="form-group">
+                            <label for="representativeFullName" class="form-label">Representative Full Name</label>
+                            <input type="text" class="form-control" id="representativeFullName" name="representativeFullName" placeholder="Jane Doe">
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="form-group">
+                            <label for="relationshipToPatient" class="form-label">Relationship to Patient</label>
+                            <input type="text" class="form-control" id="relationshipToPatient" name="relationshipToPatient" placeholder="Spouse, Parent...">
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="form-group">
+                            <label for="representativePhoneNumber" class="form-label">Representative Phone Number</label>
+                            <input type="tel" class="form-control" id="representativePhoneNumber" name="representativePhoneNumber" pattern="\d{10}" placeholder="0901234567">
+                            <div id="representativePhoneNumberError" class="invalid-feedback">Phone Number must be exactly 10 digits.</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Special Notes -->
+            <div class="mb-4">
+                <h2>4. Special Notes</h2>
+                <div class="row g-3">
+                    <div class="col-md-6">
+                        <div class="form-group">
+                            <label for="specialAssistance" class="form-label">Special Assistance Requirements</label>
+                            <input type="text" class="form-control" id="specialAssistance" name="specialAssistance" placeholder="Wheelchair, disability support...">
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="form-group">
+                            <label for="languageSupport" class="form-label">Language Support</label>
+                            <input type="text" class="form-control" id="languageSupport" name="languageSupport" placeholder="English, Japanese...">
+                        </div>
+                    </div>
+                    <div class="col-md-12">
+                        <div class="form-group">
+                            <div class="form-check">
+                                <input type="checkbox" class="form-check-input" id="vatInvoiceRequired" name="vatInvoiceRequired">
+                                <label for="vatInvoiceRequired" class="form-check-label">VAT Invoice Required</label>
                             </div>
                         </div>
                     </div>
                 </div>
-
-                <div class="row">
-                    <div class="col-md-6 mb-3">
-                        <label for="appointmentDate" class="form-label">
-                            Appointment Date <span class="required-asterisk">*</span>
-                        </label>
-                        <input type="text" id="appointmentDate" name="appointmentDate" class="form-control" required placeholder="YYYY-MM-DD" />
-                        <div id="appointmentDateError" class="error-message d-none">
-                            <i class="bi bi-exclamation-circle"></i>
-                            <span>Date is required</span>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="mb-4">
-                    <label class="form-label">
-                        Appointment Time <span class="required-asterisk">*</span>
-                    </label>
-                    <div class="time-selection">
-                        <div class="time-grid" id="timeGrid">
-                            <button type="button" class="time-slot" onclick="selectTime('08:00:00', this)" data-time="08:00:00">08:00 AM</button>
-                            <button type="button" class="time-slot" onclick="selectTime('08:30:00', this)" data-time="08:30:00">08:30 AM</button>
-                            <button type="button" class="time-slot" onclick="selectTime('09:00:00', this)" data-time="09:00:00">09:00 AM</button>
-                            <button type="button" class="time-slot" onclick="selectTime('09:30:00', this)" data-time="09:30:00">09:30 AM</button>
-                            <button type="button" class="time-slot" onclick="selectTime('10:00:00', this)" data-time="10:00:00">10:00 AM</button>
-                            <button type="button" class="time-slot" onclick="selectTime('10:30:00', this)" data-time="10:30:00">10:30 AM</button>
-                            <button type="button" class="time-slot" onclick="selectTime('11:00:00', this)" data-time="11:00:00">11:00 AM</button>
-                            <button type="button" class="time-slot" onclick="selectTime('11:30:00', this)" data-time="11:30:00">11:30 AM</button>
-                            <button type="button" class="time-slot" onclick="selectTime('14:00:00', this)" data-time="14:00:00">02:00 PM</button>
-                            <button type="button" class="time-slot" onclick="selectTime('14:30:00', this)" data-time="14:30:00">02:30 PM</button>
-                            <button type="button" class="time-slot" onclick="selectTime('15:00:00', this)" data-time="15:00:00">03:00 PM</button>
-                            <button type="button" class="time-slot" onclick="selectTime('15:30:00', this)" data-time="15:30:00">03:30 PM</button>
-                            <button type="button" class="time-slot" onclick="selectTime('16:00:00', this)" data-time="16:00:00">04:00 PM</button>
-                            <button type="button" class="time-slot" onclick="selectTime('16:30:00', this)" data-time="16:30:00">04:30 PM</button>
-                            <button type="button" class="time-slot" onclick="selectTime('17:00:00', this)" data-time="17:00:00">05:00 PM</button>
-                            <button type="button" class="time-slot" onclick="selectTime('17:30:00', this)" data-time="17:30:00">05:30 PM</button>
-                        </div>
-                        <input type="hidden" id="appointmentTime" name="appointmentTime" required />
-                        <div id="appointmentTimeError" class="error-message d-none">
-                            <i class="bi bi-exclamation-circle"></i>
-                            <span>Time selection is required</span>
-                        </div>
-                    </div>
-                </div>
-
-                <h3 class="section-title">
-                    <i class="bi bi-person-lines-fill"></i>
-                    Contact Information
-                </h3>
-
-                <div class="row">
-                    <div class="col-md-6 mb-3">
-                        <label for="fullName" class="form-label">Full Name <span class="required-asterisk">*</span></label>
-                        <input type="text" id="fullName" name="fullName" class="form-control" required />
-                        <div id="fullNameError" class="error-message d-none">
-                            <i class="bi bi-exclamation-circle"></i>
-                            <span>Full name is required</span>
-                        </div>
-                    </div>
-
-                    <div class="col-md-6 mb-3">
-                        <label for="phoneNumber" class="form-label">
-                            Phone Number <span class="required-asterisk">*</span>
-                        </label>
-                        <div class="contact-field">
-                            <input type="tel" id="phoneNumber" name="phoneNumber" class="form-control" placeholder="0123456789" required />
-                            <button type="button" class="reset-btn" onclick="resetPhoneNumber()">
-                                <i class="bi bi-arrow-clockwise"></i>
-                            </button>
-                        </div>
-                        <div id="phoneNumberError" class="error-message d-none">
-                            <i class="bi bi-exclamation-circle"></i>
-                            <span>Valid phone number is required</span>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="row">
-                    <div class="col-md-6 mb-3">
-                        <label for="email" class="form-label">
-                            Email Address <span class="required-asterisk">*</span>
-                        </label>
-                        <div class="contact-field">
-                            <input type="email" id="email" name="email" class="form-control" placeholder="patient@example.com" maxlength="50" required />
-                            <button type="button" class="reset-btn" onclick="resetEmail()">
-                                <i class="bi bi-arrow-clockwise"></i>
-                            </button>
-                        </div>
-                        <div id="emailError" class="error-message d-none">
-                            <i class="bi bi-exclamation-circle"></i>
-                            <span>Valid email address is required</span>
-                        </div>
-                    </div>
-
-                    <div class="col-md-6 mb-3">
-                        <label for="dateOfBirth" class="form-label">
-                            Date of Birth <span class="required-asterisk">*</span>
-                        </label>
-                        <input type="date" id="dateOfBirth" name="dateOfBirth" class="form-control" max="2025-06-21" required />
-                        <div id="dateOfBirthError" class="error-message d-none">
-                            <i class="bi bi-exclamation-circle"></i>
-                            <span>Valid date of birth is required</span>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="row">
-                    <div class="col-md-6 mb-3">
-                        <label for="gender" class="form-label">
-                            Gender <span class="required-asterisk">*</span>
-                        </label>
-                        <select id="gender" name="gender" class="form-select" required>
-                            <option value="">Select Gender</option>
-                            <option value="Male">Male</option>
-                            <option value="Female">Female</option>
-                            <option value="Other">Other</option>
-                        </select>
-                        <div id="genderError" class="error-message d-none">
-                            <i class="bi bi-exclamation-circle"></i>
-                            <span>Gender is required</span>
-                        </div>
-                    </div>
-
-                    <div class="col-md-6 mb-3">
-                        <label for="emergencyContact" class="form-label">Emergency Contact (Optional)</label>
-                        <input type="tel" id="emergencyContact" name="emergencyContact" class="form-control" placeholder="Emergency contact number" />
-                    </div>
-                </div>
-
-                <div class="row">
-                    <div class="col-md-6 mb-3">
-                        <label for="country" class="form-label">Country</label>
-                        <input type="text" id="country" name="country" class="form-control" value="Việt Nam" readonly />
-                    </div>
-
-                    <div class="col-md-6 mb-3">
-                        <label for="province" class="form-label">Province/City <span class="required-asterisk">*</span></label>
-                        <select id="province" name="province" class="form-select" required onchange="loadDistricts(); updatePostalCode()">
-                            <option value="">Select Province/City</option>
-                        </select>
-                        <div id="provinceError" class="error-message d-none">
-                            <i class="bi bi-exclamation-circle"></i>
-                            <span>Province/City is required</span>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="row">
-                    <div class="col-md-6 mb-3">
-                        <label for="district" class="form-label">District <span class="required-asterisk">*</span></label>
-                        <select id="district" name="district" class="form-select" required onchange="loadWards()">
-                            <option value="">Select District</option>
-                        </select>
-                        <div id="districtError" class="error-message d-none">
-                            <i class="bi bi-exclamation-circle"></i>
-                            <span>District is required</span>
-                        </div>
-                    </div>
-
-                    <div class="col-md-6 mb-3">
-                        <label for="streetAddress" class="form-label">Street Address <span class="required-asterisk">*</span></label>
-                        <select id="streetAddress" name="streetAddress" class="form-select" required>
-                            <option value="">Select Ward</option>
-                        </select>
-                        <div id="streetAddressError" class="error-message d-none">
-                            <i class="bi bi-exclamation-circle"></i>
-                            <span>Street Address is required</span>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="row">
-                    <div class="col-md-6 mb-3">
-                        <label for="postalCode" class="form-label">Postal Code</label>
-                        <input type="text" id="postalCode" name="postalCode" class="form-control" readonly />
-                    </div>
-
-                    <div class="col-md-6 mb-3">
-                        <label for="addressType" class="form-label">Address Type <span class="required-asterisk">*</span></label>
-                        <select id="addressType" name="addressType" class="form-select" required>
-                            <option value="">Select Address Type</option>
-                            <option value="Home">Home</option>
-                            <option value="Work">Work</option>
-                            <option value="Primary">Primary</option>
-                        </select>
-                        <div id="addressTypeError" class="error-message d-none">
-                            <i class="bi bi-exclamation-circle"></i>
-                            <span>Address Type is required</span>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="mb-4">
-                    <label for="description" class="form-label">
-                        Reason for Visit / Symptoms (Optional)
-                    </label>
-                    <textarea id="description" name="description" class="form-control" rows="4" maxlength="250"
-                              placeholder="Please describe your symptoms or reason for the appointment..."
-                              style="resize: none;" oninput="sanitizeOnInput(this); autoResize(this)"></textarea>
-                    <small class="text-muted">Maximum 250 characters</small>
-                </div>
-
-                <div class="text-center">
-                    <button type="button" class="btn-primary-custom" onclick="showConfirmation()">
-                        <i class="bi bi-calendar-check"></i>
-                        Book Appointment
-                    </button>
-                </div>
-            </form>
-        </div>
-    </div>
-
-    <div class="confirmation-overlay" id="confirmationOverlay">
-        <div class="confirmation-dialog">
-            <div class="confirmation-icon">
-                <i class="bi bi-calendar-check"></i>
             </div>
-            <h3 class="confirmation-title">Confirm Appointment</h3>
-            <p class="confirmation-message">
-                Please review your appointment details and confirm to proceed with the booking.
-            </p>
-            <div class="confirmation-actions">
-                <button class="btn-primary-custom" onclick="confirmBooking(true)">
-                    <i class="bi bi-check-circle"></i>
-                    Confirm Booking
+
+            <!-- Buttons -->
+            <div class="text-center">
+                <button type="button" onclick="window.history.back()" class="btn btn-secondary me-3">
+                    <i class="fas fa-arrow-left me-2"></i>Back
                 </button>
-                <button class="btn-outline-custom" onclick="confirmBooking(false)">
-                    <i class="bi bi-x-circle"></i>
-                    Cancel
-                </button>
+                <button type="submit" class="btn btn-primary">Register Appointment</button>
             </div>
         </div>
-    </div>
+    </form>
 </div>
 
-<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-
+<!-- Bootstrap JS -->
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
 <script>
-    const mockSpecialties = [
-        { specId: "1", specName: "Cardiology", price: 150 },
-        { specId: "2", specName: "Dermatology", price: 120 },
-        { specId: "3", specName: "Pediatrics", price: 100 }
-    ];
+    // Real-time validation functions
+    function validateCitizenId() {
+        const input = document.getElementById('citizenId');
+        const error = document.getElementById('citizenIdError');
+        const value = input.value.trim();
+        const isValid = /^\d{12}$/.test(value);
 
-    const mockDoctors = {
-        "1": [
-            { doctorId: "101", fullName: "John Smith", bioDescription: "Experienced cardiologist with 15+ years of practice" },
-            { doctorId: "102", fullName: "Emily Davis", bioDescription: "Specialist in heart surgery" }
-        ],
-        "2": [
-            { doctorId: "201", fullName: "Sarah Johnson", bioDescription: "Expert in skin conditions" }
-        ],
-        "3": [
-            { doctorId: "301", fullName: "Michael Lee", bioDescription: "Pediatrician with 10 years of experience" }
-        ]
-    };
-
-    const mockPatients = [
-        {
-            patientId: "P001",
-            fullName: "John Doe",
-            phoneNumber: "0123456789",
-            email: "john.doe@gmail.com",
-            dateOfBirth: "1990-05-15",
-            gender: "Male",
-            country: "Việt Nam",
-            province: "Thành phố Hà Nội",
-            district: "Quận Ba Đình",
-            streetAddress: "Phường Cống Vị",
-            postalCode: "100000",
-            addressType: "Home",
-            emergencyContact: "0987654321",
-            description: "Routine checkup"
-        },
-        {
-            patientId: "P002",
-            fullName: "Jane Smith",
-            phoneNumber: "0123456790",
-            email: "jane.smith@gmail.com",
-            dateOfBirth: "1985-08-20",
-            gender: "Female",
-            country: "Việt Nam",
-            province: "Thành phố Hồ Chí Minh",
-            district: "Quận 1",
-            streetAddress: "Phường Bến Nghé",
-            postalCode: "700000",
-            addressType: "Work",
-            emergencyContact: "",
-            description: "Skin irritation"
-        }
-    ];
-
-    // API endpoints
-    const API_PROVINCES = 'https://provinces.open-api.vn/api/p/';
-    const API_DISTRICTS = 'https://provinces.open-api.vn/api/d/';
-    const API_WARDS = 'https://provinces.open-api.vn/api/w/';
-
-    // Mock postal codes by province code
-    const postalCodes = {
-        '1': '100000', // Hà Nội
-        '79': '700000', // TP Hồ Chí Minh
-        // Add more mappings as needed
-    };
-
-    // Load provinces on page load
-    document.addEventListener('DOMContentLoaded', function() {
-        loadProvinces();
-        initializeDatePicker();
-    });
-
-    function initializeDatePicker() {
-        const today = new Date();
-        const tomorrow = new Date(today);
-        tomorrow.setDate(today.getDate() + 1);
-        const maxDate = new Date(tomorrow);
-        maxDate.setDate(tomorrow.getDate() + 7);
-
-        const dateInput = document.getElementById('appointmentDate');
-        if (dateInput) {
-            $(dateInput).datepicker({
-                dateFormat: 'yy-mm-dd',
-                minDate: tomorrow,
-                maxDate: maxDate,
-                beforeShowDay: function(date) {
-                    const day = date.getDay();
-                    return [day !== 0 && day !== 6, day !== 0 && day !== 6 ? '' : 'ui-state-disabled'];
-                },
-                onSelect: function(dateText) {
-                    updateTimeSlots();
-                }
-            });
-        }
-    }
-
-    async function loadProvinces() {
-        const provinceSelect = document.getElementById('province');
-        provinceSelect.classList.add('loading');
-        try {
-            const response = await fetch(API_PROVINCES);
-            const provinces = await response.json();
-            provinceSelect.innerHTML = '<option value="">Select Province/City</option>';
-            provinces.forEach(province => {
-                const option = document.createElement('option');
-                option.value = province.name;
-                option.text = province.name;
-                option.setAttribute('data-code', province.code);
-                provinceSelect.appendChild(option);
-            });
-        } catch (error) {
-            console.error('Error loading provinces:', error);
-            provinceSelect.innerHTML = '<option value="">Error loading provinces</option>';
-        } finally {
-            provinceSelect.classList.remove('loading');
-        }
-    }
-
-    async function loadDistricts() {
-        const provinceSelect = document.getElementById('province');
-        const districtSelect = document.getElementById('district');
-        const streetAddressSelect = document.getElementById('streetAddress');
-
-        const selectedProvince = provinceSelect.options[provinceSelect.selectedIndex];
-        const provinceCode = selectedProvince ? selectedProvince.getAttribute('data-code') : null;
-
-        districtSelect.innerHTML = '<option value="">Select District</option>';
-        streetAddressSelect.innerHTML = '<option value="">Select Ward</option>';
-
-        if (!provinceCode) {
-            districtSelect.disabled = true;
-            streetAddressSelect.disabled = true;
-            return;
-        }
-
-        districtSelect.disabled = false;
-        districtSelect.classList.add('loading');
-        try {
-            const response = await fetch(`${API_PROVINCES}${provinceCode}?depth=2`);
-            const provinceData = await response.json();
-            const districts = provinceData.districts || [];
-            districts.forEach(district => {
-                const option = document.createElement('option');
-                option.value = district.name;
-                option.text = district.name;
-                option.setAttribute('data-code', district.code);
-                districtSelect.appendChild(option);
-            });
-        } catch (error) {
-            console.error('Error loading districts:', error);
-            districtSelect.innerHTML = '<option value="">Error loading districts</option>';
-        } finally {
-            districtSelect.classList.remove('loading');
-        }
-    }
-
-    async function loadWards() {
-        const districtSelect = document.getElementById('district');
-        const streetAddressSelect = document.getElementById('streetAddress');
-
-        const selectedDistrict = districtSelect.options[districtSelect.selectedIndex];
-        const districtCode = selectedDistrict ? selectedDistrict.getAttribute('data-code') : null;
-
-        streetAddressSelect.innerHTML = '<option value="">Select Ward</option>';
-
-        if (!districtCode) {
-            streetAddressSelect.disabled = true;
-            return;
-        }
-
-        streetAddressSelect.disabled = false;
-        streetAddressSelect.classList.add('loading');
-        try {
-            const response = await fetch(`${API_DISTRICTS}${districtCode}?depth=2`);
-            const districtData = await response.json();
-            const wards = districtData.wards || [];
-            wards.forEach(ward => {
-                const option = document.createElement('option');
-                option.value = ward.name;
-                option.text = ward.name;
-                streetAddressSelect.appendChild(option);
-            });
-        } catch (error) {
-            console.error('Error loading wards:', error);
-            streetAddressSelect.innerHTML = '<option value="">Error loading wards</option>';
-        } finally {
-            streetAddressSelect.classList.remove('loading');
-        }
-    }
-
-    function updatePostalCode() {
-        const provinceSelect = document.getElementById('province');
-        const postalCodeInput = document.getElementById('postalCode');
-        const selectedProvince = provinceSelect.options[provinceSelect.selectedIndex];
-        const provinceCode = selectedProvince ? selectedProvince.getAttribute('data-code') : null;
-
-        postalCodeInput.value = provinceCode && postalCodes[provinceCode] ? postalCodes[provinceCode] : '';
-    }
-
-    function searchPatients(event) {
-        event.preventDefault();
-        const query = document.getElementById('searchQuery').value.trim();
-        if (!query) {
-            alert('Please enter a search query.');
-            return;
-        }
-        $.ajax({
-            url: '/api/patients',
-            method: 'GET',
-            data: { search: query },
-            success: function(response) {
-                const resultsContainer = document.getElementById('searchResults');
-                const resultsBody = document.getElementById('searchResultsBody');
-                resultsBody.innerHTML = '';
-                if (response && response.patients && response.patients.length > 0) {
-                    response.patients.forEach(function(patient) {
-                        const row = document.createElement('tr');
-                        row.innerHTML = `
-                            <td>${patient.id}</td>
-                            <td>${patient.name}</td>
-                            <td>${patient.phone}</td>
-                            <td>${patient.email}</td>
-                        `;
-                        row.addEventListener('click', function() { selectPatient(patient); });
-                        resultsBody.appendChild(row);
-                    });
-                    resultsContainer.classList.remove('d-none');
-                } else {
-                    resultsBody.innerHTML = '<tr><td colspan="4" class="text-center">No patients found.</td></tr>';
-                    resultsContainer.classList.remove('d-none');
-                }
-            },
-            error: function() {
-                alert('Error searching for patients.');
-            }
-        });
-    }
-
-    function selectPatient(patient) {
-        document.getElementById('patientIdInput').value = patient.id;
-        setReadOnlyField('fullName', patient.name);
-        setReadOnlyField('phoneNumber', patient.phone);
-        setReadOnlyField('email', patient.email);
-        setReadOnlyField('dateOfBirth', patient.dateOfBirth);
-        setReadOnlyField('gender', patient.gender);
-        setReadOnlyField('country', patient.country || 'Việt Nam');
-        setProvinceDistrictWardReadOnly(patient);
-        setReadOnlyField('postalCode', patient.postalCode);
-        setReadOnlyField('addressType', patient.addressType);
-        setReadOnlyField('emergencyContact', patient.emergencyContact);
-        setReadOnlyField('description', patient.description ? patient.description.substring(0, 250) : '');
-        document.getElementById('searchResults').classList.add('d-none');
-    }
-
-    // Sửa lại hàm này để load options bất đồng bộ đúng thứ tự
-    async function setProvinceDistrictWardReadOnly(patient) {
-        const provinceSelect = document.getElementById('province');
-        const districtSelect = document.getElementById('district');
-        const streetAddressSelect = document.getElementById('streetAddress');
-
-        // 1. Load provinces nếu chưa có
-        if (provinceSelect.options.length <= 1) {
-            await loadProvinces();
-        }
-
-        // 2. Set province
-        let provinceFound = false;
-        for (let i = 0; i < provinceSelect.options.length; i++) {
-            if (provinceSelect.options[i].value === patient.province) {
-                provinceSelect.selectedIndex = i;
-                provinceFound = true;
-                break;
-            }
-        }
-        provinceSelect.disabled = true;
-        if (!provinceFound) {
-            console.warn('Province not found in select:', patient.province);
-            return;
-        }
-
-        // 3. Load districts theo province
-        const selectedProvinceOption = provinceSelect.options[provinceSelect.selectedIndex];
-        const provinceCode = selectedProvinceOption.getAttribute('data-code');
-        if (!provinceCode) {
-            console.warn('Province code not found for:', patient.province);
-            return;
-        }
-        districtSelect.innerHTML = '<option value="">Select District</option>';
-        streetAddressSelect.innerHTML = '<option value="">Select Ward</option>';
-        districtSelect.disabled = true;
-        streetAddressSelect.disabled = true;
-
-        try {
-            const provinceRes = await fetch(`https://provinces.open-api.vn/api/p/${provinceCode}?depth=2`);
-            const provinceData = await provinceRes.json();
-            const districts = provinceData.districts || [];
-            let districtFound = false;
-            districts.forEach(district => {
-                const option = document.createElement('option');
-                option.value = district.name;
-                option.text = district.name;
-                option.setAttribute('data-code', district.code);
-                if (district.name === patient.district) {
-                    option.selected = true;
-                    districtFound = true;
-                }
-                districtSelect.appendChild(option);
-            });
-            districtSelect.disabled = true;
-            if (!districtFound) {
-                console.warn('District not found in select:', patient.district);
-                return;
-            }
-
-            // 4. Load wards theo district
-            const selectedDistrictOption = Array.from(districtSelect.options).find(opt => opt.value === patient.district);
-            const districtCode = selectedDistrictOption ? selectedDistrictOption.getAttribute('data-code') : null;
-            if (!districtCode) {
-                console.warn('District code not found for:', patient.district);
-                return;
-            }
-            const districtRes = await fetch(`https://provinces.open-api.vn/api/d/${districtCode}?depth=2`);
-            const districtData = await districtRes.json();
-            const wards = districtData.wards || [];
-            let wardFound = false;
-            wards.forEach(ward => {
-                const option = document.createElement('option');
-                option.value = ward.name;
-                option.text = ward.name;
-                if (ward.name === patient.streetAddress) {
-                    option.selected = true;
-                    wardFound = true;
-                }
-                streetAddressSelect.appendChild(option);
-            });
-            streetAddressSelect.disabled = true;
-            if (!wardFound) {
-                console.warn('Ward not found in select:', patient.streetAddress);
-            }
-        } catch (err) {
-            console.error('Error loading district/ward:', err);
-        }
-    }
-
-    function setReadOnlyField(id, value) {
-        var el = document.getElementById(id);
-        if (!el) return;
-        if (el.tagName === 'SELECT') {
-            // Set value and disable
-            for (let i = 0; i < el.options.length; i++) {
-                if (el.options[i].value === value) {
-                    el.selectedIndex = i;
-                    break;
-                }
-            }
-            el.disabled = true;
+        if (value === '') {
+            input.classList.remove('is-invalid', 'is-valid');
+            error.style.display = 'none';
+        } else if (isValid) {
+            input.classList.remove('is-invalid');
+            input.classList.add('is-valid');
+            error.style.display = 'none';
         } else {
-            el.value = value || '';
-            el.readOnly = true;
-            el.classList.add('readonly');
+            input.classList.remove('is-valid');
+            input.classList.add('is-invalid');
+            error.style.display = 'block';
         }
+        return isValid || value === '';
     }
 
-    function clearReadOnlyFields() {
-        var ids = ['fullName','phoneNumber','email','dateOfBirth','gender','country','province','district','streetAddress','postalCode','addressType','emergencyContact','description'];
-        ids.forEach(function(id) {
-            var el = document.getElementById(id);
-            if (!el) return;
-            el.readOnly = false;
-            el.classList.remove('readonly');
-            if (el.tagName === 'SELECT') {
-                el.disabled = false;
-            }
-        });
-    }
+    function validatePhoneNumber() {
+        const input = document.getElementById('phoneNumber');
+        const error = document.getElementById('phoneNumberError');
+        const value = input.value.trim();
+        const isValid = /^\d{10}$/.test(value);
 
-    function updateDoctors() {
-        const specialtyId = document.getElementById('specialtyId').value;
-        const doctorSelect = document.getElementById('doctorId');
-        const doctorInfo = document.getElementById('doctorInfoDisplay');
-
-        doctorSelect.innerHTML = '<option value="">Choose a Doctor</option>';
-        doctorInfo.classList.remove('show');
-
-        if (specialtyId) {
-            doctorSelect.classList.add('loading');
-            const doctors = mockDoctors[specialtyId] || [];
-            setTimeout(() => {
-                doctors.forEach(doctor => {
-                    const option = document.createElement('option');
-                    option.value = doctor.doctorId;
-                    option.text = `Dr. ${doctor.fullName}`;
-                    option.setAttribute('data-bio', doctor.bioDescription);
-                    option.setAttribute('data-name', doctor.fullName);
-                    doctorSelect.appendChild(option);
-                });
-                doctorSelect.classList.remove('loading');
-            }, 500);
-        }
-
-        const appointmentDate = document.getElementById('appointmentDate').value;
-        if (appointmentDate && doctorSelect.value) {
-            updateTimeSlots();
-        }
-    }
-
-    function updateDoctorsAndTimeSlots() {
-        showDoctorInfo();
-        const appointmentDate = document.getElementById('appointmentDate').value;
-        if (appointmentDate) {
-            updateTimeSlots();
-        }
-    }
-
-    function showDoctorInfo() {
-        const doctorSelect = document.getElementById('doctorId');
-        const selectedOption = doctorSelect.options[doctorSelect.selectedIndex];
-        const doctorInfo = document.getElementById('doctorInfoDisplay');
-
-        if (selectedOption && selectedOption.value) {
-            const doctorName = selectedOption.getAttribute('data-name');
-            const doctorBio = selectedOption.getAttribute('data-bio');
-            const specialtySelect = document.getElementById('specialtyId');
-            const specialtyName = specialtySelect.options[specialtySelect.selectedIndex].text.split(' - ')[0];
-
-            document.getElementById('doctorName').textContent = `Dr. ${doctorName}`;
-            document.getElementById('doctorSpecialty').textContent = specialtyName;
-            document.getElementById('doctorBio').textContent = doctorBio;
-            document.getElementById('doctorAvatar').textContent = doctorName.substring(0, 2).toUpperCase();
-
-            doctorInfo.classList.add('show');
+        if (value === '') {
+            input.classList.remove('is-invalid', 'is-valid');
+            error.style.display = 'none';
+        } else if (isValid) {
+            input.classList.remove('is-invalid');
+            input.classList.add('is-valid');
+            error.style.display = 'none';
         } else {
-            doctorInfo.classList.remove('show');
+            input.classList.remove('is-valid');
+            input.classList.add('is-invalid');
+            error.style.display = 'block';
         }
+        return isValid || value === '';
     }
 
-    function updateTimeSlots() {
-        const dateInput = document.getElementById('appointmentDate').value;
-        const doctorId = document.getElementById('doctorId').value;
+    function validateEmail() {
+        const input = document.getElementById('email');
+        const error = document.getElementById('emailError');
+        const value = input.value.trim();
+        const isValid = value === '' || /^[^\s@]+@gmail\.com$/.test(value);
 
-        if (dateInput && doctorId) {
-            const timeSlots = document.querySelectorAll('.time-slot');
-            timeSlots.forEach(slot => {
-                slot.classList.remove('selected', 'disabled');
-                slot.title = "Available";
-            });
-            document.getElementById('appointmentTime').value = '';
-
-            const bookedTimes = ['09:00:00', '14:30:00'];
-            setTimeout(() => {
-                timeSlots.forEach(slot => {
-                    const time = slot.getAttribute('data-time');
-                    if (bookedTimes.includes(time)) {
-                        slot.classList.add('disabled');
-                        slot.title = "This time slot is already booked";
-                    } else {
-                        slot.title = "Available";
-                    }
-                });
-            }, 500);
+        if (value === '') {
+            input.classList.remove('is-invalid', 'is-valid');
+            error.style.display = 'none';
+        } else if (isValid) {
+            input.classList.remove('is-invalid');
+            input.classList.add('is-valid');
+            error.style.display = 'none';
+        } else {
+            input.classList.remove('is-valid');
+            input.classList.add('is-invalid');
+            error.style.display = 'block';
         }
+        return isValid;
     }
 
-    function selectTime(time, button) {
-        if (!button.classList.contains('disabled')) {
-            document.querySelectorAll('.time-slot').forEach(btn => btn.classList.remove('selected'));
-            button.classList.add('selected');
-            document.getElementById('appointmentTime').value = time;
+    function validateRepresentativePhoneNumber() {
+        const input = document.getElementById('representativePhoneNumber');
+        const error = document.getElementById('representativePhoneNumberError');
+        const value = input.value.trim();
+        const isValid = /^\d{10}$/.test(value) || value === '';
+
+        if (value === '') {
+            input.classList.remove('is-invalid', 'is-valid');
+            error.style.display = 'none';
+        } else if (isValid) {
+            input.classList.remove('is-invalid');
+            input.classList.add('is-valid');
+            error.style.display = 'none';
+        } else {
+            input.classList.remove('is-valid');
+            input.classList.add('is-invalid');
+            error.style.display = 'block';
         }
+        return isValid;
     }
 
-    function resetPhoneNumber() {
-        document.getElementById('phoneNumber').value = '';
-    }
+    // Attach real-time validation listeners
+    document.getElementById('citizenId').addEventListener('input', validateCitizenId);
+    document.getElementById('phoneNumber').addEventListener('input', validatePhoneNumber);
+    document.getElementById('email').addEventListener('input', validateEmail);
+    document.getElementById('representativePhoneNumber').addEventListener('input', validateRepresentativePhoneNumber);
 
-    function resetEmail() {
-        document.getElementById('email').value = '';
-    }
+    // Form submission validation
+    document.getElementById('appointmentForm').addEventListener('submit', function(e) {
+        e.preventDefault();
 
-    function sanitizeOnInput(element) {
-        let value = element.value;
-        value = value.replace(/[<>"'&]/g, '');
-        value = value.trim().replace(/\s+/g, ' ');
-        if (value.length > 250) {
-            value = value.substring(0, 250);
-            alert('Tối đa 250 ký tự được phép cho mô tả triệu chứng.');
+        // Get form fields
+        const fullName = document.getElementById('fullName').value.trim();
+        const gender = document.getElementById('gender').value;
+        const dateOfBirth = document.getElementById('dateOfBirth').value;
+        const citizenId = document.getElementById('citizenId').value.trim();
+        const phoneNumber = document.getElementById('phoneNumber').value.trim();
+        const email = document.getElementById('email').value.trim();
+        const department = document.getElementById('department').value;
+        const typeOfVisit = document.getElementById('typeOfVisit').value;
+        const preferredDateTime = document.getElementById('preferredDateTime').value;
+        const reasonForVisit = document.getElementById('reasonForVisit').value.trim();
+
+        // Reset error messages
+        document.getElementById('fullNameError').style.display = 'none';
+        document.getElementById('citizenIdError').style.display = 'none';
+        document.getElementById('phoneNumberError').style.display = 'none';
+        document.getElementById('emailError').style.display = 'none';
+        document.getElementById('reasonForVisitError').style.display = 'none';
+        document.getElementById('dateOfBirthError').style.display = 'none';
+        document.getElementById('preferredDateTimeError').style.display = 'none';
+        document.getElementById('successMessage').classList.add('d-none');
+        document.getElementById('errorMessage').classList.add('d-none');
+
+        let isValid = true;
+
+        // Validate Full Name
+        if (!fullName) {
+            document.getElementById('fullName').classList.add('is-invalid');
+            document.getElementById('fullNameError').style.display = 'block';
+            isValid = false;
+        } else {
+            document.getElementById('fullName').classList.remove('is-invalid');
+            document.getElementById('fullName').classList.add('is-valid');
         }
-        element.value = value;
-        autoResize(element);
-    }
 
-    function confirmBooking(confirm) {
-        const overlay = document.getElementById('confirmationOverlay');
-        overlay.classList.remove('active');
+        // Validate Gender
+        if (!gender) {
+            document.getElementById('gender').classList.add('is-invalid');
+            isValid = false;
+        } else {
+            document.getElementById('gender').classList.remove('is-invalid');
+            document.getElementById('gender').classList.add('is-valid');
+        }
 
-        if (confirm) {
-            const phoneNumber = document.getElementById('phoneNumber').value.replace(/\s+/g, '');
-            const email = document.getElementById('email').value.replace(/\s+/g, '');
-            let description = document.getElementById('description').value.trim();
-            description = description.replace(/[<>"'&]/g, '').substring(0, 250);
+        // Validate Date of Birth
+        const today = new Date('2025-06-05');
+        const dob = new Date(dateOfBirth);
+        if (!dateOfBirth || dob > today) {
+            document.getElementById('dateOfBirth').classList.add('is-invalid');
+            document.getElementById('dateOfBirthError').style.display = 'block';
+            isValid = false;
+        } else {
+            document.getElementById('dateOfBirth').classList.remove('is-invalid');
+            document.getElementById('dateOfBirth').classList.add('is-valid');
+        }
 
-            document.getElementById('phoneNumber').value = phoneNumber;
-            document.getElementById('email').value = email;
-            document.getElementById('description').value = description;
+        // Validate Citizen Identification Card
+        if (!validateCitizenId()) {
+            isValid = false;
+        }
 
+        // Validate Phone Number
+        if (!validatePhoneNumber()) {
+            isValid = false;
+        }
+
+        // Validate Email
+        if (!validateEmail()) {
+            isValid = false;
+        }
+
+        // Validate Department
+        if (!department) {
+            document.getElementById('department').classList.add('is-invalid');
+            isValid = false;
+        } else {
+            document.getElementById('department').classList.remove('is-invalid');
+            document.getElementById('department').classList.add('is-valid');
+        }
+
+        // Validate Type of Visit
+        if (!typeOfVisit) {
+            document.getElementById('typeOfVisit').classList.add('is-invalid');
+            isValid = false;
+        } else {
+            document.getElementById('typeOfVisit').classList.remove('is-invalid');
+            document.getElementById('typeOfVisit').classList.add('is-valid');
+        }
+
+        // Validate Preferred Date and Time
+        const now = new Date('2025-06-05T05:08:00+07:00');
+        const oneMonthLater = new Date(now);
+        oneMonthLater.setDate(now.getDate() + 30);
+        const preferred = new Date(preferredDateTime);
+        if (!preferredDateTime || preferred < now || preferred > oneMonthLater) {
+            document.getElementById('preferredDateTime').classList.add('is-invalid');
+            document.getElementById('preferredDateTimeError').style.display = 'block';
+            isValid = false;
+        } else {
+            document.getElementById('preferredDateTime').classList.remove('is-invalid');
+            document.getElementById('preferredDateTime').classList.add('is-valid');
+        }
+
+        // Validate Reason for Visit
+        const wordCount = reasonForVisit.split(/\s+/).filter(word => word.length > 0).length;
+        if (!reasonForVisit || wordCount > 100) {
+            document.getElementById('reasonForVisit').classList.add('is-invalid');
+            document.getElementById('reasonForVisitError').style.display = 'block';
+            isValid = false;
+        } else {
+            document.getElementById('reasonForVisit').classList.remove('is-invalid');
+            document.getElementById('reasonForVisit').classList.add('is-valid');
+        }
+
+        // Validate Representative Phone Number
+        if (!validateRepresentativePhoneNumber()) {
+            isValid = false;
+        }
+
+        // If all validations pass, submit the form
+        if (isValid) {
+            // Simulate API call
+            // fetch('/api/appointments', {
+            //   method: 'POST',
+            //   body: new FormData(this)
+            // }).then(response => {
+            //   if (response.ok) {
+            //     document.getElementById('successMessage').textContent = 'Appointment registered successfully!';
+            //     document.getElementById('successMessage').classList.remove('d-none');
+            //     this.reset();
+            //     document.querySelectorAll('.form-control, .form-select').forEach(el => el.classList.remove('is-valid', 'is-invalid'));
+            //   } else {
+            //     throw new Error('Failed to register appointment');
+            //   }
+            // }).catch(error => {
+            //   document.getElementById('errorMessage').textContent = 'Error registering appointment. Please try again.';
+            //   document.getElementById('errorMessage').classList.remove('d-none');
+            // });
+
+            // Mock success response
+            document.getElementById('successMessage').textContent = 'Appointment registered successfully!';
             document.getElementById('successMessage').classList.remove('d-none');
             document.getElementById('appointmentForm').reset();
-            document.getElementById('doctorInfoDisplay').classList.remove('show');
-            document.getElementById('searchResults').classList.add('d-none');
-            document.getElementById('province').innerHTML = '<option value="">Select Province/City</option>';
-            document.getElementById('district').innerHTML = '<option value="">Select District</option>';
-            document.getElementById('streetAddress').innerHTML = '<option value="">Select Ward</option>';
-            document.getElementById('postalCode').value = '';
-            document.getElementById('addressType').value = '';
-            loadProvinces();
+            document.querySelectorAll('.form-control, .form-select').forEach(el => el.classList.remove('is-valid', 'is-invalid'));
             setTimeout(() => {
                 document.getElementById('successMessage').classList.add('d-none');
             }, 3000);
+        } else {
+            document.getElementById('errorMessage').textContent = 'Please correct the errors in the form.';
+            document.getElementById('errorMessage').classList.remove('d-none');
         }
-    }
-
-    function submitForm(event) {
-        event.preventDefault();
-        document.getElementById('successMessage').classList.remove('d-none');
-        setTimeout(() => {
-            document.getElementById('successMessage').classList.add('d-none');
-        }, 3000);
-    }
-
-    function showConfirmation() {
-        const overlay = document.getElementById('confirmationOverlay');
-        overlay.classList.add('active');
-    }
-
-    function autoResize(textarea) {
-        textarea.style.height = 'auto';
-        textarea.style.height = textarea.scrollHeight + 'px';
-    }
-
-    $(document).ready(function() {
-        // Auto-fill contact info by phone number
-        $('#phoneNumber').on('blur', function() {
-            var phone = $(this).val().trim();
-            if (phone.length >= 8) { // Adjust length as needed
-                $.ajax({
-                    url: '/api/patients',
-                    method: 'GET',
-                    data: { phone: phone },
-                    success: function(response) {
-                        if (response && response.patients && response.patients.length > 0) {
-                            var patient = response.patients[0];
-                            $('#fullName').val(patient.name || '');
-                            $('#email').val(patient.email || '');
-                            $('#dateOfBirth').val(patient.dateOfBirth || '');
-                            $('#gender').val(patient.gender || '');
-                            $('#country').val(patient.country || 'Việt Nam');
-                            $('#province').val(patient.province || '');
-                            loadDistricts();
-                            setTimeout(function() {
-                                $('#district').val(patient.district || '');
-                                loadWards();
-                                setTimeout(function() {
-                                    $('#streetAddress').val(patient.streetAddress || '');
-                            }, 300);
-                        }, 300);
-                            $('#postalCode').val(patient.postalCode || '');
-                            $('#addressType').val(patient.addressType || '');
-                            $('#emergencyContact').val(patient.emergencyContact || '');
-                            $('#description').val(patient.description ? patient.description.substring(0, 250) : '');
-                        }
-                    }
-                });
-            }
-        });
     });
 </script>
 </body>

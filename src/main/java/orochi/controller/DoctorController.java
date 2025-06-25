@@ -606,56 +606,5 @@ public class DoctorController {
             return "error";
         }
     }
-
-    /**
-     * Display the notifications page for a doctor
-     * @param doctorId The ID of the doctor
-     * @param model The Spring model
-     * @param authentication The current authentication object
-     * @return The notification page template
-     */
-    @GetMapping("/notifications")
-    public String getNotifications(@RequestParam(required = false) Integer doctorId,
-                                 Model model,
-                                 Authentication authentication) {
-        try {
-            // If doctorId is not provided, try to get it from the authentication
-            if (doctorId == null && authentication != null) {
-                logger.info("No doctorId provided, attempting to retrieve from authenticated user");
-                Object principal = authentication.getPrincipal();
-                if (principal instanceof CustomUserDetails) {
-                    CustomUserDetails userDetails = (CustomUserDetails) principal;
-                    doctorId = userDetails.getDoctorId();
-                    logger.info("Retrieved doctorId {} from authentication", doctorId);
-                }
-            }
-
-            if (doctorId == null) {
-                logger.error("No doctorId provided and could not be determined from authentication");
-                model.addAttribute("errorMessage", "Doctor ID is required");
-                return "error";
-            }
-
-            logger.info("Loading notifications for doctor ID: {}", doctorId);
-            Doctor doctor = doctorRepository.findById(doctorId).orElse(null);
-
-            // Check if doctor is null before accessing its properties
-            if (doctor == null) {
-                logger.error("Doctor not found for ID: {}", doctorId);
-                model.addAttribute("errorMessage", "Doctor not found");
-                return "error";
-            }
-
-            model.addAttribute("doctorName", doctor.getUser().getFullName());
-            model.addAttribute("doctorId", doctorId);
-
-            logger.debug("Notifications page loaded successfully for doctor ID: {}", doctorId);
-            return "doctor/doctor-notification";
-        } catch (Exception e) {
-            logger.error("Error loading notifications for doctor ID: {}", doctorId, e);
-            model.addAttribute("errorMessage", "An error occurred while loading notifications: " + e.getMessage());
-            return "error";
-        }
-    }
 }
 
