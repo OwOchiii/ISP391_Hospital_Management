@@ -187,9 +187,9 @@
         <i class="bi bi-arrow-left"></i>
         Back to Appointment List
       </a>
-      <a th:href="@{/patient/appointment-list/{id}/pdf(patientId=${patientId}, id=${appointmentId})}" class="btn-pdf-custom">
+      <a th:href="@{/patient/appointment-list-legacy/{id}/report(id=${appointmentId}, patientId=${patientId})}" class="btn-pdf-custom">
         <i class="bi bi-file-pdf"></i>
-        Import as PDF
+        Export as PDF
       </a>
       <a th:if="${prescription != null}" th:href="@{/patient/book-appointment}" class="btn-primary-custom">
         <i class="bi bi-calendar-plus"></i>
