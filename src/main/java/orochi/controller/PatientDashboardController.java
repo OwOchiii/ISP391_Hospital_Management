@@ -757,7 +757,7 @@ public class PatientDashboardController {
         }
     }
 
-    @GetMapping("/appointment-list-legacy/{id}/report")
+    @GetMapping("/appointment-list/{id}/report")
     public String getMedicalReport(@PathVariable("id") Integer appointmentId,
                                    @RequestParam("patientId") Integer patientId,
                                    Model model,
@@ -798,6 +798,7 @@ public class PatientDashboardController {
             List<Medicine> medicines = prescription != null ? prescription.getMedicines() : List.of();
 
             // Add data to model
+            model.addAttribute("appointmentId", appointmentId);
             model.addAttribute("patientId", patientId);
             model.addAttribute("patientName", appointment.getPatient().getFullName());
             model.addAttribute("prescription", prescription);
