@@ -65,6 +65,12 @@ public class PatientDashboardController {
     private TransactionRepository transactionRepository;
 
     @Autowired
+    private DoctorRepository doctorRepository;
+
+    @Autowired
+    private SpecializationRepository specializationRepository;
+
+    @Autowired
     private PatientService patientService;
 
     @Autowired
@@ -139,11 +145,19 @@ public class PatientDashboardController {
             Integer patientId = getCurrentPatientId();
             if (patientId != null) {
                 model.addAttribute("patientId", patientId);
+                Optional<Patient> patientOpt = patientRepository.findById(patientId);
+                if (patientOpt.isPresent()) {
+                    model.addAttribute("patientName", patientOpt.get().getUser().getFullName());
+                }
             }
+            List<Doctor> doctors = doctorRepository.findAll();
+            List<Specialization> specializations = specializationRepository.findAll();
+            model.addAttribute("doctors", doctors);
+            model.addAttribute("specializations", specializations);
             return "patient/search-doctor";
         } catch (Exception e) {
-            logger.error("Error loading search doctor page", e);
-            model.addAttribute("errorMessage", "An error occurred: " + e.getMessage());
+            logger.error("Error loading search doctor page: " + e.getMessage(), e);
+            model.addAttribute("errorMessage", "An error occurred while loading the search doctor page.");
             return "error";
         }
     }

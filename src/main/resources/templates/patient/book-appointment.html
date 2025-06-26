@@ -1125,13 +1125,51 @@
   }
 
   // Update both doctors and time slots when doctor changes
-  function updateDoctorsAndTimeSlots() {
-    showDoctorInfo();
-    const appointmentDate = document.getElementById('appointmentDate').value;
-    if (appointmentDate) {
-      updateTimeSlots();
+  // Update doctors based on specialty selection
+  function updateDoctors() {
+    const specialtyId = document.getElementById('specialtyId').value;
+    const doctorSelect = document.getElementById('doctorId');
+    const doctorInfo = document.getElementById('doctorInfoDisplay');
+    const preSelectedDoctorId = /*[[${appointmentForm.doctorId}]]*/ '';
+
+    // Reset doctor selection
+    doctorSelect.innerHTML = '<option value="">Choose a Doctor</option>';
+    doctorInfo.classList.remove('show');
+
+    if (specialtyId) {
+        doctorSelect.classList.add('loading');
+
+        fetch(`/patient/api/doctors-by-specialty?specialtyId=${specialtyId}`)
+                .then(response => response.json())
+                .then(doctors => {
+                    doctors.forEach(doctor => {
+                        const option = document.createElement('option');
+                        option.value = doctor.doctorId;
+                        option.text = `Dr. ${doctor.fullName}`;
+                        option.setAttribute('data-bio', doctor.bioDescription || 'Experienced medical professional');
+                        option.setAttribute('data-name', doctor.fullName);
+                        if (doctor.doctorId == preSelectedDoctorId) {
+                            option.selected = true;
+                        }
+                        doctorSelect.appendChild(option);
+                    });
+                    doctorSelect.classList.remove('loading');
+                    if (preSelectedDoctorId) {
+                        showDoctorInfo();
+                    }
+                })
+                .catch(error => {
+                    console.error('Error fetching doctors:', error);
+                    doctorSelect.classList.remove('loading');
+                });
     }
-  }
+
+    // Update time slots if a date is already selected
+    const appointmentDate = document.getElementById('appointmentDate').value;
+    if (appointmentDate && doctorSelect.value) {
+        updateTimeSlots();
+    }
+}
 
   // Show doctor information
   function showDoctorInfo() {
@@ -1389,9 +1427,10 @@
       });
     }
 
-    // For update mode, populate doctor dropdown
-    if (isUpdate && initialSpecialtyId) {
-      updateDoctors();
+    // Populate doctor dropdown if specialtyId is pre-selected
+    const specialtyId = document.getElementById('specialtyId').value;
+    if (specialtyId) {
+        updateDoctors();
     }
   });
 
