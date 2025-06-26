@@ -298,6 +298,8 @@ public class PrescriptionController {
         }
     }
 
+
+
     @PostMapping("/medicine/delete/{medicineId}")
     @ResponseBody
     public ResponseEntity<?> deleteMedicine(@PathVariable Integer medicineId) {

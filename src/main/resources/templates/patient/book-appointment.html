@@ -743,13 +743,19 @@
         My Profile
       </a>
     </div>
-    <div class="nav-section-title">Support</div>
     <div class="nav-item">
-      <a th:href="@{/patient/customer-support(patientId=${patientId})}" class="nav-link">
-        <i class="bi bi-headset"></i>
-        Customer Support
+      <a th:href="@{/patient/payment-history}" class="nav-link">
+        <i class="bi bi-credit-card"></i>
+        Payment History
       </a>
     </div>
+    <div class="nav-item">
+      <a th:href="@{/patient/security-password}" class="nav-link">
+        <i class="bi bi-shield-lock"></i>
+        Security & Password
+      </a>
+    </div>
+    <div class="nav-section-title">Support</div>
     <div class="nav-item">
       <a th:href="@{/patient/feedback}" class="nav-link">
         <i class="bi bi-chat-square-text"></i>
@@ -977,14 +983,6 @@
               <span th:errors="*{email}">Valid email address is required</span>
             </div>
           </div>
-
-          <!-- Emergency Contact -->
-          <div class="col-md-6 mb-3">
-            <label for="emergencyContact" class="form-label">Emergency Contact (Optional)</label>
-            <input type="tel" id="emergencyContact" th:field="*{emergencyContact}"
-                   class="form-control" placeholder="Emergency contact number" />
-          </div>
-        </div>
 
         <!-- Description/Reason -->
         <div class="mb-4">

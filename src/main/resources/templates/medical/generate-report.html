@@ -412,10 +412,10 @@
                     reportStatus.style.display = 'flex';
 
                     // Provide download link if available
-                    if (data.fileUrl) {
+                    if (data.fileUrl || data.reportId) {
                         // Create a download button
                         const downloadBtn = document.createElement('a');
-                        downloadBtn.href = `/download/report/${data.reportId}`;
+                        downloadBtn.href = `/download/report/${data.reportId}?download=true`; // Explicitly set download=true
                         downloadBtn.className = 'btn btn-success-custom mt-3 d-block';
                         downloadBtn.innerHTML = '<i class="bi bi-download me-2"></i> Download PDF Report';
                         downloadBtn.target = '_blank';
@@ -423,10 +423,8 @@
                         // Insert button after the form
                         document.querySelector('.d-flex.justify-content-end').insertAdjacentElement('afterend', downloadBtn);
 
-                        // Automatically trigger download after a short delay
-                        setTimeout(() => {
-                            window.open(`/download/report/${data.reportId}`, '_blank');
-                        }, 1500);
+                        // Automatically open the PDF in a new tab (without download parameter so it opens inline)
+                        window.open(`/download/report/${data.reportId}`, '_blank');
                     }
                 } else {
                     // Show error message

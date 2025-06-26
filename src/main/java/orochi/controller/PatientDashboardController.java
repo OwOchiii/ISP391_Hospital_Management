@@ -10,6 +10,7 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Controller;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.ui.Model;
@@ -24,7 +25,9 @@ import orochi.config.CustomUserDetails;
 import orochi.service.FeedbackService;
 import orochi.service.PatientService;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.LocalTime;
 import java.time.format.DateTimeFormatter;
 import java.time.format.DateTimeParseException;
 import java.util.Collections;
@@ -53,10 +56,19 @@ public class PatientDashboardController {
     private MedicalOrderRepository medicalOrderRepository;
 
     @Autowired
+    private PrescriptionRepository prescriptionRepository;
+
+    @Autowired
+    private TransactionRepository transactionRepository;
+
+    @Autowired
     private PatientService patientService;
 
     @Autowired
     private FeedbackService feedbackService;
+
+    @Autowired
+    private PasswordEncoder passwordEncoder;
 
     @GetMapping("/dashboard")
     public String dashboard(Model model) {
@@ -187,47 +199,52 @@ public class PatientDashboardController {
     @GetMapping("/appointment-list/{id}/cancel")
     public String showCancelAppointmentPage(@PathVariable("id") Integer appointmentId,
                                             @RequestParam("patientId") Integer patientId,
-                                            Model model) {
+                                            Model model,
+                                            RedirectAttributes redirectAttributes) {
         try {
             Integer currentPatientId = getCurrentPatientId();
             if (currentPatientId == null || !currentPatientId.equals(patientId)) {
                 logger.error("Unauthorized access attempt for patient ID: {}", patientId);
-                model.addAttribute("errorMessage", "Unauthorized access or invalid patient ID");
-                return "error";
+                redirectAttributes.addFlashAttribute("successMessage", "Invalid patient ID! Please try again.");
+                return "redirect:/patient/appointment-list";
             }
 
             // Get patient info
-            Optional<Patient> patientOpt = patientRepository.findById(patientId);
-            if (!patientOpt.isPresent()) {
+            Patient patient;
+            try {
+                patient = patientRepository.findById(patientId)
+                        .orElseThrow(() -> new RuntimeException("Patient not found for ID: " + patientId));
+            } catch (RuntimeException e) {
                 logger.error("Patient not found for ID: {}", patientId);
-                model.addAttribute("errorMessage", "Patient not found");
-                return "error";
+                redirectAttributes.addFlashAttribute("successMessage", "Invalid patient ID! Please try again.");
+                return "redirect:/patient/appointment-list";
             }
-            Patient patient = patientOpt.get();
             model.addAttribute("patientName", patient.getUser().getFullName());
             model.addAttribute("patientId", patientId);
 
             // Get appointment info
-            Optional<Appointment> appointmentOpt = appointmentRepository.findById(appointmentId);
-            if (!appointmentOpt.isPresent()) {
+            Appointment appointment;
+            try {
+                appointment = appointmentRepository.findById(appointmentId)
+                        .orElseThrow(() -> new RuntimeException("Appointment not found for ID: " + appointmentId));
+            } catch (RuntimeException e) {
                 logger.error("Appointment not found for ID: {}", appointmentId);
-                model.addAttribute("errorMessage", "Appointment not found");
-                return "error";
+                redirectAttributes.addFlashAttribute("successMessage", "Invalid appointment ID or patient ID! Please try again.");
+                return "redirect:/patient/appointment-list";
             }
-            Appointment appointment = appointmentOpt.get();
 
             // Verify appointment belongs to the patient
             if (!appointment.getPatient().getPatientId().equals(patientId)) {
                 logger.error("Appointment ID: {} does not belong to patient ID: {}", appointmentId, patientId);
-                model.addAttribute("errorMessage", "You are not authorized to cancel this appointment");
-                return "error";
+                redirectAttributes.addFlashAttribute("successMessage", "Invalid appointment ID or patient ID! Please try again.");
+                return "redirect:/patient/appointment-list";
             }
 
             // Check if appointment is cancellable
-            if (!"Scheduled".equals(appointment.getStatus())) {
+            if (!"Scheduled".equals(appointment.getStatus()) && !"Pending".equals(appointment.getStatus())) {
                 logger.warn("Attempt to cancel non-scheduled appointment ID: {}", appointmentId);
-                model.addAttribute("errorMessage", "Only scheduled appointments can be cancelled");
-                return "error";
+                redirectAttributes.addFlashAttribute("successMessage", "Only scheduled or pending appointments can be cancelled.");
+                return "redirect:/patient/appointment-list";
             }
 
             model.addAttribute("appointment", appointment);
@@ -237,8 +254,8 @@ public class PatientDashboardController {
             return "patient/cancel-appointment";
         } catch (Exception e) {
             logger.error("Error loading cancel appointment page for appointment ID: {}", appointmentId, e);
-            model.addAttribute("errorMessage", "An error occurred while loading the cancellation page: " + e.getMessage());
-            return "error";
+            redirectAttributes.addFlashAttribute("successMessage", "An error occurred while loading the cancellation page. Please try again.");
+            return "redirect:/patient/appointment-list";
         }
     }
 
@@ -272,7 +289,7 @@ public class PatientDashboardController {
             }
 
             // Check if appointment is cancellable
-            if (!"Scheduled".equals(appointment.getStatus())) {
+            if (!"Scheduled".equals(appointment.getStatus()) && !"Pending".equals(appointment.getStatus())) {
                 logger.warn("Attempt to cancel non-scheduled appointment ID: {}", appointmentId);
                 redirectAttributes.addFlashAttribute("errorMessage", "Only scheduled appointments can be cancelled");
                 return "redirect:/patient/appointment-list";
@@ -468,21 +485,6 @@ public class PatientDashboardController {
         }
     }
 
-    @GetMapping("/customer-support")
-    public String customerSupport(Model model) {
-        try {
-            Integer patientId = getCurrentPatientId();
-            if (patientId != null) {
-                model.addAttribute("patientId", patientId);
-            }
-            return "patient/customer-support";
-        } catch (Exception e) {
-            logger.error("Error loading customer support page", e);
-            model.addAttribute("errorMessage", "An error occurred: " + e.getMessage());
-            return "error";
-        }
-    }
-
     @GetMapping("/feedback")
     public String feedback(Model model) {
         try {
@@ -651,6 +653,366 @@ public class PatientDashboardController {
         return "redirect:/patient/my-feedback";
     }
 
+    @GetMapping("/appointment-list/{id}/reschedule")
+    public String showRescheduleAppointment(@PathVariable("id") Integer appointmentId,
+                                            @RequestParam("patientId") Integer patientId,
+                                            Model model,
+                                            RedirectAttributes redirectAttributes) {
+        try {
+            Integer currentPatientId = getCurrentPatientId();
+            if (currentPatientId == null || !currentPatientId.equals(patientId)) {
+                logger.error("Unauthorized access attempt for patient ID: {}", patientId);
+                redirectAttributes.addFlashAttribute("errorMessage", "Unauthorized access");
+                return "redirect:/patient/appointment-list";
+            }
+
+            Optional<Appointment> appointmentOpt = appointmentRepository.findById(appointmentId);
+            if (!appointmentOpt.isPresent()) {
+                logger.error("Appointment not found for ID: {}", appointmentId);
+                redirectAttributes.addFlashAttribute("errorMessage", "Appointment not found");
+                return "redirect:/patient/appointment-list";
+            }
+            Appointment appointment = appointmentOpt.get();
+
+            if (!appointment.getPatient().getPatientId().equals(patientId)) {
+                logger.error("Appointment ID: {} does not belong to patient ID: {}", appointmentId, patientId);
+                redirectAttributes.addFlashAttribute("errorMessage", "You are not authorized to reschedule this appointment");
+                return "redirect:/patient/appointment-list";
+            }
+
+            if (!"Scheduled".equals(appointment.getStatus())) {
+                logger.warn("Attempt to reschedule non-scheduled appointment ID: {}", appointmentId);
+                redirectAttributes.addFlashAttribute("errorMessage", "Only scheduled appointments can be rescheduled");
+                return "redirect:/patient/appointment-list";
+            }
+
+            model.addAttribute("appointment", appointment);
+            model.addAttribute("patientId", patientId);
+            model.addAttribute("patientName", appointment.getPatient().getUser().getFullName());
+
+            return "patient/reschedule-appointment";
+        } catch (Exception e) {
+            logger.error("Error loading reschedule appointment page", e);
+            redirectAttributes.addFlashAttribute("errorMessage", "An error occurred: " + e.getMessage());
+            return "redirect:/patient/appointment-list";
+        }
+    }
+
+    @PostMapping("/appointment-list/{id}/reschedule")
+    public String rescheduleAppointment(@PathVariable("id") Integer appointmentId,
+                                        @RequestParam("patientId") Integer patientId,
+                                        @RequestParam("newTime") String newTime,
+                                        RedirectAttributes redirectAttributes) {
+        try {
+            Integer currentPatientId = getCurrentPatientId();
+            if (currentPatientId == null || !currentPatientId.equals(patientId)) {
+                logger.error("Unauthorized access attempt for patient ID: {}", patientId);
+                redirectAttributes.addFlashAttribute("errorMessage", "Unauthorized access");
+                return "redirect:/patient/appointment-list";
+            }
+
+            Optional<Appointment> appointmentOpt = appointmentRepository.findById(appointmentId);
+            if (!appointmentOpt.isPresent()) {
+                logger.error("Appointment not found for ID: {}", appointmentId);
+                redirectAttributes.addFlashAttribute("errorMessage", "Appointment not found");
+                return "redirect:/patient/appointment-list";
+            }
+            Appointment appointment = appointmentOpt.get();
+
+            if (!appointment.getPatient().getPatientId().equals(patientId)) {
+                logger.error("Appointment ID: {} does not belong to patient ID: {}", appointmentId, patientId);
+                redirectAttributes.addFlashAttribute("errorMessage", "You are not authorized to reschedule this appointment");
+                return "redirect:/patient/appointment-list";
+            }
+
+            if (!"Scheduled".equals(appointment.getStatus())) {
+                logger.warn("Attempt to reschedule non-scheduled appointment ID: {}", appointmentId);
+                redirectAttributes.addFlashAttribute("errorMessage", "Only scheduled appointments can be rescheduled");
+                return "redirect:/patient/appointment-list";
+            }
+
+            // Get existing appointment date
+            LocalDate existingDate = appointment.getDateTime().toLocalDate();
+
+            // Parse new time
+            LocalTime newLocalTime;
+            try {
+                newLocalTime = LocalTime.parse(newTime);
+            } catch (DateTimeParseException e) {
+                logger.error("Invalid time format: {}", newTime);
+                redirectAttributes.addFlashAttribute("errorMessage", "Invalid time format");
+                return "redirect:/patient/appointment-list/" + appointmentId + "/reschedule?patientId=" + patientId;
+            }
+
+            // Combine existing date with new time
+            LocalDateTime newDateTime = LocalDateTime.of(existingDate, newLocalTime);
+
+            // Update the appointment time
+            appointment.setDateTime(newDateTime);
+            appointmentRepository.save(appointment);
+
+            logger.info("Appointment ID {} rescheduled to {} by patient ID: {}", appointmentId, newDateTime, patientId);
+            redirectAttributes.addFlashAttribute("successMessage", "Appointment rescheduled successfully");
+            return "redirect:/patient/appointment-list";
+        } catch (Exception e) {
+            logger.error("Error rescheduling appointment ID: {}", appointmentId, e);
+            redirectAttributes.addFlashAttribute("errorMessage", "Failed to reschedule appointment: " + e.getMessage());
+            return "redirect:/patient/appointment-list";
+        }
+    }
+
+    @GetMapping("/appointment-list/{id}/report")
+    public String getMedicalReport(@PathVariable("id") Integer appointmentId,
+                                   @RequestParam("patientId") Integer patientId,
+                                   Model model,
+                                   RedirectAttributes redirectAttributes) {
+        try {
+            Integer currentPatientId = getCurrentPatientId();
+            if (currentPatientId == null || !currentPatientId.equals(patientId)) {
+                logger.error("Unauthorized access attempt for patient ID: {}", patientId);
+                redirectAttributes.addFlashAttribute("errorMessage", "Unauthorized access");
+                return "redirect:/patient/appointment-list";
+            }
+
+            Optional<Appointment> appointmentOpt = appointmentRepository.findById(appointmentId);
+            if (!appointmentOpt.isPresent()) {
+                logger.error("Appointment not found for ID: {}", appointmentId);
+                redirectAttributes.addFlashAttribute("errorMessage", "Appointment not found");
+                return "redirect:/patient/appointment-list";
+            }
+            Appointment appointment = appointmentOpt.get();
+
+            if (!appointment.getPatientId().equals(patientId)) {
+                logger.error("Appointment ID: {} does not belong to patient ID: {}", appointmentId, patientId);
+                redirectAttributes.addFlashAttribute("errorMessage", "You are not authorized to view this report");
+                return "redirect:/patient/appointment-list";
+            }
+
+            if (!"Completed".equals(appointment.getStatus())) {
+                logger.warn("Attempt to view medical report for non-completed appointment ID: {}", appointmentId);
+                redirectAttributes.addFlashAttribute("errorMessage", "Medical report available only for completed appointments");
+                return "redirect:/patient/appointment-list";
+            }
+
+            // Fetch prescriptions for the appointment
+            List<Prescription> prescriptions = prescriptionRepository.findByAppointmentId(appointmentId);
+            Prescription prescription = prescriptions.isEmpty() ? null : prescriptions.get(0);
+
+            // Get medicines from the prescription, if it exists
+            List<Medicine> medicines = prescription != null ? prescription.getMedicines() : List.of();
+
+            // Add data to model
+            model.addAttribute("appointmentId", appointmentId);
+            model.addAttribute("patientId", patientId);
+            model.addAttribute("patientName", appointment.getPatient().getFullName());
+            model.addAttribute("prescription", prescription);
+            model.addAttribute("medicines", medicines);
+
+            return "patient/medical-report";
+        } catch (Exception e) {
+            logger.error("Error retrieving medical report for appointment ID: {}", appointmentId, e);
+            redirectAttributes.addFlashAttribute("errorMessage", "Failed to load medical report: " + e.getMessage());
+            return "redirect:/patient/appointment-list";
+        }
+    }
+
+    @GetMapping("/payment-history")
+    public String paymentHistory(Model model) {
+        try {
+            Integer patientId = getCurrentPatientId();
+            if (patientId == null) {
+                logger.error("No patientId found for authenticated user");
+                model.addAttribute("errorMessage", "Patient ID is required. Please contact support.");
+                return "error";
+            }
+
+            Optional<Patient> patientOpt = patientRepository.findById(patientId);
+            if (!patientOpt.isPresent()) {
+                logger.error("Patient not found for ID: {}", patientId);
+                model.addAttribute("errorMessage", "Patient not found");
+                return "error";
+            }
+
+            Patient patient = patientOpt.get();
+            Integer userId = patient.getUser().getUserId();
+
+            // Get all transactions for the patient
+            List<Transaction> transactions = transactionRepository.findByUserIdOrderByTimeOfPaymentDesc(userId);
+
+            // Count transactions by status
+            long paidCount = transactions.stream()
+                    .filter(t -> "Paid".equals(t.getStatus()))
+                    .count();
+
+            long refundedCount = transactions.stream()
+                    .filter(t -> "Refunded".equals(t.getStatus()))
+                    .count();
+
+            long pendingCount = transactions.stream()
+                    .filter(t -> "Pending".equals(t.getStatus()))
+                    .count();
+
+            // Count transactions by method
+            long cashCount = transactions.stream()
+                    .filter(t -> "Cash".equals(t.getMethod()))
+                    .count();
+
+            long bankingCount = transactions.stream()
+                    .filter(t -> "Banking".equals(t.getMethod()))
+                    .count();
+
+            // Add attributes to model
+            model.addAttribute("userId", userId);
+            model.addAttribute("patientId", patientId);
+            model.addAttribute("patientName", patient.getUser() != null ? patient.getUser().getFullName() : "Patient");
+            model.addAttribute("transactions", transactions);
+            model.addAttribute("totalTransactions", transactions.size());
+            model.addAttribute("paidTransactions", paidCount);
+            model.addAttribute("refundedTransactions", refundedCount);
+            model.addAttribute("pendingTransactions", pendingCount);
+            model.addAttribute("cashTransactions", cashCount);
+            model.addAttribute("bankingTransactions", bankingCount);
+
+            logger.info("Payment history loaded successfully for patient ID: {}", patientId);
+            return "patient/payment-history";
+        } catch (Exception e) {
+            logger.error("Error loading payment history for patient ID: {}", getCurrentPatientId(), e);
+            model.addAttribute("errorMessage", "An error occurred while loading the payment history: " + e.getMessage());
+            return "error";
+        }
+    }
+
+    @GetMapping("/payment-details/{transactionId}")
+    public String paymentDetails(@PathVariable("transactionId") Integer transactionId, Model model, RedirectAttributes redirectAttributes) {
+        try {
+            Integer patientId = getCurrentPatientId();
+            if (patientId == null) {
+                logger.error("No patientId found for authenticated user");
+                redirectAttributes.addFlashAttribute("errorMessage", "Patient ID is required. Please contact support.");
+                return "redirect:/patient/payment-history";
+            }
+
+            Optional<Patient> patientOpt = patientRepository.findById(patientId);
+            if (!patientOpt.isPresent()) {
+                logger.error("Patient not found for ID: {}", patientId);
+                redirectAttributes.addFlashAttribute("errorMessage", "Patient not found");
+                return "redirect:/patient/payment-history";
+            }
+            Patient patient = patientOpt.get();
+            Integer userId = patient.getUser().getUserId();
+
+            Optional<Transaction> transactionOpt = transactionRepository.findById(transactionId);
+            if (!transactionOpt.isPresent()) {
+                logger.error("Transaction not found for ID: {}", transactionId);
+                redirectAttributes.addFlashAttribute("errorMessage", "Transaction not found");
+                return "redirect:/patient/payment-history";
+            }
+            Transaction transaction = transactionOpt.get();
+
+            if (!transaction.getUserId().equals(userId)) {
+                logger.error("Transaction ID: {} does not belong to patient ID: {}", transactionId, patientId);
+                redirectAttributes.addFlashAttribute("errorMessage", "You are not authorized to view this transaction's details");
+                return "redirect:/patient/payment-history";
+            }
+
+            Receipt receipt = transaction.getReceipt();
+            if (receipt == null) {
+                logger.warn("No receipt found for transaction ID: {}", transactionId);
+                model.addAttribute("errorMessage", "No receipt available for this transaction");
+            } else {
+                model.addAttribute("receipt", receipt);
+            }
+
+            model.addAttribute("patientName", patient.getUser().getFullName());
+            model.addAttribute("patientId", patientId);
+
+            return "patient/payment-details";
+        } catch (Exception e) {
+            logger.error("Error loading payment details for transaction ID: {}", transactionId, e);
+            redirectAttributes.addFlashAttribute("errorMessage", "An error occurred while loading the payment details: " + e.getMessage());
+            return "redirect:/patient/payment-history";
+        }
+    }
+
+    @GetMapping("/security-password")
+    public String securityPassword(Model model) {
+        Integer patientId = getCurrentPatientId(); // Assume this method exists to get authenticated patient ID
+        if (patientId == null) {
+            model.addAttribute("errorMessage", "Patient ID is required");
+            return "error";
+        }
+
+        Optional<Patient> patientOpt = patientRepository.findById(patientId);
+        if (!patientOpt.isPresent()) {
+            model.addAttribute("errorMessage", "Patient not found");
+            return "error";
+        }
+
+        Patient patient = patientOpt.get();
+        model.addAttribute("patientId", patientId);
+        model.addAttribute("patientName", patient.getUser().getFullName());
+
+        return "patient/security-password";
+    }
+
+    @PostMapping("/security-password")
+    public String changePassword(@RequestParam Integer patientId,
+                                 @RequestParam String currentPassword,
+                                 @RequestParam String newPassword,
+                                 @RequestParam String confirmPassword,
+                                 RedirectAttributes redirectAttributes) {
+        try {
+            // Validate input data
+            if (currentPassword == null || newPassword == null || confirmPassword == null) {
+                redirectAttributes.addFlashAttribute("errorMessage", "All password fields are required");
+                return "redirect:/patient/security-password";
+            }
+
+            if (!newPassword.equals(confirmPassword)) {
+                redirectAttributes.addFlashAttribute("errorMessage", "New passwords do not match");
+                return "redirect:/patient/security-password";
+            }
+
+            if (newPassword.length() < 8) {
+                redirectAttributes.addFlashAttribute("errorMessage", "New password must be at least 8 characters long");
+                return "redirect:/patient/security-password";
+            }
+
+            Optional<Patient> patientOpt = patientRepository.findById(patientId);
+            if (!patientOpt.isPresent()) {
+                redirectAttributes.addFlashAttribute("errorMessage", "Patient not found");
+                return "redirect:/patient/security-password";
+            }
+
+            Patient patient = patientOpt.get();
+            Users user = patient.getUser();
+            if (user == null) {
+                redirectAttributes.addFlashAttribute("errorMessage", "User account not found");
+                return "redirect:/patient/security-password";
+            }
+
+            if (!passwordEncoder.matches(currentPassword, user.getPasswordHash())) {
+                redirectAttributes.addFlashAttribute("errorMessage", "Current password is incorrect");
+                return "redirect:/patient/security-password";
+            }
+
+            if (passwordEncoder.matches(newPassword, user.getPasswordHash())) {
+                redirectAttributes.addFlashAttribute("errorMessage", "New password cannot be the same as the current password");
+                return "redirect:/patient/security-password";
+            }
+
+            user.setPasswordHash(passwordEncoder.encode(newPassword));
+            userRepository.save(user);
+
+            redirectAttributes.addFlashAttribute("successMessage", "Password updated successfully!");
+            return "redirect:/patient/security-password";
+        } catch (Exception e) {
+            logger.error("Error changing password", e);
+            redirectAttributes.addFlashAttribute("errorMessage", "An error occurred while changing password");
+            return "redirect:/patient/security-password";
+        }
+    }
+
     private Integer getCurrentPatientId() {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         if (authentication != null && authentication.getPrincipal() instanceof CustomUserDetails) {
@@ -678,4 +1040,22 @@ public class PatientDashboardController {
             return dateTime.format(formatter);
         }
     }
+}
+
+// New form-backing object
+class PasswordForm {
+    private Integer patientId;
+    private String currentPassword;
+    private String newPassword;
+    private String confirmPassword;
+
+    // Getters and setters
+    public Integer getPatientId() { return patientId; }
+    public void setPatientId(Integer patientId) { this.patientId = patientId; }
+    public String getCurrentPassword() { return currentPassword; }
+    public void setCurrentPassword(String currentPassword) { this.currentPassword = currentPassword; }
+    public String getNewPassword() { return newPassword; }
+    public void setNewPassword(String newPassword) { this.newPassword = newPassword; }
+    public String getConfirmPassword() { return confirmPassword; }
+    public void setConfirmPassword(String confirmPassword) { this.confirmPassword = confirmPassword; }
 }

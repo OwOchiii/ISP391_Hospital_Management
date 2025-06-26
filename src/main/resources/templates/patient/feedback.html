@@ -113,8 +113,19 @@
     <div class="nav-item"><a th:href="@{/patient/appointment-list}" class="nav-link"><i class="bi bi-calendar-check"></i> My Appointments</a></div>
     <div class="nav-section-title">Account</div>
     <div class="nav-item"><a th:href="@{/patient/profile}" class="nav-link"><i class="bi bi-person"></i> My Profile</a></div>
+    <div class="nav-item">
+      <a th:href="@{/patient/payment-history}" class="nav-link">
+        <i class="bi bi-credit-card"></i>
+        Payment History
+      </a>
+    </div>
+    <div class="nav-item">
+      <a th:href="@{/patient/security-password}" class="nav-link">
+        <i class="bi bi-shield-lock"></i>
+        Security & Password
+      </a>
+    </div>
     <div class="nav-section-title">Support</div>
-    <div class="nav-item"><a th:href="@{/patient/customer-support(patientId=${patientId})}" class="nav-link"><i class="bi bi-headset"></i> Customer Support</a></div>
     <div class="nav-item"><a th:href="@{/patient/feedback}" class="nav-link active"><i class="bi bi-chat-square-text"></i> Feedback</a></div>
     <div class="nav-section-title">System</div>
     <div class="nav-item">
@@ -215,6 +226,56 @@
       document.getElementById('feedbackForm').submit();
     }
   }
+
+  // Sanitize Description input to prevent XSS, HTML, and malicious URLs
+  function sanitizeDescription(input) {
+    // Step 1: Encode HTML characters to prevent HTML rendering
+    const encoded = input.replace(/</g, '&lt;').replace(/>/g, '&gt;')
+                         .replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+
+    // Step 2: Remove or encode potential script tags and dangerous URLs
+    const div = document.createElement('div');
+    div.innerText = encoded; // Use innerText to ensure no HTML/script execution
+    let sanitized = div.innerHTML;
+
+    // Step 3: Remove any remaining <a> tags or URLs with dangerous protocols
+    sanitized = sanitized.replace(/<a\b[^>]*>(.*?)<\/a>/gi, '$1'); // Remove <a> tags, keep content
+    sanitized = sanitized.replace(/\b(javascript|data):/gi, ''); // Remove dangerous protocols
+
+    // Step 4: Normalize whitespace and trim
+    sanitized = sanitized.trim().replace(/\s+/g, ' ');
+
+    return sanitized;
+  }
+
+  // Trim and clean input fields on blur
+  function cleanInputOnBlur(id, isStrict = false) {
+    const element = document.getElementById(id);
+    if (!element) return;
+
+    element.addEventListener('blur', () => {
+      let value = element.value.trim();
+
+      if (isStrict) {
+        // Remove all spaces for strict fields (phone/email)
+        value = value.replace(/\s+/g, '');
+      } else {
+        // Sanitize Description field
+        if (id === 'feedbackTextarea') {
+          value = sanitizeDescription(value);
+        } else {
+          // Normalize spacing between words (one space only)
+          value = value.replace(/\s+/g, ' ');
+        }
+      }
+
+      element.value = value;
+    });
+  }
+
+  // Apply trimming logic to input fields
+  cleanInputOnBlur('feedbackTextarea', false); // sanitize and normalize spaces
+
   document.addEventListener('DOMContentLoaded', function() {
     checkScreenSize();
     const textarea = document.getElementById('feedbackTextarea');

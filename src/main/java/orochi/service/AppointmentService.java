@@ -113,7 +113,7 @@ public class AppointmentService {
     @Transactional
     public Appointment bookAppointment(Integer patientId, Integer doctorId, LocalDate appointmentDate,
                                        String appointmentTime, String email, String phoneNumber,
-                                       String description, String emergencyContact) {
+                                       String description) {
         if (email == null || email.isEmpty()) {
             throw new RuntimeException("Email is required.");
         }
@@ -142,7 +142,7 @@ public class AppointmentService {
         appointment.setPatientId(patientId);
         appointment.setDoctorId(doctorId);
         appointment.setDateTime(dateTime);
-        appointment.setStatus("Scheduled");
+        appointment.setStatus("Pending");
         appointment.setEmail(email);
         appointment.setPhoneNumber(phoneNumber);
         appointment.setDescription(description);
@@ -153,8 +153,7 @@ public class AppointmentService {
     @Transactional
     public Appointment updateAppointment(Integer appointmentId, Integer patientId, Integer doctorId,
                                          LocalDate appointmentDate, String appointmentTime,
-                                         String email, String phoneNumber, String description,
-                                         String emergencyContact) {
+                                         String email, String phoneNumber, String description) {
         if (email == null || email.isEmpty()) {
             throw new RuntimeException("Email is required.");
         }

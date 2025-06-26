@@ -6,6 +6,7 @@ import org.springframework.web.bind.annotation.*;
 import orochi.config.CustomUserDetails;
 import orochi.model.Appointment;
 import orochi.model.Patient;
+import orochi.model.PatientContact;
 import orochi.model.Users;
 import orochi.repository.UserRepository;
 import orochi.service.impl.DoctorServiceImpl;
@@ -32,6 +33,49 @@ public class ReceptionistApiController {
         this.userRepository = userRepository;
     }
 
+    @PostMapping("/appointments/confirm")
+    public ResponseEntity<?> confirmAppointment(
+            @RequestBody Map<String, Object> request,
+            Authentication authentication) {
+        try {
+            // Verify user is a receptionist
+            if (authentication == null || !authentication.isAuthenticated()) {
+                return ResponseEntity.status(401).body("Unauthorized");
+            }
+
+            CustomUserDetails userDetails = (CustomUserDetails) authentication.getPrincipal();
+            Users user = userRepository.findById(userDetails.getUserId())
+                    .orElseThrow(() -> new RuntimeException("User not found"));
+
+            if (!receptionistService.isReceptionist(user)) {
+                return ResponseEntity.status(403).body("Forbidden: Only receptionists can confirm appointments");
+            }
+
+            // Get appointment ID from request
+            Integer appointmentId = (Integer) request.get("stt");
+
+            // Validate input
+            if (appointmentId == null) {
+                return ResponseEntity.badRequest().body("Invalid request: appointment ID is required");
+            }
+
+            // Update status to "Scheduled"
+            boolean updated = receptionistService.updateAppointmentStatus(appointmentId, "Scheduled");
+
+            if (updated) {
+                return ResponseEntity.ok(Map.of(
+                        "success", true,
+                        "message", "Appointment confirmed successfully"
+                ));
+            } else {
+                return ResponseEntity.status(404).body("Appointment not found with ID: " + appointmentId);
+            }
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.badRequest().body("Error confirming appointment: " + e.getMessage());
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body("Error confirming appointment: " + e.getMessage());
+        }
+    }
     @GetMapping("/doctors")
     public ResponseEntity<?> getAllDoctors() {
         try {
@@ -79,7 +123,6 @@ public class ReceptionistApiController {
             // Implementing pagination and search
             int itemsPerPage = 12;
             List<Patient> allPatients = receptionistService.getAllPatients();
-
             // Filter by search term if provided
             if (!search.isEmpty()) {
                 String searchLower = search.toLowerCase();
@@ -96,10 +139,26 @@ public class ReceptionistApiController {
 
             List<Map<String, Object>> paginatedPatients = allPatients.subList(start, end).stream()
                     .map(patient -> {
+                        List<PatientContact> contactsById = receptionistService.getPatientContactsByPatientId(patient.getPatientId());
                         Map<String, Object> patientMap = new HashMap<>();
                         patientMap.put("id", patient.getPatientId());
                         patientMap.put("name", patient.getUser().getFullName());
                         patientMap.put("phone", patient.getUser().getPhoneNumber());
+                        patientMap.put("email", patient.getUser().getEmail());
+                        patientMap.put("dateOfBirth", patient.getDateOfBirth());
+                        patientMap.put("gender", patient.getGender());
+                        // Find contact info for this patient
+                        PatientContact contact = contactsById.stream()
+                            .filter(c -> c.getPatientId().equals(patient.getPatientId()))
+                            .findFirst().orElse(null);
+                        if (contact != null) {
+                            patientMap.put("country", contact.getCountry());
+                            patientMap.put("province", contact.getCity());
+                            patientMap.put("district", contact.getState());
+                            patientMap.put("streetAddress", contact.getStreetAddress());
+                            patientMap.put("postalCode", contact.getPostalCode());
+                            patientMap.put("addressType", contact.getAddressType());
+                        }
                         return patientMap;
                     })
                     .collect(Collectors.toList());
@@ -134,7 +193,7 @@ public class ReceptionistApiController {
                 filteredAppointments = filteredAppointments.stream()
                         .filter(a -> a.getPatient().getUser().getFullName().toLowerCase().contains(searchLower) ||
                                 (a.getPatient().getUser().getPhoneNumber() != null &&
-                                 a.getPatient().getUser().getPhoneNumber().toLowerCase().contains(searchLower)))
+                                        a.getPatient().getUser().getPhoneNumber().toLowerCase().contains(searchLower)))
                         .collect(Collectors.toList());
             }
 
@@ -217,6 +276,7 @@ public class ReceptionistApiController {
                     Map<String, Object> appointmentMap = new HashMap<>();
                     appointmentMap.put("stt", appointment.getAppointmentId());
                     appointmentMap.put("name", appointment.getPatient().getUser().getFullName());
+                    appointmentMap.put("dob", appointment.getPatient().getDateOfBirth());
                     appointmentMap.put("phone", appointment.getPatient().getUser().getPhoneNumber());
                     appointmentMap.put("time", appointment.getDateTime().toString());
                     appointmentMap.put("doctor", appointment.getDoctor().getUser().getFullName());

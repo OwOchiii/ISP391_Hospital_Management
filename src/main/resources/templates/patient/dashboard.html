@@ -568,14 +568,20 @@
         My Profile
       </a>
     </div>
-
-    <div class="nav-section-title">Support</div>
     <div class="nav-item">
-      <a href="/patient/customer-support" class="nav-link">
-        <i class="bi bi-headset"></i>
-        Customer Support
+      <a th:href="@{/patient/payment-history}" class="nav-link">
+        <i class="bi bi-credit-card"></i>
+        Payment History
       </a>
     </div>
+    <div class="nav-item">
+      <a th:href="@{/patient/security-password}" class="nav-link">
+        <i class="bi bi-shield-lock"></i>
+        Security & Password
+      </a>
+    </div>
+
+    <div class="nav-section-title">Support</div>
     <div class="nav-item">
       <a href="/patient/feedback" class="nav-link">
         <i class="bi bi-chat-square-text"></i>
@@ -714,19 +720,6 @@
         </p>
         <div class="feature-action">
           Edit Profile <i class="bi bi-arrow-right"></i>
-        </div>
-      </a>
-
-      <a href="/patient/customer-support" class="feature-card">
-        <div class="feature-icon support">
-          <i class="bi bi-headset"></i>
-        </div>
-        <h3 class="feature-title">Customer Support</h3>
-        <p class="feature-description">
-          Get help when you need it. Contact our support team for assistance with any questions.
-        </p>
-        <div class="feature-action">
-          Get Support <i class="bi bi-arrow-right"></i>
         </div>
       </a>
 
