@@ -4,11 +4,13 @@ import lombok.Getter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.dao.DataAccessException;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import orochi.model.Appointment;
@@ -40,6 +42,12 @@ public class DoctorService {
     private final UserRepository userRepository;
     @Getter
     private final PatientContactRepository patientContactRepository;
+
+    @Autowired
+    private PasswordEncoder passwordEncoder;
+
+    @Value("${app.default.doctor.password}")
+    private String defaultPassword;
 
     @Autowired
     public DoctorService(AppointmentRepository appointmentRepository,
@@ -310,30 +318,32 @@ public class DoctorService {
          */
         public void saveFromForm(DoctorForm form) {
             Users u;
-            Doctor existingDoctor = null;
+            Doctor d;
 
             if (form.getDoctorId() != null) {
-                // edit mode → load Doctor + User cũ
-                existingDoctor = doctorRepository.findById(form.getDoctorId())
+                // CHỈNH SỬA
+                d = doctorRepository.findById(form.getDoctorId())
                         .orElseThrow(() -> new IllegalArgumentException("Doctor not found " + form.getDoctorId()));
-                u = existingDoctor.getUser();
+                u = d.getUser();
             } else {
-                // add new mode
+                // TẠO MỚI → gán password mặc định
                 u = new Users();
-                u.setRoleId(2);
+                u.setRoleId(2);               // role doctor
                 u.setGuest(false);
                 u.setCreatedAt(LocalDateTime.now());
+                u.setStatus("Active");
+                u.setPasswordHash(passwordEncoder.encode(defaultPassword));
+                d = new Doctor();
             }
 
-            // Cập nhật chung
+            // Cập nhật chung cho Users
             u.setFullName(form.getFullName());
             u.setEmail(form.getEmail());
             u.setPhoneNumber(form.getPhoneNumber());
             u.setStatus(form.getStatus());
             userRepository.save(u);
 
-            // Xử lý Doctor
-            Doctor d = (existingDoctor != null) ? existingDoctor : new Doctor();
+            // Cập nhật Doctor
             d.setUserId(u.getUserId());
             d.setBioDescription(form.getBioDescription());
             doctorRepository.save(d);

@@ -3,8 +3,10 @@ package orochi.controller;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.dao.DataAccessException;
 
+import org.springframework.security.crypto.password.PasswordEncoder;
 import orochi.model.Doctor;
 import orochi.model.DoctorForm;
 import orochi.service.DoctorService;
@@ -36,6 +38,11 @@ public class AdminDoctorController {
     @Autowired
     private RoleService roleService;
 
+    @Autowired
+    private PasswordEncoder passwordEncoder;
+
+    @Value("${app.default.doctor.password}")
+    private String defaultPassword;
 
     @GetMapping
     public String list(
@@ -123,7 +130,7 @@ public class AdminDoctorController {
             RedirectAttributes flash
     ) {
         if (bindingResult.hasErrors()) {
-            // load lại dữ liệu danh sách
+            // load lại dữ liệu danh sách khi có lỗi
             Page<Doctor> pageData = doctorService.searchDoctors(search, statusFilter, page, size);
             model.addAttribute("doctors",      pageData.getContent());
             model.addAttribute("currentPage",  page);
@@ -133,21 +140,24 @@ public class AdminDoctorController {
             model.addAttribute("statusFilter", statusFilter);
             model.addAttribute("roles",        roleService.getAllRoles());
             model.addAttribute("adminId",      adminId);
-            // doctorForm + bindingResult đã sẵn có
             return "admin/doctor/list";
         }
 
+        boolean isNew = (doctorForm.getDoctorId() == null);
+
+        // Gọi service để lưu (service sẽ gán luôn passwordHash nếu isNew)
         doctorService.saveFromForm(doctorForm);
+
+        if (isNew) {
+            // đẩy plaintext password mặc định ra flash để hiển thị
+            flash.addFlashAttribute("newDoctorPassword", defaultPassword);
+        }
         flash.addFlashAttribute("successMessage", "Lưu bác sĩ thành công!");
         return "redirect:/admin/doctors?adminId=" + adminId
                 + (search!=null? "&search="+search:"")
                 + (statusFilter!=null? "&statusFilter="+statusFilter:"")
                 + "&page="+page+"&size="+size;
     }
-
-
-
-
 
 
     @PostMapping("/{id}/toggleLock")
