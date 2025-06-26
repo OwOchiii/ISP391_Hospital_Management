@@ -724,7 +724,7 @@
                         <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                     </div>
                     <div class="modal-body">
-                        <form id="scheduleForm" th:action="@{/admin/schedules(save=true,adminId=${adminId})}" method="post" onsubmit="return validateScheduleForm()">
+                        <form id="scheduleForm" th:action="@{/admin/schedules/save(adminId=${adminId})}" method="post" onsubmit="return validateScheduleForm()">
                             <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
                             <input type="hidden" id="scheduleId" name="scheduleId" value=""/>
 
@@ -761,16 +761,29 @@
                                         <input type="time" class="form-control" id="endTime" name="endTime" required/>
                                     </div>
                                     <div class="col-md-6">
-                                        <label for="appointmentId" class="form-label">Appointment ID</label>
-                                        <input type="number" class="form-control" id="appointmentId" name="appointmentId" placeholder="Enter Appointment ID…"/>
+                                        <label for="appointmentId" class="form-label">Appointment *</label>
+                                        <select class="form-select" id="appointmentId" name="appointmentId" required>
+                                            <option value="" disabled selected>Select Appointment</option>
+                                            <option th:each="a : ${appointments}"
+                                                    th:value="${a.appointmentId}"
+                                                    th:text="${'Appointment #' + a.appointmentId}">
+                                                Appointment #11
+                                            </option>
+                                        </select>
                                     </div>
                                     <div class="col-md-6">
                                         <label for="description" class="form-label">Description</label>
                                         <input type="text" class="form-control" id="description" name="description" placeholder="Enter description…"/>
                                     </div>
                                     <div class="col-md-6">
-                                        <label for="patientId" class="form-label">Patient ID</label>
-                                        <input type="number" class="form-control" id="patientId" name="patientId" placeholder="Enter Patient ID…"/>
+                                        <label for="patientId" class="form-label">Patient *</label>
+                                        <select class="form-select" id="patientId" name="patientId">
+                                            <option value="" disabled selected>Select Patient</option>
+                                            <option th:each="p : ${patients}"
+                                                    th:value="${p.patientId}"
+                                                    th:text="${p.patientId + ' - ' + p.user.fullName}">
+                                            </option>
+                                        </select>
                                     </div>
                                     <div class="col-md-6">
                                         <label for="eventType" class="form-label">Event Type *</label>

@@ -42,7 +42,7 @@ public class Schedule {
     private LocalTime endTime;
 
     @Column(name = "EventType", nullable = false, length = 20)
-    private String eventType; // "appointment", "oncall", "break"
+    private String eventType;
 
     @Column(name = "Description", length = 255)
     private String description;
@@ -50,19 +50,20 @@ public class Schedule {
     @Column(name = "IsCompleted", nullable = false)
     private Boolean isCompleted = false;
 
-    @ManyToOne
+    // Associations set to LAZY to avoid duplicate fetches
+    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "DoctorID", insertable = false, updatable = false)
     private Doctor doctor;
 
-    @ManyToOne
+    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "RoomID", insertable = false, updatable = false)
     private Room room;
 
-    @ManyToOne
+    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "PatientID", insertable = false, updatable = false)
     private Patient patient;
 
-    @OneToOne
+    @OneToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "AppointmentID", insertable = false, updatable = false)
     private Appointment appointment;
 }

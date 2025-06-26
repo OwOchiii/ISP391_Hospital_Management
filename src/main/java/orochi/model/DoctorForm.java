@@ -39,6 +39,4 @@ public class DoctorForm {
     private String status;  // ACTIVE / LOCKED
 
     private String bioDescription;
-
-    private String passwordHash;
 }

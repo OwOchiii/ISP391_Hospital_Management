@@ -49,12 +49,11 @@ public class AdminScheduleController {
         );
 
         List<ScheduleDTO> schedules = pageResult.getContent();
-        int totalPages = pageResult.getTotalPages();
 
         // đẩy data lên view
         model.addAttribute("schedules",   schedules);
         model.addAttribute("currentPage", page);
-        model.addAttribute("totalPages",  totalPages);
+        model.addAttribute("totalPages",  pageResult.getTotalPages());
         model.addAttribute("pageSize",    size);
 
         // giữ lại giá trị filter trên form
@@ -67,11 +66,15 @@ public class AdminScheduleController {
         model.addAttribute("endTime",    endTimeStr);
         model.addAttribute("adminId",    adminId);
 
-        // danh sách room để render dropdown
-        model.addAttribute("rooms", scheduleService.getAllRooms());
+        // danh sách hỗ trợ cho dropdown trong modal
+        model.addAttribute("rooms",        scheduleService.getAllRooms());
+        model.addAttribute("doctors",      scheduleService.getAllDoctors());
+        model.addAttribute("appointments", scheduleService.getAllAppointments());
+        model.addAttribute("patients",     scheduleService.getAllPatients());
 
         return "admin/schedule/list";
     }
+
 
     @GetMapping("/{id}/delete")
     public String deleteSchedule(@PathVariable Integer id,

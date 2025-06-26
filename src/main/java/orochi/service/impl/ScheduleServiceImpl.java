@@ -362,6 +362,7 @@ public class ScheduleServiceImpl implements ScheduleService {
 
         // build Specification động
         Specification<Schedule> spec = (root, query, cb) -> {
+            query.distinct(true);
             List<Predicate> preds = new ArrayList<>();
 
             if (scheduleId != null) {
@@ -394,5 +395,15 @@ public class ScheduleServiceImpl implements ScheduleService {
 
         // map sang DTO và trả về
         return pageEnt.map(this::convertToDTO);
+    }
+
+    @Override
+    public List<Appointment> getAllAppointments() {
+        return appointmentRepository.findAll();
+    }
+
+    @Override
+    public List<Patient> getAllPatients() {
+        return patientRepository.findAll();
     }
 }

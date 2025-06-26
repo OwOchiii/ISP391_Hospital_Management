@@ -1,7 +1,9 @@
 package orochi.service;
 
 import orochi.dto.ScheduleDTO;
+import orochi.model.Appointment;
 import orochi.model.Doctor;
+import orochi.model.Patient;
 import orochi.model.Room;
 import org.springframework.data.domain.Page;
 import java.time.LocalTime;
@@ -39,6 +41,15 @@ public interface ScheduleService {
      * Get a single schedule by ID
      */
     ScheduleDTO getScheduleById(Integer scheduleId);
+
+    // in ScheduleService.java
+    List<Appointment> getAllAppointments();
+
+
+    List<Patient>     getAllPatients();
+
+
+    List<Doctor> getAllDoctors();
 
     /**
      * Get all schedules
@@ -143,5 +154,7 @@ public interface ScheduleService {
         public void setCompletedSchedules(Integer completedSchedules) {
             this.completedSchedules = completedSchedules;
         }
+
+
     }
 }
