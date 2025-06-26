@@ -362,7 +362,6 @@ public class ScheduleServiceImpl implements ScheduleService {
 
         // build Specification động
         Specification<Schedule> spec = (root, query, cb) -> {
-            query.distinct(true);
             List<Predicate> preds = new ArrayList<>();
 
             if (scheduleId != null) {
