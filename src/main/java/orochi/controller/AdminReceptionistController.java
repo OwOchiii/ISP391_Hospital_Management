@@ -75,7 +75,6 @@ public class AdminReceptionistController {
         formUser.setRoleId(3);
 
         if (formUser.getUserId() != null) {
-            // Edit: giữ nguyên hash
             userService.findById(formUser.getUserId())
                     .ifPresent(orig -> formUser.setPasswordHash(orig.getPasswordHash()));
         } else {
