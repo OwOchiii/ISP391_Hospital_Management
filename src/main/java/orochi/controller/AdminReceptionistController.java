@@ -1,13 +1,16 @@
 package orochi.controller;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
 
+import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 import orochi.model.Users;
 import orochi.service.UserService;
 
@@ -17,6 +20,12 @@ public class AdminReceptionistController {
 
     @Autowired
     private UserService userService;
+
+    @Autowired
+    private PasswordEncoder passwordEncoder;
+
+    @Value("${app.default.receptionist.password}")
+    private String defaultPassword;
 
     @GetMapping
     public String listReceptionists(
@@ -60,14 +69,19 @@ public class AdminReceptionistController {
     @PostMapping("/save")
     public String saveReceptionist(
             @ModelAttribute("receptionistForm") Users formUser,
-            @RequestParam("adminId") Integer adminId) {
+            @RequestParam("adminId") Integer adminId,
+            RedirectAttributes redirectAttributes) {
 
         formUser.setRoleId(3);
 
         if (formUser.getUserId() != null) {
-            userService.findById(formUser.getUserId()).ifPresent(orig -> formUser.setPasswordHash(orig.getPasswordHash()));
+            // Edit: giữ nguyên hash
+            userService.findById(formUser.getUserId())
+                    .ifPresent(orig -> formUser.setPasswordHash(orig.getPasswordHash()));
         } else {
-            formUser.setPasswordHash("$2a$10$abcdefghijklmnopqrstuv");
+            String encoded = passwordEncoder.encode(defaultPassword);
+            formUser.setPasswordHash(encoded);
+            redirectAttributes.addFlashAttribute("newReceptionistPassword", defaultPassword);
         }
 
         userService.save(formUser);

@@ -617,6 +617,13 @@
 
   <!-- Content Area -->
   <div class="content-area">
+
+    <div th:if="${newReceptionistPassword}" class="alert alert-info alert-dismissible fade show" role="alert">
+      <i class="bi bi-lock-fill me-2"></i>
+      A new receptionist has been created with the default password:
+      <strong th:text="${newReceptionistPassword}">PasswordHere</strong>
+      <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    </div>
     <!-- Page Header -->
     <div class="page-header">
       <div class="row align-items-center">

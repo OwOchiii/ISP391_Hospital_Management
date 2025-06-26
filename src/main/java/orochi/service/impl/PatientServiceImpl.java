@@ -98,7 +98,6 @@ public class PatientServiceImpl implements PatientService {
         // Thông tin Patient-specific
         f.setDateOfBirth (p.getDateOfBirth());
         f.setGender      (p.getGender());
-        f.setAddress     (p.getAddress());
         f.setDescription (p.getDescription());
         return f;
     }
@@ -135,7 +134,6 @@ public class PatientServiceImpl implements PatientService {
         p.setUserId      (u.getUserId());
         p.setDateOfBirth (form.getDateOfBirth());
         p.setGender      (form.getGender());
-        p.setAddress     (form.getAddress());
         p.setDescription (form.getDescription());
         patientRepository.save(p);
     }
