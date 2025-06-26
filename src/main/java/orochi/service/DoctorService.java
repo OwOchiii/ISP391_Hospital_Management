@@ -8,6 +8,7 @@ import org.springframework.dao.DataAccessException;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import orochi.model.Appointment;
@@ -268,17 +269,26 @@ public class DoctorService {
         }
     }
 
-    public List<Doctor> searchDoctors(String search, String statusFilter) {
+//    public List<Doctor> searchDoctors(String search, String statusFilter) {
+//        String trimmed = (search != null && !search.isBlank()) ? search.trim() : null;
+//        String status = (statusFilter != null && !statusFilter.isBlank()) ? statusFilter.trim() : null;
+//        try {
+//            logger.info("Searching doctors with keyword='{}' and status='{}'", trimmed, status);
+//            return doctorRepository.searchDoctors(trimmed, status);
+//        } catch (DataAccessException e) {
+//            logger.error("Error searching doctors with keyword='{}' and status='{}'", trimmed, status, e);
+//            return Collections.emptyList();
+//        }
+//    }
+
+    public Page<Doctor> searchDoctors(String search, String statusFilter, int page, int size) {
         String trimmed = (search != null && !search.isBlank()) ? search.trim() : null;
-        String status = (statusFilter != null && !statusFilter.isBlank()) ? statusFilter.trim() : null;
-        try {
-            logger.info("Searching doctors with keyword='{}' and status='{}'", trimmed, status);
-            return doctorRepository.searchDoctors(trimmed, status);
-        } catch (DataAccessException e) {
-            logger.error("Error searching doctors with keyword='{}' and status='{}'", trimmed, status, e);
-            return Collections.emptyList();
-        }
+        String status  = (statusFilter != null && !statusFilter.isBlank()) ? statusFilter.trim() : null;
+        Pageable pageable = PageRequest.of(page, size);
+
+        return doctorRepository.searchDoctors(trimmed, status, pageable);
     }
+
 
     public DoctorForm loadForm(int doctorId) {
         Doctor d = getDoctorById(doctorId);
@@ -293,37 +303,43 @@ public class DoctorService {
         form.setBioDescription(d.getBioDescription());
         return form;
     }
+        // … các field và constructor …
 
-    public void saveFromForm(DoctorForm form) {
-        // 1) xử lý Users
-        Users u;
-        if (form.getUserId() != null) {
-            u = userRepository.findById(form.getUserId())
-                    .orElseThrow(() -> new IllegalArgumentException("User not found: " + form.getUserId()));
-        } else {
-            u = new Users();
-            // thiết lập các mặc định: roleId, isGuest, createdAt,...
-            u.setRoleId(2);           // giả sử 2 = ROLE_DOCTOR
-            u.setGuest(false);
-            u.setCreatedAt(LocalDateTime.now());
-        }
-        u.setFullName(form.getFullName());
-        u.setEmail(form.getEmail());
-        u.setPhoneNumber(form.getPhoneNumber());
-        u.setStatus(form.getStatus());
-        userRepository.save(u);
+        /**
+         * Lưu hoặc cập nhật Doctor kèm Users, có kiểm tra trùng email trước khi persist.
+         */
+        public void saveFromForm(DoctorForm form) {
+            Users u;
+            Doctor existingDoctor = null;
 
-        // 2) xử lý Doctor
-        Doctor d;
-        if (form.getDoctorId() != null) {
-            d = getDoctorById(form.getDoctorId());
-        } else {
-            d = new Doctor();
+            if (form.getDoctorId() != null) {
+                // edit mode → load Doctor + User cũ
+                existingDoctor = doctorRepository.findById(form.getDoctorId())
+                        .orElseThrow(() -> new IllegalArgumentException("Doctor not found " + form.getDoctorId()));
+                u = existingDoctor.getUser();
+            } else {
+                // add new mode
+                u = new Users();
+                u.setRoleId(2);
+                u.setGuest(false);
+                u.setCreatedAt(LocalDateTime.now());
+            }
+
+            // Cập nhật chung
+            u.setFullName(form.getFullName());
+            u.setEmail(form.getEmail());
+            u.setPhoneNumber(form.getPhoneNumber());
+            u.setStatus(form.getStatus());
+            userRepository.save(u);
+
+            // Xử lý Doctor
+            Doctor d = (existingDoctor != null) ? existingDoctor : new Doctor();
+            d.setUserId(u.getUserId());
+            d.setBioDescription(form.getBioDescription());
+            doctorRepository.save(d);
         }
-        d.setUserId(u.getUserId());
-        d.setBioDescription(form.getBioDescription());
-        doctorRepository.save(d);
-    }
+
+
 
     /**
      * Get doctor by ID
