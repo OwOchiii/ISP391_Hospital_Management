@@ -8,6 +8,7 @@ import org.springframework.dao.DataAccessException;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -23,6 +24,7 @@ import orochi.model.*;
 import orochi.repository.*;
 import orochi.config.CustomUserDetails;
 import orochi.service.FeedbackService;
+import orochi.service.NotificationService;
 import orochi.service.PatientService;
 
 import java.time.LocalDate;
@@ -36,6 +38,7 @@ import java.util.Optional;
 
 @Controller
 @RequestMapping("/patient")
+@Slf4j
 public class PatientDashboardController {
 
     private static final Logger logger = LoggerFactory.getLogger(PatientDashboardController.class);
@@ -66,6 +69,9 @@ public class PatientDashboardController {
 
     @Autowired
     private FeedbackService feedbackService;
+
+    @Autowired
+    private NotificationService notificationService;
 
     @Autowired
     private PasswordEncoder passwordEncoder;
@@ -141,7 +147,6 @@ public class PatientDashboardController {
             return "error";
         }
     }
-
 
     @GetMapping("/appointment-list")
     public String appointmentList(Model model) {
@@ -1010,6 +1015,92 @@ public class PatientDashboardController {
             logger.error("Error changing password", e);
             redirectAttributes.addFlashAttribute("errorMessage", "An error occurred while changing password");
             return "redirect:/patient/security-password";
+        }
+    }
+
+    @GetMapping("/notifications")
+    public String viewNotifications(Model model) {
+        try {
+            Integer patientId = getCurrentPatientId();
+            if (patientId == null) {
+                logger.error("No patientId found for authenticated user");
+                model.addAttribute("errorMessage", "Patient ID is required. Please contact support.");
+                return "error";
+            }
+
+            Optional<Patient> patientOpt = patientRepository.findById(patientId);
+            if (!patientOpt.isPresent()) {
+                logger.error("Patient not found for ID: {}", patientId);
+                model.addAttribute("errorMessage", "Patient not found");
+                return "error";
+            }
+
+            Patient patient = patientOpt.get();
+            Integer userId = patient.getUser().getUserId();
+            List<Notification> notifications = notificationService.findByUserIdOrderByCreatedAtDesc(userId);
+
+            // Log notification details for debugging
+            notifications.forEach(n -> logger.debug("Notification ID: {}, IsRead: {}", n.getNotificationId(), n.isRead()));
+
+            model.addAttribute("notifications", notifications);
+            model.addAttribute("totalNotifications", notifications.size());
+            model.addAttribute("unreadNotifications", notifications.stream().filter(n -> !n.isRead()).count());
+            model.addAttribute("readNotifications", notifications.stream().filter(Notification::isRead).count());
+            model.addAttribute("patientId", patientId);
+            model.addAttribute("patientName", patient.getUser().getFullName());
+
+            logger.info("Notifications loaded successfully for patient ID: {}, user ID: {}, total: {}, unread: {}, read: {}",
+                    patientId, userId, notifications.size(), notifications.stream().filter(n -> !n.isRead()).count(), notifications.stream().filter(Notification::isRead).count());
+            return "patient/notifications";
+        } catch (Exception e) {
+            logger.error("Error loading notifications for patient ID: {}", getCurrentPatientId(), e);
+            model.addAttribute("errorMessage", "An error occurred while loading notifications: " + e.getMessage());
+            return "error";
+        }
+    }
+
+    @PostMapping("/notifications/{id}/read")
+    @Transactional
+    @ResponseBody
+    public ResponseEntity<?> markNotificationAsRead(@PathVariable("id") Integer notificationId) {
+        try {
+            Integer patientId = getCurrentPatientId();
+            if (patientId == null) {
+                logger.error("No patientId found for authenticated user");
+                return ResponseEntity.badRequest().body("Patient ID is required");
+            }
+
+            Optional<Patient> patientOpt = patientRepository.findById(patientId);
+            if (!patientOpt.isPresent()) {
+                logger.error("Patient not found for ID: {}", patientId);
+                return ResponseEntity.notFound().build();
+            }
+
+            Patient patient = patientOpt.get();
+            Integer userId = patient.getUser().getUserId();
+            Notification notification = notificationService.findByIdAndUserId(notificationId, userId);
+            if (notification == null) {
+                logger.error("Notification ID: {} not found for user ID: {}", notificationId, userId);
+                return ResponseEntity.notFound().build();
+            }
+
+            logger.debug("Before update: Notification ID: {}, IsRead: {}", notification.getNotificationId(), notification.isRead());
+            notification.setRead(true);
+            notificationService.save(notification);
+            logger.debug("After update: Notification ID: {}, IsRead: {}", notification.getNotificationId(), notification.isRead());
+
+            // Verify database state
+            Notification updatedNotification = notificationService.findById(notificationId)
+                    .orElseThrow(() -> new IllegalStateException("Notification not found after save"));
+            logger.debug("Database state: Notification ID: {}, IsRead: {}",
+                    updatedNotification.getNotificationId(), updatedNotification.isRead());
+
+            logger.info("Notification ID: {} marked as read for patient ID: {}, user ID: {}",
+                    notificationId, patientId, userId);
+            return ResponseEntity.ok().build();
+        } catch (Exception e) {
+            logger.error("Error marking notification ID: {} as read", notificationId, e);
+            return ResponseEntity.status(500).body("Failed to mark notification as read: " + e.getMessage());
         }
     }
 
