@@ -9,9 +9,11 @@ import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
 import orochi.dto.ScheduleDTO;
 import orochi.model.Doctor;
+import orochi.model.Notification;
 import orochi.model.Patient;
 import orochi.model.Room;
 import orochi.repository.DoctorRepository;
+import orochi.repository.NotificationRepository;
 import orochi.repository.PatientRepository;
 import orochi.repository.RoomRepository;
 import orochi.service.DoctorService;
@@ -20,6 +22,7 @@ import orochi.service.ScheduleService;
 import java.time.DayOfWeek;
 import java.time.LocalDate;
 import java.time.temporal.TemporalAdjusters;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -40,6 +43,8 @@ public class ScheduleController {
     @Autowired
     private DoctorRepository doctorRepository;
 
+    @Autowired
+    private NotificationRepository notificationRepository;
     /**
      * Display the doctor's schedule page
      */
@@ -81,6 +86,19 @@ public class ScheduleController {
         List<Patient> patients = patientRepository.findAll();
         model.addAttribute("rooms", rooms);
         model.addAttribute("patients", patients);
+
+        List<Notification> notifications = notificationRepository.findByUserIdOrderByCreatedAtDesc(doctor.getUserId());
+        if (notifications == null) {
+            notifications = new ArrayList<>();
+        }
+
+        // Count unread notifications
+        long unreadNotifications = notifications.stream()
+                .filter(notification -> !notification.isRead())
+                .count();
+
+        model.addAttribute("notifications", notifications);
+        model.addAttribute("unreadNotifications", unreadNotifications);
 
         return "doctor/schedule";
     }
@@ -197,6 +215,19 @@ public class ScheduleController {
         model.addAttribute("doctor", doctor);
         model.addAttribute("doctorId", doctorId);
         model.addAttribute("workEntry", workEntry);
+
+        List<Notification> notifications = notificationRepository.findByUserIdOrderByCreatedAtDesc(doctor.getUserId());
+        if (notifications == null) {
+            notifications = new ArrayList<>();
+        }
+
+        // Count unread notifications
+        long unreadNotifications = notifications.stream()
+                .filter(notification -> !notification.isRead())
+                .count();
+
+        model.addAttribute("notifications", notifications);
+        model.addAttribute("unreadNotifications", unreadNotifications);
 
         return "doctor/schedule-details";
     }
