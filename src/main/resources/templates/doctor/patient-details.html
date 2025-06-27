@@ -775,7 +775,7 @@
     <div class="nav-section">
       <div class="nav-section-title">Dashboard</div>
       <div class="nav-item">
-        <a th:href="@{/doctor/dashboard(doctorId=${doctorId})}" class="nav-link active">
+        <a th:href="@{/doctor/dashboard(doctorId=${doctorId})}" class="nav-link">
           <i class="bi bi-speedometer2"></i>
           Dashboard
         </a>
@@ -791,7 +791,7 @@
         </a>
       </div>
       <div class="nav-item">
-        <a th:href="@{/doctor/patients(doctorId=${doctorId})}" class="nav-link">
+        <a th:href="@{/doctor/patients(doctorId=${doctorId})}" class="nav-link active">
           <i class="bi bi-people"></i>
           Patients
         </a>
@@ -1100,12 +1100,7 @@
     </div>
 
     <!-- Action Buttons -->
-    <div class="d-flex gap-3 justify-content-center mt-4">
-      <a th:href="@{/doctor/appointments/new(doctorId=${doctorId}, patientId=${patient.patientId})}" class="btn-primary-custom">
-        <i class="bi bi-calendar-plus"></i>
-        Schedule New Appointment
-      </a>
-    </div>
+
   </div>
 </div>
 
