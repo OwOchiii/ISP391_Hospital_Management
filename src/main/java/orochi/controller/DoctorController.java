@@ -296,6 +296,21 @@ public class DoctorController {
             // Add the page object for pagination
             model.addAttribute("page", patientsPage);
 
+            Doctor doctor = doctorRepository.findById(doctorId).orElse(null);
+
+            List<Notification> notifications = notificationRepository.findByUserIdOrderByCreatedAtDesc(doctor.getUserId());
+            if (notifications == null) {
+                notifications = new ArrayList<>();
+            }
+
+            // Count unread notifications
+            long unreadNotifications = notifications.stream()
+                    .filter(notification -> !notification.isRead())
+                    .count();
+
+            model.addAttribute("notifications", notifications);
+            model.addAttribute("unreadNotifications", unreadNotifications);
+
             logger.debug("Retrieved {} patients (page {} of {})",
                     patientsPage.getContent().size(), page + 1, patientsPage.getTotalPages());
             return "doctor/patients";
@@ -531,6 +546,19 @@ public class DoctorController {
                         parsedDate);
             }
 
+            List<Notification> notifications = notificationRepository.findByUserIdOrderByCreatedAtDesc(doctor.getUserId());
+            if (notifications == null) {
+                notifications = new ArrayList<>();
+            }
+
+            // Count unread notifications
+            long unreadNotifications = notifications.stream()
+                    .filter(notification -> !notification.isRead())
+                    .count();
+
+            model.addAttribute("notifications", notifications);
+            model.addAttribute("unreadNotifications", unreadNotifications);
+
             model.addAttribute("doctorId", doctorId);
             model.addAttribute("doctorName", doctor.getUser().getFullName());
             model.addAttribute("outgoingOrders", outgoingOrders);
@@ -598,6 +626,24 @@ public class DoctorController {
             model.addAttribute("doctorId", doctorId);
             model.addAttribute("selectedStatus", status);
             model.addAttribute("title", status + " Medical Orders");
+
+
+            Doctor doctor = doctorRepository.findById(doctorId)
+                    .orElseThrow(() -> new IllegalArgumentException("Invalid doctor ID: " + doctorId));
+
+            List<Notification> notifications = notificationRepository.findByUserIdOrderByCreatedAtDesc(doctor.getUserId());
+            if (notifications == null) {
+                notifications = new ArrayList<>();
+            }
+
+            // Count unread notifications
+            long unreadNotifications = notifications.stream()
+                    .filter(notification -> !notification.isRead())
+                    .count();
+
+            model.addAttribute("notifications", notifications);
+            model.addAttribute("unreadNotifications", unreadNotifications);
+
 
             logger.debug("Retrieved {} medical orders for doctor ID: {} with status: {}", orders.size(), doctorId, status);
             return "doctor/medical-orders";
