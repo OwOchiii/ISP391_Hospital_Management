@@ -578,7 +578,7 @@
                     <input type="hidden" name="adminId" th:value="${adminId}"/>
                     <div class="col-md-4">
                         <label for="search" class="form-label">Search Number / Name</label>
-                        <input type="text" id="search" name="search" th:value="${search}" class="form-control" placeholder="Enter keyword…"/>
+                        <input type="text" id="search" name="search" th:value="${search}" class="form-control" placeholder="Enter keyword…" maxlength="20"/>
                     </div>
                     <div class="col-md-3">
                         <label for="statusFilter" class="form-label">Filter by Status</label>
@@ -611,7 +611,7 @@
             </div>
             <div th:each="r : ${rooms}" class="col">
                 <div class="room-card h-100">
-                    <div class="room-content" data-bs-toggle="modal" data-bs-target="#roomDetailModal" th:attr="data-id=${r.roomId},data-number=${r.roomNumber},data-name=${r.roomName},data-type=${r.type},data-capacity=${r.capacity},data-status=${r.status},data-dept=${r.departmentId},data-notes=${r.notes}">
+                    <div class="room-content" data-bs-toggle="modal" data-bs-target="#roomDetailModal" th:attr="data-id=${r.roomId},data-number=${r.roomNumber},data-name=${r.roomName},data-capacity=${r.capacity},data-status=${r.status},data-dept=${r.departmentId},data-notes=${r.notes}">
                         <div class="card-body d-flex flex-column">
                             <div class="d-flex justify-content-between align-items-start mb-3">
                                 <h5 class="card-title mb-0" th:text="${r.roomNumber} + ' – ' + ${r.roomName}">R101 – Room A</h5>
@@ -640,7 +640,7 @@
                                 <button type="submit" class="btn w-100 btn-warning btn-action btn-sm" th:if="${r.status == 'Available'}" onmousedown="event.stopPropagation()" onclick="event.stopPropagation()">Occupy</button>
                                 <button type="submit" class="btn w-100 btn-success btn-action btn-sm" th:if="${r.status == 'Occupied'}" onmousedown="event.stopPropagation()" onclick="event.stopPropagation()">Make Available</button>
                             </form>
-                            <button type="button" class="btn btn-outline-secondary btn-action btn-sm" data-bs-toggle="modal" data-bs-target="#roomModal" data-mode="edit" th:attr="data-id=${r.roomId},data-number=${r.roomNumber},data-name=${r.roomName},data-type=${r.type},data-capacity=${r.capacity},data-status=${r.status},data-dept=${r.departmentId},data-notes=${r.notes}" onmousedown="event.stopPropagation()" onclick="event.stopPropagation()">
+                            <button type="button" class="btn btn-outline-secondary btn-action btn-sm" data-bs-toggle="modal" data-bs-target="#roomModal" data-mode="edit" th:attr="data-id=${r.roomId},data-number=${r.roomNumber},data-name=${r.roomName},data-capacity=${r.capacity},data-status=${r.status},data-dept=${r.departmentId},data-notes=${r.notes}" onmousedown="event.stopPropagation()" onclick="event.stopPropagation()">
                                 <i class="bi bi-pencil-square"></i> Edit
                             </button>
                         </div>
@@ -711,14 +711,14 @@
                                                oninput="this.value = this.value.trimStart()"
                                                pattern=".*\S.*" title="Room name cannot be blank or only spaces"/>
                                     </div>
-                                    <div class="col-md-4">
-                                        <label for="type" class="form-label">Type *</label>
-                                        <input type="text" class="form-control" id="type" name="type"
-                                               placeholder="e.g. Single, Double" required
-                                               oninput="this.value = this.value.trimStart()"
-                                               pattern="^[A-Za-z\s]+$"
-                                               title="Type must only contain letters and spaces"/>
-                                    </div>
+<!--                                    <div class="col-md-4">-->
+<!--                                        <label for="type" class="form-label">Type *</label>-->
+<!--                                        <input type="text" class="form-control" id="type" name="type"-->
+<!--                                               placeholder="e.g. Single, Double" required-->
+<!--                                               oninput="this.value = this.value.trimStart()"-->
+<!--                                               pattern="^[A-Za-z\s]+$"-->
+<!--                                               title="Type must only contain letters and spaces"/>-->
+<!--                                    </div>-->
                                     <div class="col-md-4">
                                         <label for="capacity" class="form-label">Capacity *</label>
                                         <input type="number" class="form-control" id="capacity" name="capacity"
@@ -866,7 +866,6 @@
         var inputId = form.querySelector('#roomId');
         var inputNumber = form.querySelector('#roomNumber');
         var inputName = form.querySelector('#roomName');
-        var inputType = form.querySelector('#type');
         var inputCapacity = form.querySelector('#capacity');
         var selectStatus = form.querySelector('#status');
         var inputDeptId = form.querySelector('#departmentId');
@@ -877,7 +876,6 @@
             inputId.value = '';
             inputNumber.value = '';
             inputName.value = '';
-            inputType.value = '';
             inputCapacity.value = '';
             selectStatus.value = 'Available';
             inputDeptId.value = '';
@@ -887,7 +885,6 @@
             inputId.value = button.getAttribute('data-id');
             inputNumber.value = button.getAttribute('data-number');
             inputName.value = button.getAttribute('data-name');
-            inputType.value = button.getAttribute('data-type');
             inputCapacity.value = button.getAttribute('data-capacity');
             selectStatus.value = button.getAttribute('data-status');
             inputDeptId.value = button.getAttribute('data-dept');
