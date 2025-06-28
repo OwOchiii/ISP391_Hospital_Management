@@ -15,6 +15,12 @@ public class Feedback {
     @Column(name = "UserID", nullable = false)
     private Integer userId;
 
+    @Column(name = "FeedbackType", nullable = false)
+    private String feedbackType;
+
+    @Column(name = "Title", nullable = false)
+    private String title;
+
     @Column(name = "description", nullable = false, columnDefinition = "TEXT")
     private String description;
 
@@ -35,6 +41,22 @@ public class Feedback {
 
     public void setUserId(Integer userId) {
         this.userId = userId;
+    }
+
+    public String getFeedbackType() {
+        return feedbackType;
+    }
+
+    public void setFeedbackType(String feedbackType) {
+        this.feedbackType = feedbackType;
+    }
+
+    public String getTitle() {
+        return title;
+    }
+
+    public void setTitle(String title) {
+        this.title = title;
     }
 
     public String getDescription() {

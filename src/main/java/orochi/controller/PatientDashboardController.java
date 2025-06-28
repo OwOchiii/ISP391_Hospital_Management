@@ -83,6 +83,13 @@ public class PatientDashboardController {
     @Autowired
     private PasswordEncoder passwordEncoder;
 
+    private static final List<String> ALLOWED_FEEDBACK_TYPES = Arrays.asList(
+            "Quality of medical services", "Facilities", "Administrative procedures",
+            "Online booking & application system", "Staff attitude and behavior",
+            "Costs & payment", "Suggestions & improvements", "Timing & progress",
+            "Safety & security", "Other"
+    );
+
     @GetMapping("/dashboard")
     public String dashboard(Model model) {
         try {
@@ -539,7 +546,6 @@ public class PatientDashboardController {
                 return "error";
             }
 
-            // Get patient info
             Optional<Patient> patientOpt = patientRepository.findById(patientId);
             Patient patient = patientOpt.orElseThrow(() -> new Exception("Patient not found"));
             model.addAttribute("userId", patient.getUser().getUserId());
@@ -555,7 +561,11 @@ public class PatientDashboardController {
     }
 
     @PostMapping("/feedback")
-    public String submitFeedback(@RequestParam("description") String description, Model model) {
+    public String submitFeedback(
+            @RequestParam("feedbackType") String feedbackType,
+            @RequestParam("title") String title,
+            @RequestParam("description") String description,
+            Model model) {
         try {
             Integer patientId = getCurrentPatientId();
             if (patientId == null) {
@@ -563,7 +573,6 @@ public class PatientDashboardController {
                 return "error";
             }
 
-            // Get userId from patient
             Optional<Patient> patientOpt = patientRepository.findById(patientId);
             if (!patientOpt.isPresent()) {
                 model.addAttribute("errorMessage", "Patient not found");
@@ -571,14 +580,32 @@ public class PatientDashboardController {
             }
             Integer userId = patientOpt.get().getUser().getUserId();
 
-            // Trim and normalize spaces, limit to 250 characters
+            String trimmedFeedbackType = feedbackType.trim();
+            String trimmedTitle = title.trim().replaceAll("\\s+", " ");
             String trimmedDescription = description.trim().replaceAll("\\s+", " ");
+
+            if (trimmedFeedbackType.isEmpty() || trimmedTitle.isEmpty() || trimmedDescription.isEmpty()) {
+                model.addAttribute("errorMessage", "All fields are required");
+                return "patient/feedback";
+            }
+
+            if (!ALLOWED_FEEDBACK_TYPES.contains(trimmedFeedbackType)) {
+                model.addAttribute("errorMessage", "Invalid feedback type");
+                return "patient/feedback";
+            }
+
+            if (trimmedTitle.length() > 100) {
+                trimmedTitle = trimmedTitle.substring(0, 100);
+            }
+
             if (trimmedDescription.length() > 250) {
                 trimmedDescription = trimmedDescription.substring(0, 250);
             }
 
             Feedback feedback = new Feedback();
             feedback.setUserId(userId);
+            feedback.setFeedbackType(trimmedFeedbackType);
+            feedback.setTitle(trimmedTitle);
             feedback.setDescription(trimmedDescription);
 
             feedbackService.saveFeedback(feedback);
@@ -590,8 +617,10 @@ public class PatientDashboardController {
         } catch (Exception e) {
             logger.error("Error submitting feedback", e);
             model.addAttribute("errorMessage", "Failed to submit feedback: " + e.getMessage());
-            model.addAttribute("description", description); // Preserve user input
-            return "error";
+            model.addAttribute("feedbackType", feedbackType);
+            model.addAttribute("title", title);
+            model.addAttribute("description", description);
+            return "patient/feedback";
         }
     }
 
@@ -617,7 +646,7 @@ public class PatientDashboardController {
             model.addAttribute("patientName", patient.getUser() != null ? patient.getUser().getFullName() : "Patient");
 
             Pageable pageable = PageRequest.of(page, size);
-            Page<Feedback> feedbackPage = null; // Initialize to null
+            Page<Feedback> feedbackPage = null;
 
             String fromDateTrimmed = (fromDate != null) ? fromDate.trim() : null;
             String toDateTrimmed = (toDate != null) ? toDate.trim() : null;
@@ -628,7 +657,7 @@ public class PatientDashboardController {
                     start = LocalDateTime.parse(fromDateTrimmed + "T00:00:00");
                 } catch (DateTimeParseException e) {
                     model.addAttribute("errorMessage", "Invalid From Date format. Please use YYYY-MM-DD.");
-                    model.addAttribute("feedbacks", Collections.emptyList()); // Default to empty list
+                    model.addAttribute("feedbacks", Collections.emptyList());
                     model.addAttribute("currentPage", 0);
                     model.addAttribute("totalPages", 0);
                     model.addAttribute("size", size);
@@ -682,7 +711,7 @@ public class PatientDashboardController {
         } catch (Exception e) {
             logger.error("Error fetching feedback", e);
             model.addAttribute("errorMessage", "Failed to fetch feedback: " + e.getMessage());
-            model.addAttribute("feedbacks", Collections.emptyList()); // Ensure feedbacks is never null
+            model.addAttribute("feedbacks", Collections.emptyList());
             model.addAttribute("currentPage", 0);
             model.addAttribute("totalPages", 0);
             model.addAttribute("size", size);
