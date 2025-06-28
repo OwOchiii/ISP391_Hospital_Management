@@ -408,7 +408,7 @@
                     <td>
                         <div class="info-item">
                             <span class="info-label">Date of Birth</span>
-                            <div class="info-value" th:text="${patient.dateOfBirth != null ? #dates.format(patient.dateOfBirth, 'MMMM d, yyyy') : 'N/A'}">January 1, 1980</div>
+                            <div class="info-value" th:text="${patient.dateOfBirth != null ? #temporals.format(patient.dateOfBirth, 'MMMM d, yyyy') : 'N/A'}">January 1, 1980</div>
                         </div>
                     </td>
                 </tr>
@@ -441,7 +441,7 @@
                     <td>
                         <div class="info-item">
                             <span class="info-label">Appointment Date & Time</span>
-                            <div class="info-value" th:text="${#temporals.format(appointment.dateTime, 'MMMM d, yyyy - HH:mm')}">May 25, 2023 - 10:00</div>
+                            <div class="info-value" th:text="${appointment != null && appointment.dateTime != null ? #temporals.format(appointment.dateTime, 'MMMM d, yyyy - HH:mm') : 'N/A'}">May 25, 2023 - 10:00</div>
                         </div>
                     </td>
                     <td>
@@ -455,13 +455,13 @@
                     <td>
                         <div class="info-item">
                             <span class="info-label">Appointment Status</span>
-                            <div class="info-value" th:text="${appointment.status}">Completed</div>
+                            <div class="info-value" th:text="${appointment != null && appointment.status != null ? appointment.status : 'N/A'}">Completed</div>
                         </div>
                     </td>
                     <td>
                         <div class="info-item">
                             <span class="info-label">Visit Description</span>
-                            <div class="info-value" th:text="${appointment.description != null ? appointment.description : 'N/A'}">Regular checkup</div>
+                            <div class="info-value" th:text="${appointment != null && appointment.description != null ? appointment.description : 'N/A'}">Regular checkup</div>
                         </div>
                     </td>
                 </tr>
@@ -480,10 +480,10 @@
                     <table class="result-header-table">
                         <tr>
                             <td>
-                                <div class="result-title" th:text="${order.orderType}">LABORATORY</div>
+                                <div class="result-title" th:text="${order.orderType != null ? order.orderType : 'N/A'}">LABORATORY</div>
                             </td>
                             <td>
-                                <div class="result-date" th:text="${#dates.format(order.orderDate, 'MMM d, yyyy')}">May 25, 2023</div>
+                                <div class="result-date" th:text="${order.orderDate != null ? #dates.format(order.orderDate, 'MMM d, yyyy') : 'N/A'}">May 25, 2023</div>
                             </td>
                         </tr>
                     </table>
@@ -493,17 +493,17 @@
                         <div class="result-meta-item">
                             <span class="result-meta-label">Status:</span>
                             <span class="badge"
-                                  th:classappend="${order.status == 'PENDING' ? 'badge-warning' :
+                                  th:classappend="${order.status != null ? (order.status == 'PENDING' ? 'badge-warning' :
                                                  (order.status == 'IN_PROGRESS' ? 'badge-info' :
-                                                 (order.status == 'COMPLETED' ? 'badge-success' : 'badge-danger'))}"
-                                  th:text="${order.status}">COMPLETED</span>
+                                                 (order.status == 'COMPLETED' ? 'badge-success' : 'badge-danger'))) : 'badge-info'}"
+                                  th:text="${order.status != null ? order.status : 'UNKNOWN'}">COMPLETED</span>
                         </div>
                         <div class="result-meta-item" th:if="${order.assignedToDepartment != null}">
                             <span class="result-meta-label">Department:</span>
-                            <span th:text="${order.assignedToDepartment.deptName}">Laboratory</span>
+                            <span th:text="${order.assignedToDepartment.deptName != null ? order.assignedToDepartment.deptName : 'N/A'}">Laboratory</span>
                         </div>
                     </div>
-                    <div class="result-content" th:text="${order.description}">Complete blood count and metabolic panel.</div>
+                    <div class="result-content" th:text="${order.description != null ? order.description : 'No description available.'}">Complete blood count and metabolic panel.</div>
                 </div>
             </div>
         </div>
@@ -523,7 +523,7 @@
                                 <div class="result-title">Medical Result</div>
                             </td>
                             <td>
-                                <div class="result-date" th:text="${#temporals.format(result.resultDate, 'MMM d, yyyy - HH:mm')}">May 26, 2023 - 14:30</div>
+                                <div class="result-date" th:text="${result.resultDate != null ? #temporals.format(result.resultDate, 'MMM d, yyyy - HH:mm') : 'N/A'}">May 26, 2023 - 14:30</div>
                             </td>
                         </tr>
                     </table>
@@ -533,13 +533,13 @@
                         <div class="result-meta-item">
                             <span class="result-meta-label">Status:</span>
                             <span class="badge"
-                                  th:classappend="${result.status == 'DRAFT' ? 'badge-warning' :
+                                  th:classappend="${result.status != null ? (result.status == 'DRAFT' ? 'badge-warning' :
                                                  (result.status == 'PENDING_REVIEW' ? 'badge-info' :
-                                                 (result.status == 'COMPLETED' ? 'badge-success' : 'badge-danger'))}"
-                                  th:text="${result.status}">COMPLETED</span>
+                                                 (result.status == 'COMPLETED' ? 'badge-success' : 'badge-danger'))) : 'badge-info'}"
+                                  th:text="${result.status != null ? result.status : 'UNKNOWN'}">COMPLETED</span>
                         </div>
                     </div>
-                    <div class="result-content" th:text="${result.description}">
+                    <div class="result-content" th:text="${result.description != null ? result.description : 'No description available.'}">
                         Blood pressure: 120/80 mmHg (Normal)
                         Heart rate: 72 bpm (Normal)
                         Respiratory rate: 16 breaths per minute (Normal)
@@ -548,6 +548,73 @@
                     </div>
                     <div th:if="${result.fileUrl != null}" class="file-attachment">
                         Document attached in original record
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Prescriptions Section -->
+    <div class="section" th:if="${not #lists.isEmpty(prescriptions)}">
+        <div class="section-header">
+            <div class="section-title">Prescriptions</div>
+        </div>
+        <div class="section-content">
+            <div th:each="prescription : ${prescriptions}" class="result-item">
+                <div class="result-header">
+                    <table class="result-header-table">
+                        <tr>
+                            <td>
+                                <div class="result-title">Prescription</div>
+                            </td>
+                            <td>
+                                <div class="result-date" th:text="${prescription.prescriptionDate != null ? #temporals.format(prescription.prescriptionDate, 'MMM d, yyyy - HH:mm') : 'N/A'}">June 24, 2025 - 14:30</div>
+                            </td>
+                        </tr>
+                    </table>
+                </div>
+                <div class="result-body">
+                    <div class="result-meta">
+                        <div class="result-meta-item">
+                            <span class="result-meta-label">Prescribed By:</span>
+                            <span th:text="${prescription.doctor != null && prescription.doctor.user != null ? prescription.doctor.user.fullName : 'N/A'}">Dr. John Smith</span>
+                        </div>
+                        <div class="result-meta-item" th:if="${prescription.appointment != null}">
+                            <span class="result-meta-label">For Appointment:</span>
+                            <span th:text="${prescription.appointment.dateTime != null ? #temporals.format(prescription.appointment.dateTime, 'MMM d, yyyy') : 'N/A'}">June 20, 2025</span>
+                        </div>
+                    </div>
+                    <div class="result-content" th:text="${prescription.notes != null ? prescription.notes : 'No instructions available.'}">
+                        Take all medications as directed. Complete the full course of antibiotics.
+                    </div>
+
+                    <!-- Medicines List -->
+                    <div class="mt-10" th:if="${not #lists.isEmpty(prescription.medicines)}">
+                        <div class="bold mb-10">Prescribed Medications:</div>
+                        <table class="layout-table" style="width: 100%; border: 1px solid #e5e7eb; border-collapse: collapse;">
+                            <thead>
+                                <tr style="background-color: #f8fafc;">
+                                    <th style="border: 1px solid #e5e7eb; padding: 8px; text-align: left;">Medication</th>
+                                    <th style="border: 1px solid #e5e7eb; padding: 8px; text-align: left;">Dosage</th>
+                                    <th style="border: 1px solid #e5e7eb; padding: 8px; text-align: left;">Frequency</th>
+                                    <th style="border: 1px solid #e5e7eb; padding: 8px; text-align: left;">Duration</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr th:each="medicine : ${prescription.medicines}" style="border-bottom: 1px solid #e5e7eb;">
+                                    <td style="border: 1px solid #e5e7eb; padding: 8px;" th:text="${medicine.inventory != null ? medicine.inventory.medicineName : 'N/A'}">Amoxicillin</td>
+                                    <td style="border: 1px solid #e5e7eb; padding: 8px;" th:text="${medicine.dosage}">500mg</td>
+                                    <td style="border: 1px solid #e5e7eb; padding: 8px;" th:text="${medicine.frequency}">3 times daily</td>
+                                    <td style="border: 1px solid #e5e7eb; padding: 8px;" th:text="${medicine.duration}">7 days</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                        <div class="mt-10" th:if="${prescription.medicines[0].instructions != null}">
+                            <div class="bold mb-10">Special Instructions:</div>
+                            <div class="result-content" th:text="${prescription.medicines[0].instructions}">
+                                Take with food. Avoid alcohol while taking this medication.
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -588,8 +655,7 @@
     <div class="report-footer">
         <table class="footer-table">
             <tr>
-                <td class="report-id">Report ID: MCP-2024-001234</td>
-                <td class="page-number">Page 1 of 1</td>
+
             </tr>
         </table>
     </div>

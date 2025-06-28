@@ -40,49 +40,66 @@ public class PatientAppointmentController {
     @Autowired
     private DoctorSpecializationRepository doctorSpecializationRepository;
 
+    @Autowired
+    private orochi.repository.MedicalReportRepository medicalReportRepository;
+
     @GetMapping("/book-appointment")
     public String showBookAppointmentForm(
             @RequestParam(required = false) Integer patientId,
             @RequestParam(required = false) Integer appointmentId,
-            Model model) {
+            Model model,
+            RedirectAttributes redirectAttributes) {
         if (patientId == null) {
             Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
             if (authentication != null && authentication.getPrincipal() instanceof CustomUserDetails) {
                 CustomUserDetails userDetails = (CustomUserDetails) authentication.getPrincipal();
                 patientId = userDetails.getPatientId();
                 if (patientId == null) {
-                    return "redirect:/error?message=No patient ID found. Please login as a patient.";
+                    redirectAttributes.addFlashAttribute("successMessage", "No patient ID found. Please login as a patient.");
+                    return "redirect:/patient/appointment-list";
                 }
             } else {
-                return "redirect:/error?message=Authentication required to book an appointment.";
+                redirectAttributes.addFlashAttribute("successMessage", "Authentication required to book an appointment.");
+                return "redirect:/patient/appointment-list";
             }
         }
 
         Integer finalPatientId = patientId;
-        Patient patient = patientRepository.findById(patientId)
-                .orElseThrow(() -> new RuntimeException("Patient not found with ID: " + finalPatientId));
+        Patient patient;
+        try {
+            patient = patientRepository.findById(patientId)
+                    .orElseThrow(() -> new RuntimeException("Patient not found with ID: " + finalPatientId));
+        } catch (RuntimeException e) {
+            redirectAttributes.addFlashAttribute("successMessage", "Invalid patient ID! Please try again.");
+            return "redirect:/patient/appointment-list";
+        }
 
         AppointmentFormDTO appointmentForm;
         boolean isUpdate = appointmentId != null;
         if (isUpdate) {
-            Appointment appointment = appointmentRepository.findById(appointmentId)
-                    .orElseThrow(() -> new RuntimeException("Appointment not found with ID: " + appointmentId));
-            if (!appointment.getPatientId().equals(patientId)) {
-                throw new RuntimeException("You do not have permission to update this appointment.");
+            try {
+                Appointment appointment = appointmentRepository.findById(appointmentId)
+                        .orElseThrow(() -> new RuntimeException("Appointment not found with ID: " + appointmentId));
+                if (!appointment.getPatientId().equals(patientId)) {
+                    redirectAttributes.addFlashAttribute("successMessage", "Invalid appointment ID or patient ID! Please try again.");
+                    return "redirect:/patient/appointment-list";
+                }
+                DoctorSpecialization doctorSpecialization = doctorSpecializationRepository.findByDoctorId(appointment.getDoctorId())
+                        .orElseThrow(() -> new RuntimeException("Specialization not found for doctor ID: " + appointment.getDoctorId()));
+                appointmentForm = new AppointmentFormDTO();
+                appointmentForm.setAppointmentId(appointmentId);
+                appointmentForm.setPatientId(patientId);
+                appointmentForm.setSpecialtyId(doctorSpecialization.getSpecialization().getSpecId());
+                appointmentForm.setDoctorId(appointment.getDoctorId());
+                appointmentForm.setAppointmentDate(appointment.getDateTime().toLocalDate());
+                appointmentForm.setAppointmentTime(appointment.getDateTime().toLocalTime().toString());
+                appointmentForm.setEmail(appointment.getEmail() != null ? appointment.getEmail() : patient.getUser().getEmail());
+                appointmentForm.setPhoneNumber(appointment.getPhoneNumber() != null ? appointment.getPhoneNumber() : patient.getUser().getPhoneNumber());
+                appointmentForm.setDescription(appointment.getDescription());
+            } catch (RuntimeException e) {
+                redirectAttributes.addFlashAttribute("successMessage", "Invalid appointment ID or patient ID! Please try again.");
+                return "redirect:/patient/appointment-list";
             }
-            DoctorSpecialization doctorSpecialization = doctorSpecializationRepository.findByDoctorId(appointment.getDoctorId())
-                    .orElseThrow(() -> new RuntimeException("Specialization not found for doctor ID: " + appointment.getDoctorId()));
-            appointmentForm = new AppointmentFormDTO();
-            appointmentForm.setAppointmentId(appointmentId);
-            appointmentForm.setPatientId(patientId);
-            appointmentForm.setSpecialtyId(doctorSpecialization.getSpecialization().getSpecId());
-            appointmentForm.setDoctorId(appointment.getDoctorId());
-            appointmentForm.setAppointmentDate(appointment.getDateTime().toLocalDate());
-            appointmentForm.setAppointmentTime(appointment.getDateTime().toLocalTime().toString());
-            appointmentForm.setEmail(appointment.getEmail() != null ? appointment.getEmail() : patient.getUser().getEmail());
-            appointmentForm.setPhoneNumber(appointment.getPhoneNumber() != null ? appointment.getPhoneNumber() : patient.getUser().getPhoneNumber());
-            appointmentForm.setDescription(appointment.getDescription());
-            appointmentForm.setEmergencyContact(null);
         } else {
             appointmentForm = new AppointmentFormDTO();
             appointmentForm.setPatientId(patientId);
@@ -166,8 +183,7 @@ public class PatientAppointmentController {
                         appointmentForm.getAppointmentTime(),
                         appointmentForm.getEmail(),
                         appointmentForm.getPhoneNumber(),
-                        appointmentForm.getDescription(),
-                        appointmentForm.getEmergencyContact()
+                        appointmentForm.getDescription()
                 );
                 redirectAttributes.addFlashAttribute("successMessage", "Your appointment has been successfully updated.");
             } else {
@@ -178,8 +194,7 @@ public class PatientAppointmentController {
                         appointmentForm.getAppointmentTime(),
                         appointmentForm.getEmail(),
                         appointmentForm.getPhoneNumber(),
-                        appointmentForm.getDescription(),
-                        appointmentForm.getEmergencyContact()
+                        appointmentForm.getDescription()
                 );
                 redirectAttributes.addFlashAttribute("successMessage",
                         "Your appointment has been successfully booked for " +
@@ -199,6 +214,62 @@ public class PatientAppointmentController {
             model.addAttribute("isUpdate", appointmentForm.getAppointmentId() != null);
             return "patient/book-appointment";
         }
+    }
+
+    /**
+     * View latest medical report for an appointment
+     * @param id The appointment ID
+     * @param patientId The patient ID for authorization
+     * @return The medical report PDF or an error page
+     */
+    @GetMapping("/appointment-list-legacy/{id}/report")
+    public String viewLatestMedicalReport(
+            @PathVariable Integer id,
+            @RequestParam(required = false) Integer patientId,
+            Model model,
+            RedirectAttributes redirectAttributes) {
+
+        // Validate patient authorization
+        if (patientId == null) {
+            Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+            if (authentication != null && authentication.getPrincipal() instanceof CustomUserDetails) {
+                CustomUserDetails userDetails = (CustomUserDetails) authentication.getPrincipal();
+                patientId = userDetails.getPatientId();
+            }
+        }
+
+        if (patientId == null) {
+            redirectAttributes.addFlashAttribute("errorMessage", "Patient authentication required");
+            return "redirect:/patient/appointment-list";
+        }
+
+        // Check if appointment exists and belongs to the patient
+        Appointment appointment = appointmentRepository.findById(id).orElse(null);
+        if (appointment == null) {
+            redirectAttributes.addFlashAttribute("errorMessage", "Appointment not found");
+            return "redirect:/patient/appointment-list";
+        }
+
+        if (!appointment.getPatientId().equals(patientId)) {
+            redirectAttributes.addFlashAttribute("errorMessage", "Unauthorized access to this appointment");
+            return "redirect:/patient/appointment-list";
+        }
+
+        // Get the latest medical report for this appointment
+        List<MedicalReport> reports = medicalReportRepository.findByAppointmentIdOrderByReportDateDesc(id);
+        if (reports.isEmpty()) {
+            redirectAttributes.addFlashAttribute("errorMessage", "No medical report available for this appointment");
+            return "redirect:/patient/appointment-list";
+        }
+
+        MedicalReport latestReport = reports.get(0);
+        if (latestReport.getFileUrl() == null || latestReport.getFileUrl().isEmpty()) {
+            redirectAttributes.addFlashAttribute("errorMessage", "Medical report file not found");
+            return "redirect:/patient/appointment-list";
+        }
+
+        // Redirect to the file download controller to serve the PDF
+        return "redirect:/download/report/" + latestReport.getReportId() + "?inline=true";
     }
 
     private String formatTimeForDisplay(String time) {

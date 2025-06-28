@@ -9,7 +9,7 @@ import java.util.List;
 @ToString(exclude = "Appointment")
 @EqualsAndHashCode(exclude = "Appointment")
 @Entity
-@Table(name = "Transaction")
+@Table(name = "[Transaction]")
 @Data
 @NoArgsConstructor
 @AllArgsConstructor

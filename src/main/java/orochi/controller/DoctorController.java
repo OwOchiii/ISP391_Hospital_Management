@@ -14,6 +14,7 @@ import org.springframework.web.bind.annotation.*;
 import orochi.model.*;
 import orochi.repository.DoctorRepository;
 import orochi.repository.MedicalOrderRepository;
+import orochi.repository.NotificationRepository;
 import orochi.service.DoctorService;
 import orochi.config.CustomUserDetails;
 
@@ -35,6 +36,9 @@ public class DoctorController {
 
     @Autowired
     private MedicalOrderRepository medicalOrderRepository;
+
+    @Autowired
+    private NotificationRepository notificationRepository;
 
     @GetMapping("/dashboard")
     public String getDashboard(@RequestParam(required = false) Integer doctorId,
@@ -104,6 +108,16 @@ public class DoctorController {
                 patients = new ArrayList<>();
             }
 
+            // Fetch notifications for the doctor
+            List<Notification> notifications = notificationRepository.findByUserIdOrderByCreatedAtDesc(doctor.getUserId());
+            if (notifications == null) {
+                notifications = new ArrayList<>();
+            }
+
+            // Count unread notifications
+            long unreadNotifications = notifications.stream()
+                    .filter(notification -> !notification.isRead())
+                    .count();
 
 
             model.addAttribute("todayAppointments", todayAppointments);
@@ -111,6 +125,8 @@ public class DoctorController {
             model.addAttribute("pendingOrders", pendingOrders);
             model.addAttribute("patientCount", patients.size());
             model.addAttribute("doctorId", doctorId);
+            model.addAttribute("notifications", notifications);
+            model.addAttribute("unreadNotifications", unreadNotifications);
 
             logger.debug("Dashboard loaded successfully for doctor ID: {}", doctorId);
             return "doctor/dashboard";
@@ -590,4 +606,56 @@ public class DoctorController {
             return "error";
         }
     }
+
+    /**
+     * Display the notifications page for a doctor
+     * @param doctorId The ID of the doctor
+     * @param model The Spring model
+     * @param authentication The current authentication object
+     * @return The notification page template
+     */
+    @GetMapping("/notifications")
+    public String getNotifications(@RequestParam(required = false) Integer doctorId,
+                                 Model model,
+                                 Authentication authentication) {
+        try {
+            // If doctorId is not provided, try to get it from the authentication
+            if (doctorId == null && authentication != null) {
+                logger.info("No doctorId provided, attempting to retrieve from authenticated user");
+                Object principal = authentication.getPrincipal();
+                if (principal instanceof CustomUserDetails) {
+                    CustomUserDetails userDetails = (CustomUserDetails) principal;
+                    doctorId = userDetails.getDoctorId();
+                    logger.info("Retrieved doctorId {} from authentication", doctorId);
+                }
+            }
+
+            if (doctorId == null) {
+                logger.error("No doctorId provided and could not be determined from authentication");
+                model.addAttribute("errorMessage", "Doctor ID is required");
+                return "error";
+            }
+
+            logger.info("Loading notifications for doctor ID: {}", doctorId);
+            Doctor doctor = doctorRepository.findById(doctorId).orElse(null);
+
+            // Check if doctor is null before accessing its properties
+            if (doctor == null) {
+                logger.error("Doctor not found for ID: {}", doctorId);
+                model.addAttribute("errorMessage", "Doctor not found");
+                return "error";
+            }
+
+            model.addAttribute("doctorName", doctor.getUser().getFullName());
+            model.addAttribute("doctorId", doctorId);
+
+            logger.debug("Notifications page loaded successfully for doctor ID: {}", doctorId);
+            return "doctor/doctor-notification";
+        } catch (Exception e) {
+            logger.error("Error loading notifications for doctor ID: {}", doctorId, e);
+            model.addAttribute("errorMessage", "An error occurred while loading notifications: " + e.getMessage());
+            return "error";
+        }
+    }
 }
+

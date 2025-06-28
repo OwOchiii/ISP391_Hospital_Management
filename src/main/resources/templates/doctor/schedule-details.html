@@ -565,6 +565,92 @@
                 grid-template-columns: 1fr;
             }
         }
+
+        .notification-dropdown {
+            position: relative;
+        }
+
+        .notification-btn {
+            background: none;
+            border: none;
+            cursor: pointer;
+            font-size: 1.25rem;
+            color: var(--text-dark);
+            position: relative;
+        }
+
+        .notification-badge {
+            position: absolute;
+            top: -5px;
+            right: -10px;
+            background: var(--primary-color);
+            color: white;
+            border-radius: 50%;
+            padding: 0.2rem 0.6rem;
+            font-size: 0.75rem;
+            font-weight: 600;
+        }
+
+        .dropdown-menu {
+            width: 350px;
+            border-radius: 12px;
+            overflow: hidden;
+            margin-top: 0.5rem;
+            border: 1px solid var(--border-color);
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+        }
+
+        .dropdown-header {
+            background: var(--primary-color);
+            color: white;
+            padding: 1rem;
+            font-weight: 600;
+            font-size: 0.875rem;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        .notification-list {
+            max-height: 300px;
+            overflow-y: auto;
+        }
+
+        .notification-item {
+            padding: 0.75rem 1rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            transition: background 0.3s ease;
+        }
+
+        .notification-item:hover {
+            background: rgba(0, 0, 0, 0.03);
+        }
+
+        .notification-content {
+            flex: 1;
+            margin-right: 0.5rem;
+        }
+
+        .notification-message {
+            font-size: 0.875rem;
+            color: var(--text-dark);
+        }
+
+        .notification-time {
+            font-size: 0.75rem;
+            color: var(--text-muted);
+        }
+
+        .mark-read-btn {
+            background: none;
+            border: none;
+            cursor: pointer;
+            color: var(--primary-color);
+            font-size: 1rem;
+        }
+
+
     </style>
 </head>
 <body>
@@ -585,7 +671,7 @@
         <div class="nav-section">
             <div class="nav-section-title">Dashboard</div>
             <div class="nav-item">
-                <a th:href="@{/doctor/dashboard(doctorId=${doctorId})}" class="nav-link active">
+                <a th:href="@{/doctor/dashboard(doctorId=${doctorId})}" class="nav-link">
                     <i class="bi bi-speedometer2"></i>
                     Dashboard
                 </a>
@@ -617,7 +703,7 @@
         <div class="nav-section">
             <div class="nav-section-title">Management</div>
             <div class="nav-item">
-                <a th:href="@{/doctor/schedule(doctorId=${doctorId})}" class="nav-link">
+                <a th:href="@{/doctor/schedule(doctorId=${doctorId})}" class="nav-link active">
                     <i class="bi bi-calendar-week"></i>
                     View Schedule
                 </a>
@@ -663,12 +749,40 @@
         </div>
 
         <div class="header-right">
+            <div class="notification-dropdown dropdown">
+                <button class="notification-btn" id="notificationDropdown" data-bs-toggle="dropdown" aria-expanded="false">
+                    <i class="bi bi-bell"></i>
+                    <span class="notification-badge" th:if="${unreadNotifications > 0}" th:text="${unreadNotifications}">0</span>
+                </button>
+                <ul class="dropdown-menu dropdown-menu-end notification-menu" aria-labelledby="notificationDropdown">
+                    <li class="dropdown-header">Notifications</li>
+                    <div class="notification-list" th:if="${notifications != null && !notifications.isEmpty()}">
+                        <li th:each="notification : ${notifications}" class="notification-item" th:classappend="${!notification.isRead ? 'unread' : ''}">
+                            <div class="notification-content">
+                                <div class="notification-message" th:text="${notification.message}">Notification message</div>
+                                <div class="notification-time" th:text="${#temporals.format(notification.createdAt, 'MMM dd, yyyy HH:mm')}">Jun 18, 2025</div>
+                            </div>
+                            <button th:if="${!notification.isRead}" class="mark-read-btn" th:data-id="${notification.notificationId}">
+                                <i class="bi bi-check-circle"></i>
+                            </button>
+                        </li>
+                    </div>
+                    <li class="empty-notification" th:if="${notifications == null || notifications.isEmpty()}">
+                        <div class="text-center py-3">
+                            <i class="bi bi-bell-slash"></i>
+                            <p>No notifications</p>
+                        </div>
+                    </li>
+                    <li><hr class="dropdown-divider"></li>
+                    <li class="text-center"><a href="#" class="dropdown-item text-primary">View all notifications</a></li>
+                </ul>
+            </div>
             <div class="doctor-info">
                 <div class="doctor-avatar">
-                    <span th:text="${doctorName != null ? #strings.substring(doctorName, 0, 2).toUpperCase() : 'DR'}">DR</span>
+                    <span th:text="${doctor.getUser().getFullName() != null ? #strings.substring(doctor.getUser().getFullName(), 0, 2).toUpperCase() : 'DR'}">DR</span>
                 </div>
                 <div>
-                    <div class="fw-semibold" th:text="${doctorName != null ? doctorName : 'Doctor'}">Doctor</div>
+                    <div class="fw-semibold" th:text="${doctor.getUser().getFullName() != null ? doctor.getUser().getFullName(): 'Doctor'}">Doctor</div>
                     <small class="text-muted" th:text="${'ID: ' + doctorId}">ID: 123</small>
                 </div>
             </div>
@@ -789,18 +903,18 @@
                                 <span th:text="${workEntry.patientName != null ? #strings.substring(workEntry.patientName, 0, 2).toUpperCase() : 'PT'}">JS</span>
                             </div>
                             <div class="patient-info">
-                                <h5 th:text="${workEntry.patientName}">John Smith</h5>
-                                <p th:text="${'Patient ID: ' + workEntry.patientId}">Patient ID: 12345</p>
+                                <h5 th:text="${workEntry.patientName}">N/A</h5>
+                                <p th:text="${'Patient ID: ' + workEntry.patientId}">Patient ID: N/A<</p>
                             </div>
                         </div>
                         <div class="contact-info">
                             <div class="contact-item" th:if="${workEntry.patientEmail}">
                                 <i class="bi bi-envelope"></i>
-                                <span th:text="${workEntry.patientEmail}">john.smith@email.com</span>
+                                <span th:text="${workEntry.patientEmail}">N/A<</span>
                             </div>
                             <div class="contact-item" th:if="${workEntry.patientPhone}">
                                 <i class="bi bi-telephone"></i>
-                                <span th:text="${workEntry.patientPhone}">+1 234 567 8900</span>
+                                <span th:text="${workEntry.patientPhone}">N/A<</span>
                             </div>
                         </div>
                     </div>
@@ -813,17 +927,17 @@
                             </div>
                             <div class="patient-info">
                                 <h5>On-Call Duty</h5>
-                                <p th:text="${'Room: ' + workEntry.roomNumber}">Emergency Department</p>
+                                <p th:text="${'Room: ' + workEntry.roomNumber}">N/A<</p>
                             </div>
                         </div>
                         <div class="contact-info">
                             <div class="contact-item">
                                 <i class="bi bi-clock"></i>
-                                <span th:text="${workEntry.startTime + ' - ' + workEntry.endTime}">09:00 - 17:00</span>
+                                <span th:text="${workEntry.startTime + ' - ' + workEntry.endTime}">N/A<</span>
                             </div>
                             <div class="contact-item">
                                 <i class="bi bi-geo-alt"></i>
-                                <span th:text="${'Room ID: ' + workEntry.roomNumber}">Room 101</span>
+                                <span th:text="${'Room ID: ' + workEntry.roomNumber}">N/A<</span>
                             </div>
                             <div class="contact-item">
                                 <i class="bi bi-check-circle" th:if="${workEntry.isCompleted}"></i>
@@ -859,11 +973,6 @@
                     <!-- Appointment Actions -->
                     <div th:if="${workEntry.eventType == 'appointment'}">
                         <div class="d-grid gap-3">
-                            <a th:href="@{/doctor/appointments/{id}/edit(id=${workEntry.appointmentId}, doctorId=${doctorId})}"
-                               class="btn-primary-custom">
-                                <i class="bi bi-pencil"></i>
-                                Edit Appointment
-                            </a>
 
                             <a th:href="@{/doctor/patients/{id}(id=${workEntry.patientId}, doctorId=${doctorId})}"
                                class="btn-outline-custom">
@@ -895,40 +1004,7 @@
         </div>
 
         <!-- Related Information -->
-        <div class="details-card">
-            <div class="card-header">
-                <h3 class="card-title">
-                    <i class="bi bi-clock-history"></i>
-                    <span th:text="${workEntry.eventType == 'appointment' ? 'Patient History' : 'Recent On-Call Activities'}">Recent Activities</span>
-                </h3>
-            </div>
-            <div class="card-body">
-                <!-- Timeline of related activities -->
-                <div class="timeline-item">
-                    <div class="timeline-time">10:30</div>
-                    <div class="timeline-content">
-                        <div class="timeline-title">Previous Appointment</div>
-                        <div class="timeline-description">Last consultation on December 20, 2023</div>
-                    </div>
-                </div>
 
-                <div class="timeline-item">
-                    <div class="timeline-time">09:15</div>
-                    <div class="timeline-content">
-                        <div class="timeline-title">Lab Results Received</div>
-                        <div class="timeline-description">Blood work results available for review</div>
-                    </div>
-                </div>
-
-                <div class="timeline-item">
-                    <div class="timeline-time">08:45</div>
-                    <div class="timeline-content">
-                        <div class="timeline-title">Appointment Confirmed</div>
-                        <div class="timeline-description">Patient confirmed attendance via phone</div>
-                    </div>
-                </div>
-            </div>
-        </div>
     </div>
 </div>
 
@@ -1080,11 +1156,20 @@
     // Toggle completed status functionality
     function toggleCompleted() {
         const completedButtonText = document.getElementById('completedButtonText');
-        const scheduleId = workEntry.scheduleId || workEntry.appointmentId;
-        const type = workEntry.eventType; // Using eventType instead of type
-        const endpoint = type === 'appointment'
-            ? `/doctor/api/appointments/${scheduleId}/toggle-completed`
-            : `/doctor/api/schedule/${scheduleId}/toggle-completed`;
+
+        // Use the appropriate ID based on the event type
+        let id;
+        let endpoint;
+
+        if (workEntry.eventType === 'appointment') {
+            // For appointments, always use the appointmentId
+            id = workEntry.appointmentId;
+            endpoint = `/doctor/api/appointments/${id}/toggle-completed`;
+        } else {
+            // For schedules (on-call, break), use scheduleId
+            id = workEntry.scheduleId;
+            endpoint = `/doctor/api/schedule/${id}/toggle-completed`;
+        }
 
         // Get CSRF token
         const csrfToken = document.querySelector('input[name="_csrf"]').value;
@@ -1156,6 +1241,56 @@
             this.classList.add('active');
         });
     });
+
+    document.addEventListener('DOMContentLoaded', function() {
+        // Initialize Bootstrap dropdowns
+        var dropdownElementList = [].slice.call(document.querySelectorAll('.dropdown-toggle'))
+        dropdownElementList.map(function (dropdownToggleEl) {
+            return new bootstrap.Dropdown(dropdownToggleEl)
+        });
+
+        // Mark notification as read
+        document.querySelectorAll('.mark-read-btn').forEach(button => {
+            button.addEventListener('click', function(e) {
+                e.stopPropagation(); // Prevent dropdown from closing
+                const notificationId = this.getAttribute('data-id');
+                markNotificationAsRead(notificationId, this);
+            });
+        });
+    });
+
+    // Function to mark notification as read
+    function markNotificationAsRead(notificationId, buttonElement) {
+        fetch(`/api/notifications/${notificationId}/read`, {
+            method: 'PUT',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRF-TOKEN': document.querySelector('meta[name="_csrf"]').getAttribute('content')
+            }
+        })
+            .then(response => {
+                if (response.ok) {
+                    // Update UI
+                    const notificationItem = buttonElement.closest('.notification-item');
+                    notificationItem.classList.remove('unread');
+                    buttonElement.style.display = 'none';
+
+                    // Update badge count
+                    const badge = document.querySelector('.notification-badge');
+                    if (badge) {
+                        const currentCount = parseInt(badge.textContent);
+                        if (currentCount > 1) {
+                            badge.textContent = currentCount - 1;
+                        } else {
+                            badge.style.display = 'none';
+                        }
+                    }
+                }
+            })
+            .catch(error => {
+                console.error('Error marking notification as read:', error);
+            });
+    }
     /*]]>*/
 </script>
 </body>

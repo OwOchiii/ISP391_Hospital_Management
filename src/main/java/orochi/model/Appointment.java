@@ -38,7 +38,7 @@ public class Appointment {
     @NotNull(message = "Date and time is required")
     private LocalDateTime dateTime;
 
-    @Column(name = "Status", nullable = false, columnDefinition = "varchar(20) DEFAULT 'Scheduled'")
+    @Column(name = "Status", nullable = false, columnDefinition = "varchar(20) DEFAULT 'Pending'")
     @NotNull(message = "Status is required")
     private String status;
 

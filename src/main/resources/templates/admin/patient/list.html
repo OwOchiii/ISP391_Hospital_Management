@@ -619,6 +619,15 @@
     <div class="content-area">
         <!-- Page Header -->
         <div class="page-header">
+            <div th:if="${successMessage}" class="alert alert-success">
+                <i class="bi bi-check-circle me-2"></i>
+                <span th:text="${successMessage}"></span>
+            </div>
+            <div th:if="${errorMessage}" class="alert alert-danger">
+                <i class="bi bi-exclamation-circle me-2"></i>
+                <span th:text="${errorMessage}"></span>
+            </div>
+
             <div class="row align-items-center">
                 <div class="col-md-6">
                     <h2 class="mb-2">Patient Management</h2>
@@ -649,6 +658,8 @@
         <!-- Search and Filters -->
         <div class="search-filters">
             <form class="row g-3" method="get" th:action="@{/admin/patients}">
+                <input type="hidden" name="page" th:value="${currentPage}" />
+                <input type="hidden" name="size" th:value="${pageSize}" />
                 <input type="hidden" name="adminId" th:value="${adminId}"/>
                 <div class="col-md-4">
                     <label for="search" class="form-label">Search by Name/Email</label>
@@ -662,10 +673,10 @@
                         <option value="LOCKED" th:selected="${param.statusFilter=='LOCKED'}">Locked</option>
                     </select>
                 </div>
-                <div class="col-md-3">
-                    <label for="dateFrom" class="form-label">Date of Birth</label>
-                    <input type="date" id="dateFrom" name="dateFrom" th:value="${param.dateFrom}" class="form-control"/>
-                </div>
+<!--                <div class="col-md-3">-->
+<!--                    <label for="dateFrom" class="form-label">Date of Birth</label>-->
+<!--                    <input type="date" id="dateFrom" name="dateFrom" th:value="${param.dateFrom}" class="form-control"/>-->
+<!--                </div>-->
                 <div class="col-md-2">
                     <label class="form-label"> </label>
                     <button type="submit" class="btn-primary-custom w-100">
@@ -741,10 +752,6 @@
                                     <span class="info-value" th:text="${p.gender}">Male</span>
                                 </div>
                                 <div class="info-item">
-                                    <span class="info-label">Address</span>
-                                    <span class="info-value" th:text="${p.address}">123 Ly Thuong Kiet...</span>
-                                </div>
-                                <div class="info-item">
                                     <span class="info-label">Description</span>
                                     <span class="info-value" th:text="${p.description}">Allergic to penicillin.</span>
                                 </div>
@@ -757,6 +764,39 @@
                     </div>
                 </div>
             </div>
+
+            <nav aria-label="Page navigation">
+                <ul class="pagination justify-content-center">
+                    <li class="page-item" th:classappend="${currentPage==0} ? 'disabled'">
+                        <a class="page-link"
+                           th:href="@{/admin/patients(
+                     adminId=${adminId},
+                     search=${search},
+                     statusFilter=${statusFilter},
+                     page=${currentPage - 1},
+                     size=${pageSize})}">
+                            Previous
+                        </a>
+                    </li>
+                    <li class="page-item disabled">
+      <span class="page-link">
+        Page <span th:text="${currentPage+1}"></span> of <span th:text="${totalPages}"></span>
+      </span>
+                    </li>
+                    <li class="page-item" th:classappend="${currentPage+1>=totalPages} ? 'disabled'">
+                        <a class="page-link"
+                           th:href="@{/admin/patients(
+                     adminId=${adminId},
+                     search=${search},
+                     statusFilter=${statusFilter},
+                     page=${currentPage+1},
+                     size=${pageSize})}">
+                            Next
+                        </a>
+                    </li>
+                </ul>
+            </nav>
+
         </div>
     </div>
 </div>

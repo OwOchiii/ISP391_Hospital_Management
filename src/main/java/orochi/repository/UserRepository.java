@@ -35,4 +35,7 @@ public interface UserRepository extends JpaRepository<Users, Integer>, JpaSpecif
 
     @Query("SELECT u FROM Users u WHERE u.roleId = :roleId")
     Page<Users> findAllByRoleId(@Param("roleId") Integer roleId, Pageable pageable);
+
+    boolean existsByEmail(String email);
+
 }
