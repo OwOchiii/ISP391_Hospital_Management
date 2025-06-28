@@ -39,4 +39,10 @@ public interface DoctorRepository extends JpaRepository<Doctor, Integer> {
             @Param("statusFilter") String statusFilter
     );
 
+    @Query("""
+        SELECT d FROM Doctor d JOIN d.specializations s
+        WHERE s.specId = :specialtyId
+        """)
+    List<Doctor> findBySpecialtyId(int specialtyId);
+
 }
