@@ -411,7 +411,7 @@
 
         /* Scrollable Table in Modal */
         .table-responsive {
-            max-height: 500px; /* Adjust as needed */
+            max-height: 500px;
             overflow-y: auto;
         }
 
@@ -433,6 +433,35 @@
             background: var(--secondary);
         }
 
+        /* Filter Styles */
+        .filter-group {
+            display: flex;
+            gap: 1rem;
+            flex-wrap: wrap;
+            margin-bottom: 1rem;
+            align-items: center;
+        }
+
+        .filter-group .form-control {
+            flex: 1;
+            min-width: 150px;
+        }
+
+        .filter-group .btn-reset {
+            padding: 0.5rem 1rem;
+            border-radius: 8px;
+            font-size: 0.875rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            background: var(--light);
+            color: var(--text-dark);
+            border: 1px solid rgba(102, 126, 234, 0.2);
+        }
+
+        .filter-group .btn-reset:hover {
+            background: var(--bg-white);
+        }
+
         /* Responsive Design */
         @media (max-width: 768px) {
             .sidebar {
@@ -449,6 +478,15 @@
 
             .card {
                 padding: 1rem;
+            }
+
+            .filter-group {
+                flex-direction: column;
+            }
+
+            .filter-group .form-control,
+            .filter-group .btn-reset {
+                min-width: 100%;
             }
         }
 
@@ -581,9 +619,23 @@
                     <a href="#" class="text-primary" onclick="openAppointmentModal('in-progress')">View All</a>
                 </div>
                 <div class="card-body">
-                    <div class="input-group mb-3">
-                        <span class="input-group-text"><i class="fas fa-search"></i></span>
-                        <input type="text" class="form-control" id="search-in-progress" placeholder="Search by Name or Phone" onkeyup="searchAppointments('in-progress')">
+                    <div class="filter-group mb-3">
+                        <div class="input-group">
+                            <span class="input-group-text"><i class="fas fa-search"></i></span>
+                            <input type="text" class="form-control" id="search-in-progress" placeholder="Search by Name or Phone">
+                        </div>
+                        <select class="form-control" id="filter-age-group-in-progress">
+                            <option value="">Select Age Group</option>
+                            <option value="under_18">Under 18</option>
+                            <option value="18_40">18-40</option>
+                            <option value="40_60">40-60</option>
+                            <option value="over_60">Over 60</option>
+                        </select>
+                        <input type="datetime-local" class="form-control" id="filter-time-in-progress">
+                        <select class="form-control" id="filter-doctor-in-progress">
+                            <option value="">Select Doctor</option>
+                        </select>
+                        <button class="btn-reset" onclick="resetFilters('in-progress')">Reset</button>
                     </div>
                     <div class="table-responsive">
                         <table class="table table-hover">
@@ -612,9 +664,23 @@
                     <a href="#" class="text-primary" onclick="openAppointmentModal('completed')">View All</a>
                 </div>
                 <div class="card-body">
-                    <div class="input-group mb-3">
-                        <span class="input-group-text"><i class="fas fa-search"></i></span>
-                        <input type="text" class="form-control" id="search-completed" placeholder="Search by Name, or Phone" onkeyup="searchAppointments('completed')">
+                    <div class="filter-group mb-3">
+                        <div class="input-group">
+                            <span class="input-group-text"><i class="fas fa-search"></i></span>
+                            <input type="text" class="form-control" id="search-completed" placeholder="Search by Name or Phone">
+                        </div>
+                        <select class="form-control" id="filter-age-group-completed">
+                            <option value="">Select Age Group</option>
+                            <option value="under_18">Under 18</option>
+                            <option value="18_40">18-40</option>
+                            <option value="40_60">40-60</option>
+                            <option value="over_60">Over 60</option>
+                        </select>
+                        <input type="datetime-local" class="form-control" id="filter-time-completed">
+                        <select class="form-control" id="filter-doctor-completed">
+                            <option value="">Select Doctor</option>
+                        </select>
+                        <button class="btn-reset" onclick="resetFilters('completed')">Reset</button>
                     </div>
                     <div class="table-responsive">
                         <table class="table table-hover">
@@ -643,9 +709,23 @@
                     <a href="#" class="text-primary" onclick="openAppointmentModal('rejected')">View All</a>
                 </div>
                 <div class="card-body">
-                    <div class="input-group mb-3">
-                        <span class="input-group-text"><i class="fas fa-search"></i></span>
-                        <input type="text" class="form-control" id="search-rejected" placeholder="Search by Name, or Phone" onkeyup="searchAppointments('rejected')">
+                    <div class="filter-group mb-3">
+                        <div class="input-group">
+                            <span class="input-group-text"><i class="fas fa-search"></i></span>
+                            <input type="text" class="form-control" id="search-rejected" placeholder="Search by Name or Phone">
+                        </div>
+                        <select class="form-control" id="filter-age-group-rejected">
+                            <option value="">Select Age Group</option>
+                            <option value="under_18">Under 18</option>
+                            <option value="18_40">18-40</option>
+                            <option value="40_60">40-60</option>
+                            <option value="over_60">Over 60</option>
+                        </select>
+                        <input type="datetime-local" class="form-control" id="filter-time-rejected">
+                        <select class="form-control" id="filter-doctor-rejected">
+                            <option value="">Select Doctor</option>
+                        </select>
+                        <button class="btn-reset" onclick="resetFilters('rejected')">Reset</button>
                     </div>
                     <div class="table-responsive">
                         <table class="table table-hover">
@@ -679,9 +759,23 @@
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
             <div class="modal-body">
-                <div class="input-group mb-3">
-                    <span class="input-group-text"><i class="fas fa-search"></i></span>
-                    <input type="text" class="form-control" id="modalSearch" placeholder="Search by Name, or Phone" onkeyup="searchModalAppointments()">
+                <div class="filter-group mb-3">
+                    <div class="input-group">
+                        <span class="input-group-text"><i class="fas fa-search"></i></span>
+                        <input type="text" class="form-control" id="modalSearch" placeholder="Search by Name or Phone">
+                    </div>
+                    <select class="form-control" id="modalFilterAgeGroup">
+                        <option value="">Select Age Group</option>
+                        <option value="under_18">Under 18</option>
+                        <option value="18_40">18-40</option>
+                        <option value="40_60">40-60</option>
+                        <option value="over_60">Over 60</option>
+                    </select>
+                    <input type="datetime-local" class="form-control" id="modalFilterTime">
+                    <select class="form-control" id="modalFilterDoctor">
+                        <option value="">Select Doctor</option>
+                    </select>
+                    <button class="btn-reset" onclick="resetModalFilters()">Reset</button>
                 </div>
                 <div class="table-responsive">
                     <table class="table table-hover">
@@ -712,6 +806,7 @@
         'completed': 'Completed',
         'rejected': 'Cancel'
     };
+
     // Sidebar toggle functionality
     function toggleSidebar() {
         const sidebar = document.getElementById('patientSidebar');
@@ -747,9 +842,9 @@
     const itemsPerPage = 5;
     const maxModalItems = 16; // Maximum items to display in modal
     const paginationStates = {
-        'in-progress': { currentPage: 1, searchTerm: '' },
-        'completed': { currentPage: 1, searchTerm: '' },
-        'rejected': { currentPage: 1, searchTerm: '' }
+        'in-progress': { currentPage: 1, searchTerm: '', filterAgeGroup: '', filterTime: '', filterDoctor: '' },
+        'completed': { currentPage: 1, searchTerm: '', filterAgeGroup: '', filterTime: '', filterDoctor: '' },
+        'rejected': { currentPage: 1, searchTerm: '', filterAgeGroup: '', filterTime: '', filterDoctor: '' }
     };
 
     // Debounce function to limit fetch calls
@@ -765,28 +860,63 @@
         };
     }
 
+    // Fetch doctors from server
+    async function fetchDoctors() {
+        try {
+            const response = await fetch('/api/doctors');
+            if (!response.ok) {
+                throw new Error(`Failed to fetch doctors: ${response.statusText}`);
+            }
+            const doctors = await response.json();
+            return doctors; // Expected format: [{ id: 1, name: 'Dr. Smith' }, ...]
+        } catch (error) {
+            console.error('Error fetching doctors:', error);
+            return [];
+        }
+    }
+
+    // Populate doctor dropdowns
+    async function populateDoctorDropdowns() {
+        const doctorSelects = document.querySelectorAll('[id^="filter-doctor-"], #modalFilterDoctor');
+        const doctors = await fetchDoctors();
+        doctorSelects.forEach(select => {
+            select.innerHTML = '<option value="">Select Doctor</option>';
+            doctors.forEach(doctor => {
+                const option = document.createElement('option');
+                option.value = doctor.id;
+                option.textContent = doctor.name;
+                select.appendChild(option);
+            });
+        });
+    }
+
     // Fetch appointments from server
-    async function fetchAppointments(status, page, searchTerm = '', fetchAll = false) {
+    async function fetchAppointments(status, page, searchTerm = '', filterAgeGroup = '', filterTime = '', filterDoctor = '', fetchAll = false) {
         try {
             const apiStatus = statusMap[status];
             if (!apiStatus) {
                 throw new Error(`Invalid status provided: ${status}`);
             }
-            let url = `/api/appointments?status=${apiStatus}&page=${page}&search=${encodeURIComponent(searchTerm)}`;
+            let url = `/api/appointments?status=${encodeURIComponent(apiStatus)}&page=${page}&search=${encodeURIComponent(searchTerm)}`;
+            if (filterAgeGroup) url += `&ageGroup=${encodeURIComponent(filterAgeGroup)}`;
+            if (filterTime) url += `&time=${encodeURIComponent(filterTime)}`;
+            if (filterDoctor) url += `&doctor=${encodeURIComponent(filterDoctor)}`;
             if (fetchAll) {
                 url += '&fetchAll=true';
             }
 
+            console.log(`Fetching appointments with URL: ${url}`);
             const response = await fetch(url);
             if (!response.ok) {
                 const errorText = await response.text();
                 throw new Error(`Failed to fetch appointments: ${errorText || response.statusText}`);
             }
             const data = await response.json();
+            console.log(`Received appointments:`, data);
             return data; // Expected format: { appointments: [], total: number }
         } catch (error) {
             console.error(`Error fetching ${apiStatus} appointments:`, error);
-            throw error; // Propagate the error to caller for better error handling
+            throw error;
         }
     }
 
@@ -794,30 +924,39 @@
     async function renderAppointments(status, page = 1) {
         const tbody = document.getElementById(`${status}-list`);
         const pagination = document.getElementById(`${status}-pagination`);
-        const { searchTerm } = paginationStates[status];
+        const { searchTerm, filterAgeGroup, filterTime, filterDoctor } = paginationStates[status];
 
         try {
-            const { appointments, total } = await fetchAppointments(status, page, searchTerm);
+            const { appointments, total } = await fetchAppointments(
+                status,
+                page,
+                searchTerm,
+                filterAgeGroup,
+                filterTime,
+                filterDoctor
+            );
             tbody.innerHTML = '';
 
-            appointments.forEach(appt => {
-                const row = document.createElement('tr');
-                const actionsHtml = `
-                    <a href="appointment-details.jsp?stt=${appt.stt}" class="btn-view"><i class="fas fa-eye"></i></a>
-                    ${status === 'in-progress' ? `
-                    ` : ''}
-                `;
-                row.innerHTML = `
-                    <td>${appt.stt}</td>
-                    <td>${appt.name}</td>
-                    <td>${calculateAge(appt.dob)}</td>
-                    <td>${appt.phone}</td>
-                    <td>${appt.time}</td>
-                    <td>${appt.doctor}</td>
-                    <td class="action-buttons">${actionsHtml}</td>
-                `;
-                tbody.appendChild(row);
-            });
+            if (appointments.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="7" class="text-center">No data available</td></tr>';
+            } else {
+                appointments.forEach(appt => {
+                    const row = document.createElement('tr');
+                    const actionsHtml = `
+                        <a href="/receptionist/appointment-details?stt=${appt.stt}" class="btn-view"><i class="fas fa-eye"></i></a>
+                    `;
+                    row.innerHTML = `
+                        <td>${appt.stt}</td>
+                        <td>${appt.name}</td>
+                        <td>${calculateAge(appt.dob)}</td>
+                        <td>${appt.phone}</td>
+                        <td>${appt.time}</td>
+                        <td>${appt.doctor}</td>
+                        <td class="action-buttons">${actionsHtml}</td>
+                    `;
+                    tbody.appendChild(row);
+                });
+            }
 
             // Render pagination
             const totalPages = Math.ceil(total / itemsPerPage);
@@ -854,6 +993,7 @@
             }
         } catch (error) {
             console.error(`Error rendering ${status} appointments:`, error);
+            tbody.innerHTML = '<tr><td colspan="7" class="text-center">Error loading appointments</td></tr>';
         }
     }
 
@@ -866,7 +1006,6 @@
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ stt, status: newApiStatus })
             });
-            console.log(response)
             if (!response.ok) throw new Error('Failed to update status');
             // Refresh all tables
             await Promise.all([
@@ -879,12 +1018,39 @@
         }
     }
 
-    // Search appointments
-    const searchAppointments = debounce(function(status) {
-        paginationStates[status].searchTerm = document.getElementById(`search-${status}`).value;
+    // Apply filters
+    function applyFilters(status) {
+        const searchTerm = document.getElementById(`search-${status}`).value.trim();
+        const filterAgeGroup = document.getElementById(`filter-age-group-${status}`).value.trim();
+        const filterTime = document.getElementById(`filter-time-${status}`).value.trim();
+        const filterDoctor = document.getElementById(`filter-doctor-${status}`).value.trim();
+
+        paginationStates[status].searchTerm = searchTerm;
+        paginationStates[status].filterAgeGroup = filterAgeGroup;
+        paginationStates[status].filterTime = filterTime;
+        paginationStates[status].filterDoctor = filterDoctor;
         paginationStates[status].currentPage = 1;
+
+        console.log(`Applying filters for ${status}:`, { searchTerm, filterAgeGroup, filterTime, filterDoctor });
         renderAppointments(status, 1);
-    }, 300);
+    }
+
+    // Reset filters
+    function resetFilters(status) {
+        document.getElementById(`search-${status}`).value = '';
+        document.getElementById(`filter-age-group-${status}`).value = '';
+        document.getElementById(`filter-time-${status}`).value = '';
+        document.getElementById(`filter-doctor-${status}`).value = '';
+
+        paginationStates[status].searchTerm = '';
+        paginationStates[status].filterAgeGroup = '';
+        paginationStates[status].filterTime = '';
+        paginationStates[status].filterDoctor = '';
+        paginationStates[status].currentPage = 1;
+
+        console.log(`Resetting filters for ${status}`);
+        renderAppointments(status, 1);
+    }
 
     // Open modal with all appointments
     async function openAppointmentModal(status) {
@@ -892,67 +1058,140 @@
         const modalList = document.getElementById('modalAppointmentList');
         modalTitle.textContent = `${status.charAt(0).toUpperCase() + status.slice(1)} Appointments`;
 
-        const { appointments } = await fetchAppointments(status, 1, '', true); // Fetch all
-        modalList.innerHTML = '';
+        const { searchTerm, filterAgeGroup, filterTime, filterDoctor } = paginationStates[status];
+        try {
+            const { appointments } = await fetchAppointments(
+                status,
+                1,
+                searchTerm,
+                filterAgeGroup,
+                filterTime,
+                filterDoctor,
+                true
+            );
+            modalList.innerHTML = '';
 
-        // Limit to maxModalItems (16)
-        const limitedAppointments = appointments.slice(0, maxModalItems);
+            if (appointments.length === 0) {
+                modalList.innerHTML = '<tr><td colspan="7" class="text-center">No data available</td></tr>';
+            } else {
+                // Limit to maxModalItems (16)
+                const limitedAppointments = appointments.slice(0, maxModalItems);
 
-        limitedAppointments.forEach(appt => {
-            const row = document.createElement('tr');
-            const actionsHtml = `
-                <a href="appointment-details.jsp?stt=${appt.stt}" class="btn-view"><i class="fas fa-eye"></i></a>
-                ${status === 'in-progress' ? `
-                ` : ''}
-            `;
-            row.innerHTML = `
-                <td>${appt.stt}</td>
-                <td>${appt.name}</td>
-                <td>${calculateAge(appt.dob)}</td>
-                <td>${appt.phone}</td>
-                <td>${appt.time}</td>
-                <td>${appt.doctor}</td>
-                <td class="action-buttons">${actionsHtml}</td>
-            `;
-            modalList.appendChild(row);
-        });
+                limitedAppointments.forEach(appt => {
+                    const row = document.createElement('tr');
+                    const actionsHtml = `
+                        <a href="/receptionist/appointment-details?stt=${appt.stt}" class="btn-view"><i class="fas fa-eye"></i></a>
+                    `;
+                    row.innerHTML = `
+                        <td>${appt.stt}</td>
+                        <td>${appt.name}</td>
+                        <td>${calculateAge(appt.dob)}</td>
+                        <td>${appt.phone}</td>
+                        <td>${appt.time}</td>
+                        <td>${appt.doctor}</td>
+                        <td class="action-buttons">${actionsHtml}</td>
+                    `;
+                    modalList.appendChild(row);
+                });
+            }
 
-        appointmentModal.show();
+            // Set filter values in modal
+            document.getElementById('modalSearch').value = searchTerm || '';
+            document.getElementById('modalFilterAgeGroup').value = filterAgeGroup || '';
+            document.getElementById('modalFilterTime').value = filterTime || '';
+            document.getElementById('modalFilterDoctor').value = filterDoctor || '';
+            appointmentModal.show();
+        } catch (error) {
+            console.error(`Error opening modal for ${status}:`, error);
+            modalList.innerHTML = '<tr><td colspan="7" class="text-center">Error loading appointments</td></tr>';
+        }
     }
 
-    // Search in modal
-    const searchModalAppointments = debounce(async function() {
-        const searchTerm = document.getElementById('modalSearch').value;
+    // Apply modal filters
+    function applyModalFilters() {
         const modalTitle = document.getElementById('appointmentModalLabel').textContent.toLowerCase();
         const status = modalTitle.split(' ')[0];
+
+        const searchTerm = document.getElementById('modalSearch').value.trim();
+        const filterAgeGroup = document.getElementById('modalFilterAgeGroup').value.trim();
+        const filterTime = document.getElementById('modalFilterTime').value.trim();
+        const filterDoctor = document.getElementById('modalFilterDoctor').value.trim();
+
+        paginationStates[status].searchTerm = searchTerm;
+        paginationStates[status].filterAgeGroup = filterAgeGroup;
+        paginationStates[status].filterTime = filterTime;
+        paginationStates[status].filterDoctor = filterDoctor;
+
+        console.log(`Applying modal filters for ${status}:`, { searchTerm, filterAgeGroup, filterTime, filterDoctor });
+        renderModalAppointments(status);
+    }
+
+    // Reset modal filters
+    function resetModalFilters() {
+        const modalTitle = document.getElementById('appointmentModalLabel').textContent.toLowerCase();
+        const status = modalTitle.split(' ')[0];
+
+        document.getElementById('modalSearch').value = '';
+        document.getElementById('modalFilterAgeGroup').value = '';
+        document.getElementById('modalFilterTime').value = '';
+        document.getElementById('modalFilterDoctor').value = '';
+
+        paginationStates[status].searchTerm = '';
+        paginationStates[status].filterAgeGroup = '';
+        paginationStates[status].filterTime = '';
+        paginationStates[status].filterDoctor = '';
+
+        console.log(`Resetting modal filters for ${status}`);
+        renderModalAppointments(status);
+    }
+
+    // Render modal appointments
+    async function renderModalAppointments(status) {
         const modalList = document.getElementById('modalAppointmentList');
+        const { searchTerm, filterAgeGroup, filterTime, filterDoctor } = paginationStates[status];
 
-        const { appointments } = await fetchAppointments(status, 1, searchTerm, true);
-        modalList.innerHTML = '';
+        try {
+            const { appointments } = await fetchAppointments(
+                status,
+                1,
+                searchTerm,
+                filterAgeGroup,
+                filterTime,
+                filterDoctor,
+                true
+            );
+            modalList.innerHTML = '';
 
-        // Limit to maxModalItems (16)
-        const limitedAppointments = appointments.slice(0, maxModalItems);
+            if (appointments.length === 0) {
+                modalList.innerHTML = '<tr><td colspan="7" class="text-center">No data available</td></tr>';
+            } else {
+                // Limit to maxModalItems (16)
+                const limitedAppointments = appointments.slice(0, maxModalItems);
 
-        limitedAppointments.forEach(appt => {
-            const row = document.createElement('tr');
-            const actionsHtml = `
-                <a href="appointment-details.jsp?stt=${appt.stt}" class="btn-view"><i class="fas fa-eye"></i></a>
-                ${status === 'in-progress' ? `
-                ` : ''}
-            `;
-            row.innerHTML = `
-                <td>${appt.stt}</td>
-                <td>${appt.name}</td>
-                <td>${calculateAge(appt.dob)}</td>
-                <td>${appt.phone}</td>
-                <td>${appt.time}</td>
-                <td>${appt.doctor}</td>
-                <td class="action-buttons">${actionsHtml}</td>
-            `;
-            modalList.appendChild(row);
-        });
-    }, 300);
+                limitedAppointments.forEach(appt => {
+                    const row = document.createElement('tr');
+                    const actionsHtml = `
+                        <a href="/receptionist/appointment-details?stt=${appt.stt}" class="btn-view"><i class="fas fa-eye"></i></a>
+                    `;
+                    row.innerHTML = `
+                        <td>${appt.stt}</td>
+                        <td>${appt.name}</td>
+                        <td>${calculateAge(appt.dob)}</td>
+                        <td>${appt.phone}</td>
+                        <td>${appt.time}</td>
+                        <td>${appt.doctor}</td>
+                        <td class="action-buttons">${actionsHtml}</td>
+                    `;
+                    modalList.appendChild(row);
+                });
+            }
+        } catch (error) {
+            console.error(`Error rendering modal appointments for ${status}:`, error);
+            modalList.innerHTML = '<tr><td colspan="7" class="text-center">Error loading appointments</td></tr>';
+        }
+    }
 
+    // Calculate age
     function calculateAge(birthDate) {
         const today = new Date();
         const birth = new Date(birthDate);
@@ -970,11 +1209,31 @@
         return age;
     }
 
-    // Initialize tables
-    document.addEventListener('DOMContentLoaded', () => {
+    // Initialize tables, doctor dropdowns, and event listeners
+    document.addEventListener('DOMContentLoaded', async () => {
+        await populateDoctorDropdowns();
+
+        // Render initial tables
         renderAppointments('in-progress');
         renderAppointments('completed');
         renderAppointments('rejected');
+
+        // Add event listeners for filters
+        ['in-progress', 'completed', 'rejected'].forEach(status => {
+            const debouncedApplyFilters = debounce(() => applyFilters(status), 300);
+
+            document.getElementById(`search-${status}`).addEventListener('input', debouncedApplyFilters);
+            document.getElementById(`filter-age-group-${status}`).addEventListener('change', debouncedApplyFilters);
+            document.getElementById(`filter-time-${status}`).addEventListener('change', debouncedApplyFilters);
+            document.getElementById(`filter-doctor-${status}`).addEventListener('change', debouncedApplyFilters);
+        });
+
+        // Add event listeners for modal filters
+        const debouncedApplyModalFilters = debounce(applyModalFilters, 300);
+        document.getElementById('modalSearch').addEventListener('input', debouncedApplyModalFilters);
+        document.getElementById('modalFilterAgeGroup').addEventListener('change', debouncedApplyModalFilters);
+        document.getElementById('modalFilterTime').addEventListener('change', debouncedApplyModalFilters);
+        document.getElementById('modalFilterDoctor').addEventListener('change', debouncedApplyModalFilters);
     });
 </script>
 </body>
