@@ -32,6 +32,7 @@ import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.time.format.DateTimeFormatter;
 import java.time.format.DateTimeParseException;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
@@ -385,9 +386,13 @@ public class PatientDashboardController {
         Patient patient = patientOpt.get();
         Users user = patient.getUser();
         String streetAddress = "";
+        String city = "";
+        String country = "Vietnam"; // Default to Vietnam
         if (patient.getContacts() != null && !patient.getContacts().isEmpty()) {
             PatientContact contact = patient.getContacts().get(0);
             streetAddress = contact.getStreetAddress();
+            city = contact.getCity();
+            country = contact.getCountry();
         }
 
         ProfileUpdateForm form = new ProfileUpdateForm();
@@ -398,10 +403,27 @@ public class PatientDashboardController {
         form.setGender(patient.getGender());
         form.setDescription(patient.getDescription());
         form.setStreetAddress(streetAddress);
+        form.setCity(city);
+        form.setCountry(country);
+
+        // List of all 63 cities/provinces in Vietnam
+        List<String> cities = Arrays.asList(
+                "An Giang", "Ba Ria-Vung Tau", "Bac Giang", "Bac Kan", "Bac Lieu", "Bac Ninh", "Ben Tre",
+                "Binh Dinh", "Binh Duong", "Binh Phuoc", "Binh Thuan", "Ca Mau", "Can Tho", "Cao Bang",
+                "Da Nang", "Dak Lak", "Dak Nong", "Dien Bien", "Dong Nai", "Dong Thap", "Gia Lai",
+                "Ha Giang", "Ha Nam", "Ha Noi", "Ha Tinh", "Hai Duong", "Hai Phong", "Hau Giang",
+                "Ho Chi Minh City", "Hoa Binh", "Hung Yen", "Khanh Hoa", "Kien Giang", "Kon Tum",
+                "Lai Chau", "Lam Dong", "Lang Son", "Lao Cai", "Long An", "Nam Dinh", "Nghe An",
+                "Ninh Binh", "Ninh Thuan", "Phu Tho", "Phu Yen", "Quang Binh", "Quang Nam", "Quang Ngai",
+                "Quang Ninh", "Quang Tri", "Soc Trang", "Son La", "Tay Ninh", "Thai Binh", "Thai Nguyen",
+                "Thanh Hoa", "Thua Thien Hue", "Tien Giang", "Tra Vinh", "Tuyen Quang", "Vinh Long",
+                "Vinh Phuc", "Yen Bai"
+        );
 
         model.addAttribute("profileForm", form);
         model.addAttribute("patientId", patientId);
         model.addAttribute("patientName", user.getFullName());
+        model.addAttribute("cities", cities);
 
         return "patient/update-profile";
     }
@@ -420,8 +442,25 @@ public class PatientDashboardController {
             return "redirect:/patient/profile";
         }
 
+        // Ensure country is always Vietnam
+        form.setCountry("Vietnam");
+
         if (bindingResult.hasErrors()) {
             System.out.println("Validation errors found: " + bindingResult.getAllErrors());
+            // Re-add cities to the model for form re-rendering
+            List<String> cities = Arrays.asList(
+                    "An Giang", "Ba Ria-Vung Tau", "Bac Giang", "Bac Kan", "Bac Lieu", "Bac Ninh", "Ben Tre",
+                    "Binh Dinh", "Binh Duong", "Binh Phuoc", "Binh Thuan", "Ca Mau", "Can Tho", "Cao Bang",
+                    "Da Nang", "Dak Lak", "Dak Nong", "Dien Bien", "Dong Nai", "Dong Thap", "Gia Lai",
+                    "Ha Giang", "Ha Nam", "Ha Noi", "Ha Tinh", "Hai Duong", "Hai Phong", "Hau Giang",
+                    "Ho Chi Minh City", "Hoa Binh", "Hung Yen", "Khanh Hoa", "Kien Giang", "Kon Tum",
+                    "Lai Chau", "Lam Dong", "Lang Son", "Lao Cai", "Long An", "Nam Dinh", "Nghe An",
+                    "Ninh Binh", "Ninh Thuan", "Phu Tho", "Phu Yen", "Quang Binh", "Quang Nam", "Quang Ngai",
+                    "Quang Ninh", "Quang Tri", "Soc Trang", "Son La", "Tay Ninh", "Thai Binh", "Thai Nguyen",
+                    "Thanh Hoa", "Thua Thien Hue", "Tien Giang", "Tra Vinh", "Tuyen Quang", "Vinh Long",
+                    "Vinh Phuc", "Yen Bai"
+            );
+            model.addAttribute("cities", cities);
             return "patient/update-profile";
         }
 
@@ -436,35 +475,9 @@ public class PatientDashboardController {
         Users user = patient.getUser();
         System.out.println("Found patient ID: " + patient.getPatientId() + ", user ID: " + user.getUserId());
 
-        String newEmail = form.getEmail();
-        String newPhoneNumber = form.getPhoneNumber();
-
-        if (!newEmail.equals(user.getEmail())) {
-            Optional<Users> emailCheck = userRepository.findByEmail(newEmail);
-            if (emailCheck.isPresent() && !emailCheck.get().getUserId().equals(user.getUserId())) {
-                System.out.println("Email already in use: " + newEmail);
-                bindingResult.addError(new FieldError("profileForm", "email", "This email is already in use."));
-            }
-        }
-
-        if (!newPhoneNumber.equals(user.getPhoneNumber()) && userRepository.existsByPhoneNumberAndUserIdNot(newPhoneNumber, user.getUserId())) {
-            System.out.println("Phone number already in use: " + newPhoneNumber);
-            bindingResult.addError(new FieldError("profileForm", "phoneNumber", "This phone number is already in use."));
-        }
-
-        if (bindingResult.hasErrors()) {
-            System.out.println("Post-validation errors found: " + bindingResult.getAllErrors());
-            return "patient/update-profile";
-        }
-
         try {
-            // Update Users entity
             user.setFullName(form.getFullName());
-            user.setEmail(newEmail);
-            user.setPhoneNumber(newPhoneNumber);
-            System.out.println("Saving user ID: " + user.getUserId() + ", email: " + user.getEmail());
             userRepository.save(user);
-
             // Update Patient entity
             patient.setDateOfBirth(form.getDateOfBirth());
             patient.setGender(form.getGender());
@@ -477,8 +490,8 @@ public class PatientDashboardController {
             if (contactOpt.isPresent()) {
                 PatientContact contact = contactOpt.get();
                 contact.setStreetAddress(form.getStreetAddress());
-                contact.setCity("OK");
-                contact.setCountry("OK");
+                contact.setCity(form.getCity());
+                contact.setCountry("Vietnam");
                 System.out.println("Saving existing contact ID: " + contact.getContactId());
                 patientContactRepository.save(contact);
             } else {
@@ -486,13 +499,12 @@ public class PatientDashboardController {
                 newContact.setPatientId(patientId);
                 newContact.setAddressType("Primary");
                 newContact.setStreetAddress(form.getStreetAddress());
-                newContact.setCity("OK");
-                newContact.setCountry("OK");
+                newContact.setCity(form.getCity());
+                newContact.setCountry("Vietnam");
                 System.out.println("Saving new contact for patient ID: " + patientId);
                 patientContactRepository.save(newContact);
             }
 
-            // Move success message after all saves
             System.out.println("Profile updated successfully for patient ID: " + patientId);
             redirectAttributes.addFlashAttribute("successMessage", "Profile updated successfully");
             return "redirect:/patient/profile";
@@ -500,6 +512,20 @@ public class PatientDashboardController {
             System.out.println("Error updating profile for patient ID: " + patientId + ", error: " + e.getMessage());
             e.printStackTrace();
             model.addAttribute("errorMessage", "Failed to update profile: " + e.getMessage());
+            // Re-add cities to the model for form re-rendering
+            List<String> cities = Arrays.asList(
+                    "An Giang", "Ba Ria-Vung Tau", "Bac Giang", "Bac Kan", "Bac Lieu", "Bac Ninh", "Ben Tre",
+                    "Binh Dinh", "Binh Duong", "Binh Phuoc", "Binh Thuan", "Ca Mau", "Can Tho", "Cao Bang",
+                    "Da Nang", "Dak Lak", "Dak Nong", "Dien Bien", "Dong Nai", "Dong Thap", "Gia Lai",
+                    "Ha Giang", "Ha Nam", "Ha Noi", "Ha Tinh", "Hai Duong", "Hai Phong", "Hau Giang",
+                    "Ho Chi Minh City", "Hoa Binh", "Hung Yen", "Khanh Hoa", "Kien Giang", "Kon Tum",
+                    "Lai Chau", "Lam Dong", "Lang Son", "Lao Cai", "Long An", "Nam Dinh", "Nghe An",
+                    "Ninh Binh", "Ninh Thuan", "Phu Tho", "Phu Yen", "Quang Binh", "Quang Nam", "Quang Ngai",
+                    "Quang Ninh", "Quang Tri", "Soc Trang", "Son La", "Tay Ninh", "Thai Binh", "Thai Nguyen",
+                    "Thanh Hoa", "Thua Thien Hue", "Tien Giang", "Tra Vinh", "Tuyen Quang", "Vinh Long",
+                    "Vinh Phuc", "Yen Bai"
+            );
+            model.addAttribute("cities", cities);
             return "patient/update-profile";
         }
     }

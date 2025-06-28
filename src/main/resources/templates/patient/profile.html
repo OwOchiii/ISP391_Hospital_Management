@@ -648,6 +648,16 @@
           <span class="detail-value" th:if="${patient.contacts != null and not #lists.isEmpty(patient.contacts)}" th:text="${patient.contacts[0].streetAddress}">No address provided</span>
           <span class="detail-value" th:unless="${patient.contacts != null and not #lists.isEmpty(patient.contacts)}">No address provided</span>
         </div>
+        <div class="detail-item">
+          <span class="detail-label">City</span>
+          <span class="detail-value" th:if="${patient.contacts != null and not #lists.isEmpty(patient.contacts)}" th:text="${patient.contacts[0].city}">No city provided</span>
+          <span class="detail-value" th:unless="${patient.contacts != null and not #lists.isEmpty(patient.contacts)}">No city provided</span>
+        </div>
+        <div class="detail-item">
+          <span class="detail-label">Country</span>
+          <span class="detail-value" th:if="${patient.contacts != null and not #lists.isEmpty(patient.contacts)}" th:text="${patient.contacts[0].country}">No country provided</span>
+          <span class="detail-value" th:unless="${patient.contacts != null and not #lists.isEmpty(patient.contacts)}">No country provided</span>
+        </div>
       </div>
 
       <div class="profile-description">

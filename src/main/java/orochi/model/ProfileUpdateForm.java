@@ -36,4 +36,12 @@ public class ProfileUpdateForm {
     @NotBlank(message = "Street Address is required")
     @Size(max = 255, message = "Street Address must not exceed 255 characters")
     private String streetAddress;
+
+    @NotBlank(message = "City is required")
+    @Size(max = 100, message = "City must not exceed 100 characters")
+    private String city;
+
+    @NotBlank(message = "Country is required")
+    @Size(max = 100, message = "Country must not exceed 100 characters")
+    private String country;
 }
