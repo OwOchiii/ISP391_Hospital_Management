@@ -134,4 +134,19 @@ public interface AppointmentRepository extends JpaRepository<Appointment, Intege
             @Param("end") LocalDateTime end,
             @Param("appointmentId") Integer appointmentId);
 
+    @Query("SELECT a FROM Appointment a " +
+            "JOIN a.doctor d " +
+            "JOIN d.user u " +
+            "WHERE a.patientId = :patientId " +
+            "AND (:search IS NULL OR LOWER(u.fullName) LIKE LOWER(CONCAT('%', :search, '%')) OR LOWER(a.description) LIKE LOWER(CONCAT('%', :search, '%'))) " +
+            "AND (:status IS NULL OR a.status = :status) " +
+            "AND (:fromDate IS NULL OR a.dateTime >= :fromDate) " +
+            "AND (:toDate IS NULL OR a.dateTime <= :toDate)")
+    Page<Appointment> findByPatientIdWithFilters(
+            @Param("patientId") Integer patientId,
+            @Param("search") String search,
+            @Param("status") String status,
+            @Param("fromDate") LocalDateTime fromDate,
+            @Param("toDate") LocalDateTime toDate,
+            Pageable pageable);
 }

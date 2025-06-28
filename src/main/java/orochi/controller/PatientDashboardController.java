@@ -8,6 +8,7 @@ import org.springframework.dao.DataAccessException;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -171,7 +172,13 @@ public class PatientDashboardController {
     }
 
     @GetMapping("/appointment-list")
-    public String appointmentList(Model model) {
+    public String appointmentList(
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(required = false) String search,
+            @RequestParam(required = false) String status,
+            @RequestParam(required = false) String fromDate,
+            @RequestParam(required = false) String toDate,
+            Model model) {
         try {
             Integer patientId = getCurrentPatientId();
             if (patientId == null) {
@@ -179,41 +186,63 @@ public class PatientDashboardController {
                 return "error";
             }
 
-            // Get patient info
             Optional<Patient> patientOpt = patientRepository.findById(patientId);
             if (patientOpt.isPresent()) {
                 Patient patient = patientOpt.get();
                 model.addAttribute("patientName", patient.getUser().getFullName());
             }
 
-            // Get all appointments for the patient
-            List<Appointment> appointments = appointmentRepository.findByPatientIdOrderByDateTimeDesc(patientId);
+            int pageSize = 5;
+            Pageable pageable = PageRequest.of(page, pageSize, Sort.by("dateTime").descending());
 
-            // Count appointments by status
-            long scheduledCount = appointments.stream()
-                    .filter(a -> "Scheduled".equals(a.getStatus()))
-                    .count();
+            String searchTerm = (search != null && !search.trim().isEmpty()) ? search.trim() : null;
+            String statusFilter = (status != null && !status.trim().isEmpty()) ? status.trim() : null;
+            LocalDateTime fromDateTime = null;
+            LocalDateTime toDateTime = null;
 
-            long pendingCount = appointments.stream()
-                    .filter(a -> "Pending".equals(a.getStatus()))
-                    .count();
+            if (fromDate != null && !fromDate.trim().isEmpty()) {
+                try {
+                    fromDateTime = LocalDateTime.parse(fromDate + "T00:00:00");
+                } catch (DateTimeParseException e) {
+                    model.addAttribute("errorMessage", "Invalid From Date format. Please use YYYY-MM-DD.");
+                    return "patient/appointment-list";
+                }
+            }
+            if (toDate != null && !toDate.trim().isEmpty()) {
+                try {
+                    toDateTime = LocalDateTime.parse(toDate + "T23:59:59");
+                    if (fromDateTime != null && toDateTime.isBefore(fromDateTime)) {
+                        model.addAttribute("errorMessage", "To Date cannot be before From Date.");
+                        return "patient/appointment-list";
+                    }
+                } catch (DateTimeParseException e) {
+                    model.addAttribute("errorMessage", "Invalid To Date format. Please use YYYY-MM-DD.");
+                    return "patient/appointment-list";
+                }
+            }
 
-            long completedCount = appointments.stream()
-                    .filter(a -> "Completed".equals(a.getStatus()))
-                    .count();
+            Page<Appointment> appointmentPage = appointmentRepository.findByPatientIdWithFilters(
+                    patientId, searchTerm, statusFilter, fromDateTime, toDateTime, pageable);
 
-            long cancelledCount = appointments.stream()
-                    .filter(a -> "Cancel".equals(a.getStatus()))
-                    .count();
+            long scheduledCount = appointmentRepository.countByPatientIdAndStatus(patientId, "Scheduled");
+            long pendingCount = appointmentRepository.countByPatientIdAndStatus(patientId, "Pending");
+            long completedCount = appointmentRepository.countByPatientIdAndStatus(patientId, "Completed");
+            long cancelledCount = appointmentRepository.countByPatientIdAndStatus(patientId, "Cancel");
 
-            // Add attributes to model
-            model.addAttribute("appointments", appointments);
+            model.addAttribute("appointments", appointmentPage.getContent());
+            model.addAttribute("totalPages", appointmentPage.getTotalPages());
+            model.addAttribute("currentPage", appointmentPage.getNumber());
+            model.addAttribute("pageSize", pageSize);
             model.addAttribute("patientId", patientId);
-            model.addAttribute("totalAppointments", appointments.size());
+            model.addAttribute("totalAppointments", appointmentPage.getTotalElements());
             model.addAttribute("scheduledAppointments", scheduledCount);
             model.addAttribute("pendingAppointments", pendingCount);
             model.addAttribute("completedAppointments", completedCount);
             model.addAttribute("cancelledAppointments", cancelledCount);
+            model.addAttribute("search", search);
+            model.addAttribute("status", status);
+            model.addAttribute("fromDate", fromDate);
+            model.addAttribute("toDate", toDate);
 
             return "patient/appointment-list";
         } catch (Exception e) {
