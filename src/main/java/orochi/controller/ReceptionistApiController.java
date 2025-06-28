@@ -117,10 +117,11 @@ public class ReceptionistApiController {
 
     @GetMapping("/patients")
     public ResponseEntity<?> getPatients(
-            @RequestParam(defaultValue = "1") int page,
+            @RequestParam(value = "page", required = false) Integer page,
             @RequestParam(defaultValue = "") String search) {
         try {
-            // Implementing pagination and search
+            // Default page to 1 if null or invalid
+            int pageNumber = (page == null || page < 1) ? 1 : page;
             int itemsPerPage = 12;
             List<Patient> allPatients = receptionistService.getAllPatients();
             // Filter by search term if provided
@@ -134,7 +135,7 @@ public class ReceptionistApiController {
 
             // Calculate pagination
             int total = allPatients.size();
-            int start = (page - 1) * itemsPerPage;
+            int start = (pageNumber - 1) * itemsPerPage;
             int end = Math.min(start + itemsPerPage, total);
 
             List<Map<String, Object>> paginatedPatients = allPatients.subList(start, end).stream()
@@ -286,4 +287,6 @@ public class ReceptionistApiController {
                 })
                 .collect(Collectors.toList());
     }
+
+
 }
