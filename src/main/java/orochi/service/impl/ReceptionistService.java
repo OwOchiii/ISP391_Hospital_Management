@@ -25,17 +25,21 @@ public class ReceptionistService {
     private final PatientRepository patientRepository;
     private final ReceptionistRepository receptionistRepository;
     private final PatientContactRepository patientContactRepository;
+    private final DoctorRepository DoctorRepository;
 
     public ReceptionistService(
             UserRepository userRepository,
             AppointmentRepository appointmentRepository,
             PatientRepository patientRepository,
-            ReceptionistRepository receptionistRepository, PatientContactRepository patientContactRepository) {
+            ReceptionistRepository receptionistRepository,
+            PatientContactRepository patientContactRepository,
+            DoctorRepository doctorRepository) {
         this.userRepository = userRepository;
         this.appointmentRepository = appointmentRepository;
         this.patientRepository = patientRepository;
         this.receptionistRepository = receptionistRepository;
         this.patientContactRepository = patientContactRepository;
+        this.DoctorRepository = doctorRepository;
     }
 
     // Fetch all appointments for scheduling purposes
@@ -147,6 +151,10 @@ public class ReceptionistService {
     public List<Map<String, Object>> getAppointmentTableData() {
         // G?i repository ?? l?y d? li?u
         return receptionistRepository.fetchAppointmentTableData();
+    }
+    public Appointment bookAppointment(Appointment appointment) {
+        appointment.setStatus("Scheduled"); // Trạng thái mặc định
+        return appointmentRepository.save(appointment);
     }
 
 }
