@@ -10,6 +10,8 @@
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     <!-- Google Fonts -->
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <!-- SheetJS for XLSX export -->
+    <script src="https://cdn.sheetjs.com/xlsx-latest/xlsx.full.min.js"></script>
     <style>
         :root {
             --primary: #667eea;
@@ -386,7 +388,7 @@
             transform: translateY(-2px);
         }
 
-        /* New Styles for Search and Filters */
+        /* Search and Filters */
         .search-bar {
             background: var(--bg-white);
             padding: 1rem;
@@ -395,20 +397,42 @@
             margin-bottom: 1.5rem;
         }
 
-        .filter-group {
-            display: flex;
-            gap: 1rem;
-            flex-wrap: wrap;
-            align-items: center;
-        }
-
-        .filter-header {
+        .filter-toggle {
+            background: var(--info-color);
+            border: none;
+            padding: 0.5rem 1rem;
+            border-radius: 8px;
+            color: white;
+            font-weight: 500;
+            transition: all 0.3s ease;
             display: flex;
             align-items: center;
             gap: 0.5rem;
-            font-weight: 600;
-            color: var(--text-dark);
-            margin-bottom: 0.5rem;
+            cursor: pointer;
+        }
+
+        .filter-toggle:hover {
+            background: var(--secondary);
+            transform: translateY(-2px);
+        }
+
+        .filter-group {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 0.75rem;
+            margin-top: 0.5rem;
+            align-items: center;
+        }
+
+        .filter-group .form-select,
+        .filter-group .form-control {
+            padding: 0.5rem;
+            font-size: 0.85rem;
+        }
+
+        .filter-group .btn {
+            padding: 0.5rem 1rem;
+            font-size: 0.85rem;
         }
 
         .status-unpaid {
@@ -462,8 +486,7 @@
             }
 
             .filter-group {
-                flex-direction: column;
-                align-items: stretch;
+                grid-template-columns: 1fr;
             }
         }
 
@@ -586,31 +609,31 @@
                         <input type="text" class="form-control" id="searchInput" placeholder="Search by Name, Patient ID, Phone, or Visit Date...">
                     </div>
                     <!-- Filters -->
-                    <div class="filter-header">
-                        <i class="fas fa-filter"></i>
-                        <span>Filters</span>
-                    </div>
-                    <div class="filter-group">
-                        <select class="form-select" id="statusFilter">
-                            <option value="">All Status</option>
-                            <option value="unpaid">Unpaid</option>
-                            <option value="paid">Paid</option>
-                        </select>
-                        <input type="date" class="form-control" id="dateFilter" placeholder="Select Date">
-                        <select class="form-select" id="departmentFilter">
-                            <option value="">All Departments</option>
-                            <option value="internal">Internal Medicine</option>
-                            <option value="surgery">Surgery</option>
-                            <option value="pediatrics">Pediatrics</option>
-                        </select>
-                        <button class="btn btn-secondary" onclick="resetFilters()"><i class="fas fa-undo"></i> Reset</button>
+                    <button class="filter-toggle" type="button" data-bs-toggle="collapse" data-bs-target="#filterCollapse" aria-expanded="false" aria-controls="filterCollapse">
+                        <i class="fas fa-filter"></i>Filters
+                    </button>
+                    <div class="collapse" id="filterCollapse">
+                        <div class="filter-group mt-2">
+                            <select class="form-select" id="statusFilter">
+                                <option value="">All Status</option>
+                                <option value="unpaid">Unpaid</option>
+                                <option value="paid">Paid</option>
+                            </select>
+                            <input type="date" class="form-control" id="dateFilter" placeholder="Select Date">
+                            <select class="form-select" id="departmentFilter">
+                                <option value="">All Departments</option>
+                                <option value="internal">Internal Medicine</option>
+                                <option value="surgery">Surgery</option>
+                                <option value="pediatrics">Pediatrics</option>
+                            </select>
+                            <button class="btn btn-secondary" onclick="resetFilters()"><i class="fas fa-undo"></i> Reset</button>
+                        </div>
                     </div>
                 </div>
                 <!-- Quick Action Bar -->
                 <div class="card mb-4">
                     <div class="card-body quick-action-bar d-flex gap-3">
                         <a href="/receptionist/payment_history" class="btn btn-quick-action"><i class="fas fa-history me-2"></i>Payment History</a>
-                        <a href="/receptionist/view_payment_details" class="btn btn-quick-action"><i class="fas fa-file-invoice-dollar me-2"></i>Payment Details</a>
                     </div>
                 </div>
                 <!-- Payment List -->
@@ -801,6 +824,42 @@
         document.getElementById('dateFilter').value = '';
         document.getElementById('departmentFilter').value = '';
         filterPayments();
+    }
+
+    function exportToCSV() {
+        const headers = ['Patient ID', 'Patient Name', 'Visit Date', 'Amount (VND)', 'Status', 'Department'];
+        const rows = filteredPayments.map(payment => [
+            payment.patientId,
+            payment.patientName,
+            payment.visitDate,
+            payment.amount,
+            payment.status,
+            payment.department
+        ]);
+        let csvContent = 'data:text/csv;charset=utf-8,' + headers.join(',') + '\n' + rows.map(row => row.join(',')).join('\n');
+        const encodedUri = encodeURI(csvContent);
+        const link = document.createElement('a');
+        link.setAttribute('href', encodedUri);
+        link.setAttribute('download', 'payments_export.csv');
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+    }
+
+    function exportToXLSX() {
+        const headers = ['Patient ID', 'Patient Name', 'Visit Date', 'Amount (VND)', 'Status', 'Department'];
+        const data = filteredPayments.map(payment => ({
+            'Patient ID': payment.patientId,
+            'Patient Name': payment.patientName,
+            'Visit Date': payment.visitDate,
+            'Amount (VND)': payment.amount,
+            'Status': payment.status,
+            'Department': payment.department
+        }));
+        const ws = XLSX.utils.json_to_sheet([{ ...headers.reduce((obj, header) => ({ ...obj, [header]: header }), {}) }, ...data]);
+        const wb = XLSX.utils.book_new();
+        XLSX.utils.book_append_sheet(wb, ws, 'Payments');
+        XLSX.write(wb, 'payments_export.xlsx');
     }
 
     function showInvoiceDetails(patientId) {
