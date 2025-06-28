@@ -37,6 +37,7 @@ public class Patient {
     @Column(name = "address")
     private String address;
 
+
     public String getAddress() {
         return address;
     }
@@ -83,4 +84,5 @@ public class Patient {
                 ", description='" + description + '\'' +
                 '}';
     }
+
 }
