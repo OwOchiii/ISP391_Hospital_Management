@@ -5,15 +5,18 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import orochi.dto.AppointmentDTO;
 import orochi.dto.AppointmentFormDTO;
 import orochi.model.Appointment;
 import orochi.model.Doctor;
 import orochi.model.Patient;
 import orochi.model.Specialization;
+import orochi.model.Transaction;
 import orochi.repository.AppointmentRepository;
 import orochi.repository.DoctorRepository;
 import orochi.repository.PatientRepository;
 import orochi.repository.SpecializationRepository;
+import orochi.repository.TransactionRepository;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -37,6 +40,9 @@ public class AppointmentService {
     @Autowired
     private SpecializationRepository specializationRepository;
 
+    @Autowired
+    private TransactionRepository transactionRepository;
+
     // Standard appointment duration in minutes
     private static final int APPOINTMENT_DURATION = 30;
 
@@ -46,6 +52,95 @@ public class AppointmentService {
 
     public List<Doctor> getDoctorsBySpecialization(Integer specId) {
         return doctorRepository.findBySpecializationId(specId);
+    }
+
+    public AppointmentDTO getAppointmentDetails(Integer appointmentId) {
+        // Tìm kiếm lịch hẹn trong cơ sở dữ liệu dựa trên appointmentId - avoid loading transactions
+        Appointment appointment = appointmentRepository.findById(appointmentId)
+                .orElse(null);
+
+        List<Specialization> specializations = specializationRepository.findAll();
+
+        // Nếu không tìm thấy lịch hẹn, trả về null
+        if (appointment == null) {
+            return null;
+        }
+
+        // Ánh xạ từ entity Appointment sang DTO
+        AppointmentDTO appointmentDTO = new AppointmentDTO();
+        appointmentDTO.setId(Long.valueOf(appointment.getAppointmentId()));
+        appointmentDTO.setFullName(appointment.getPatient().getFullName());
+        appointmentDTO.setPatientID(String.valueOf(appointment.getPatient().getPatientId()));
+        appointmentDTO.setGender(appointment.getPatient().getGender());
+        appointmentDTO.setDateOfBirth(appointment.getPatient().getDateOfBirth());
+        appointmentDTO.setPhoneNumber(appointment.getPatient().getUser().getPhoneNumber());
+        appointmentDTO.setEmail(appointment.getPatient().getUser().getEmail());
+        appointmentDTO.setSpecializations(specializations);
+        appointmentDTO.setAppointmentTime(appointment.getDateTime().toLocalTime());
+
+        // Lấy thông tin liên hệ từ PatientContact (lấy contact đầu tiên nếu có)
+        if (appointment.getPatient().getContacts() != null && !appointment.getPatient().getContacts().isEmpty()) {
+            orochi.model.PatientContact contact = appointment.getPatient().getContacts().get(0);
+            appointmentDTO.setAddressType(contact.getAddressType());
+            appointmentDTO.setStreetAddress(contact.getStreetAddress());
+            appointmentDTO.setCity(contact.getCity());
+            appointmentDTO.setState(contact.getState());
+            appointmentDTO.setPostalCode(contact.getPostalCode());
+            appointmentDTO.setCountry(contact.getCountry());
+        }
+
+        // Set appointment specific information
+        appointmentDTO.setRoom(appointment.getRoom().getRoomNumber());
+        appointmentDTO.setDoctor(appointment.getDoctor());
+        appointmentDTO.setSpecialtyId(String.valueOf(appointment.getDoctor().getSpecializations().get(0).getSpecId()));
+        appointmentDTO.setSpecialtyName(appointment.getDoctor().getSpecializations().get(0).getSpecName());
+        appointmentDTO.setAppointmentStatus(appointment.getStatus());
+        appointmentDTO.setReasonForVisit(appointment.getDescription());
+        appointmentDTO.setAppointmentDate(appointment.getDateTime().toLocalDate());
+
+        // Fetch payment status separately to avoid SQL grammar exception
+        String paymentStatus = getPaymentStatusForAppointment(appointmentId);
+        appointmentDTO.setPaymentStatus(paymentStatus);
+
+        return appointmentDTO;
+    }
+
+    /**
+     * Get payment status for an appointment by querying transactions separately
+     */
+    private String getPaymentStatusForAppointment(Integer appointmentId) {
+        try {
+            // Query transactions directly using a custom repository method
+            List<Transaction> transactions = transactionRepository.findByAppointmentId(appointmentId);
+
+            if (transactions.isEmpty()) {
+                return "Unpaid";
+            }
+
+            // Get the latest transaction status
+            Transaction latestTransaction = transactions.get(0);
+            String transactionStatus = latestTransaction.getStatus();
+
+            // Map transaction status to payment status
+            switch (transactionStatus.toLowerCase()) {
+                case "completed":
+                case "success":
+                    return "Paid";
+                case "pending":
+                    return "Pending";
+                case "failed":
+                case "cancelled":
+                    return "Failed";
+                case "refunded":
+                    return "Refunded";
+                default:
+                    return "Unpaid";
+            }
+        } catch (Exception e) {
+            // Log the error and return default status
+            System.err.println("Error fetching payment status for appointment " + appointmentId + ": " + e.getMessage());
+            return "Unknown";
+        }
     }
 
     public Map<String, List<String>> getDoctorAvailability(LocalDate date, Integer doctorId, Integer excludeAppointmentId) {
@@ -142,7 +237,7 @@ public class AppointmentService {
         appointment.setPatientId(patientId);
         appointment.setDoctorId(doctorId);
         appointment.setDateTime(dateTime);
-        appointment.setStatus("Scheduled");
+        appointment.setStatus("Pending");
         appointment.setEmail(email);
         appointment.setPhoneNumber(phoneNumber);
         appointment.setDescription(description);
@@ -263,6 +358,40 @@ public class AppointmentService {
 
         // Save appointment
         return appointmentRepository.save(appointment);
+    }
+
+    @Transactional
+    public boolean updateAppointment(Integer appointmentId, AppointmentFormDTO appointmentFormDTO) {
+        try {
+            Optional<Appointment> optionalAppointment = appointmentRepository.findById(appointmentId);
+            if (optionalAppointment.isPresent()) {
+                Appointment appointment = optionalAppointment.get();
+
+                // Update appointment fields
+                if (appointmentFormDTO.getDoctorId() != null) {
+                    appointment.setDoctorId(appointmentFormDTO.getDoctorId());
+                }
+
+                if (appointmentFormDTO.getAppointmentDate() != null && appointmentFormDTO.getAppointmentTime() != null) {
+                    LocalDateTime dateTime = LocalDateTime.of(
+                        appointmentFormDTO.getAppointmentDate(),
+                            LocalTime.parse(appointmentFormDTO.getAppointmentTime())
+                    );
+                    appointment.setDateTime(dateTime);
+                }
+
+                if (appointmentFormDTO.getDescription() != null) {
+                    appointment.setDescription(appointmentFormDTO.getDescription());
+                }
+
+                appointmentRepository.save(appointment);
+                return true;
+            }
+            return false;
+        } catch (Exception e) {
+            e.printStackTrace();
+            return false;
+        }
     }
 
     public List<Appointment> getAppointmentsByDoctorIdAndPatientName(Integer doctorId, String search) {
