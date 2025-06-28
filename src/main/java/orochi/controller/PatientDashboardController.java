@@ -630,6 +630,7 @@ public class PatientDashboardController {
             @RequestParam(defaultValue = "5") int size,
             @RequestParam(required = false) String fromDate,
             @RequestParam(required = false) String toDate,
+            @RequestParam(required = false) String feedbackType,
             Model model) {
         try {
             if (page < 0) {
@@ -644,12 +645,14 @@ public class PatientDashboardController {
             model.addAttribute("userId", userId);
             model.addAttribute("patientId", patientId);
             model.addAttribute("patientName", patient.getUser() != null ? patient.getUser().getFullName() : "Patient");
+            model.addAttribute("feedbackTypes", ALLOWED_FEEDBACK_TYPES); // Add feedback types for dropdown
 
             Pageable pageable = PageRequest.of(page, size);
             Page<Feedback> feedbackPage = null;
 
             String fromDateTrimmed = (fromDate != null) ? fromDate.trim() : null;
             String toDateTrimmed = (toDate != null) ? toDate.trim() : null;
+            String feedbackTypeTrimmed = (feedbackType != null) ? feedbackType.trim() : null;
 
             LocalDateTime start = null, end = null;
             if (fromDateTrimmed != null && !fromDateTrimmed.isEmpty()) {
@@ -663,6 +666,7 @@ public class PatientDashboardController {
                     model.addAttribute("size", size);
                     model.addAttribute("fromDate", fromDate);
                     model.addAttribute("toDate", toDate);
+                    model.addAttribute("feedbackType", feedbackType);
                     return "patient/my-feedback";
                 }
             }
@@ -677,6 +681,7 @@ public class PatientDashboardController {
                         model.addAttribute("size", size);
                         model.addAttribute("fromDate", fromDate);
                         model.addAttribute("toDate", toDate);
+                        model.addAttribute("feedbackType", feedbackType);
                         return "patient/my-feedback";
                     }
                 } catch (DateTimeParseException e) {
@@ -687,18 +692,42 @@ public class PatientDashboardController {
                     model.addAttribute("size", size);
                     model.addAttribute("fromDate", fromDate);
                     model.addAttribute("toDate", toDate);
+                    model.addAttribute("feedbackType", feedbackType);
                     return "patient/my-feedback";
                 }
             }
+            if (feedbackTypeTrimmed != null && !feedbackTypeTrimmed.isEmpty() && !ALLOWED_FEEDBACK_TYPES.contains(feedbackTypeTrimmed)) {
+                model.addAttribute("errorMessage", "Invalid Feedback Type.");
+                model.addAttribute("feedbacks", Collections.emptyList());
+                model.addAttribute("currentPage", 0);
+                model.addAttribute("totalPages", 0);
+                model.addAttribute("size", size);
+                model.addAttribute("fromDate", fromDate);
+                model.addAttribute("toDate", toDate);
+                model.addAttribute("feedbackType", feedbackType);
+                return "patient/my-feedback";
+            }
 
-            if (start != null && end != null) {
-                feedbackPage = feedbackService.getFeedbackByUserIdAndDateRange(userId, start, end, pageable);
-            } else if (start != null) {
-                feedbackPage = feedbackService.getFeedbackByUserIdAndDateRange(userId, start, LocalDateTime.now(), pageable);
-            } else if (end != null) {
-                feedbackPage = feedbackService.getFeedbackByUserIdAndDateRange(userId, LocalDateTime.of(1900, 1, 1, 0, 0), end, pageable);
+            if (feedbackTypeTrimmed != null && !feedbackTypeTrimmed.isEmpty()) {
+                if (start != null && end != null) {
+                    feedbackPage = feedbackService.getFeedbackByUserIdAndTypeAndDateRange(userId, feedbackTypeTrimmed, start, end, pageable);
+                } else if (start != null) {
+                    feedbackPage = feedbackService.getFeedbackByUserIdAndTypeAndDateRange(userId, feedbackTypeTrimmed, start, LocalDateTime.now(), pageable);
+                } else if (end != null) {
+                    feedbackPage = feedbackService.getFeedbackByUserIdAndTypeAndDateRange(userId, feedbackTypeTrimmed, LocalDateTime.of(1900, 1, 1, 0, 0), end, pageable);
+                } else {
+                    feedbackPage = feedbackService.getFeedbackByUserIdAndType(userId, feedbackTypeTrimmed, pageable);
+                }
             } else {
-                feedbackPage = feedbackService.getFeedbackByUserId(userId, pageable);
+                if (start != null && end != null) {
+                    feedbackPage = feedbackService.getFeedbackByUserIdAndDateRange(userId, start, end, pageable);
+                } else if (start != null) {
+                    feedbackPage = feedbackService.getFeedbackByUserIdAndDateRange(userId, start, LocalDateTime.now(), pageable);
+                } else if (end != null) {
+                    feedbackPage = feedbackService.getFeedbackByUserIdAndDateRange(userId, LocalDateTime.of(1900, 1, 1, 0, 0), end, pageable);
+                } else {
+                    feedbackPage = feedbackService.getFeedbackByUserId(userId, pageable);
+                }
             }
 
             model.addAttribute("feedbacks", feedbackPage != null ? feedbackPage.getContent() : Collections.emptyList());
@@ -707,6 +736,7 @@ public class PatientDashboardController {
             model.addAttribute("size", size);
             model.addAttribute("fromDate", fromDate);
             model.addAttribute("toDate", toDate);
+            model.addAttribute("feedbackType", feedbackType);
             return "patient/my-feedback";
         } catch (Exception e) {
             logger.error("Error fetching feedback", e);
@@ -717,6 +747,7 @@ public class PatientDashboardController {
             model.addAttribute("size", size);
             model.addAttribute("fromDate", fromDate);
             model.addAttribute("toDate", toDate);
+            model.addAttribute("feedbackType", feedbackType);
             return "patient/my-feedback";
         }
     }
