@@ -2,14 +2,12 @@ package orochi.repository;
 
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
-import orochi.model.Appointment;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import orochi.model.Appointment;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
@@ -27,8 +25,8 @@ public interface AppointmentRepository extends JpaRepository<Appointment, Intege
     // Get today's appointments for a doctor with specific time range
     @Query("SELECT a FROM Appointment a WHERE a.doctorId = :doctorId AND a.dateTime BETWEEN :startOfDay AND :endOfDay ORDER BY a.dateTime ASC")
     List<Appointment> findTodayAppointmentsForDoctorWithTimeRange(@Param("doctorId") Integer doctorId,
-                                                                 @Param("startOfDay") LocalDateTime startOfDay,
-                                                                 @Param("endOfDay") LocalDateTime endOfDay);
+                                                                  @Param("startOfDay") LocalDateTime startOfDay,
+                                                                  @Param("endOfDay") LocalDateTime endOfDay);
 
     // Get upcoming appointments for a doctor
     @Query("SELECT a FROM Appointment a WHERE a.doctorId = :doctorId AND a.dateTime > :now ORDER BY a.dateTime ASC")
@@ -46,6 +44,7 @@ public interface AppointmentRepository extends JpaRepository<Appointment, Intege
     // Sửa: Sử dụng Appointment.AppointmentStatus
     @Query("SELECT COUNT(a) FROM Appointment a WHERE a.status = :status")
     long countByStatus(@Param("status") String status);
+
     // Get appointments by patient for a specific doctor
     List<Appointment> findByPatientIdAndDoctorIdOrderByDateTimeDesc(Integer patientId, Integer doctorId);
 
@@ -57,6 +56,7 @@ public interface AppointmentRepository extends JpaRepository<Appointment, Intege
     List<Appointment> findByDoctorIdAndDateTimeBetweenOrderByDateTime(@Param("doctorId") Integer doctorId, @Param("startDate") LocalDateTime startDate, @Param("endDate") LocalDateTime endDate);
 
     List<Appointment> findByPatientIdAndDateTimeAfterOrderByDateTime(Integer patientId, LocalDateTime now);
+
     List<Appointment> findByPatientIdOrderByDateTimeDesc(Integer patientId);
 
     // Count appointments for a patient with a specific doctor
@@ -88,32 +88,34 @@ public interface AppointmentRepository extends JpaRepository<Appointment, Intege
 
     // For doctor-specific appointments
     Page<Appointment> findByPatientIdAndDoctorIdAndDateTimeAfterOrderByDateTimeAsc(
-        Integer patientId, Integer doctorId, LocalDateTime dateTime, Pageable pageable);
+            Integer patientId, Integer doctorId, LocalDateTime dateTime, Pageable pageable);
 
     Page<Appointment> findByPatientIdAndDoctorIdAndStatusOrderByDateTimeDesc(
-        Integer patientId, Integer doctorId, String status, Pageable pageable);
+            Integer patientId, Integer doctorId, String status, Pageable pageable);
 
     Page<Appointment> findByPatientIdAndDoctorIdAndStatusInOrderByDateTimeDesc(
-        Integer patientId, Integer doctorId, List<String> statuses, Pageable pageable);
+            Integer patientId, Integer doctorId, List<String> statuses, Pageable pageable);
 
     Page<Appointment> findByPatientIdAndDoctorIdOrderByDateTimeDesc(
-        Integer patientId, Integer doctorId, Pageable pageable);
+            Integer patientId, Integer doctorId, Pageable pageable);
 
     // For patient-specific appointments (across all doctors)
     Page<Appointment> findByPatientIdAndDateTimeAfterOrderByDateTimeAsc(
-        Integer patientId, LocalDateTime dateTime, Pageable pageable);
+            Integer patientId, LocalDateTime dateTime, Pageable pageable);
 
     Page<Appointment> findByPatientIdAndStatusOrderByDateTimeDesc(
-        Integer patientId, String status, Pageable pageable);
+            Integer patientId, String status, Pageable pageable);
 
     Page<Appointment> findByPatientIdAndStatusInOrderByDateTimeDesc(
-        Integer patientId, List<String> statuses, Pageable pageable);
+            Integer patientId, List<String> statuses, Pageable pageable);
 
     // For counting appointments
     Long countByPatientIdAndStatus(Integer patientId, String status);
 
     Long countByPatientIdAndStatusIn(Integer patientId, List<String> statuses);
+
     Page<Appointment> findByPatientId(Integer patientId, Pageable pageable);
+
     Page<Appointment> findByPatientIdAndDoctorId(Integer patientId, Integer doctorId, Pageable pageable);
 
     <T> Page<Appointment> findByPatientIdAndDoctorId(Integer patientId, Integer doctorId, List<T> list, Pageable pageable);
@@ -134,4 +136,7 @@ public interface AppointmentRepository extends JpaRepository<Appointment, Intege
             @Param("end") LocalDateTime end,
             @Param("appointmentId") Integer appointmentId);
 
+    @Query(value = "SELECT a FROM Appointment a WHERE a.doctorId = :doctorId AND CAST(a.dateTime AS DATE) = :date")
+    List<Appointment> findByDoctorIdAndDate(@Param("doctorId") Integer doctorId, @Param("date") LocalDate date);
 }
+
