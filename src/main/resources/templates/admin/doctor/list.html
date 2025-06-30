@@ -822,8 +822,47 @@
                               th:action="@{/admin/doctors/save(adminId=${adminId})}"
                               th:object="${doctorForm}"
                               method="post"
+                              enctype="multipart/form-data"
                               onsubmit="return validateDoctorForm()">
                             <input th:field="*{doctorId}" type="hidden"/>
+                            <input th:field="*{userId}" type="hidden"/>
+                            <!-- Hidden field to store the cropped image data -->
+                            <input type="hidden" id="croppedImageData" name="croppedImageData"/>
+                            <!-- Hidden field to preserve existing image URL -->
+                            <input type="hidden" th:field="*{imageUrl}" id="currentImageUrl"/>
+
+                            <!-- Profile Image Section -->
+                            <div class="mb-3">
+                                <label class="form-label">Profile Image</label>
+                                <div class="profile-image-container">
+                                    <!-- Show current image if exists -->
+                                    <img th:if="${doctorForm.imageUrl != null && !doctorForm.imageUrl.isEmpty()}"
+                                         th:src="${doctorForm.imageUrl}"
+                                         class="current-image mb-2" alt="Current profile image" style="max-width: 150px; border-radius: 5px;">
+                                    <div th:if="${doctorForm.imageUrl == null || doctorForm.imageUrl.isEmpty()}"
+                                         class="alert alert-secondary">No profile image uploaded</div>
+                                </div>
+
+                                <div class="mb-3">
+                                    <label for="profileImage" class="form-label">Upload New Image</label>
+                                    <input type="file" class="form-control" id="profileImage" name="profileImage"
+                                           accept="image/png, image/jpeg, image/jpg, image/gif">
+                                    <div class="form-text">Supported formats: JPG, JPEG, PNG, GIF. Max size: 10MB</div>
+                                </div>
+
+                                <!-- Image Preview -->
+                                <img id="imagePreview" class="image-preview" alt="Image preview"
+                                     style="max-width: 100%; max-height: 200px; margin-top: 10px; display: none;">
+
+                                <!-- Cropper Container -->
+                                <div id="cropperContainer" style="margin-top: 15px; margin-bottom: 15px; display: none;">
+                                    <div id="cropperCanvas"></div>
+                                    <div class="mt-2">
+                                        <button type="button" id="cropImageBtn" class="btn btn-success btn-sm" style="display: none;">Crop Image</button>
+                                        <button type="button" id="cancelCropBtn" class="btn btn-secondary btn-sm ms-2" style="display: none;">Cancel</button>
+                                    </div>
+                                </div>
+                            </div>
 
                             <div class="mb-3">
                                 <label for="fullName" class="form-label">Full Name</label>
@@ -850,7 +889,46 @@
 
                             <div class="mb-3">
                                 <label for="bioDescription" class="form-label">Bio Description</label>
-                                <textarea class="form-control" id="bioDescription" name="bioDescription" rows="3" oninput="this.value = this.value.trimStart()"></textarea>
+                                <textarea th:field="*{bioDescription}" class="form-control" id="bioDescription" rows="3" oninput="this.value = this.value.trimStart()"></textarea>
+                            </div>
+
+                            <!-- Doctor Education Section -->
+                            <div class="card mb-3">
+                                <div class="card-header">
+                                    <h5>Education & Certificates</h5>
+                                </div>
+                                <div class="card-body">
+                                    <div id="educationContainer">
+                                        <!-- Education items will be added here -->
+                                        <div class="education-item mb-3">
+                                            <div class="row g-2">
+                                                <div class="col-md-6">
+                                                    <label class="form-label">Degree</label>
+                                                    <input type="text" name="degrees[]" class="form-control" placeholder="e.g., MD, PhD" required>
+                                                </div>
+                                                <div class="col-md-6">
+                                                    <label class="form-label">Institution</label>
+                                                    <input type="text" name="institutions[]" class="form-control" placeholder="e.g., Harvard Medical School" required>
+                                                </div>
+                                                <div class="col-md-6">
+                                                    <label class="form-label">Graduation Year</label>
+                                                    <input type="number" name="graduations[]" class="form-control" placeholder="e.g., 2020" min="1950" max="2030">
+                                                </div>
+                                                <div class="col-md-6">
+                                                    <label class="form-label">Certificate Image</label>
+                                                    <input type="file" name="certificateImages[]" class="form-control" accept="image/png, image/jpeg, image/jpg, image/pdf">
+                                                </div>
+                                                <div class="col-12 mt-2">
+                                                    <label class="form-label">Description</label>
+                                                    <textarea name="educationDescriptions[]" class="form-control" rows="2" placeholder="Additional details about the education"></textarea>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <button type="button" id="addEducationBtn" class="btn btn-outline-primary mt-2">
+                                        <i class="bi bi-plus"></i> Add Another Education
+                                    </button>
+                                </div>
                             </div>
 
                             <div class="mb-3">
@@ -869,147 +947,349 @@
                 </div>
             </div>
         </div>
-    </div>
-</div>
 
-<!-- Bootstrap JS -->
-<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+        <!-- Bootstrap JS -->
+        <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 
-<script th:inline="javascript">
-    /*<![CDATA[*/
-    // Get admin ID from Thymeleaf
-    const adminId = /*[[${adminId}]]*/ 0;
+        <script th:inline="javascript">
+            /*<![CDATA[*/
+            // Get admin ID from Thymeleaf
+            const adminId = /*[[${adminId}]]*/ 0;
 
-    document.addEventListener('DOMContentLoaded', function() {
-        // Set doctors tab as active
-        const currentPath = window.location.pathname;
-        if (currentPath.includes('/doctors')) {
+            document.addEventListener('DOMContentLoaded', function() {
+                // Set doctors tab as active
+                const currentPath = window.location.pathname;
+                if (currentPath.includes('/doctors')) {
+                    document.querySelectorAll('.nav-link').forEach(link => {
+                        link.classList.remove('active');
+                    });
+                    document.querySelector('.nav-link[href*="doctors"]').classList.add('active');
+                }
+
+                // Initialize Bootstrap collapse
+                const collapseElements = document.querySelectorAll('.collapse');
+                collapseElements.forEach(collapse => {
+                    new bootstrap.Collapse(collapse, {
+                        toggle: false
+                    });
+                });
+
+                // Add click event to toggle collapse
+                document.querySelectorAll('[data-bs-toggle="collapse"]').forEach(button => {
+                    button.addEventListener('click', function (e) {
+                        const target = this.getAttribute('data-bs-target');
+                        const collapse = document.querySelector(target);
+                        if (collapse) {
+                            const bsCollapse = bootstrap.Collapse.getOrCreateInstance(collapse);
+                            bsCollapse.toggle();
+                        }
+                    });
+                });
+
+                // Doctor Modal Handler
+                var doctorModalEl = document.getElementById('doctorModal');
+                doctorModalEl.addEventListener('show.bs.modal', function (event) {
+                    var button = event.relatedTarget;
+                    var mode = button.getAttribute('data-mode');
+                    var modalTitle = doctorModalEl.querySelector('.modal-title');
+                    var form = doctorModalEl.querySelector('#doctorForm');
+                    var inputId = form.querySelector('#doctorId');
+                    var inputFullName = form.querySelector('#fullName');
+                    var inputEmail = form.querySelector('#email');
+                    var inputPhone = form.querySelector('#phoneNumber');
+                    var inputBio = form.querySelector('#bioDescription');
+                    var selectStatus = form.querySelector('#status');
+
+                    if (mode === 'add') {
+                        modalTitle.textContent = 'Add New Doctor';
+                        inputId.value = '';
+                        inputFullName.value = '';
+                        inputEmail.value = '';
+                        inputPhone.value = '';
+                        inputBio.value = '';
+                        selectStatus.value = 'ACTIVE';
+                    } else if (mode === 'edit') {
+                        modalTitle.textContent = 'Edit Doctor';
+                        inputId.value = button.getAttribute('data-id') || '';
+                        inputFullName.value = button.getAttribute('data-fullname') || '';
+                        inputEmail.value = button.getAttribute('data-email') || '';
+                        inputPhone.value = button.getAttribute('data-phone') || '';
+                        inputBio.value = button.getAttribute('data-bio') || '';
+                        selectStatus.value = button.getAttribute('data-status') || 'ACTIVE';
+                    }
+                });
+            });
+
+            // Sidebar toggle functionality
+            function toggleSidebar() {
+                const sidebar = document.getElementById('sidebar');
+                const mainContent = document.getElementById('mainContent');
+                sidebar.classList.toggle('collapsed');
+                mainContent.classList.toggle('expanded');
+            }
+
+            // Auto-hide sidebar on mobile
+            function checkScreenSize() {
+                const sidebar = document.getElementById('sidebar');
+                const mainContent = document.getElementById('mainContent');
+                if (window.innerWidth <= 768) {
+                    sidebar.classList.add('collapsed');
+                    mainContent.classList.add('expanded');
+                } else {
+                    sidebar.classList.remove('collapsed');
+                    mainContent.classList.remove('expanded');
+                }
+            }
+
+            // Check screen size on load and resize
+            window.addEventListener('load', checkScreenSize);
+            window.addEventListener('resize', checkScreenSize);
+
+            // Refresh doctors
+            function refreshDoctors() {
+                window.location.reload();
+            }
+
+            // Validate doctor form
+            function validateDoctorForm() {
+                const fullName = document.getElementById("fullName").value.trim();
+                const email = document.getElementById("email").value.trim();
+                const phone = document.getElementById("phoneNumber").value.trim();
+
+                if (fullName === "" || fullName.match(/^\s*$/)) {
+                    alert("Full Name cannot be empty or contain only spaces.");
+                    return false;
+                }
+
+                if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+                    alert("Please enter a valid email address.");
+                    return false;
+                }
+
+                if (!/^\d{10,15}$/.test(phone)) {
+                    alert("Phone number must be between 10 to 15 digits and contain only numbers.");
+                    return false;
+                }
+
+                return true;
+            }
+
+            // Navigation link handlers
             document.querySelectorAll('.nav-link').forEach(link => {
-                link.classList.remove('active');
+                link.addEventListener('click', function(e) {
+                    if (this.getAttribute('href') === '#') {
+                        e.preventDefault();
+                    }
+                });
             });
-            document.querySelector('.nav-link[href*="doctors"]').classList.add('active');
-        }
 
-        // Initialize Bootstrap collapse
-        const collapseElements = document.querySelectorAll('.collapse');
-        collapseElements.forEach(collapse => {
-            new bootstrap.Collapse(collapse, {
-                toggle: false
-            });
-        });
+            // Initialize
+            hideAlerts();
+            /*]]>*/
+        </script>
 
-        // Add click event to toggle collapse
-        document.querySelectorAll('[data-bs-toggle="collapse"]').forEach(button => {
-            button.addEventListener('click', function (e) {
-                const target = this.getAttribute('data-bs-target');
-                const collapse = document.querySelector(target);
-                if (collapse) {
-                    const bsCollapse = bootstrap.Collapse.getOrCreateInstance(collapse);
-                    bsCollapse.toggle();
+        <!-- Add Cropper.js library -->
+        <link href="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.13/cropper.min.css" rel="stylesheet">
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.13/cropper.min.js"></script>
+
+        <script>
+            // Image cropping functionality
+            document.addEventListener('DOMContentLoaded', function() {
+                const profileImageInput = document.getElementById('profileImage');
+                const imagePreview = document.getElementById('imagePreview');
+                const cropperContainer = document.getElementById('cropperContainer');
+                const cropperCanvas = document.getElementById('cropperCanvas');
+                const cropImageBtn = document.getElementById('cropImageBtn');
+                const cancelCropBtn = document.getElementById('cancelCropBtn');
+                const croppedImageData = document.getElementById('croppedImageData');
+
+                let cropper = null;
+
+                // Handle file selection
+                if (profileImageInput) {
+                    profileImageInput.addEventListener('change', function(e) {
+                        const file = e.target.files[0];
+
+                        if (!file) return;
+
+                        // Validate file type
+                        const validTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/gif'];
+                        if (!validTypes.includes(file.type)) {
+                            alert('Please select a valid image file (JPG, JPEG, PNG, GIF)');
+                            profileImageInput.value = '';
+                            return;
+                        }
+
+                        // Validate file size (5MB max)
+                        if (file.size > 5 * 1024 * 1024) {
+                            alert('Image file size must be less than 5MB');
+                            profileImageInput.value = '';
+                            return;
+                        }
+
+                        // Read and display the selected image
+                        const reader = new FileReader();
+                        reader.onload = function(event) {
+                            // Create a new image element for the cropper
+                            const img = document.createElement('img');
+                            img.id = 'imageForCropper';
+                            img.src = event.target.result;
+                            img.style.maxWidth = '100%';
+
+                            // Clear the previous content and add the new image
+                            cropperCanvas.innerHTML = '';
+                            cropperCanvas.appendChild(img);
+
+                            // Show the cropper container and buttons
+                            cropperContainer.style.display = 'block';
+                            cropImageBtn.style.display = 'inline-block';
+                            cancelCropBtn.style.display = 'inline-block';
+
+                            // Initialize the cropper
+                            if (cropper) {
+                                cropper.destroy();
+                            }
+
+                            cropper = new Cropper(img, {
+                                aspectRatio: 1, // Square aspect ratio
+                                viewMode: 1,    // Restrict the crop box to not exceed the size of the canvas
+                                responsive: true,
+                                zoomable: true,
+                                scalable: true,
+                                movable: true
+                            });
+                        };
+
+                        reader.readAsDataURL(file);
+                    });
+                }
+
+                // Handle crop button click
+                if (cropImageBtn) {
+                    cropImageBtn.addEventListener('click', function() {
+                        if (!cropper) return;
+
+                        // Get the cropped canvas
+                        const canvas = cropper.getCroppedCanvas({
+                            width: 300,   // Output image width
+                            height: 300,  // Output image height
+                            minWidth: 100,
+                            minHeight: 100,
+                            maxWidth: 1000,
+                            maxHeight: 1000,
+                            fillColor: '#fff',
+                            imageSmoothingEnabled: true,
+                            imageSmoothingQuality: 'high'
+                        });
+
+                        // Convert canvas to data URL
+                        const croppedImageUrl = canvas.toDataURL('image/jpeg', 0.9); // JPEG format, 90% quality
+
+                        // Display the cropped image
+                        imagePreview.src = croppedImageUrl;
+                        imagePreview.style.display = 'block';
+
+                        // Store the cropped image data to be sent with the form
+                        croppedImageData.value = croppedImageUrl;
+
+                        // Hide the cropper and buttons
+                        cropperContainer.style.display = 'none';
+                        cropImageBtn.style.display = 'none';
+                        cancelCropBtn.style.display = 'none';
+                    });
+                }
+
+                // Handle cancel button click
+                if (cancelCropBtn) {
+                    cancelCropBtn.addEventListener('click', function() {
+                        if (cropper) {
+                            cropper.destroy();
+                            cropper = null;
+                        }
+
+                        // Reset the file input
+                        profileImageInput.value = '';
+
+                        // Hide the cropper and buttons
+                        cropperContainer.style.display = 'none';
+                        cropImageBtn.style.display = 'none';
+                        cancelCropBtn.style.display = 'none';
+                    });
+                }
+
+                // Doctor Education Management
+                const educationContainer = document.getElementById('educationContainer');
+                const addEducationBtn = document.getElementById('addEducationBtn');
+
+                if (addEducationBtn) {
+                    addEducationBtn.addEventListener('click', function() {
+                        const newEducation = document.createElement('div');
+                        newEducation.className = 'education-item mb-3 pt-3 border-top';
+                        newEducation.innerHTML = `
+                            <div class="d-flex justify-content-between mb-2">
+                                <h6>Additional Education</h6>
+                                <button type="button" class="btn btn-sm btn-outline-danger remove-education-btn">
+                                    <i class="bi bi-trash"></i> Remove
+                                </button>
+                            </div>
+                            <div class="row g-2">
+                                <div class="col-md-6">
+                                    <label class="form-label">Degree</label>
+                                    <input type="text" name="degrees[]" class="form-control" placeholder="e.g., MD, PhD" required>
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label">Institution</label>
+                                    <input type="text" name="institutions[]" class="form-control" placeholder="e.g., Harvard Medical School" required>
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label">Graduation Year</label>
+                                    <input type="number" name="graduations[]" class="form-control" placeholder="e.g., 2020" min="1950" max="2030">
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label">Certificate Image</label>
+                                    <input type="file" name="certificateImages[]" class="form-control" accept="image/png, image/jpeg, image/jpg, image/pdf">
+                                </div>
+                                <div class="col-12 mt-2">
+                                    <label class="form-label">Description</label>
+                                    <textarea name="educationDescriptions[]" class="form-control" rows="2" placeholder="Additional details about the education"></textarea>
+                                </div>
+                            </div>
+                        `;
+                        educationContainer.appendChild(newEducation);
+
+                        // Add event listener to remove button
+                        const removeBtn = newEducation.querySelector('.remove-education-btn');
+                        removeBtn.addEventListener('click', function() {
+                            educationContainer.removeChild(newEducation);
+                        });
+                    });
+                }
+
+                // Add event delegation for remove education buttons that may already exist
+                if (educationContainer) {
+                    educationContainer.addEventListener('click', function(e) {
+                        if (e.target.classList.contains('remove-education-btn') ||
+                            e.target.parentElement.classList.contains('remove-education-btn')) {
+                            const button = e.target.classList.contains('remove-education-btn') ?
+                                        e.target : e.target.parentElement;
+                            const educationItem = button.closest('.education-item');
+                            if (educationItem && educationContainer.children.length > 1) {
+                                educationContainer.removeChild(educationItem);
+                            } else {
+                                alert('You must have at least one education entry');
+                            }
+                        }
+                    });
                 }
             });
-        });
 
-        // Doctor Modal Handler
-        var doctorModalEl = document.getElementById('doctorModal');
-        doctorModalEl.addEventListener('show.bs.modal', function (event) {
-            var button = event.relatedTarget;
-            var mode = button.getAttribute('data-mode');
-            var modalTitle = doctorModalEl.querySelector('.modal-title');
-            var form = doctorModalEl.querySelector('#doctorForm');
-            var inputId = form.querySelector('#doctorId');
-            var inputFullName = form.querySelector('#fullName');
-            var inputEmail = form.querySelector('#email');
-            var inputPhone = form.querySelector('#phoneNumber');
-            var inputBio = form.querySelector('#bioDescription');
-            var selectStatus = form.querySelector('#status');
-
-            if (mode === 'add') {
-                modalTitle.textContent = 'Add New Doctor';
-                inputId.value = '';
-                inputFullName.value = '';
-                inputEmail.value = '';
-                inputPhone.value = '';
-                inputBio.value = '';
-                selectStatus.value = 'ACTIVE';
-            } else if (mode === 'edit') {
-                modalTitle.textContent = 'Edit Doctor';
-                inputId.value = button.getAttribute('data-id') || '';
-                inputFullName.value = button.getAttribute('data-fullname') || '';
-                inputEmail.value = button.getAttribute('data-email') || '';
-                inputPhone.value = button.getAttribute('data-phone') || '';
-                inputBio.value = button.getAttribute('data-bio') || '';
-                selectStatus.value = button.getAttribute('data-status') || 'ACTIVE';
+            // Hide alerts function
+            function hideAlerts() {
+                document.getElementById('successAlert').style.display = 'none';
+                document.getElementById('errorAlert').style.display = 'none';
             }
-        });
-    });
-
-    // Sidebar toggle functionality
-    function toggleSidebar() {
-        const sidebar = document.getElementById('sidebar');
-        const mainContent = document.getElementById('mainContent');
-        sidebar.classList.toggle('collapsed');
-        mainContent.classList.toggle('expanded');
-    }
-
-    // Auto-hide sidebar on mobile
-    function checkScreenSize() {
-        const sidebar = document.getElementById('sidebar');
-        const mainContent = document.getElementById('mainContent');
-        if (window.innerWidth <= 768) {
-            sidebar.classList.add('collapsed');
-            mainContent.classList.add('expanded');
-        } else {
-            sidebar.classList.remove('collapsed');
-            mainContent.classList.remove('expanded');
-        }
-    }
-
-    // Check screen size on load and resize
-    window.addEventListener('load', checkScreenSize);
-    window.addEventListener('resize', checkScreenSize);
-
-    // Refresh doctors
-    function refreshDoctors() {
-        window.location.reload();
-    }
-
-    // Validate doctor form
-    function validateDoctorForm() {
-        const fullName = document.getElementById("fullName").value.trim();
-        const email = document.getElementById("email").value.trim();
-        const phone = document.getElementById("phoneNumber").value.trim();
-
-        if (fullName === "" || fullName.match(/^\s*$/)) {
-            alert("Full Name cannot be empty or contain only spaces.");
-            return false;
-        }
-
-        if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
-            alert("Please enter a valid email address.");
-            return false;
-        }
-
-        if (!/^\d{10,15}$/.test(phone)) {
-            alert("Phone number must be between 10 to 15 digits and contain only numbers.");
-            return false;
-        }
-
-        return true;
-    }
-
-    // Navigation link handlers
-    document.querySelectorAll('.nav-link').forEach(link => {
-        link.addEventListener('click', function(e) {
-            if (this.getAttribute('href') === '#') {
-                e.preventDefault();
-            }
-        });
-    });
-
-    // Initialize
-    hideAlerts();
-    /*]]>*/
-</script>
+        </script>
+    </div>
+</div>
 </body>
 </html>
