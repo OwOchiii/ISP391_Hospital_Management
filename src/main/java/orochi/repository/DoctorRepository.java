@@ -22,7 +22,7 @@ public interface DoctorRepository extends JpaRepository<Doctor, Integer> {
     Optional<Doctor> findByUserFullNameContainingIgnoreCase(@Param("name") String name);
 
     // Find doctors by specialization ID
-    @Query("SELECT d FROM Doctor d JOIN d.specializations s WHERE s.specId = :specId")
+    @Query("SELECT DISTINCT d FROM Doctor d JOIN d.specializations s WHERE s.specId = :specId")
     List<Doctor> findBySpecializationId(@Param("specId") Integer specId);
 
     // Search & filter doctors by name/email and status
@@ -40,7 +40,7 @@ public interface DoctorRepository extends JpaRepository<Doctor, Integer> {
     );
 
     @Query("""
-        SELECT d FROM Doctor d JOIN d.specializations s
+        SELECT DISTINCT d FROM Doctor d JOIN d.specializations s
         WHERE s.specId = :specialtyId
         """)
     List<Doctor> findBySpecialtyId(int specialtyId);
