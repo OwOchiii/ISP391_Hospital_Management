@@ -8,6 +8,8 @@ import orochi.model.*;
 import java.time.LocalDateTime;
 import java.util.List;
 
+@ToString(exclude = {"doctor", "patient", "room", "transactions", "medicalResults", "medicalOrders", "prescriptions", "schedule"})
+@EqualsAndHashCode(exclude = {"doctor", "patient", "room", "transactions", "medicalResults", "medicalOrders", "prescriptions", "schedule"})
 @Entity
 @Table(name = "Appointment")
 @Data
