@@ -847,6 +847,11 @@
         'rejected': { currentPage: 1, searchTerm: '', filterAgeGroup: '', filterTime: '', filterDoctor: '' }
     };
 
+    // Add viewAppointmentDetails function from dashboard.html
+    function viewAppointmentDetails(appointmentId) {
+        window.location.href = `/receptionist/appointment-details?id=${appointmentId}`;
+    }
+
     // Debounce function to limit fetch calls
     function debounce(func, wait) {
         let timeout;
@@ -897,10 +902,9 @@
             if (!apiStatus) {
                 throw new Error(`Invalid status provided: ${status}`);
             }
+
+            // Only send supported parameters to API (status, page, search, fetchAll)
             let url = `/api/appointments?status=${encodeURIComponent(apiStatus)}&page=${page}&search=${encodeURIComponent(searchTerm)}`;
-            if (filterAgeGroup) url += `&ageGroup=${encodeURIComponent(filterAgeGroup)}`;
-            if (filterTime) url += `&time=${encodeURIComponent(filterTime)}`;
-            if (filterDoctor) url += `&doctor=${encodeURIComponent(filterDoctor)}`;
             if (fetchAll) {
                 url += '&fetchAll=true';
             }
@@ -913,9 +917,58 @@
             }
             const data = await response.json();
             console.log(`Received appointments:`, data);
-            return data; // Expected format: { appointments: [], total: number }
+
+            // Apply client-side filtering for unsupported filters
+            let filteredAppointments = data.appointments || [];
+
+            // Filter by age group
+            if (filterAgeGroup) {
+                filteredAppointments = filteredAppointments.filter(appt => {
+                    const age = calculateAge(appt.dob);
+                    switch (filterAgeGroup) {
+                        case 'child': return age < 18;
+                        case 'adult': return age >= 18 && age < 60;
+                        case 'senior': return age >= 60;
+                        default: return true;
+                    }
+                });
+            }
+
+            // Filter by appointment time
+            if (filterTime) {
+                filteredAppointments = filteredAppointments.filter(appt => {
+                    // Convert filter time to Date for comparison
+                    const filterDate = new Date(filterTime);
+                    const apptDate = new Date(appt.time);
+
+                    // Compare dates (same day)
+                    return apptDate.toDateString() === filterDate.toDateString();
+                });
+            }
+
+            // Filter by doctor
+            if (filterDoctor) {
+                filteredAppointments = filteredAppointments.filter(appt => {
+                    return appt.doctor && appt.doctor.toLowerCase().includes(filterDoctor.toLowerCase());
+                });
+            }
+
+            // Apply pagination to filtered results if not fetchAll
+            let paginatedAppointments = filteredAppointments;
+            if (!fetchAll) {
+                const itemsPerPage = 5;
+                const startIndex = (page - 1) * itemsPerPage;
+                const endIndex = startIndex + itemsPerPage;
+                paginatedAppointments = filteredAppointments.slice(startIndex, endIndex);
+            }
+
+            return {
+                appointments: paginatedAppointments,
+                total: filteredAppointments.length
+            };
+
         } catch (error) {
-            console.error(`Error fetching ${apiStatus} appointments:`, error);
+            console.error(`Error fetching ${status} appointments:`, error);
             throw error;
         }
     }
@@ -943,7 +996,9 @@
                 appointments.forEach(appt => {
                     const row = document.createElement('tr');
                     const actionsHtml = `
-                        <a href="/receptionist/appointment-details?stt=${appt.stt}" class="btn-view"><i class="fas fa-eye"></i></a>
+                        <button class="btn-view" onclick="viewAppointmentDetails(${appt.id || appt.stt})" title="View Details">
+                            <i class="fas fa-eye"></i>
+                        </button>
                     `;
                     row.innerHTML = `
                         <td>${appt.stt}</td>
@@ -1080,7 +1135,9 @@
                 limitedAppointments.forEach(appt => {
                     const row = document.createElement('tr');
                     const actionsHtml = `
-                        <a href="/receptionist/appointment-details?stt=${appt.stt}" class="btn-view"><i class="fas fa-eye"></i></a>
+                        <button class="btn-view" onclick="viewAppointmentDetails(${appt.id || appt.stt})" title="View Details">
+                            <i class="fas fa-eye"></i>
+                        </button>
                     `;
                     row.innerHTML = `
                         <td>${appt.stt}</td>
@@ -1171,7 +1228,9 @@
                 limitedAppointments.forEach(appt => {
                     const row = document.createElement('tr');
                     const actionsHtml = `
-                        <a href="/receptionist/appointment-details?stt=${appt.stt}" class="btn-view"><i class="fas fa-eye"></i></a>
+                        <button class="btn-view" onclick="viewAppointmentDetails(${appt.id || appt.stt})" title="View Details">
+                            <i class="fas fa-eye"></i>
+                        </button>
                     `;
                     row.innerHTML = `
                         <td>${appt.stt}</td>
@@ -1238,3 +1297,4 @@
 </script>
 </body>
 </html>
+
