@@ -670,7 +670,7 @@
                 <input type="hidden" name="adminId" th:value="${adminId}"/>
                 <div class="col-md-4">
                     <label for="search" class="form-label">Search by Name/Email</label>
-                    <input type="text" id="search" name="search" th:value="${search}" class="form-control" placeholder="Enter keyword..."/>
+                    <input type="text" id="search" name="search" th:value="${search}" class="form-control" placeholder="Enter keyword..." maxlength="30"/>
                 </div>
                 <div class="col-md-3">
                     <label for="statusFilter" class="form-label">Filter by Status</label>
@@ -786,27 +786,55 @@
             </div>
         </div>
 
-        <div class="pagination" th:if="${totalPages > 1}">
-            <nav>
+        <!-- Phân trang -->
+        <div class="pagination-container mt-4" th:if="${totalPages > 1}">
+            <nav aria-label="Page navigation">
                 <ul class="pagination justify-content-center">
-                    <li class="page-item" th:classappend="${currentPage == 0}? 'disabled'">
+                    <!-- Previous -->
+                    <li class="page-item" th:classappend="${currentPage == 0} ? 'disabled'">
                         <a class="page-link"
-                           th:href="@{/admin/doctors(adminId=${adminId},search=${search},statusFilter=${statusFilter},page=${currentPage - 1},size=${pageSize})}">«</a>
+                           th:href="@{/admin/doctors(
+              adminId=${adminId},
+              search=${search},
+              statusFilter=${statusFilter},
+              page=${currentPage - 1},
+              size=${pageSize})}"
+                           aria-label="Previous">
+                            «
+                        </a>
                     </li>
-                    <li th:each="i : ${#numbers.sequence(0, totalPages - 1)}"
-                        class="page-item"
-                        th:classappend="${i == currentPage}? 'active'">
+
+                    <!-- Các số trang -->
+                    <li class="page-item"
+                        th:each="i : ${#numbers.sequence(0, totalPages - 1)}"
+                        th:classappend="${i == currentPage} ? 'active'">
                         <a class="page-link"
-                           th:href="@{/admin/doctors(adminId=${adminId},search=${search},statusFilter=${statusFilter},page=${i},size=${pageSize})}"
+                           th:href="@{/admin/doctors(
+              adminId=${adminId},
+              search=${search},
+              statusFilter=${statusFilter},
+              page=${i},
+              size=${pageSize})}"
                            th:text="${i + 1}">1</a>
                     </li>
-                    <li class="page-item" th:classappend="${currentPage == totalPages - 1}? 'disabled'">
+
+                    <!-- Next -->
+                    <li class="page-item" th:classappend="${currentPage == totalPages - 1} ? 'disabled'">
                         <a class="page-link"
-                           th:href="@{/admin/doctors(adminId=${adminId},search=${search},statusFilter=${statusFilter},page=${currentPage+1},size=${pageSize})}">»</a>
+                           th:href="@{/admin/doctors(
+              adminId=${adminId},
+              search=${search},
+              statusFilter=${statusFilter},
+              page=${currentPage + 1},
+              size=${pageSize})}"
+                           aria-label="Next">
+                            »
+                        </a>
                     </li>
                 </ul>
             </nav>
         </div>
+
 
 
         <!-- Modal (Add/Edit Doctor) -->
