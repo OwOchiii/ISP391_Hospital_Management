@@ -6,8 +6,8 @@ import lombok.*;
 import java.time.LocalDateTime;
 import java.util.List;
 
-@ToString(exclude = "Appointment")
-@EqualsAndHashCode(exclude = "Appointment")
+@ToString(exclude = {"appointment", "user", "processedByUser", "receipt"})
+@EqualsAndHashCode(exclude = {"appointment", "user", "processedByUser", "receipt"})
 @Entity
 @Table(name = "[Transaction]")
 @Data
