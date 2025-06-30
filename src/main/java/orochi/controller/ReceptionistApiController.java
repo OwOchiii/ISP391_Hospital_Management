@@ -12,6 +12,8 @@ import orochi.repository.UserRepository;
 import orochi.service.impl.DoctorServiceImpl;
 import orochi.service.impl.ReceptionistService;
 
+import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -183,9 +185,13 @@ public class ReceptionistApiController {
         try {
             List<Appointment> allAppointments = receptionistService.getAllAppointments();
 
-            // Filter by status
+            // Get current date for filtering
+            LocalDate today = LocalDate.now();
+
+            // Filter by status and today's date
             List<Appointment> filteredAppointments = allAppointments.stream()
                     .filter(a -> a.getStatus().equalsIgnoreCase(status))
+                    .filter(a -> a.getDateTime().toLocalDate().equals(today)) // Only today's appointments
                     .collect(Collectors.toList());
 
             // Filter by search term if provided
