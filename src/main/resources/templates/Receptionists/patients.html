@@ -593,100 +593,6 @@
     let sortColumn = '';
     let sortDirection = 'asc';
 
-    // Sample data for 5 patients
-    const samplePatients = [
-        {
-            PatientID: 1,
-            FullName: "Nguyễn Văn Hùng",
-            PhoneNumber: "0905123456",
-            Email: "hung.nguyen@example.com",
-            dateOfBirth: "1988-04-12",
-            gender: "Male",
-            Status: "Examined",
-            LastVisit: "2025-06-10",
-            description: "Bệnh nhân có tiền sử viêm dạ dày.",
-            address: {
-                StreetAddress: "123 Phạm Văn Đồng",
-                City: "Hà Nội",
-                State: "",
-                PostalCode: "100000",
-                Country: "Vietnam"
-            }
-        },
-        {
-            PatientID: 2,
-            FullName: "Trần Thị Lan",
-            PhoneNumber: "0916234567",
-            Email: "lan.tran@example.com",
-            dateOfBirth: "1995-07-20",
-            gender: "Female",
-            Status: "Pending",
-            LastVisit: "2025-06-15",
-            description: "Chờ kết quả xét nghiệm viêm gan B.",
-            address: {
-                StreetAddress: "45 Lê Văn Sỹ",
-                City: "Hồ Chí Minh",
-                State: "",
-                PostalCode: "700000",
-                Country: "Vietnam"
-            }
-        },
-        {
-            PatientID: 3,
-            FullName: "Lê Minh Tuấn",
-            PhoneNumber: "0927345678",
-            Email: "tuan.le@example.com",
-            dateOfBirth: "2008-09-05",
-            gender: "Male",
-            Status: "Waiting",
-            LastVisit: "2025-06-20",
-            description: "Đăng ký khám sức khỏe định kỳ.",
-            address: {
-                StreetAddress: "67 Nguyễn Trãi",
-                City: "Đà Nẵng",
-                State: "",
-                PostalCode: "550000",
-                Country: "Vietnam"
-            }
-        },
-        {
-            PatientID: 4,
-            FullName: "Phạm Thị Hoa",
-            PhoneNumber: "0938456789",
-            Email: "hoa.pham@example.com",
-            dateOfBirth: "1970-12-15",
-            gender: "Female",
-            Status: "Examined",
-            LastVisit: "2025-06-05",
-            description: "Bệnh nhân tiểu đường tuýp 2.",
-            address: {
-                StreetAddress: "89 Trần Hưng Đạo",
-                City: "Huế",
-                State: "",
-                PostalCode: "530000",
-                Country: "Vietnam"
-            }
-        },
-        {
-            PatientID: 5,
-            FullName: "Hoàng Văn Nam",
-            PhoneNumber: "0949567890",
-            Email: "nam.hoang@example.com",
-            dateOfBirth: "1965-03-25",
-            gender: "Male",
-            Status: "Waiting",
-            LastVisit: "2025-06-18",
-            description: "Cần kiểm tra huyết áp cao.",
-            address: {
-                StreetAddress: "34 Nguyễn Văn Cừ",
-                City: "Cần Thơ",
-                State: "",
-                PostalCode: "900000",
-                Country: "Vietnam"
-            }
-        }
-    ];
-
     function toggleSidebar() {
         const sidebar = document.getElementById('sidebar');
         const mainContent = document.getElementById('mainContent');
@@ -706,12 +612,30 @@
         }
     }
 
-    function fetchPatients() {
-        // Use sample data
-        return Promise.resolve(samplePatients.map(patient => ({
-            ...patient,
-            Age: calculateAge(patient.dateOfBirth)
-        })));
+    // Fetch patients from the API
+    async function fetchPatients() {
+        try {
+            const response = await fetch('/receptionist/api/patients');
+            if (!response.ok) throw new Error('Failed to fetch patients');
+            const data = await response.json();
+            return data;
+        } catch (error) {
+            console.error('Error fetching patients:', error);
+            return [];
+        }
+    }
+
+    // Fetch individual patient details
+    async function fetchPatientDetails(patientId) {
+        try {
+            const response = await fetch(`/receptionist/api/patients/${patientId}`);
+            if (!response.ok) throw new Error('Failed to fetch patient details');
+            const data = await response.json();
+            return data;
+        } catch (error) {
+            console.error('Error fetching patient details:', error);
+            return null;
+        }
     }
 
     function calculateAge(dateOfBirth) {
@@ -749,7 +673,7 @@
                 (patient.PatientID && patient.PatientID.toString().includes(searchInput))
             );
 
-            const matchesGender = !filterGender || (patient.gender && patient.gender === filterGender);
+            const matchesGender = !filterGender || (patient.Gender && patient.Gender === filterGender);
 
             const matchesAge = !filterAge || (
                 filterAge === '0-18' && patient.Age < 18 ||
@@ -759,7 +683,7 @@
             );
 
             const matchesLastVisit = !filterLastVisit || (
-                patient.LastVisit !== 'N/A' &&
+                patient.LastVisit !== 'Never' && patient.LastVisit !== 'N/A' &&
                 new Date(patient.LastVisit).toISOString().split('T')[0] === filterLastVisit
             );
 
@@ -791,11 +715,11 @@
             row.innerHTML = `
                 <td>${patient.PatientID}</td>
                 <td>${patient.FullName || 'N/A'}</td>
-                <td>${patient.Age}</td>
-                <td>${patient.gender || 'N/A'}</td>
+                <td>${patient.Age || 'N/A'}</td>
+                <td>${patient.Gender || 'N/A'}</td>
                 <td>${patient.PhoneNumber || 'N/A'}</td>
-                <td>${patient.LastVisit || 'N/A'}</td>
-                <td><span class="status-badge status-${(patient.Status || 'pending').toLowerCase()}">${patient.Status || 'Pending'}</span></td>
+                <td>${patient.LastVisit || 'Never'}</td>
+                <td><span class="status-badge status-${(patient.Status || 'pending').toLowerCase().replace(' ', '-')}">${patient.Status || 'Pending'}</span></td>
                 <td>
                     <button class="btn-view" onclick="viewPatientDetails(${patient.PatientID})">View</button>
                 </td>
@@ -809,30 +733,40 @@
     function renderPagination() {
         const pagination = document.getElementById('pagination');
         pagination.innerHTML = '';
-        const pageCount = Math.ceil(filteredPatients.length / patientsPerPage);
 
-        if (pageCount <= 1) return;
+        const totalPages = Math.ceil(filteredPatients.length / patientsPerPage);
 
-        const prevItem = document.createElement('li');
-        prevItem.className = `page-item ${currentPage === 1 ? 'disabled' : ''}`;
-        prevItem.innerHTML = `<a class="page-link" href="#" onclick="changePage(${currentPage - 1}); event.preventDefault();">Previous</a>`;
-        pagination.appendChild(prevItem);
+        if (totalPages <= 1) return;
 
-        for (let i = 1; i <= pageCount; i++) {
+        // Previous button
+        if (currentPage > 1) {
+            const prevItem = document.createElement('li');
+            prevItem.className = 'page-item';
+            prevItem.innerHTML = `<a class="page-link" href="#" onclick="changePage(${currentPage - 1})">Previous</a>`;
+            pagination.appendChild(prevItem);
+        }
+
+        // Page numbers
+        const startPage = Math.max(1, currentPage - 2);
+        const endPage = Math.min(totalPages, currentPage + 2);
+
+        for (let i = startPage; i <= endPage; i++) {
             const pageItem = document.createElement('li');
             pageItem.className = `page-item ${i === currentPage ? 'active' : ''}`;
-            pageItem.innerHTML = `<a class="page-link" href="#" onclick="changePage(${i}); event.preventDefault();">${i}</a>`;
+            pageItem.innerHTML = `<a class="page-link" href="#" onclick="changePage(${i})">${i}</a>`;
             pagination.appendChild(pageItem);
         }
 
-        const nextItem = document.createElement('li');
-        nextItem.className = `page-item ${currentPage === pageCount ? 'disabled' : ''}`;
-        nextItem.innerHTML = `<a class="page-link" href="#" onclick="changePage(${currentPage + 1}); event.preventDefault();">Next</a>`;
-        pagination.appendChild(nextItem);
+        // Next button
+        if (currentPage < totalPages) {
+            const nextItem = document.createElement('li');
+            nextItem.className = 'page-item';
+            nextItem.innerHTML = `<a class="page-link" href="#" onclick="changePage(${currentPage + 1})">Next</a>`;
+            pagination.appendChild(nextItem);
+        }
     }
 
     function changePage(page) {
-        if (page < 1 || page > Math.ceil(filteredPatients.length / patientsPerPage)) return;
         currentPage = page;
         renderPatients();
     }
@@ -845,61 +779,161 @@
             sortDirection = 'asc';
         }
 
-        const thElements = document.querySelectorAll('th');
-        thElements.forEach(th => {
+        // Update sort indicators
+        document.querySelectorAll('th').forEach(th => {
             th.classList.remove('asc', 'desc');
-            if (th.querySelector('.sort-icon').textContent === column) {
-                th.classList.add(sortDirection);
-            }
         });
 
+        const header = document.querySelector(`th[onclick="sortTable('${column}')"]`);
+        if (header) {
+            header.classList.add(sortDirection);
+        }
+
         filteredPatients.sort((a, b) => {
-            let valA = a[column] || '';
-            let valB = b[column] || '';
-            if (column === 'Age') {
-                valA = parseInt(valA) || 0;
-                valB = parseInt(valB) || 0;
-            } else if (column === 'LastVisit' && valA !== 'N/A') {
-                valA = new Date(valA).getTime();
-                valB = new Date(valB).getTime();
-            }
-            if (sortDirection === 'asc') {
-                return valA > valB ? 1 : -1;
-            } else {
-                return valA < valB ? 1 : -1;
-            }
+            let aVal = a[column];
+            let bVal = b[column];
+
+            // Handle null/undefined values
+            if (aVal == null) aVal = '';
+            if (bVal == null) bVal = '';
+
+            // Convert to string for comparison
+            aVal = aVal.toString().toLowerCase();
+            bVal = bVal.toString().toLowerCase();
+
+            if (aVal < bVal) return sortDirection === 'asc' ? -1 : 1;
+            if (aVal > bVal) return sortDirection === 'asc' ? 1 : -1;
+            return 0;
         });
 
         renderPatients();
     }
 
-    function viewPatientDetails(id) {
-        window.location.href = `/receptionist/patients/${id}`;
-    }
+    async function viewPatientDetails(patientId) {
+        try {
+            const patient = await fetchPatientDetails(patientId);
+            if (!patient) {
+                alert('Failed to load patient details.');
+                return;
+            }
 
-    function toggleNotificationModal() {
-        const modal = document.getElementById('notificationModal');
-        if (modal) {
-            modal.style.display = modal.style.display === 'block' ? 'none' : 'block';
+            // Create and show patient details modal
+            showPatientModal(patient);
+        } catch (error) {
+            console.error('Error viewing patient details:', error);
+            alert('Error loading patient details.');
         }
     }
 
-    async function initialize() {
-        checkScreenSize();
-        patients = await fetchPatients();
-        filteredPatients = [...patients];
-        renderPatients();
+    function showPatientModal(patient) {
+        // Create modal if it doesn't exist
+        let modal = document.getElementById('patientModal');
+        if (!modal) {
+            modal = document.createElement('div');
+            modal.id = 'patientModal';
+            modal.className = 'modal fade';
+            modal.innerHTML = `
+                <div class="modal-dialog modal-lg">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <h5 class="modal-title">Patient Details</h5>
+                            <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                        </div>
+                        <div class="modal-body" id="patientModalBody">
+                        </div>
+                    </div>
+                </div>
+            `;
+            document.body.appendChild(modal);
+        }
 
-        // Add event listeners for search and filters
-        document.getElementById('searchInput').addEventListener('input', filterPatients);
-        document.getElementById('filterGender').addEventListener('change', filterPatients);
-        document.getElementById('filterAge').addEventListener('change', filterPatients);
-        document.getElementById('filterLastVisit').addEventListener('change', filterPatients);
-        document.getElementById('filterStatus').addEventListener('change', filterPatients);
+        // Populate modal with patient data
+        const modalBody = document.getElementById('patientModalBody');
+        modalBody.innerHTML = `
+            <div class="row">
+                <div class="col-md-6">
+                    <div class="detail-item">
+                        <span class="detail-label">Patient ID</span>
+                        <span class="detail-value">${patient.PatientID}</span>
+                    </div>
+                    <div class="detail-item">
+                        <span class="detail-label">Full Name</span>
+                        <span class="detail-value">${patient.FullName || 'N/A'}</span>
+                    </div>
+                    <div class="detail-item">
+                        <span class="detail-label">Email</span>
+                        <span class="detail-value">${patient.Email || 'N/A'}</span>
+                    </div>
+                    <div class="detail-item">
+                        <span class="detail-label">Phone Number</span>
+                        <span class="detail-value">${patient.PhoneNumber || 'N/A'}</span>
+                    </div>
+                    <div class="detail-item">
+                        <span class="detail-label">Gender</span>
+                        <span class="detail-value">${patient.Gender || 'N/A'}</span>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="detail-item">
+                        <span class="detail-label">Age</span>
+                        <span class="detail-value">${patient.Age || 'N/A'}</span>
+                    </div>
+                    <div class="detail-item">
+                        <span class="detail-label">Date of Birth</span>
+                        <span class="detail-value">${patient.DateOfBirth || 'N/A'}</span>
+                    </div>
+                    <div class="detail-item">
+                        <span class="detail-label">Address</span>
+                        <span class="detail-value">${patient.Address || 'N/A'}</span>
+                    </div>
+                    <div class="detail-item">
+                        <span class="detail-label">Medical History</span>
+                        <span class="detail-value">${patient.MedicalHistory || 'N/A'}</span>
+                    </div>
+                    <div class="detail-item">
+                        <span class="detail-label">Emergency Contact</span>
+                        <span class="detail-value">${patient.EmergencyContact || 'N/A'}</span>
+                    </div>
+                </div>
+            </div>
+        `;
+
+        // Show modal
+        const bootstrapModal = new bootstrap.Modal(modal);
+        bootstrapModal.show();
     }
 
-    window.addEventListener('load', initialize);
+    function toggleNotificationModal() {
+        // Notification modal functionality
+        console.log('Notification modal toggled');
+    }
+
+    // Initialize the page
+    async function initializePage() {
+        try {
+            console.log('Loading patients...');
+            patients = await fetchPatients();
+            filteredPatients = [...patients];
+            renderPatients();
+
+            // Add event listeners
+            document.getElementById('searchInput').addEventListener('input', filterPatients);
+            document.getElementById('filterGender').addEventListener('change', filterPatients);
+            document.getElementById('filterAge').addEventListener('change', filterPatients);
+            document.getElementById('filterLastVisit').addEventListener('change', filterPatients);
+            document.getElementById('filterStatus').addEventListener('change', filterPatients);
+
+            console.log(`Loaded ${patients.length} patients`);
+        } catch (error) {
+            console.error('Error initializing page:', error);
+        }
+    }
+
+    // Run when page loads
+    checkScreenSize();
     window.addEventListener('resize', checkScreenSize);
+    document.addEventListener('DOMContentLoaded', initializePage);
 </script>
 </body>
 </html>
+
