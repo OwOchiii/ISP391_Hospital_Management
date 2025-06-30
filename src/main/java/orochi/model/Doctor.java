@@ -2,11 +2,11 @@ package orochi.model;
 
 import com.fasterxml.jackson.annotation.*;
 import jakarta.persistence.*;
-import lombok.AllArgsConstructor;
-import lombok.Data;
-import lombok.NoArgsConstructor;
+import lombok.*;
 import java.util.List;
 
+@ToString(exclude = {"user", "educations", "appointments", "schedules", "medicalResults", "medicalOrders", "departmentsLed", "prescriptions", "specializations"})
+@EqualsAndHashCode(exclude = {"user", "educations", "appointments", "schedules", "medicalResults", "medicalOrders", "departmentsLed", "prescriptions", "specializations"})
 @Entity
 @Table(name = "Doctor")
 @Data
