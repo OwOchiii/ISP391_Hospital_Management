@@ -4,9 +4,12 @@ import java.time.LocalDate;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 import jakarta.validation.Valid;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -40,6 +43,8 @@ public class ReceptionistController {
     private final SpecializationService specializationService;
     private final AppointmentService appointmentService;
     private final PatientRepository patientRepository;
+
+    private static final Logger logger = LoggerFactory.getLogger(ReceptionistController.class);
 
     @Autowired
     public ReceptionistController(ReceptionistService receptionistService, UserRepository userRepository, SpecializationService specializationService, AppointmentService appointmentService, PatientRepository patientRepository) {
@@ -201,6 +206,79 @@ public class ReceptionistController {
         return "Receptionists/doctors";
     }
 
+    // API endpoint to fetch all doctors with their specialties
+    @GetMapping("/api/doctors")
+    @ResponseBody
+    public ResponseEntity<List<Map<String, Object>>> getAllDoctorsApi() {
+        try {
+            List<Map<String, Object>> doctors = receptionistService.getAllDoctorsWithDetails();
+            return ResponseEntity.ok(doctors);
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
+        }
+    }
+
+    // API endpoint to fetch individual doctor details
+    @GetMapping("/api/doctors/{doctorId}")
+    @ResponseBody
+    public ResponseEntity<Map<String, Object>> getDoctorDetailsApi(@PathVariable Integer doctorId) {
+        try {
+            Map<String, Object> doctor = receptionistService.getDoctorDetails(doctorId);
+            if (doctor != null) {
+                return ResponseEntity.ok(doctor);
+            } else {
+                return ResponseEntity.notFound().build();
+            }
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
+        }
+    }
+
+    // API endpoint to validate doctor specialty
+    @GetMapping("/api/validate-doctor-specialty")
+    @ResponseBody
+    public ResponseEntity<Map<String, Object>> validateDoctorSpecialty(
+            @RequestParam Integer doctorId,
+            @RequestParam Integer specialtyId) {
+        try {
+            boolean isValid = receptionistService.validateDoctorSpecialty(doctorId, specialtyId);
+            Map<String, Object> response = new HashMap<>();
+            response.put("valid", isValid);
+            response.put("message", isValid ? "Doctor has the required specialty" : "Doctor does not have the required specialty");
+            return ResponseEntity.ok(response);
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
+        }
+    }
+
+    // API endpoint to get the single doctor for a specialty
+    @GetMapping("/api/doctor/by-specialty/{specialtyId}")
+    @ResponseBody
+    public ResponseEntity<Map<String, Object>> getDoctorBySpecialty(@PathVariable Integer specialtyId) {
+        try {
+            Map<String, Object> doctor = receptionistService.getDoctorBySpecialty(specialtyId);
+            if (doctor != null) {
+                return ResponseEntity.ok(doctor);
+            } else {
+                return ResponseEntity.notFound().build();
+            }
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
+        }
+    }
+
+    // API endpoint to get doctors by specialty
+    @GetMapping("/api/doctors/by-specialty/{specialtyId}")
+    @ResponseBody
+    public ResponseEntity<List<Map<String, Object>>> getDoctorsBySpecialty(@PathVariable Integer specialtyId) {
+        try {
+            List<Map<String, Object>> doctors = receptionistService.getDoctorsBySpecialty(specialtyId);
+            return ResponseEntity.ok(doctors);
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
+        }
+    }
+
     @GetMapping("/patients")
     public String patients(Authentication authentication) {
         if (authentication == null || !authentication.isAuthenticated()) {
@@ -253,14 +331,30 @@ public class ReceptionistController {
     }
 
     @GetMapping("/patient_register")
-    public String patientRegister(Authentication authentication) {
-        // Ensure authentication is not null
-        if (authentication == null || !authentication.isAuthenticated()) {
-            return "redirect:/login";
-        }
+    public String patientRegister(Authentication authentication, Model model) {
+        try {
+            // Ensure authentication is not null
+            if (authentication == null || !authentication.isAuthenticated()) {
+                return "redirect:/login";
+            }
 
-        // Get patient registration form data, initialize registration process ...
-        return "Receptionists/patient_register";
+            // Add any necessary data to the model
+            model.addAttribute("newUser", new Users());
+
+            // Return the correct template path
+            return "Receptionists/patient_register";
+
+        } catch (Exception e) {
+            // Log the error for debugging
+            System.err.println("Error rendering patient_register page: " + e.getMessage());
+            e.printStackTrace();
+
+            // Add error message to model
+            model.addAttribute("errorMessage", "An error occurred while loading the registration page: " + e.getMessage());
+
+            // Return to a safe page
+            return "redirect:/receptionist/dashboard";
+        }
     }
 
     @GetMapping("/payment_history")
@@ -330,18 +424,18 @@ public class ReceptionistController {
 
     @PostMapping("/confirmAppointment")
     public ResponseEntity<?> updateAppointmentStatus(
-            @RequestParam int appointId
+            @RequestParam int id
     ){
         try {
-            // Update status to "Scheduled"
-            boolean isSuccess = receptionistService.updateAppointmentStatus(appointId, "Scheduled");
+            // Update status to "Scheduled" (Approved)
+            boolean isSuccess = receptionistService.updateAppointmentStatus(id, "Scheduled");
             if(isSuccess) {
-                return ResponseEntity.ok("Update successfully");
+                return ResponseEntity.ok("Appointment approved successfully");
             } else {
-                return ResponseEntity.badRequest().body("Update failed");
+                return ResponseEntity.badRequest().body("Failed to approve appointment");
             }
         } catch (Exception e) {
-            return ResponseEntity.badRequest().body("Error update appointment status: " + e.getMessage());
+            return ResponseEntity.badRequest().body("Error approving appointment: " + e.getMessage());
         }
     }
     @PostMapping("/api/appointment/update")
@@ -363,6 +457,14 @@ public class ReceptionistController {
             // Validate required fields
             if (appointmentId == null) {
                 return ResponseEntity.badRequest().body("Appointment ID is required");
+            }
+
+            // Validate doctor specialty match if both doctor and specialty are provided
+            if (doctorId != null && specialtyId != null) {
+                boolean isValidSpecialty = receptionistService.validateDoctorSpecialty(doctorId, specialtyId);
+                if (!isValidSpecialty) {
+                    return ResponseEntity.badRequest().body("Error: The selected doctor does not specialize in the required medical specialty. Please select a doctor who specializes in this area.");
+                }
             }
 
             // Create AppointmentFormDTO for update
@@ -395,22 +497,45 @@ public class ReceptionistController {
             return ResponseEntity.badRequest().body("Error updating appointment: " + e.getMessage());
         }
     }
-    @GetMapping("/api/doctors/specialty/{specialtyId}")
+
+    // API endpoint to check existing appointments for a doctor on a specific date
+    @GetMapping("/api/appointments/check")
     @ResponseBody
-    public ResponseEntity<List<Map<String, Object>>> getDoctorsBySpecialty(@PathVariable Integer specialtyId) {
+    public ResponseEntity<List<Map<String, Object>>> checkExistingAppointments(
+            @RequestParam Integer doctorId,
+            @RequestParam String date,
+            @RequestParam(defaultValue = "0") Integer excludeId) {
+
         try {
-            List<Doctor> doctors = appointmentService.getDoctorsBySpecialization(specialtyId);
-            List<Map<String, Object>> doctorList = doctors.stream()
-                    .map(doctor -> {
-                        Map<String, Object> doctorMap = new HashMap<>();
-                        doctorMap.put("doctorId", doctor.getDoctorId());
-                        doctorMap.put("fullName", doctor.getUser().getFullName());
-                        return doctorMap;
+            // Parse the date string to LocalDate
+            LocalDate appointmentDate = LocalDate.parse(date);
+
+            // Get existing appointments for this doctor on this date
+            List<Appointment> existingAppointments = appointmentService.getAppointmentsByDoctorAndDate(doctorId, appointmentDate);
+
+            // Filter out the current appointment if we're editing
+            if (excludeId > 0) {
+                existingAppointments = existingAppointments.stream()
+                        .filter(apt -> !apt.getAppointmentId().equals(excludeId))
+                        .collect(Collectors.toList());
+            }
+
+            // Convert to a simple format for frontend
+            List<Map<String, Object>> appointmentTimes = existingAppointments.stream()
+                    .map(apt -> {
+                        Map<String, Object> timeSlot = new HashMap<>();
+                        timeSlot.put("appointmentId", apt.getAppointmentId());
+                        timeSlot.put("appointmentTime", apt.getDateTime().toLocalTime().toString());
+                        return timeSlot;
                     })
                     .collect(Collectors.toList());
-            return ResponseEntity.ok(doctorList);
+
+            return ResponseEntity.ok(appointmentTimes);
+
         } catch (Exception e) {
-            return ResponseEntity.badRequest().build();
+            System.err.println("Error checking existing appointments: " + e.getMessage());
+            e.printStackTrace();
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
         }
     }
 
@@ -430,7 +555,7 @@ public class ReceptionistController {
             model.addAttribute("patientId", appointmentForm.getPatientId());
             model.addAttribute("patientName", patient.getUser() != null ? patient.getUser().getFullName() : "Patient");
             model.addAttribute("isUpdate", appointmentForm.getAppointmentId() != null);
-            return "Receptionists/appointments";
+            return "Receptionists/new_appointment";
         }
 
         try {
@@ -444,8 +569,8 @@ public class ReceptionistController {
                         appointmentForm.getAppointmentTime(),
                         appointmentForm.getEmail(),
                         appointmentForm.getPhoneNumber(),
-                        appointmentForm.getDescription(),
-                        appointmentForm.getEmergencyContact()
+                        appointmentForm.getDescription()
+//                        appointmentForm.getEmergencyContact()
                 );
                 redirectAttributes.addFlashAttribute("successMessage", "Your appointment has been successfully updated.");
             } else {
@@ -456,15 +581,15 @@ public class ReceptionistController {
                         appointmentForm.getAppointmentTime(),
                         appointmentForm.getEmail(),
                         appointmentForm.getPhoneNumber(),
-                        appointmentForm.getDescription(),
-                        appointmentForm.getEmergencyContact()
+                        appointmentForm.getDescription()
+//                        appointmentForm.getEmergencyContact()
                 );
                 redirectAttributes.addFlashAttribute("successMessage",
                         "Your appointment has been successfully booked for " +
                                 appointmentForm.getAppointmentDate() + " at " +
                                 formatTimeForDisplay(appointmentForm.getAppointmentTime()));
             }
-            return "redirect:/Receptionists/appointments";
+            return "redirect:/receptionist/new_appointment";
         } catch (Exception e) {
             model.addAttribute("errorMessage", e.getMessage());
             List<Specialization> specializations = appointmentService.getAllSpecializations();
@@ -475,7 +600,7 @@ public class ReceptionistController {
             model.addAttribute("patientId", appointmentForm.getPatientId());
             model.addAttribute("patientName", patient.getUser() != null ? patient.getUser().getFullName() : "Patient");
             model.addAttribute("isUpdate", appointmentForm.getAppointmentId() != null);
-            return "Receptionists/appointments";
+            return "Receptionists/new_appointment";
         }
 
     }
@@ -486,6 +611,117 @@ public class ReceptionistController {
         String period = hour >= 12 ? "PM" : "AM";
         int displayHour = hour > 12 ? hour - 12 : (hour == 0 ? 12 : hour);
         return String.format("%d:%02d %s", displayHour, minute, period);
+    }
+
+    @PostMapping("/register-patient")
+    public ResponseEntity<?> registerNewPatient(
+            @RequestParam String fullName,
+            @RequestParam String email,
+            @RequestParam String phoneNumber,
+            @RequestParam String passwordHash,
+            @RequestParam String dateOfBirth,
+            @RequestParam String gender,
+            @RequestParam String streetAddress,
+            @RequestParam String city,
+            @RequestParam String country,
+            @RequestParam String addressType,
+            @RequestParam(required = false) String description,
+            Authentication authentication) {
+
+        try {
+            // Validate authentication
+            if (authentication == null || !authentication.isAuthenticated()) {
+                return ResponseEntity.status(401).body("Unauthorized");
+            }
+
+            // Get current user details
+            Object principal = authentication.getPrincipal();
+            if (!(principal instanceof CustomUserDetails)) {
+                return ResponseEntity.status(401).body("Invalid authentication");
+            }
+
+            CustomUserDetails userDetails = (CustomUserDetails) principal;
+            Integer currentUserId = userDetails.getUserId();
+
+            // Fetch current user from database
+            Users currentUser = userRepository.findById(currentUserId)
+                    .orElseThrow(() -> new RuntimeException("Current user not found"));
+
+            // Check if current user is a receptionist
+            if (!currentUser.getRole().getRoleName().equals("RECEPTIONIST")) {
+                return ResponseEntity.status(403).body("Only receptionists can register patients");
+            }
+
+            // Validate required fields
+            if (fullName == null || fullName.trim().isEmpty()) {
+                return ResponseEntity.badRequest().body("Full name is required");
+            }
+            if (email == null || email.trim().isEmpty()) {
+                return ResponseEntity.badRequest().body("Email is required");
+            }
+            if (phoneNumber == null || phoneNumber.trim().isEmpty()) {
+                return ResponseEntity.badRequest().body("Phone number is required");
+            }
+            if (passwordHash == null || passwordHash.trim().isEmpty()) {
+                return ResponseEntity.badRequest().body("Password is required");
+            }
+            if (dateOfBirth == null || dateOfBirth.trim().isEmpty()) {
+                return ResponseEntity.badRequest().body("Date of birth is required");
+            }
+            if (gender == null || gender.trim().isEmpty()) {
+                return ResponseEntity.badRequest().body("Gender is required");
+            }
+
+            // Validate email format
+            if (!email.matches("^[\\w-\\.]+@([\\w-]+\\.)+[\\w-]{2,4}$")) {
+                return ResponseEntity.badRequest().body("Invalid email format");
+            }
+
+            // Validate phone number format (Vietnam phone number)
+            if (!phoneNumber.matches("^(0[3|5|7|8|9])+([0-9]{8})$")) {
+                return ResponseEntity.badRequest().body("Invalid phone number format");
+            }
+
+            // Check if email already exists
+            Optional<Users> existingUserByEmail = userRepository.findByEmail(email);
+            if (existingUserByEmail.isPresent()) {
+                return ResponseEntity.badRequest().body("Email already exists");
+            }
+
+            // Check if phone number already exists
+            Optional<Users> existingUserByPhone = userRepository.findByPhoneNumber(phoneNumber);
+            if (existingUserByPhone.isPresent()) {
+                return ResponseEntity.badRequest().body("Phone number already exists");
+            }
+
+            // Prepare registration data for PatientContact structure
+            Map<String, Object> registrationData = new HashMap<>();
+            registrationData.put("fullName", fullName.trim());
+            registrationData.put("email", email.trim().toLowerCase());
+            registrationData.put("phoneNumber", phoneNumber.trim());
+            registrationData.put("passwordHash", passwordHash);
+            registrationData.put("dateOfBirth", dateOfBirth);
+            registrationData.put("gender", gender);
+            registrationData.put("streetAddress", streetAddress != null ? streetAddress.trim() : "");
+            registrationData.put("city", city != null ? city.trim() : "");
+            registrationData.put("country", country != null ? country.trim() : "");
+            registrationData.put("addressType", addressType != null ? addressType.trim() : "Home");
+            registrationData.put("description", description != null ? description.trim() : "");
+
+            // Call service to register patient
+            Users newPatient = receptionistService.registerNewPatient(registrationData);
+
+            return ResponseEntity.ok().body(Map.of(
+                "success", true,
+                "message", "Patient registered successfully",
+                "patientId", newPatient.getPatient().getPatientId(),
+                "userId", newPatient.getUserId()
+            ));
+
+        } catch (Exception e) {
+            logger.error("Error registering patient", e);
+            return ResponseEntity.status(500).body("Error registering patient: " + e.getMessage());
+        }
     }
 
 }
