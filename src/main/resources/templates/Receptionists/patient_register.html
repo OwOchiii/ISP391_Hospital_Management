@@ -1,22 +1,17 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Patient Register - MediCare Plus</title>
-    <!-- Tailwind CSS CDN -->
-    <script src="https://cdn.tailwindcss.com"></script>
-    <!-- Font Awesome CDN -->
-    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.6.0/css/all.min.css" rel="stylesheet">
-    <!-- Bootstrap Icons CDN -->
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Font Awesome -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <!-- Bootstrap Icons -->
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css">
     <!-- Google Fonts -->
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;700&display=swap" rel="stylesheet">
-    <!-- React and ReactDOM CDNs -->
-    <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
-    <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
-    <!-- Babel CDN for JSX -->
-    <script src="https://unpkg.com/@babel/standalone@7.25.6/babel.min.js"></script>
     <style>
         :root {
             --primary-color: #007bff;
@@ -63,7 +58,7 @@
             gap: 1rem;
         }
         .header-left h4 {
-            font-size: 1.8rem; /* Match Book Appointment header font size */
+            font-size: 1.8rem;
         }
         .header-right {
             display: flex;
@@ -94,13 +89,13 @@
             background: none;
             padding: 0;
             margin: 0;
-            font-size: 0.9rem; /* Ensure consistent breadcrumb font size */
+            font-size: 0.9rem;
         }
         .breadcrumb-item {
             display: inline;
         }
         .breadcrumb-item + .breadcrumb-item::before {
-            content: '/'; /* Ensure slash separator for breadcrumb */
+            content: '/';
             color: var(--text-muted);
             margin: 0 0.5rem;
         }
@@ -162,41 +157,39 @@
             align-items: center;
             gap: 0.25rem;
         }
-        .btn-primary-custom {
-            background: var(--success-color);
-            border: none;
-            padding: 1rem 2rem;
+        .error-message i {
+            font-size: 0.75rem;
+        }
+        .form-control.is-invalid {
+            border-color: var(--error-color) !important;
+            box-shadow: 0 0 0 0.2rem rgba(239, 68, 68, 0.25) !important;
+        }
+        .form-control.is-valid {
+            border-color: #28a745 !important;
+            box-shadow: 0 0 0 0.2rem rgba(40, 167, 69, 0.25) !important;
+        }
+        .alert-custom {
             border-radius: 12px;
-            color: white;
-            font-weight: 600;
-            font-size: 1.1rem;
-            transition: all 0.3s ease;
-            display: inline-flex;
+            padding: 1rem 1.5rem;
+            margin-bottom: 1.5rem;
+            border: none;
+            display: flex;
             align-items: center;
             gap: 0.75rem;
-            cursor: pointer;
+            font-weight: 500;
         }
-        .btn-primary-custom:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 8px 25px rgba(0, 123, 255, 0.3);
-            color: white;
+        .alert-danger-custom {
+            background: #fef2f2;
+            color: #dc2626;
+            border-left: 4px solid #dc2626;
         }
-        .btn-outline-custom {
-            border: 2px solid var(--success-color);
-            color: var(--success-color);
-            background: transparent;
-            padding: 0.75rem 1.5rem;
-            border-radius: 10px;
-            font-weight: 600;
-            transition: all 0.3s ease;
-            display: inline-flex;
-            align-items: center;
-            gap: 0.5rem;
+        .alert-success-custom {
+            background: #f0f9ff;
+            color: #1e40af;
+            border-left: 4px solid #1e40af;
         }
-        .btn-outline-custom:hover {
-            background: var(--success-color);
-            color: white;
-            transform: translateY(-2px);
+        .required {
+            color: var(--error-color);
         }
         .confirmation-overlay {
             position: fixed;
@@ -265,6 +258,57 @@
         .success-message i {
             color: var(--success-color);
         }
+        .password-toggle {
+            position: absolute;
+            right: 10px;
+            top: 50%;
+            transform: translateY(-50%);
+            background: none;
+            border: none;
+            color: var(--text-muted);
+            cursor: pointer;
+        }
+        .password-field {
+            position: relative;
+        }
+        .btn-primary-custom {
+            background: var(--success-color);
+            border: none;
+            padding: 1rem 2rem;
+            border-radius: 12px;
+            color: white;
+            font-weight: 600;
+            font-size: 1.1rem;
+            transition: all 0.3s ease;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.75rem;
+            cursor: pointer;
+        }
+        .btn-primary-custom:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(0, 123, 255, 0.3);
+            color: white;
+        }
+        .btn-outline-custom {
+            border: 2px solid var(--success-color);
+            color: var(--success-color);
+            background: transparent;
+            padding: 0.75rem 1.5rem;
+            border-radius: 10px;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            text-decoration: none;
+            cursor: pointer;
+        }
+        .btn-outline-custom:hover {
+            background: var(--success-color);
+            color: white;
+            transform: translateY(-2px);
+        }
         @media (max-width: 768px) {
             .page-content {
                 padding: 1rem;
@@ -296,417 +340,729 @@
         .animate-slideIn {
             animation: slideIn 0.3s ease-out;
         }
+        .d-none {
+            display: none !important;
+        }
+
+        /* Loading styles */
+        .loading {
+            position: relative;
+            pointer-events: none;
+            opacity: 0.7;
+        }
+
+        .loading::after {
+            content: '';
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(255, 255, 255, 0.8);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 9999;
+        }
+
+        .loading::before {
+            content: 'Processing...';
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: var(--bg-white);
+            padding: 2rem;
+            border-radius: 12px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+            font-weight: 600;
+            color: var(--text-dark);
+            z-index: 10000;
+        }
     </style>
 </head>
 <body>
-<div class="main-content" id="root"></div>
+<div class="main-content" id="mainContent">
+    <!-- Header -->
+    <div class="top-header">
+        <div class="header-left">
+            <h4 class="mb-0">Patient Register</h4>
+        </div>
+        <div class="header-right">
+            <a href="/receptionist/dashboard" class="btn-outline-custom">
+                <i class="bi bi-arrow-left"></i>
+                Back to Dashboard
+            </a>
+        </div>
+    </div>
 
-<script type="text/babel">
-    function PatientRegister() {
-        const [formData, setFormData] = React.useState({
-            fullName: '',
-            phoneNumber: '',
-            email: '',
-            passwordHash: '',
-            dateOfBirth: '',
-            gender: '',
-            streetAddress: '',
-            city: '',
-            country: '',
-            addressType: '',
-            description: '',
-            createdAt: ''
-        });
-
-        const [errors, setErrors] = React.useState({});
-        const [notificationCount] = React.useState(3);
-        const [showNotifications, setShowNotifications] = React.useState(false);
-        const [showPassword, setShowPassword] = React.useState(false);
-        const [showConfirmPopup, setShowConfirmPopup] = React.useState(false);
-        const [showSuccessMessage, setShowSuccessMessage] = React.useState(false);
-
-        React.useEffect(() => {
-            setFormData(prev => ({ ...prev, passwordHash: prev.phoneNumber }));
-        }, [formData.phoneNumber]);
-
-        const validateForm = () => {
-            const newErrors = {};
-            if (!formData.fullName) newErrors.fullName = 'Full name is required';
-            if (!formData.phoneNumber || !/^\d{10}$/.test(formData.phoneNumber))
-                newErrors.phoneNumber = 'Phone number must be 10 digits';
-            if (!formData.email || !/\S+@\S+\.\S+/.test(formData.email))
-                newErrors.email = 'Invalid email address';
-            if (!formData.passwordHash || formData.passwordHash.length < 8)
-                newErrors.passwordHash = 'Password must be at least 8 characters';
-            if (!formData.dateOfBirth) newErrors.dateOfBirth = 'Date of birth is required';
-            if (!formData.gender) newErrors.gender = 'Gender is required';
-            if (!formData.streetAddress) newErrors.streetAddress = 'Street address is required';
-            if (!formData.city) newErrors.city = 'City is required';
-            if (!formData.country) newErrors.country = 'Country is required';
-            if (!formData.addressType) newErrors.addressType = 'Address type is required';
-            if (formData.description.length > 200)
-                newErrors.description = 'Description must not exceed 200 characters';
-
-            setErrors(newErrors);
-            return Object.keys(newErrors).length === 0;
-        };
-
-        const handleInputChange = (e) => {
-            const { name, value } = e.target;
-            setFormData(prev => ({ ...prev, [name]: value }));
-            if (errors[name]) {
-                setErrors(prev => ({ ...prev, [name]: '' }));
-            }
-        };
-
-        const handleSubmit = (e) => {
-            e.preventDefault();
-            if (validateForm()) {
-                setShowConfirmPopup(true);
-            } else {
-                alert('Please fill in all required fields correctly.');
-            }
-        };
-
-        const confirmRegister = (confirm) => {
-            setShowConfirmPopup(false);
-            if (confirm) {
-                const currentTime = new Date().toLocaleString('en-GB');
-                setFormData(prev => ({ ...prev, createdAt: currentTime }));
-                console.log('Form Data:', { ...formData, createdAt: currentTime });
-                setShowSuccessMessage(true);
-                setTimeout(() => {
-                    setFormData({
-                        fullName: '',
-                        phoneNumber: '',
-                        email: '',
-                        passwordHash: '',
-                        dateOfBirth: '',
-                        gender: '',
-                        streetAddress: '',
-                        city: '',
-                        country: '',
-                        addressType: '',
-                        description: '',
-                        createdAt: ''
-                    });
-                    setShowSuccessMessage(false);
-                }, 300);
-            }
-        };
-
-        const toggleNotifications = () => {
-            setShowNotifications(!showNotifications);
-        };
-
-        const toggleShowPassword = () => {
-            setShowPassword(!showPassword);
-        };
-
-        const today = new Date().toISOString().split('T')[0];
-
-        return (
-            <div className="main-content">
-                {/* Header */}
-                <div className="top-header">
-                    <div className="header-left">
-                        <h4 className="mb-0 text-[1.8rem]">Patient Register</h4>
-                    </div>
-                    <div className="header-right">
-                        <a href="javascript:history.back()" className="btn-outline-custom">
-                            <i className="bi bi-arrow-left"></i>
-                            Back to Dashboard
-                        </a>
-                    </div>
-                </div>
-
-                {/* Notification Modal */}
-                {showNotifications && (
-                    <div className="fixed top-16 right-4 w-80 bg-white rounded-lg shadow-xl z-50 p-4 max-h-96 overflow-y-auto animate-fadeIn">
-                        <h2 className="text-lg font-semibold text-gray-800 mb-3">Notifications</h2>
-                        <div className="space-y-2">
-                            <div className="p-3 bg-gray-50 rounded-md hover:bg-gray-100 transition">
-                                <p className="text-sm font-medium text-gray-800">New Payment: INV-001 completed.</p>
-                                <p className="text-xs text-gray-500">2 hours ago</p>
-                            </div>
-                            <div className="p-3 bg-gray-50 rounded-md hover:bg-gray-100 transition">
-                                <p className="text-sm font-medium text-gray-800">Pending Payment: INV-002 awaiting confirmation.</p>
-                                <p className="text-xs text-gray-500">1 day ago</p>
-                            </div>
-                        </div>
-                    </div>
-                )}
-
-                {/* Success Message */}
-                {showSuccessMessage && (
-                    <div className="fixed top-4 max-w-3xl mx-auto px-4 w-full">
-                        <div className="success-message animate-slideIn">
-                            <i className="bi bi-check-circle-fill"></i>
-                            <span>Patient registered successfully!</span>
-                        </div>
-                    </div>
-                )}
-
-                {/* Confirmation Popup */}
-                {showConfirmPopup && (
-                    <div className="confirmation-overlay active">
-                        <div className="confirmation-container">
-                            <div className="confirmation-icon">
-                                <i className="bi bi-check-circle"></i>
-                            </div>
-                            <h3 className="confirmation-title">Confirm Patient Register</h3>
-                            <p className="confirmation-message">
-                                Please review your patient details and confirm to proceed with the registration.
-                            </p>
-                            <div className="confirmation-actions">
-                                <button
-                                    onClick={() => confirmRegister(true)}
-                                    className="btn-primary-custom"
-                                >
-                                    <i className="bi bi-check-circle"></i>
-                                    Confirm Register
-                                </button>
-                                <button
-                                    onClick={() => confirmRegister(false)}
-                                    className="btn-outline-custom"
-                                >
-                                    <i className="bi bi-x-circle"></i>
-                                    Cancel
-                                </button>
-                            </div>
-                        </div>
-                    </div>
-                )}
-
-                {/* Main Content */}
-                <div className="page-content">
-                    <div className="page-header">
-                        <h1 className="page-title">
-                            <i className="bi bi-person-plus"></i>
-                            Register New Patient
-                        </h1>
-                        <nav>
-                            <ol className="breadcrumb">
-                                <li className="breadcrumb-item"><a href="javascript:history.back()">Dashboard</a></li>
-                                <li className="breadcrumb-item active">Patient Register</li>
-                            </ol>
-                        </nav>
-                    </div>
-
-                    <div className="form-section animate-fadeIn">
-                        <form onSubmit={handleSubmit} className="space-y-8">
-                            {/* Personal Information */}
-                            <div>
-                                <h3 className="section-title">
-                                    <i className="bi bi-person-fill"></i>
-                                    Personal Information
-                                </h3>
-                                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                                    <div>
-                                        <label className="form-label">Full Name</label>
-                                        <input
-                                            type="text"
-                                            name="fullName"
-                                            value={formData.fullName}
-                                            onChange={handleInputChange}
-                                            className={`form-control ${errors.fullName ? 'border-red-500' : ''}`}
-                                            required
-                                        />
-                                        {errors.fullName && <p className="error-message">{errors.fullName}</p>}
-                                    </div>
-                                    <div>
-                                        <label className="form-label">Email</label>
-                                        <input
-                                            type="email"
-                                            name="email"
-                                            value={formData.email}
-                                            onChange={handleInputChange}
-                                            className={`form-control ${errors.email ? 'border-red-500' : ''}`}
-                                            required
-                                        />
-                                        {errors.email && <p className="error-message">{errors.email}</p>}
-                                    </div>
-                                    <div>
-                                        <label className="form-label">Phone Number</label>
-                                        <input
-                                            type="tel"
-                                            name="phoneNumber"
-                                            value={formData.phoneNumber}
-                                            onChange={handleInputChange}
-                                            className={`form-control ${errors.phoneNumber ? 'border-red-500' : ''}`}
-                                            required
-                                        />
-                                        {errors.phoneNumber && <p className="error-message">{errors.phoneNumber}</p>}
-                                    </div>
-                                    <div className="relative">
-                                        <label className="form-label">Password</label>
-                                        <input
-                                            type={showPassword ? 'text' : 'password'}
-                                            name="passwordHash"
-                                            value={formData.passwordHash}
-                                            onChange={handleInputChange}
-                                            className={`form-control ${errors.passwordHash ? 'border-red-500' : ''}`}
-                                            required
-                                        />
-                                        <button
-                                            type="button"
-                                            onClick={toggleShowPassword}
-                                            className="absolute inset-y-0 right-0 flex items-center pr-3 mt-6 text-gray-600"
-                                        >
-                                            <i className={`fas ${showPassword ? 'fa-eye-slash' : 'fa-eye'}`}></i>
-                                        </button>
-                                        {errors.passwordHash && <p className="error-message">{errors.passwordHash}</p>}
-                                    </div>
-                                </div>
-                            </div>
-
-                            {/* Patient Information */}
-                            <div>
-                                <h3 className="section-title">
-                                    <i className="bi bi-clipboard2-pulse"></i>
-                                    Patient Information
-                                </h3>
-                                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                                    <div>
-                                        <label className="form-label">Date of Birth</label>
-                                        <input
-                                            type="date"
-                                            name="dateOfBirth"
-                                            value={formData.dateOfBirth}
-                                            onChange={handleInputChange}
-                                            max={today}
-                                            className={`form-control ${errors.dateOfBirth ? 'border-red-500' : ''}`}
-                                            required
-                                        />
-                                        {errors.dateOfBirth && <p className="error-message">{errors.dateOfBirth}</p>}
-                                    </div>
-                                    <div>
-                                        <label className="form-label">Gender</label>
-                                        <select
-                                            name="gender"
-                                            value={formData.gender}
-                                            onChange={handleInputChange}
-                                            className={`form-control ${errors.gender ? 'border-red-500' : ''}`}
-                                            required
-                                        >
-                                            <option value="">Select Gender</option>
-                                            <option value="male">Male</option>
-                                            <option value="female">Female</option>
-                                            <option value="other">Other</option>
-                                        </select>
-                                        {errors.gender && <p className="error-message">{errors.gender}</p>}
-                                    </div>
-                                </div>
-                            </div>
-
-                            {/* Contact Address */}
-                            <div>
-                                <h3 className="section-title">
-                                    <i className="bi bi-geo-alt-fill"></i>
-                                    Contact Address
-                                </h3>
-                                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                                    <div>
-                                        <label className="form-label">Street Address</label>
-                                        <input
-                                            type="text"
-                                            name="streetAddress"
-                                            value={formData.streetAddress}
-                                            onChange={handleInputChange}
-                                            className={`form-control ${errors.streetAddress ? 'border-red-500' : ''}`}
-                                            required
-                                        />
-                                        {errors.streetAddress && <p className="error-message">{errors.streetAddress}</p>}
-                                    </div>
-                                    <div>
-                                        <label className="form-label">City</label>
-                                        <input
-                                            type="text"
-                                            name="city"
-                                            value={formData.city}
-                                            onChange={handleInputChange}
-                                            className={`form-control ${errors.city ? 'border-red-500' : ''}`}
-                                            required
-                                        />
-                                        {errors.city && <p className="error-message">{errors.city}</p>}
-                                    </div>
-                                    <div>
-                                        <label className="form-label">Country</label>
-                                        <input
-                                            type="text"
-                                            name="country"
-                                            value={formData.country}
-                                            onChange={handleInputChange}
-                                            className={`form-control ${errors.country ? 'border-red-500' : ''}`}
-                                            required
-                                        />
-                                        {errors.country && <p className="error-message">{errors.country}</p>}
-                                    </div>
-                                    <div>
-                                        <label className="form-label">Address Type</label>
-                                        <input
-                                            type="text"
-                                            name="addressType"
-                                            value={formData.addressType}
-                                            onChange={handleInputChange}
-                                            className={`form-control ${errors.addressType ? 'border-red-500' : ''}`}
-                                            required
-                                        />
-                                        {errors.addressType && <p className="error-message">{errors.addressType}</p>}
-                                    </div>
-                                </div>
-                            </div>
-
-                            {/* Additional Information */}
-                            <div>
-                                <h3 className="section-title">
-                                    <i className="bi bi-info-circle-fill"></i>
-                                    Additional Information (Optional)
-                                </h3>
-                                <div className="grid grid-cols-1 gap-6">
-                                    <div>
-                                        <label className="form-label">Description / Notes</label>
-                                        <textarea
-                                            name="description"
-                                            value={formData.description}
-                                            onChange={handleInputChange}
-                                            rows="5"
-                                            maxLength="200"
-                                            className={`form-control ${errors.description ? 'border-red-500' : ''}`}
-                                            placeholder="Enter any additional notes or comments..."
-                                        ></textarea>
-                                        <p className="text-sm text-gray-500 mt-1 text-right">
-                                            {formData.description.length}/200 characters
-                                        </p>
-                                        {errors.description && <p className="error-message">{errors.description}</p>}
-                                    </div>
-                                    <div>
-                                        <label className="form-label">Created At</label>
-                                        <p className="text-success-color font-semibold">
-                                            {formData.createdAt || 'Not set yet'}
-                                        </p>
-                                    </div>
-                                </div>
-                            </div>
-
-                            {/* Submit Button */}
-                            <div className="text-center">
-                                <button
-                                    type="submit"
-                                    className="btn-primary-custom"
-                                >
-                                    Register Patient
-                                </button>
-                            </div>
-                        </form>
-                    </div>
-                </div>
+    <!-- Success Message -->
+    <div id="successMessage" class="fixed-top mt-4 d-none">
+        <div class="container">
+            <div class="success-message animate-slideIn">
+                <i class="bi bi-check-circle-fill"></i>
+                <span>Patient registered successfully!</span>
             </div>
-        );
+        </div>
+    </div>
+
+    <!-- Confirmation Popup -->
+    <div id="confirmationOverlay" class="confirmation-overlay">
+        <div class="confirmation-container">
+            <div class="confirmation-icon">
+                <i class="bi bi-check-circle"></i>
+            </div>
+            <h3 class="confirmation-title">Confirm Patient Register</h3>
+            <p class="confirmation-message">
+                Please review your patient details and confirm to proceed with the registration.
+            </p>
+            <div class="confirmation-actions">
+                <button onclick="confirmRegister(true)" class="btn-primary-custom">
+                    <i class="bi bi-check-circle"></i>
+                    Confirm Register
+                </button>
+                <button onclick="confirmRegister(false)" class="btn-outline-custom">
+                    <i class="bi bi-x-circle"></i>
+                    Cancel
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Main Content -->
+    <div class="page-content">
+        <div class="page-header">
+            <h1 class="page-title">
+                <i class="bi bi-person-plus"></i>
+                Register New Patient
+            </h1>
+            <nav>
+                <ol class="breadcrumb">
+                    <li class="breadcrumb-item"><a href="/receptionist/dashboard">Dashboard</a></li>
+                    <li class="breadcrumb-item active">Patient Register</li>
+                </ol>
+            </nav>
+        </div>
+
+        <div class="form-section animate-fadeIn">
+            <form id="patientForm" method="post" th:action="@{/receptionist/register-patient}">
+                <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
+
+                <!-- Personal Information -->
+                <div class="mb-5">
+                    <h3 class="section-title">
+                        <i class="bi bi-person-fill"></i>
+                        Personal Information
+                    </h3>
+                    <div class="row g-4">
+                        <div class="col-md-6">
+                            <label class="form-label">Full Name <span class="required">*</span></label>
+                            <input type="text" name="fullName" id="fullName" class="form-control" required>
+                            <div class="error-message d-none" id="fullNameError">
+                                <i class="fas fa-exclamation-circle"></i>
+                                <span></span>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">Email <span class="required">*</span></label>
+                            <input type="email" name="email" id="email" class="form-control" required>
+                            <div class="error-message d-none" id="emailError">
+                                <i class="fas fa-exclamation-circle"></i>
+                                <span></span>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">Phone Number <span class="required">*</span></label>
+                            <input type="tel" name="phoneNumber" id="phoneNumber" class="form-control" required>
+                            <div class="error-message d-none" id="phoneNumberError">
+                                <i class="fas fa-exclamation-circle"></i>
+                                <span></span>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">Password <span class="required">*</span></label>
+                            <div class="password-field">
+                                <input type="password" name="passwordHash" id="passwordHash" class="form-control" required>
+                                <button type="button" class="password-toggle" onclick="togglePassword()">
+                                    <i class="fas fa-eye" id="passwordIcon"></i>
+                                </button>
+                            </div>
+                            <div class="error-message d-none" id="passwordHashError">
+                                <i class="fas fa-exclamation-circle"></i>
+                                <span></span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Patient Information -->
+                <div class="mb-5">
+                    <h3 class="section-title">
+                        <i class="bi bi-clipboard2-pulse"></i>
+                        Patient Information
+                    </h3>
+                    <div class="row g-4">
+                        <div class="col-md-6">
+                            <label class="form-label">Date of Birth <span class="required">*</span></label>
+                            <input type="date" name="dateOfBirth" id="dateOfBirth" class="form-control" required>
+                            <div class="error-message d-none" id="dateOfBirthError">
+                                <i class="fas fa-exclamation-circle"></i>
+                                <span></span>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">Gender <span class="required">*</span></label>
+                            <select name="gender" id="gender" class="form-control" required>
+                                <option value="">Select Gender</option>
+                                <option value="male">Male</option>
+                                <option value="female">Female</option>
+                                <option value="other">Other</option>
+                            </select>
+                            <div class="error-message d-none" id="genderError">
+                                <i class="fas fa-exclamation-circle"></i>
+                                <span></span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Contact Address -->
+                <div class="mb-5">
+                    <h3 class="section-title">
+                        <i class="bi bi-geo-alt-fill"></i>
+                        Contact Address
+                    </h3>
+                    <div class="row g-4">
+                        <div class="col-md-6">
+                            <label class="form-label">Street Address <span class="required">*</span></label>
+                            <input type="text" name="streetAddress" id="streetAddress" class="form-control" required>
+                            <div class="error-message d-none" id="streetAddressError">
+                                <i class="fas fa-exclamation-circle"></i>
+                                <span></span>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">City <span class="required">*</span></label>
+                            <input type="text" name="city" id="city" class="form-control" required>
+                            <div class="error-message d-none" id="cityError">
+                                <i class="fas fa-exclamation-circle"></i>
+                                <span></span>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">Country <span class="required">*</span></label>
+                            <input type="text" name="country" id="country" class="form-control" required>
+                            <div class="error-message d-none" id="countryError">
+                                <i class="fas fa-exclamation-circle"></i>
+                                <span></span>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">Address Type <span class="required">*</span></label>
+                            <input type="text" name="addressType" id="addressType" class="form-control" required placeholder="e.g., Home, Work">
+                            <div class="error-message d-none" id="addressTypeError">
+                                <i class="fas fa-exclamation-circle"></i>
+                                <span></span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Additional Information -->
+                <div class="mb-5">
+                    <h3 class="section-title">
+                        <i class="bi bi-info-circle-fill"></i>
+                        Additional Information (Optional)
+                    </h3>
+                    <div class="row g-4">
+                        <div class="col-12">
+                            <label class="form-label">Description / Notes</label>
+                            <textarea name="description" id="description" rows="5" maxlength="200"
+                                    class="form-control" placeholder="Enter any additional notes or comments..."></textarea>
+                            <p class="text-muted mt-1 text-end">
+                                <span id="descriptionCount">0</span>/200 characters
+                            </p>
+                            <div class="error-message d-none" id="descriptionError"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Submit Button -->
+                <div class="text-center">
+                    <button type="submit" class="btn-primary-custom">
+                        <i class="bi bi-person-plus"></i>
+                        Register Patient
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Bootstrap JS -->
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+<script>
+    // Set date limits: min date 1900-01-01, max date today
+    const dateOfBirthField = document.getElementById('dateOfBirth');
+    dateOfBirthField.min = '1900-01-01';
+    dateOfBirthField.max = new Date().toISOString().split('T')[0];
+
+    // Real-time validation for all fields
+    const formFields = [
+        { id: 'fullName', validator: validateFullName },
+        { id: 'email', validator: validateEmail },
+        { id: 'phoneNumber', validator: validatePhoneNumber },
+        { id: 'passwordHash', validator: validatePassword },
+        { id: 'dateOfBirth', validator: validateDateOfBirth },
+        { id: 'gender', validator: validateGender },
+        { id: 'streetAddress', validator: validateStreetAddress },
+        { id: 'city', validator: validateCity },
+        { id: 'country', validator: validateCountry },
+        { id: 'addressType', validator: validateAddressType }
+    ];
+
+    // Add real-time validation to all fields
+    formFields.forEach(field => {
+        const element = document.getElementById(field.id);
+        if (element) {
+            // Validate on blur (when user leaves the field)
+            element.addEventListener('blur', () => {
+                if (element.value.trim()) {
+                    field.validator(element.value, field.id);
+                }
+            });
+
+            // Validate on input (while user is typing) with debounce
+            let timeoutId;
+            element.addEventListener('input', () => {
+                // Clear previous validation states while typing
+                clearError(field.id + 'Error');
+                element.classList.remove('is-invalid', 'is-valid');
+
+                // Clear previous timeout
+                clearTimeout(timeoutId);
+
+                // Set new timeout to validate after user stops typing
+                timeoutId = setTimeout(() => {
+                    if (element.value.trim()) {
+                        field.validator(element.value, field.id);
+                    }
+                }, 500); // 500ms delay after user stops typing
+            });
+
+            // Immediate validation for certain fields on change
+            if (field.id === 'gender') {
+                element.addEventListener('change', () => {
+                    field.validator(element.value, field.id);
+                });
+            }
+        }
+    });
+
+    // Auto-set password to default value when name, email, phone are filled
+    function checkAndSetPassword() {
+        const fullName = document.getElementById('fullName').value.trim();
+        const email = document.getElementById('email').value.trim();
+        const phoneNumber = document.getElementById('phoneNumber').value.trim();
+        const passwordField = document.getElementById('passwordHash');
+
+        // If all three fields are filled, set default password
+        if (fullName && email && phoneNumber) {
+            passwordField.value = 'Aa123123@';
+            // Trigger validation for password field
+            validatePassword(passwordField.value, 'passwordHash');
+        }
     }
 
-    const root = ReactDOM.createRoot(document.getElementById('root'));
-    root.render(<PatientRegister />);
+    // Add event listeners to trigger password auto-fill
+    document.getElementById('fullName').addEventListener('input', checkAndSetPassword);
+    document.getElementById('email').addEventListener('input', checkAndSetPassword);
+    document.getElementById('phoneNumber').addEventListener('input', checkAndSetPassword);
+
+    // Character counter for description
+    document.getElementById('description').addEventListener('input', function() {
+        const count = this.value.length;
+        document.getElementById('descriptionCount').textContent = count;
+
+        // Validate description length in real-time
+        if (count > 200) {
+            showError('descriptionError', 'Description must not exceed 200 characters');
+            this.classList.add('is-invalid');
+        } else {
+            clearError('descriptionError');
+            this.classList.remove('is-invalid');
+        }
+    });
+
+    // Toggle password visibility
+    function togglePassword() {
+        const passwordField = document.getElementById('passwordHash');
+        const passwordIcon = document.getElementById('passwordIcon');
+
+        if (passwordField.type === 'password') {
+            passwordField.type = 'text';
+            passwordIcon.className = 'fas fa-eye-slash';
+        } else {
+            passwordField.type = 'password';
+            passwordIcon.className = 'fas fa-eye';
+        }
+    }
+
+    // Individual field validators
+    function validateFullName(value, fieldId) {
+        if (!value || value.trim().length < 2) {
+            showError(fieldId + 'Error', 'Please enter full name (minimum 2 characters)');
+            return false;
+        }
+        if (!/^[a-zA-ZÀ-ỹ\s]+$/.test(value)) {
+            showError(fieldId + 'Error', 'Full name can only contain letters and spaces');
+            return false;
+        }
+        document.getElementById(fieldId).classList.add('is-valid');
+        return true;
+    }
+
+    function validateEmail(value, fieldId) {
+        if (!value) {
+            showError(fieldId + 'Error', 'Please enter email address');
+            return false;
+        }
+        if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value)) {
+            showError(fieldId + 'Error', 'Please enter a valid email address (e.g., name@example.com)');
+            return false;
+        }
+        document.getElementById(fieldId).classList.add('is-valid');
+        return true;
+    }
+
+    function validatePhoneNumber(value, fieldId) {
+        if (!value) {
+            showError(fieldId + 'Error', 'Please enter phone number');
+            return false;
+        }
+        if (!/^(0[3|5|7|8|9])+([0-9]{8})$/.test(value)) {
+            showError(fieldId + 'Error', 'Please enter a valid phone number (10 digits, starting with 03, 05, 07, 08, 09)');
+            return false;
+        }
+        document.getElementById(fieldId).classList.add('is-valid');
+        return true;
+    }
+
+    function validatePassword(value, fieldId) {
+        if (!value) {
+            showError(fieldId + 'Error', 'Please enter password');
+            return false;
+        }
+        if (value.length < 8) {
+            showError(fieldId + 'Error', 'Password must be at least 8 characters long');
+            return false;
+        }
+        if (!/(?=.*[a-z])(?=.*[A-Z])(?=.*\d)/.test(value)) {
+            showError(fieldId + 'Error', 'Password must contain at least 1 uppercase, 1 lowercase letter and 1 number');
+            return false;
+        }
+        document.getElementById(fieldId).classList.add('is-valid');
+        return true;
+    }
+
+    function validateDateOfBirth(value, fieldId) {
+        if (!value) {
+            showError(fieldId + 'Error', 'Please select date of birth');
+            return false;
+        }
+
+        const birthDate = new Date(value);
+        const today = new Date();
+        const age = today.getFullYear() - birthDate.getFullYear();
+
+        if (birthDate > today) {
+            showError(fieldId + 'Error', 'Date of birth cannot be in the future');
+            return false;
+        }
+        if (age > 120) {
+            showError(fieldId + 'Error', 'Invalid age (over 120 years old)');
+            return false;
+        }
+        if (age < 0) {
+            showError(fieldId + 'Error', 'Invalid date of birth');
+            return false;
+        }
+
+        document.getElementById(fieldId).classList.add('is-valid');
+        return true;
+    }
+
+    function validateGender(value, fieldId) {
+        if (!value) {
+            showError(fieldId + 'Error', 'Please select gender');
+            return false;
+        }
+        document.getElementById(fieldId).classList.add('is-valid');
+        return true;
+    }
+
+    function validateStreetAddress(value, fieldId) {
+        if (!value || value.trim().length < 5) {
+            showError(fieldId + 'Error', 'Please enter detailed address (minimum 5 characters)');
+            return false;
+        }
+        document.getElementById(fieldId).classList.add('is-valid');
+        return true;
+    }
+
+    function validateCity(value, fieldId) {
+        if (!value || value.trim().length < 2) {
+            showError(fieldId + 'Error', 'Please enter city name');
+            return false;
+        }
+        if (!/^[a-zA-ZÀ-ỹ\s]+$/.test(value)) {
+            showError(fieldId + 'Error', 'City name can only contain letters and spaces');
+            return false;
+        }
+        document.getElementById(fieldId).classList.add('is-valid');
+        return true;
+    }
+
+    function validateCountry(value, fieldId) {
+        if (!value || value.trim().length < 2) {
+            showError(fieldId + 'Error', 'Please enter country name');
+            return false;
+        }
+        if (!/^[a-zA-ZÀ-ỹ\s]+$/.test(value)) {
+            showError(fieldId + 'Error', 'Country name can only contain letters and spaces');
+            return false;
+        }
+        document.getElementById(fieldId).classList.add('is-valid');
+        return true;
+    }
+
+    function validateAddressType(value, fieldId) {
+        if (!value) {
+            showError(fieldId + 'Error', 'Please enter address type (e.g., Home, Office)');
+            return false;
+        }
+        document.getElementById(fieldId).classList.add('is-valid');
+        return true;
+    }
+
+    // Form validation
+    function validateForm() {
+        let isValid = true;
+        let firstErrorField = null;
+
+        // Clear previous errors
+        document.querySelectorAll('.error-message').forEach(el => el.classList.add('d-none'));
+        document.querySelectorAll('.form-control').forEach(el => {
+            el.classList.remove('is-invalid');
+            el.classList.remove('is-valid');
+        });
+
+        // Validate all fields
+        formFields.forEach(field => {
+            const element = document.getElementById(field.id);
+            if (element && !field.validator(element.value, field.id)) {
+                isValid = false;
+                if (!firstErrorField) {
+                    firstErrorField = element;
+                }
+            }
+        });
+
+        // Show general error message if validation fails
+        if (!isValid) {
+            showGeneralErrorMessage('Please check and fill in all required fields marked with (*)', firstErrorField);
+        }
+
+        return isValid;
+    }
+
+    function showError(elementId, message) {
+        const errorElement = document.getElementById(elementId);
+        const inputElement = document.getElementById(elementId.replace('Error', ''));
+
+        if (errorElement && inputElement) {
+            const spanElement = errorElement.querySelector('span') || errorElement;
+            spanElement.textContent = message;
+            errorElement.classList.remove('d-none');
+            inputElement.classList.add('is-invalid');
+            inputElement.classList.remove('is-valid');
+        }
+    }
+
+    function clearError(elementId) {
+        const errorElement = document.getElementById(elementId);
+        if (errorElement) {
+            errorElement.classList.add('d-none');
+        }
+    }
+
+    function showGeneralErrorMessage(message, firstErrorField) {
+        // Create or update general error alert
+        let alertElement = document.getElementById('generalErrorAlert');
+        if (!alertElement) {
+            alertElement = document.createElement('div');
+            alertElement.id = 'generalErrorAlert';
+            alertElement.className = 'alert-custom alert-danger-custom animate-slideIn';
+            alertElement.innerHTML = `
+                <i class="fas fa-exclamation-triangle"></i>
+                <span>${message}</span>
+            `;
+
+            const formSection = document.querySelector('.form-section');
+            formSection.insertBefore(alertElement, formSection.firstChild);
+        } else {
+            alertElement.querySelector('span').textContent = message;
+            alertElement.classList.remove('d-none');
+        }
+
+        // Scroll to first error field
+        if (firstErrorField) {
+            firstErrorField.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            firstErrorField.focus();
+        }
+
+        // Auto-hide after 5 seconds
+        setTimeout(() => {
+            if (alertElement) {
+                alertElement.classList.add('d-none');
+            }
+        }, 5000);
+    }
+
+    // Form submission
+    document.getElementById('patientForm').addEventListener('submit', function(e) {
+        e.preventDefault();
+
+        if (validateForm()) {
+            document.getElementById('confirmationOverlay').classList.add('active');
+        } else {
+            alert('Please fill in all required fields correctly.');
+        }
+    });
+
+    // Confirmation functions
+    function confirmRegister(confirm) {
+        const confirmationOverlay = document.getElementById('confirmationOverlay');
+        if (confirmationOverlay) {
+            confirmationOverlay.classList.remove('active');
+        }
+
+        if (confirm) {
+            // Show loading state with proper null check
+            const mainContent = document.getElementById('mainContent');
+            if (mainContent) {
+                mainContent.classList.add('loading');
+            } else {
+                console.error('mainContent element not found');
+            }
+
+            // Get form data with null checks
+            const formData = new FormData();
+
+            // Helper function to safely get element value
+            function getElementValue(id, defaultValue = '') {
+                const element = document.getElementById(id);
+                return element ? element.value.trim() : defaultValue;
+            }
+
+            formData.append('fullName', getElementValue('fullName'));
+            formData.append('email', getElementValue('email').toLowerCase());
+            formData.append('phoneNumber', getElementValue('phoneNumber'));
+            formData.append('passwordHash', getElementValue('passwordHash'));
+            formData.append('dateOfBirth', getElementValue('dateOfBirth'));
+            formData.append('gender', getElementValue('gender'));
+            formData.append('streetAddress', getElementValue('streetAddress'));
+            formData.append('city', getElementValue('city'));
+            formData.append('country', getElementValue('country'));
+            formData.append('addressType', getElementValue('addressType'));
+            formData.append('description', getElementValue('description'));
+
+            // Add CSRF token with null check
+            const csrfElement = document.querySelector('input[name="_csrf"]');
+            if (csrfElement) {
+                formData.append('_csrf', csrfElement.value);
+            } else {
+                console.error('CSRF token not found');
+                alert('Security token not found. Please refresh the page and try again.');
+                if (mainContent) {
+                    mainContent.classList.remove('loading');
+                }
+                return;
+            }
+
+            // Send AJAX request to new endpoint
+            fetch('/receptionist/register-patient', {
+                method: 'POST',
+                body: formData
+            })
+            .then(response => {
+                if (mainContent) {
+                    mainContent.classList.remove('loading');
+                }
+
+                if (response.ok) {
+                    return response.json();
+                } else {
+                    return response.text().then(text => {
+                        throw new Error(text);
+                    });
+                }
+            })
+            .then(data => {
+                if (data.success) {
+                    showSuccessMessage(data.message);
+                    resetForm();
+                } else {
+                    alert('Error: ' + (data.message || 'Unknown error occurred'));
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('Error registering patient: ' + error.message);
+                if (mainContent) {
+                    mainContent.classList.remove('loading');
+                }
+            });
+        }
+    }
+
+    function showSuccessMessage(message = "Patient registered successfully!") {
+        const successMessage = document.getElementById('successMessage');
+        successMessage.querySelector('span').textContent = message;
+        successMessage.classList.remove('d-none');
+
+        setTimeout(() => {
+            successMessage.classList.add('d-none');
+        }, 5000);
+    }
+
+    function resetForm() {
+        // Reset all form fields
+        document.getElementById('fullName').value = '';
+        document.getElementById('email').value = '';
+        document.getElementById('phoneNumber').value = '';
+        document.getElementById('passwordHash').value = '';
+        document.getElementById('dateOfBirth').value = '';
+        document.getElementById('gender').value = '';
+        document.getElementById('streetAddress').value = '';
+        document.getElementById('city').value = '';
+        document.getElementById('country').value = '';
+        document.getElementById('addressType').value = '';
+        document.getElementById('description').value = '';
+
+        // Reset character counter
+        document.getElementById('descriptionCount').textContent = '0';
+
+        // Clear any validation states
+        document.querySelectorAll('.form-control, .form-select').forEach(el => {
+            el.classList.remove('is-valid', 'is-invalid');
+        });
+
+        // Hide all error messages
+        document.querySelectorAll('.error-message').forEach(el => {
+            el.classList.add('d-none');
+        });
+    }
 </script>
 </body>
 </html>
