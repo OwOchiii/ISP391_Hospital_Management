@@ -42,4 +42,6 @@ public interface TransactionRepository extends JpaRepository<Transaction, Intege
      */
     @Query(value = "SELECT * FROM [Transaction] WHERE Method = :method", nativeQuery = true)
     List<Transaction> findByMethod(@Param("method") String method);
+
+    List<Transaction> findByUserIdOrderByTimeOfPaymentDesc(Integer userId);
 }
