@@ -396,4 +396,21 @@ public class AppointmentService {
     public List<Appointment> getAppointmentsByDoctorIdAndPatientName(Integer doctorId, String search) {
         return null;
     }
+
+    /**
+     * Get all appointments for a specific doctor on a specific date
+     * Used for checking time slot conflicts
+     */
+    public List<Appointment> getAppointmentsByDoctorAndDate(Integer doctorId, LocalDate date) {
+        try {
+            LocalDateTime startOfDay = date.atStartOfDay();
+            LocalDateTime endOfDay = date.atTime(23, 59, 59);
+
+            return appointmentRepository.findByDoctorIdAndDateTimeBetween(doctorId, startOfDay, endOfDay);
+        } catch (Exception e) {
+            System.err.println("Error fetching appointments by doctor and date: " + e.getMessage());
+            e.printStackTrace();
+            return new ArrayList<>();
+        }
+    }
 }
