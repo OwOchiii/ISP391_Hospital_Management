@@ -289,13 +289,13 @@ public class DoctorService {
 //        }
 //    }
 
-    public Page<Doctor> searchDoctors(String search, String statusFilter, int page, int size) {
-        String trimmed = (search != null && !search.isBlank()) ? search.trim() : null;
-        String status  = (statusFilter != null && !statusFilter.isBlank()) ? statusFilter.trim() : null;
-        Pageable pageable = PageRequest.of(page, size);
-
-        return doctorRepository.searchDoctors(trimmed, status, pageable);
-    }
+//    public Page<Doctor> searchDoctors(String search, String statusFilter, int page, int size) {
+//        String trimmed = (search != null && !search.isBlank()) ? search.trim() : null;
+//        String status  = (statusFilter != null && !statusFilter.isBlank()) ? statusFilter.trim() : null;
+//        Pageable pageable = PageRequest.of(page, size);
+//
+//        return doctorRepository.searchDoctors(trimmed, status, pageable);
+//    }
 
 
     public DoctorForm loadForm(int doctorId) {
