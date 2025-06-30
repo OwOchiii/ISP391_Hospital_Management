@@ -4,6 +4,9 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Receptionist Dashboard - MediCare Plus</title>
+    <!-- CSRF Token Meta Tags -->
+    <meta name="_csrf" th:content="${_csrf.token}"/>
+    <meta name="_csrf_header" th:content="${_csrf.headerName}"/>
     <!-- Bootstrap CSS -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
     <!-- Font Awesome -->
@@ -432,6 +435,8 @@
             padding: 2rem;
             box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
             border: 1px solid rgba(102, 126, 234, 0.1);
+            position: relative;
+            min-height: 400px; /* Fixed minimum height */
         }
 
         .chart-container h5 {
@@ -441,31 +446,56 @@
             margin-bottom: 1rem;
         }
 
-        .form-select {
-            border-radius: 8px;
-            font-size: 0.875rem;
-            padding: 0.5rem 1rem;
-            border: 1px solid rgba(102, 126, 234, 0.2);
+        /* Chart Canvas Fixed Size */
+        .chart-wrapper {
+            position: relative;
+            height: 300px; /* Fixed height */
+            width: 100%;
+            margin: 1rem 0;
         }
 
-        .legend-color {
-            width: 12px;
-            height: 12px;
+        #patientStatusChart {
+            width: 100% !important;
+            height: 300px !important;
+        }
+
+        /* Loading State */
+        .chart-loading {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 1rem;
+            z-index: 10;
+        }
+
+        .loading-spinner {
+            width: 40px;
+            height: 40px;
+            border: 4px solid rgba(102, 126, 234, 0.1);
+            border-top: 4px solid var(--primary);
             border-radius: 50%;
-            display: inline-block;
-            margin-right: 0.5rem;
+            animation: spin 1s linear infinite;
         }
 
-        .legend-color.scheduled {
-            background: #f59e0b;
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
         }
 
-        .legend-color.completed {
-            background: #10b981;
+        .chart-error {
+            text-align: center;
+            padding: 2rem;
+            color: var(--text-muted);
         }
 
-        .legend-color.cancelled {
-            background: #ef4444;
+        .chart-no-data {
+            text-align: center;
+            padding: 2rem;
+            color: var(--text-muted);
         }
 
         /* Tables */
@@ -523,28 +553,6 @@
             font-size: 0.875rem;
             color: var(--text-dark);
             vertical-align: middle;
-        }
-
-        .status-dropdown {
-            border-radius: 8px;
-            font-size: 0.75rem;
-            padding: 0.25rem 0.5rem;
-            border: none;
-        }
-
-        .status-dropdown.scheduled {
-            background-color: #fefcbf;
-            color: #b45309;
-        }
-
-        .status-dropdown.completed {
-            background-color: #c6f6d5;
-            color: #15803d;
-        }
-
-        .status-dropdown.cancel {
-            background-color: #fed7d7;
-            color: #b91c1c;
         }
 
         /* Action Icons */
@@ -885,37 +893,16 @@
 
             <!-- Charts -->
             <div class="row g-4 mb-3">
-                <div class="col-lg-6">
+                <div class="col-lg-12">
                     <div class="chart-container">
                         <div class="d-flex justify-content-between align-items-center mb-3">
-                            <h5>Patient Statistics</h5>
-                            <select class="form-select w-auto" id="patientStatsPeriod">
-                                <option value="month">Month</option>
-                                <option value="day">Day</option>
-                                <option value="5years">Last 5 Years</option>
-                            </select>
+                            <h5>Patient Statistics - Daily Registration (Current Month)</h5>
                         </div>
-                        <canvas id="patientStatusChart" height="300"></canvas>
+                        <div class="chart-wrapper">
+                            <canvas id="patientStatusChart" height="300"></canvas>
+                        </div>
                         <div class="d-flex justify-content-center gap-3 mt-3">
                             <div><span class="legend-color recovered"></span> Total Patients</div>
-                        </div>
-                    </div>
-                </div>
-                <div class="col-lg-6">
-                    <div class="chart-container">
-                        <div class="d-flex justify-content-between align-items-center mb-3">
-                            <h5>Appointment Statistics</h5>
-                            <select class="form-select w-auto" id="appointmentStatsPeriod">
-                                <option value="day">Day</option>
-                                <option value="month">Month</option>
-                                <option value="5years">Last 5 Years</option>
-                            </select>
-                        </div>
-                        <canvas id="appointmentStatusChart" height="300"></canvas>
-                        <div class="d-flex justify-content-center gap-3 mt-3">
-                            <div><span class="legend-color scheduled"></span> Scheduled</div>
-                            <div><span class="legend-color completed"></span> Completed</div>
-                            <div><span class="legend-color cancelled"></span> Cancelled</div>
                         </div>
                     </div>
                 </div>
@@ -1080,7 +1067,7 @@
 
     // Chart variables
     let patientStatusChart = null;
-    let appointmentStatusChart = null;
+    let isChartLoading = false;
 
     const appointmentModal = new bootstrap.Modal(document.getElementById('appointmentModal'));
     const detailsModal = new bootstrap.Modal(document.getElementById('detailsModal'));
@@ -1113,6 +1100,49 @@
         }, 3000);
     }
 
+    function showChartLoading() {
+        const chartWrapper = document.querySelector('.chart-wrapper');
+        if (!chartWrapper) return;
+
+        chartWrapper.innerHTML = `
+            <div class="chart-loading">
+                <div class="loading-spinner"></div>
+                <p class="text-muted">Loading patient statistics...</p>
+            </div>
+        `;
+    }
+
+    function showChartError(message) {
+        const chartWrapper = document.querySelector('.chart-wrapper');
+        if (!chartWrapper) return;
+
+        chartWrapper.innerHTML = `
+            <div class="chart-error">
+                <i class="fas fa-exclamation-triangle text-warning mb-3" style="font-size: 2rem;"></i>
+                <p class="text-muted">${message}</p>
+                <button class="btn btn-outline-primary btn-sm" onclick="retryLoadChart()">
+                    <i class="fas fa-redo"></i> Retry
+                </button>
+            </div>
+        `;
+    }
+
+    function showChartNoData() {
+        const chartWrapper = document.querySelector('.chart-wrapper');
+        if (!chartWrapper) return;
+
+        chartWrapper.innerHTML = `
+            <div class="chart-no-data">
+                <i class="fas fa-chart-bar text-muted mb-3" style="font-size: 2rem;"></i>
+                <p class="text-muted">No patient registration data available for this month</p>
+                <small class="text-muted">Data will appear here when patients register</small>
+            </div>
+        `;
+    }
+
+    function retryLoadChart() {
+        initPatientStatusChart();
+    }
     function viewAppointmentDetails(appointmentId) {
         window.location.href = `/receptionist/appointment-details?id=${appointmentId}`;
     }
@@ -1138,10 +1168,12 @@
     // }
 
     function confirmAppointment(appointmentId) {
+        const csrfToken = document.querySelector('meta[name="_csrf"]').getAttribute('content');
         fetch(`/receptionist/confirmAppointment?id=${appointmentId}`, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
+                'X-CSRF-TOKEN': csrfToken
             }
         })
             .then(response => {
@@ -1329,217 +1361,215 @@
     }
 
     function initPatientStatusChart() {
+        const chartWrapper = document.querySelector('.chart-wrapper');
+        if (!chartWrapper) return;
+
+        // Prevent multiple simultaneous loads
+        if (isChartLoading) return;
+        isChartLoading = true;
+
+        // Show loading state
+        showChartLoading();
+
+        // Destroy existing chart if it exists
+        if (patientStatusChart) {
+            patientStatusChart.destroy();
+            patientStatusChart = null;
+        }
+
+        // Load chart data
+        updatePatientStatusChart();
+    }
+
+    function createChart(labels, data) {
+        const chartWrapper = document.querySelector('.chart-wrapper');
+        if (!chartWrapper) return;
+
+        // Create canvas element
+        chartWrapper.innerHTML = '<canvas id="patientStatusChart" width="400" height="300"></canvas>';
+
         const ctx = document.getElementById('patientStatusChart');
         if (!ctx) return;
 
-        if (patientStatusChart) {
-            patientStatusChart.destroy();
-        }
+        // Get current month and year for better labeling
+        const currentDate = new Date();
+        const currentMonth = currentDate.toLocaleString('default', { month: 'long' });
+        const currentYear = currentDate.getFullYear();
 
         patientStatusChart = new Chart(ctx.getContext('2d'), {
             type: 'bar',
             data: {
-                labels: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'],
+                labels: labels,
                 datasets: [{
-                    label: 'Total Patients',
-                    data: [],
-                    backgroundColor: '#3b82f6',
-                    borderColor: '#3b82f6',
+                    label: `Patient Registrations - ${currentMonth} ${currentYear}`,
+                    data: data,
+                    backgroundColor: 'rgba(59, 130, 246, 0.8)',
+                    borderColor: 'rgba(59, 130, 246, 1)',
                     borderWidth: 1,
-                    borderRadius: 8
+                    borderRadius: 8,
+                    borderSkipped: false,
                 }]
             },
             options: {
                 responsive: true,
                 maintainAspectRatio: false,
+                interaction: {
+                    intersect: false,
+                    mode: 'index'
+                },
                 plugins: {
-                    legend: {display: false},
+                    legend: {
+                        display: true,
+                        position: 'top',
+                        labels: {
+                            color: '#6b7280',
+                            font: {
+                                size: 12,
+                                weight: '500'
+                            },
+                            padding: 20
+                        }
+                    },
                     tooltip: {
                         backgroundColor: 'rgba(0, 0, 0, 0.8)',
-                        cornerRadius: 8
+                        titleColor: '#ffffff',
+                        bodyColor: '#ffffff',
+                        cornerRadius: 8,
+                        displayColors: false,
+                        callbacks: {
+                            title: function(tooltipItems) {
+                                return `Day ${tooltipItems[0].label}, ${currentMonth} ${currentYear}`;
+                            },
+                            label: function(tooltipItem) {
+                                const count = tooltipItem.raw;
+                                return `${count} patient${count !== 1 ? 's' : ''} registered`;
+                            }
+                        }
                     }
                 },
                 scales: {
                     x: {
-                        grid: {display: false},
-                        title: {display: true, text: 'Month'}
+                        grid: {
+                            display: false
+                        },
+                        border: {
+                            color: '#e5e7eb'
+                        },
+                        ticks: {
+                            color: '#6b7280',
+                            font: {
+                                size: 11
+                            },
+                            maxTicksLimit: 31
+                        },
+                        title: {
+                            display: true,
+                            text: 'Day of Month',
+                            color: '#374151',
+                            font: {
+                                size: 12,
+                                weight: '600'
+                            },
+                            padding: {
+                                top: 10
+                            }
+                        }
                     },
                     y: {
-                        grid: {color: '#e9ecef'},
-                        title: {display: true, text: 'Number of Patients'}
+                        grid: {
+                            color: '#f3f4f6',
+                            borderDash: [2, 2]
+                        },
+                        border: {
+                            color: '#e5e7eb'
+                        },
+                        ticks: {
+                            color: '#6b7280',
+                            font: {
+                                size: 11
+                            },
+                            stepSize: 1,
+                            precision: 0
+                        },
+                        title: {
+                            display: true,
+                            text: 'Number of Patient Registrations',
+                            color: '#374151',
+                            font: {
+                                size: 12,
+                                weight: '600'
+                            },
+                            padding: {
+                                bottom: 10
+                            }
+                        },
+                        beginAtZero: true,
+                        suggestedMax: Math.max(...data) + 2
                     }
+                },
+                elements: {
+                    bar: {
+                        borderRadius: 4
+                    }
+                },
+                animation: {
+                    duration: 1000,
+                    easing: 'easeInOutQuart'
                 }
             }
         });
 
-        updatePatientStatusChart('month');
+        isChartLoading = false;
     }
 
-    const updatePatientStatusChart = debounce(function (period) {
-        console.log(`Fetching patient stats for period: ${period}`);
-        const ctx = document.getElementById('patientStatusChart');
-        if (!ctx) return;
+    const updatePatientStatusChart = debounce(function () {
+        if (isChartLoading) return;
 
-        fetch(`/receptionist/patientStatus?period=${period}`)
+        console.log('Fetching daily patient stats for current month');
+
+        fetch('/receptionist/patientStatus?period=day')
             .then(response => {
-                if (!response.ok) throw new Error('Failed to fetch patient stats');
+                if (!response.ok) {
+                    throw new Error(`HTTP ${response.status}: Failed to fetch patient stats`);
+                }
                 return response.json();
             })
             .then(data => {
-                console.log("data: ", data);
-                if (!data.patientStats || !data.patientStats.data || data.patientStats.data.length === 0) {
-                    displayNoDataMessage(ctx, 'Waiting for patient statistics...');
+                console.log("Patient stats data received: ", data);
+
+                // Check if we have valid data
+                if (!data || (!data.patientStats && !data.data)) {
+                    showChartNoData();
                     return;
                 }
 
-                if (!ctx.getContext) {
-                    const parent = ctx.parentNode;
-                    parent.innerHTML = '<canvas id="patientStatusChart" height="300"></canvas>';
-                    initPatientStatusChart();
+                // Handle both nested and flat data structures
+                let chartData = data.patientStats ? data.patientStats.data : data.data;
+                let chartLabels = data.patientStats ? data.patientStats.labels : data.labels;
+
+                if (!chartData || chartData.length === 0) {
+                    showChartNoData();
+                    return;
                 }
 
-                if (patientStatusChart) {
-                    patientStatusChart.data.datasets[0].data = data.patientStats.data;
-                    if (period === 'day') {
-                        patientStatusChart.data.labels = Array.from({length: 30}, (_, i) => (i + 1).toString());
-                        patientStatusChart.options.scales.x.title.text = 'Day';
-                    } else if (period === 'month') {
-                        const allMonths = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
-                        const dataMap = {};
-                        data.labels.forEach((label, index) => {
-                            dataMap[label] = data.data[index];
-                        });
-                        const finalData = allMonths.map(month => dataMap[month] || 0);
-
-                        patientStatusChart.data.labels = allMonths;
-                        patientStatusChart.data.datasets[0].data = finalData;
-                        console.log("data log: ", allMonths, finalData);
-                        patientStatusChart.options.scales.x.title.text = 'Month';
-                    } else {
-                        patientStatusChart.data.labels = ['2021', '2022', '2023', '2024', '2025'];
-                        patientStatusChart.options.scales.x.title.text = 'Year';
-                    }
-                    patientStatusChart.update();
+                // Ensure we have proper labels
+                if (!chartLabels || chartLabels.length === 0) {
+                    chartLabels = Array.from({length: chartData.length}, (_, i) => (i + 1).toString());
                 }
+
+                // Create or update chart
+                createChart(chartLabels, chartData);
+
+                console.log("Chart updated successfully with labels:", chartLabels, "and data:", chartData);
+
+                isChartLoading = false;
             })
             .catch(error => {
                 console.error('Error fetching patient stats:', error);
-                displayNoDataMessage(ctx, 'Error loading patient statistics. Please try again later.');
-                showNotification('Failed to load patient statistics', 'error');
+                showChartError('Error loading patient statistics. Please check your connection and try again.');
+                isChartLoading = false;
             });
-    }, 500);
-
-    function initAppointmentStatusChart() {
-        const ctx = document.getElementById('appointmentStatusChart');
-        if (!ctx) return;
-
-        if (appointmentStatusChart) {
-            appointmentStatusChart.destroy();
-        }
-
-        appointmentStatusChart = new Chart(ctx.getContext('2d'), {
-            type: 'line',
-            data: {
-                labels: Array.from({length: 30}, (_, i) => (i + 1).toString()),
-                datasets: [
-                    {
-                        label: 'Scheduled',
-                        data: [],
-                        borderColor: '#f59e0b',
-                        backgroundColor: 'rgba(245, 158, 11, 0.2)',
-                        fill: true,
-                        tension: 0.4
-                    },
-                    {
-                        label: 'Completed',
-                        data: [],
-                        borderColor: '#10b981',
-                        backgroundColor: 'rgba(16, 185, 129, 0.2)',
-                        fill: true,
-                        tension: 0.4
-                    },
-                    {
-                        label: 'Cancelled',
-                        data: [],
-                        borderColor: '#ef4444',
-                        backgroundColor: 'rgba(239, 68, 68, 0.2)',
-                        fill: true,
-                        tension: 0.4
-                    }
-                ]
-            },
-            options: {
-                responsive: true,
-                maintainAspectRatio: false,
-                plugins: {
-                    legend: {display: false},
-                    tooltip: {
-                        backgroundColor: 'rgba(0, 0, 0, 0.8)',
-                        cornerRadius: 8
-                    }
-                },
-                scales: {
-                    x: {
-                        grid: {display: false},
-                        title: {display: true, text: 'Day'}
-                    },
-                    y: {
-                        grid: {color: '#e9ecef'},
-                        title: {display: true, text: 'Number of Appointments'}
-                    }
-                }
-            }
-        });
-
-        updateAppointmentStatusChart('day');
-    }
-
-    const updateAppointmentStatusChart = debounce(function (period) {
-        console.log(`Fetching appointment stats for period: ${period}`);
-        const ctx = document.getElementById('appointmentStatusChart');
-        if (!ctx) return;
-
-        fetch(`/DashboardDataServlet?dataType=appointmentStatus&period=${period}`)
-            .then(response => {
-                if (!response.ok) throw new Error('Failed to fetch appointment stats');
-                return response.json();
-            })
-            .then(data => {
-                if (!data.appointmentStatus || (!data.appointmentStatus.scheduled && !data.appointmentStatus.completed && !data.appointmentStatus.cancelled) ||
-                    (!data.appointmentStatus.scheduled.length && !data.appointmentStatus.completed.length && !data.appointmentStatus.cancelled.length)) {
-                    displayNoDataMessage(ctx, 'Waiting for appointment statistics data...');
-                    return;
-                }
-
-                if (!ctx.getContext) {
-                    const parent = ctx.parentNode;
-                    parent.innerHTML = '<canvas id="appointmentStatusChart" height="300"></canvas>';
-                    initAppointmentStatusChart();
-                }
-
-                if (appointmentStatusChart) {
-                    appointmentStatusChart.data.datasets[0].data = data.appointmentStatus.scheduled || [];
-                    appointmentStatusChart.data.datasets[1].data = data.appointmentStatus.completed || [];
-                    appointmentStatusChart.data.datasets[2].data = data.appointmentStatus.cancelled || [];
-                    if (period === 'day') {
-                        appointmentStatusChart.data.labels = Array.from({length: 30}, (_, i) => (i + 1).toString());
-                        appointmentStatusChart.options.scales.x.title.text = 'Day';
-                    } else if (period === 'month') {
-                        appointmentStatusChart.data.labels = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
-                        appointmentStatusChart.options.scales.x.title.text = 'Month';
-                    } else {
-                        appointmentStatusChart.data.labels = ['2021', '2022', '2023', '2024', '2025'];
-                        appointmentStatusChart.options.scales.x.title.text = 'Year';
-                    }
-                    appointmentStatusChart.update();
-                }
-            })
-            .catch(error => {
-                console.error('Error fetching appointment stats:', error);
-                displayNoDataMessage(ctx, 'Error loading appointment statistics. Please try again later.');
-                showNotification('Failed to load appointment statistics', 'error');
-            });
-    }, 500);
+    }, 300);
 
     function addEventListeners() {
         document.querySelectorAll('.nav-link').forEach(item => {
@@ -1555,20 +1585,6 @@
             });
         });
 
-        const patientStatsPeriod = document.getElementById('patientStatsPeriod');
-        const patientStatsClone = patientStatsPeriod.cloneNode(true);
-        patientStatsPeriod.parentNode.replaceChild(patientStatsClone, patientStatsPeriod);
-        patientStatsClone.addEventListener('change', function () {
-            updatePatientStatusChart(this.value);
-        });
-
-        const appointmentStatsPeriod = document.getElementById('appointmentStatsPeriod');
-        const appointmentStatsClone = appointmentStatsPeriod.cloneNode(true);
-        appointmentStatsPeriod.parentNode.replaceChild(appointmentStatsClone, appointmentStatsPeriod);
-        appointmentStatsClone.addEventListener('change', function () {
-            updateAppointmentStatusChart(this.value);
-        });
-
         window.onclick = function (event) {
             const notificationModal = document.getElementById('notificationModal');
             if (event.target !== notificationModal &&
@@ -1578,25 +1594,10 @@
             }
         };
 
-        setInterval(() => {
-            const patientPeriod = document.getElementById('patientStatsPeriod').value;
-            const appointmentPeriod = document.getElementById('appointmentStatsPeriod').value;
-            updatePatientStatusChart(patientPeriod);
-            updateAppointmentStatusChart(appointmentPeriod);
-        }, 30000);
+        // Remove the problematic auto-refresh interval that was causing infinite loading
+        // Charts will only load once on page load and can be manually refreshed via retry button
     }
-
-    function toggleNotificationModal() {
-        const modal = document.getElementById('notificationModal');
-        modal.style.display = modal.style.display === 'block' ? 'none' : 'block';
-    }
-
-    document.addEventListener('DOMContentLoaded', function () {
-        addEventListeners();
-        addAppointmentRequestData();
-        // initPatientStatusChart();
-        // initAppointmentStatusChart();
-    });
 </script>
 </body>
 </html>
+
