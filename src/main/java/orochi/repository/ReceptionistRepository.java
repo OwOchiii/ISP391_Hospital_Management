@@ -47,43 +47,34 @@ public interface ReceptionistRepository extends JpaRepository<Users, Integer> {
     Integer activeStaff();
 
     @Query(value = """
-
-            SELECT COUNT(*)
+        SELECT COUNT(*)
         FROM Users
         WHERE roleId = 4
         AND CONVERT(DATE, created_at) = CONVERT(DATE, GETDATE())
         """, nativeQuery = true)
     Integer newPatients();
 
+    // Patient statistics by day for current month - shows all days including those with 0 patients
     @Query(value = """
-        SELECT CAST(DAY(created_at) AS VARCHAR), COUNT(*)
-        FROM Users
-        WHERE RoleID = 4 AND MONTH(created_at) = MONTH(GETDATE()) AND YEAR(created_at) = YEAR(GETDATE())
-        GROUP BY DAY(created_at)
-        ORDER BY DAY(created_at)
+        WITH DaysInMonth AS (
+            SELECT 1 as day_num
+            UNION ALL
+            SELECT day_num + 1
+            FROM DaysInMonth
+            WHERE day_num < DAY(EOMONTH(GETDATE()))
+        )
+        SELECT 
+            CAST(d.day_num AS VARCHAR) as day_label,
+            ISNULL(COUNT(u.UserID), 0) as patient_count
+        FROM DaysInMonth d
+        LEFT JOIN Users u ON DAY(u.created_at) = d.day_num 
+            AND MONTH(u.created_at) = MONTH(GETDATE()) 
+            AND YEAR(u.created_at) = YEAR(GETDATE())
+            AND u.RoleID = 4
+        GROUP BY d.day_num
+        ORDER BY d.day_num
         """, nativeQuery = true)
     List<Object[]> getPatientStatsByDay();
-
-    // Group by month (trong n?m hi?n t?i)
-    @Query(value = """
-        SELECT FORMAT(created_at, 'MMM') AS month_name, COUNT(*)
-        FROM Users
-        WHERE RoleID = 4 AND YEAR(created_at) = YEAR(GETDATE())
-        GROUP BY FORMAT(created_at, 'MMM'), MONTH(created_at)
-        ORDER BY MONTH(created_at)
-        """, nativeQuery = true)
-    List<Object[]> getPatientStatsByMonth();
-
-    // Group by year (5 n?m g?n nh?t)
-    @Query(value = """
-        SELECT CAST(YEAR(created_at) AS VARCHAR), COUNT(*)
-        FROM Users
-        WHERE RoleID = 4 AND YEAR(created_at) >= YEAR(GETDATE()) - 4
-        GROUP BY YEAR(created_at)
-        ORDER BY YEAR(created_at)
-        """, nativeQuery = true)
-    List<Object[]> getPatientStatsByYear();
-
 
     @Query(value = """
         SELECT
