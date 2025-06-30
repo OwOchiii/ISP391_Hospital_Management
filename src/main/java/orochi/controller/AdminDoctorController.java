@@ -34,7 +34,6 @@ public class AdminDoctorController {
     @Qualifier("userServiceImpl")
     private UserService userService;
 
-
     @Autowired
     private RoleService roleService;
 
@@ -53,16 +52,16 @@ public class AdminDoctorController {
             @RequestParam(value = "size", defaultValue = "5") int size,
             Model model
     ) {
-        Page<Doctor> pageData = doctorService.searchDoctors(search, statusFilter, page, size);
-        model.addAttribute("doctors",      pageData.getContent());
-        model.addAttribute("currentPage",  page);
-        model.addAttribute("totalPages",   pageData.getTotalPages());
-        model.addAttribute("pageSize",     size);
-        model.addAttribute("adminId",      adminId);
-        model.addAttribute("search",       search);
-        model.addAttribute("statusFilter", statusFilter);
-        model.addAttribute("roles", roleService.getAllRoles());
-        model.addAttribute("doctorForm", new DoctorForm());
+//        Page<Doctor> pageData = doctorService.searchDoctors(search, statusFilter, page, size);
+//        model.addAttribute("doctors",      pageData.getContent());
+//        model.addAttribute("currentPage",  page);
+//        model.addAttribute("totalPages",   pageData.getTotalPages());
+//        model.addAttribute("pageSize",     size);
+//        model.addAttribute("adminId",      adminId);
+//        model.addAttribute("search",       search);
+//        model.addAttribute("statusFilter", statusFilter);
+//        model.addAttribute("roles", roleService.getAllRoles());
+//        model.addAttribute("doctorForm", new DoctorForm());
 
         return "admin/doctor/list";
     }
@@ -131,16 +130,16 @@ public class AdminDoctorController {
     ) {
         if (bindingResult.hasErrors()) {
             // load lại dữ liệu danh sách khi có lỗi
-            Page<Doctor> pageData = doctorService.searchDoctors(search, statusFilter, page, size);
-            model.addAttribute("doctors",      pageData.getContent());
-            model.addAttribute("currentPage",  page);
-            model.addAttribute("totalPages",   pageData.getTotalPages());
-            model.addAttribute("pageSize",     size);
-            model.addAttribute("search",       search);
-            model.addAttribute("statusFilter", statusFilter);
-            model.addAttribute("roles",        roleService.getAllRoles());
-            model.addAttribute("adminId",      adminId);
-            return "admin/doctor/list";
+//            Page<Doctor> pageData = doctorService.searchDoctors(search, statusFilter, page, size);
+//            model.addAttribute("doctors",      pageData.getContent());
+//            model.addAttribute("currentPage",  page);
+//            model.addAttribute("totalPages",   pageData.getTotalPages());
+//            model.addAttribute("pageSize",     size);
+//            model.addAttribute("search",       search);
+//            model.addAttribute("statusFilter", statusFilter);
+//            model.addAttribute("roles",        roleService.getAllRoles());
+//            model.addAttribute("adminId",      adminId);
+//            return "admin/doctor/list";
         }
 
         boolean isNew = (doctorForm.getDoctorId() == null);
