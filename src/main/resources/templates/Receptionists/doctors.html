@@ -551,6 +551,10 @@
                     <span class="detail-label">Institution</span>
                     <span class="detail-value" id="modalInstitution"></span>
                 </div>
+                <div class="detail-item">
+                    <span class="detail-label">Specialty</span>
+                    <span class="detail-value" id="modalSpecialty"></span>
+                </div>
             </div>
         </div>
     </div>
@@ -583,7 +587,7 @@
 
     async function fetchDoctors() {
         try {
-            const response = await fetch('/api/doctors');
+            const response = await fetch('/receptionist/api/doctors');
             if (!response.ok) throw new Error('Failed to fetch doctors');
             const data = await response.json();
             return data;
@@ -637,7 +641,7 @@
 
     async function fetchDoctorDetails(id) {
         try {
-            const response = await fetch(`/api/doctors/${id}`);
+            const response = await fetch(`/receptionist/api/doctors/${id}`);
             if (!response.ok) throw new Error('Failed to fetch doctor details');
             const data = await response.json();
             return data;
@@ -662,6 +666,7 @@
         document.getElementById('modalDescription').textContent = doctor.description || 'N/A';
         document.getElementById('modalDegree').textContent = doctor.degree || 'N/A';
         document.getElementById('modalInstitution').textContent = doctor.institution || 'N/A';
+        document.getElementById('modalSpecialty').textContent = doctor.specialty || 'N/A';
 
         const doctorModal = new bootstrap.Modal(document.getElementById('doctorModal'));
         doctorModal.show();
@@ -683,3 +688,4 @@
 </script>
 </body>
 </html>
+
