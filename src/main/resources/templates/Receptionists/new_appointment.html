@@ -643,6 +643,7 @@
             <form id="appointmentForm" onsubmit="submitForm(event)">
                 <input type="hidden" name="appointmentId" id="appointmentId"/>
                 <input type="hidden" name="patientId" id="patientIdInput"/>
+                <input type="hidden" name="_csrf" th:value="${_csrf.token}"/>
 
                 <div class="row">
                     <div class="col-md-6 mb-3">
@@ -1351,6 +1352,12 @@
         }
     }
 
+    // Function to auto-resize textarea based on content
+    function autoResize(element) {
+        element.style.height = 'auto';
+        element.style.height = (element.scrollHeight) + 'px';
+    }
+
     function sanitizeOnInput(element) {
         let value = element.value;
         value = value.replace(/[<>"'&]/g, '');
@@ -1442,7 +1449,7 @@
         }
 
         if (confirm) {
-            // Làm sạch dữ liệu trước khi gửi
+            // Sanitize data before sending
             const phoneNumber = document.getElementById('phoneNumber').value.replace(/\s+/g, '');
             const email = document.getElementById('email').value.replace(/\s+/g, '');
             let description = document.getElementById('description').value.trim();
@@ -1454,9 +1461,93 @@
             document.getElementById('email').value = email;
             document.getElementById('description').value = description;
 
-            // Gửi form
-            document.getElementById('appointmentForm').submit();
+            // Format the appointment date for backend
+            const appointmentDateInput = document.getElementById('appointmentDate').value;
+            let formattedDate = '';
+
+            if (appointmentDateInput && appointmentDateInput.includes('/')) {
+                // Convert from MM/DD/YYYY to ISO format (YYYY-MM-DD)
+                const [month, day, year] = appointmentDateInput.split('/');
+                formattedDate = `${year}-${month.padStart(2, '0')}-${day.padStart(2, '0')}`;
+            }
+
+            // Debug info - check what data is being submitted
+            console.log('Submitting appointment with:');
+            console.log('Patient ID:', document.getElementById('patientIdInput').value);
+            console.log('Doctor ID:', document.getElementById('doctorId').value);
+            console.log('Date:', document.getElementById('appointmentDate').value);
+            console.log('Formatted Date:', formattedDate);
+            console.log('Time:', document.getElementById('appointmentTime').value);
+            console.log('Description:', document.getElementById('description').value);
+
+            // Show loading state
+            const mainContent = document.getElementById('mainContent');
+            mainContent.classList.add('loading');
+
+            // Create a proper form for submission
+            const form = document.getElementById('appointmentForm');
+
+            // Clean up any previous hidden appointmentDate fields to avoid duplicates
+            const existingHiddenInputs = form.querySelectorAll('input[name="appointmentDate"][type="hidden"]');
+            existingHiddenInputs.forEach(input => input.remove());
+
+            // Create a hidden input for appointmentDate with the correct format
+            const hiddenAppointmentDateInput = document.createElement('input');
+            hiddenAppointmentDateInput.type = 'hidden';
+            hiddenAppointmentDateInput.name = 'appointmentDate';
+            hiddenAppointmentDateInput.value = formattedDate;
+            form.appendChild(hiddenAppointmentDateInput);
+
+            // Update the visible appointmentDate field to prevent it from being submitted
+            const visibleDateInput = document.getElementById('appointmentDate');
+            visibleDateInput.name = 'appointmentDate_display'; // Change the name so it doesn't conflict
+
+            // Set action and method
+            form.action = '/receptionist/book-appointment';
+            form.method = 'POST';
+
+            // Submit the form
+            form.submit();
         }
+    }
+
+    // Reset form fields after successful submission
+    function resetForm() {
+        // Reset specialty, doctor and date/time selections
+        document.getElementById('specialtyId').value = '';
+        document.getElementById('doctorId').innerHTML = '<option value="">Choose a Doctor</option>';
+        document.getElementById('appointmentDate').value = '';
+        document.getElementById('appointmentTime').value = '';
+
+        // Reset doctor info display
+        document.getElementById('doctorInfoDisplay').classList.remove('show');
+
+        // Reset patient fields
+        document.getElementById('patientIdInput').value = '';
+
+        const readOnlyFields = [
+            'fullName', 'phoneNumber', 'email', 'dateOfBirth', 'gender',
+            'country', 'province', 'district', 'streetAddress', 'postalCode', 'addressType'
+        ];
+
+        readOnlyFields.forEach(field => {
+            setReadOnlyField(field, '');
+        });
+
+        // Reset and disable description
+        const description = document.getElementById('description');
+        description.value = '';
+        description.disabled = true;
+        description.classList.add('readonly');
+
+        // Reset time slots
+        document.querySelectorAll('.time-slot').forEach(slot => {
+            slot.classList.remove('selected', 'disabled');
+        });
+
+        // Clear search results
+        document.getElementById('searchQuery').value = '';
+        document.getElementById('searchResults').classList.add('d-none');
     }
 
     // Hàm làm sạch description
