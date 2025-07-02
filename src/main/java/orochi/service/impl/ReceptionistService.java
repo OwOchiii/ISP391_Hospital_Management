@@ -12,14 +12,20 @@ import orochi.model.Patient;
 import orochi.model.PatientContact;
 import orochi.model.Users;
 import orochi.repository.*;
+import orochi.model.*;
 
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Objects;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 @Service
 public class ReceptionistService {
+
+    private static final Logger logger = LoggerFactory.getLogger(ReceptionistService.class);
 
     private final UserRepository userRepository;
     private final AppointmentRepository appointmentRepository;
@@ -27,6 +33,10 @@ public class ReceptionistService {
     private final ReceptionistRepository receptionistRepository;
     private final PatientContactRepository patientContactRepository;
     private final DoctorRepository DoctorRepository;
+    private final ReceiptRepository receiptRepository;
+
+    @Autowired
+    private TransactionRepository transactionRepository;
 
     public ReceptionistService(
             UserRepository userRepository,
@@ -34,13 +44,15 @@ public class ReceptionistService {
             PatientRepository patientRepository,
             ReceptionistRepository receptionistRepository,
             PatientContactRepository patientContactRepository,
-            DoctorRepository doctorRepository) {
+            DoctorRepository doctorRepository,
+            ReceiptRepository receiptRepository) {
         this.userRepository = userRepository;
         this.appointmentRepository = appointmentRepository;
         this.patientRepository = patientRepository;
         this.receptionistRepository = receptionistRepository;
         this.patientContactRepository = patientContactRepository;
         this.DoctorRepository = doctorRepository;
+        this.receiptRepository = receiptRepository;
     }
 
     // Fetch all appointments for scheduling purposes
@@ -49,6 +61,7 @@ public class ReceptionistService {
     }
 
     // Register a new patient
+    @SuppressWarnings("unused") // This method might be used elsewhere
     public Users registerPatient(Users user) {
         Users patientRole = receptionistRepository.findByEmail("PATIENT")
                 .orElseThrow(() -> new RuntimeException("Patient role not found"));
@@ -129,8 +142,7 @@ public class ReceptionistService {
 
         } catch (Exception e) {
             // Log the error
-            System.err.println("Error registering new patient: " + e.getMessage());
-            e.printStackTrace();
+            logger.error("Error registering new patient: {}", e.getMessage(), e);
             throw new RuntimeException("Failed to register patient: " + e.getMessage());
         }
     }
@@ -140,6 +152,7 @@ public class ReceptionistService {
         return patientRepository.findAll();
     }
 
+    @SuppressWarnings("unused") // This method might be used elsewhere
     public List<PatientContact> getAllPatientContacts() {
         return patientContactRepository.findAll();
     }
@@ -149,6 +162,7 @@ public class ReceptionistService {
     }
 
     // Check if the user is a Receptionist
+    @SuppressWarnings("unused") // This method might be used elsewhere
     public boolean isReceptionist(Users user) {
         return user.getRole().getRoleName().equals("RECEPTIONIST");
     }
@@ -174,10 +188,12 @@ public class ReceptionistService {
     }
 
     // Fetch all Receptionists with pagination and filtering
+    @SuppressWarnings("unused") // This method might be used elsewhere
     public Page<Users> getAllReceptionists(Pageable pageable) {
         return receptionistRepository.findAllReceptionistsFiltered(null, null, pageable);
     }
 
+    @SuppressWarnings("unused") // This method might be used elsewhere
     public Page<Users> getAllReceptionists(String search, String statusFilter, Pageable pageable) {
         return receptionistRepository.findAllReceptionistsFiltered(search, statusFilter, pageable);
     }
@@ -203,6 +219,7 @@ public class ReceptionistService {
         return receptionistRepository.newPatients();
     }
 
+    @SuppressWarnings("unused") // Parameter period is intended for future use
     public Map<String, Object> getPatientStatusChartData(String period) {
 
         // Only support "day" period - always return daily statistics for current month
@@ -236,6 +253,99 @@ public class ReceptionistService {
         return receptionistRepository.fetchAppointmentTableData();
     }
 
+    // New method to get pending appointments only
+    public List<Map<String, Object>> getPendingAppointmentTableData() {
+        // Get all appointments and filter for Pending status
+        List<Appointment> allAppointments = getAllAppointments();
+
+        return allAppointments.stream()
+                .filter(appointment -> "Pending".equalsIgnoreCase(appointment.getStatus()))
+                .map(appointment -> {
+                    Map<String, Object> appointmentData = new HashMap<>();
+                    appointmentData.put("id", appointment.getAppointmentId());
+                    appointmentData.put("name", appointment.getPatient().getUser().getFullName());
+                    appointmentData.put("phone", appointment.getPatient().getUser().getPhoneNumber());
+                    appointmentData.put("gender", appointment.getPatient().getGender());
+                    appointmentData.put("date", appointment.getDateTime().toLocalDate().toString());
+                    appointmentData.put("time", appointment.getDateTime().toLocalTime().toString());
+                    appointmentData.put("status", appointment.getStatus());
+                    appointmentData.put("email", appointment.getEmail());
+                    appointmentData.put("description", appointment.getDescription());
+                    appointmentData.put("appointmentDateTime", appointment.getDateTime().toString());
+                    appointmentData.put("dateTime", appointment.getDateTime().toString());
+                    if (appointment.getDoctor() != null && appointment.getDoctor().getUser() != null) {
+                        appointmentData.put("doctorName", appointment.getDoctor().getUser().getFullName());
+                    } else {
+                        appointmentData.put("doctorName", "Not Assigned");
+                    }
+                    return appointmentData;
+                })
+                .collect(Collectors.toList());
+    }
+
+    // New method to get today's pending appointments
+    public List<Map<String, Object>> getTodaysPendingAppointmentTableData(String dateStr) {
+        try {
+            // Parse the date string
+            java.time.LocalDate targetDate = java.time.LocalDate.parse(dateStr);
+
+            // Get all appointments and filter for today's date and Pending status
+            List<Appointment> allAppointments = getAllAppointments();
+
+            System.out.println("Total appointments in database: " + allAppointments.size());
+
+            List<Map<String, Object>> todaysAppointments = allAppointments.stream()
+                    .filter(appointment -> {
+                        // Check if appointment date matches target date
+                        java.time.LocalDate appointmentDate = appointment.getDateTime().toLocalDate();
+                        boolean isToday = appointmentDate.equals(targetDate);
+
+                        // Check if status is Pending
+                        boolean isPending = "Pending".equalsIgnoreCase(appointment.getStatus());
+
+                        if (isToday && isPending) {
+                            System.out.println("Found matching appointment: " + appointment.getAppointmentId() +
+                                             " on " + appointmentDate + " with status " + appointment.getStatus());
+                        }
+
+                        return isToday && isPending;
+                    })
+                    .map(appointment -> {
+                        Map<String, Object> appointmentData = new HashMap<>();
+                        appointmentData.put("id", appointment.getAppointmentId());
+                        appointmentData.put("name", appointment.getPatient().getUser().getFullName());
+                        appointmentData.put("phone", appointment.getPatient().getUser().getPhoneNumber());
+                        appointmentData.put("gender", appointment.getPatient().getGender());
+                        appointmentData.put("date", appointment.getDateTime().toLocalDate().toString());
+                        appointmentData.put("time", appointment.getDateTime().toLocalTime().toString());
+                        appointmentData.put("status", appointment.getStatus());
+                        appointmentData.put("email", appointment.getEmail());
+                        appointmentData.put("description", appointment.getDescription());
+                        appointmentData.put("appointmentDateTime", appointment.getDateTime().toString());
+                        appointmentData.put("dateTime", appointment.getDateTime().toString());
+                        appointmentData.put("patientId", appointment.getPatient().getPatientId());
+
+                        if (appointment.getDoctor() != null && appointment.getDoctor().getUser() != null) {
+                            appointmentData.put("doctorName", appointment.getDoctor().getUser().getFullName());
+                        } else {
+                            appointmentData.put("doctorName", "Not Assigned");
+                        }
+
+                        System.out.println("Processed appointment data: " + appointmentData);
+                        return appointmentData;
+                    })
+                    .collect(Collectors.toList());
+
+            System.out.println("Returning " + todaysAppointments.size() + " appointments for date " + dateStr);
+            return todaysAppointments;
+
+        } catch (Exception e) {
+            logger.error("Error filtering today's appointments: {}", e.getMessage(), e);
+            return new ArrayList<>();
+        }
+    }
+
+    @SuppressWarnings("unused") // This method might be used elsewhere
     public Appointment bookAppointment(Appointment appointment) {
         appointment.setStatus("Scheduled"); // Trạng thái mặc định
         return appointmentRepository.save(appointment);
@@ -259,7 +369,7 @@ public class ReceptionistService {
                         // For better readability, show only the first specialty in lists
                         // but keep all specialties for detailed views
                         specialty = doctor.getSpecializations().stream()
-                            .map(spec -> spec.getSpecName())
+                            .map(Specialization::getSpecName)
                             .collect(Collectors.joining(", "));
                     }
                     doctorMap.put("specialty", specialty);
@@ -303,7 +413,7 @@ public class ReceptionistService {
             String specialty = "General Practice";
             if (doctor.getSpecializations() != null && !doctor.getSpecializations().isEmpty()) {
                 specialty = doctor.getSpecializations().stream()
-                    .map(spec -> spec.getSpecName())
+                    .map(Specialization::getSpecName)
                     .collect(Collectors.joining(", "));
             }
             doctorDetails.put("specialty", specialty);
@@ -359,7 +469,7 @@ public class ReceptionistService {
                 String specialty = "General Practice";
                 if (doctor.getSpecializations() != null && !doctor.getSpecializations().isEmpty()) {
                     specialty = doctor.getSpecializations().stream()
-                        .map(spec -> spec.getSpecName())
+                        .map(Specialization::getSpecName)
                         .collect(Collectors.joining(", "));
                 }
                 doctorMap.put("specialty", specialty);
@@ -394,11 +504,574 @@ public class ReceptionistService {
         String specialty = "General Practice";
         if (doctor.getSpecializations() != null && !doctor.getSpecializations().isEmpty()) {
             specialty = doctor.getSpecializations().stream()
-                .map(spec -> spec.getSpecName())
+                .map(Specialization::getSpecName)
                 .collect(Collectors.joining(", "));
         }
         doctorMap.put("specialty", specialty);
 
         return doctorMap;
+    }
+
+    // New payment methods
+
+    /**
+     * Get today's payment data for the payments page
+     * Amount từ Receipt.TotalAmount, Status từ Transaction.Status
+     */
+    public List<Map<String, Object>> getTodaysPaymentData() {
+        try {
+            // Sử dụng getAllReceiptsWithTransactionData() để lấy dữ liệu thực
+            List<Map<String, Object>> rawData = receiptRepository.getAllReceiptsWithTransactionData();
+
+            // Log để debug
+            System.out.println("Raw payment data count: " + rawData.size());
+            if (!rawData.isEmpty()) {
+                System.out.println("First payment data: " + rawData.get(0));
+            }
+
+            // Process the data to match frontend expectations
+            return rawData.stream().map(payment -> {
+                Map<String, Object> processedPayment = new HashMap<>();
+                processedPayment.put("patientId", payment.get("patientId"));
+                processedPayment.put("patientName", payment.get("fullName")); // Full Name from Users table
+                processedPayment.put("visitDate", payment.get("phoneNumber")); // PhoneNumber from Users table (as per requirement)
+
+                // Amount từ Receipt.TotalAmount - hiển thị số nguyên
+                Object totalAmount = payment.get("totalAmount");
+                processedPayment.put("amount", Objects.requireNonNullElse(totalAmount, 0));
+
+                // Status từ Transaction.Status - hiển thị trực tiếp
+                String transactionStatus = (String) payment.get("status");
+                processedPayment.put("status", mapTransactionStatusToPaymentStatus(transactionStatus));
+                processedPayment.put("receiptId", payment.get("receiptId"));
+                processedPayment.put("transactionId", payment.get("transactionId"));
+
+                // Log để debug mapping
+                System.out.println("Processing payment - PatientID: " + payment.get("patientId") +
+                                 ", Amount: " + totalAmount +
+                                 ", Transaction Status: " + transactionStatus +
+                                 " -> Payment Status: " + processedPayment.get("status"));
+
+                return processedPayment;
+            }).collect(Collectors.toList());
+
+        } catch (Exception e) {
+            logger.error("Error fetching today's payment data: {}", e.getMessage(), e);
+            return new ArrayList<>();
+        }
+    }
+
+    /**
+     * Get test payment data for debugging - sử dụng dữ liệu thực từ Receipt và Transaction
+     */
+    public List<Map<String, Object>> getTestPaymentData() {
+        try {
+            // Thử lấy dữ liệu thực từ Receipt và Transaction trước
+            List<Map<String, Object>> rawData = receiptRepository.getAllReceiptsWithTransactionData();
+
+            System.out.println("Real receipt data count: " + rawData.size());
+            if (!rawData.isEmpty()) {
+                System.out.println("First real receipt data: " + rawData.get(0));
+            }
+
+            if (!rawData.isEmpty()) {
+                // Nếu có dữ liệu thực, sử dụng nó
+                return rawData.stream().map(payment -> {
+                    Map<String, Object> processedPayment = new HashMap<>();
+                    processedPayment.put("patientId", payment.get("patientId"));
+                    processedPayment.put("patientName", payment.get("fullName"));
+                    processedPayment.put("visitDate", payment.get("phoneNumber"));
+
+                    // Amount từ Receipt.TotalAmount
+                    Object totalAmount = payment.get("totalAmount");
+                    if (totalAmount != null) {
+                        try {
+                            double amountValue = Double.parseDouble(totalAmount.toString());
+                            processedPayment.put("amount", amountValue);
+                        } catch (NumberFormatException e) {
+                            logger.error("Error parsing receipt amount: {}", totalAmount);
+                            processedPayment.put("amount", 0);
+                        }
+                    } else {
+                        processedPayment.put("amount", 0);
+                    }
+
+                    // Status từ Transaction.Status
+                    String transactionStatus = (String) payment.get("status");
+                    processedPayment.put("status", mapTransactionStatusToPaymentStatus(transactionStatus));
+                    processedPayment.put("receiptId", payment.get("receiptId"));
+                    processedPayment.put("transactionId", payment.get("transactionId"));
+
+                    System.out.println("Real data - Amount: " + totalAmount + ", Status: " + transactionStatus);
+                    return processedPayment;
+                }).collect(Collectors.toList());
+            } else {
+                // Nếu không có dữ liệu Receipt/Transaction, lấy danh sách bệnh nhân cơ bản
+                List<Map<String, Object>> patientData = receiptRepository.getAllPatientsWithPaymentInfo();
+                System.out.println("Patient data count: " + patientData.size());
+
+                return patientData.stream().map(payment -> {
+                    Map<String, Object> processedPayment = new HashMap<>();
+                    processedPayment.put("patientId", payment.get("patientId"));
+                    processedPayment.put("patientName", payment.get("fullName"));
+                    processedPayment.put("visitDate", payment.get("phoneNumber"));
+                    processedPayment.put("amount", 0); // Mặc định là 0 nếu không có Receipt
+                    processedPayment.put("status", "unpaid"); // Mặc định là unpaid
+                    processedPayment.put("receiptId", 0);
+                    processedPayment.put("transactionId", 0);
+                    return processedPayment;
+                }).collect(Collectors.toList());
+            }
+
+        } catch (Exception e) {
+            logger.error("Error fetching test payment data: {}", e.getMessage(), e);
+            return new ArrayList<>();
+        }
+    }
+
+    /**
+     * Get all receipt data with transaction info - method mới để debug
+     */
+    public List<Map<String, Object>> getAllReceiptsWithTransactionData() {
+        try {
+            List<Map<String, Object>> rawData = receiptRepository.getAllReceiptsWithTransactionData();
+
+            System.out.println("All receipts count: " + rawData.size());
+            if (!rawData.isEmpty()) {
+                System.out.println("Sample receipt data: " + rawData.get(0));
+            }
+
+            return rawData.stream().map(payment -> {
+                Map<String, Object> processedPayment = new HashMap<>();
+                processedPayment.put("patientId", payment.get("patientId"));
+                processedPayment.put("patientName", payment.get("fullName"));
+                processedPayment.put("visitDate", payment.get("phoneNumber"));
+
+                // Amount từ Receipt.TotalAmount
+                Object totalAmount = payment.get("totalAmount");
+                if (totalAmount != null) {
+                    try {
+                        double amountValue = Double.parseDouble(totalAmount.toString());
+                        processedPayment.put("amount", amountValue);
+                    } catch (NumberFormatException e) {
+                        logger.error("Error parsing amount from receipt: {}", totalAmount);
+                        processedPayment.put("amount", 0);
+                    }
+                } else {
+                    processedPayment.put("amount", 0);
+                }
+
+                // Status từ Transaction.Status
+                String transactionStatus = (String) payment.get("status");
+                processedPayment.put("status", mapTransactionStatusToPaymentStatus(transactionStatus));
+                processedPayment.put("receiptId", payment.get("receiptId"));
+                processedPayment.put("transactionId", payment.get("transactionId"));
+                processedPayment.put("issuedDate", payment.get("issuedDate"));
+
+                System.out.println("Receipt data - Amount: " + totalAmount + ", Transaction Status: " + transactionStatus);
+                return processedPayment;
+            }).collect(Collectors.toList());
+
+        } catch (Exception e) {
+            logger.error("Error fetching all receipts data: {}", e.getMessage(), e);
+            return new ArrayList<>();
+        }
+    }
+
+    /**
+     * Get today's total revenue (only from completed transactions)
+     */
+    public Double getTodaysTotalRevenue() {
+        try {
+            Double total = receiptRepository.getTodaysTotalRevenue();
+            return total != null ? total : 0.0;
+        } catch (Exception e) {
+            logger.error("Error fetching today's total revenue: {}", e.getMessage(), e);
+            return 0.0;
+        }
+    }
+
+    /**
+     * Get filtered payment data by status for today
+     */
+    public List<Map<String, Object>> getTodaysPaymentDataByStatus(String status) {
+        try {
+            // Map frontend status to database status
+            String dbStatus = mapPaymentStatusToTransactionStatus(status);
+            if (dbStatus.isEmpty()) {
+                // If no valid status mapping, return all today's data
+                return getTodaysPaymentData();
+            }
+
+            List<Map<String, Object>> rawData = receiptRepository.getTodaysPaymentDataByStatus(dbStatus);
+
+            // Process the data to match frontend expectations
+            return rawData.stream().map(payment -> {
+                Map<String, Object> processedPayment = new HashMap<>();
+                processedPayment.put("patientId", payment.get("patientId"));
+                processedPayment.put("patientName", payment.get("fullName")); // Full Name from Users table
+                processedPayment.put("visitDate", payment.get("phoneNumber")); // PhoneNumber from Users table (as per requirement)
+
+                // Format amount without VND
+                Object totalAmount = payment.get("totalAmount");
+                if (totalAmount != null) {
+                    processedPayment.put("amount", totalAmount);
+                } else {
+                    processedPayment.put("amount", 0);
+                }
+
+                processedPayment.put("status", mapTransactionStatusToPaymentStatus((String) payment.get("status")));
+                processedPayment.put("receiptId", payment.get("receiptId"));
+                processedPayment.put("transactionId", payment.get("transactionId"));
+                return processedPayment;
+            }).collect(Collectors.toList());
+
+        } catch (Exception e) {
+            logger.error("Error fetching filtered payment data: {}", e.getMessage(), e);
+            return new ArrayList<>();
+        }
+    }
+
+    /**
+     * Map transaction status from database to payment status for frontend
+     */
+    private String mapTransactionStatusToPaymentStatus(String transactionStatus) {
+        if (transactionStatus == null) {
+            return "pending";
+        }
+
+        return switch (transactionStatus.toLowerCase()) {
+            case "paid" -> "paid";
+            case "pending" -> "pending";
+            case "refunded" -> "refunded";
+            default -> "pending"; // Default to pending for any unknown status
+        };
+    }
+
+    /**
+     * Map payment status from frontend to transaction status for database query
+     */
+    private String mapPaymentStatusToTransactionStatus(String paymentStatus) {
+        if (paymentStatus == null || paymentStatus.isEmpty()) {
+            return "";
+        }
+
+        return switch (paymentStatus.toLowerCase()) {
+            case "paid" -> "Paid";
+            case "pending" -> "Pending";
+            case "refunded" -> "Refunded";
+            default -> "";
+        };
+    }
+
+    /**
+     * Get patients with appointments today and their transaction status
+     * Logic: Check today's appointments by DateTime -> map to PatientID -> get Transaction status
+     */
+    public List<Map<String, Object>> getPatientsWithAppointmentsToday() {
+        try {
+            // Get today's date
+            java.time.LocalDate today = java.time.LocalDate.now();
+            java.time.LocalDateTime startOfDay = today.atStartOfDay();
+            java.time.LocalDateTime endOfDay = today.atTime(23, 59, 59);
+
+            System.out.println("Fetching appointments for today: " + today);
+
+            // Get all appointments for today using DateTime from Appointment table
+            List<Appointment> todaysAppointments = appointmentRepository.findByDateTimeBetween(startOfDay, endOfDay);
+            System.out.println("Found " + todaysAppointments.size() + " appointments for today");
+
+            List<Map<String, Object>> result = new ArrayList<>();
+
+            for (Appointment appointment : todaysAppointments) {
+                try {
+                    Map<String, Object> patientPaymentData = new HashMap<>();
+
+                    // Get patient information from appointment
+                    Patient patient = appointment.getPatient();
+                    if (patient == null || patient.getUser() == null) {
+                        System.out.println("Skipping appointment " + appointment.getAppointmentId() + " - missing patient data");
+                        continue;
+                    }
+
+                    // Basic patient info
+                    patientPaymentData.put("appointmentId", appointment.getAppointmentId());
+                    patientPaymentData.put("patientId", patient.getPatientId());
+                    patientPaymentData.put("patientName", patient.getUser().getFullName());
+                    patientPaymentData.put("visitDate", patient.getUser().getPhoneNumber()); // Phone as per requirement
+                    patientPaymentData.put("appointmentDate", appointment.getDateTime().toLocalDate().toString());
+                    patientPaymentData.put("appointmentTime", appointment.getDateTime().toLocalTime().toString());
+                    patientPaymentData.put("appointmentStatus", appointment.getStatus());
+
+                    // Get transaction status by AppointmentID mapping
+                    String transactionStatus = "unpaid"; // Default status
+                    Double amount = 0.0; // Default amount
+                    Integer receiptId = null;
+                    Integer transactionId = null;
+
+                    try {
+                        // Find transactions linked to this appointment
+                        List<Transaction> transactions = transactionRepository.findByAppointmentId(appointment.getAppointmentId());
+
+                        if (!transactions.isEmpty()) {
+                            // Get the latest transaction
+                            Transaction latestTransaction = transactions.get(0);
+                            transactionStatus = mapTransactionStatusToPaymentStatus(latestTransaction.getStatus());
+                            transactionId = latestTransaction.getTransactionId();
+
+                            // Get amount from Receipt, not Transaction
+                            if (latestTransaction.getReceipt() != null && latestTransaction.getReceipt().getTotalAmount() != null) {
+                                amount = latestTransaction.getReceipt().getTotalAmount().doubleValue();
+                            }
+
+                            // Try to find corresponding receipt
+                            try {
+                                List<Map<String, Object>> receipts = receiptRepository.getReceiptByTransactionId(latestTransaction.getTransactionId());
+                                if (!receipts.isEmpty()) {
+                                    Map<String, Object> receipt = receipts.get(0);
+                                    receiptId = (Integer) receipt.get("receiptId");
+                                    Object totalAmount = receipt.get("totalAmount");
+                                    if (totalAmount != null) {
+                                        amount = Double.parseDouble(totalAmount.toString());
+                                    }
+                                }
+                            } catch (Exception receiptError) {
+                                logger.error("Error fetching receipt for transaction {}: {}", latestTransaction.getTransactionId(), receiptError.getMessage());
+                            }
+                        }
+                    } catch (Exception transactionError) {
+                        logger.error("Error fetching transactions for appointment {}: {}", appointment.getAppointmentId(), transactionError.getMessage());
+                    }
+
+                    // Set payment information
+                    patientPaymentData.put("amount", amount.longValue()); // Convert to long to remove decimals
+                    patientPaymentData.put("status", transactionStatus);
+                    patientPaymentData.put("receiptId", receiptId);
+                    patientPaymentData.put("transactionId", transactionId);
+
+                    result.add(patientPaymentData);
+
+                    System.out.println("Processed appointment " + appointment.getAppointmentId() +
+                                     " for patient " + patient.getPatientId() +
+                                     " with status: " + transactionStatus +
+                                     " and amount: " + amount);
+
+                } catch (Exception e) {
+                    logger.error("Error processing appointment {}: {}", appointment.getAppointmentId(), e.getMessage(), e);
+                }
+            }
+
+            System.out.println("Returning " + result.size() + " patients with appointments today");
+            return result;
+
+        } catch (Exception e) {
+            logger.error("Error fetching patients with appointments today: {}", e.getMessage(), e);
+            return new ArrayList<>();
+        }
+    }
+
+    /**
+     * Get today's appointment payment data based on DateTime in Appointment table
+     * Map by AppointmentID to get PatientID and Transaction Status
+     * Logic: Check today's appointments by DateTime -> map to PatientID -> get Transaction status
+     */
+    public List<Map<String, Object>> getTodaysAppointmentPaymentData() {
+        try {
+            // Get today's date
+            java.time.LocalDate today = java.time.LocalDate.now();
+            java.time.LocalDateTime startOfDay = today.atStartOfDay();
+            java.time.LocalDateTime endOfDay = today.atTime(23, 59, 59);
+
+            System.out.println("Fetching appointments for today: " + today);
+
+            // Get all appointments for today using DateTime from Appointment table
+            List<Appointment> todaysAppointments = appointmentRepository.findByDateTimeBetween(startOfDay, endOfDay);
+            System.out.println("Found " + todaysAppointments.size() + " appointments for today");
+
+            List<Map<String, Object>> result = new ArrayList<>();
+
+            for (Appointment appointment : todaysAppointments) {
+                try {
+                    Map<String, Object> patientPaymentData = new HashMap<>();
+
+                    // Get patient information from appointment
+                    Patient patient = appointment.getPatient();
+                    if (patient == null || patient.getUser() == null) {
+                        System.out.println("Skipping appointment " + appointment.getAppointmentId() + " - missing patient data");
+                        continue;
+                    }
+
+                    // Basic patient info
+                    patientPaymentData.put("appointmentId", appointment.getAppointmentId());
+                    patientPaymentData.put("patientId", patient.getPatientId());
+                    patientPaymentData.put("patientName", patient.getUser().getFullName());
+                    patientPaymentData.put("phoneNumber", patient.getUser().getPhoneNumber());
+                    patientPaymentData.put("appointmentDate", appointment.getDateTime().toLocalDate().toString());
+                    patientPaymentData.put("appointmentTime", appointment.getDateTime().toLocalTime().toString());
+                    patientPaymentData.put("appointmentStatus", appointment.getStatus());
+
+                    // Get doctor information
+                    if (appointment.getDoctor() != null && appointment.getDoctor().getUser() != null) {
+                        patientPaymentData.put("doctorName", appointment.getDoctor().getUser().getFullName());
+                    } else {
+                        patientPaymentData.put("doctorName", "Not Assigned");
+                    }
+
+                    // Get transaction status by AppointmentID mapping
+                    String transactionStatus = "unpaid"; // Default status
+                    Double amount = 0.0; // Default amount
+                    Integer receiptId = null;
+                    Integer transactionId = null;
+
+                    try {
+                        // Find transactions linked to this appointment
+                        List<Transaction> transactions = transactionRepository.findByAppointmentId(appointment.getAppointmentId());
+
+                        if (!transactions.isEmpty()) {
+                            // Get the latest transaction
+                            Transaction latestTransaction = transactions.get(0);
+                            transactionStatus = mapTransactionStatusToPaymentStatus(latestTransaction.getStatus());
+                            transactionId = latestTransaction.getTransactionId();
+
+                            // Get amount from Receipt, not Transaction
+                            if (latestTransaction.getReceipt() != null && latestTransaction.getReceipt().getTotalAmount() != null) {
+                                amount = latestTransaction.getReceipt().getTotalAmount().doubleValue();
+                            }
+
+                            // Try to find corresponding receipt
+                            try {
+                                List<Map<String, Object>> receipts = receiptRepository.getReceiptByTransactionId(latestTransaction.getTransactionId());
+                                if (!receipts.isEmpty()) {
+                                    Map<String, Object> receipt = receipts.get(0);
+                                    receiptId = (Integer) receipt.get("receiptId");
+                                    Object totalAmount = receipt.get("totalAmount");
+                                    if (totalAmount != null) {
+                                        amount = Double.parseDouble(totalAmount.toString());
+                                    }
+                                }
+                            } catch (Exception receiptError) {
+                                logger.error("Error fetching receipt for transaction {}: {}", latestTransaction.getTransactionId(), receiptError.getMessage());
+                            }
+                        }
+                    } catch (Exception transactionError) {
+                        logger.error("Error fetching transactions for appointment {}: {}", appointment.getAppointmentId(), transactionError.getMessage());
+                    }
+
+                    // Set payment information
+                    patientPaymentData.put("amount", amount.longValue()); // Convert to long to remove decimals
+                    patientPaymentData.put("status", transactionStatus);
+                    patientPaymentData.put("receiptId", receiptId);
+                    patientPaymentData.put("transactionId", transactionId);
+
+                    result.add(patientPaymentData);
+
+                    System.out.println("Processed appointment " + appointment.getAppointmentId() +
+                                     " for patient " + patient.getPatientId() +
+                                     " with status: " + transactionStatus +
+                                     " and amount: " + amount);
+
+                } catch (Exception e) {
+                    logger.error("Error processing appointment {}: {}", appointment.getAppointmentId(), e.getMessage(), e);
+                }
+            }
+
+            System.out.println("Returning " + result.size() + " patients with appointments today");
+            return result;
+
+        } catch (Exception e) {
+            logger.error("Error fetching today's appointment payment data: {}", e.getMessage(), e);
+            return new ArrayList<>();
+        }
+    }
+
+    /**
+     * Get today's total revenue from appointments only
+     */
+    public Double getTodaysAppointmentPaymentRevenue() {
+        try {
+            // Get today's date
+            java.time.LocalDate today = java.time.LocalDate.now();
+            java.time.LocalDateTime startOfDay = today.atStartOfDay();
+            java.time.LocalDateTime endOfDay = today.atTime(23, 59, 59);
+
+            // Get all appointments for today
+            List<Appointment> todaysAppointments = appointmentRepository.findByDateTimeBetween(startOfDay, endOfDay);
+
+            double totalRevenue = 0.0;
+
+            for (Appointment appointment : todaysAppointments) {
+                try {
+                    // Find transactions linked to this appointment
+                    List<Transaction> transactions = transactionRepository.findByAppointmentId(appointment.getAppointmentId());
+
+                    for (Transaction transaction : transactions) {
+                        // Only count completed transactions
+                        if ("Completed".equalsIgnoreCase(transaction.getStatus()) || "Success".equalsIgnoreCase(transaction.getStatus())) {
+                            // Get amount from Receipt, not Transaction
+                            if (transaction.getReceipt() != null && transaction.getReceipt().getTotalAmount() != null) {
+                                totalRevenue += transaction.getReceipt().getTotalAmount().doubleValue();
+                            }
+                        }
+                    }
+                } catch (Exception e) {
+                    logger.error("Error calculating revenue for appointment {}: {}", appointment.getAppointmentId(), e.getMessage());
+                }
+            }
+
+            return totalRevenue;
+
+        } catch (Exception e) {
+            logger.error("Error calculating today's appointment payment revenue: {}", e.getMessage(), e);
+            return 0.0;
+        }
+    }
+
+    /**
+     * Get all available transaction statuses from database
+     */
+    public List<String> getAllAvailableStatuses() {
+        try {
+            // Get all unique statuses from Receipt/Transaction data
+            List<Map<String, Object>> rawData = receiptRepository.getAllReceiptsWithTransactionData();
+
+            return rawData.stream()
+                    .map(payment -> (String) payment.get("status"))
+                    .filter(status -> status != null && !status.trim().isEmpty())
+                    .distinct()
+                    .sorted()
+                    .collect(Collectors.toList());
+        } catch (Exception e) {
+            logger.error("Error fetching available statuses: {}", e.getMessage(), e);
+            // Return default statuses if query fails
+            return List.of("Pending", "Completed", "Failed", "Cancelled", "Refunded");
+        }
+    }
+
+    /**
+     * Get today's payment data without status mapping - show raw database status
+     */
+    public List<Map<String, Object>> getTodaysPaymentDataRaw() {
+        try {
+            List<Map<String, Object>> rawData = receiptRepository.getAllReceiptsWithTransactionData();
+
+            return rawData.stream().map(payment -> {
+                Map<String, Object> processedPayment = new HashMap<>();
+                processedPayment.put("patientId", payment.get("patientId"));
+                processedPayment.put("patientName", payment.get("fullName"));
+                processedPayment.put("visitDate", payment.get("phoneNumber"));
+
+                // Show raw amount and status without processing
+                processedPayment.put("amount", Objects.requireNonNullElse(payment.get("totalAmount"), 0));
+                processedPayment.put("status", payment.get("status")); // Raw status from database
+                processedPayment.put("receiptId", payment.get("receiptId"));
+                processedPayment.put("transactionId", payment.get("transactionId"));
+
+                return processedPayment;
+            }).collect(Collectors.toList());
+
+        } catch (Exception e) {
+            logger.error("Error fetching today's payment data (raw): {}", e.getMessage(), e);
+            return new ArrayList<>();
+        }
     }
 }
