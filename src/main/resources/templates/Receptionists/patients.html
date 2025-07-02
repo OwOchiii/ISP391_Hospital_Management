@@ -369,6 +369,8 @@
         .status-examined { background: var(--success-color); color: white; }
         .status-pending { background: #f59e0b; color: white; }
         .status-waiting { background: #3b82f6; color: white; }
+        .status-cancelled { background: #ef4444; color: white; }
+        .status-no-appointment { background: #8b5a3c; color: white; }
 
         @media (max-width: 768px) {
             .sidebar {
@@ -503,7 +505,7 @@
                         <div class="col-md-6">
                             <div class="input-group">
                                 <span class="input-group-text"><i class="fas fa-search"></i></span>
-                                <input type="text" class="form-control" id="searchInput" placeholder="Search by Name, Phone, or Patient ID">
+                                <input type="text" class="form-control" id="searchInput" placeholder="Search by Name, Phone">
                             </div>
                         </div>
                         <div class="col-md-6 text-md-end">
@@ -518,7 +520,7 @@
                     <div class="collapse mt-3" id="filterCollapse">
                         <div class="filter-group">
                             <div class="row g-3">
-                                <div class="col-md-3">
+                                <div class="col-md-4">
                                     <label for="filterGender" class="form-label">Gender</label>
                                     <select id="filterGender" class="form-select">
                                         <option value="">All</option>
@@ -527,7 +529,7 @@
                                         <option value="Other">Other</option>
                                     </select>
                                 </div>
-                                <div class="col-md-3">
+                                <div class="col-md-4">
                                     <label for="filterAge" class="form-label">Age Group</label>
                                     <select id="filterAge" class="form-select">
                                         <option value="">All</option>
@@ -537,17 +539,15 @@
                                         <option value="60+">Over 60</option>
                                     </select>
                                 </div>
-                                <div class="col-md-3">
-                                    <label for="filterLastVisit" class="form-label">Last Visit</label>
-                                    <input type="date" id="filterLastVisit" class="form-control">
-                                </div>
-                                <div class="col-md-3">
+                                <div class="col-md-4">
                                     <label for="filterStatus" class="form-label">Status</label>
                                     <select id="filterStatus" class="form-select">
                                         <option value="">All</option>
-                                        <option value="Examined">Completed</option>
+                                        <option value="Completed">Completed</option>
                                         <option value="Pending">Pending</option>
-                                        <option value="Waiting">Schedule</option>
+                                        <option value="Scheduled">Scheduled</option>
+                                        <option value="Cancel">Cancel</option>
+                                        <option value="No Appointment">No Appointment</option>
                                     </select>
                                 </div>
                             </div>
@@ -566,8 +566,8 @@
                             <th onclick="sortTable('Age')"><span class="sort-icon">Age</span></th>
                             <th onclick="sortTable('Gender')"><span class="sort-icon">Gender</span></th>
                             <th onclick="sortTable('PhoneNumber')"><span class="sort-icon">Phone</span></th>
-                            <th onclick="sortTable('LastVisit')"><span class="sort-icon">Last Visit</span></th>
-                            <th onclick="sortTable('Status')"><span class="sort-icon">Status</span></th>
+                            <th onclick="sortTable('AppointmentDateTime')"><span class="sort-icon">Appointment DateTime</span></th>
+                            <th onclick="sortTable('AppointmentStatus')"><span class="sort-icon">Status</span></th>
                             <th>Action</th>
                         </tr>
                         </thead>
@@ -615,23 +615,30 @@
     // Fetch patients from the API
     async function fetchPatients() {
         try {
-            const response = await fetch('/receptionist/api/patients');
+            const response = await fetch('/api/patients/detailed');
             if (!response.ok) throw new Error('Failed to fetch patients');
             const data = await response.json();
-            return data;
+            return data.patients || [];
         } catch (error) {
             console.error('Error fetching patients:', error);
             return [];
         }
     }
 
-    // Fetch individual patient details
+    // Fetch individual patient details - now returns detailed info from the main API
     async function fetchPatientDetails(patientId) {
         try {
-            const response = await fetch(`/receptionist/api/patients/${patientId}`);
+            // Find patient in the already loaded data
+            const patient = patients.find(p => p.PatientID === patientId);
+            if (patient) {
+                return patient;
+            }
+
+            // Fallback: fetch from API if not found
+            const response = await fetch(`/api/patients/detailed`);
             if (!response.ok) throw new Error('Failed to fetch patient details');
             const data = await response.json();
-            return data;
+            return data.patients.find(p => p.PatientID === patientId) || null;
         } catch (error) {
             console.error('Error fetching patient details:', error);
             return null;
@@ -654,7 +661,6 @@
         document.getElementById('searchInput').value = '';
         document.getElementById('filterGender').value = '';
         document.getElementById('filterAge').value = '';
-        document.getElementById('filterLastVisit').value = '';
         document.getElementById('filterStatus').value = '';
         filterPatients();
     }
@@ -663,14 +669,14 @@
         const searchInput = document.getElementById('searchInput').value.toLowerCase();
         const filterGender = document.getElementById('filterGender').value;
         const filterAge = document.getElementById('filterAge').value;
-        const filterLastVisit = document.getElementById('filterLastVisit').value;
         const filterStatus = document.getElementById('filterStatus').value;
 
         filteredPatients = patients.filter(patient => {
             const matchesSearch = (
                 (patient.FullName && patient.FullName.toLowerCase().includes(searchInput)) ||
                 (patient.PhoneNumber && patient.PhoneNumber.toLowerCase().includes(searchInput)) ||
-                (patient.PatientID && patient.PatientID.toString().includes(searchInput))
+                (patient.PatientID && patient.PatientID.toString().includes(searchInput)) ||
+                (patient.Email && patient.Email.toLowerCase().includes(searchInput))
             );
 
             const matchesGender = !filterGender || (patient.Gender && patient.Gender === filterGender);
@@ -682,14 +688,9 @@
                 filterAge === '60+' && patient.Age > 60
             );
 
-            const matchesLastVisit = !filterLastVisit || (
-                patient.LastVisit !== 'Never' && patient.LastVisit !== 'N/A' &&
-                new Date(patient.LastVisit).toISOString().split('T')[0] === filterLastVisit
-            );
+            const matchesStatus = !filterStatus || (patient.AppointmentStatus && patient.AppointmentStatus === filterStatus);
 
-            const matchesStatus = !filterStatus || (patient.Status && patient.Status === filterStatus);
-
-            return matchesSearch && matchesGender && matchesAge && matchesLastVisit && matchesStatus;
+            return matchesSearch && matchesGender && matchesAge && matchesStatus;
         });
 
         currentPage = 1;
@@ -712,16 +713,50 @@
 
         paginatedPatients.forEach((patient, index) => {
             const row = document.createElement('tr');
+
+            // Format appointment datetime
+            let formattedAppointmentDateTime = 'No Appointment';
+            if (patient.AppointmentDateTime && patient.AppointmentDateTime !== 'No Appointment') {
+                try {
+                    const dateTime = new Date(patient.AppointmentDateTime);
+                    const dateStr = dateTime.toLocaleDateString('en-US');
+                    const timeStr = dateTime.toLocaleTimeString('en-US', {
+                        hour: '2-digit',
+                        minute: '2-digit',
+                        hour12: false
+                    });
+                    formattedAppointmentDateTime = `${dateStr} ${timeStr}`;
+                } catch (e) {
+                    formattedAppointmentDateTime = patient.AppointmentDateTime.toString();
+                }
+            }
+
+            // Get appointment status from Appointment table
+            let statusClass = 'pending';
+            let statusText = patient.AppointmentStatus || 'No Appointment';
+
+            if (statusText === 'Completed') {
+                statusClass = 'examined';
+            } else if (statusText === 'Scheduled') {
+                statusClass = 'waiting';
+            } else if (statusText === 'Pending') {
+                statusClass = 'pending';
+            } else if (statusText === 'Cancel' || statusText === 'Cancelled') {
+                statusClass = 'cancelled';
+            } else if (statusText === 'No Appointment') {
+                statusClass = 'no-appointment';
+            }
+
             row.innerHTML = `
                 <td>${patient.PatientID}</td>
                 <td>${patient.FullName || 'N/A'}</td>
                 <td>${patient.Age || 'N/A'}</td>
                 <td>${patient.Gender || 'N/A'}</td>
                 <td>${patient.PhoneNumber || 'N/A'}</td>
-                <td>${patient.LastVisit || 'Never'}</td>
-                <td><span class="status-badge status-${(patient.Status || 'pending').toLowerCase().replace(' ', '-')}">${patient.Status || 'Pending'}</span></td>
+                <td>${formattedAppointmentDateTime}</td>
+                <td><span class="status-badge status-${statusClass}">${statusText}</span></td>
                 <td>
-                    <button class="btn-view" onclick="viewPatientDetails(${patient.PatientID})">View</button>
+                    <a href="/receptionist/patient_details?patientId=${patient.PatientID}" class="btn-view">View</a>
                 </td>
             `;
             table.appendChild(row);
@@ -817,97 +852,23 @@
                 return;
             }
 
-            // Create and show patient details modal
-            showPatientModal(patient);
+            // Redirect to patient details page
+            window.location.href = `patient_details.html?patientId=${patientId}`;
         } catch (error) {
             console.error('Error viewing patient details:', error);
             alert('Error loading patient details.');
         }
     }
 
-    function showPatientModal(patient) {
-        // Create modal if it doesn't exist
-        let modal = document.getElementById('patientModal');
-        if (!modal) {
-            modal = document.createElement('div');
-            modal.id = 'patientModal';
-            modal.className = 'modal fade';
-            modal.innerHTML = `
-                <div class="modal-dialog modal-lg">
-                    <div class="modal-content">
-                        <div class="modal-header">
-                            <h5 class="modal-title">Patient Details</h5>
-                            <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-                        </div>
-                        <div class="modal-body" id="patientModalBody">
-                        </div>
-                    </div>
-                </div>
-            `;
-            document.body.appendChild(modal);
+    function getStatusBadgeClass(status) {
+        switch(status) {
+            case 'Completed': return 'bg-success';
+            case 'Scheduled': return 'bg-info';
+            case 'Pending': return 'bg-warning';
+            case 'Cancelled': return 'bg-danger';
+            default: return 'bg-secondary';
         }
-
-        // Populate modal with patient data
-        const modalBody = document.getElementById('patientModalBody');
-        modalBody.innerHTML = `
-            <div class="row">
-                <div class="col-md-6">
-                    <div class="detail-item">
-                        <span class="detail-label">Patient ID</span>
-                        <span class="detail-value">${patient.PatientID}</span>
-                    </div>
-                    <div class="detail-item">
-                        <span class="detail-label">Full Name</span>
-                        <span class="detail-value">${patient.FullName || 'N/A'}</span>
-                    </div>
-                    <div class="detail-item">
-                        <span class="detail-label">Email</span>
-                        <span class="detail-value">${patient.Email || 'N/A'}</span>
-                    </div>
-                    <div class="detail-item">
-                        <span class="detail-label">Phone Number</span>
-                        <span class="detail-value">${patient.PhoneNumber || 'N/A'}</span>
-                    </div>
-                    <div class="detail-item">
-                        <span class="detail-label">Gender</span>
-                        <span class="detail-value">${patient.Gender || 'N/A'}</span>
-                    </div>
-                </div>
-                <div class="col-md-6">
-                    <div class="detail-item">
-                        <span class="detail-label">Age</span>
-                        <span class="detail-value">${patient.Age || 'N/A'}</span>
-                    </div>
-                    <div class="detail-item">
-                        <span class="detail-label">Date of Birth</span>
-                        <span class="detail-value">${patient.DateOfBirth || 'N/A'}</span>
-                    </div>
-                    <div class="detail-item">
-                        <span class="detail-label">Address</span>
-                        <span class="detail-value">${patient.Address || 'N/A'}</span>
-                    </div>
-                    <div class="detail-item">
-                        <span class="detail-label">Medical History</span>
-                        <span class="detail-value">${patient.MedicalHistory || 'N/A'}</span>
-                    </div>
-                    <div class="detail-item">
-                        <span class="detail-label">Emergency Contact</span>
-                        <span class="detail-value">${patient.EmergencyContact || 'N/A'}</span>
-                    </div>
-                </div>
-            </div>
-        `;
-
-        // Show modal
-        const bootstrapModal = new bootstrap.Modal(modal);
-        bootstrapModal.show();
     }
-
-    function toggleNotificationModal() {
-        // Notification modal functionality
-        console.log('Notification modal toggled');
-    }
-
     // Initialize the page
     async function initializePage() {
         try {
@@ -920,7 +881,6 @@
             document.getElementById('searchInput').addEventListener('input', filterPatients);
             document.getElementById('filterGender').addEventListener('change', filterPatients);
             document.getElementById('filterAge').addEventListener('change', filterPatients);
-            document.getElementById('filterLastVisit').addEventListener('change', filterPatients);
             document.getElementById('filterStatus').addEventListener('change', filterPatients);
 
             console.log(`Loaded ${patients.length} patients`);
@@ -936,4 +896,3 @@
 </script>
 </body>
 </html>
-

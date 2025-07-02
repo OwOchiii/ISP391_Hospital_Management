@@ -625,15 +625,15 @@
                             <input type="text" class="form-control" id="search-in-progress" placeholder="Search by Name or Phone">
                         </div>
                         <select class="form-control" id="filter-age-group-in-progress">
-                            <option value="">Select Age Group</option>
-                            <option value="under_18">Under 18</option>
-                            <option value="18_40">18-40</option>
-                            <option value="40_60">40-60</option>
-                            <option value="over_60">Over 60</option>
+                            <option value="">All Age Groups</option>
+                            <option value="children">Children (1-12 years)</option>
+                            <option value="adolescence">Adolescence (13-19 years)</option>
+                            <option value="youth">Youth (20-39 years)</option>
+                            <option value="middle-aged">Middle-aged (40-59 years)</option>
+                            <option value="elderly">Elderly (60+ years)</option>
                         </select>
-                        <input type="datetime-local" class="form-control" id="filter-time-in-progress">
                         <select class="form-control" id="filter-doctor-in-progress">
-                            <option value="">Select Doctor</option>
+                            <option value="">All Doctors</option>
                         </select>
                         <button class="btn-reset" onclick="resetFilters('in-progress')">Reset</button>
                     </div>
@@ -670,15 +670,15 @@
                             <input type="text" class="form-control" id="search-completed" placeholder="Search by Name or Phone">
                         </div>
                         <select class="form-control" id="filter-age-group-completed">
-                            <option value="">Select Age Group</option>
-                            <option value="under_18">Under 18</option>
-                            <option value="18_40">18-40</option>
-                            <option value="40_60">40-60</option>
-                            <option value="over_60">Over 60</option>
+                            <option value="">All Age Groups</option>
+                            <option value="children">Children (1-12 years)</option>
+                            <option value="adolescence">Adolescence (13-19 years)</option>
+                            <option value="youth">Youth (20-39 years)</option>
+                            <option value="middle-aged">Middle-aged (40-59 years)</option>
+                            <option value="elderly">Elderly (60+ years)</option>
                         </select>
-                        <input type="datetime-local" class="form-control" id="filter-time-completed">
                         <select class="form-control" id="filter-doctor-completed">
-                            <option value="">Select Doctor</option>
+                            <option value="">All Doctors</option>
                         </select>
                         <button class="btn-reset" onclick="resetFilters('completed')">Reset</button>
                     </div>
@@ -715,15 +715,15 @@
                             <input type="text" class="form-control" id="search-rejected" placeholder="Search by Name or Phone">
                         </div>
                         <select class="form-control" id="filter-age-group-rejected">
-                            <option value="">Select Age Group</option>
-                            <option value="under_18">Under 18</option>
-                            <option value="18_40">18-40</option>
-                            <option value="40_60">40-60</option>
-                            <option value="over_60">Over 60</option>
+                            <option value="">All Age Groups</option>
+                            <option value="children">Children (1-12 years)</option>
+                            <option value="adolescence">Adolescence (13-19 years)</option>
+                            <option value="youth">Youth (20-39 years)</option>
+                            <option value="middle-aged">Middle-aged (40-59 years)</option>
+                            <option value="elderly">Elderly (60+ years)</option>
                         </select>
-                        <input type="datetime-local" class="form-control" id="filter-time-rejected">
                         <select class="form-control" id="filter-doctor-rejected">
-                            <option value="">Select Doctor</option>
+                            <option value="">All Doctors</option>
                         </select>
                         <button class="btn-reset" onclick="resetFilters('rejected')">Reset</button>
                     </div>
@@ -765,13 +765,13 @@
                         <input type="text" class="form-control" id="modalSearch" placeholder="Search by Name or Phone">
                     </div>
                     <select class="form-control" id="modalFilterAgeGroup">
-                        <option value="">Select Age Group</option>
-                        <option value="under_18">Under 18</option>
-                        <option value="18_40">18-40</option>
-                        <option value="40_60">40-60</option>
-                        <option value="over_60">Over 60</option>
+                        <option value="">All Age Groups</option>
+                        <option value="children">Children (1-12 years)</option>
+                        <option value="adolescence">Adolescence (13-19 years)</option>
+                        <option value="youth">Youth (20-39 years)</option>
+                        <option value="middle-aged">Middle-aged (40-59 years)</option>
+                        <option value="elderly">Elderly (60+ years)</option>
                     </select>
-                    <input type="datetime-local" class="form-control" id="modalFilterTime">
                     <select class="form-control" id="modalFilterDoctor">
                         <option value="">Select Doctor</option>
                     </select>
@@ -842,12 +842,12 @@
     const itemsPerPage = 5;
     const maxModalItems = 16; // Maximum items to display in modal
     const paginationStates = {
-        'in-progress': { currentPage: 1, searchTerm: '', filterAgeGroup: '', filterTime: '', filterDoctor: '' },
-        'completed': { currentPage: 1, searchTerm: '', filterAgeGroup: '', filterTime: '', filterDoctor: '' },
-        'rejected': { currentPage: 1, searchTerm: '', filterAgeGroup: '', filterTime: '', filterDoctor: '' }
+        'in-progress': { currentPage: 1, searchTerm: '', filterAgeGroup: '', filterDoctor: '', allAppointments: [] },
+        'completed': { currentPage: 1, searchTerm: '', filterAgeGroup: '', filterDoctor: '', allAppointments: [] },
+        'rejected': { currentPage: 1, searchTerm: '', filterAgeGroup: '', filterDoctor: '', allAppointments: [] }
     };
 
-    // Add viewAppointmentDetails function from dashboard.html
+    // Add viewAppointmentDetails function
     function viewAppointmentDetails(appointmentId) {
         window.location.href = `/receptionist/appointment-details?id=${appointmentId}`;
     }
@@ -885,29 +885,27 @@
         const doctorSelects = document.querySelectorAll('[id^="filter-doctor-"], #modalFilterDoctor');
         const doctors = await fetchDoctors();
         doctorSelects.forEach(select => {
-            select.innerHTML = '<option value="">Select Doctor</option>';
+            // Clear existing options except the first one
+            select.innerHTML = '<option value="">All Doctors</option>';
             doctors.forEach(doctor => {
                 const option = document.createElement('option');
-                option.value = doctor.id;
+                option.value = doctor.name; // Use name for filtering
                 option.textContent = doctor.name;
                 select.appendChild(option);
             });
         });
     }
 
-    // Fetch appointments from server
-    async function fetchAppointments(status, page, searchTerm = '', filterAgeGroup = '', filterTime = '', filterDoctor = '', fetchAll = false) {
+    // Fetch appointments from server (fetch all, then filter and paginate client-side)
+    async function fetchAppointments(status, searchTerm = '') {
         try {
             const apiStatus = statusMap[status];
             if (!apiStatus) {
                 throw new Error(`Invalid status provided: ${status}`);
             }
 
-            // Only send supported parameters to API (status, page, search, fetchAll)
-            let url = `/api/appointments?status=${encodeURIComponent(apiStatus)}&page=${page}&search=${encodeURIComponent(searchTerm)}`;
-            if (fetchAll) {
-                url += '&fetchAll=true';
-            }
+            // Fetch all appointments with search term only (server-side search)
+            let url = `/api/appointments?status=${encodeURIComponent(apiStatus)}&search=${encodeURIComponent(searchTerm)}&fetchAll=true`;
 
             console.log(`Fetching appointments with URL: ${url}`);
             const response = await fetch(url);
@@ -918,54 +916,7 @@
             const data = await response.json();
             console.log(`Received appointments:`, data);
 
-            // Apply client-side filtering for unsupported filters
-            let filteredAppointments = data.appointments || [];
-
-            // Filter by age group
-            if (filterAgeGroup) {
-                filteredAppointments = filteredAppointments.filter(appt => {
-                    const age = calculateAge(appt.dob);
-                    switch (filterAgeGroup) {
-                        case 'child': return age < 18;
-                        case 'adult': return age >= 18 && age < 60;
-                        case 'senior': return age >= 60;
-                        default: return true;
-                    }
-                });
-            }
-
-            // Filter by appointment time
-            if (filterTime) {
-                filteredAppointments = filteredAppointments.filter(appt => {
-                    // Convert filter time to Date for comparison
-                    const filterDate = new Date(filterTime);
-                    const apptDate = new Date(appt.time);
-
-                    // Compare dates (same day)
-                    return apptDate.toDateString() === filterDate.toDateString();
-                });
-            }
-
-            // Filter by doctor
-            if (filterDoctor) {
-                filteredAppointments = filteredAppointments.filter(appt => {
-                    return appt.doctor && appt.doctor.toLowerCase().includes(filterDoctor.toLowerCase());
-                });
-            }
-
-            // Apply pagination to filtered results if not fetchAll
-            let paginatedAppointments = filteredAppointments;
-            if (!fetchAll) {
-                const itemsPerPage = 5;
-                const startIndex = (page - 1) * itemsPerPage;
-                const endIndex = startIndex + itemsPerPage;
-                paginatedAppointments = filteredAppointments.slice(startIndex, endIndex);
-            }
-
-            return {
-                appointments: paginatedAppointments,
-                total: filteredAppointments.length
-            };
+            return data.appointments || [];
 
         } catch (error) {
             console.error(`Error fetching ${status} appointments:`, error);
@@ -973,27 +924,68 @@
         }
     }
 
-    // Render appointments
+    // Apply client-side filtering
+    function applyClientSideFilters(appointments, filterAgeGroup, filterDoctor) {
+        let filteredAppointments = [...appointments];
+
+        // Filter by age group with new categories
+        if (filterAgeGroup) {
+            filteredAppointments = filteredAppointments.filter(appt => {
+                const age = calculateAge(appt.dob);
+                switch (filterAgeGroup) {
+                    case 'children': return age >= 1 && age <= 12;
+                    case 'adolescence': return age >= 13 && age <= 19;
+                    case 'youth': return age >= 20 && age <= 39;
+                    case 'middle-aged': return age >= 40 && age <= 59;
+                    case 'elderly': return age >= 60;
+                    default: return true;
+                }
+            });
+        }
+
+        // Filter by doctor (exact match)
+        if (filterDoctor) {
+            filteredAppointments = filteredAppointments.filter(appt => {
+                return appt.doctor && appt.doctor.trim() === filterDoctor.trim();
+            });
+        }
+
+        return filteredAppointments;
+    }
+
+    // Apply pagination to filtered results
+    function applyPagination(appointments, page) {
+        const startIndex = (page - 1) * itemsPerPage;
+        const endIndex = startIndex + itemsPerPage;
+        return appointments.slice(startIndex, endIndex);
+    }
+
+    // Render appointments with improved pagination
     async function renderAppointments(status, page = 1) {
         const tbody = document.getElementById(`${status}-list`);
         const pagination = document.getElementById(`${status}-pagination`);
-        const { searchTerm, filterAgeGroup, filterTime, filterDoctor } = paginationStates[status];
+        const { searchTerm, filterAgeGroup, filterDoctor } = paginationStates[status];
 
         try {
-            const { appointments, total } = await fetchAppointments(
-                status,
-                page,
-                searchTerm,
-                filterAgeGroup,
-                filterTime,
-                filterDoctor
-            );
+            // Fetch all appointments from server (with search term)
+            const allAppointments = await fetchAppointments(status, searchTerm);
+
+            // Store all appointments for this status
+            paginationStates[status].allAppointments = allAppointments;
+
+            // Apply client-side filtering
+            const filteredAppointments = applyClientSideFilters(allAppointments, filterAgeGroup, filterDoctor);
+
+            // Apply pagination
+            const paginatedAppointments = applyPagination(filteredAppointments, page);
+
+            // Clear table body
             tbody.innerHTML = '';
 
-            if (appointments.length === 0) {
+            if (paginatedAppointments.length === 0) {
                 tbody.innerHTML = '<tr><td colspan="7" class="text-center">No data available</td></tr>';
             } else {
-                appointments.forEach(appt => {
+                paginatedAppointments.forEach(appt => {
                     const row = document.createElement('tr');
                     const actionsHtml = `
                         <button class="btn-view" onclick="viewAppointmentDetails(${appt.id || appt.stt})" title="View Details">
@@ -1005,7 +997,7 @@
                         <td>${appt.name}</td>
                         <td>${calculateAge(appt.dob)}</td>
                         <td>${appt.phone}</td>
-                        <td>${appt.time}</td>
+                        <td>${formatDateTime(appt.time)}</td>
                         <td>${appt.doctor}</td>
                         <td class="action-buttons">${actionsHtml}</td>
                     `;
@@ -1013,80 +1005,125 @@
                 });
             }
 
-            // Render pagination
-            const totalPages = Math.ceil(total / itemsPerPage);
-            pagination.innerHTML = '';
-            if (totalPages > 1) {
-                const prevButton = document.createElement('button');
-                prevButton.textContent = 'Previous';
-                prevButton.disabled = page === 1;
-                prevButton.onclick = () => {
-                    paginationStates[status].currentPage--;
-                    renderAppointments(status, paginationStates[status].currentPage);
-                };
-                pagination.appendChild(prevButton);
+            // Render pagination controls
+            renderPaginationControls(status, filteredAppointments.length, page);
 
-                for (let j = 1; j <= totalPages; j++) {
-                    const pageButton = document.createElement('button');
-                    pageButton.textContent = j;
-                    pageButton.disabled = j === page;
-                    pageButton.onclick = () => {
-                        paginationStates[status].currentPage = j;
-                        renderAppointments(status, j);
-                    };
-                    pagination.appendChild(pageButton);
-                }
-
-                const nextButton = document.createElement('button');
-                nextButton.textContent = 'Next';
-                nextButton.disabled = page === totalPages;
-                nextButton.onclick = () => {
-                    paginationStates[status].currentPage++;
-                    renderAppointments(status, paginationStates[status].currentPage);
-                };
-                pagination.appendChild(nextButton);
-            }
         } catch (error) {
             console.error(`Error rendering ${status} appointments:`, error);
             tbody.innerHTML = '<tr><td colspan="7" class="text-center">Error loading appointments</td></tr>';
         }
     }
 
-    // Update appointment status
-    async function updateStatus(stt, newStatus) {
-        try {
-            const newApiStatus = statusMap[newStatus];
-            const response = await fetch('/api/appointments/update', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ stt, status: newApiStatus })
-            });
-            if (!response.ok) throw new Error('Failed to update status');
-            // Refresh all tables
-            await Promise.all([
-                renderAppointments('in-progress', paginationStates['in-progress'].currentPage),
-                renderAppointments('completed', paginationStates['completed'].currentPage),
-                renderAppointments('rejected', paginationStates['rejected'].currentPage)
-            ]);
-        } catch (error) {
-            console.error('Error updating status:', error);
+    // Render pagination controls
+    function renderPaginationControls(status, totalItems, currentPage) {
+        const pagination = document.getElementById(`${status}-pagination`);
+        const totalPages = Math.ceil(totalItems / itemsPerPage);
+
+        pagination.innerHTML = '';
+
+        if (totalPages <= 1) {
+            return; // No pagination needed
         }
+
+        // Previous button
+        const prevButton = document.createElement('button');
+        prevButton.textContent = 'Previous';
+        prevButton.disabled = currentPage === 1;
+        prevButton.className = currentPage === 1 ? 'disabled' : '';
+        prevButton.onclick = () => {
+            if (currentPage > 1) {
+                paginationStates[status].currentPage = currentPage - 1;
+                renderAppointments(status, currentPage - 1);
+            }
+        };
+        pagination.appendChild(prevButton);
+
+        // Page number buttons (show max 5 pages)
+        const startPage = Math.max(1, currentPage - 2);
+        const endPage = Math.min(totalPages, startPage + 4);
+
+        if (startPage > 1) {
+            const firstButton = document.createElement('button');
+            firstButton.textContent = '1';
+            firstButton.onclick = () => {
+                paginationStates[status].currentPage = 1;
+                renderAppointments(status, 1);
+            };
+            pagination.appendChild(firstButton);
+
+            if (startPage > 2) {
+                const ellipsis = document.createElement('span');
+                ellipsis.textContent = '...';
+                ellipsis.style.padding = '0.5rem';
+                pagination.appendChild(ellipsis);
+            }
+        }
+
+        for (let i = startPage; i <= endPage; i++) {
+            const pageButton = document.createElement('button');
+            pageButton.textContent = i;
+            pageButton.className = i === currentPage ? 'active' : '';
+            pageButton.disabled = i === currentPage;
+            pageButton.onclick = () => {
+                paginationStates[status].currentPage = i;
+                renderAppointments(status, i);
+            };
+            pagination.appendChild(pageButton);
+        }
+
+        if (endPage < totalPages) {
+            if (endPage < totalPages - 1) {
+                const ellipsis = document.createElement('span');
+                ellipsis.textContent = '...';
+                ellipsis.style.padding = '0.5rem';
+                pagination.appendChild(ellipsis);
+            }
+
+            const lastButton = document.createElement('button');
+            lastButton.textContent = totalPages;
+            lastButton.onclick = () => {
+                paginationStates[status].currentPage = totalPages;
+                renderAppointments(status, totalPages);
+            };
+            pagination.appendChild(lastButton);
+        }
+
+        // Next button
+        const nextButton = document.createElement('button');
+        nextButton.textContent = 'Next';
+        nextButton.disabled = currentPage === totalPages;
+        nextButton.className = currentPage === totalPages ? 'disabled' : '';
+        nextButton.onclick = () => {
+            if (currentPage < totalPages) {
+                paginationStates[status].currentPage = currentPage + 1;
+                renderAppointments(status, currentPage + 1);
+            }
+        };
+        pagination.appendChild(nextButton);
+
+        // Add page info
+        const pageInfo = document.createElement('div');
+        pageInfo.style.marginTop = '0.5rem';
+        pageInfo.style.textAlign = 'center';
+        pageInfo.style.fontSize = '0.875rem';
+        pageInfo.style.color = 'var(--text-muted)';
+        pageInfo.textContent = `Showing page ${currentPage} of ${totalPages} (${totalItems} total items)`;
+        pagination.appendChild(pageInfo);
     }
 
-    // Apply filters
+    // Apply filters with reset to page 1
     function applyFilters(status) {
         const searchTerm = document.getElementById(`search-${status}`).value.trim();
         const filterAgeGroup = document.getElementById(`filter-age-group-${status}`).value.trim();
-        const filterTime = document.getElementById(`filter-time-${status}`).value.trim();
         const filterDoctor = document.getElementById(`filter-doctor-${status}`).value.trim();
 
+        // Update pagination state
         paginationStates[status].searchTerm = searchTerm;
         paginationStates[status].filterAgeGroup = filterAgeGroup;
-        paginationStates[status].filterTime = filterTime;
         paginationStates[status].filterDoctor = filterDoctor;
-        paginationStates[status].currentPage = 1;
+        paginationStates[status].currentPage = 1; // Reset to page 1
 
-        console.log(`Applying filters for ${status}:`, { searchTerm, filterAgeGroup, filterTime, filterDoctor });
+        console.log(`Applying filters for ${status}:`, { searchTerm, filterAgeGroup, filterDoctor });
         renderAppointments(status, 1);
     }
 
@@ -1094,12 +1131,11 @@
     function resetFilters(status) {
         document.getElementById(`search-${status}`).value = '';
         document.getElementById(`filter-age-group-${status}`).value = '';
-        document.getElementById(`filter-time-${status}`).value = '';
         document.getElementById(`filter-doctor-${status}`).value = '';
 
+        // Reset pagination state
         paginationStates[status].searchTerm = '';
         paginationStates[status].filterAgeGroup = '';
-        paginationStates[status].filterTime = '';
         paginationStates[status].filterDoctor = '';
         paginationStates[status].currentPage = 1;
 
@@ -1107,30 +1143,28 @@
         renderAppointments(status, 1);
     }
 
-    // Open modal with all appointments
+    // Open modal with filtered appointments
     async function openAppointmentModal(status) {
         const modalTitle = document.getElementById('appointmentModalLabel');
         const modalList = document.getElementById('modalAppointmentList');
-        modalTitle.textContent = `${status.charAt(0).toUpperCase() + status.slice(1)} Appointments`;
+        modalTitle.textContent = `${status.charAt(0).toUpperCase() + status.slice(1).replace('-', ' ')} Appointments`;
 
-        const { searchTerm, filterAgeGroup, filterTime, filterDoctor } = paginationStates[status];
+        const { searchTerm, filterAgeGroup, filterDoctor, allAppointments } = paginationStates[status];
+
         try {
-            const { appointments } = await fetchAppointments(
-                status,
-                1,
-                searchTerm,
-                filterAgeGroup,
-                filterTime,
-                filterDoctor,
-                true
-            );
+            // Use already fetched appointments if available, otherwise fetch
+            let appointments = allAppointments.length > 0 ? allAppointments : await fetchAppointments(status, searchTerm);
+
+            // Apply client-side filtering
+            const filteredAppointments = applyClientSideFilters(appointments, filterAgeGroup, filterDoctor);
+
             modalList.innerHTML = '';
 
-            if (appointments.length === 0) {
+            if (filteredAppointments.length === 0) {
                 modalList.innerHTML = '<tr><td colspan="7" class="text-center">No data available</td></tr>';
             } else {
                 // Limit to maxModalItems (16)
-                const limitedAppointments = appointments.slice(0, maxModalItems);
+                const limitedAppointments = filteredAppointments.slice(0, maxModalItems);
 
                 limitedAppointments.forEach(appt => {
                     const row = document.createElement('tr');
@@ -1144,116 +1178,112 @@
                         <td>${appt.name}</td>
                         <td>${calculateAge(appt.dob)}</td>
                         <td>${appt.phone}</td>
-                        <td>${appt.time}</td>
+                        <td>${formatDateTime(appt.time)}</td>
                         <td>${appt.doctor}</td>
                         <td class="action-buttons">${actionsHtml}</td>
                     `;
                     modalList.appendChild(row);
                 });
+
+                // Add info about limited results
+                if (filteredAppointments.length > maxModalItems) {
+                    const infoRow = document.createElement('tr');
+                    infoRow.innerHTML = `<td colspan="7" class="text-center text-muted">Showing first ${maxModalItems} of ${filteredAppointments.length} appointments</td>`;
+                    modalList.appendChild(infoRow);
+                }
             }
 
-            // Set filter values in modal
+            // Set current filter values in modal
             document.getElementById('modalSearch').value = searchTerm || '';
-            document.getElementById('modalFilterAgeGroup').value = filterAgeGroup || '';
-            document.getElementById('modalFilterTime').value = filterTime || '';
+
+            // Set modal age group values to match the main filter options
+            const modalAgeGroup = document.getElementById('modalFilterAgeGroup');
+            modalAgeGroup.value = filterAgeGroup || '';
+
             document.getElementById('modalFilterDoctor').value = filterDoctor || '';
+
             appointmentModal.show();
         } catch (error) {
             console.error(`Error opening modal for ${status}:`, error);
             modalList.innerHTML = '<tr><td colspan="7" class="text-center">Error loading appointments</td></tr>';
+            appointmentModal.show();
         }
     }
 
     // Apply modal filters
     function applyModalFilters() {
         const modalTitle = document.getElementById('appointmentModalLabel').textContent.toLowerCase();
-        const status = modalTitle.split(' ')[0];
+        let status = 'in-progress'; // default
+
+        if (modalTitle.includes('completed')) {
+            status = 'completed';
+        } else if (modalTitle.includes('rejected')) {
+            status = 'rejected';
+        }
 
         const searchTerm = document.getElementById('modalSearch').value.trim();
         const filterAgeGroup = document.getElementById('modalFilterAgeGroup').value.trim();
-        const filterTime = document.getElementById('modalFilterTime').value.trim();
         const filterDoctor = document.getElementById('modalFilterDoctor').value.trim();
 
+        // Update main filters to match modal filters
+        document.getElementById(`search-${status}`).value = searchTerm;
+        document.getElementById(`filter-age-group-${status}`).value = filterAgeGroup;
+        document.getElementById(`filter-doctor-${status}`).value = filterDoctor;
+
+        // Update pagination state
         paginationStates[status].searchTerm = searchTerm;
         paginationStates[status].filterAgeGroup = filterAgeGroup;
-        paginationStates[status].filterTime = filterTime;
         paginationStates[status].filterDoctor = filterDoctor;
+        paginationStates[status].currentPage = 1;
 
-        console.log(`Applying modal filters for ${status}:`, { searchTerm, filterAgeGroup, filterTime, filterDoctor });
-        renderModalAppointments(status);
+        console.log(`Applying modal filters for ${status}:`, { searchTerm, filterAgeGroup, filterDoctor });
+
+        // Re-render the modal and main table
+        openAppointmentModal(status);
+        renderAppointments(status, 1);
     }
 
     // Reset modal filters
     function resetModalFilters() {
         const modalTitle = document.getElementById('appointmentModalLabel').textContent.toLowerCase();
-        const status = modalTitle.split(' ')[0];
+        let status = 'in-progress'; // default
+
+        if (modalTitle.includes('completed')) {
+            status = 'completed';
+        } else if (modalTitle.includes('rejected')) {
+            status = 'rejected';
+        }
 
         document.getElementById('modalSearch').value = '';
         document.getElementById('modalFilterAgeGroup').value = '';
-        document.getElementById('modalFilterTime').value = '';
         document.getElementById('modalFilterDoctor').value = '';
 
+        // Reset main filters too
+        document.getElementById(`search-${status}`).value = '';
+        document.getElementById(`filter-age-group-${status}`).value = '';
+        document.getElementById(`filter-doctor-${status}`).value = '';
+
+        // Reset pagination state
         paginationStates[status].searchTerm = '';
         paginationStates[status].filterAgeGroup = '';
-        paginationStates[status].filterTime = '';
         paginationStates[status].filterDoctor = '';
+        paginationStates[status].currentPage = 1;
 
         console.log(`Resetting modal filters for ${status}`);
-        renderModalAppointments(status);
+
+        // Re-render the modal and main table
+        openAppointmentModal(status);
+        renderAppointments(status, 1);
     }
 
-    // Render modal appointments
-    async function renderModalAppointments(status) {
-        const modalList = document.getElementById('modalAppointmentList');
-        const { searchTerm, filterAgeGroup, filterTime, filterDoctor } = paginationStates[status];
-
-        try {
-            const { appointments } = await fetchAppointments(
-                status,
-                1,
-                searchTerm,
-                filterAgeGroup,
-                filterTime,
-                filterDoctor,
-                true
-            );
-            modalList.innerHTML = '';
-
-            if (appointments.length === 0) {
-                modalList.innerHTML = '<tr><td colspan="7" class="text-center">No data available</td></tr>';
-            } else {
-                // Limit to maxModalItems (16)
-                const limitedAppointments = appointments.slice(0, maxModalItems);
-
-                limitedAppointments.forEach(appt => {
-                    const row = document.createElement('tr');
-                    const actionsHtml = `
-                        <button class="btn-view" onclick="viewAppointmentDetails(${appt.id || appt.stt})" title="View Details">
-                            <i class="fas fa-eye"></i>
-                        </button>
-                    `;
-                    row.innerHTML = `
-                        <td>${appt.stt}</td>
-                        <td>${appt.name}</td>
-                        <td>${calculateAge(appt.dob)}</td>
-                        <td>${appt.phone}</td>
-                        <td>${appt.time}</td>
-                        <td>${appt.doctor}</td>
-                        <td class="action-buttons">${actionsHtml}</td>
-                    `;
-                    modalList.appendChild(row);
-                });
-            }
-        } catch (error) {
-            console.error(`Error rendering modal appointments for ${status}:`, error);
-            modalList.innerHTML = '<tr><td colspan="7" class="text-center">Error loading appointments</td></tr>';
-        }
-    }
-
-    // Calculate age
+    // Calculate age from date of birth
     function calculateAge(birthDate) {
+        if (!birthDate) return 'N/A';
+
         const today = new Date();
         const birth = new Date(birthDate);
+
+        if (isNaN(birth.getTime())) return 'N/A';
 
         let age = today.getFullYear() - birth.getFullYear();
 
@@ -1268,32 +1298,88 @@
         return age;
     }
 
-    // Initialize tables, doctor dropdowns, and event listeners
+    // Format date time for display
+    function formatDateTime(dateTimeStr) {
+        if (!dateTimeStr) return 'N/A';
+
+        try {
+            const date = new Date(dateTimeStr);
+            if (isNaN(date.getTime())) return dateTimeStr;
+
+            return date.toLocaleString('en-US', {
+                year: 'numeric',
+                month: '2-digit',
+                day: '2-digit',
+                hour: '2-digit',
+                minute: '2-digit',
+                hour12: true
+            });
+        } catch (error) {
+            return dateTimeStr;
+        }
+    }
+
+    // Update appointment status
+    async function updateStatus(stt, newStatus) {
+        try {
+            const newApiStatus = statusMap[newStatus];
+            const response = await fetch('/api/appointments/update', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ stt, status: newApiStatus })
+            });
+            if (!response.ok) throw new Error('Failed to update status');
+
+            // Refresh all tables
+            await Promise.all([
+                renderAppointments('in-progress', paginationStates['in-progress'].currentPage),
+                renderAppointments('completed', paginationStates['completed'].currentPage),
+                renderAppointments('rejected', paginationStates['rejected'].currentPage)
+            ]);
+        } catch (error) {
+            console.error('Error updating status:', error);
+            alert('Failed to update appointment status. Please try again.');
+        }
+    }
+
+    // Initialize everything when DOM is ready
     document.addEventListener('DOMContentLoaded', async () => {
-        await populateDoctorDropdowns();
+        try {
+            // Populate doctor dropdowns first
+            await populateDoctorDropdowns();
 
-        // Render initial tables
-        renderAppointments('in-progress');
-        renderAppointments('completed');
-        renderAppointments('rejected');
+            // Render initial tables
+            await Promise.all([
+                renderAppointments('in-progress'),
+                renderAppointments('completed'),
+                renderAppointments('rejected')
+            ]);
 
-        // Add event listeners for filters
-        ['in-progress', 'completed', 'rejected'].forEach(status => {
-            const debouncedApplyFilters = debounce(() => applyFilters(status), 300);
+            // Add event listeners for filters with debouncing
+            ['in-progress', 'completed', 'rejected'].forEach(status => {
+                const debouncedApplyFilters = debounce(() => applyFilters(status), 500);
 
-            document.getElementById(`search-${status}`).addEventListener('input', debouncedApplyFilters);
-            document.getElementById(`filter-age-group-${status}`).addEventListener('change', debouncedApplyFilters);
-            document.getElementById(`filter-time-${status}`).addEventListener('change', debouncedApplyFilters);
-            document.getElementById(`filter-doctor-${status}`).addEventListener('change', debouncedApplyFilters);
-        });
+                document.getElementById(`search-${status}`).addEventListener('input', debouncedApplyFilters);
+                document.getElementById(`filter-age-group-${status}`).addEventListener('change', () => applyFilters(status));
+                document.getElementById(`filter-doctor-${status}`).addEventListener('change', () => applyFilters(status));
+            });
 
-        // Add event listeners for modal filters
-        const debouncedApplyModalFilters = debounce(applyModalFilters, 300);
-        document.getElementById('modalSearch').addEventListener('input', debouncedApplyModalFilters);
-        document.getElementById('modalFilterAgeGroup').addEventListener('change', debouncedApplyModalFilters);
-        document.getElementById('modalFilterTime').addEventListener('change', debouncedApplyModalFilters);
-        document.getElementById('modalFilterDoctor').addEventListener('change', debouncedApplyModalFilters);
+            // Add event listeners for modal filters
+            const debouncedApplyModalFilters = debounce(applyModalFilters, 500);
+            document.getElementById('modalSearch').addEventListener('input', debouncedApplyModalFilters);
+            document.getElementById('modalFilterAgeGroup').addEventListener('change', applyModalFilters);
+            document.getElementById('modalFilterDoctor').addEventListener('change', applyModalFilters);
+
+        } catch (error) {
+            console.error('Error initializing appointments page:', error);
+        }
     });
+
+    // Notification functionality (placeholder)
+    function toggleNotificationModal() {
+        // Placeholder for notification functionality
+        console.log('Notification modal toggled');
+    }
 </script>
 </body>
 </html>

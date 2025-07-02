@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -84,26 +84,19 @@
             border-radius: 0.375rem;
             margin-bottom: 0;
         }
-        .form-control, .form-select {
-            border-radius: 0.375rem;
-            border: 1px solid #d1d5db;
-            padding: 0.75rem;
+        .btn-back {
+            padding: 0.75rem 2rem;
             font-size: 0.9rem;
-            transition: border-color 0.3s, box-shadow 0.3s;
+            font-weight: 500;
+            border-radius: 0.5rem;
+            background: #6b7280;
+            border: none;
+            color: white;
+            transition: all 0.3s ease;
         }
-        .form-control:focus, .form-select:focus {
-            border-color: #007bff;
-            box-shadow: 0 0 8px rgba(0, 123, 255, 0.2);
-            outline: none;
-        }
-        .form-control[readonly], .form-select[disabled] {
-            background: #e9ecef;
-            cursor: not-allowed;
-            border-color: #d1d5db;
-        }
-        .form-control[readonly]:focus, .form-select[disabled]:focus {
-            box-shadow: none;
-            border-color: #d1d5db;
+        .btn-back:hover {
+            background: #4b5563;
+            transform: translateY(-2px);
         }
         .alert {
             border-radius: 0.5rem;
@@ -111,61 +104,209 @@
             font-size: 0.9rem;
             margin-bottom: 1.5rem;
         }
-        .btn-back, .btn-save, .btn-edit {
-            padding: 0.75rem 2rem;
-            font-size: 0.9rem;
-            font-weight: 500;
-            border-radius: 0.5rem;
+        .stats-card {
+            background: linear-gradient(135deg, rgba(102, 126, 234, 0.1), rgba(167, 139, 250, 0.1));
+            border: 1px solid rgba(102, 126, 234, 0.2);
+            border-radius: 0.75rem;
+            padding: 1.5rem;
+            text-align: center;
             transition: all 0.3s ease;
         }
-        .btn-back {
-            background: #6b7280;
-            border: none;
-            color: white;
-        }
-        .btn-back:hover {
-            background: #4b5563;
+        .stats-card:hover {
             transform: translateY(-2px);
+            box-shadow: 0 4px 15px rgba(102, 126, 234, 0.15);
         }
-        .btn-save {
-            background: #007bff;
-            border: none;
-            color: white;
+        .stats-number {
+            font-size: 2rem;
+            font-weight: 700;
+            color: #007bff;
+            margin-bottom: 0.5rem;
         }
-        .btn-save:hover {
-            background: #0056b3;
-            transform: translateY(-2px);
+        .stats-label {
+            font-size: 0.875rem;
+            color: #6b7280;
+            font-weight: 500;
         }
+        .loading {
+            text-align: center;
+            padding: 2rem;
+            color: #6b7280;
+        }
+        .loading-spinner {
+            width: 40px;
+            height: 40px;
+            border: 4px solid rgba(102, 126, 234, 0.1);
+            border-top: 4px solid #007bff;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 1rem;
+        }
+
+        /* Edit Mode Styles */
         .btn-edit {
+            padding: 0.5rem 1.5rem;
+            font-size: 0.875rem;
+            font-weight: 500;
+            border-radius: 0.375rem;
             background: #10b981;
             border: none;
-            padding: 0.5rem 1.5rem;
             color: white;
+            transition: all 0.3s ease;
         }
+
         .btn-edit:hover {
             background: #059669;
             transform: translateY(-2px);
         }
-        .field-required::after {
-            content: '*';
-            color: #dc2626;
-            margin-left: 0.25rem;
-        }
-        .invalid-feedback {
-            font-size: 0.8rem;
-            color: #dc2626;
-        }
-        .is-valid {
-            border-color: #10b981 !important;
-        }
-        .is-invalid {
-            border-color: #dc2626 !important;
-        }
-        .character-counter {
+
+        .btn-save {
+            padding: 0.5rem 1.5rem;
             font-size: 0.875rem;
+            font-weight: 500;
+            border-radius: 0.375rem;
+            background: #007bff;
+            border: none;
+            color: white;
+            transition: all 0.3s ease;
+        }
+
+        .btn-save:hover {
+            background: #0056b3;
+            transform: translateY(-2px);
+        }
+
+        .btn-cancel {
+            padding: 0.5rem 1.5rem;
+            font-size: 0.875rem;
+            font-weight: 500;
+            border-radius: 0.375rem;
+            background: #6b7280;
+            border: none;
+            color: white;
+            transition: all 0.3s ease;
+            margin-left: 0.5rem;
+        }
+
+        .btn-cancel:hover {
+            background: #4b5563;
+            transform: translateY(-2px);
+        }
+
+        .form-control {
+            border: 2px solid #e5e7eb;
+            border-radius: 0.375rem;
+            padding: 0.75rem;
+            font-size: 1rem;
+            transition: all 0.3s ease;
+            background: #ffffff;
+        }
+
+        .form-control:focus {
+            border-color: #007bff;
+            box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.25);
+            background: #ffffff;
+            outline: none;
+        }
+
+        .form-select {
+            border: 2px solid #e5e7eb;
+            border-radius: 0.375rem;
+            padding: 0.75rem;
+            font-size: 1rem;
+            transition: all 0.3s ease;
+            background: #ffffff;
+        }
+
+        .form-select:focus {
+            border-color: #007bff;
+            box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.25);
+            background: #ffffff;
+            outline: none;
+        }
+
+        .editable-field {
+            display: none;
+        }
+
+        .readonly-field {
+            display: block;
+        }
+
+        .edit-mode .editable-field {
+            display: block;
+        }
+
+        .edit-mode .readonly-field {
+            display: none;
+        }
+
+        .success-message {
+            background: #d1fae5;
+            border: 1px solid #10b981;
+            border-radius: 0.5rem;
+            padding: 1rem;
+            margin-bottom: 1rem;
+            color: #065f46;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .success-message i {
+            color: #10b981;
+        }
+
+        /* Validation Styles */
+        .error-message {
+            background: #fef2f2;
+            border: 1px solid #dc2626;
+            border-radius: 0.5rem;
+            padding: 1rem;
+            margin-bottom: 1rem;
+            color: #dc2626;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .error-message i {
+            color: #dc2626;
+        }
+
+        .field-error {
+            color: #dc2626;
+            font-size: 0.875rem;
+            margin-top: 0.25rem;
+            display: none;
+        }
+
+        .form-control.is-invalid, .form-select.is-invalid {
+            border-color: #dc2626;
+            box-shadow: 0 0 0 0.2rem rgba(220, 38, 38, 0.25);
+        }
+
+        .form-control.is-valid, .form-select.is-valid {
+            border-color: #10b981;
+            box-shadow: 0 0 0 0.2rem rgba(16, 185, 129, 0.25);
+        }
+
+        .character-count {
+            font-size: 0.75rem;
             color: #6b7280;
             text-align: right;
             margin-top: 0.25rem;
+        }
+
+        .character-count.limit-warning {
+            color: #f59e0b;
+        }
+
+        .character-count.limit-error {
+            color: #dc2626;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
         }
         @media (max-width: 767.98px) {
             .card-body {
@@ -177,12 +318,12 @@
             .section-title {
                 font-size: 1.25rem;
             }
-            .btn-back, .btn-save, .btn-edit {
+            .btn-back {
                 padding: 0.5rem 1.5rem;
                 font-size: 0.85rem;
             }
-            p, .form-control, .form-select {
-                font-size: 0.9rem;
+            p {
+                font-size: 0.85rem;
             }
         }
     </style>
@@ -190,408 +331,1072 @@
 <body>
 <div class="container">
     <h1>Patient Details</h1>
-    <div class="card">
-        <div class="card-header">
-            <span><i class="fas fa-user"></i> Patient Overview</span>
-            <button id="editButton" class="btn btn-edit"><i class="fas fa-edit me-2"></i>Edit</button>
-        </div>
-        <div class="card-body">
-            <!-- Success/Error Messages -->
-            <div id="successMessage" class="alert alert-success d-none" role="alert"></div>
-            <div id="errorMessage" class="alert alert-danger d-none" role="alert"></div>
 
-            <!-- Personal Information -->
-            <div class="mb-5" id="personalInfo">
-                <h2 class="section-title">1. Personal Information</h2>
+    <!-- Loading State -->
+    <div id="loadingState" class="loading">
+        <div class="loading-spinner"></div>
+        <p>Loading patient details...</p>
+    </div>
+
+    <!-- Error State -->
+    <div id="errorState" class="alert alert-danger d-none" role="alert">
+        <i class="fas fa-exclamation-triangle"></i>
+        <span id="errorMessage">Error loading patient details</span>
+    </div>
+
+    <!-- Patient Details Content -->
+    <div id="patientContent" class="d-none">
+        <!-- Personal Information -->
+        <div class="card" id="personalInfoCard">
+            <div class="card-header">
+                <span><i class="fas fa-user"></i> Personal Information</span>
+                <button id="editAllBtn" class="btn-edit" onclick="toggleEditAllMode()">
+                    <i class="fas fa-edit me-2"></i>Update
+                </button>
+            </div>
+            <div class="card-body">
+                <!-- Success Message -->
+                <div id="updateSuccessMessage" class="success-message d-none">
+                    <i class="fas fa-check-circle"></i>
+                    <span>Patient information updated successfully!</span>
+                </div>
+
                 <div class="row g-4">
                     <div class="col-md-6">
-                        <label class="form-label field-required">Full Name</label>
+                        <label class="form-label">Patient ID</label>
+                        <p id="patientId">-</p>
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label">Full Name</label>
                         <p id="fullName">-</p>
-                        <input id="fullNameInput" type="text" class="form-control d-none" readonly>
                     </div>
                     <div class="col-md-6">
-                        <label class="form-label field-required">Patient ID</label>
-                        <p id="patientID">-</p>
-                        <input id="patientIDInput" type="text" class="form-control d-none" readonly>
+                        <label class="form-label">Date of Birth</label>
+                        <p id="dateOfBirth" class="readonly-field">-</p>
+                        <input type="date" id="dateOfBirthEdit" class="form-control editable-field" />
+                        <div class="field-error" id="dateOfBirthError">Date of Birth is required</div>
                     </div>
                     <div class="col-md-6">
-                        <label class="form-label field-required">Gender</label>
-                        <p id="gender">-</p>
-                        <select id="genderInput" class="form-select d-none" required>
+                        <label class="form-label">Age</label>
+                        <p id="age">-</p>
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label">Gender</label>
+                        <p id="gender" class="readonly-field">-</p>
+                        <select id="genderEdit" class="form-select editable-field">
                             <option value="">Select Gender</option>
                             <option value="Male">Male</option>
                             <option value="Female">Female</option>
                             <option value="Other">Other</option>
                         </select>
-                        <div id="genderError" class="invalid-feedback">Gender is required.</div>
+                        <div class="field-error" id="genderError">Gender is required</div>
                     </div>
                     <div class="col-md-6">
-                        <label class="form-label field-required">Date of Birth</label>
-                        <p id="dob">-</p>
-                        <input id="dobInput" type="date" class="form-control d-none" max="2025-06-25" required>
-                        <div id="dobError" class="invalid-feedback">Date of Birth cannot be in the future.</div>
+                        <label class="form-label">Status</label>
+                        <p id="status">-</p>
                     </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Contact Information -->
+        <div class="card" id="contactInfoCard">
+            <div class="card-header">
+                <span><i class="fas fa-address-book"></i> Contact Information</span>
+            </div>
+            <div class="card-body">
+                <div class="row g-4">
                     <div class="col-md-6">
-                        <label class="form-label field-required">Phone Number</label>
-                        <p id="phone">-</p>
-                        <input id="phoneInput" type="tel" class="form-control d-none" pattern="\d{10}" required>
-                        <div id="phoneError" class="invalid-feedback">Phone Number must be exactly 10 digits.</div>
+                        <label class="form-label">Phone Number</label>
+                        <p id="phoneNumber">-</p>
                     </div>
                     <div class="col-md-6">
                         <label class="form-label">Email</label>
                         <p id="email">-</p>
-                        <input id="emailInput" type="email" class="form-control d-none" readonly>
                     </div>
-                    <div class="col-md-12">
-                        <label class="form-label">Description/Notes</label>
-                        <p id="description">-</p>
-                        <textarea id="descriptionInput" class="form-control d-none" rows="4" maxlength="250"></textarea>
-                        <p class="character-counter d-none" id="descriptionCounter">0/250 characters</p>
-                        <div id="descriptionError" class="invalid-feedback">Description cannot exceed 250 characters.</div>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Contact Information -->
-            <div class="mb-5" id="contactInfo">
-                <h2 class="section-title">2. Contact Information</h2>
-                <div class="row g-4">
                     <div class="col-md-6">
                         <label class="form-label">Address Type</label>
-                        <p id="addressType">-</p>
-                        <select id="addressTypeInput" class="form-select d-none">
-                            <option value="">Select Address Type</option>
-                            <option value="Home">Home</option>
-                            <option value="Work">Work</option>
-                            <option value="Other">Other</option>
-                        </select>
+                        <p id="addressType" class="readonly-field">-</p>
+                        <input type="text" id="addressTypeEdit" class="form-control editable-field" placeholder="e.g., Home, Work" maxlength="50" />
+                        <div class="field-error" id="addressTypeError">Address Type is required</div>
                     </div>
                     <div class="col-md-6">
                         <label class="form-label">Street Address</label>
-                        <p id="streetAddress">-</p>
-                        <input id="streetAddressInput" type="text" class="form-control d-none">
+                        <p id="streetAddress" class="readonly-field">-</p>
+                        <input type="text" id="streetAddressEdit" class="form-control editable-field" placeholder="Enter street address" maxlength="50" />
+                        <div class="field-error" id="streetAddressError">Street Address is required</div>
                     </div>
                     <div class="col-md-6">
                         <label class="form-label">City</label>
-                        <p id="city">-</p>
-                        <input id="cityInput" type="text" class="form-control d-none">
+                        <p id="city" class="readonly-field">-</p>
+                        <input type="text" id="cityEdit" class="form-control editable-field" placeholder="Enter city" maxlength="50" />
+                        <div class="field-error" id="cityError">City is required</div>
                     </div>
                     <div class="col-md-6">
                         <label class="form-label">State/Province</label>
-                        <p id="state">-</p>
-                        <input id="stateInput" type="text" class="form-control d-none">
+                        <p id="state" class="readonly-field">-</p>
+                        <input type="text" id="stateEdit" class="form-control editable-field" placeholder="Enter state/province" maxlength="50" />
+                        <div class="field-error" id="stateError">State/Province is required</div>
                     </div>
                     <div class="col-md-6">
                         <label class="form-label">Postal Code</label>
-                        <p id="postalCode">-</p>
-                        <input id="postalCodeInput" type="text" class="form-control d-none">
+                        <p id="postalCode" class="readonly-field">-</p>
+                        <input type="text" id="postalCodeEdit" class="form-control editable-field" placeholder="Enter postal code" maxlength="50" />
+                        <div class="field-error" id="postalCodeError">Postal Code is required</div>
                     </div>
                     <div class="col-md-6">
                         <label class="form-label">Country</label>
-                        <p id="country">-</p>
-                        <input id="countryInput" type="text" class="form-control d-none">
+                        <p id="country" class="readonly-field">-</p>
+                        <input type="text" id="countryEdit" class="form-control editable-field" placeholder="Enter country" maxlength="50" />
+                        <div class="field-error" id="countryError">Country is required</div>
                     </div>
                 </div>
-            </div>
-
-            <!-- Appointment History -->
-            <div class="mb-5" id="appointmentInfo">
-                <h2 class="section-title">3. Appointment History</h2>
-                <div class="row g-4">
-                    <div class="col-md-6">
-                        <label class="form-label field-required">Appointment Date and Time</label>
-                        <p id="appointmentTime">-</p>
-                        <input id="appointmentTimeInput" type="datetime-local" class="form-control d-none" readonly>
-                    </div>
-                    <div class="col-md-6">
-                        <label class="form-label">Appointment Status</label>
-                        <p id="appointmentStatus">-</p>
-                        <select id="appointmentStatusInput" class="form-select d-none" disabled>
-                            <option value="">Select Status</option>
-                            <option value="Scheduled">Scheduled</option>
-                            <option value="Completed">Completed</option>
-                            <option value="Cancelled">Cancelled</option>
-                        </select>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Payment Transactions -->
-            <div class="mb-5" id="transactionInfo">
-                <h2 class="section-title">4. Payment Transactions</h2>
-                <div class="row g-4">
-                    <div class="col-md-6">
-                        <label class="form-label">Payment Status</label>
-                        <p id="paymentStatus">-</p>
-                        <select id="paymentStatusInput" class="form-select d-none" disabled>
-                            <option value="">Select Status</option>
-                            <option value="Pending">Pending</option>
-                            <option value="Completed">Completed</option>
-                            <option value="Failed">Failed</option>
-                        </select>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Save Button -->
-            <div id="saveSection" class="text-center d-none">
-                <button id="saveButton" class="btn btn-save"><i class="fas fa-save me-2"></i>Update Patient</button>
-            </div>
-
-            <!-- Back Button -->
-            <div class="text-center mt-4">
-                <button onclick="history.back()" class="btn btn-back"><i class="fas fa-arrow-left me-2"></i>Back to List</button>
             </div>
         </div>
+
+        <!-- Appointment Statistics -->
+        <div class="card">
+            <div class="card-header">
+                <span><i class="fas fa-chart-bar"></i> Appointment Statistics</span>
+            </div>
+            <div class="card-body">
+                <div class="row g-4">
+                    <div class="col-md-3">
+                        <div class="stats-card">
+                            <div class="stats-number" id="totalAppointments">0</div>
+                            <div class="stats-label">Total Appointments</div>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="stats-card">
+                            <div class="stats-number" id="completedAppointments">0</div>
+                            <div class="stats-label">Completed</div>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="stats-card">
+                            <div class="stats-number" id="pendingAppointments">0</div>
+                            <div class="stats-label">Pending</div>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="stats-card">
+                            <div class="stats-number" id="cancelledAppointments">0</div>
+                            <div class="stats-label">Cancelled</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Appointment -->
+        <div class="card">
+            <div class="card-header">
+                <span><i class="fas fa-calendar-check"></i> Appointment</span>
+            </div>
+            <div class="card-body">
+                <div class="row g-4">
+                    <div class="col-md-6">
+                        <label class="form-label">Date & Time</label>
+                        <p id="appointmentDateTime">-</p>
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label">Status</label>
+                        <p id="appointmentStatus">-</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Additional Information -->
+        <div class="card" id="additionalInfoCard">
+            <div class="card-header">
+                <span><i class="fas fa-info-circle"></i> Additional Information</span>
+            </div>
+            <div class="card-body">
+                <div class="row g-4">
+                    <div class="col-md-12">
+                        <label class="form-label">Description/Notes</label>
+                        <p id="description" class="readonly-field">-</p>
+                        <textarea id="descriptionEdit" class="form-control editable-field" rows="4" maxlength="200" placeholder="Enter description or notes..."></textarea>
+                        <div class="field-error" id="descriptionError">Description is required</div>
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label">Registration Date</label>
+                        <p id="createdAt">-</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Update Buttons -->
+        <div id="updateButtonsSection" class="text-center mt-4 d-none">
+            <button class="btn-save" onclick="confirmUpdateAllInfo()">
+                <i class="fas fa-check me-2"></i>Confirm Update
+            </button>
+            <button class="btn-cancel" onclick="cancelEditAll()">
+                <i class="fas fa-times me-2"></i>Cancel
+            </button>
+        </div>
+    </div>
+
+    <!-- Back Button -->
+    <div class="text-center mt-4">
+        <button onclick="history.back()" class="btn btn-back"><i class="fas fa-arrow-left me-2"></i>Back to Patients List</button>
     </div>
 </div>
 
 <!-- Bootstrap JS -->
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
 <script>
-    // Load patient data from database
-    async function loadPatientData() {
-        try {
-            const response = await fetch('/api/patient');
-            if (response.ok) {
-                const data = await response.json();
+    // Get patient ID from URL
+    const urlParams = new URLSearchParams(window.location.search);
+    const patientId = urlParams.get('patientId');
 
-                // Personal Information
-                document.getElementById('fullName').textContent = data.fullName || '-';
-                document.getElementById('patientID').textContent = data.patientID || '-';
-                document.getElementById('gender').textContent = data.gender || '-';
-                document.getElementById('dob').textContent = data.dateOfBirth ? new Date(data.dateOfBirth).toLocaleDateString('en-GB') : '-';
-                document.getElementById('phone').textContent = data.phoneNumber || '-';
-                document.getElementById('email').textContent = data.email || '-';
-                document.getElementById('description').textContent = data.description || '-';
-
-                document.getElementById('fullNameInput').value = data.fullName || '';
-                document.getElementById('patientIDInput').value = data.patientID || '';
-                document.getElementById('genderInput').value = data.gender || '';
-                document.getElementById('dobInput').value = data.dateOfBirth || '';
-                document.getElementById('phoneInput').value = data.phoneNumber || '';
-                document.getElementById('emailInput').value = data.email || '';
-                document.getElementById('descriptionInput').value = data.description || '';
-                updateDescriptionCounter();
-
-                // Contact Information
-                document.getElementById('addressType').textContent = data.addressType || '-';
-                document.getElementById('streetAddress').textContent = data.streetAddress || '-';
-                document.getElementById('city').textContent = data.city || '-';
-                document.getElementById('state').textContent = data.state || '-';
-                document.getElementById('postalCode').textContent = data.postalCode || '-';
-                document.getElementById('country').textContent = data.country || '-';
-
-                document.getElementById('addressTypeInput').value = data.addressType || '';
-                document.getElementById('streetAddressInput').value = data.streetAddress || '';
-                document.getElementById('cityInput').value = data.city || '';
-                document.getElementById('stateInput').value = data.state || '';
-                document.getElementById('postalCodeInput').value = data.postalCode || '';
-                document.getElementById('countryInput').value = data.country || '';
-
-                // Appointment Information
-                document.getElementById('appointmentTime').textContent = data.appointmentTime ? new Date(data.appointmentTime).toLocaleString('en-GB') : '-';
-                document.getElementById('appointmentStatus').textContent = data.appointmentStatus || '-';
-
-                document.getElementById('appointmentTimeInput').value = data.appointmentTime || '';
-                document.getElementById('appointmentStatusInput').value = data.appointmentStatus || '';
-
-                // Transaction Information
-                document.getElementById('paymentStatus').textContent = data.paymentStatus || '-';
-                document.getElementById('paymentStatusInput').value = data.paymentStatus || '';
-            } else {
-                showError('Failed to load patient data.');
-            }
-        } catch (error) {
-            showError('Error loading patient data.');
-        }
+    // Show loading state
+    function showLoading() {
+        document.getElementById('loadingState').classList.remove('d-none');
+        document.getElementById('errorState').classList.add('d-none');
+        document.getElementById('patientContent').classList.add('d-none');
     }
 
-    // Save patient data to database
-    async function savePatientData(sectionId, data) {
-        try {
-            const response = await fetch('/api/patient', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(data)
-            });
-            if (response.ok) {
-                showSuccess('Patient updated successfully!');
-                loadPatientData();
-                toggleEditMode(false);
-            } else {
-                throw new Error('Failed to save data');
-            }
-        } catch (error) {
-            showError('Error saving data.');
-        }
-    }
-
-    // Show success message
-    function showSuccess(message) {
-        const successMessage = document.getElementById('successMessage');
-        successMessage.textContent = message;
-        successMessage.classList.remove('d-none');
-        setTimeout(() => successMessage.classList.add('d-none'), 3000);
-    }
-
-    // Show error message
+    // Show error state
     function showError(message) {
-        const errorMessage = document.getElementById('errorMessage');
-        errorMessage.textContent = message;
-        errorMessage.classList.remove('d-none');
-        setTimeout(() => errorMessage.classList.add('d-none'), 3000);
+        document.getElementById('loadingState').classList.add('d-none');
+        document.getElementById('errorState').classList.remove('d-none');
+        document.getElementById('patientContent').classList.add('d-none');
+        document.getElementById('errorMessage').textContent = message || 'Error loading patient details';
     }
 
-    // Real-time validation for phone number
-    function validatePhoneNumber() {
-        const input = document.getElementById('phoneInput');
-        const error = document.getElementById('phoneError');
-        const value = input.value.trim();
-        const isValid = /^\d{10}$/.test(value);
-
-        if (value === '') {
-            input.classList.remove('is-invalid', 'is-valid');
-            error.style.display = 'none';
-        } else if (isValid) {
-            input.classList.remove('is-invalid');
-            input.classList.add('is-valid');
-            error.style.display = 'none';
-        } else {
-            input.classList.remove('is-valid');
-            input.classList.add('is-invalid');
-            error.style.display = 'block';
-        }
-        return isValid || value === '';
+    // Show patient content
+    function showContent() {
+        document.getElementById('loadingState').classList.add('d-none');
+        document.getElementById('errorState').classList.add('d-none');
+        document.getElementById('patientContent').classList.remove('d-none');
     }
 
-    // Real-time validation for description
-    function validateDescription() {
-        const input = document.getElementById('descriptionInput');
-        const error = document.getElementById('descriptionError');
-        const value = input.value.trim();
-        const charCount = value.length;
-        const isValid = charCount <= 250;
-
-        if (isValid) {
-            input.classList.remove('is-invalid');
-            input.classList.add('is-valid');
-            error.style.display = 'none';
-        } else {
-            input.classList.remove('is-valid');
-            input.classList.add('is-invalid');
-            error.style.display = 'block';
-        }
-        updateDescriptionCounter();
-        return isValid;
-    }
-
-    // Update character counter for Description
-    function updateDescriptionCounter() {
-        const input = document.getElementById('descriptionInput');
-        const counter = document.getElementById('descriptionCounter');
-        const charCount = input.value.length;
-        counter.textContent = `${charCount}/250 characters`;
-    }
-
-    // Toggle edit mode
-    function toggleEditMode(isEditing) {
-        const sections = ['personalInfo', 'contactInfo', 'appointmentInfo', 'transactionInfo'];
-        const nonEditableFields = ['fullName', 'patientID', 'email', 'appointmentTime', 'appointmentStatus', 'paymentStatus'];
-
-        sections.forEach(sectionId => {
-            const section = document.getElementById(sectionId);
-            section.querySelectorAll('p').forEach(p => {
-                if (!nonEditableFields.includes(p.id)) {
-                    p.classList.toggle('d-none', isEditing);
-                }
+    // Format date for display
+    function formatDate(dateStr) {
+        if (!dateStr || dateStr === 'null') return '-';
+        try {
+            const date = new Date(dateStr);
+            return date.toLocaleDateString('en-US', {
+                year: 'numeric',
+                month: 'long',
+                day: 'numeric'
             });
-            section.querySelectorAll('input, select, textarea').forEach(i => {
-                if (!nonEditableFields.includes(i.id.replace('Input', ''))) {
-                    i.classList.toggle('d-none', !isEditing);
-                }
+        } catch (e) {
+            return dateStr;
+        }
+    }
+
+    // Format datetime for display
+    function formatDateTime(dateTimeStr) {
+        if (!dateTimeStr || dateTimeStr === 'null') return '-';
+        try {
+            const dateTime = new Date(dateTimeStr);
+            return dateTime.toLocaleDateString('en-US', {
+                year: 'numeric',
+                month: 'short',
+                day: 'numeric',
+                hour: '2-digit',
+                minute: '2-digit'
             });
-            if (sectionId === 'personalInfo') {
-                const descriptionCounter = document.getElementById('descriptionCounter');
-                descriptionCounter.classList.toggle('d-none', !isEditing);
+        } catch (e) {
+            return dateTimeStr;
+        }
+    }
+
+    // Set element text content with null check
+    function setElementContent(id, value) {
+        const element = document.getElementById(id);
+        if (element) {
+            element.textContent = value && value !== 'null' ? value : '-';
+        }
+    }
+
+    // Load patient details
+    async function loadPatientDetails() {
+        if (!patientId) {
+            showError('Patient ID is required');
+            return;
+        }
+
+        showLoading();
+
+        try {
+            // Sửa lại endpoint API cho đúng
+            const response = await fetch(`/api/patients/${patientId}/details`);
+
+            if (!response.ok) {
+                if (response.status === 404) {
+                    showError('Patient not found');
+                } else {
+                    showError('Failed to load patient details');
+                }
+                return;
             }
-            section.querySelectorAll('.form-control, .form-select').forEach(i => i.classList.remove('is-valid', 'is-invalid'));
-            section.querySelectorAll('.invalid-feedback').forEach(e => e.style.display = 'none');
-        });
-        document.getElementById('editButton').classList.toggle('d-none', isEditing);
-        document.getElementById('saveSection').classList.toggle('d-none', !isEditing);
+
+            const patient = await response.json();
+            console.log('Patient data received:', patient); // Debug log
+
+            // Personal Information
+            setElementContent('patientId', patient.PatientID);
+            setElementContent('fullName', patient.FullName);
+            setElementContent('dateOfBirth', formatDate(patient.DateOfBirth));
+            setElementContent('age', patient.Age);
+            setElementContent('gender', patient.Gender);
+            setElementContent('status', 'Active'); // Default status
+
+            // Contact Information
+            setElementContent('phoneNumber', patient.PhoneNumber);
+            setElementContent('email', patient.Email);
+            setElementContent('addressType', patient.AddressType);
+            setElementContent('streetAddress', patient.StreetAddress);
+            setElementContent('city', patient.City);
+            setElementContent('state', patient.State);
+            setElementContent('postalCode', patient.PostalCode);
+            setElementContent('country', patient.Country);
+
+            // Calculate appointment statistics from appointments array
+            let totalAppointments = 0;
+            let completedAppointments = 0;
+            let pendingAppointments = 0;
+            let cancelledAppointments = 0;
+            let latestAppointmentDateTime = '-';
+            let latestAppointmentStatus = '-';
+
+            if (patient.Appointments && Array.isArray(patient.Appointments)) {
+                totalAppointments = patient.Appointments.length;
+
+                patient.Appointments.forEach(appointment => {
+                    const status = appointment.Status;
+                    if (status === 'Completed') {
+                        completedAppointments++;
+                    } else if (status === 'Pending') {
+                        pendingAppointments++;
+                    } else if (status === 'Cancel' || status === 'Cancelled') {
+                        cancelledAppointments++;
+                    }
+                });
+
+                // Get latest appointment (first one since they're sorted by date descending)
+                if (patient.Appointments.length > 0) {
+                    const latestAppointment = patient.Appointments[0];
+                    latestAppointmentDateTime = latestAppointment.DateTime;
+                    latestAppointmentStatus = latestAppointment.Status;
+                }
+            }
+
+            // Appointment Statistics
+            setElementContent('totalAppointments', totalAppointments);
+            setElementContent('completedAppointments', completedAppointments);
+            setElementContent('pendingAppointments', pendingAppointments);
+            setElementContent('cancelledAppointments', cancelledAppointments);
+
+            // Latest Appointment
+            setElementContent('appointmentDateTime', formatDateTime(latestAppointmentDateTime));
+            setElementContent('appointmentStatus', latestAppointmentStatus);
+
+            // Additional Information
+            setElementContent('description', patient.Description);
+            setElementContent('createdAt', formatDateTime(new Date().toISOString())); // Default to current date
+
+            showContent();
+
+        } catch (error) {
+            console.error('Error loading patient details:', error);
+            showError('Error loading patient details. Please try again.');
+        }
     }
 
-    // Initialize edit functionality
-    document.getElementById('editButton').addEventListener('click', () => {
-        toggleEditMode(true);
-        document.getElementById('phoneInput').addEventListener('input', validatePhoneNumber);
-        document.getElementById('descriptionInput').addEventListener('input', validateDescription);
-    });
+    // Toggle edit mode for all editable fields across all sections
+    function toggleEditAllMode() {
+        const personalCard = document.getElementById('personalInfoCard');
+        const contactCard = document.getElementById('contactInfoCard');
+        const additionalCard = document.getElementById('additionalInfoCard');
+        const editButton = document.getElementById('editAllBtn');
+        const successMessage = document.getElementById('updateSuccessMessage');
 
-    // Save changes
-    document.getElementById('saveButton').addEventListener('click', async () => {
-        let isValid = true;
-        document.querySelectorAll('.invalid-feedback').forEach(error => error.style.display = 'none');
+        const isCurrentlyEditing = personalCard.classList.contains('edit-mode');
 
+        if (isCurrentlyEditing) {
+            // Exit edit mode without saving
+            exitEditMode();
+        } else {
+            // Enter edit mode
+            enterEditMode();
+        }
+    }
+
+    // Enter edit mode for all sections
+    function enterEditMode() {
+        const personalCard = document.getElementById('personalInfoCard');
+        const contactCard = document.getElementById('contactInfoCard');
+        const additionalCard = document.getElementById('additionalInfoCard');
+        const editButton = document.getElementById('editAllBtn');
+        const successMessage = document.getElementById('updateSuccessMessage');
+
+        // Add edit-mode class to all relevant cards
+        personalCard.classList.add('edit-mode');
+        contactCard.classList.add('edit-mode');
+        additionalCard.classList.add('edit-mode');
+
+        // Update button text
+        editButton.innerHTML = '<i class="fas fa-times me-2"></i>Cancel';
+        editButton.classList.remove('btn-edit');
+        editButton.classList.add('btn-cancel');
+
+        // Hide success message
+        successMessage.classList.add('d-none');
+
+        // Show all editable fields and hide readonly fields across all sections
+        const allEditableFields = document.querySelectorAll('.editable-field');
+        const allReadonlyFields = document.querySelectorAll('.readonly-field');
+
+        allEditableFields.forEach(field => {
+            field.style.display = 'block';
+            field.removeAttribute('disabled');
+        });
+
+        allReadonlyFields.forEach(field => {
+            field.style.display = 'none';
+        });
+
+        // Populate edit fields with current values
+        populateEditFields();
+
+        // Show update buttons section
+        document.getElementById('updateButtonsSection').classList.remove('d-none');
+    }
+
+    // Exit edit mode without saving
+    function exitEditMode() {
+        const personalCard = document.getElementById('personalInfoCard');
+        const contactCard = document.getElementById('contactInfoCard');
+        const additionalCard = document.getElementById('additionalInfoCard');
+        const editButton = document.getElementById('editAllBtn');
+
+        // Remove edit-mode class from all cards
+        personalCard.classList.remove('edit-mode');
+        contactCard.classList.remove('edit-mode');
+        additionalCard.classList.remove('edit-mode');
+
+        // Reset button
+        editButton.innerHTML = '<i class="fas fa-edit me-2"></i>Update';
+        editButton.classList.add('btn-edit');
+        editButton.classList.remove('btn-cancel');
+
+        // Hide all editable fields and show readonly fields
+        const allEditableFields = document.querySelectorAll('.editable-field');
+        const allReadonlyFields = document.querySelectorAll('.readonly-field');
+
+        allEditableFields.forEach(field => {
+            field.style.display = 'none';
+            field.setAttribute('disabled', 'disabled');
+        });
+
+        allReadonlyFields.forEach(field => {
+            field.style.display = 'block';
+        });
+
+        // Hide update buttons section
+        document.getElementById('updateButtonsSection').classList.add('d-none');
+    }
+
+    // Populate edit fields with current displayed values
+    function populateEditFields() {
         // Personal Information
-        const gender = document.getElementById('genderInput').value;
-        const dob = document.getElementById('dobInput').value;
-        const phone = document.getElementById('phoneInput').value.trim();
-        const description = document.getElementById('descriptionInput').value.trim();
+        const dateOfBirthText = document.getElementById('dateOfBirth').textContent;
+        if (dateOfBirthText && dateOfBirthText !== '-') {
+            // Convert from display format to input format (YYYY-MM-DD)
+            try {
+                const date = new Date(dateOfBirthText);
+                const year = date.getFullYear();
+                const month = String(date.getMonth() + 1).padStart(2, '0');
+                const day = String(date.getDate()).padStart(2, '0');
+                document.getElementById('dateOfBirthEdit').value = `${year}-${month}-${day}`;
+            } catch (e) {
+                console.error('Error parsing date:', e);
+            }
+        }
 
-        if (!gender) {
-            document.getElementById('genderError').style.display = 'block';
-            document.getElementById('genderInput').classList.add('is-invalid');
-            isValid = false;
-        } else {
-            document.getElementById('genderInput').classList.add('is-valid');
-        }
-        const today = new Date('2025-06-25');
-        const dobDate = new Date(dob);
-        if (!dob || dobDate > today) {
-            document.getElementById('dobError').style.display = 'block';
-            document.getElementById('dobInput').classList.add('is-invalid');
-            isValid = false;
-        } else {
-            document.getElementById('dobInput').classList.add('is-valid');
-        }
-        if (!validatePhoneNumber()) {
-            isValid = false;
-        }
-        if (!validateDescription()) {
-            isValid = false;
+        const genderText = document.getElementById('gender').textContent;
+        if (genderText && genderText !== '-') {
+            document.getElementById('genderEdit').value = genderText;
         }
 
         // Contact Information
-        const addressType = document.getElementById('addressTypeInput').value;
-        const streetAddress = document.getElementById('streetAddressInput').value.trim();
-        const city = document.getElementById('cityInput').value.trim();
-        const state = document.getElementById('stateInput').value.trim();
-        const postalCode = document.getElementById('postalCodeInput').value.trim();
-        const country = document.getElementById('countryInput').value.trim();
-
-        if (isValid) {
-            const data = {
-                gender,
-                dateOfBirth: dob,
-                phoneNumber: phone,
-                description,
-                addressType,
-                streetAddress,
-                city,
-                state,
-                postalCode,
-                country
-            };
-            await savePatientData('all', data);
-        } else {
-            showError('Please correct the errors in the form.');
+        const addressTypeText = document.getElementById('addressType').textContent;
+        if (addressTypeText && addressTypeText !== '-') {
+            document.getElementById('addressTypeEdit').value = addressTypeText;
         }
-    });
 
-    // Load data on page load
-    document.addEventListener('DOMContentLoaded', loadPatientData);
+        const streetAddressText = document.getElementById('streetAddress').textContent;
+        if (streetAddressText && streetAddressText !== '-') {
+            document.getElementById('streetAddressEdit').value = streetAddressText;
+        }
+
+        const cityText = document.getElementById('city').textContent;
+        if (cityText && cityText !== '-') {
+            document.getElementById('cityEdit').value = cityText;
+        }
+
+        const stateText = document.getElementById('state').textContent;
+        if (stateText && stateText !== '-') {
+            document.getElementById('stateEdit').value = stateText;
+        }
+
+        const postalCodeText = document.getElementById('postalCode').textContent;
+        if (postalCodeText && postalCodeText !== '-') {
+            document.getElementById('postalCodeEdit').value = postalCodeText;
+        }
+
+        const countryText = document.getElementById('country').textContent;
+        if (countryText && countryText !== '-') {
+            document.getElementById('countryEdit').value = countryText;
+        }
+
+        // Additional Information
+        const descriptionText = document.getElementById('description').textContent;
+        if (descriptionText && descriptionText !== '-') {
+            document.getElementById('descriptionEdit').value = descriptionText;
+        }
+
+        // Set up date constraints for Date of Birth
+        setupDateConstraints();
+
+        // Add real-time validation event listeners
+        addValidationListeners();
+    }
+
+    // Set up date constraints for Date of Birth field
+    function setupDateConstraints() {
+        const dateInput = document.getElementById('dateOfBirthEdit');
+        if (dateInput) {
+            // Set maximum date to today
+            const today = new Date();
+            const todayString = today.toISOString().split('T')[0];
+            dateInput.setAttribute('max', todayString);
+
+            // Set minimum date to January 1, 1900
+            dateInput.setAttribute('min', '1900-01-01');
+        }
+    }
+
+    // Add real-time validation event listeners
+    function addValidationListeners() {
+        // Date of Birth validation
+        document.getElementById('dateOfBirthEdit').addEventListener('input', validateDateOfBirth);
+        document.getElementById('dateOfBirthEdit').addEventListener('change', validateDateOfBirth);
+
+        // Gender validation
+        document.getElementById('genderEdit').addEventListener('change', validateGender);
+
+        // Address fields validation
+        document.getElementById('addressTypeEdit').addEventListener('input', validateAddressType);
+        document.getElementById('streetAddressEdit').addEventListener('input', validateStreetAddress);
+        document.getElementById('cityEdit').addEventListener('input', validateCity);
+        document.getElementById('stateEdit').addEventListener('input', validateState);
+        document.getElementById('postalCodeEdit').addEventListener('input', validatePostalCode);
+        document.getElementById('countryEdit').addEventListener('input', validateCountry);
+
+        // Description validation
+        document.getElementById('descriptionEdit').addEventListener('input', validateDescription);
+    }
+
+    // Validate Date of Birth
+    function validateDateOfBirth() {
+        const input = document.getElementById('dateOfBirthEdit');
+        const error = document.getElementById('dateOfBirthError');
+        const value = input.value.trim();
+
+        // Clear previous validation
+        input.classList.remove('is-valid', 'is-invalid');
+        error.style.display = 'none';
+
+        if (!value) {
+            input.classList.add('is-invalid');
+            error.textContent = 'Date of Birth is required';
+            error.style.display = 'block';
+            return false;
+        }
+
+        const selectedDate = new Date(value);
+        const today = new Date();
+        const minDate = new Date('1900-01-01');
+
+        // Check if date is in the future
+        if (selectedDate > today) {
+            input.classList.add('is-invalid');
+            error.textContent = 'Date of Birth cannot be in the future';
+            error.style.display = 'block';
+            return false;
+        }
+
+        // Check if date is before 1900
+        if (selectedDate < minDate) {
+            input.classList.add('is-invalid');
+            error.textContent = 'Date of Birth cannot be before January 1, 1900';
+            error.style.display = 'block';
+            return false;
+        }
+
+        // Check if date is valid
+        if (isNaN(selectedDate.getTime())) {
+            input.classList.add('is-invalid');
+            error.textContent = 'Please enter a valid date';
+            error.style.display = 'block';
+            return false;
+        }
+
+        input.classList.add('is-valid');
+        return true;
+    }
+
+    // Validate Gender
+    function validateGender() {
+        const input = document.getElementById('genderEdit');
+        const error = document.getElementById('genderError');
+        const value = input.value.trim();
+
+        // Clear previous validation
+        input.classList.remove('is-valid', 'is-invalid');
+        error.style.display = 'none';
+
+        if (!value) {
+            input.classList.add('is-invalid');
+            error.textContent = 'Gender is required';
+            error.style.display = 'block';
+            return false;
+        }
+
+        input.classList.add('is-valid');
+        return true;
+    }
+
+    // Validate Address Type
+    function validateAddressType() {
+        const input = document.getElementById('addressTypeEdit');
+        const error = document.getElementById('addressTypeError');
+        const value = input.value.trim();
+
+        // Clear previous validation
+        input.classList.remove('is-valid', 'is-invalid');
+        error.style.display = 'none';
+
+        if (!value) {
+            input.classList.add('is-invalid');
+            error.textContent = 'Address Type is required';
+            error.style.display = 'block';
+            return false;
+        }
+
+        if (value.length < 2) {
+            input.classList.add('is-invalid');
+            error.textContent = 'Address Type must be at least 2 characters';
+            error.style.display = 'block';
+            return false;
+        }
+
+        if (value.length > 50) {
+            input.classList.add('is-invalid');
+            error.textContent = 'Address Type cannot exceed 50 characters';
+            error.style.display = 'block';
+            return false;
+        }
+
+        input.classList.add('is-valid');
+        return true;
+    }
+
+    // Validate Street Address
+    function validateStreetAddress() {
+        const input = document.getElementById('streetAddressEdit');
+        const error = document.getElementById('streetAddressError');
+        const value = input.value.trim();
+
+        // Clear previous validation
+        input.classList.remove('is-valid', 'is-invalid');
+        error.style.display = 'none';
+
+        if (!value) {
+            input.classList.add('is-invalid');
+            error.textContent = 'Street Address is required';
+            error.style.display = 'block';
+            return false;
+        }
+
+        if (value.length > 150) {
+            input.classList.add('is-invalid');
+            error.textContent = 'Street Address cannot exceed 50 characters';
+            error.style.display = 'block';
+            return false;
+        }
+
+        input.classList.add('is-valid');
+        return true;
+    }
+
+    // Validate City
+    function validateCity() {
+        const input = document.getElementById('cityEdit');
+        const error = document.getElementById('cityError');
+        const value = input.value.trim();
+
+        // Clear previous validation
+        input.classList.remove('is-valid', 'is-invalid');
+        error.style.display = 'none';
+
+        if (!value) {
+            input.classList.add('is-invalid');
+            error.textContent = 'City is required';
+            error.style.display = 'block';
+            return false;
+        }
+
+        if (value.length < 2) {
+            input.classList.add('is-invalid');
+            error.textContent = 'City must be at least 2 characters';
+            error.style.display = 'block';
+            return false;
+        }
+
+        if (value.length > 100) {
+            input.classList.add('is-invalid');
+            error.textContent = 'City cannot exceed 100 characters';
+            error.style.display = 'block';
+            return false;
+        }
+
+        // Check for valid characters (letters, spaces, hyphens, apostrophes)
+        const cityPattern = /^[a-zA-ZÀ-ÿ\s\-\'\.]+$/;
+        if (!cityPattern.test(value)) {
+            input.classList.add('is-invalid');
+            error.textContent = 'City can only contain letters, spaces, hyphens, and apostrophes';
+            error.style.display = 'block';
+            return false;
+        }
+
+        input.classList.add('is-valid');
+        return true;
+    }
+
+    // Validate State/Province
+    function validateState() {
+        const input = document.getElementById('stateEdit');
+        const error = document.getElementById('stateError');
+        const value = input.value.trim();
+
+        // Clear previous validation
+        input.classList.remove('is-valid', 'is-invalid');
+        error.style.display = 'none';
+
+        if (!value) {
+            input.classList.add('is-invalid');
+            error.textContent = 'State/Province is required';
+            error.style.display = 'block';
+            return false;
+        }
+
+        if (value.length < 2) {
+            input.classList.add('is-invalid');
+            error.textContent = 'State/Province must be at least 2 characters';
+            error.style.display = 'block';
+            return false;
+        }
+
+        if (value.length > 100) {
+            input.classList.add('is-invalid');
+            error.textContent = 'State/Province cannot exceed 100 characters';
+            error.style.display = 'block';
+            return false;
+        }
+
+        // Check for valid characters (letters, spaces, hyphens, apostrophes)
+        const statePattern = /^[a-zA-ZÀ-ÿ\s\-\'\.]+$/;
+        if (!statePattern.test(value)) {
+            input.classList.add('is-invalid');
+            error.textContent = 'State/Province can only contain letters, spaces, hyphens, and apostrophes';
+            error.style.display = 'block';
+            return false;
+        }
+
+        input.classList.add('is-valid');
+        return true;
+    }
+
+    // Validate Postal Code
+    function validatePostalCode() {
+        const input = document.getElementById('postalCodeEdit');
+        const error = document.getElementById('postalCodeError');
+        const value = input.value.trim();
+
+        // Clear previous validation
+        input.classList.remove('is-valid', 'is-invalid');
+        error.style.display = 'none';
+
+        if (!value) {
+            input.classList.add('is-invalid');
+            error.textContent = 'Postal Code is required';
+            error.style.display = 'block';
+            return false;
+        }
+
+        // Check if postal code contains only numbers
+        const numbersOnlyPattern = /^\d+$/;
+        if (!numbersOnlyPattern.test(value)) {
+            input.classList.add('is-invalid');
+            error.textContent = 'Postal Code must contain only numbers';
+            error.style.display = 'block';
+            return false;
+        }
+
+        if (value.length > 50) {
+            input.classList.add('is-invalid');
+            error.textContent = 'Postal Code cannot exceed 50 characters';
+            error.style.display = 'block';
+            return false;
+        }
+
+        input.classList.add('is-valid');
+        return true;
+    }
+
+    // Validate Country
+    function validateCountry() {
+        const input = document.getElementById('countryEdit');
+        const error = document.getElementById('countryError');
+        const value = input.value.trim();
+
+        // Clear previous validation
+        input.classList.remove('is-valid', 'is-invalid');
+        error.style.display = 'none';
+
+        if (!value) {
+            input.classList.add('is-invalid');
+            error.textContent = 'Country is required';
+            error.style.display = 'block';
+            return false;
+        }
+
+        if (value.length < 2) {
+            input.classList.add('is-invalid');
+            error.textContent = 'Country must be at least 2 characters';
+            error.style.display = 'block';
+            return false;
+        }
+
+        if (value.length > 100) {
+            input.classList.add('is-invalid');
+            error.textContent = 'Country cannot exceed 100 characters';
+            error.style.display = 'block';
+            return false;
+        }
+
+        // Check for valid characters (letters, spaces, hyphens, apostrophes)
+        const countryPattern = /^[a-zA-ZÀ-ÿ\s\-\'\.]+$/;
+        if (!countryPattern.test(value)) {
+            input.classList.add('is-invalid');
+            error.textContent = 'Country can only contain letters, spaces, hyphens, and apostrophes';
+            error.style.display = 'block';
+            return false;
+        }
+
+        input.classList.add('is-valid');
+        return true;
+    }
+
+    // Validate Description/Notes (max 200 characters)
+    function validateDescription() {
+        const input = document.getElementById('descriptionEdit');
+        const error = document.getElementById('descriptionError');
+        const value = input.value.trim();
+        const maxLength = 200;
+
+        // Clear previous validation
+        input.classList.remove('is-valid', 'is-invalid');
+        error.style.display = 'none';
+
+        // Update character count display
+        updateCharacterCount(value.length, maxLength);
+
+        if (value.length > maxLength) {
+            input.classList.add('is-invalid');
+            error.textContent = `Description cannot exceed ${maxLength} characters`;
+            error.style.display = 'block';
+            return false;
+        }
+
+        if (value.length > 0) {
+            input.classList.add('is-valid');
+        }
+        return true;
+    }
+
+    // Update character count display for description
+    function updateCharacterCount(currentLength, maxLength) {
+        let countElement = document.getElementById('descriptionCharCount');
+        if (!countElement) {
+            // Create character count element if it doesn't exist
+            countElement = document.createElement('div');
+            countElement.id = 'descriptionCharCount';
+            countElement.className = 'character-count';
+            const textareaParent = document.getElementById('descriptionEdit').parentNode;
+            textareaParent.appendChild(countElement);
+        }
+
+        countElement.textContent = `${currentLength}/${maxLength} characters`;
+
+        // Update styling based on character count
+        countElement.classList.remove('limit-warning', 'limit-error');
+        if (currentLength > maxLength * 0.9) {
+            countElement.classList.add('limit-warning');
+        }
+        if (currentLength > maxLength) {
+            countElement.classList.add('limit-error');
+        }
+    }
+
+    // Validate all fields before submission and focus on first invalid field
+    function validateAllFields() {
+        const validations = [
+            { validate: validateDateOfBirth, fieldId: 'dateOfBirthEdit' },
+            { validate: validateGender, fieldId: 'genderEdit' },
+            { validate: validateAddressType, fieldId: 'addressTypeEdit' },
+            { validate: validateStreetAddress, fieldId: 'streetAddressEdit' },
+            { validate: validateCity, fieldId: 'cityEdit' },
+            { validate: validateState, fieldId: 'stateEdit' },
+            { validate: validatePostalCode, fieldId: 'postalCodeEdit' },
+            { validate: validateCountry, fieldId: 'countryEdit' },
+            { validate: validateDescription, fieldId: 'descriptionEdit' }
+        ];
+
+        // Find first invalid field
+        for (let validation of validations) {
+            if (!validation.validate()) {
+                // Focus on the first invalid field
+                const field = document.getElementById(validation.fieldId);
+                if (field) {
+                    field.focus();
+                    field.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                }
+                return false;
+            }
+        }
+
+        return true;
+    }
+
+    // Confirm and save all information
+    async function confirmUpdateAllInfo() {
+        const patientIdElement = document.getElementById('patientId');
+        if (!patientIdElement) {
+            showError('Patient ID not found');
+            return;
+        }
+
+        // Run comprehensive validation before submitting and focus on first invalid field
+        if (!validateAllFields()) {
+            // Don't show generic error message, validation functions already show specific errors
+            return;
+        }
+
+        const patientId = patientIdElement.textContent;
+        const dateOfBirth = document.getElementById('dateOfBirthEdit').value;
+        const gender = document.getElementById('genderEdit').value;
+        const addressType = document.getElementById('addressTypeEdit').value;
+        const streetAddress = document.getElementById('streetAddressEdit').value;
+        const city = document.getElementById('cityEdit').value;
+        const state = document.getElementById('stateEdit').value;
+        const postalCode = document.getElementById('postalCodeEdit').value;
+        const country = document.getElementById('countryEdit').value;
+        const description = document.getElementById('descriptionEdit').value;
+
+        showLoading();
+
+        try {
+            const response = await fetch(`/receptionist/api/patient-details/${patientId}`, {
+                method: 'PUT',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    DateOfBirth: dateOfBirth,
+                    Gender: gender,
+                    AddressType: addressType,
+                    StreetAddress: streetAddress,
+                    City: city,
+                    State: state,
+                    PostalCode: postalCode,
+                    Country: country,
+                    Description: description || ''
+                })
+            });
+
+            if (!response.ok) {
+                const errorText = await response.text();
+                throw new Error(errorText || 'Failed to update patient information');
+            }
+
+            const patient = await response.json();
+            console.log('Updated patient data:', patient);
+
+            // Update displayed information
+            setElementContent('dateOfBirth', formatDate(patient.DateOfBirth));
+            setElementContent('gender', patient.Gender);
+            setElementContent('addressType', patient.AddressType);
+            setElementContent('streetAddress', patient.StreetAddress);
+            setElementContent('city', patient.City);
+            setElementContent('state', patient.State);
+            setElementContent('postalCode', patient.PostalCode);
+            setElementContent('country', patient.Country);
+            setElementContent('description', patient.Description);
+
+            // Calculate and update age if date of birth changed
+            if (patient.DateOfBirth) {
+                try {
+                    const birthDate = new Date(patient.DateOfBirth);
+                    const today = new Date();
+                    let age = today.getFullYear() - birthDate.getFullYear();
+                    const monthDiff = today.getMonth() - birthDate.getMonth();
+                    if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birthDate.getDate())) {
+                        age--;
+                    }
+                    setElementContent('age', age);
+                } catch (e) {
+                    console.error('Error calculating age:', e);
+                }
+            }
+
+            // Show success message
+            const successMessage = document.getElementById('updateSuccessMessage');
+            successMessage.classList.remove('d-none');
+            setTimeout(() => {
+                successMessage.classList.add('d-none');
+            }, 3000);
+
+            // Exit edit mode
+            exitEditMode();
+
+            showContent();
+
+        } catch (error) {
+            console.error('Error saving patient information:', error);
+            showError('Error saving patient information: ' + error.message);
+        }
+    }
+
+    // Cancel edit mode
+    function cancelEditAll() {
+        exitEditMode();
+    }
+
+    // Initialize page
+    document.addEventListener('DOMContentLoaded', function() {
+        console.log('Loading patient details for ID:', patientId);
+        loadPatientDetails();
+    });
 </script>
 </body>
 </html>
