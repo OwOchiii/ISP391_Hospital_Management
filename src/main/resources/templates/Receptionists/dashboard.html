@@ -15,6 +15,7 @@
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <!-- Chart.js -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.9.1/chart.min.js"></script>
+    <!-- Removed realtime-appointments.js reference -->
     <style>
         :root {
             --primary: #667eea;
@@ -651,77 +652,146 @@
             transform: translateY(-2px);
         }
 
-        /* Responsive Design */
-        @media (max-width: 768px) {
-            .sidebar {
-                transform: translateX(-100%);
-            }
-
-            .main-content {
-                margin-left: 0;
-            }
-
-            header {
-                padding: 0 1rem;
-            }
-
-            .profile-info img {
-                display: block;
-            }
-
-            .chart-container {
-                padding: 1.5rem;
-            }
-
-            .card {
-                padding: 1.25rem;
-            }
-
-            .quick-access .btn-primary {
-                width: 100%;
-                margin-bottom: 0.5rem;
-            }
+        /* Confirmation Modal Styles */
+        .confirm-modal {
+            display: none;
+            position: fixed;
+            z-index: 9999;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.5);
+            backdrop-filter: blur(5px);
         }
 
-        @media (max-width: 576px) {
-            .row-cols-xl-4 > .col {
-                flex: 0 0 100%;
-                max-width: 100%;
-            }
-
-            .chart-container {
-                padding: 1rem;
-            }
-
-            .stat-card {
-                padding: 0.25rem;
-            }
-
-            .stat-icon {
-                width: 20px;
-                height: 20px;
-                font-size: 0.75rem;
-            }
-
-            .card-text {
-                font-size: 0.875rem;
-            }
+        .confirm-modal-content {
+            background-color: #fff;
+            margin: 15% auto;
+            padding: 30px;
+            border: none;
+            border-radius: 15px;
+            width: 90%;
+            max-width: 450px;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.15);
+            animation: slideDown 0.3s ease-out;
+            text-align: center;
         }
 
-        /* Animation */
-        .main-content {
-            animation: fadeInUp 0.6s ease-out;
-        }
-
-        @keyframes fadeInUp {
+        @keyframes slideDown {
             from {
                 opacity: 0;
-                transform: translateY(30px);
+                transform: translateY(-50px);
             }
             to {
                 opacity: 1;
                 transform: translateY(0);
             }
+        }
+
+        .confirm-modal-icon {
+            font-size: 3rem;
+            color: var(--warning-color);
+            margin-bottom: 20px;
+        }
+
+        .confirm-modal-title {
+            font-size: 1.5rem;
+            font-weight: 600;
+            color: var(--text-dark);
+            margin-bottom: 15px;
+        }
+
+        .confirm-modal-message {
+            color: var(--text-light);
+            margin-bottom: 30px;
+            line-height: 1.5;
+        }
+
+        .confirm-modal-buttons {
+            display: flex;
+            gap: 15px;
+            justify-content: center;
+        }
+
+        .confirm-btn {
+            padding: 12px 30px;
+            border: none;
+            border-radius: 8px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            min-width: 120px;
+        }
+
+        .confirm-btn-primary {
+            background: var(--success-color);
+            color: white;
+        }
+
+        .confirm-btn-primary:hover {
+            background: #059669;
+            transform: translateY(-2px);
+        }
+
+        .confirm-btn-secondary {
+            background: #e5e7eb;
+            color: var(--text-dark);
+        }
+
+        .confirm-btn-secondary:hover {
+            background: #d1d5db;
+            transform: translateY(-2px);
+        }
+
+        /* Success notification styles */
+        .success-notification {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: var(--success-color);
+            color: white;
+            padding: 15px 25px;
+            border-radius: 8px;
+            box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);
+            z-index: 10000;
+            display: none;
+            animation: slideInRight 0.3s ease-out;
+        }
+
+        @keyframes slideInRight {
+            from {
+                opacity: 0;
+                transform: translateX(100px);
+            }
+            to {
+                opacity: 1;
+                transform: translateX(0);
+            }
+        }
+
+        /* Action buttons styling */
+        .action-buttons {
+            display: flex;
+            gap: 8px;
+            justify-content: center;
+        }
+
+        .btn-confirm {
+            background: var(--success-color);
+            color: white;
+            border: none;
+            padding: 6px 15px;
+            border-radius: 6px;
+            font-size: 0.875rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .btn-confirm:hover {
+            background: #059669;
+            transform: translateY(-1px);
         }
     </style>
 </head>
@@ -1143,52 +1213,68 @@
     function retryLoadChart() {
         initPatientStatusChart();
     }
+    // Updated viewAppointmentDetails function - navigate to appointment-details page
     function viewAppointmentDetails(appointmentId) {
-        window.location.href = `/receptionist/appointment-details?id=${appointmentId}`;
-    }
+        try {
+            // Validate appointmentId
+            if (!appointmentId || appointmentId === null || appointmentId === undefined) {
+                showNotification('Invalid appointment ID', 'error');
+                return;
+            }
 
-    // function viewAppointmentDetails(appointmentId) {
-    //     fetch(`/receptionist/appointment-details?id=${appointmentId}`)
-    //         .then(response => response.json())
-    //         .then(data => {
-    //             document.getElementById('detailsContent').innerHTML = `
-    //                 <p><strong>Name:</strong> ${data.name}</p>
-    //                 <p><strong>Phone:</strong> ${data.phone}</p>
-    //                 <p><strong>Gender:</strong> ${data.gender}</p>
-    //                 <p><strong>Date:</strong> ${data.date}</p>
-    //                 <p><strong>Time:</strong> ${data.time}</p>
-    //                 <p><strong>Status:</strong> ${data.status}</p>
-    //             `;
-    //             detailsModal.show();
-    //         })
-    //         .catch(error => {
-    //             console.error('Error fetching appointment details:', error);
-    //             showNotification('Failed to load appointment details', 'error');
-    //         });
-    // }
+            console.log('Navigating to appointment details for ID:', appointmentId);
+
+            // Show loading notification
+            showNotification('Loading appointment details...', 'info');
+
+            // Navigate to appointment details page
+            window.location.href = `/receptionist/appointment-details?id=${appointmentId}`;
+
+        } catch (error) {
+            console.error('Error navigating to appointment details:', error);
+            showNotification('Failed to load appointment details', 'error');
+        }
+    }
 
     function confirmAppointment(appointmentId) {
         const csrfToken = document.querySelector('meta[name="_csrf"]').getAttribute('content');
-        fetch(`/receptionist/confirmAppointment?id=${appointmentId}`, {
+
+        fetch(`/receptionist/confirmAppointment`, {
             method: 'POST',
             headers: {
-                'Content-Type': 'application/json',
+                'Content-Type': 'application/x-www-form-urlencoded',
                 'X-CSRF-TOKEN': csrfToken
+            },
+            body: `id=${appointmentId}`
+        })
+        .then(response => {
+            if (!response.ok) throw new Error('Failed to confirm appointment');
+            return response.text();
+        })
+        .then(result => {
+            if (result.includes('successfully') || result.includes('approved')) {
+                showNotification('Appointment confirmed successfully', 'success');
+
+                // Remove the confirmed appointment from the current list
+                appointmentData = appointmentData.filter(appointment => appointment.id !== appointmentId);
+
+                // Re-render the table without the confirmed appointment
+                renderAppointmentTable(appointmentData, currentPage);
+
+                // Update count badge
+                updateAppointmentRequestsCount(appointmentData.length);
+                updateDashboardTitle(appointmentData.length);
+
+                // Also update modal if it's open
+                loadModalPendingAppointments();
+            } else {
+                showNotification('Error confirming appointment: ' + result, 'error');
             }
         })
-            .then(response => {
-                if (!response.ok) throw new Error('Failed to confirm appointment');
-                return response.json();
-            })
-            .then(data => {
-                showNotification('Appointment confirmed successfully', 'success');
-                addAppointmentRequestData(); // Refresh table data
-                addModalAppointmentRequestData(); // Refresh modal table data
-            })
-            .catch(error => {
-                console.error('Error confirming appointment:', error);
-                showNotification('Failed to confirm appointment', 'error');
-            });
+        .catch(error => {
+            console.error('Error confirming appointment:', error);
+            showNotification('Failed to confirm appointment', 'error');
+        });
     }
 
     function renderAppointmentTable(data, page = 1) {
@@ -1196,7 +1282,7 @@
         tableBody.innerHTML = '';
 
         if (data.length === 0) {
-            tableBody.innerHTML = '<tr><td colspan="5" class="text-center">No appointments found</td></tr>';
+            tableBody.innerHTML = '<tr><td colspan="5" class="text-center">No pending appointments found</td></tr>';
             document.getElementById('pageInfo').textContent = 'Page 1 of 1';
             document.getElementById('prevPage').disabled = true;
             document.getElementById('nextPage').disabled = true;
@@ -1212,11 +1298,12 @@
             tr.innerHTML = `
                 <td>${row.name || ''}</td>
                 <td>${row.date || ''}</td>
-                <td>${row.time || ''}</td>
-                <td>${row.status || ''}</td>
+                <td>${formatTime(row.time) || ''}</td>
+                <td><span class="badge bg-warning">${row.status || ''}</span></td>
                 <td>
-                    <i class="fas fa-eye action-icon view-icon" onclick="viewAppointmentDetails(${row.id})" title="View Details"></i>
-                    <i class="fas fa-check action-icon confirm-icon" onclick="confirmAppointment(${row.id})" title="Confirm Appointment"></i>
+                    <button class="btn btn-sm btn-success" onclick="showConfirmModal(${row.id}, '${row.name || 'Patient'}')" title="Confirm Appointment">
+                        <i class="fas fa-check"></i> Confirm
+                    </button>
                 </td>
             `;
             tableBody.appendChild(tr);
@@ -1233,23 +1320,124 @@
         renderAppointmentTable(appointmentData, currentPage);
     }
 
-    function addAppointmentRequestData() {
-        fetch("/receptionist/appointmentRequest")
+    // Enhanced function to load only pending appointments for today (NO AUTO-REFRESH)
+    function loadTodaysAppointments() {
+        // Get today's date in Vietnamese timezone (UTC+7)
+        const now = new Date();
+        const vietnamTime = new Date(now.getTime() + (7 * 60 * 60 * 1000));
+        const today = vietnamTime.toISOString().split('T')[0];
+
+        console.log(`Loading appointments for today: ${today}`);
+
+        // Show loading indicator
+        const tableBody = document.getElementById('appointmentTableBody');
+        if (tableBody) {
+            tableBody.innerHTML = '<tr><td colspan="5" class="text-center"><i class="fas fa-spinner fa-spin"></i> Loading today\'s appointments...</td></tr>';
+        }
+
+        // Use the today-specific endpoint
+        fetch(`/receptionist/pendingAppointmentRequest/today?date=${today}&timestamp=${Date.now()}`)
             .then(response => {
                 if (!response.ok) {
-                    throw new Error('Failed to fetch appointment table data');
+                    throw new Error(`HTTP ${response.status}: Failed to fetch appointment data`);
                 }
                 return response.json();
             })
             .then(data => {
-                appointmentData = data;
+                console.log('Received appointment data:', data);
+
+                // Filter appointments for today only
+                const todayAppointments = data.filter(appointment => {
+                    const dateFields = [
+                        appointment.appointmentDateTime,
+                        appointment.dateTime,
+                        appointment.date,
+                        appointment.scheduledDate,
+                        appointment.visitDate
+                    ];
+
+                    for (let dateField of dateFields) {
+                        if (dateField) {
+                            try {
+                                let appointmentDate;
+                                if (typeof dateField === 'string' && dateField.includes('T')) {
+                                    appointmentDate = new Date(dateField).toISOString().split('T')[0];
+                                } else if (typeof dateField === 'string' && dateField.includes('-')) {
+                                    appointmentDate = dateField.split(' ')[0];
+                                } else {
+                                    appointmentDate = new Date(dateField).toISOString().split('T')[0];
+                                }
+
+                                if (appointmentDate === today) {
+                                    return true;
+                                }
+                            } catch (error) {
+                                console.warn('Error parsing date field:', dateField, error);
+                            }
+                        }
+                    }
+                    return false;
+                });
+
+                console.log(`Found ${todayAppointments.length} appointments for today`);
+
+                appointmentData = todayAppointments;
                 currentPage = 1;
                 renderAppointmentTable(appointmentData, currentPage);
+
+                // Update appointment requests count badge
+                updateAppointmentRequestsCount(todayAppointments.length);
+
+                // Update dashboard title to show it's today's appointments
+                updateDashboardTitle(todayAppointments.length);
             })
             .catch(error => {
-                console.error('Error:', error);
-                showNotification('Failed to load appointment data', 'error');
+                console.error('Error loading appointments:', error);
+                showNotification('Failed to load appointments: ' + error.message, 'error');
+
+                // Show error state
+                const tableBody = document.getElementById('appointmentTableBody');
+                if (tableBody) {
+                    tableBody.innerHTML = `
+                        <tr>
+                            <td colspan="5" class="text-center text-danger">
+                                <i class="fas fa-exclamation-triangle"></i>
+                                Error loading appointments.
+                                <button class="btn btn-sm btn-outline-primary ms-2" onclick="loadTodaysAppointments()">
+                                    <i class="fas fa-redo"></i> Retry
+                                </button>
+                            </td>
+                        </tr>
+                    `;
+                }
+                updateAppointmentRequestsCount(0);
             });
+    }
+
+    // Enhanced function to update dashboard title with today's info (NO LAST UPDATED TIME)
+    function updateDashboardTitle(count) {
+        const now = new Date();
+        const vietnamTime = new Date(now.getTime() + (7 * 60 * 60 * 1000));
+        const today = vietnamTime.toLocaleDateString('vi-VN', {
+            weekday: 'long',
+            year: 'numeric',
+            month: 'long',
+            day: 'numeric'
+        });
+
+        const appointmentRequestsTitle = document.querySelector('.card-title');
+        if (appointmentRequestsTitle && appointmentRequestsTitle.textContent.includes('Appointment Requests')) {
+            // Remove existing badges
+            const existingBadges = appointmentRequestsTitle.querySelectorAll('.badge');
+            existingBadges.forEach(badge => badge.remove());
+
+            // Update title with today's date and count (NO REFRESH TIME)
+            appointmentRequestsTitle.innerHTML = `
+                Today's Appointment Requests
+                <small class="text-muted d-block">${today}</small>
+                ${count > 0 ? `<span class="badge bg-warning ms-2">${count} pending</span>` : '<span class="badge bg-success ms-2">All clear</span>'}
+            `;
+        }
     }
 
     function searchPatients() {
@@ -1262,11 +1450,22 @@
         renderAppointmentTable(filteredData, currentPage);
     }
 
-    function addModalAppointmentRequestData() {
-        fetch("/receptionist/appointmentRequest")
+    // Enhanced function to update appointment requests count badge
+    function updateAppointmentRequestsCount(count) {
+        // Update notification bell badge
+        const notificationBadge = document.getElementById('notificationCount');
+        if (notificationBadge) {
+            notificationBadge.textContent = count;
+            notificationBadge.style.display = count > 0 ? 'block' : 'none';
+        }
+    }
+
+    // Function to load pending appointments for modal (all appointments, not just today)
+    function loadModalPendingAppointments() {
+        fetch("/receptionist/pendingAppointmentRequest")
             .then(response => {
                 if (!response.ok) {
-                    throw new Error('Failed to fetch appointment table data');
+                    throw new Error('Failed to fetch pending appointment data');
                 }
                 return response.json();
             })
@@ -1275,7 +1474,7 @@
                 tableBody.innerHTML = '';
 
                 if (data.length === 0) {
-                    tableBody.innerHTML = '<tr><td colspan="7" class="text-center">No appointments found</td></tr>';
+                    tableBody.innerHTML = '<tr><td colspan="7" class="text-center">No pending appointments found</td></tr>';
                     return;
                 }
 
@@ -1286,28 +1485,29 @@
                         <td>${row.phone || ''}</td>
                         <td>${row.gender || ''}</td>
                         <td>${row.date || ''}</td>
-                        <td>${row.time || ''}</td>
-                        <td>${row.status || ''}</td>
+                        <td>${formatTime(row.time) || ''}</td>
+                        <td><span class="badge bg-warning">${row.status || ''}</span></td>
                         <td>
-                            <i class="fas fa-eye action-icon view-icon" onclick="viewAppointmentDetails(${row.id})" title="View Details"></i>
-                            <i class="fas fa-check action-icon confirm-icon" onclick="confirmAppointment(${row.id})" title="Confirm Appointment"></i>
+                            <button class="btn btn-sm btn-success" onclick="showConfirmModal(${row.id})">
+                                Confirm
+                            </button>
                         </td>
                     `;
                     tableBody.appendChild(tr);
                 });
             })
             .catch(error => {
-                console.error('Error:', error);
-                showNotification('Failed to load appointment data', 'error');
+                console.error('Error loading modal pending appointments:', error);
+                showNotification('Failed to load pending appointments', 'error');
             });
     }
 
     function searchModalPatients() {
         const searchTerm = document.getElementById('modalPatientSearch').value.toLowerCase();
-        fetch("/receptionist/appointmentRequest")
+        fetch("/receptionist/pendingAppointmentRequest")
             .then(response => {
                 if (!response.ok) {
-                    throw new Error('Failed to fetch appointment table data');
+                    throw new Error('Failed to fetch pending appointment data');
                 }
                 return response.json();
             })
@@ -1320,7 +1520,7 @@
                 tableBody.innerHTML = '';
 
                 if (filteredData.length === 0) {
-                    tableBody.innerHTML = '<tr><td colspan="7" class="text-center">No appointments found</td></tr>';
+                    tableBody.innerHTML = '<tr><td colspan="7" class="text-center">No pending appointments found</td></tr>';
                     return;
                 }
 
@@ -1331,25 +1531,70 @@
                         <td>${row.phone || ''}</td>
                         <td>${row.gender || ''}</td>
                         <td>${row.date || ''}</td>
-                        <td>${row.time || ''}</td>
-                        <td>${row.status || ''}</td>
+                        <td>${formatTime(row.time) || ''}</td>
+                        <td><span class="badge bg-warning">${row.status || ''}</span></td>
                         <td>
-                            <i class="fas fa-eye action-icon view-icon" onclick="viewAppointmentDetails(${row.id})" title="View Details"></i>
-                            <i class="fas fa-check action-icon confirm-icon" onclick="confirmAppointment(${row.id})" title="Confirm Appointment"></i>
+                            <button class="btn btn-sm btn-success" onclick="showConfirmModal(${row.id})">
+                                Confirm
+                            </button>
                         </td>
                     `;
                     tableBody.appendChild(tr);
                 });
             })
             .catch(error => {
-                console.error('Error:', error);
-                showNotification('Failed to load appointment data', 'error');
+                console.error('Error searching modal pending appointments:', error);
+                showNotification('Failed to search pending appointments', 'error');
             });
     }
 
     function openAppointmentModal() {
-        addModalAppointmentRequestData();
+        loadModalPendingAppointments();
         appointmentModal.show();
+    }
+
+    // Enhanced function to format time for better display
+    function formatTime(timeString) {
+        if (!timeString) return '';
+        try {
+            if (timeString.includes(':')) {
+                const [hours, minutes] = timeString.split(':');
+                const time = new Date();
+                time.setHours(parseInt(hours), parseInt(minutes));
+                return time.toLocaleTimeString('vi-VN', {
+                    hour: '2-digit',
+                    minute: '2-digit',
+                    hour12: false
+                });
+            }
+            return timeString;
+        } catch (error) {
+            return timeString;
+        }
+    }
+
+    function addEventListeners() {
+        document.querySelectorAll('.nav-link').forEach(item => {
+            item.addEventListener('click', function (e) {
+                if (this.getAttribute('href').startsWith('#') || this.getAttribute('href') === '') {
+                    e.preventDefault();
+                    document.querySelectorAll('.nav-link').forEach(nav => nav.classList.remove('active'));
+                    this.classList.add('active');
+                    if (!this.textContent.trim().toLowerCase().includes('dashboard')) {
+                        showNotification(`${this.textContent.trim()} page coming soon!`, 'info');
+                    }
+                }
+            });
+        });
+
+        window.onclick = function (event) {
+            const notificationModal = document.getElementById('notificationModal');
+            if (event.target !== notificationModal &&
+                !notificationModal.contains(event.target) &&
+                !event.target.closest('.notification-bell')) {
+                notificationModal.style.display = 'none';
+            }
+        };
     }
 
     function displayNoDataMessage(ctx, message) {
@@ -1403,9 +1648,9 @@
                 datasets: [{
                     label: `Patient Registrations - ${currentMonth} ${currentYear}`,
                     data: data,
-                    backgroundColor: 'rgba(59, 130, 246, 0.8)',
-                    borderColor: 'rgba(59, 130, 246, 1)',
-                    borderWidth: 1,
+                    backgroundColor: 'rgba(102, 126, 234, 0.1)',
+                    borderColor: 'rgba(102, 126, 234, 1)',
+                    borderWidth: 2,
                     borderRadius: 8,
                     borderSkipped: false,
                 }]
@@ -1413,142 +1658,71 @@
             options: {
                 responsive: true,
                 maintainAspectRatio: false,
-                interaction: {
-                    intersect: false,
-                    mode: 'index'
-                },
                 plugins: {
                     legend: {
-                        display: true,
-                        position: 'top',
-                        labels: {
-                            color: '#6b7280',
-                            font: {
-                                size: 12,
-                                weight: '500'
-                            },
-                            padding: 20
-                        }
+                        display: false
                     },
                     tooltip: {
                         backgroundColor: 'rgba(0, 0, 0, 0.8)',
-                        titleColor: '#ffffff',
-                        bodyColor: '#ffffff',
-                        cornerRadius: 8,
-                        displayColors: false,
-                        callbacks: {
-                            title: function(tooltipItems) {
-                                return `Day ${tooltipItems[0].label}, ${currentMonth} ${currentYear}`;
-                            },
-                            label: function(tooltipItem) {
-                                const count = tooltipItem.raw;
-                                return `${count} patient${count !== 1 ? 's' : ''} registered`;
-                            }
-                        }
+                        titleColor: 'white',
+                        bodyColor: 'white',
+                        borderColor: 'rgba(102, 126, 234, 1)',
+                        borderWidth: 1
                     }
                 },
                 scales: {
+                    y: {
+                        beginAtZero: true,
+                        grid: {
+                            color: 'rgba(102, 126, 234, 0.1)'
+                        },
+                        ticks: {
+                            color: 'rgba(102, 126, 234, 0.7)',
+                            stepSize: 1
+                        }
+                    },
                     x: {
                         grid: {
                             display: false
                         },
-                        border: {
-                            color: '#e5e7eb'
-                        },
                         ticks: {
-                            color: '#6b7280',
-                            font: {
-                                size: 11
-                            },
-                            maxTicksLimit: 31
-                        },
-                        title: {
-                            display: true,
-                            text: 'Day of Month',
-                            color: '#374151',
-                            font: {
-                                size: 12,
-                                weight: '600'
-                            },
-                            padding: {
-                                top: 10
-                            }
+                            color: 'rgba(102, 126, 234, 0.7)'
                         }
-                    },
-                    y: {
-                        grid: {
-                            color: '#f3f4f6',
-                            borderDash: [2, 2]
-                        },
-                        border: {
-                            color: '#e5e7eb'
-                        },
-                        ticks: {
-                            color: '#6b7280',
-                            font: {
-                                size: 11
-                            },
-                            stepSize: 1,
-                            precision: 0
-                        },
-                        title: {
-                            display: true,
-                            text: 'Number of Patient Registrations',
-                            color: '#374151',
-                            font: {
-                                size: 12,
-                                weight: '600'
-                            },
-                            padding: {
-                                bottom: 10
-                            }
-                        },
-                        beginAtZero: true,
-                        suggestedMax: Math.max(...data) + 2
                     }
-                },
-                elements: {
-                    bar: {
-                        borderRadius: 4
-                    }
-                },
-                animation: {
-                    duration: 1000,
-                    easing: 'easeInOutQuart'
                 }
             }
         });
-
-        isChartLoading = false;
     }
 
-    const updatePatientStatusChart = debounce(function () {
-        if (isChartLoading) return;
-
-        console.log('Fetching daily patient stats for current month');
-
+    const updatePatientStatusChart = debounce(() => {
         fetch('/receptionist/patientStatus?period=day')
             .then(response => {
                 if (!response.ok) {
-                    throw new Error(`HTTP ${response.status}: Failed to fetch patient stats`);
+                    throw new Error(`HTTP error! status: ${response.status}`);
                 }
                 return response.json();
             })
             .then(data => {
-                console.log("Patient stats data received: ", data);
+                console.log("Received patient status data:", data);
 
-                // Check if we have valid data
-                if (!data || (!data.patientStats && !data.data)) {
+                let chartData, chartLabels;
+
+                if (data.patientStats && data.patientStats.data && data.patientStats.labels) {
+                    chartData = data.patientStats.data;
+                    chartLabels = data.patientStats.labels;
+                } else if (data.data && data.labels) {
+                    chartData = data.data;
+                    chartLabels = data.labels;
+                } else {
+                    console.warn("Unexpected data structure:", data);
                     showChartNoData();
+                    isChartLoading = false;
                     return;
                 }
 
-                // Handle both nested and flat data structures
-                let chartData = data.patientStats ? data.patientStats.data : data.data;
-                let chartLabels = data.patientStats ? data.patientStats.labels : data.labels;
-
                 if (!chartData || chartData.length === 0) {
                     showChartNoData();
+                    isChartLoading = false;
                     return;
                 }
 
@@ -1571,33 +1745,124 @@
             });
     }, 300);
 
-    function addEventListeners() {
-        document.querySelectorAll('.nav-link').forEach(item => {
-            item.addEventListener('click', function (e) {
-                if (this.getAttribute('href').startsWith('#') || this.getAttribute('href') === '') {
-                    e.preventDefault();
-                    document.querySelectorAll('.nav-link').forEach(nav => nav.classList.remove('active'));
-                    this.classList.add('active');
-                    if (!this.textContent.trim().toLowerCase().includes('dashboard')) {
-                        showNotification(`${this.textContent.trim()} page coming soon!`, 'info');
-                    }
-                }
-            });
-        });
+    // Add doctor review functionality
+    function addDoctorReviewData() {
+        const reviewsList = document.getElementById('reviewsList');
 
-        window.onclick = function (event) {
-            const notificationModal = document.getElementById('notificationModal');
-            if (event.target !== notificationModal &&
-                !notificationModal.contains(event.target) &&
-                !event.target.closest('.notification-bell')) {
-                notificationModal.style.display = 'none';
+        // Sample doctor reviews data - replace with actual API call
+        const reviews = [
+            {
+                doctorName: "Dr. Smith",
+                patientName: "John Doe",
+                rating: 5,
+                comment: "Excellent service and care",
+                date: "2023-12-01"
+            },
+            {
+                doctorName: "Dr. Johnson",
+                patientName: "Jane Smith",
+                rating: 4,
+                comment: "Very professional and helpful",
+                date: "2023-12-02"
+            },
+            {
+                doctorName: "Dr. Williams",
+                patientName: "Bob Johnson",
+                rating: 5,
+                comment: "Outstanding treatment and bedside manner",
+                date: "2023-12-03"
             }
-        };
+        ];
 
-        // Remove the problematic auto-refresh interval that was causing infinite loading
-        // Charts will only load once on page load and can be manually refreshed via retry button
+        reviewsList.innerHTML = '';
+
+        if (reviews.length === 0) {
+            reviewsList.innerHTML = '<p class="text-muted text-center">No reviews available</p>';
+            return;
+        }
+
+        reviews.forEach(review => {
+            const reviewItem = document.createElement('div');
+            reviewItem.className = 'review-item mb-3';
+            reviewItem.innerHTML = `
+                <div class="d-flex justify-content-between align-items-start">
+                    <div>
+                        <h6 class="mb-1">${review.doctorName}</h6>
+                        <small class="text-muted">${review.patientName} - ${review.date}</small>
+                    </div>
+                    <div class="text-warning">
+                        ${'★'.repeat(review.rating)}${'☆'.repeat(5 - review.rating)}
+                    </div>
+                </div>
+                <p class="text-muted mb-0">${review.comment}</p>
+            `;
+            reviewsList.appendChild(reviewItem);
+        });
     }
+
+    function searchDoctors() {
+        const searchTerm = document.getElementById('doctorSearch').value.toLowerCase();
+        // Implementation for searching doctors in reviews
+        addDoctorReviewData(); // For now, just reload the reviews
+    }
+
+    function toggleNotificationModal() {
+        const modal = document.getElementById('notificationModal');
+        modal.style.display = modal.style.display === 'none' ? 'block' : 'none';
+    }
+
+    // Confirmation modal functionality
+    function showConfirmModal(appointmentId, patientName) {
+        const confirmModal = document.createElement('div');
+        confirmModal.className = 'confirm-modal';
+        confirmModal.innerHTML = `
+            <div class="confirm-modal-content">
+                <div class="confirm-modal-icon">
+                    <i class="fas fa-exclamation-triangle"></i>
+                </div>
+                <div class="confirm-modal-title">Confirm Appointment</div>
+                <div class="confirm-modal-message">
+                    Are you sure you want to confirm this appointment for ${patientName}?
+                </div>
+                <div class="confirm-modal-buttons">
+                    <button class="confirm-btn confirm-btn-primary" onclick="confirmAppointment(${appointmentId}); closeConfirmModal();">
+                        <i class="fas fa-check"></i> Yes, Confirm
+                    </button>
+                    <button class="confirm-btn confirm-btn-secondary" onclick="closeConfirmModal()">
+                        <i class="fas fa-times"></i> Cancel
+                    </button>
+                </div>
+            </div>
+        `;
+        document.body.appendChild(confirmModal);
+        setTimeout(() => {
+            confirmModal.style.display = 'flex';
+        }, 10);
+    }
+
+    function closeConfirmModal() {
+        const confirmModal = document.querySelector('.confirm-modal');
+        if (confirmModal) {
+            confirmModal.style.display = 'none';
+            setTimeout(() => {
+                confirmModal.remove();
+            }, 300);
+        }
+    }
+
+    // Initialize everything when page loads
+    document.addEventListener('DOMContentLoaded', () => {
+        addEventListeners();
+        initPatientStatusChart();
+        addDoctorReviewData(); // Load doctor reviews
+
+        // Load today's appointments once
+        loadTodaysAppointments();
+
+        console.log('Dashboard initialized');
+    });
+
+    addEventListeners();
 </script>
 </body>
 </html>
-
