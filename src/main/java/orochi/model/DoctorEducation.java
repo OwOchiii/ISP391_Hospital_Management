@@ -32,6 +32,9 @@ public class DoctorEducation {
     @Column(name = "Description", columnDefinition = "varchar(max)")
     private String description;
 
+    @Column(name = "CertificateImageURL")
+    private String certificateImageUrl;
+
     @ManyToOne
     @JoinColumn(name = "DoctorID", insertable = false, updatable = false)
     private Doctor doctor;

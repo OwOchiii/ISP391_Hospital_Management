@@ -286,6 +286,7 @@
         .type-alert { background: #fee2e2; color: #991b1b; }
         .type-appointment { background: #d1fae5; color: #065f46; }
         .type-system { background: #e5e7eb; color: #4b5563; }
+        .type-default { background: #f3f4f6; color: #6b7280; } /* Default type styling */
 
         .notification-time {
             font-size: 0.75rem;
@@ -457,13 +458,13 @@
             <div class="filter-tabs" id="notificationFilterTabs">
                 <button class="filter-tab active" data-filter="all">
                     <i class="bi bi-bell me-2"></i>All
-                    <span class="badge bg-primary ms-2" id="allCount">0</span>
+                    <span class="badge bg-primary ms-2" th:text="${allCount}">0</span>
                 </button>
                 <button class="filter-tab" data-filter="unread">
                     <i class="bi bi-envelope me-2"></i>Unread
-                    <span class="badge bg-info ms-2" id="unreadCount">0</span>
+                    <span class="badge bg-info ms-2" th:text="${unreadCount}">0</span>
                 </button>
-                <button class="filter-tab" data-filter="appointment">
+               <!-- <button class="filter-tab" data-filter="appointment">
                     <i class="bi bi-calendar-check me-2"></i>Appointments
                     <span class="badge bg-success ms-2" id="appointmentCount">0</span>
                 </button>
@@ -475,6 +476,7 @@
                     <i class="bi bi-exclamation-circle me-2"></i>Alerts
                     <span class="badge bg-danger ms-2" id="alertCount">0</span>
                 </button>
+                -->
             </div>
 
             <!-- Search Input -->
@@ -486,14 +488,49 @@
 
         <!-- Notifications List -->
         <div class="notifications-container" id="notificationsContainer">
-            <!-- Notifications will be rendered here by JavaScript -->
+            <!-- Display notifications from the model directly using Thymeleaf -->
+            <div th:each="notification : ${notifications}" th:class="'notification-card ' + (${!notification.isRead()} ? 'unread' : 'read')" th:data-type="${notification.type?.toLowerCase()}">
+                <div class="notification-icon">
+                    <i th:class="${'bi ' +
+                        (notification.type != null ?
+                            (notification.type.toLowerCase() == 'info' ? 'bi-info-circle' :
+                            notification.type.toLowerCase() == 'warning' ? 'bi-exclamation-triangle' :
+                            notification.type.toLowerCase() == 'alert' ? 'bi-exclamation-circle' :
+                            notification.type.toLowerCase() == 'appointment' ? 'bi-calendar-check' :
+                            notification.type.toLowerCase() == 'system' ? 'bi-gear' : 'bi-bell')
+                            : 'bi-bell')}"></i>
+                </div>
+                <div class="notification-content">
+                    <div class="notification-header">
+                        <span th:class="${'notification-type ' +
+                       (notification.type != null ?
+                         (notification.type.toLowerCase() == 'info' ? 'type-info' :
+                          notification.type.toLowerCase() == 'warning' ? 'type-warning' :
+                          notification.type.toLowerCase() == 'alert' ? 'type-alert' :
+                          notification.type.toLowerCase() == 'appointment' ? 'type-appointment' :
+                          notification.type.toLowerCase() == 'system' ? 'type-system' : 'type-default')
+                         : 'type-default')}"
+                      th:text="${notification.type != null ? notification.type : 'Notification'}">Type</span>
+                        <span class="notification-time" th:text="${#temporals.format(notification.createdAt, 'MMM dd, yyyy HH:mm')}">Time</span>
+                    </div>
+                    <p class="notification-message" th:text="${notification.message}">Message</p>
+                    <div class="notification-actions">
+                        <form th:if="${!notification.isRead()}" th:action="@{/doctor/notifications/mark-read}" method="post" style="display: inline;">
+                            <input type="hidden" name="notificationId" th:value="${notification.notificationId}" />
+                            <input type="hidden" name="doctorId" th:value="${doctorId}" />
+                            <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}" />
+                            <button type="submit" class="btn-link-custom">Mark as Read</button>
+                        </form>
+                    </div>
+                </div>
+            </div>
         </div>
 
         <!-- Empty State for Notifications -->
-        <div class="empty-state" id="emptyNotificationsState" style="display: none;">
+        <div class="empty-state" th:if="${notifications == null || notifications.isEmpty()}" id="emptyNotificationsState">
             <i class="bi bi-bell-slash"></i>
             <h3>No Notifications Found</h3>
-            <p>No notifications match your current filters or search terms.</p>
+            <p>You don't have any notifications at this time.</p>
         </div>
     </div>
 </div>
@@ -505,7 +542,6 @@
     /*<![CDATA[*/
     // Get the doctor ID from Thymeleaf
     const doctorId = /*[[${doctorId}]]*/ null;
-    let notificationsData = [];
 
     // Function to format time as "X [units] ago"
     function timeAgo(dateString) {
@@ -538,150 +574,156 @@
         }
     }
 
-    // Function to fetch notifications from the server
-    async function fetchNotifications() {
-        try {
-            const response = await fetch(`/api/notifications?userId=${doctorId}`);
-            if (!response.ok) {
-                throw new Error('Failed to fetch notifications');
-            }
-            notificationsData = await response.json();
-            filterAndSearchNotifications();
-        } catch (error) {
-            console.error('Error fetching notifications:', error);
-            document.getElementById('emptyNotificationsState').style.display = 'block';
-            document.getElementById('notificationsContainer').style.display = 'none';
-        }
-    }
-
-    // Function to mark a notification as read
-    async function markNotificationAsRead(id) {
-        try {
-            const response = await fetch(`/api/notifications/${id}/read`, {
-                method: 'PUT',
-                headers: {
-                    'Content-Type': 'application/json'
-                }
-            });
-
-            if (!response.ok) {
-                throw new Error('Failed to mark notification as read');
-            }
-
-            // Update local data after successful API call
-            const notification = notificationsData.find(n => n.notificationId === id);
-            if (notification) {
-                notification.read = true;
-                filterAndSearchNotifications(); // Re-render and update counts
-            }
-        } catch (error) {
-            console.error('Error marking notification as read:', error);
-        }
-    }
-
-    // Function to render notifications into the container
-    function renderNotifications(notifications) {
-        const container = document.getElementById('notificationsContainer');
-        const emptyState = document.getElementById('emptyNotificationsState');
-        container.innerHTML = ''; // Clear existing notifications
-
-        if (notifications.length === 0) {
-            emptyState.style.display = 'block';
-            container.style.display = 'none';
-            return;
-        } else {
-            emptyState.style.display = 'none';
-            container.style.display = 'grid';
-        }
-
-        notifications.forEach(notification => {
-            const card = document.createElement('div');
-            card.className = `notification-card ${notification.read ? 'read' : 'unread'}`;
-            card.dataset.type = notification.type.toLowerCase();
-            card.dataset.read = notification.read;
-            card.dataset.message = notification.message.toLowerCase(); // For search
-
-            card.innerHTML = `
-                <div class="notification-icon">
-                    <i class="bi ${getNotificationIcon(notification.type)}"></i>
-                </div>
-                <div class="notification-content">
-                    <div class="notification-header">
-                        <span class="notification-type type-${notification.type.toLowerCase()}">${notification.type}</span>
-                        <span class="notification-time">${timeAgo(notification.createdAt)}</span>
-                    </div>
-                    <p class="notification-message">${notification.message}</p>
-                    <div class="notification-actions">
-                        <button class="btn-link-custom mark-as-read" data-id="${notification.notificationId}" ${notification.read ? 'style="display:none;"' : ''}>Mark as Read</button>
-                        <a href="#" class="btn-link-custom view-details" data-id="${notification.notificationId}">View Details</a>
-                    </div>
-                </div>
-            `;
-            container.appendChild(card);
-        });
-
-        // Add event listeners for "Mark as Read" buttons
-        document.querySelectorAll('.mark-as-read').forEach(button => {
-            button.addEventListener('click', function() {
-                const notificationId = parseInt(this.dataset.id);
-                markNotificationAsRead(notificationId);
-            });
-        });
-    }
-
-    // Function to update counts on filter tabs
-    function updateFilterCounts(allNotifications) {
-        const allCount = document.getElementById('allCount');
-        const unreadCount = document.getElementById('unreadCount');
-        const appointmentCount = document.getElementById('appointmentCount');
-        const warningCount = document.getElementById('warningCount');
-        const alertCount = document.getElementById('alertCount');
-
-        allCount.textContent = allNotifications.length;
-        unreadCount.textContent = allNotifications.filter(n => !n.read).length;
-        appointmentCount.textContent = allNotifications.filter(n => n.type.toLowerCase() === 'appointment').length;
-        warningCount.textContent = allNotifications.filter(n => n.type.toLowerCase() === 'warning').length;
-        alertCount.textContent = allNotifications.filter(n => n.type.toLowerCase() === 'alert').length;
-    }
-
-    // Main function to filter and search notifications based on current active tab and search term
-    function filterAndSearchNotifications() {
-        const activeFilterTab = document.querySelector('.filter-tab.active');
-        const filterType = activeFilterTab ? activeFilterTab.dataset.filter : 'all';
-        const searchTerm = document.getElementById('notificationSearchInput').value.toLowerCase();
-
-        let filtered = notificationsData.filter(notification => {
-            const matchesType = (filterType === 'all') ||
-                (filterType === 'unread' && !notification.read) ||
-                (notification.type.toLowerCase() === filterType);
-
-            const matchesSearch = notification.message.toLowerCase().includes(searchTerm);
-
-            return matchesType && matchesSearch;
-        });
-
-        renderNotifications(filtered);
-        updateFilterCounts(notificationsData); // Always update counts based on the full data set
-    }
-
     // Initialize page on DOMContentLoaded
     document.addEventListener('DOMContentLoaded', function() {
-        fetchNotifications(); // Fetch notifications from the server
+        // Set the notification counts in the filter tabs
+        const allCountElement = document.getElementById('allCount');
+        const unreadCountElement = document.getElementById('unreadCount');
+
+        if (allCountElement) {
+            allCountElement.textContent = /*[[${allCount}]]*/ '0';
+        }
+
+        if (unreadCountElement) {
+            unreadCountElement.textContent = /*[[${unreadCount}]]*/ '0';
+        }
+
+        // Display success/error messages if present
+        const successMessage = /*[[${successMessage}]]*/ null;
+        const errorMessage = /*[[${errorMessage}]]*/ null;
+
+        if (successMessage) {
+            showToast('Success', successMessage, 'success');
+        }
+
+        if (errorMessage) {
+            showToast('Error', errorMessage, 'error');
+        }
 
         // Filter tabs functionality
         document.querySelectorAll('.filter-tab').forEach(tab => {
             tab.addEventListener('click', function() {
+                const filterType = this.getAttribute('data-filter');
+
+                // Update active tab
                 document.querySelectorAll('.filter-tab').forEach(t => t.classList.remove('active'));
                 this.classList.add('active');
-                filterAndSearchNotifications();
+
+                // Count visible items for empty state detection
+                let visibleCount = 0;
+
+                // Filter notifications based on selected tab
+                document.querySelectorAll('.notification-card').forEach(card => {
+                    if (filterType === 'all') {
+                        card.style.display = 'flex';
+                        visibleCount++;
+                    } else if (filterType === 'unread') {
+                        const isUnread = card.classList.contains('unread');
+                        card.style.display = isUnread ? 'flex' : 'none';
+                        if (isUnread) visibleCount++;
+                    } else if (filterType === 'appointment') {
+                        const isAppointment = card.getAttribute('data-type') === 'appointment';
+                        card.style.display = isAppointment ? 'flex' : 'none';
+                        if (isAppointment) visibleCount++;
+                    }
+                });
+
+                // Show or hide empty state based on visible notifications
+                const emptyState = document.getElementById('emptyNotificationsState');
+                if (emptyState) {
+                    if (visibleCount === 0) {
+                        emptyState.style.display = 'block';
+                        emptyState.querySelector('h3').textContent = `No ${filterType === 'all' ? '' : filterType} notifications found`;
+                        emptyState.querySelector('p').textContent = `You don't have any ${filterType === 'all' ? '' : filterType} notifications at this time.`;
+                    } else {
+                        emptyState.style.display = 'none';
+                    }
+                }
             });
         });
 
         // Search input functionality
-        document.getElementById('notificationSearchInput').addEventListener('input', function() {
-            filterAndSearchNotifications();
-        });
+        const searchInput = document.getElementById('notificationSearchInput');
+        if (searchInput) {
+            let searchTimeout;
+
+            searchInput.addEventListener('input', function() {
+                const searchTerm = this.value.toLowerCase().trim();
+
+                // Clear previous timeout
+                clearTimeout(searchTimeout);
+
+                if (searchTerm.length === 0) {
+                    // If search is cleared, reapply current filter
+                    const activeFilter = document.querySelector('.filter-tab.active');
+                    if (activeFilter) {
+                        activeFilter.click();
+                    }
+                    return;
+                }
+
+                // Debounce search to avoid excessive filtering
+                searchTimeout = setTimeout(() => {
+                    console.log("Searching for:", searchTerm); // Debug log
+                    // Count visible items for empty state detection
+                    let visibleCount = 0;
+
+                    // Get active filter type
+                    const activeFilter = document.querySelector('.filter-tab.active');
+                    const filterType = activeFilter ? activeFilter.getAttribute('data-filter') : 'all';
+
+                    // Client-side filtering
+                    document.querySelectorAll('.notification-card').forEach(card => {
+                        // Get message content from the notification card
+                        const messageElement = card.querySelector('.notification-message');
+
+                        if (!messageElement) {
+                            console.log("Message element not found in card:", card); // Debug log
+                            return;
+                        }
+
+                        const message = messageElement.textContent.toLowerCase();
+                        const type = card.getAttribute('data-type') || '';
+                        const matches = message.includes(searchTerm) || type.includes(searchTerm);
+
+                        console.log("Card message:", message, "Matches:", matches); // Debug log
+
+                        // Apply both search and filter criteria
+                        let showBasedOnFilter = true;
+
+                        if (filterType === 'unread') {
+                            showBasedOnFilter = card.classList.contains('unread');
+                        } else if (filterType === 'appointment') {
+                            showBasedOnFilter = (type === 'appointment');
+                        }
+
+                        const shouldShow = matches && showBasedOnFilter;
+                        card.style.display = shouldShow ? 'flex' : 'none';
+                        if (shouldShow) visibleCount++;
+                    });
+
+                    // Show or hide empty state based on search results
+                    const emptyState = document.getElementById('emptyNotificationsState');
+                    if (emptyState) {
+                        if (visibleCount === 0) {
+                            emptyState.style.display = 'block';
+                            emptyState.querySelector('h3').textContent = 'No matching notifications found';
+                            emptyState.querySelector('p').textContent = `No notifications match your search for "${searchTerm}"`;
+                        } else {
+                            emptyState.style.display = 'none';
+                        }
+                    }
+                }, 300);
+            });
+        }
     });
+
+    // Helper function to show toast notifications
+    function showToast(title, message, type) {
+        // You can implement a toast notification here or use a library
+        // For now, we'll use a simple alert
+        alert(`${title}: ${message}`);
+    }
     /*]]>*/
 </script>
 </body>

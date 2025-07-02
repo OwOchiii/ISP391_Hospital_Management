@@ -10,25 +10,35 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import orochi.model.Doctor;
 import orochi.model.DoctorForm;
 import orochi.service.DoctorService;
+import orochi.service.FileStorageService;
 import orochi.service.RoleService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 import jakarta.validation.Valid;
 import org.springframework.validation.BindingResult;
 
+import java.io.IOException;
+import java.util.ArrayList;
 import java.util.List;
 import orochi.model.Users;
 import orochi.service.UserService;
+import orochi.util.ImageUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 @Controller
 @RequestMapping("/admin/doctors")
 @RequiredArgsConstructor
 public class AdminDoctorController {
+    private static final Logger logger = LoggerFactory.getLogger(AdminDoctorController.class);
+
     private final DoctorService doctorService;
+    private final FileStorageService fileStorageService;
 
     @Autowired
     @Qualifier("userServiceImpl")
@@ -126,6 +136,13 @@ public class AdminDoctorController {
             @RequestParam(required = false) String statusFilter,
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "5") int size,
+            @RequestParam(value = "profileImage", required = false) MultipartFile profileImage,
+            @RequestParam(value = "croppedImageData", required = false) String croppedImageData,
+            @RequestParam(value = "degrees[]", required = false) List<String> degrees,
+            @RequestParam(value = "institutions[]", required = false) List<String> institutions,
+            @RequestParam(value = "graduations[]", required = false) List<Integer> graduations,
+            @RequestParam(value = "educationDescriptions[]", required = false) List<String> educationDescriptions,
+            @RequestParam(value = "certificateImages[]", required = false) MultipartFile[] certificateImages,
             Model model,
             RedirectAttributes flash
     ) {
@@ -144,6 +161,66 @@ public class AdminDoctorController {
         }
 
         boolean isNew = (doctorForm.getDoctorId() == null);
+
+        // Process profile image if provided
+        try {
+            // If we have cropped image data, use that instead of the original file
+            if (croppedImageData != null && !croppedImageData.isEmpty()) {
+                logger.info("Processing cropped image data for doctor");
+                // Generate filename based on doctor info
+                String filename = "doctor_profile_" + (doctorForm.getDoctorId() != null ?
+                                  doctorForm.getDoctorId() : "new");
+
+                // Convert Base64 image to MultipartFile
+                MultipartFile croppedImageFile = ImageUtils.base64ToMultipartFile(
+                        croppedImageData, filename);
+
+                // Store the file and get the URL
+                String imageUrl = fileStorageService.storeFile(croppedImageFile, "doctor-profiles");
+
+                // Set the image URL in the doctor form
+                doctorForm.setImageUrl(imageUrl);
+                logger.info("Saved profile image for doctor: {}", imageUrl);
+            } else if (profileImage != null && !profileImage.isEmpty()) {
+                // If we only have the original file (no cropping), just store it
+                logger.info("Processing original profile image for doctor");
+                String imageUrl = fileStorageService.storeFile(profileImage, "doctor-profiles");
+                doctorForm.setImageUrl(imageUrl);
+                logger.info("Saved profile image for doctor: {}", imageUrl);
+            }
+
+            // Process education data and certificate images
+            if (degrees != null && !degrees.isEmpty()) {
+                // Transfer the education data to the doctorForm
+                doctorForm.setDegrees(degrees);
+                doctorForm.setInstitutions(institutions);
+                doctorForm.setGraduations(graduations);
+                doctorForm.setEducationDescriptions(educationDescriptions);
+
+                // Process certificate images
+                List<String> certificateImageUrls = new ArrayList<>();
+
+                if (certificateImages != null) {
+                    for (int i = 0; i < certificateImages.length; i++) {
+                        MultipartFile certImage = certificateImages[i];
+                        if (certImage != null && !certImage.isEmpty()) {
+                            // Store certificate image
+                            String certImageUrl = fileStorageService.storeFile(certImage, "doctor-certificates");
+                            certificateImageUrls.add(certImageUrl);
+                            logger.info("Saved certificate image: {}", certImageUrl);
+                        } else {
+                            // No image for this education entry
+                            certificateImageUrls.add(null);
+                        }
+                    }
+                }
+
+                doctorForm.setCertificateImageUrls(certificateImageUrls);
+            }
+        } catch (IOException e) {
+            logger.error("Error processing doctor images", e);
+            flash.addFlashAttribute("errorMessage", "Error uploading images: " + e.getMessage());
+        }
 
         // Gọi service để lưu (service sẽ gán luôn passwordHash nếu isNew)
         doctorService.saveFromForm(doctorForm);
