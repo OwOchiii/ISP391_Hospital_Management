@@ -17,6 +17,7 @@ import orochi.repository.DoctorRepository;
 import orochi.repository.MedicalOrderRepository;
 import orochi.repository.NotificationRepository;
 import orochi.service.DoctorService;
+import orochi.service.MedicalRecordService;
 import orochi.config.CustomUserDetails;
 
 import java.time.LocalDate;
@@ -40,6 +41,9 @@ public class DoctorController {
 
     @Autowired
     private NotificationRepository notificationRepository;
+
+    @Autowired
+    private MedicalRecordService medicalRecordService;
 
     @GetMapping("/dashboard")
     public String getDashboard(@RequestParam(required = false) Integer doctorId,
@@ -354,6 +358,16 @@ public class DoctorController {
 
             Patient patient = patientOpt.get();
             model.addAttribute("patient", patient);
+
+            // Fetch medical record and medications
+            Optional<MedicalRecord> medicalRecordOpt = medicalRecordService.getMedicalRecordByPatientId(patientId);
+            if (medicalRecordOpt.isPresent()) {
+                MedicalRecord medicalRecord = medicalRecordOpt.get();
+                model.addAttribute("medicalRecord", medicalRecord);
+                model.addAttribute("medications", medicalRecord.getMedications());
+            } else {
+                model.addAttribute("medications", new ArrayList<RecordMedication>());
+            }
 
             // Calculate age if date of birth is available
             if (patient.getDateOfBirth() != null) {
