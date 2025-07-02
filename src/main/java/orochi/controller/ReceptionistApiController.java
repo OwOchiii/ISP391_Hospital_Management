@@ -13,10 +13,10 @@ import orochi.service.impl.DoctorServiceImpl;
 import orochi.service.impl.ReceptionistService;
 
 import java.time.LocalDate;
-import java.time.LocalDateTime;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 @RestController
@@ -173,6 +173,215 @@ public class ReceptionistApiController {
             return ResponseEntity.ok(response);
         } catch (Exception e) {
             return ResponseEntity.badRequest().body("Error fetching patients: " + e.getMessage());
+        }
+    }
+
+    @GetMapping("/patients/detailed")
+    public ResponseEntity<?> getPatientsDetailed(
+            @RequestParam(value = "page", required = false) Integer page,
+            @RequestParam(defaultValue = "") String search) {
+        try {
+            // Default page to 1 if null or invalid
+            int pageNumber = (page == null || page < 1) ? 1 : page;
+            int itemsPerPage = 12;
+
+            // Lấy tất cả patients có RoleID = 4 (Patient role)
+            List<Patient> allPatients = receptionistService.getAllPatients().stream()
+                    .filter(patient -> patient.getUser() != null && patient.getUser().getRoleId() == 4)
+                    .collect(Collectors.toList());
+
+            // Filter by search term if provided
+            if (!search.isEmpty()) {
+                String searchLower = search.toLowerCase();
+                allPatients = allPatients.stream()
+                        .filter(p -> p.getUser().getFullName().toLowerCase().contains(searchLower) ||
+                                (p.getUser().getPhoneNumber() != null && p.getUser().getPhoneNumber().toLowerCase().contains(searchLower)) ||
+                                (p.getUser().getEmail() != null && p.getUser().getEmail().toLowerCase().contains(searchLower)) ||
+                                p.getPatientId().toString().contains(searchLower))
+                        .collect(Collectors.toList());
+            }
+
+            // Calculate pagination
+            int total = allPatients.size();
+            int start = (pageNumber - 1) * itemsPerPage;
+            int end = Math.min(start + itemsPerPage, total);
+
+            List<Map<String, Object>> paginatedPatients = allPatients.subList(start, end).stream()
+                    .map(patient -> {
+                        Map<String, Object> patientMap = new HashMap<>();
+
+                        // Thông tin cơ bản từ bảng Patient
+                        patientMap.put("PatientID", patient.getPatientId());
+                        patientMap.put("UserID", patient.getUserId());
+                        patientMap.put("DateOfBirth", patient.getDateOfBirth());
+                        patientMap.put("Gender", patient.getGender());
+                        patientMap.put("Description", patient.getDescription());
+
+                        // Thông tin từ bảng Users (RoleID = 4)
+                        if (patient.getUser() != null) {
+                            patientMap.put("FullName", patient.getUser().getFullName());
+                            patientMap.put("Email", patient.getUser().getEmail());
+                            patientMap.put("PhoneNumber", patient.getUser().getPhoneNumber());
+                            patientMap.put("RoleID", patient.getUser().getRoleId());
+                        }
+
+                        // Calculate age từ dateOfBirth
+                        if (patient.getDateOfBirth() != null) {
+                            LocalDate today = LocalDate.now();
+                            LocalDate birthDate = patient.getDateOfBirth();
+                            int age = today.getYear() - birthDate.getYear();
+                            if (today.getDayOfYear() < birthDate.getDayOfYear()) {
+                                age--;
+                            }
+                            patientMap.put("Age", age);
+                        } else {
+                            patientMap.put("Age", null);
+                        }
+
+                        // Lấy thông tin appointment mới nhất từ bảng Appointment
+                        List<Appointment> patientAppointments = receptionistService.getAllAppointments().stream()
+                                .filter(apt -> apt.getPatientId().equals(patient.getPatientId()))
+                                .sorted((a1, a2) -> a2.getDateTime().compareTo(a1.getDateTime()))
+                                .collect(Collectors.toList());
+
+                        if (!patientAppointments.isEmpty()) {
+                            Appointment latestAppointment = patientAppointments.get(0);
+                            patientMap.put("AppointmentDateTime", latestAppointment.getDateTime().toString());
+                            patientMap.put("AppointmentStatus", latestAppointment.getStatus());
+                            patientMap.put("AppointmentID", latestAppointment.getAppointmentId());
+                            patientMap.put("DoctorID", latestAppointment.getDoctorId());
+                            patientMap.put("RoomID", latestAppointment.getRoomId());
+                            patientMap.put("AppointmentDescription", latestAppointment.getDescription());
+                            patientMap.put("AppointmentEmail", latestAppointment.getEmail());
+                            patientMap.put("AppointmentPhoneNumber", latestAppointment.getPhoneNumber());
+                        } else {
+                            patientMap.put("AppointmentDateTime", "No Appointment");
+                            patientMap.put("AppointmentStatus", "No Appointment");
+                            patientMap.put("AppointmentID", null);
+                            patientMap.put("DoctorID", null);
+                            patientMap.put("RoomID", null);
+                            patientMap.put("AppointmentDescription", null);
+                            patientMap.put("AppointmentEmail", null);
+                            patientMap.put("AppointmentPhoneNumber", null);
+                        }
+
+                        // Get contact info từ PatientContact
+                        List<PatientContact> contactsById = receptionistService.getPatientContactsByPatientId(patient.getPatientId());
+                        if (!contactsById.isEmpty()) {
+                            PatientContact contact = contactsById.get(0);
+                            patientMap.put("Country", contact.getCountry());
+                            patientMap.put("City", contact.getCity());
+                            patientMap.put("State", contact.getState());
+                            patientMap.put("StreetAddress", contact.getStreetAddress());
+                            patientMap.put("PostalCode", contact.getPostalCode());
+                            patientMap.put("AddressType", contact.getAddressType());
+                        }
+
+                        return patientMap;
+                    })
+                    .collect(Collectors.toList());
+
+            Map<String, Object> response = new HashMap<>();
+            response.put("patients", paginatedPatients);
+            response.put("total", total);
+
+            return ResponseEntity.ok(response);
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body("Error fetching patients: " + e.getMessage());
+        }
+    }
+
+    @GetMapping("/patients/{patientId}/details")
+    public ResponseEntity<?> getPatientDetails(@PathVariable Integer patientId) {
+        try {
+            // Lấy patient theo PatientID và kiểm tra RoleID = 4
+            Optional<Patient> patientOptional = receptionistService.getAllPatients().stream()
+                    .filter(p -> p.getPatientId().equals(patientId) &&
+                               p.getUser() != null &&
+                               p.getUser().getRoleId() == 4)
+                    .findFirst();
+
+            if (patientOptional.isEmpty()) {
+                return ResponseEntity.notFound().build();
+            }
+
+            Patient patient = patientOptional.get();
+            Map<String, Object> patientDetails = new HashMap<>();
+
+            // Thông tin cơ bản từ bảng Patient
+            patientDetails.put("PatientID", patient.getPatientId());
+            patientDetails.put("UserID", patient.getUserId());
+            patientDetails.put("DateOfBirth", patient.getDateOfBirth());
+            patientDetails.put("Gender", patient.getGender());
+            patientDetails.put("Description", patient.getDescription());
+
+            // Thông tin từ bảng Users (RoleID = 4)
+            if (patient.getUser() != null) {
+                patientDetails.put("FullName", patient.getUser().getFullName());
+                patientDetails.put("Email", patient.getUser().getEmail());
+                patientDetails.put("PhoneNumber", patient.getUser().getPhoneNumber());
+                patientDetails.put("RoleID", patient.getUser().getRoleId());
+            }
+
+            // Calculate age từ dateOfBirth
+            if (patient.getDateOfBirth() != null) {
+                LocalDate today = LocalDate.now();
+                LocalDate birthDate = patient.getDateOfBirth();
+                int age = today.getYear() - birthDate.getYear();
+                if (today.getDayOfYear() < birthDate.getDayOfYear()) {
+                    age--;
+                }
+                patientDetails.put("Age", age);
+            }
+
+            // Get contact information từ PatientContact
+            List<PatientContact> contacts = receptionistService.getPatientContactsByPatientId(patientId);
+            if (!contacts.isEmpty()) {
+                PatientContact contact = contacts.get(0);
+                patientDetails.put("Country", contact.getCountry());
+                patientDetails.put("City", contact.getCity());
+                patientDetails.put("State", contact.getState());
+                patientDetails.put("StreetAddress", contact.getStreetAddress());
+                patientDetails.put("PostalCode", contact.getPostalCode());
+                patientDetails.put("AddressType", contact.getAddressType());
+            }
+
+            // Get all appointments cho patient này từ bảng Appointment
+            List<Appointment> appointments = receptionistService.getAllAppointments().stream()
+                    .filter(apt -> apt.getPatientId().equals(patientId))
+                    .sorted((a1, a2) -> a2.getDateTime().compareTo(a1.getDateTime()))
+                    .collect(Collectors.toList());
+
+            List<Map<String, Object>> appointmentDetails = appointments.stream()
+                    .map(apt -> {
+                        Map<String, Object> aptMap = new HashMap<>();
+                        // Thông tin từ bảng Appointment
+                        aptMap.put("AppointmentID", apt.getAppointmentId());
+                        aptMap.put("DoctorID", apt.getDoctorId());
+                        aptMap.put("PatientID", apt.getPatientId());
+                        aptMap.put("RoomID", apt.getRoomId());
+                        aptMap.put("DateTime", apt.getDateTime().toString());
+                        aptMap.put("Status", apt.getStatus());
+                        aptMap.put("Description", apt.getDescription());
+                        aptMap.put("Email", apt.getEmail());
+                        aptMap.put("PhoneNumber", apt.getPhoneNumber());
+
+                        // Thông tin doctor
+                        if (apt.getDoctor() != null && apt.getDoctor().getUser() != null) {
+                            aptMap.put("DoctorName", apt.getDoctor().getUser().getFullName());
+                            aptMap.put("DoctorSpecialty", apt.getDoctor().getSpecializations().isEmpty() ?
+                                    "General Practice" :
+                                    apt.getDoctor().getSpecializations().get(0).getSpecName());
+                        }
+                        return aptMap;
+                    })
+                    .collect(Collectors.toList());
+
+            patientDetails.put("Appointments", appointmentDetails);
+
+            return ResponseEntity.ok(patientDetails);
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body("Error fetching patient details: " + e.getMessage());
         }
     }
 

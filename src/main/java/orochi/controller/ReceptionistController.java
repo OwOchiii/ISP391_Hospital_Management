@@ -724,4 +724,28 @@ public class ReceptionistController {
         }
     }
 
+    @GetMapping("/patient_details")
+    public String patientDetails(@RequestParam Integer patientId, Model model, Authentication authentication) {
+        try {
+            if (authentication == null || !authentication.isAuthenticated()) {
+                return "redirect:/login";
+            }
+
+            // Add patientId to model for use in the template if needed
+            model.addAttribute("patientId", patientId);
+
+            return "Receptionists/patient_details";
+        } catch (Exception e) {
+            // Log the error for debugging
+            System.err.println("Error rendering patient_details page: " + e.getMessage());
+            e.printStackTrace();
+
+            // Add error message to model
+            model.addAttribute("errorMessage", "An error occurred while loading the patient details page: " + e.getMessage());
+
+            // Return to a safe page
+            return "redirect:/receptionist/patients";
+        }
+    }
+
 }
