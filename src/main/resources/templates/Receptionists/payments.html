@@ -445,6 +445,31 @@
             font-weight: 500;
         }
 
+        .status-pending {
+            color: var(--warning-color);
+            font-weight: 500;
+        }
+
+        .status-cancelled {
+            color: var(--text-muted);
+            font-weight: 500;
+        }
+
+        .status-refunded {
+            color: var(--info-color);
+            font-weight: 500;
+        }
+
+        .status-processing {
+            color: var(--primary);
+            font-weight: 500;
+        }
+
+        .status-unknown {
+            color: var(--text-muted);
+            font-weight: 500;
+        }
+
         .daily-total {
             background: var(--primary);
             color: white;
@@ -600,7 +625,7 @@
             <div class="container-fluid p-4">
                 <!-- Daily Total -->
                 <div class="daily-total">
-                    Total Revenue Today: <span id="dailyTotal">0 VND</span>
+                    Total Revenue Today: <span id="dailyTotal">0</span> VND
                 </div>
                 <!-- Search Bar -->
                 <div class="search-bar">
@@ -616,8 +641,9 @@
                         <div class="filter-group mt-2">
                             <select class="form-select" id="statusFilter">
                                 <option value="">All Status</option>
-                                <option value="unpaid">Unpaid</option>
+                                <option value="pending">Pending</option>
                                 <option value="paid">Paid</option>
+                                <option value="refunded">Refunded</option>
                             </select>
                             <input type="date" class="form-control" id="dateFilter" placeholder="Select Date">
                             <select class="form-select" id="departmentFilter">
@@ -648,9 +674,9 @@
                                 <tr>
                                     <th>#</th>
                                     <th>Patient ID</th>
-                                    <th>Patient Name</th>
-                                    <th>Visit Date</th>
-                                    <th>Amount (VND)</th>
+                                    <th>Full Name</th>
+                                    <th>Phone Number</th>
+                                    <th>Amount</th>
                                     <th>Status</th>
                                     <th>Action</th>
                                 </tr>
@@ -704,36 +730,193 @@
         modal.style.display = modal.style.display === 'block' ? 'none' : 'block';
     }
 
-    // Sample data
-    let payments = [
-        { patientId: 'BN001', patientName: 'Nguyen Van A', visitDate: '2025-06-22', amount: 1200000, status: 'unpaid', department: 'internal' },
-        { patientId: 'BN002', patientName: 'Tran Thi B', visitDate: '2025-06-21', amount: 750000, status: 'paid', department: 'surgery' },
-        { patientId: 'BN003', patientName: 'Le Van C', visitDate: '2025-06-20', amount: 1500000, status: 'unpaid', department: 'pediatrics' },
-        { patientId: 'BN004', patientName: 'Pham Thi D', visitDate: '2025-06-19', amount: 900000, status: 'paid', department: 'internal' },
-        { patientId: 'BN005', patientName: 'Hoang Van E', visitDate: '2025-06-18', amount: 2000000, status: 'unpaid', department: 'surgery' },
-        { patientId: 'BN006', patientName: 'Vo Thi F', visitDate: '2025-06-17', amount: 600000, status: 'paid', department: 'pediatrics' },
-        { patientId: 'BN007', patientName: 'Bui Van G', visitDate: '2025-06-16', amount: 1800000, status: 'unpaid', department: 'internal' },
-        { patientId: 'BN008', patientName: 'Nguyen Thi H', visitDate: '2025-06-15', amount: 850000, status: 'paid', department: 'surgery' },
-        { patientId: 'BN009', patientName: 'Tran Van I', visitDate: '2025-06-14', amount: 1100000, status: 'unpaid', department: 'pediatrics' },
-        { patientId: 'BN010', patientName: 'Le Thi K', visitDate: '2025-06-13', amount: 950000, status: 'paid', department: 'internal' },
-        { patientId: 'BN011', patientName: 'Pham Van L', visitDate: '2025-06-12', amount: 1300000, status: 'unpaid', department: 'surgery' },
-        { patientId: 'BN012', patientName: 'Hoang Thi M', visitDate: '2025-06-11', amount: 700000, status: 'paid', department: 'pediatrics' },
-        { patientId: 'BN013', patientName: 'Vo Van N', visitDate: '2025-06-10', amount: 1600000, status: 'unpaid', department: 'internal' },
-        { patientId: 'BN014', patientName: 'Bui Thi O', visitDate: '2025-06-09', amount: 800000, status: 'paid', department: 'surgery' },
-        { patientId: 'BN015', patientName: 'Nguyen Van P', visitDate: '2025-06-08', amount: 1400000, status: 'unpaid', department: 'pediatrics' }
-    ];
+    // Sample data - REMOVED, will fetch from backend
+    let payments = [];
+    let allStatuses = []; // Store all available statuses from backend
 
     let currentPage = 1;
     const rowsPerPage = 10;
     let filteredPayments = [...payments];
 
-    // Calculate daily total
+    // Load all available statuses from backend
+    function loadAvailableStatuses() {
+        fetch('/receptionist/api/payments/statuses')
+            .then(response => response.json())
+            .then(data => {
+                allStatuses = data;
+                console.log('Available statuses from database:', allStatuses);
+                populateStatusFilter();
+            })
+            .catch(error => {
+                console.error('Error fetching available statuses:', error);
+                // Use default statuses if API fails
+                allStatuses = ['Pending', 'Completed', 'Failed', 'Cancelled', 'Refunded'];
+                populateStatusFilter();
+            });
+    }
+
+    // Populate status filter dropdown with all available statuses
+    function populateStatusFilter() {
+        const statusFilter = document.getElementById('statusFilter');
+        statusFilter.innerHTML = '<option value="">All Status</option>';
+
+        allStatuses.forEach(status => {
+            const option = document.createElement('option');
+            option.value = status; // Use exact database value
+            option.textContent = status.charAt(0).toUpperCase() + status.slice(1);
+            statusFilter.appendChild(option);
+        });
+    }
+
+    // Calculate daily total - Updated to fetch from backend
     function calculateDailyTotal() {
-        const today = new Date().toISOString().split('T')[0];
-        const dailyTotal = payments
-            .filter(p => p.visitDate === today && p.status === 'paid')
-            .reduce((sum, p) => sum + p.amount, 0);
-        document.getElementById('dailyTotal').textContent = dailyTotal.toLocaleString('en-US') + ' VND';
+        // Use the new appointment-based revenue endpoint
+        fetch('/receptionist/api/payments/appointments-today/total')
+            .then(response => response.json())
+            .then(data => {
+                const total = data.total || 0;
+                document.getElementById('dailyTotal').textContent = total.toLocaleString('vi-VN');
+            })
+            .catch(error => {
+                console.error('Error fetching daily total:', error);
+                document.getElementById('dailyTotal').textContent = '0';
+            });
+    }
+
+    // Load payments data from backend - UPDATED: Use raw database status
+    function loadPaymentsData() {
+        console.log('Loading payments data with raw database status...');
+
+        // Use the new raw API endpoint that shows exact database status
+        fetch('/receptionist/api/payments/today/raw')
+            .then(response => response.json())
+            .then(rawPaymentData => {
+                console.log('Raw payment data from database:', rawPaymentData);
+
+                if (rawPaymentData && rawPaymentData.length > 0) {
+                    // Process the data to match frontend expectations
+                    payments = rawPaymentData.map(payment => ({
+                        patientId: payment.patientId,
+                        patientName: payment.patientName,
+                        visitDate: payment.visitDate, // This is phone number
+                        phoneNumber: payment.visitDate,
+                        amount: payment.amount || 0,
+                        status: payment.status || 'Unknown', // Use exact database status
+                        receiptId: payment.receiptId,
+                        transactionId: payment.transactionId,
+                        paymentDate: new Date().toISOString().split('T')[0] // Today's date
+                    }));
+
+                    filteredPayments = [...payments];
+                    renderTable(filteredPayments, currentPage);
+                    updateDailyStats();
+
+                    console.log('Processed payment data with raw status:', payments);
+                } else {
+                    // No payment data available
+                    payments = [];
+                    filteredPayments = [];
+                    renderTable(filteredPayments, currentPage);
+                    showNoDataMessage();
+                }
+            })
+            .catch(error => {
+                console.error('Error fetching raw payment data:', error);
+
+                // Fallback: try the appointment-based endpoint
+                console.log('Falling back to appointment-based payment data...');
+                fetch('/receptionist/api/payments/appointments-today-only')
+                    .then(response => response.json())
+                    .then(appointmentPaymentData => {
+                        console.log('Appointment payment data:', appointmentPaymentData);
+
+                        if (appointmentPaymentData && appointmentPaymentData.length > 0) {
+                            payments = appointmentPaymentData.map(payment => ({
+                                appointmentId: payment.appointmentId,
+                                patientId: payment.patientId,
+                                patientName: payment.patientName,
+                                visitDate: payment.phoneNumber, // Using phone number as visitDate field
+                                phoneNumber: payment.phoneNumber,
+                                appointmentDate: payment.appointmentDate,
+                                appointmentTime: payment.appointmentTime,
+                                appointmentStatus: payment.appointmentStatus,
+                                doctorName: payment.doctorName,
+                                amount: payment.amount || 0,
+                                status: payment.status || 'Unknown', // Use exact database status
+                                receiptId: payment.receiptId,
+                                transactionId: payment.transactionId,
+                                paymentDate: payment.appointmentDate // Use appointment date as payment date
+                            }));
+
+                            filteredPayments = [...payments];
+                            renderTable(filteredPayments, currentPage);
+                            updateDailyStats();
+                        } else {
+                            payments = [];
+                            filteredPayments = [];
+                            renderTable(filteredPayments, currentPage);
+                            showNoDataMessage();
+                        }
+                    })
+                    .catch(fallbackError => {
+                        console.error('Error fetching fallback data:', fallbackError);
+                        payments = [];
+                        filteredPayments = [];
+                        renderTable(filteredPayments, currentPage);
+                        showNoDataMessage();
+                    });
+            });
+    }
+
+    // Show message when no appointments today
+    function showNoAppointmentsMessage() {
+        const tableBody = document.getElementById('patientTableBody');
+        if (tableBody) {
+            tableBody.innerHTML = `
+                <tr>
+                    <td colspan="7" class="text-center py-4">
+                        <i class="fas fa-calendar-times fa-2x mb-2 d-block text-muted"></i>
+                        <p class="text-muted mb-0">No appointments scheduled for today</p>
+                        <small class="text-muted">Patient payment data will appear here when there are appointments today</small>
+                    </td>
+                </tr>
+            `;
+        }
+
+        // Update page title
+        const cardTitle = document.querySelector('.card-title');
+        if (cardTitle) {
+            const today = new Date().toLocaleDateString('vi-VN');
+            cardTitle.textContent = `Today's Payment List (${today}) - No appointments`;
+        }
+    }
+
+    // Show message when no data available
+    function showNoDataMessage() {
+        const tableBody = document.getElementById('patientTableBody');
+        if (tableBody) {
+            tableBody.innerHTML = `
+                <tr>
+                    <td colspan="7" class="text-center py-4">
+                        <i class="fas fa-receipt fa-2x mb-2 d-block text-muted"></i>
+                        <p class="text-muted mb-0">No payment data available for today</p>
+                        <small class="text-muted">Data will appear here when there are appointments and payments</small>
+                    </td>
+                </tr>
+            `;
+        }
+    }
+
+    // Update daily statistics
+    function updateDailyStats() {
+        const today = new Date().toLocaleDateString('vi-VN');
+        const todayTransactions = filteredPayments.length;
+
+        // Update page title to show it's today's transactions
+        const cardTitle = document.querySelector('.card-title');
+        if (cardTitle) {
+            cardTitle.textContent = `Today's Payment List (${today}) - ${todayTransactions} transactions`;
+        }
     }
 
     function renderTable(data, page) {
@@ -750,16 +933,46 @@
 
         paginatedData.forEach((payment, index) => {
             const row = document.createElement('tr');
+
+            // Enhanced status display with more comprehensive status handling
+            const getStatusDisplay = (status) => {
+                const statusLower = status.toLowerCase();
+                const statusClasses = {
+                    'paid': 'status-paid',
+                    'unpaid': 'status-unpaid',
+                    'pending': 'status-pending',
+                    'cancelled': 'status-cancelled',
+                    'refunded': 'status-refunded',
+                    'processing': 'status-processing'
+                };
+
+                const statusLabels = {
+                    'paid': 'Paid',
+                    'unpaid': 'Unpaid',
+                    'pending': 'Pending',
+                    'cancelled': 'Cancelled',
+                    'refunded': 'Refunded',
+                    'processing': 'Processing'
+                };
+
+                const cssClass = statusClasses[statusLower] || 'status-unknown';
+                const label = statusLabels[statusLower] || status;
+
+                return `<span class="${cssClass}">${label}</span>`;
+            };
+
             row.innerHTML = `
                 <td>${start + index + 1}</td>
-                <td>${payment.patientId}</td>
-                <td>${payment.patientName}</td>
-                <td>${payment.visitDate}</td>
-                <td>${payment.amount.toLocaleString('en-US')}</td>
-                <td><span class="${payment.status === 'unpaid' ? 'status-unpaid' : 'status-paid'}">${payment.status === 'unpaid' ? 'Unpaid' : 'Paid'}</span></td>
+                <td>${payment.patientId || 'N/A'}</td>
+                <td>${payment.patientName || 'N/A'}</td>
+                <td>${payment.visitDate || 'N/A'}</td>
+                <td>${payment.amount ? Number(payment.amount).toLocaleString('vi-VN') : '0'} VND</td>
+                <td>${getStatusDisplay(payment.status)}</td>
                 <td>
-                    <button class="btn btn-sm btn-primary me-1" onclick="showInvoiceDetails('${payment.patientId}')"><i class="fas fa-eye"></i> Details</button>
-                    ${payment.status === 'unpaid' ? `<button class="btn btn-sm btn-success" onclick="payInvoice('${payment.patientId}')"><i class="fas fa-money-check-alt"></i> Pay</button>` : ''}
+                    ${payment.status.toLowerCase() === 'pending' ? `<button class="btn btn-sm btn-success" onclick="payInvoice('${payment.patientId}', '${payment.receiptId}')"><i class="fas fa-money-check-alt"></i> Pay</button>` :
+                      payment.status.toLowerCase() === 'paid' ? '<span class="text-success">Completed</span>' :
+                      payment.status.toLowerCase() === 'refunded' ? '<span class="text-muted">No Action</span>' :
+                      '<span class="text-muted">No Action</span>'}
                 </td>
             `;
             tableBody.appendChild(row);
@@ -798,24 +1011,36 @@
     function filterPayments() {
         const searchValue = document.getElementById('searchInput').value.trim().toLowerCase();
         const statusFilter = document.getElementById('statusFilter').value;
-        const dateFilter = document.getElementById('dateFilter').value;
-        const departmentFilter = document.getElementById('departmentFilter').value;
+        const today = new Date().toISOString().split('T')[0];
 
-        filteredPayments = payments.filter(payment => {
-            const matchesSearch = (
-                payment.patientName.toLowerCase().includes(searchValue) ||
-                payment.patientId.toLowerCase().includes(searchValue) ||
-                payment.visitDate.includes(searchValue)
-            );
-            const matchesStatus = !statusFilter || payment.status === statusFilter;
-            const matchesDate = !dateFilter || payment.visitDate === dateFilter;
-            const matchesDepartment = !departmentFilter || payment.department === departmentFilter;
-
-            return matchesSearch && matchesStatus && matchesDate && matchesDepartment;
+        // Always work with today's data only
+        let todayPayments = payments.filter(payment => {
+            const paymentDate = new Date(payment.paymentDate || today).toISOString().split('T')[0];
+            return paymentDate === today;
         });
 
+        // Apply status filter if selected
+        if (statusFilter) {
+            todayPayments = todayPayments.filter(payment =>
+                payment.status.toLowerCase() === statusFilter.toLowerCase()
+            );
+        }
+
+        // Apply search filter
+        if (searchValue) {
+            todayPayments = todayPayments.filter(payment => {
+                return (
+                    payment.patientName.toLowerCase().includes(searchValue) ||
+                    payment.patientId.toString().toLowerCase().includes(searchValue) ||
+                    payment.visitDate.toLowerCase().includes(searchValue)
+                );
+            });
+        }
+
+        filteredPayments = todayPayments;
         currentPage = 1;
         renderTable(filteredPayments, currentPage);
+        updateDailyStats();
     }
 
     function resetFilters() {
@@ -823,18 +1048,20 @@
         document.getElementById('statusFilter').value = '';
         document.getElementById('dateFilter').value = '';
         document.getElementById('departmentFilter').value = '';
-        filterPayments();
+
+        // Reload original data
+        filteredPayments = [...payments];
+        renderTable(filteredPayments, currentPage);
     }
 
     function exportToCSV() {
-        const headers = ['Patient ID', 'Patient Name', 'Visit Date', 'Amount (VND)', 'Status', 'Department'];
+        const headers = ['Patient ID', 'Patient Name', 'Phone Number', 'Amount', 'Status'];
         const rows = filteredPayments.map(payment => [
             payment.patientId,
             payment.patientName,
-            payment.visitDate,
+            payment.visitDate, // This is phone number
             payment.amount,
-            payment.status,
-            payment.department
+            payment.status
         ]);
         let csvContent = 'data:text/csv;charset=utf-8,' + headers.join(',') + '\n' + rows.map(row => row.join(',')).join('\n');
         const encodedUri = encodeURI(csvContent);
@@ -847,40 +1074,35 @@
     }
 
     function exportToXLSX() {
-        const headers = ['Patient ID', 'Patient Name', 'Visit Date', 'Amount (VND)', 'Status', 'Department'];
+        const headers = ['Patient ID', 'Patient Name', 'Phone Number', 'Amount', 'Status'];
         const data = filteredPayments.map(payment => ({
             'Patient ID': payment.patientId,
             'Patient Name': payment.patientName,
-            'Visit Date': payment.visitDate,
-            'Amount (VND)': payment.amount,
-            'Status': payment.status,
-            'Department': payment.department
+            'Phone Number': payment.visitDate, // This is phone number
+            'Amount': payment.amount,
+            'Status': payment.status
         }));
         const ws = XLSX.utils.json_to_sheet([{ ...headers.reduce((obj, header) => ({ ...obj, [header]: header }), {}) }, ...data]);
         const wb = XLSX.utils.book_new();
         XLSX.utils.book_append_sheet(wb, ws, 'Payments');
-        XLSX.write(wb, 'payments_export.xlsx');
+        XLSX.writeFile(wb, 'payments_export.xlsx');
     }
 
-    function showInvoiceDetails(patientId) {
-        window.location.href = `/receptionist/view_payment_details?patientId=${patientId}`;
-    }
-
-    function payInvoice(patientId) {
-        window.location.href = `/receptionist/pay_invoice?patientId=${patientId}`;
+    // Updated payInvoice function to redirect to pay_invoice.html
+    function payInvoice(patientId, receiptId) {
+        window.location.href = `/receptionist/pay_invoice?patientId=${patientId}&receiptId=${receiptId}`;
     }
 
     // Event listeners
     document.getElementById('searchInput').addEventListener('input', filterPayments);
     document.getElementById('statusFilter').addEventListener('change', filterPayments);
-    document.getElementById('dateFilter').addEventListener('input', filterPayments);
-    document.getElementById('departmentFilter').addEventListener('change', filterPayments);
 
-    // Initialize
+    // Initialize - Updated to load data from backend
     document.addEventListener('DOMContentLoaded', () => {
         try {
             calculateDailyTotal();
-            renderTable(filteredPayments, currentPage);
+            loadPaymentsData();
+            loadAvailableStatuses(); // Load statuses for filter
         } catch (error) {
             console.error('Error initializing:', error);
         }

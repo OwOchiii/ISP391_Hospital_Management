@@ -295,6 +295,173 @@ public class ReceptionistController {
 
         return "Receptionists/payments";
     }
+
+    // New payment API endpoints
+
+    /**
+     * API endpoint to get today's payment data
+     */
+    @GetMapping("/api/payments/today")
+    @ResponseBody
+    public ResponseEntity<List<Map<String, Object>>> getTodaysPayments() {
+        try {
+            List<Map<String, Object>> payments = receptionistService.getTodaysPaymentData();
+            return ResponseEntity.ok(payments);
+        } catch (Exception e) {
+            System.err.println("Error fetching today's payments: " + e.getMessage());
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
+        }
+    }
+
+    /**
+     * API endpoint to get today's total revenue
+     */
+    @GetMapping("/api/payments/today/total")
+    @ResponseBody
+    public ResponseEntity<Map<String, Object>> getTodaysTotalRevenue() {
+        try {
+            Double total = receptionistService.getTodaysTotalRevenue();
+            Map<String, Object> response = new HashMap<>();
+            response.put("total", total);
+            return ResponseEntity.ok(response);
+        } catch (Exception e) {
+            System.err.println("Error fetching today's total revenue: " + e.getMessage());
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
+        }
+    }
+
+    /**
+     * API endpoint to get filtered payment data by status
+     */
+    @GetMapping("/api/payments/today/filtered")
+    @ResponseBody
+    public ResponseEntity<List<Map<String, Object>>> getFilteredPayments(@RequestParam(required = false) String status) {
+        try {
+            List<Map<String, Object>> payments;
+            if (status != null && !status.isEmpty()) {
+                payments = receptionistService.getTodaysPaymentDataByStatus(status);
+            } else {
+                payments = receptionistService.getTodaysPaymentData();
+            }
+            return ResponseEntity.ok(payments);
+        } catch (Exception e) {
+            System.err.println("Error fetching filtered payments: " + e.getMessage());
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
+        }
+    }
+
+    /**
+     * API endpoint to get all receipts with transaction data for debugging
+     */
+    @GetMapping("/api/payments/receipts")
+    @ResponseBody
+    public ResponseEntity<List<Map<String, Object>>> getAllReceiptsWithTransactionData() {
+        try {
+            List<Map<String, Object>> receipts = receptionistService.getAllReceiptsWithTransactionData();
+            return ResponseEntity.ok(receipts);
+        } catch (Exception e) {
+            System.err.println("Error fetching receipts data: " + e.getMessage());
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
+        }
+    }
+
+    /**
+     * API endpoint to get test payment data for debugging
+     */
+    @GetMapping("/api/payments/test")
+    @ResponseBody
+    public ResponseEntity<List<Map<String, Object>>> getTestPayments() {
+        try {
+            List<Map<String, Object>> payments = receptionistService.getTestPaymentData();
+            return ResponseEntity.ok(payments);
+        } catch (Exception e) {
+            System.err.println("Error fetching test payments: " + e.getMessage());
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
+        }
+    }
+
+    /**
+     * API endpoint to get patients with appointments today and their transaction status
+     * Logic: Check today's appointments by DateTime -> map to PatientID -> get Transaction status
+     */
+    @GetMapping("/api/payments/appointments-today")
+    @ResponseBody
+    public ResponseEntity<List<Map<String, Object>>> getPatientsWithAppointmentsToday() {
+        try {
+            List<Map<String, Object>> patientsWithPayments = receptionistService.getPatientsWithAppointmentsToday();
+            return ResponseEntity.ok(patientsWithPayments);
+        } catch (Exception e) {
+            System.err.println("Error fetching patients with appointments today: " + e.getMessage());
+            e.printStackTrace();
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
+        }
+    }
+
+    /**
+     * API endpoint to get today's total revenue from appointments
+     */
+    @GetMapping("/api/payments/appointments-today/total")
+    @ResponseBody
+    public ResponseEntity<Map<String, Object>> getTodaysAppointmentRevenue() {
+        try {
+            Double total = receptionistService.getTodaysAppointmentPaymentRevenue();
+            Map<String, Object> response = new HashMap<>();
+            response.put("total", total);
+            return ResponseEntity.ok(response);
+        } catch (Exception e) {
+            System.err.println("Error fetching today's appointment revenue: " + e.getMessage());
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
+        }
+    }
+
+    /**
+     * NEW API endpoint to get patients with appointments today and their payment status
+     * This follows the exact logic requested: check DateTime in Appointment table for today
+     * -> map by AppointmentID -> get PatientID -> get Transaction Status
+     */
+    @GetMapping("/api/payments/appointments-today-only")
+    @ResponseBody
+    public ResponseEntity<List<Map<String, Object>>> getTodaysAppointmentPayments() {
+        try {
+            List<Map<String, Object>> todaysAppointmentPayments = receptionistService.getTodaysAppointmentPaymentData();
+            return ResponseEntity.ok(todaysAppointmentPayments);
+        } catch (Exception e) {
+            System.err.println("Error fetching today's appointment payments: " + e.getMessage());
+            e.printStackTrace();
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
+        }
+    }
+
+    /**
+     * API endpoint to get all available statuses from database
+     */
+    @GetMapping("/api/payments/statuses")
+    @ResponseBody
+    public ResponseEntity<List<String>> getAllAvailableStatuses() {
+        try {
+            List<String> statuses = receptionistService.getAllAvailableStatuses();
+            return ResponseEntity.ok(statuses);
+        } catch (Exception e) {
+            System.err.println("Error fetching available statuses: " + e.getMessage());
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
+        }
+    }
+
+    /**
+     * API endpoint to get today's payment data with raw database status (no mapping)
+     */
+    @GetMapping("/api/payments/today/raw")
+    @ResponseBody
+    public ResponseEntity<List<Map<String, Object>>> getTodaysPaymentsRaw() {
+        try {
+            List<Map<String, Object>> payments = receptionistService.getTodaysPaymentDataRaw();
+            return ResponseEntity.ok(payments);
+        } catch (Exception e) {
+            System.err.println("Error fetching today's payments (raw): " + e.getMessage());
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
+        }
+    }
+
     @GetMapping("/reports")
     public String reports(Authentication authentication) {
         if (authentication == null || !authentication.isAuthenticated()) {
@@ -419,6 +586,34 @@ public class ReceptionistController {
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                     .body("Error retrieving appointment table data: " + e.getMessage());
+        }
+    }
+
+    // New endpoint for pending appointments only
+    @GetMapping("/pendingAppointmentRequest")
+    public ResponseEntity<?> getPendingAppointmentTableData(){
+        try {
+            List<Map<String, Object>> pendingAppointmentTableData = receptionistService.getPendingAppointmentTableData();
+            return ResponseEntity.ok(pendingAppointmentTableData);
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body("Error retrieving pending appointment table data: " + e.getMessage());
+        }
+    }
+
+    // New endpoint for today's pending appointments
+    @GetMapping("/pendingAppointmentRequest/today")
+    public ResponseEntity<?> getTodaysPendingAppointmentTableData(@RequestParam String date){
+        try {
+            System.out.println("Fetching appointments for date: " + date);
+            List<Map<String, Object>> todaysPendingAppointments = receptionistService.getTodaysPendingAppointmentTableData(date);
+            System.out.println("Found " + todaysPendingAppointments.size() + " appointments for today");
+            return ResponseEntity.ok(todaysPendingAppointments);
+        } catch (Exception e) {
+            System.err.println("Error retrieving today's pending appointments: " + e.getMessage());
+            e.printStackTrace();
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body("Error retrieving today's pending appointment data: " + e.getMessage());
         }
     }
 
