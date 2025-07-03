@@ -858,33 +858,11 @@
 
         <div class="header-right">
             <!-- Add notification dropdown -->
-            <div class="notification-dropdown dropdown">
-                <button class="notification-btn" id="notificationDropdown" data-bs-toggle="dropdown" aria-expanded="false">
+            <div class="notification-dropdown">
+                <a th:href="@{/doctor/notifications(doctorId=${doctorId})}" class="notification-btn position-relative">
                     <i class="bi bi-bell"></i>
                     <span class="notification-badge" th:if="${unreadNotifications > 0}" th:text="${unreadNotifications}">0</span>
-                </button>
-                <ul class="dropdown-menu dropdown-menu-end notification-menu" aria-labelledby="notificationDropdown">
-                    <li class="dropdown-header">Notifications</li>
-                    <div class="notification-list" th:if="${notifications != null && !notifications.isEmpty()}">
-                        <li th:each="notification : ${notifications}" class="notification-item" th:classappend="${!notification.isRead ? 'unread' : ''}">
-                            <div class="notification-content">
-                                <div class="notification-message" th:text="${notification.message}">Notification message</div>
-                                <div class="notification-time" th:text="${#temporals.format(notification.createdAt, 'MMM dd, yyyy HH:mm')}">Jun 18, 2025</div>
-                            </div>
-                            <button th:if="${!notification.isRead}" class="mark-read-btn" th:data-id="${notification.notificationId}">
-                                <i class="bi bi-check-circle"></i>
-                            </button>
-                        </li>
-                    </div>
-                    <li class="empty-notification" th:if="${notifications == null || notifications.isEmpty()}">
-                        <div class="text-center py-3">
-                            <i class="bi bi-bell-slash"></i>
-                            <p>No notifications</p>
-                        </div>
-                    </li>
-                    <li><hr class="dropdown-divider"></li>
-                    <li class="text-center"><a href="#" class="dropdown-item text-primary">View all notifications</a></li>
-                </ul>
+                </a>
             </div>
             <div class="doctor-info">
                 <div class="doctor-avatar">
@@ -950,10 +928,6 @@
                         <i class="bi bi-funnel"></i>
                         Advanced Filters
                     </button>
-                    <button class="btn-outline-primary-custom btn-sm" onclick="exportPatients()">
-                        <i class="bi bi-download"></i>
-                        Export
-                    </button>
                 </div>
             </div>
 
@@ -990,12 +964,6 @@
                             <option value="6months">Last 6 Months</option>
                             <option value="year">Last Year</option>
                         </select>
-                    </div>
-                    <div class="filter-item">
-                        <button class="btn-primary-custom" onclick="applyFilters()">
-                            <i class="bi bi-check"></i>
-                            Apply Filters
-                        </button>
                     </div>
                 </div>
             </div>
@@ -1069,14 +1037,6 @@
                     <a th:href="@{/doctor/patients/{id}(id=${patient.patientId}, doctorId=${doctorId})}" class="btn-primary-custom btn-sm">
                         <i class="bi bi-eye"></i>
                         View Details
-                    </a>
-                    <a th:href="@{/doctor/appointments/new(patientId=${patient.patientId}, doctorId=${doctorId})}" class="btn-outline-primary-custom btn-sm">
-                        <i class="bi bi-calendar-plus"></i>
-                        Schedule
-                    </a>
-                    <a th:href="@{/doctor/patients/{id}/history(id=${patient.patientId}, doctorId=${doctorId})}" class="btn-outline-primary-custom btn-sm">
-                        <i class="bi bi-clock-history"></i>
-                        History
                     </a>
                 </div>
             </div>
@@ -1184,10 +1144,6 @@
             <i class="bi bi-people"></i>
             <h3>No Patients Found</h3>
             <p>No patients match your current search criteria. Try adjusting your filters or search terms.</p>
-            <a th:href="@{/doctor/patients/new(doctorId=${doctorId})}" class="btn-primary-custom">
-                <i class="bi bi-plus-circle"></i>
-                Add First Patient
-            </a>
         </div>
     </div>
 </div>
@@ -1206,7 +1162,7 @@
         sidebar.classList.toggle('collapsed');
         mainContent.classList.toggle('expanded');
     }
-
+    
     // Auto-hide sidebar on mobile
     function checkScreenSize() {
         const sidebar = document.getElementById('sidebar');
@@ -1338,15 +1294,6 @@
         advancedFilters.classList.toggle('show');
     }
 
-    function applyFilters() {
-        const gender = document.getElementById('genderFilter').value;
-        const age = document.getElementById('ageFilter').value;
-        const lastVisit = document.getElementById('lastVisitFilter').value;
-
-        // Apply filters logic here
-        console.log('Applying filters:', { gender, age, lastVisit });
-    }
-
     function exportPatients() {
         // Export functionality
         window.location.href = '/doctor/patients/export?doctorId=' + /*[[${doctorId}]]*/ '123';
@@ -1462,3 +1409,4 @@
 </script>
 </body>
 </html>
+

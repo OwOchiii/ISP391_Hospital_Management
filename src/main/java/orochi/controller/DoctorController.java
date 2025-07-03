@@ -11,6 +11,7 @@ import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 import orochi.model.*;
 import orochi.repository.DoctorRepository;
 import orochi.repository.MedicalOrderRepository;
@@ -295,6 +296,21 @@ public class DoctorController {
             // Add the page object for pagination
             model.addAttribute("page", patientsPage);
 
+            Doctor doctor = doctorRepository.findById(doctorId).orElse(null);
+
+            List<Notification> notifications = notificationRepository.findByUserIdOrderByCreatedAtDesc(doctor.getUserId());
+            if (notifications == null) {
+                notifications = new ArrayList<>();
+            }
+
+            // Count unread notifications
+            long unreadNotifications = notifications.stream()
+                    .filter(notification -> !notification.isRead())
+                    .count();
+
+            model.addAttribute("notifications", notifications);
+            model.addAttribute("unreadNotifications", unreadNotifications);
+
             logger.debug("Retrieved {} patients (page {} of {})",
                     patientsPage.getContent().size(), page + 1, patientsPage.getTotalPages());
             return "doctor/patients";
@@ -530,6 +546,19 @@ public class DoctorController {
                         parsedDate);
             }
 
+            List<Notification> notifications = notificationRepository.findByUserIdOrderByCreatedAtDesc(doctor.getUserId());
+            if (notifications == null) {
+                notifications = new ArrayList<>();
+            }
+
+            // Count unread notifications
+            long unreadNotifications = notifications.stream()
+                    .filter(notification -> !notification.isRead())
+                    .count();
+
+            model.addAttribute("notifications", notifications);
+            model.addAttribute("unreadNotifications", unreadNotifications);
+
             model.addAttribute("doctorId", doctorId);
             model.addAttribute("doctorName", doctor.getUser().getFullName());
             model.addAttribute("outgoingOrders", outgoingOrders);
@@ -598,6 +627,24 @@ public class DoctorController {
             model.addAttribute("selectedStatus", status);
             model.addAttribute("title", status + " Medical Orders");
 
+
+            Doctor doctor = doctorRepository.findById(doctorId)
+                    .orElseThrow(() -> new IllegalArgumentException("Invalid doctor ID: " + doctorId));
+
+            List<Notification> notifications = notificationRepository.findByUserIdOrderByCreatedAtDesc(doctor.getUserId());
+            if (notifications == null) {
+                notifications = new ArrayList<>();
+            }
+
+            // Count unread notifications
+            long unreadNotifications = notifications.stream()
+                    .filter(notification -> !notification.isRead())
+                    .count();
+
+            model.addAttribute("notifications", notifications);
+            model.addAttribute("unreadNotifications", unreadNotifications);
+
+
             logger.debug("Retrieved {} medical orders for doctor ID: {} with status: {}", orders.size(), doctorId, status);
             return "doctor/medical-orders";
         } catch (Exception e) {
@@ -645,9 +692,30 @@ public class DoctorController {
                 model.addAttribute("errorMessage", "Doctor not found");
                 return "error";
             }
+            logger.info("Doctor Identified: {}", doctor.getUser().getUserId());
+            // Fetch notifications for the doctor
+            List<Notification> notifications = notificationRepository.findByUserIdOrderByCreatedAtDesc(doctor.getUser().getUserId());
+            if (notifications == null) {
+                notifications = new ArrayList<>();
+            }
+
+            // Count notifications by type
+            long unreadCount = notifications.stream()
+                    .filter(notification -> !notification.isRead())
+                    .count();
+
+            long appointmentCount = notifications.stream()
+                    .filter(notification -> notification.getType() != null &&
+                           notification.getType().toLowerCase().contains("appointment"))
+                    .count();
 
             model.addAttribute("doctorName", doctor.getUser().getFullName());
             model.addAttribute("doctorId", doctorId);
+            model.addAttribute("notifications", notifications);
+            model.addAttribute("unreadNotifications", unreadCount);
+            model.addAttribute("allCount", notifications.size());
+            model.addAttribute("unreadCount", unreadCount);
+            model.addAttribute("appointmentCount", appointmentCount);
 
             logger.debug("Notifications page loaded successfully for doctor ID: {}", doctorId);
             return "doctor/doctor-notification";
@@ -657,5 +725,40 @@ public class DoctorController {
             return "error";
         }
     }
-}
 
+    /**
+     * Mark a notification as read and redirect back to notifications page
+     * @param notificationId The ID of the notification to mark as read
+     * @param doctorId The ID of the doctor making the request
+     * @param redirectAttributes RedirectAttributes for flash messages
+     * @return Redirect to the notifications page
+     */
+    @PostMapping("/notifications/mark-read")
+    public String markNotificationAsRead(
+            @RequestParam Integer notificationId,
+            @RequestParam Integer doctorId,
+            RedirectAttributes redirectAttributes) {
+        try {
+            logger.info("Marking notification ID: {} as read for doctor ID: {}", notificationId, doctorId);
+
+            Notification notification = notificationRepository.findById(notificationId).orElse(null);
+            if (notification != null) {
+                notification.setRead(true);
+                notificationRepository.save(notification);
+                redirectAttributes.addFlashAttribute("successMessage", "Notification marked as read");
+                logger.debug("Successfully marked notification ID: {} as read", notificationId);
+            } else {
+                logger.warn("Notification with ID: {} not found", notificationId);
+                redirectAttributes.addFlashAttribute("errorMessage", "Notification not found");
+            }
+
+            return "redirect:/doctor/notifications?doctorId=" + doctorId;
+        } catch (Exception e) {
+            logger.error("Error marking notification ID: {} as read for doctor ID: {}",
+                    notificationId, doctorId, e);
+            redirectAttributes.addFlashAttribute("errorMessage",
+                    "Failed to mark notification as read: " + e.getMessage());
+            return "redirect:/doctor/notifications?doctorId=" + doctorId;
+        }
+    }
+}

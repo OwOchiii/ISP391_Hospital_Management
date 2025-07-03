@@ -8,6 +8,8 @@ import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Pattern;
+import java.util.ArrayList;
+import java.util.List;
 
 
 /**
@@ -39,4 +41,18 @@ public class DoctorForm {
     private String status;  // ACTIVE / LOCKED
 
     private String bioDescription;
+
+    private String imageUrl;  // URL của ảnh đại diện
+
+    // Education information
+    private List<String> degrees = new ArrayList<>();
+    private List<String> institutions = new ArrayList<>();
+    private List<Integer> graduations = new ArrayList<>();
+    private List<String> educationDescriptions = new ArrayList<>();
+    private List<String> certificateImageUrls = new ArrayList<>();
+
+    // Helper method to get the number of education entries
+    public int getEducationCount() {
+        return degrees.size();
+    }
 }

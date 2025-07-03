@@ -26,6 +26,9 @@ public class Doctor {
     @Column(name = "BioDescription", columnDefinition = "varchar(max)")
     private String bioDescription;
 
+    @Column(name = "ImageURL")
+    private String imageUrl;
+
     @OneToOne
     @JoinColumn(name = "UserID", insertable = false, updatable = false)
     private Users user;
