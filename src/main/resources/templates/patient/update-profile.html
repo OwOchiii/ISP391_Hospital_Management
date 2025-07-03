@@ -347,6 +347,12 @@
       background: var(--bg-white);
     }
 
+    .form-control[readonly] {
+      background: var(--bg-light);
+      opacity: 0.7;
+      cursor: not-allowed;
+    }
+
     .contact-field {
       position: relative;
     }
@@ -546,6 +552,12 @@
         Security & Password
       </a>
     </div>
+    <div class="nav-item">
+      <a th:href="@{/patient/notifications}" class="nav-link">
+        <i class="bi bi-shield-lock"></i>
+        Notifications
+      </a>
+    </div>
     <div class="nav-section-title">Support</div>
     <div class="nav-item">
       <a th:href="@{/patient/feedback}" class="nav-link"><i class="bi bi-chat-square-text"></i> Feedback</a>
@@ -614,8 +626,7 @@
           <div class="col-md-6 mb-3">
             <label for="email" class="form-label">Email Address <span class="required-asterisk">*</span></label>
             <div class="contact-field">
-              <input type="email" id="email" th:field="*{email}" class="form-control" maxlength="50" required />
-              <button type="button" class="reset-btn" onclick="resetField('email')"><i class="bi bi-arrow-clockwise"></i></button>
+              <input type="email" id="email" th:field="*{email}" class="form-control" maxlength="50" readonly required />
             </div>
             <div th:if="${#fields.hasErrors('email')}" class="error-message"><i class="bi bi-exclamation-circle"></i> <span th:errors="*{email}"></span></div>
           </div>
@@ -624,8 +635,7 @@
           <div class="col-md-6 mb-3">
             <label for="phoneNumber" class="form-label">Phone Number <span class="required-asterisk">*</span></label>
             <div class="contact-field">
-              <input type="tel" id="phoneNumber" th:field="*{phoneNumber}" class="form-control" required />
-              <button type="button" class="reset-btn" onclick="resetField('phoneNumber')"><i class="bi bi-arrow-clockwise"></i></button>
+              <input type="tel" id="phoneNumber" th:field="*{phoneNumber}" class="form-control" readonly required />
             </div>
             <div th:if="${#fields.hasErrors('phoneNumber')}" class="error-message"><i class="bi bi-exclamation-circle"></i> <span th:errors="*{phoneNumber}"></span></div>
           </div>
@@ -658,6 +668,26 @@
             <button type="button" class="reset-btn" onclick="resetField('streetAddress')"><i class="bi bi-arrow-clockwise"></i></button>
           </div>
           <div th:if="${#fields.hasErrors('streetAddress')}" class="error-message"><i class="bi bi-exclamation-circle"></i> <span th:errors="*{streetAddress}"></span></div>
+        </div>
+        <div class="row">
+          <div class="col-md-6 mb-3">
+            <label for="country" class="form-label">Country <span class="required-asterisk">*</span></label>
+            <div class="contact-field">
+              <input type="text" id="country" th:field="*{country}" class="form-control" value="Vietnam" readonly required />
+            </div>
+            <div th:if="${#fields.hasErrors('country')}" class="error-message"><i class="bi bi-exclamation-circle"></i> <span th:errors="*{country}"></span></div>
+          </div>
+          <div class="col-md-6 mb-3">
+            <label for="city" class="form-label">City <span class="required-asterisk">*</span></label>
+            <div class="contact-field">
+              <select id="city" th:field="*{city}" class="form-control" required>
+                <option value="" disabled selected>Select a city</option>
+                <option th:each="city : ${cities}" th:value="${city}" th:text="${city}"></option>
+              </select>
+              <button type="button" class="reset-btn" onclick="resetField('city')"><i class="bi bi-arrow-clockwise"></i></button>
+            </div>
+            <div th:if="${#fields.hasErrors('city')}" class="error-message"><i class="bi bi-exclamation-circle"></i> <span th:errors="*{city}"></span></div>
+          </div>
         </div>
         <div class="mb-3">
           <label for="description" class="form-label">Description (Optional)</label>
@@ -693,14 +723,13 @@
 <script th:inline="javascript">
   const initialValues = {
     fullName: /*[[${profileForm.fullName}]]*/ '',
-    email: /*[[${profileForm.email}]]*/ '',
-    phoneNumber: /*[[${profileForm.phoneNumber}]]*/ '',
-    description: /*[[${profileForm.description}]]*/ '',
-    streetAddress: /*[[${profileForm.streetAddress}]]*/ ''
+    streetAddress: /*[[${profileForm.streetAddress}]]*/ '',
+    city: /*[[${profileForm.city}]]*/ '',
+    description: /*[[${profileForm.description}]]*/ ''
   };
 
   function resetField(fieldId) {
-    document.getElementById(fieldId).value = initialValues[fieldId];
+    document.getElementById(fieldId).value = initialValues[fieldId] || '';
   }
 
   function toggleSidebar() {
@@ -724,32 +753,13 @@
 
   function showConfirmation() {
     const fullName = document.getElementById('fullName').value.trim();
-    const email = document.getElementById('email').value.trim();
-    const phoneNumber = document.getElementById('phoneNumber').value.trim();
     const dateOfBirth = document.getElementById('dateOfBirth').value;
     const gender = document.querySelector('input[name="gender"]:checked');
     const streetAddress = document.getElementById('streetAddress').value.trim();
+    const city = document.getElementById('city').value;
 
     if (!fullName) {
       alert('Full Name is required.');
-      return;
-    }
-    if (!email) {
-      alert('Email Address is required.');
-      return;
-    }
-    const emailRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
-    if (!emailRegex.test(email)) {
-      alert('Please enter a valid email address.');
-      return;
-    }
-    if (!phoneNumber) {
-      alert('Phone Number is required.');
-      return;
-    }
-    const phoneRegex = /^0\d{9}$|^0\d{11}$/;
-    if (!phoneRegex.test(phoneNumber)) {
-      alert('Phone number must start with 0 and be 10 or 12 digits long.');
       return;
     }
     if (!dateOfBirth) {
@@ -771,6 +781,10 @@
       alert('Street Address is required.');
       return;
     }
+    if (!city) {
+      alert('City is required.');
+      return;
+    }
 
     document.getElementById('confirmationOverlay').classList.add('active');
   }
@@ -783,7 +797,7 @@
     }
   }
 
-  // Sanitize Description input to prevent XSS, HTML, and malicious URLs
+  // Sanitize input to prevent XSS, HTML, and malicious URLs
   function sanitizeDescription(input) {
     // Step 1: Encode HTML characters to prevent HTML rendering
     const encoded = input.replace(/</g, '&lt;').replace(/>/g, '&gt;')
@@ -805,32 +819,23 @@
   }
 
   // Trim and clean input fields on blur
-  function cleanInputOnBlur(id, isStrict = false) {
+  function cleanInputOnBlur(id) {
     const element = document.getElementById(id);
     if (!element) return;
 
     element.addEventListener('blur', () => {
       let value = element.value.trim();
-
-      if (isStrict) {
-        // Remove all spaces for strict fields (phone/email)
-        value = value.replace(/\s+/g, '');
-      } else {
-        // Sanitize Description field
-        if (id === 'description') {
-          value = sanitizeDescription(value);
-        } else {
-          // Normalize spacing between words (one space only)
-          value = value.replace(/\s+/g, ' ');
-        }
+      if (id === 'fullName' || id === 'streetAddress' || id === 'description') {
+        value = sanitizeDescription(value);
       }
-
       element.value = value;
     });
   }
 
   // Apply trimming logic to input fields
-  cleanInputOnBlur('description', false); // sanitize and normalize spaces
+  cleanInputOnBlur('fullName');
+  cleanInputOnBlur('streetAddress');
+  cleanInputOnBlur('description');
 
   document.addEventListener('DOMContentLoaded', function() {
     const dateInput = document.getElementById('dateOfBirth');

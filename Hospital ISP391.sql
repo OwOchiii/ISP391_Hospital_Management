@@ -795,3 +795,9 @@ IF @@ROWCOUNT = 0
 ELSE
         PRINT 'Deleted dependent records from DoctorSpecialization and Service.';
 END;
+
+-- Update table Feedback
+DELETE FROM [Feedback];
+ALTER TABLE [Feedback]
+ADD [FeedbackType] varchar(50) NOT NULL,
+    [Title] varchar(100) NOT NULL;
