@@ -532,11 +532,12 @@
                                 <div class="col-md-4">
                                     <label for="filterAge" class="form-label">Age Group</label>
                                     <select id="filterAge" class="form-select">
-                                        <option value="">All</option>
-                                        <option value="0-18">Under 18</option>
-                                        <option value="18-40">18–40</option>
-                                        <option value="40-60">40–60</option>
-                                        <option value="60+">Over 60</option>
+                                        <option value="">All Age Groups</option>
+                                        <option value="children">Children (1-12 years)</option>
+                                        <option value="adolescence">Adolescence (13-19 years)</option>
+                                        <option value="youth">Youth (20-39 years)</option>
+                                        <option value="middle-aged">Middle-aged (40-59 years)</option>
+                                        <option value="elderly">Elderly (60+ years)</option>
                                     </select>
                                 </div>
                                 <div class="col-md-4">
@@ -682,10 +683,11 @@
             const matchesGender = !filterGender || (patient.Gender && patient.Gender === filterGender);
 
             const matchesAge = !filterAge || (
-                filterAge === '0-18' && patient.Age < 18 ||
-                filterAge === '18-40' && patient.Age >= 18 && patient.Age <= 40 ||
-                filterAge === '40-60' && patient.Age > 40 && patient.Age <= 60 ||
-                filterAge === '60+' && patient.Age > 60
+                filterAge === 'children' && patient.Age >= 1 && patient.Age <= 12 ||
+                filterAge === 'adolescence' && patient.Age >= 13 && patient.Age <= 19 ||
+                filterAge === 'youth' && patient.Age >= 20 && patient.Age <= 39 ||
+                filterAge === 'middle-aged' && patient.Age >= 40 && patient.Age <= 59 ||
+                filterAge === 'elderly' && patient.Age >= 60
             );
 
             const matchesStatus = !filterStatus || (patient.AppointmentStatus && patient.AppointmentStatus === filterStatus);

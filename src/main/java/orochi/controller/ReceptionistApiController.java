@@ -485,6 +485,131 @@ public class ReceptionistApiController {
         }
     }
 
+    @PutMapping("/patients/{patientId}/details")
+    public ResponseEntity<?> updatePatientDetails(
+            @PathVariable Integer patientId,
+            @RequestBody Map<String, Object> updateData,
+            Authentication authentication) {
+        try {
+            // Verify user is a receptionist
+            if (authentication == null || !authentication.isAuthenticated()) {
+                return ResponseEntity.status(401).body("Unauthorized");
+            }
+
+            CustomUserDetails userDetails = (CustomUserDetails) authentication.getPrincipal();
+            Users user = userRepository.findById(userDetails.getUserId())
+                    .orElseThrow(() -> new RuntimeException("User not found"));
+
+            if (!receptionistService.isReceptionist(user)) {
+                return ResponseEntity.status(403).body("Forbidden: Only receptionists can update patient details");
+            }
+
+            // Find the patient
+            Optional<Patient> patientOptional = receptionistService.getAllPatients().stream()
+                    .filter(p -> p.getPatientId().equals(patientId) &&
+                               p.getUser() != null &&
+                               p.getUser().getRoleId() == 4)
+                    .findFirst();
+
+            if (patientOptional.isEmpty()) {
+                return ResponseEntity.notFound().build();
+            }
+
+            Patient patient = patientOptional.get();
+
+            // Update patient information
+            if (updateData.containsKey("DateOfBirth")) {
+                String dateOfBirthStr = (String) updateData.get("DateOfBirth");
+                try {
+                    java.time.LocalDate dateOfBirth = java.time.LocalDate.parse(dateOfBirthStr);
+                    patient.setDateOfBirth(dateOfBirth);
+                } catch (Exception e) {
+                    return ResponseEntity.badRequest().body("Invalid date format for DateOfBirth");
+                }
+            }
+
+            if (updateData.containsKey("Gender")) {
+                String gender = (String) updateData.get("Gender");
+                if (gender != null && !gender.trim().isEmpty()) {
+                    patient.setGender(gender.trim());
+                }
+            }
+
+            if (updateData.containsKey("Description")) {
+                String description = (String) updateData.get("Description");
+                patient.setDescription(description != null ? description.trim() : "");
+            }
+
+            // Save patient changes
+            Patient updatedPatient = receptionistService.updatePatient(patient);
+
+            // Update contact information
+            List<PatientContact> contacts = receptionistService.getPatientContactsByPatientId(patientId);
+            PatientContact contact;
+
+            if (contacts.isEmpty()) {
+                // Create new contact if none exists
+                contact = new PatientContact();
+                contact.setPatientId(patientId);
+            } else {
+                // Update existing contact
+                contact = contacts.get(0);
+            }
+
+            // Update contact fields
+            if (updateData.containsKey("AddressType")) {
+                String addressType = (String) updateData.get("AddressType");
+                contact.setAddressType(addressType != null ? addressType.trim() : "");
+            }
+
+            if (updateData.containsKey("StreetAddress")) {
+                String streetAddress = (String) updateData.get("StreetAddress");
+                contact.setStreetAddress(streetAddress != null ? streetAddress.trim() : "");
+            }
+
+            if (updateData.containsKey("City")) {
+                String city = (String) updateData.get("City");
+                contact.setCity(city != null ? city.trim() : "");
+            }
+
+            if (updateData.containsKey("State")) {
+                String state = (String) updateData.get("State");
+                contact.setState(state != null ? state.trim() : "");
+            }
+
+            if (updateData.containsKey("PostalCode")) {
+                String postalCode = (String) updateData.get("PostalCode");
+                contact.setPostalCode(postalCode != null ? postalCode.trim() : "");
+            }
+
+            if (updateData.containsKey("Country")) {
+                String country = (String) updateData.get("Country");
+                contact.setCountry(country != null ? country.trim() : "");
+            }
+
+            // Save contact changes
+            PatientContact updatedContact = receptionistService.savePatientContact(contact);
+
+            // Prepare response data
+            Map<String, Object> responseData = new HashMap<>();
+            responseData.put("PatientID", updatedPatient.getPatientId());
+            responseData.put("DateOfBirth", updatedPatient.getDateOfBirth());
+            responseData.put("Gender", updatedPatient.getGender());
+            responseData.put("Description", updatedPatient.getDescription());
+            responseData.put("AddressType", updatedContact.getAddressType());
+            responseData.put("StreetAddress", updatedContact.getStreetAddress());
+            responseData.put("City", updatedContact.getCity());
+            responseData.put("State", updatedContact.getState());
+            responseData.put("PostalCode", updatedContact.getPostalCode());
+            responseData.put("Country", updatedContact.getCountry());
+
+            return ResponseEntity.ok(responseData);
+
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body("Error updating patient details: " + e.getMessage());
+        }
+    }
+
     // Helper method to map appointments to response format
     private List<Map<String, Object>> mapAppointmentsToResponse(List<Appointment> appointments) {
         return appointments.stream()

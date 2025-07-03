@@ -3,6 +3,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="_csrf" th:content="${_csrf.token}"/>
+    <meta name="_csrf_header" th:content="${_csrf.headerName}"/>
     <title>Patient Details - MediCare Plus</title>
     <!-- Bootstrap CSS -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
@@ -105,27 +107,262 @@
             margin-bottom: 1.5rem;
         }
         .stats-card {
-            background: linear-gradient(135deg, rgba(102, 126, 234, 0.1), rgba(167, 139, 250, 0.1));
-            border: 1px solid rgba(102, 126, 234, 0.2);
-            border-radius: 0.75rem;
-            padding: 1.5rem;
+            background: linear-gradient(135deg, rgba(102, 126, 234, 0.08), rgba(167, 139, 250, 0.08));
+            border: 2px solid rgba(102, 126, 234, 0.15);
+            border-radius: 1rem;
+            padding: 1.75rem 1.5rem;
             text-align: center;
+            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+            cursor: pointer;
+            position: relative;
+            overflow: hidden;
+            backdrop-filter: blur(10px);
+            box-shadow: 0 4px 20px rgba(102, 126, 234, 0.08);
+            height: 160px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .stats-card:hover {
+            transform: translateY(-8px) scale(1.02);
+            box-shadow: 0 12px 40px rgba(102, 126, 234, 0.2);
+            background: linear-gradient(135deg, rgba(102, 126, 234, 0.12), rgba(167, 139, 250, 0.12));
+            border-color: rgba(102, 126, 234, 0.3);
+        }
+
+        .stats-icon {
+            opacity: 0.7;
+            color: #6366f1;
             transition: all 0.3s ease;
         }
-        .stats-card:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 4px 15px rgba(102, 126, 234, 0.15);
+
+        .stats-card:hover .stats-icon {
+            opacity: 1;
+            transform: scale(1.1);
         }
-        .stats-number {
-            font-size: 2rem;
-            font-weight: 700;
-            color: #007bff;
+
+        .stats-card.clickable-stat:hover {
+            border-color: #007bff;
+            background: linear-gradient(135deg, rgba(0, 123, 255, 0.12), rgba(102, 126, 234, 0.12));
+        }
+
+        .stats-card.clickable-stat:active {
+            transform: translateY(-4px) scale(0.98);
+            box-shadow: 0 6px 25px rgba(102, 126, 234, 0.25);
+        }
+
+        /* Individual card colors with enhanced hover effects */
+        .stats-card[data-status="all"] {
+            background: linear-gradient(135deg, rgba(99, 102, 241, 0.08), rgba(139, 92, 246, 0.08));
+            border-color: rgba(99, 102, 241, 0.15);
+        }
+
+        .stats-card[data-status="all"] .stats-icon {
+            color: #6366f1;
+        }
+
+        .stats-card[data-status="all"]:hover {
+            background: linear-gradient(135deg, rgba(99, 102, 241, 0.15), rgba(139, 92, 246, 0.15));
+            border-color: rgba(99, 102, 241, 0.3);
+            box-shadow: 0 12px 40px rgba(99, 102, 241, 0.2);
+        }
+
+        .stats-card[data-status="scheduled"] {
+            background: linear-gradient(135deg, rgba(59, 130, 246, 0.08), rgba(37, 99, 235, 0.08));
+            border-color: rgba(59, 130, 246, 0.15);
+        }
+
+        .stats-card[data-status="scheduled"] .stats-icon {
+            color: #3b82f6;
+        }
+
+        .stats-card[data-status="scheduled"]:hover {
+            background: linear-gradient(135deg, rgba(59, 130, 246, 0.15), rgba(37, 99, 235, 0.15));
+            border-color: rgba(59, 130, 246, 0.3);
+            box-shadow: 0 12px 40px rgba(59, 130, 246, 0.2);
+        }
+
+        .stats-card[data-status="completed"] {
+            background: linear-gradient(135deg, rgba(34, 197, 94, 0.08), rgba(22, 163, 74, 0.08));
+            border-color: rgba(34, 197, 94, 0.15);
+        }
+
+        .stats-card[data-status="completed"] .stats-icon {
+            color: #22c55e;
+        }
+
+        .stats-card[data-status="completed"]:hover {
+            background: linear-gradient(135deg, rgba(34, 197, 94, 0.15), rgba(22, 163, 74, 0.15));
+            border-color: rgba(34, 197, 94, 0.3);
+            box-shadow: 0 12px 40px rgba(34, 197, 94, 0.2);
+        }
+
+        .stats-card[data-status="pending"] {
+            background: linear-gradient(135deg, rgba(245, 158, 11, 0.08), rgba(217, 119, 6, 0.08));
+            border-color: rgba(245, 158, 11, 0.15);
+        }
+
+        .stats-card[data-status="pending"] .stats-icon {
+            color: #f59e0b;
+        }
+
+        .stats-card[data-status="pending"]:hover {
+            background: linear-gradient(135deg, rgba(245, 158, 11, 0.15), rgba(217, 119, 6, 0.15));
+            border-color: rgba(245, 158, 11, 0.3);
+            box-shadow: 0 12px 40px rgba(245, 158, 11, 0.2);
+        }
+
+        .stats-card[data-status="cancelled"] {
+            background: linear-gradient(135deg, rgba(239, 68, 68, 0.08), rgba(220, 38, 38, 0.08));
+            border-color: rgba(239, 68, 68, 0.15);
+        }
+
+        .stats-card[data-status="cancelled"] .stats-icon {
+            color: #ef4444;
+        }
+
+        .stats-card[data-status="cancelled"]:hover {
+            background: linear-gradient(135deg, rgba(239, 68, 68, 0.15), rgba(220, 38, 38, 0.15));
+            border-color: rgba(239, 68, 68, 0.3);
+            box-shadow: 0 12px 40px rgba(239, 68, 68, 0.2);
+        }
+
+        /* Modal styles for appointment details */
+        .appointment-modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.5);
+            z-index: 1000;
+            justify-content: center;
+            align-items: center;
+            backdrop-filter: blur(5px);
+        }
+
+        .appointment-modal.show {
+            display: flex;
+        }
+
+        .modal-content {
+            background: white;
+            border-radius: 1rem;
+            width: 90%;
+            max-width: 800px;
+            max-height: 90vh;
+            overflow-y: auto;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
+            animation: modalAppear 0.3s ease-out;
+        }
+        @keyframes modalAppear {
+            from {
+                opacity: 0;
+                transform: scale(0.9) translateY(-20px);
+            }
+            to {
+                opacity: 1;
+                transform: scale(1) translateY(0);
+            }
+        }
+        .modal-header {
+            background: #007bff;
+            color: white;
+            padding: 1.5rem;
+            border-radius: 1rem 1rem 0 0;
+            display: flex;
+            justify-content: between;
+            align-items: center;
+        }
+        .modal-title {
+            font-size: 1.25rem;
+            font-weight: 600;
+            margin: 0;
+        }
+        .modal-close {
+            background: none;
+            border: none;
+            color: white;
+            font-size: 1.5rem;
+            cursor: pointer;
+            padding: 0.25rem;
+            border-radius: 0.25rem;
+            transition: background 0.2s;
+        }
+        .modal-close:hover {
+            background: rgba(255, 255, 255, 0.1);
+        }
+        .modal-body {
+            padding: 1.5rem;
+        }
+        .appointment-item {
+            background: #f8f9fa;
+            border: 1px solid #e9ecef;
+            border-radius: 0.5rem;
+            padding: 1rem;
+            margin-bottom: 1rem;
+            transition: all 0.2s ease;
+        }
+        .appointment-item:hover {
+            background: #e3f2fd;
+            border-color: #007bff;
+            transform: translateY(-1px);
+            box-shadow: 0 2px 8px rgba(0, 123, 255, 0.1);
+        }
+        .appointment-item:last-child {
+            margin-bottom: 0;
+        }
+        .appointment-header {
+            display: flex;
+            justify-content: between;
+            align-items: center;
             margin-bottom: 0.5rem;
         }
-        .stats-label {
-            font-size: 0.875rem;
-            color: #6b7280;
+        .appointment-id {
+            font-weight: 600;
+            color: #007bff;
+        }
+        .appointment-status {
+            padding: 0.25rem 0.75rem;
+            border-radius: 1rem;
+            font-size: 0.75rem;
             font-weight: 500;
+        }
+        .status-completed {
+            background: #d1fae5;
+            color: #065f46;
+        }
+        .status-pending {
+            background: #fef3c7;
+            color: #92400e;
+        }
+        .status-cancelled, .status-cancel {
+            background: #fee2e2;
+            color: #991b1b;
+        }
+        .status-scheduled {
+            background: #e0e7ff;
+            color: #3730a3;
+        }
+        .appointment-details {
+            color: #6b7280;
+            font-size: 0.875rem;
+        }
+        .appointment-details strong {
+            color: #374151;
+        }
+        .no-appointments {
+            text-align: center;
+            padding: 2rem;
+            color: #6b7280;
+        }
+        .no-appointments i {
+            font-size: 3rem;
+            margin-bottom: 1rem;
+            opacity: 0.5;
         }
         .loading {
             text-align: center;
@@ -304,6 +541,122 @@
         .character-count.limit-error {
             color: #dc2626;
         }
+
+        /* Confirmation Modal Styles */
+        .confirmation-modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.5);
+            z-index: 2000;
+            justify-content: center;
+            align-items: center;
+            backdrop-filter: blur(5px);
+        }
+
+        .confirmation-modal.show {
+            display: flex;
+        }
+
+        .confirmation-modal-content {
+            background: white;
+            border-radius: 1rem;
+            width: 90%;
+            max-width: 500px;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
+            animation: confirmationModalAppear 0.3s ease-out;
+            overflow: hidden;
+        }
+
+        @keyframes confirmationModalAppear {
+            from {
+                opacity: 0;
+                transform: scale(0.9) translateY(-20px);
+            }
+            to {
+                opacity: 1;
+                transform: scale(1) translateY(0);
+            }
+        }
+
+        .confirmation-modal-header {
+            background: #f59e0b;
+            color: white;
+            padding: 1.5rem;
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+
+        .confirmation-modal-title {
+            font-size: 1.25rem;
+            font-weight: 600;
+            margin: 0;
+        }
+
+        .confirmation-modal-body {
+            padding: 2rem;
+            text-align: center;
+        }
+
+        .confirmation-modal-body p {
+            font-size: 1rem;
+            color: #374151;
+            margin-bottom: 1rem;
+            background: none;
+            padding: 0;
+            border-radius: 0;
+        }
+
+        .confirmation-modal-body .text-muted {
+            color: #6b7280 !important;
+            font-size: 0.875rem;
+        }
+
+        .confirmation-modal-footer {
+            padding: 1.5rem 2rem 2rem;
+            display: flex;
+            gap: 1rem;
+            justify-content: center;
+        }
+
+        .btn-confirm {
+            padding: 0.75rem 2rem;
+            font-size: 0.9rem;
+            font-weight: 500;
+            border-radius: 0.5rem;
+            background: #007bff;
+            border: none;
+            color: white;
+            transition: all 0.3s ease;
+            cursor: pointer;
+        }
+
+        .btn-confirm:hover {
+            background: #0056b3;
+            transform: translateY(-2px);
+        }
+
+        .btn-confirm-cancel {
+            padding: 0.75rem 2rem;
+            font-size: 0.9rem;
+            font-weight: 500;
+            border-radius: 0.5rem;
+            background: #6b7280;
+            border: none;
+            color: white;
+            transition: all 0.3s ease;
+            cursor: pointer;
+        }
+
+        .btn-confirm-cancel:hover {
+            background: #4b5563;
+            transform: translateY(-2px);
+        }
+
         @keyframes spin {
             0% { transform: rotate(0deg); }
             100% { transform: rotate(360deg); }
@@ -458,29 +811,51 @@
         <div class="card">
             <div class="card-header">
                 <span><i class="fas fa-chart-bar"></i> Appointment Statistics</span>
+                <small class="text-light opacity-75">Click on any statistic to view detailed appointments</small>
             </div>
             <div class="card-body">
-                <div class="row g-4">
-                    <div class="col-md-3">
-                        <div class="stats-card">
+                <div class="row g-2 justify-content-center">
+                    <div class="col-xl-2 col-lg-3 col-md-4 col-sm-6 col-6 d-flex">
+                        <div class="stats-card clickable-stat flex-fill" onclick="showAppointmentModal('all')" data-status="all">
+                            <div class="stats-icon mb-2">
+                                <i class="fas fa-calendar-alt fa-2x"></i>
+                            </div>
                             <div class="stats-number" id="totalAppointments">0</div>
-                            <div class="stats-label">Total Appointments</div>
+                            <div class="stats-label">Total</div>
                         </div>
                     </div>
-                    <div class="col-md-3">
-                        <div class="stats-card">
+                    <div class="col-xl-2 col-lg-3 col-md-4 col-sm-6 col-6 d-flex">
+                        <div class="stats-card clickable-stat flex-fill" onclick="showAppointmentModal('scheduled')" data-status="scheduled">
+                            <div class="stats-icon mb-2">
+                                <i class="fas fa-clock fa-2x"></i>
+                            </div>
+                            <div class="stats-number" id="scheduledAppointments">0</div>
+                            <div class="stats-label">Scheduled</div>
+                        </div>
+                    </div>
+                    <div class="col-xl-2 col-lg-3 col-md-4 col-sm-6 col-6 d-flex">
+                        <div class="stats-card clickable-stat flex-fill" onclick="showAppointmentModal('completed')" data-status="completed">
+                            <div class="stats-icon mb-2">
+                                <i class="fas fa-check-circle fa-2x"></i>
+                            </div>
                             <div class="stats-number" id="completedAppointments">0</div>
                             <div class="stats-label">Completed</div>
                         </div>
                     </div>
-                    <div class="col-md-3">
-                        <div class="stats-card">
+                    <div class="col-xl-2 col-lg-3 col-md-4 col-sm-6 col-6 d-flex">
+                        <div class="stats-card clickable-stat flex-fill" onclick="showAppointmentModal('pending')" data-status="pending">
+                            <div class="stats-icon mb-2">
+                                <i class="fas fa-hourglass-half fa-2x"></i>
+                            </div>
                             <div class="stats-number" id="pendingAppointments">0</div>
                             <div class="stats-label">Pending</div>
                         </div>
                     </div>
-                    <div class="col-md-3">
-                        <div class="stats-card">
+                    <div class="col-xl-2 col-lg-3 col-md-4 col-sm-6 col-6 d-flex">
+                        <div class="stats-card clickable-stat flex-fill" onclick="showAppointmentModal('cancelled')" data-status="cancelled">
+                            <div class="stats-icon mb-2">
+                                <i class="fas fa-times-circle fa-2x"></i>
+                            </div>
                             <div class="stats-number" id="cancelledAppointments">0</div>
                             <div class="stats-label">Cancelled</div>
                         </div>
@@ -543,6 +918,49 @@
     <!-- Back Button -->
     <div class="text-center mt-4">
         <button onclick="history.back()" class="btn btn-back"><i class="fas fa-arrow-left me-2"></i>Back to Patients List</button>
+    </div>
+</div>
+
+<!-- Appointment Modal -->
+<div id="appointmentModal" class="appointment-modal">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h5 class="modal-title" id="modalTitle">Appointments</h5>
+            <button class="modal-close" onclick="closeAppointmentModal()">
+                <i class="fas fa-times"></i>
+            </button>
+        </div>
+        <div class="modal-body">
+            <div id="appointmentsList">
+                <!-- Appointments will be loaded here -->
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Confirmation Modal (Hidden by default) -->
+<div id="confirmationModal" class="confirmation-modal">
+    <div class="confirmation-modal-content">
+        <div class="confirmation-modal-header">
+            <h5 class="confirmation-modal-title">
+                <i class="fas fa-exclamation-triangle me-2"></i>
+                Confirm Update
+            </h5>
+        </div>
+        <div class="confirmation-modal-body">
+            <p>Are you sure you want to update this patient's information?</p>
+            <p class="text-muted mb-0">
+                <small>This action will save all changes to the database and cannot be undone.</small>
+            </p>
+        </div>
+        <div class="confirmation-modal-footer">
+            <button type="button" class="btn-confirm" id="confirmYes">
+                <i class="fas fa-check me-2"></i>Yes, Update
+            </button>
+            <button type="button" class="btn-confirm-cancel" id="confirmNo">
+                <i class="fas fa-times me-2"></i>Cancel
+            </button>
+        </div>
     </div>
 </div>
 
@@ -690,6 +1108,7 @@
 
             // Appointment Statistics
             setElementContent('totalAppointments', totalAppointments);
+            setElementContent('scheduledAppointments', totalAppointments - completedAppointments - pendingAppointments - cancelledAppointments);
             setElementContent('completedAppointments', completedAppointments);
             setElementContent('pendingAppointments', pendingAppointments);
             setElementContent('cancelledAppointments', cancelledAppointments);
@@ -701,6 +1120,9 @@
             // Additional Information
             setElementContent('description', patient.Description);
             setElementContent('createdAt', formatDateTime(new Date().toISOString())); // Default to current date
+
+            // Store patient appointments data for modal - assign to global variable
+            patientAppointments = patient.Appointments || [];
 
             showContent();
 
@@ -1288,7 +1710,7 @@
         return true;
     }
 
-    // Confirm and save all information
+    // Confirm and save all information with confirmation popup
     async function confirmUpdateAllInfo() {
         const patientIdElement = document.getElementById('patientId');
         if (!patientIdElement) {
@@ -1302,6 +1724,19 @@
             return;
         }
 
+        // Show confirmation popup
+        const isConfirmed = await showConfirmationModal();
+        if (!isConfirmed) {
+            return; // User cancelled the operation
+        }
+
+        // Execute the actual save operation
+        await executeUpdatePatientInfo();
+    }
+
+    // Execute the actual update operation
+    async function executeUpdatePatientInfo() {
+        const patientIdElement = document.getElementById('patientId');
         const patientId = patientIdElement.textContent;
         const dateOfBirth = document.getElementById('dateOfBirthEdit').value;
         const gender = document.getElementById('genderEdit').value;
@@ -1316,11 +1751,46 @@
         showLoading();
 
         try {
-            const response = await fetch(`/receptionist/api/patient-details/${patientId}`, {
+            // Get CSRF token from meta tag or cookie
+            let csrfToken = '';
+            let csrfHeader = '';
+
+            // Try to get CSRF token from meta tags first
+            const csrfTokenMeta = document.querySelector('meta[name="_csrf"]');
+            const csrfHeaderMeta = document.querySelector('meta[name="_csrf_header"]');
+
+            if (csrfTokenMeta && csrfHeaderMeta) {
+                csrfToken = csrfTokenMeta.getAttribute('content');
+                csrfHeader = csrfHeaderMeta.getAttribute('content');
+            } else {
+                // Try to get from cookie as fallback
+                const cookies = document.cookie.split(';');
+                for (let cookie of cookies) {
+                    const [name, value] = cookie.trim().split('=');
+                    if (name === 'XSRF-TOKEN') {
+                        csrfToken = decodeURIComponent(value);
+                        csrfHeader = 'X-XSRF-TOKEN';
+                        break;
+                    }
+                }
+            }
+
+            // Prepare headers
+            const headers = {
+                'Content-Type': 'application/json'
+            };
+
+            // Add CSRF token to headers if available
+            if (csrfToken && csrfHeader) {
+                headers[csrfHeader] = csrfToken;
+            }
+
+            console.log('Sending update request with headers:', headers);
+
+            const response = await fetch(`/api/patients/${patientId}/details`, {
                 method: 'PUT',
-                headers: {
-                    'Content-Type': 'application/json'
-                },
+                headers: headers,
+                credentials: 'same-origin', // Include cookies for authentication
                 body: JSON.stringify({
                     DateOfBirth: dateOfBirth,
                     Gender: gender,
@@ -1334,9 +1804,35 @@
                 })
             });
 
+            console.log('Response status:', response.status);
+            console.log('Response headers:', Object.fromEntries(response.headers.entries()));
+
             if (!response.ok) {
-                const errorText = await response.text();
-                throw new Error(errorText || 'Failed to update patient information');
+                let errorMessage = 'Failed to update patient information';
+
+                // Handle specific error status codes
+                if (response.status === 403) {
+                    errorMessage = 'Access denied. You do not have permission to update patient information. Please check your login status and try again.';
+                } else if (response.status === 401) {
+                    errorMessage = 'Authentication required. Please log in again.';
+                    // Redirect to login page
+                    window.location.href = '/login';
+                    return;
+                } else if (response.status === 404) {
+                    errorMessage = 'Patient not found.';
+                } else {
+                    // Try to get error message from response
+                    try {
+                        const errorText = await response.text();
+                        if (errorText) {
+                            errorMessage = errorText;
+                        }
+                    } catch (e) {
+                        console.error('Error parsing error response:', e);
+                    }
+                }
+
+                throw new Error(errorMessage);
             }
 
             const patient = await response.json();
@@ -1387,10 +1883,220 @@
         }
     }
 
+    // Show confirmation modal and return a promise
+    function showConfirmationModal() {
+        return new Promise((resolve) => {
+            const modal = document.getElementById('confirmationModal');
+            const confirmYes = document.getElementById('confirmYes');
+            const confirmNo = document.getElementById('confirmNo');
+
+            // Show the modal
+            modal.classList.add('show');
+            document.body.style.overflow = 'hidden';
+
+            // Remove any existing event listeners to prevent multiple bindings
+            const newConfirmYes = confirmYes.cloneNode(true);
+            const newConfirmNo = confirmNo.cloneNode(true);
+            confirmYes.parentNode.replaceChild(newConfirmYes, confirmYes);
+            confirmNo.parentNode.replaceChild(newConfirmNo, confirmNo);
+
+            // Handle Yes button
+            newConfirmYes.addEventListener('click', () => {
+                closeConfirmationModal();
+                resolve(true);
+            });
+
+            // Handle No button
+            newConfirmNo.addEventListener('click', () => {
+                closeConfirmationModal();
+                resolve(false);
+            });
+
+            // Handle click outside modal
+            modal.addEventListener('click', (e) => {
+                if (e.target === modal) {
+                    closeConfirmationModal();
+                    resolve(false);
+                }
+            });
+
+            // Handle Escape key
+            const handleEscape = (e) => {
+                if (e.key === 'Escape') {
+                    closeConfirmationModal();
+                    resolve(false);
+                    document.removeEventListener('keydown', handleEscape);
+                }
+            };
+            document.addEventListener('keydown', handleEscape);
+
+            function closeConfirmationModal() {
+                modal.classList.remove('show');
+                document.body.style.overflow = 'auto';
+                document.removeEventListener('keydown', handleEscape);
+            }
+        });
+    }
     // Cancel edit mode
     function cancelEditAll() {
         exitEditMode();
     }
+
+    // Global variable to store patient appointments data
+    let patientAppointments = [];
+
+    // Show appointment modal with filtered appointments by status
+    function showAppointmentModal(status) {
+        const modal = document.getElementById('appointmentModal');
+        const modalTitle = document.getElementById('modalTitle');
+        const appointmentsList = document.getElementById('appointmentsList');
+
+        // Set modal title based on status
+        let title = '';
+        switch(status) {
+            case 'all':
+                title = 'All Appointments';
+                break;
+            case 'completed':
+                title = 'Completed Appointments';
+                break;
+            case 'pending':
+                title = 'Pending Appointments';
+                break;
+            case 'cancelled':
+                title = 'Cancelled Appointments';
+                break;
+            default:
+                title = 'Appointments';
+        }
+        modalTitle.textContent = title;
+
+        // Filter appointments based on status
+        let filteredAppointments = [];
+        if (status === 'all') {
+            filteredAppointments = patientAppointments;
+        } else {
+            filteredAppointments = patientAppointments.filter(appointment => {
+                const appointmentStatus = appointment.Status.toLowerCase();
+                if (status === 'cancelled') {
+                    return appointmentStatus === 'cancel' || appointmentStatus === 'cancelled';
+                }
+                return appointmentStatus === status.toLowerCase();
+            });
+        }
+
+        // Render appointments list
+        renderAppointmentsList(filteredAppointments, appointmentsList);
+
+        // Show modal
+        modal.classList.add('show');
+        document.body.style.overflow = 'hidden'; // Prevent background scrolling
+    }
+
+    // Close appointment modal
+    function closeAppointmentModal() {
+        const modal = document.getElementById('appointmentModal');
+        modal.classList.remove('show');
+        document.body.style.overflow = 'auto'; // Restore background scrolling
+    }
+
+    // Render appointments list in modal
+    function renderAppointmentsList(appointments, container) {
+        container.innerHTML = '';
+
+        if (!appointments || appointments.length === 0) {
+            container.innerHTML = `
+                <div class="no-appointments">
+                    <i class="fas fa-calendar-times"></i>
+                    <p>No appointments found for this status.</p>
+                </div>
+            `;
+            return;
+        }
+
+        appointments.forEach(appointment => {
+            const appointmentDiv = document.createElement('div');
+            appointmentDiv.className = 'appointment-item';
+
+            // Get status class for styling
+            const statusClass = getStatusClass(appointment.Status);
+
+            // Format appointment date and time
+            const formattedDateTime = formatDateTime(appointment.DateTime);
+
+            appointmentDiv.innerHTML = `
+                <div class="appointment-header">
+                    <span class="appointment-id">Appointment #${appointment.AppointmentID}</span>
+                    <span class="appointment-status ${statusClass}">${appointment.Status}</span>
+                </div>
+                <div class="appointment-details">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <strong>Date & Time:</strong> ${formattedDateTime}
+                        </div>
+                        <div class="col-md-6">
+                            <strong>Doctor:</strong> ${appointment.DoctorName || 'Not Assigned'}
+                        </div>
+                    </div>
+                    ${appointment.DoctorSpecialty ? `
+                        <div class="mt-2">
+                            <strong>Specialty:</strong> ${appointment.DoctorSpecialty}
+                        </div>
+                    ` : ''}
+                    ${appointment.Description ? `
+                        <div class="mt-2">
+                            <strong>Description:</strong> ${appointment.Description}
+                        </div>
+                    ` : ''}
+                    ${appointment.Email ? `
+                        <div class="mt-2">
+                            <strong>Contact Email:</strong> ${appointment.Email}
+                        </div>
+                    ` : ''}
+                    ${appointment.PhoneNumber ? `
+                        <div class="mt-2">
+                            <strong>Contact Phone:</strong> ${appointment.PhoneNumber}
+                        </div>
+                    ` : ''}
+                </div>
+            `;
+
+            container.appendChild(appointmentDiv);
+        });
+    }
+
+    // Get CSS class for appointment status
+    function getStatusClass(status) {
+        const statusLower = status.toLowerCase();
+        switch(statusLower) {
+            case 'completed':
+                return 'status-completed';
+            case 'pending':
+                return 'status-pending';
+            case 'cancel':
+            case 'cancelled':
+                return 'status-cancelled';
+            case 'scheduled':
+                return 'status-scheduled';
+            default:
+                return 'status-pending';
+        }
+    }
+
+    // Close modal when clicking outside
+    document.addEventListener('click', function(event) {
+        const modal = document.getElementById('appointmentModal');
+        if (event.target === modal) {
+            closeAppointmentModal();
+        }
+    });
+
+    // Close modal with Escape key
+    document.addEventListener('keydown', function(event) {
+        if (event.key === 'Escape') {
+            closeAppointmentModal();
+        }
+    });
 
     // Initialize page
     document.addEventListener('DOMContentLoaded', function() {

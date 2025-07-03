@@ -161,10 +161,36 @@ public class ReceptionistService {
         return patientContactRepository.findByPatientId(patientId);
     }
 
+    /**
+     * Update patient information
+     */
+    @Transactional
+    public Patient updatePatient(Patient patient) {
+        try {
+            return patientRepository.save(patient);
+        } catch (Exception e) {
+            logger.error("Error updating patient: {}", e.getMessage(), e);
+            throw new RuntimeException("Failed to update patient: " + e.getMessage());
+        }
+    }
+
+    /**
+     * Save patient contact information
+     */
+    @Transactional
+    public PatientContact savePatientContact(PatientContact contact) {
+        try {
+            return patientContactRepository.save(contact);
+        } catch (Exception e) {
+            logger.error("Error saving patient contact: {}", e.getMessage(), e);
+            throw new RuntimeException("Failed to save patient contact: " + e.getMessage());
+        }
+    }
+
     // Check if the user is a Receptionist
     @SuppressWarnings("unused") // This method might be used elsewhere
     public boolean isReceptionist(Users user) {
-        return user.getRole().getRoleName().equals("RECEPTIONIST");
+        return user.getRole() != null && user.getRole().getRoleName().equals("RECEPTIONIST");
     }
 
     // Update appointment status
