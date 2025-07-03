@@ -11,6 +11,7 @@ import orochi.model.Users;
 import orochi.repository.UserRepository;
 import orochi.service.impl.DoctorServiceImpl;
 import orochi.service.impl.ReceptionistService;
+import orochi.service.impl.RoomServiceImpl;
 
 import java.time.LocalDate;
 import java.util.HashMap;
@@ -26,13 +27,16 @@ public class ReceptionistApiController {
     private final ReceptionistService receptionistService;
     private final DoctorServiceImpl doctorService;
     private final UserRepository userRepository;
+    private final RoomServiceImpl roomService;
 
     public ReceptionistApiController(ReceptionistService receptionistService,
                                      DoctorServiceImpl doctorService,
-                                     UserRepository userRepository) {
+                                     UserRepository userRepository,
+                                     RoomServiceImpl roomService) {
         this.receptionistService = receptionistService;
         this.doctorService = doctorService;
         this.userRepository = userRepository;
+        this.roomService = roomService;
     }
 
     @PostMapping("/appointments/confirm")
@@ -610,7 +614,126 @@ public class ReceptionistApiController {
         }
     }
 
-    // Helper method to map appointments to response format
+    @GetMapping("/rooms/by-specialty-doctor")
+    public ResponseEntity<?> getRoomsBySpecialtyAndDoctor(
+            @RequestParam Integer specialtyId,
+            @RequestParam Integer doctorId) {
+        try {
+            List<Map<String, Object>> rooms = receptionistService.getRoomsBySpecialtyAndDoctor(specialtyId, doctorId);
+            return ResponseEntity.ok(rooms);
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body("Error fetching rooms: " + e.getMessage());
+        }
+    }
+
+    /**
+     * API endpoint to get rooms by doctor and specialty
+     * Implements the SQL logic: SELECT DISTINCT s.SpecName AS SpecializationName, u.FullName AS DoctorName,
+     * r.RoomID, r.RoomNumber, d.DeptName AS DepartmentName
+     * FROM Specialization s INNER JOIN DoctorSpecialization ds ON s.SpecID = ds.SpecID
+     * INNER JOIN Doctor doc ON ds.DoctorID = doc.DoctorID
+     * INNER JOIN Users u ON doc.UserID = u.UserID
+     * LEFT JOIN Schedule sch ON doc.DoctorID = sch.DoctorID
+     * LEFT JOIN Room r ON sch.RoomID = r.RoomID
+     * LEFT JOIN Department d ON r.DepartmentID = d.DepartmentID
+     * ORDER BY u.FullName, s.SpecName, r.RoomNumber;
+     */
+    @GetMapping("/rooms-by-doctor-specialty")
+    public ResponseEntity<?> getRoomsByDoctorAndSpecialty(
+            @RequestParam Integer specialtyId,
+            @RequestParam Integer doctorId) {
+        try {
+            // Validate input parameters
+            if (doctorId == null || specialtyId == null) {
+                return ResponseEntity.badRequest().body("Doctor ID and Specialty ID are required");
+            }
+
+            // Get rooms using the service method
+            List<Map<String, Object>> rooms = roomService.getRoomsByDoctorAndSpecialty(doctorId, specialtyId);
+
+            if (rooms.isEmpty()) {
+                return ResponseEntity.ok(List.of()); // Return empty list instead of error
+            }
+
+            // Transform the data to match frontend expectations
+            List<Map<String, Object>> transformedRooms = rooms.stream()
+                    .map(room -> {
+                        Map<String, Object> roomData = new HashMap<>();
+                        roomData.put("roomId", room.get("RoomID"));
+                        roomData.put("roomNumber", room.get("RoomNumber"));
+                        roomData.put("departmentName", room.get("DepartmentName"));
+                        roomData.put("specializationName", room.get("SpecializationName"));
+                        roomData.put("doctorName", room.get("DoctorName"));
+                        return roomData;
+                    })
+                    .collect(Collectors.toList());
+
+            return ResponseEntity.ok(transformedRooms);
+
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.badRequest().body("Invalid request parameters: " + e.getMessage());
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body("Error fetching rooms: " + e.getMessage());
+        }
+    }
+
+    // Add new endpoint to match frontend URL pattern
+    @GetMapping("/rooms/doctor/{doctorId}/specialty/{specialtyId}")
+    public ResponseEntity<?> getRoomsByDoctorAndSpecialtyPath(
+            @PathVariable Integer doctorId,
+            @PathVariable Integer specialtyId) {
+        try {
+            // Validate input parameters
+            if (doctorId == null || specialtyId == null) {
+                return ResponseEntity.badRequest().body("Doctor ID and Specialty ID are required");
+            }
+
+            // Get rooms using the service method
+            List<Map<String, Object>> rooms = roomService.getRoomsByDoctorAndSpecialty(doctorId, specialtyId);
+
+            if (rooms.isEmpty()) {
+                return ResponseEntity.ok(List.of()); // Return empty list instead of error
+            }
+
+            // Transform the data to match frontend expectations
+            List<Map<String, Object>> transformedRooms = rooms.stream()
+                    .map(room -> {
+                        Map<String, Object> roomData = new HashMap<>();
+                        roomData.put("roomId", room.get("RoomID"));
+                        roomData.put("roomNumber", room.get("RoomNumber"));
+                        roomData.put("departmentName", room.get("DepartmentName"));
+                        roomData.put("specializationName", room.get("SpecializationName"));
+                        roomData.put("doctorName", room.get("DoctorName"));
+                        return roomData;
+                    })
+                    .collect(Collectors.toList());
+
+            return ResponseEntity.ok(transformedRooms);
+
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.badRequest().body("Invalid request parameters: " + e.getMessage());
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body("Error fetching rooms: " + e.getMessage());
+        }
+    }
+
+    @GetMapping("/doctors-by-specialty")
+    public ResponseEntity<?> getDoctorsBySpecialty(
+            @RequestParam Integer specialtyId) {
+        try {
+            // Fetch doctors by specialty
+            List<Map<String, Object>> doctors = doctorService.getDoctorsBySpecialtyId(specialtyId);
+
+            if (doctors.isEmpty()) {
+                return ResponseEntity.ok(doctors); // Return empty list, not 404
+            }
+
+            return ResponseEntity.ok(doctors);
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body("Error fetching doctors: " + e.getMessage());
+        }
+    }
+
     private List<Map<String, Object>> mapAppointmentsToResponse(List<Appointment> appointments) {
         return appointments.stream()
                 .map(appointment -> {

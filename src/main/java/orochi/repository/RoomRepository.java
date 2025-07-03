@@ -29,4 +29,68 @@ public interface RoomRepository extends JpaRepository<Room, Integer> {
 
     // Find all rooms by department ID
     List<Room> findByDepartmentId(Integer departmentId);
+
+    // Get rooms by doctor and specialty - implements the SQL logic from your requirements
+    @Query(value = "SELECT DISTINCT " +
+            "s.SpecName AS SpecializationName, " +
+            "u.FullName AS DoctorName, " +
+            "r.RoomID, " +
+            "r.RoomNumber, " +
+            "d.DeptName AS DepartmentName " +
+            "FROM Specialization s " +
+            "INNER JOIN DoctorSpecialization ds ON s.SpecID = ds.SpecID " +
+            "INNER JOIN Doctor doc ON ds.DoctorID = doc.DoctorID " +
+            "INNER JOIN Users u ON doc.UserID = u.UserID " +
+            "LEFT JOIN Schedule sch ON doc.DoctorID = sch.DoctorID " +
+            "LEFT JOIN Room r ON sch.RoomID = r.RoomID " +
+            "LEFT JOIN Department d ON r.DepartmentID = d.DepartmentID " +
+            "ORDER BY u.FullName, s.SpecName, r.RoomNumber",
+            nativeQuery = true)
+    List<Object[]> findRoomsByDoctorAndSpecialty(@Param("doctorId") Integer doctorId, @Param("specialtyId") Integer specialtyId);
+
+    // Find rooms by specialty ID - FIXED: Using correct entity relationships
+    @Query("SELECT DISTINCT r FROM Room r " +
+           "JOIN r.department d " +
+           "WHERE EXISTS (" +
+           "    SELECT 1 FROM Doctor doc " +
+           "    JOIN doc.specializations spec " +
+           "    WHERE spec.specId = :specialtyId " +
+           "    AND (d.headDoctor = doc OR " +
+           "         EXISTS (SELECT 1 FROM Schedule s WHERE s.doctor = doc AND s.room = r))" +
+           ") " +
+           "AND r.status = 'Available' " +
+           "ORDER BY r.roomNumber")
+    List<Room> findRoomsBySpecialtyId(@Param("specialtyId") Integer specialtyId);
+
+    // Alternative method using native query - FIXED
+    @Query(value = "SELECT DISTINCT r.* FROM Room r " +
+                   "INNER JOIN Department d ON r.DepartmentID = d.DepartmentID " +
+                   "WHERE EXISTS (" +
+                   "    SELECT 1 FROM Doctor doc " +
+                   "    INNER JOIN DoctorSpecialization ds ON doc.DoctorID = ds.DoctorID " +
+                   "    WHERE ds.SpecID = :specialtyId " +
+                   "    AND (d.HeadDoctorID = doc.DoctorID OR " +
+                   "         EXISTS (SELECT 1 FROM Schedule s WHERE s.DoctorID = doc.DoctorID AND s.RoomID = r.RoomID))" +
+                   ") " +
+                   "AND r.Status = 'Available' " +
+                   "ORDER BY r.RoomNumber",
+           nativeQuery = true)
+    List<Room> findRoomsBySpecialtyIdNative(@Param("specialtyId") Integer specialtyId);
+
+    // Get all rooms for doctors with specific specialty - FIXED
+    @Query(value = "SELECT DISTINCT r.RoomID, r.RoomNumber, r.RoomName, r.Type, " +
+                   "r.Capacity, r.Status, r.DepartmentID, r.Notes, d.DeptName " +
+                   "FROM Room r " +
+                   "INNER JOIN Department d ON r.DepartmentID = d.DepartmentID " +
+                   "WHERE EXISTS (" +
+                   "    SELECT 1 FROM Doctor doc " +
+                   "    INNER JOIN DoctorSpecialization ds ON doc.DoctorID = ds.DoctorID " +
+                   "    WHERE ds.SpecID = :specialtyId " +
+                   "    AND (d.HeadDoctorID = doc.DoctorID OR " +
+                   "         EXISTS (SELECT 1 FROM Schedule s WHERE s.DoctorID = doc.DoctorID AND s.RoomID = r.RoomID))" +
+                   ") " +
+                   "AND r.Status = 'Available' " +
+                   "ORDER BY r.RoomNumber",
+           nativeQuery = true)
+    List<Object[]> findDetailedRoomsBySpecialtyId(@Param("specialtyId") Integer specialtyId);
 }

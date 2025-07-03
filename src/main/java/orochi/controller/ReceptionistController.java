@@ -1,6 +1,7 @@
 package orochi.controller;
 
 import java.time.LocalDate;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -34,6 +35,7 @@ import orochi.repository.UserRepository;
 import orochi.service.AppointmentService;
 import orochi.service.SpecializationService;
 import orochi.service.impl.ReceptionistService;
+import orochi.service.RoomService;
 
 @Controller
 @RequestMapping("/receptionist")
@@ -44,6 +46,7 @@ public class ReceptionistController {
     private final SpecializationService specializationService;
     private final AppointmentService appointmentService;
     private final PatientRepository patientRepository;
+    private final RoomService roomService; // Add RoomService injection
 
     @Autowired
     private PasswordEncoder passwordEncoder;
@@ -51,12 +54,15 @@ public class ReceptionistController {
     private static final Logger logger = LoggerFactory.getLogger(ReceptionistController.class);
 
     @Autowired
-    public ReceptionistController(ReceptionistService receptionistService, UserRepository userRepository, SpecializationService specializationService, AppointmentService appointmentService, PatientRepository patientRepository) {
+    public ReceptionistController(ReceptionistService receptionistService, UserRepository userRepository,
+                                 SpecializationService specializationService, AppointmentService appointmentService,
+                                 PatientRepository patientRepository, RoomService roomService) {
         this.receptionistService = receptionistService;
         this.userRepository = userRepository;
         this.specializationService = specializationService;
         this.appointmentService = appointmentService;
         this.patientRepository = patientRepository;
+        this.roomService = roomService; // Initialize RoomService
     }
 
     @GetMapping("/dashboard")
@@ -950,6 +956,158 @@ public class ReceptionistController {
 
             // Return to a safe page
             return "redirect:/receptionist/patients";
+        }
+    }
+
+    // API endpoint for booking appointments
+    @PostMapping("/appointments/book")
+    @ResponseBody
+    public ResponseEntity<Map<String, Object>> bookAppointment(@Valid @ModelAttribute AppointmentFormDTO appointmentDTO,
+                                                               BindingResult bindingResult) {
+        Map<String, Object> response = new HashMap<>();
+
+        try {
+            if (bindingResult.hasErrors()) {
+                response.put("success", false);
+                response.put("message", "Validation errors: " + bindingResult.getAllErrors().get(0).getDefaultMessage());
+                return ResponseEntity.badRequest().body(response);
+            }
+
+            Appointment appointment = appointmentService.bookAppointment(appointmentDTO);
+
+            response.put("success", true);
+            response.put("message", "Appointment booked successfully");
+            response.put("appointmentId", appointment.getAppointmentId());
+
+            return ResponseEntity.ok(response);
+
+        } catch (Exception e) {
+            logger.error("Error booking appointment: ", e);
+            response.put("success", false);
+            response.put("message", e.getMessage());
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
+        }
+    }
+
+    // API endpoint to get doctor by specialty (single doctor per specialty)
+    @GetMapping("/api/doctor/specialty/{specialtyId}")
+    @ResponseBody
+    public ResponseEntity<List<Map<String, Object>>> getDoctorBySpecialtyApi(@PathVariable Integer specialtyId) {
+        try {
+            List<Doctor> doctors = appointmentService.getDoctorsBySpecialization(specialtyId);
+            List<Map<String, Object>> doctorList = doctors.stream().map(doctor -> {
+                Map<String, Object> doctorMap = new HashMap<>();
+                doctorMap.put("doctorId", doctor.getDoctorId());
+                // Sửa lỗi: Lấy fullName từ user object
+                doctorMap.put("fullName", doctor.getUser() != null ? doctor.getUser().getFullName() : "Unknown Doctor");
+                doctorMap.put("bioDescription", doctor.getBioDescription());
+                return doctorMap;
+            }).collect(Collectors.toList());
+
+            return ResponseEntity.ok(doctorList);
+        } catch (Exception e) {
+            logger.error("Error fetching doctors by specialty: ", e);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(new ArrayList<>());
+        }
+    }
+
+    // API endpoint to get rooms by specialty - NOW USING REAL DATA
+    @GetMapping("/api/rooms/specialty/{specialtyId}")
+    @ResponseBody
+    public ResponseEntity<List<Map<String, Object>>> getRoomsBySpecialty(@PathVariable Integer specialtyId) {
+        try {
+            // Use RoomService to get real room data by specialty
+            List<Map<String, Object>> roomDetails = roomService.getRoomDetailsWithDepartmentBySpecialtyId(specialtyId);
+
+            if (!roomDetails.isEmpty()) {
+                // Convert to the format expected by frontend
+                List<Map<String, Object>> rooms = roomDetails.stream()
+                        .map(roomData -> {
+                            Map<String, Object> room = new HashMap<>();
+                            room.put("roomId", roomData.get("roomId"));
+                            room.put("roomNumber", roomData.get("roomNumber"));
+                            room.put("departmentName", roomData.get("departmentName"));
+                            room.put("roomName", roomData.get("roomName"));
+                            room.put("type", roomData.get("type"));
+                            room.put("capacity", roomData.get("capacity"));
+                            return room;
+                        })
+                        .collect(Collectors.toList());
+
+                logger.info("Found {} rooms for specialty ID {}", rooms.size(), specialtyId);
+                return ResponseEntity.ok(rooms);
+            } else {
+                // If no rooms found via detailed query, try simplified approach
+                List<orochi.model.Room> roomEntities = roomService.getRoomsBySpecialtyId(specialtyId);
+
+                if (!roomEntities.isEmpty()) {
+                    List<Map<String, Object>> rooms = roomEntities.stream()
+                            .map(roomEntity -> {
+                                Map<String, Object> room = new HashMap<>();
+                                room.put("roomId", roomEntity.getRoomId());
+                                room.put("roomNumber", roomEntity.getRoomNumber());
+                                room.put("departmentName", roomEntity.getDepartment() != null ?
+                                        roomEntity.getDepartment().getDeptName() : "General");
+                                room.put("roomName", roomEntity.getRoomName());
+                                room.put("type", roomEntity.getType());
+                                room.put("capacity", roomEntity.getCapacity());
+                                return room;
+                            })
+                            .collect(Collectors.toList());
+
+                    logger.info("Found {} rooms (simplified) for specialty ID {}", rooms.size(), specialtyId);
+                    return ResponseEntity.ok(rooms);
+                }
+
+                // If still no rooms found, return a default/fallback room
+                logger.warn("No rooms found for specialty ID {}. Returning fallback room.", specialtyId);
+                List<Map<String, Object>> fallbackRooms = new ArrayList<>();
+                Map<String, Object> fallbackRoom = new HashMap<>();
+                fallbackRoom.put("roomId", 1);
+                fallbackRoom.put("roomNumber", "101");
+                fallbackRoom.put("departmentName", "General Medicine");
+                fallbackRoom.put("roomName", "Consultation Room 101");
+                fallbackRoom.put("type", "Consultation");
+                fallbackRoom.put("capacity", 2);
+                fallbackRooms.add(fallbackRoom);
+
+                return ResponseEntity.ok(fallbackRooms);
+            }
+
+        } catch (Exception e) {
+            logger.error("Error fetching rooms by specialty ID {}: ", specialtyId, e);
+
+            // Return fallback data in case of error
+            List<Map<String, Object>> errorFallbackRooms = new ArrayList<>();
+            Map<String, Object> errorRoom = new HashMap<>();
+            errorRoom.put("roomId", 1);
+            errorRoom.put("roomNumber", "101");
+            errorRoom.put("departmentName", "General");
+            errorRoom.put("roomName", "Emergency Room");
+            errorRoom.put("type", "Emergency");
+            errorRoom.put("capacity", 1);
+            errorFallbackRooms.add(errorRoom);
+
+            return ResponseEntity.ok(errorFallbackRooms);
+        }
+    }
+
+    // API endpoint to get doctor availability
+    @GetMapping("/api/doctor/{doctorId}/availability")
+    @ResponseBody
+    public ResponseEntity<Map<String, List<String>>> getDoctorAvailability(
+            @PathVariable Integer doctorId,
+            @RequestParam String date) {
+        try {
+            LocalDate appointmentDate = LocalDate.parse(date);
+            Map<String, List<String>> availability = appointmentService.getDoctorAvailability(appointmentDate, doctorId);
+            return ResponseEntity.ok(availability);
+        } catch (Exception e) {
+            logger.error("Error fetching doctor availability: ", e);
+            Map<String, List<String>> errorResponse = new HashMap<>();
+            errorResponse.put("bookedTimes", new ArrayList<>());
+            errorResponse.put("unavailableTimes", new ArrayList<>());
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(errorResponse);
         }
     }
 

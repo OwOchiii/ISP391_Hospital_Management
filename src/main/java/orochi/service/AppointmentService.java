@@ -345,10 +345,18 @@ public class AppointmentService {
         LocalTime appointmentTime = LocalTime.parse(appointmentDTO.getAppointmentTime());
         LocalDateTime dateTime = LocalDateTime.of(appointmentDate, appointmentTime);
 
+        // Check time slot availability
+        Map<String, List<String>> availability = getDoctorAvailability(appointmentDate, appointmentDTO.getDoctorId());
+        if (availability.get("bookedTimes").contains(appointmentDTO.getAppointmentTime()) ||
+                availability.get("unavailableTimes").contains(appointmentDTO.getAppointmentTime())) {
+            throw new RuntimeException("The selected time slot is unavailable. Please choose another time.");
+        }
+
         // Create new appointment
         Appointment appointment = new Appointment();
         appointment.setPatientId(appointmentDTO.getPatientId());
         appointment.setDoctorId(appointmentDTO.getDoctorId());
+        appointment.setRoomId(appointmentDTO.getRoomId()); // SET ROOM ID HERE
         appointment.setDateTime(dateTime);
         appointment.setStatus("Pending"); // Default status
         appointment.setEmail(appointmentDTO.getEmail());

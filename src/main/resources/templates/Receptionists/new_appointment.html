@@ -371,14 +371,10 @@
             width: 100%;
             height: 100%;
             background: rgba(0, 0, 0, 0.5);
-            z-index: 2000;
-            display: none;
-            align-items: center;
-            justify-content: center;
-        }
-
-        .confirmation-overlay.active {
             display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 1049;
         }
 
         .confirmation-dialog {
@@ -390,6 +386,10 @@
             box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
             text-align: center;
             animation: slideIn 0.3s ease-out;
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
         }
 
         @keyframes slideIn {
@@ -616,6 +616,11 @@
                                 <i class="bi bi-search"></i>
                             </button>
                         </div>
+                        <!-- Thêm phần hiển thị lỗi search -->
+                        <div id="searchError" class="error-message d-none">
+                            <i class="bi bi-exclamation-circle"></i>
+                            <span>Please search for a patient by name or phone number first.</span>
+                        </div>
                     </div>
                 </div>
             </form>
@@ -691,6 +696,27 @@
                 </div>
 
                 <div class="row">
+                    <div class="col-md-6 mb-3">
+                        <label for="roomId" class="form-label">
+                            Select Room <span class="required-asterisk">*</span>
+                        </label>
+                        <select id="roomId" name="roomId" class="form-select" required>
+                            <option value="">Choose a Room</option>
+                        </select>
+                        <div id="roomIdError" class="error-message d-none">
+                            <i class="bi bi-exclamation-circle"></i>
+                            <span>Please select a room</span>
+                        </div>
+                        <div class="room-info-display d-none" id="roomInfoDisplay">
+                            <div class="room-card">
+                                <div class="room-details">
+                                    <small class="text-muted">Room Details:</small>
+                                    <p id="roomDetails" class="mb-0"></p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
                     <div class="col-md-6 mb-3">
                         <label for="appointmentDate" class="form-label">
                             Appointment Date <span class="required-asterisk">*</span>
@@ -964,6 +990,19 @@
                 this.classList.remove('error');
             });
         }
+
+        // Add room selection change event
+        const roomSelect = document.getElementById('roomId');
+        if (roomSelect) {
+            roomSelect.addEventListener('change', function() {
+                const roomError = document.getElementById('roomIdError');
+                if (roomError) {
+                    roomError.classList.add('d-none');
+                }
+                this.classList.remove('error');
+                updateRoomInfo();
+            });
+        }
     });
 
     function initializeDatePicker() {
@@ -1099,49 +1138,267 @@
         el.classList.add('readonly');
     }
 
-    // Enhanced validation function
+    // Enhanced validation function with scroll to error
     function validateForm() {
         let isValid = true;
+        let firstErrorField = null;
 
         // Clear previous errors
         clearAllErrors();
 
-        // Validate Medical Specialty
-        const specialty = document.getElementById('specialtyId');
-        if (!specialty.value) {
-            showError('specialtyId', 'specialtyIdError', 'Please select a medical specialty');
-            isValid = false;
-        }
+        // Define required fields with their validation messages
+        const requiredFields = [
+            { id: 'specialtyId', errorId: 'specialtyIdError', message: 'Please select a medical specialty' },
+            { id: 'doctorId', errorId: 'doctorIdError', message: 'Please select a doctor' },
+            { id: 'roomId', errorId: 'roomIdError', message: 'Please select a room' },
+            { id: 'appointmentDate', errorId: 'appointmentDateError', message: 'Please select an appointment date' },
+            { id: 'fullName', errorId: 'fullNameError', message: 'Full name is required. Please search and select a patient first.' },
+            { id: 'phoneNumber', errorId: 'phoneNumberError', message: 'Phone number is required. Please search and select a patient first.' },
+            { id: 'email', errorId: 'emailError', message: 'Email address is required. Please search and select a patient first.' },
+            { id: 'dateOfBirth', errorId: 'dateOfBirthError', message: 'Date of birth is required. Please search and select a patient first.' },
+            { id: 'gender', errorId: 'genderError', message: 'Gender is required. Please search and select a patient first.' },
+            { id: 'description', errorId: 'descriptionError', message: 'Please describe your reason for visit or symptoms' }
+        ];
 
-        // Validate Doctor Selection
-        const doctor = document.getElementById('doctorId');
-        if (!doctor.value) {
-            showError('doctorId', 'doctorIdError', 'Please select a doctor');
-            isValid = false;
-        }
+        // Validate all required fields
+        requiredFields.forEach(field => {
+            const element = document.getElementById(field.id);
+            if (!element || !element.value || element.value.trim() === '') {
+                showError(field.id, field.errorId, field.message);
+                isValid = false;
 
-        // Validate Appointment Date
-        const appointmentDate = document.getElementById('appointmentDate');
-        if (!appointmentDate.value) {
-            showError('appointmentDate', 'appointmentDateError', 'Please select an appointment date');
-            isValid = false;
-        }
+                // Set first error field for scrolling
+                if (!firstErrorField) {
+                    firstErrorField = element;
+                }
+            }
+        });
 
-        // Validate Appointment Time
+        // Special validation for appointment time
         const appointmentTime = document.getElementById('appointmentTime');
         if (!appointmentTime.value) {
             showTimeError();
             isValid = false;
+
+            if (!firstErrorField) {
+                firstErrorField = document.getElementById('timeGrid');
+            }
         }
 
-        // Validate Description/Reason for Visit
-        const description = document.getElementById('description');
-        if (!description.value.trim()) {
-            showError('description', 'descriptionError', 'Please describe your reason for visit or symptoms');
-            isValid = false;
+        // If there are validation errors, scroll to the first error field
+        if (!isValid && firstErrorField) {
+            scrollToErrorField(firstErrorField);
         }
 
         return isValid;
+    }
+
+    // Function to scroll to error field smoothly
+    function scrollToErrorField(element) {
+        const rect = element.getBoundingClientRect();
+        const elementTop = rect.top + window.pageYOffset;
+        const offset = 100; // Offset from top of viewport
+
+        window.scrollTo({
+            top: elementTop - offset,
+            behavior: 'smooth'
+        });
+
+        // Focus on the element if it's focusable
+        setTimeout(() => {
+            if (element.focus && typeof element.focus === 'function') {
+                element.focus();
+            }
+        }, 500);
+    }
+
+    // Function to validate patient data fields specifically
+    function validatePatientData() {
+        const patientFields = ['fullName', 'phoneNumber', 'email', 'dateOfBirth', 'gender'];
+        let hasPatientData = false;
+
+        patientFields.forEach(fieldId => {
+            const field = document.getElementById(fieldId);
+            if (field && field.value && field.value.trim() !== '') {
+                hasPatientData = true;
+            }
+        });
+
+        return hasPatientData;
+    }
+
+    // Enhanced showConfirmation function with inline error display
+    function showConfirmation() {
+        // Clear any previous search errors
+        clearSearchError();
+
+        // First check if user has searched for a patient
+        const searchQuery = document.getElementById('searchQuery').value.trim();
+        const patientId = document.getElementById('patientIdInput').value;
+
+        // If no search query and no patient selected, show error inline at search field
+        if (!searchQuery && !patientId) {
+            showSearchError('Please search for a patient by name or phone number first.');
+            const searchInput = document.getElementById('searchQuery');
+            if (searchInput) {
+                scrollToErrorField(searchInput);
+                searchInput.focus();
+                searchInput.classList.add('error');
+                setTimeout(() => {
+                    searchInput.classList.remove('error');
+                }, 3000);
+            }
+            return;
+        }
+
+        // If search was done but no patient selected, show different message
+        if (searchQuery && !patientId) {
+            showSearchError('Please select a patient from the search results before booking an appointment.');
+            const searchResults = document.getElementById('searchResults');
+            if (searchResults && !searchResults.classList.contains('d-none')) {
+                scrollToErrorField(searchResults);
+            } else {
+                const searchInput = document.getElementById('searchQuery');
+                if (searchInput) {
+                    scrollToErrorField(searchInput);
+                    searchInput.focus();
+                }
+            }
+            return;
+        }
+
+        // Check if patient data is available
+        if (!validatePatientData()) {
+            showSearchError('Patient information is incomplete. Please search and select a patient first.');
+            const searchInput = document.getElementById('searchQuery');
+            if (searchInput) {
+                scrollToErrorField(searchInput);
+                searchInput.focus();
+            }
+            return;
+        }
+
+        // Then validate the form
+        if (!validateForm()) {
+            return;
+        }
+
+        document.getElementById('confirmationModal').style.display = 'block';
+    }
+
+    // Function to show search error inline
+    function showSearchError(message) {
+        const searchError = document.getElementById('searchError');
+        const searchInput = document.getElementById('searchQuery');
+
+        if (searchError) {
+            searchError.classList.remove('d-none');
+            searchError.querySelector('span').textContent = message;
+        }
+
+        if (searchInput) {
+            searchInput.classList.add('error');
+        }
+    }
+
+    // Function to clear search error
+    function clearSearchError() {
+        const searchError = document.getElementById('searchError');
+        const searchInput = document.getElementById('searchQuery');
+
+        if (searchError) {
+            searchError.classList.add('d-none');
+        }
+
+        if (searchInput) {
+            searchInput.classList.remove('error');
+        }
+    }
+
+    // Add event listener to clear search error when user starts typing
+    document.addEventListener('DOMContentLoaded', function () {
+        // ...existing code...
+
+        // Add search input event listener to clear errors
+        const searchInput = document.getElementById('searchQuery');
+        if (searchInput) {
+            searchInput.addEventListener('input', function() {
+                if (this.value.trim()) {
+                    clearSearchError();
+                }
+            });
+        }
+    });
+
+    function confirmBooking(confirm) {
+        document.getElementById('confirmationModal').style.display = 'none';
+
+        if (confirm) {
+            submitAppointment();
+        }
+    }
+
+    // Add function to submit appointment
+    async function submitAppointment() {
+        const formData = new FormData();
+
+        // Collect all form data
+        formData.append('patientId', document.getElementById('patientIdInput').value);
+        formData.append('specialtyId', document.getElementById('specialtyId').value);
+        formData.append('doctorId', document.getElementById('doctorId').value);
+        formData.append('roomId', document.getElementById('roomId').value);
+
+        // Convert date format from MM/DD/YYYY to YYYY-MM-DD
+        const appointmentDate = document.getElementById('appointmentDate').value;
+        const dateParts = appointmentDate.split('/');
+        const formattedDate = `${dateParts[2]}-${dateParts[0].padStart(2, '0')}-${dateParts[1].padStart(2, '0')}`;
+        formData.append('appointmentDate', formattedDate);
+
+        formData.append('appointmentTime', document.getElementById('appointmentTime').value);
+        formData.append('email', document.getElementById('email').value);
+        formData.append('phoneNumber', document.getElementById('phoneNumber').value);
+        formData.append('description', document.getElementById('description').value);
+
+        // Add CSRF token
+        const csrfToken = document.querySelector('input[name="_csrf"]').value;
+        formData.append('_csrf', csrfToken);
+
+        try {
+            const response = await $.ajax({
+                url: '/receptionist/appointments/book',
+                method: 'POST',
+                data: Object.fromEntries(formData),
+                dataType: 'json'
+            });
+
+            if (response.success) {
+                // Show success message
+                document.getElementById('successMessage').classList.remove('d-none');
+                // Reset form
+                document.getElementById('appointmentForm').reset();
+                // Scroll to top
+                window.scrollTo(0, 0);
+            } else {
+                alert('Error booking appointment: ' + (response.message || 'Unknown error'));
+            }
+        } catch (error) {
+            console.error('Error booking appointment:', error);
+            alert('Error booking appointment. Please try again.');
+        }
+    }
+
+    // Add input sanitization functions
+    function sanitizeOnInput(element) {
+        element.value = element.value.replace(/<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>/gi, '');
+    }
+
+    function autoResize(element) {
+        element.style.height = 'auto';
+        element.style.height = element.scrollHeight + 'px';
+    }
+
+    function sanitizeDescription(description) {
+        return description.replace(/<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>/gi, '').trim();
     }
 
     function showError(fieldId, errorId, message) {
@@ -1174,7 +1431,7 @@
 
     function clearAllErrors() {
         // Clear field errors
-        const fields = ['specialtyId', 'doctorId', 'appointmentDate', 'description'];
+        const fields = ['specialtyId', 'doctorId', 'roomId', 'appointmentDate', 'description', 'fullName', 'phoneNumber', 'email', 'dateOfBirth', 'gender'];
         fields.forEach(fieldId => {
             const field = document.getElementById(fieldId);
             const errorDiv = document.getElementById(fieldId + 'Error');
@@ -1210,24 +1467,39 @@
         const specialtyId = document.getElementById('specialtyId').value;
         const doctorSelect = document.getElementById('doctorId');
         const doctorInfo = document.getElementById('doctorInfoDisplay');
+        const roomSelect = document.getElementById('roomId');
 
+        // Clear previous selections
         doctorSelect.innerHTML = '<option value="">Choose a Doctor</option>';
+        roomSelect.innerHTML = '<option value="">Choose a Room</option>';
         doctorInfo.classList.remove('show');
 
         if (specialtyId) {
             doctorSelect.classList.add('loading');
-            let doctors = await getDoctorBySpecialtyId(specialtyId);
-            setTimeout(() => {
-                doctors.forEach(doctor => {
-                    const option = document.createElement('option');
-                    option.value = doctor.doctorId;
-                    option.text = `Dr. ${doctor.fullName}`;
-                    option.setAttribute('data-bio', doctor.bioDescription);
-                    option.setAttribute('data-name', doctor.fullName);
-                    doctorSelect.appendChild(option);
-                });
+            try {
+                // Get the single doctor for this specialty
+                let doctors = await getDoctorBySpecialtyId(specialtyId);
+                setTimeout(() => {
+                    if (doctors && doctors.length > 0) {
+                        // Since each specialty has only 1 doctor, take the first one and auto-select
+                        const doctor = doctors[0];
+                        const option = document.createElement('option');
+                        option.value = doctor.doctorId;
+                        option.text = `Dr. ${doctor.fullName}`;
+                        option.setAttribute('data-bio', doctor.bioDescription);
+                        option.setAttribute('data-name', doctor.fullName);
+                        option.selected = true; // Auto-select the doctor
+                        doctorSelect.appendChild(option);
+
+                        // Auto-update doctor info and rooms
+                        updateDoctorsAndTimeSlots();
+                    }
+                    doctorSelect.classList.remove('loading');
+                }, 500);
+            } catch (error) {
+                console.error('Error fetching doctors:', error);
                 doctorSelect.classList.remove('loading');
-            }, 500);
+            }
         }
 
         const appointmentDate = document.getElementById('appointmentDate').value;
@@ -1239,15 +1511,15 @@
     function getDoctorBySpecialtyId(specialtyId) {
         return new Promise((resolve, reject) => {
             $.ajax({
-                url: '/api/doctor/specialty/' + specialtyId,
+                url: '/receptionist/api/doctor/specialty/' + specialtyId,
                 method: 'GET',
                 dataType: 'json',
                 success: function (response) {
-                    resolve(response); // Resolve with the API response (array of doctors)
+                    resolve(response);
                 },
                 error: function (xhr, status, error) {
                     console.error('Error fetching doctors:', error);
-                    reject([]); // Reject with an empty array on error
+                    reject([]);
                 }
             });
         });
@@ -1261,345 +1533,214 @@
         }
         document.getElementById('doctorId').classList.remove('error');
 
-        showDoctorInfo();
-        const appointmentDate = document.getElementById('appointmentDate').value;
-        if (appointmentDate) {
-            updateTimeSlots();
-        }
-    }
-
-    function showDoctorInfo() {
         const doctorSelect = document.getElementById('doctorId');
         const selectedOption = doctorSelect.options[doctorSelect.selectedIndex];
         const doctorInfo = document.getElementById('doctorInfoDisplay');
 
-        if (selectedOption && selectedOption.value) {
+        if (doctorSelect.value && selectedOption) {
             const doctorName = selectedOption.getAttribute('data-name');
             const doctorBio = selectedOption.getAttribute('data-bio');
-            const specialtySelect = document.getElementById('specialtyId');
-            const specialtyName = specialtySelect.options[specialtySelect.selectedIndex].text.split(' - ')[0];
+            const specialtyName = document.getElementById('specialtyId').options[document.getElementById('specialtyId').selectedIndex].text.split(' - ')[0];
 
+            // Update doctor info display
             document.getElementById('doctorName').textContent = `Dr. ${doctorName}`;
             document.getElementById('doctorSpecialty').textContent = specialtyName;
-            document.getElementById('doctorBio').textContent = doctorBio;
-            document.getElementById('doctorAvatar').textContent = doctorName.substring(0, 2).toUpperCase();
+            document.getElementById('doctorBio').textContent = doctorBio || 'No additional information available.';
+
+            // Get initials for avatar
+            const initials = doctorName.split(' ').map(name => name.charAt(0)).join('').toUpperCase();
+            document.getElementById('doctorAvatar').textContent = initials;
 
             doctorInfo.classList.add('show');
+
+            // Update rooms when doctor is selected - auto-select the single room
+            updateRooms();
         } else {
             doctorInfo.classList.remove('show');
+            // Clear rooms when no doctor selected
+            const roomSelect = document.getElementById('roomId');
+            roomSelect.innerHTML = '<option value="">Choose a Room</option>';
+            const roomInfo = document.getElementById('roomInfoDisplay');
+            roomInfo.classList.add('d-none');
+        }
+
+        // Update time slots if date is also selected
+        const appointmentDate = document.getElementById('appointmentDate').value;
+        if (appointmentDate && doctorSelect.value) {
+            updateTimeSlots();
         }
     }
 
-    async function updateTimeSlots() {
-        const dateInput = document.getElementById('appointmentDate').value;
+    // New function to update rooms based on selected doctor and specialty
+    async function updateRooms() {
+        const specialtyId = document.getElementById('specialtyId').value;
         const doctorId = document.getElementById('doctorId').value;
+        const roomSelect = document.getElementById('roomId');
+        const roomInfo = document.getElementById('roomInfoDisplay');
 
-        if (dateInput && doctorId) {
-            const timeSlots = document.querySelectorAll('.time-slot');
-            timeSlots.forEach(slot => {
-                slot.classList.remove('selected', 'disabled');
-                slot.title = "Available";
-            });
-            document.getElementById('appointmentTime').value = '';
+        // Clear previous room selection
+        roomSelect.innerHTML = '<option value="">Choose a Room</option>';
+        roomInfo.classList.add('d-none');
 
-            const bookedTimes = await getAvailableTimeSlots(doctorId,dateInput);
-            setTimeout(() => {
-                timeSlots.forEach(slot => {
-                    const time = slot.getAttribute('data-time');
-                    if (bookedTimes.includes(time)) {
-                        slot.classList.add('disabled');
-                        slot.title = "This time slot is already booked";
+        if (specialtyId && doctorId) {
+            roomSelect.classList.add('loading');
+
+            try {
+                const rooms = await getRoomsBySpecialty(specialtyId);
+
+                setTimeout(() => {
+                    if (rooms && rooms.length > 0) {
+                        // Since each specialty has only 1 room, take the first one and auto-select
+                        const room = rooms[0];
+                        const option = document.createElement('option');
+                        option.value = room.roomId;
+                        option.text = `Room ${room.roomNumber} - ${room.departmentName}`;
+                        option.setAttribute('data-room-number', room.roomNumber);
+                        option.setAttribute('data-department', room.departmentName);
+                        option.selected = true; // Auto-select the room
+                        roomSelect.appendChild(option);
+
+                        // Auto-update room info
+                        updateRoomInfo();
                     } else {
-                        slot.title = "Available";
+                        const noRoomOption = document.createElement('option');
+                        noRoomOption.value = '';
+                        noRoomOption.text = 'No rooms available for this specialty';
+                        noRoomOption.disabled = true;
+                        roomSelect.appendChild(noRoomOption);
                     }
-                });
-            }, 500);
+                    roomSelect.classList.remove('loading');
+                }, 500);
+            } catch (error) {
+                console.error('Error fetching rooms:', error);
+                roomSelect.classList.remove('loading');
+                const errorOption = document.createElement('option');
+                errorOption.value = '';
+                errorOption.text = 'Error loading rooms';
+                errorOption.disabled = true;
+                roomSelect.appendChild(errorOption);
+            }
         }
     }
 
-    function getAvailableTimeSlots(doctorId, dateInput) {
-        const date = new Date(dateInput);
-        date.setDate(date.getDate() + 1);
-        const formattedDate = date.toISOString().split('T')[0];
+    // Modified function to get rooms by specialty instead of doctor+specialty
+    function getRoomsBySpecialty(specialtyId) {
         return new Promise((resolve, reject) => {
             $.ajax({
-                url: `/api/doctor/appointment?doctorId=${doctorId}&date=${formattedDate}`,
+                url: `/receptionist/api/rooms/specialty/${specialtyId}`,
                 method: 'GET',
                 dataType: 'json',
                 success: function (response) {
-                    resolve(response); // Array of booked times, e.g., ["09:00:00", "14:30:00"]
+                    resolve(response);
                 },
                 error: function (xhr, status, error) {
-                    console.error('Error fetching time slots:', error);
-                    reject([]); // Return empty array on error
+                    console.error('Error fetching rooms:', error);
+                    // Fallback: return mock room data for demonstration
+                    const mockRooms = [{
+                        roomId: 1,
+                        roomNumber: '101',
+                        departmentName: 'General'
+                    }];
+                    resolve(mockRooms);
                 }
             });
         });
     }
 
-    function selectTime(time, button) {
-        if (!button.classList.contains('disabled')) {
-            // Clear time error when user selects
-            const timeError = document.getElementById('appointmentTimeError');
-            if (timeError) {
-                timeError.classList.add('d-none');
-            }
-            document.getElementById('timeGrid').classList.remove('error');
+    // New function to handle room selection and display room info
+    function updateRoomInfo() {
+        // Clear room error when user selects
+        const roomError = document.getElementById('roomIdError');
+        if (roomError) {
+            roomError.classList.add('d-none');
+        }
+        document.getElementById('roomId').classList.remove('error');
 
-            document.querySelectorAll('.time-slot').forEach(btn => btn.classList.remove('selected'));
-            button.classList.add('selected');
-            document.getElementById('appointmentTime').value = time;
+        const roomSelect = document.getElementById('roomId');
+        const selectedOption = roomSelect.options[roomSelect.selectedIndex];
+        const roomInfo = document.getElementById('roomInfoDisplay');
+
+        if (roomSelect.value && selectedOption) {
+            const roomNumber = selectedOption.getAttribute('data-room-number');
+            const departmentName = selectedOption.getAttribute('data-department');
+
+            // Update room info display
+            const roomDetails = `Room ${roomNumber} - ${departmentName} Department`;
+            document.getElementById('roomDetails').textContent = roomDetails;
+
+            roomInfo.classList.remove('d-none');
+        } else {
+            roomInfo.classList.add('d-none');
         }
     }
 
-    // Function to auto-resize textarea based on content
-    function autoResize(element) {
-        element.style.height = 'auto';
-        element.style.height = (element.scrollHeight) + 'px';
-    }
-
-    function sanitizeOnInput(element) {
-        let value = element.value;
-        value = value.replace(/[<>"'&]/g, '');
-        value = value.trim().replace(/\s+/g, ' ');
-        if (value.length > 250) {
-            value = value.substring(0, 250);
-            alert('Tối đa 250 ký tự được phép cho mô tả triệu chứng.');
+    // Add missing time selection functions
+    function selectTime(time, element) {
+        // Clear time error when user selects
+        const timeError = document.getElementById('appointmentTimeError');
+        if (timeError) {
+            timeError.classList.add('d-none');
         }
-        element.value = value;
-        autoResize(element);
-    }
+        document.getElementById('timeGrid').classList.remove('error');
 
-    // Show confirmation dialog
-    function showConfirmation() {
-        // Validate form before showing confirmation
-        if (!validateForm()) {
-            // Scroll to first error
-            const firstError = document.querySelector('.error');
-            if (firstError) {
-                firstError.scrollIntoView({ behavior: 'smooth', block: 'center' });
-            }
-            return;
-        }
-
-        // Lấy giá trị từ các trường
-        const specialty = document.getElementById('specialtyId').value;
-        const doctor = document.getElementById('doctorId').value;
-        const date = document.getElementById('appointmentDate').value;
-        const time = document.getElementById('appointmentTime').value;
-        const phone = document.getElementById('phoneNumber').value.trim();
-        const email = document.getElementById('email').value.trim();
-
-        // Kiểm tra các trường bắt buộc
-        if (!specialty) {
-            alert('Please select a medical specialty.');
-            return;
-        }
-        if (!doctor) {
-            alert('Please select a doctor.');
-            return;
-        }
-        if (!date) {
-            alert('Please select an appointment date.');
-            return;
-        }
-        if (!time) {
-            alert('Please select an appointment time.');
-            return;
-        }
-        if (!phone) {
-            alert('Phone number is required.');
-            return;
-        }
-        if (!email) {
-            alert('Email address is required.');
-            return;
-        }
-
-        // Kiểm tra định dạng số điện thoại
-        const phoneRegex = /^0\d{9}$|^0\d{11}$/;
-        if (!phoneRegex.test(phone)) {
-            alert('Phone number must start with 0 and be either 10 or 12 digits long, with no spaces.');
-            return;
-        }
-
-        // Kiểm tra định dạng email
-        const emailRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
-        if (!emailRegex.test(email)) {
-            alert('Please enter a valid email address.');
-            return;
-        }
-
-        // Sanitize description before confirmation
-        let description = document.getElementById('description').value.trim();
-        description = sanitizeDescription(description);
-        document.getElementById('description').value = description;
-
-        // Hiển thị modal
-        const modal = document.getElementById('confirmationModal');
-        if (modal) {
-            modal.style.display = 'flex'; // Use flex to center the dialog
-        }
-    }
-
-    function confirmBooking(confirm) {
-        const modal = document.getElementById('confirmationModal');
-        if (modal) {
-            modal.style.display = 'none';
-        }
-
-        if (confirm) {
-            // Sanitize data before sending
-            const phoneNumber = document.getElementById('phoneNumber').value.replace(/\s+/g, '');
-            const email = document.getElementById('email').value.replace(/\s+/g, '');
-            let description = document.getElementById('description').value.trim();
-
-            // Final sanitization of description
-            description = sanitizeDescription(description);
-
-            document.getElementById('phoneNumber').value = phoneNumber;
-            document.getElementById('email').value = email;
-            document.getElementById('description').value = description;
-
-            // Format the appointment date for backend
-            const appointmentDateInput = document.getElementById('appointmentDate').value;
-            let formattedDate = '';
-
-            if (appointmentDateInput && appointmentDateInput.includes('/')) {
-                // Convert from MM/DD/YYYY to ISO format (YYYY-MM-DD)
-                const [month, day, year] = appointmentDateInput.split('/');
-                formattedDate = `${year}-${month.padStart(2, '0')}-${day.padStart(2, '0')}`;
-            }
-
-            // Debug info - check what data is being submitted
-            console.log('Submitting appointment with:');
-            console.log('Patient ID:', document.getElementById('patientIdInput').value);
-            console.log('Doctor ID:', document.getElementById('doctorId').value);
-            console.log('Date:', document.getElementById('appointmentDate').value);
-            console.log('Formatted Date:', formattedDate);
-            console.log('Time:', document.getElementById('appointmentTime').value);
-            console.log('Description:', document.getElementById('description').value);
-
-            // Show loading state
-            const mainContent = document.getElementById('mainContent');
-            mainContent.classList.add('loading');
-
-            // Create a proper form for submission
-            const form = document.getElementById('appointmentForm');
-
-            // Clean up any previous hidden appointmentDate fields to avoid duplicates
-            const existingHiddenInputs = form.querySelectorAll('input[name="appointmentDate"][type="hidden"]');
-            existingHiddenInputs.forEach(input => input.remove());
-
-            // Create a hidden input for appointmentDate with the correct format
-            const hiddenAppointmentDateInput = document.createElement('input');
-            hiddenAppointmentDateInput.type = 'hidden';
-            hiddenAppointmentDateInput.name = 'appointmentDate';
-            hiddenAppointmentDateInput.value = formattedDate;
-            form.appendChild(hiddenAppointmentDateInput);
-
-            // Update the visible appointmentDate field to prevent it from being submitted
-            const visibleDateInput = document.getElementById('appointmentDate');
-            visibleDateInput.name = 'appointmentDate_display'; // Change the name so it doesn't conflict
-
-            // Set action and method
-            form.action = '/receptionist/book-appointment';
-            form.method = 'POST';
-
-            // Submit the form
-            form.submit();
-        }
-    }
-
-    // Reset form fields after successful submission
-    function resetForm() {
-        // Reset specialty, doctor and date/time selections
-        document.getElementById('specialtyId').value = '';
-        document.getElementById('doctorId').innerHTML = '<option value="">Choose a Doctor</option>';
-        document.getElementById('appointmentDate').value = '';
-        document.getElementById('appointmentTime').value = '';
-
-        // Reset doctor info display
-        document.getElementById('doctorInfoDisplay').classList.remove('show');
-
-        // Reset patient fields
-        document.getElementById('patientIdInput').value = '';
-
-        const readOnlyFields = [
-            'fullName', 'phoneNumber', 'email', 'dateOfBirth', 'gender',
-            'country', 'province', 'district', 'streetAddress', 'postalCode', 'addressType'
-        ];
-
-        readOnlyFields.forEach(field => {
-            setReadOnlyField(field, '');
-        });
-
-        // Reset and disable description
-        const description = document.getElementById('description');
-        description.value = '';
-        description.disabled = true;
-        description.classList.add('readonly');
-
-        // Reset time slots
+        // Remove selected class from all time slots
         document.querySelectorAll('.time-slot').forEach(slot => {
-            slot.classList.remove('selected', 'disabled');
+            slot.classList.remove('selected');
         });
 
-        // Clear search results
-        document.getElementById('searchQuery').value = '';
-        document.getElementById('searchResults').classList.add('d-none');
+        // Add selected class to clicked element
+        element.classList.add('selected');
+
+        // Set the hidden input value
+        document.getElementById('appointmentTime').value = time;
     }
 
-    // Hàm làm sạch description
-    function sanitizeDescription(input) {
-        // Step 1: Encode HTML characters to prevent HTML rendering
-        const encoded = input.replace(/</g, '&lt;').replace(/>/g, '&gt;')
-                             .replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+    // Add missing time slots update function
+    async function updateTimeSlots() {
+        const doctorId = document.getElementById('doctorId').value;
+        const appointmentDate = document.getElementById('appointmentDate').value;
 
-        // Step 2: Remove or encode potential script tags and dangerous URLs
-        const div = document.createElement('div');
-        div.innerText = encoded; // Use innerText to ensure no HTML/script execution
-        let sanitized = div.innerHTML;
+        if (!doctorId || !appointmentDate) {
+            return;
+        }
 
-        // Step 3: Remove any remaining <a> tags or URLs with dangerous protocols
-        sanitized = sanitized.replace(/<a\b[^>]*>(.*?)<\/a>/gi, '$1'); // Remove <a> tags, keep content
-        sanitized = sanitized.replace(/\b(javascript|data):/gi, ''); // Remove dangerous protocols
+        try {
+            // Convert MM/DD/YYYY to YYYY-MM-DD format for API
+            const dateParts = appointmentDate.split('/');
+            const apiDate = `${dateParts[2]}-${dateParts[0].padStart(2, '0')}-${dateParts[1].padStart(2, '0')}`;
 
-        // Step 4: Normalize whitespace and trim
-        sanitized = sanitized.trim().replace(/\s+/g, ' ');
+            const response = await $.ajax({
+                url: `/api/doctor/${doctorId}/availability`,
+                method: 'GET',
+                data: { date: apiDate },
+                dataType: 'json'
+            });
 
-        return sanitized;
-    }
+            const bookedTimes = response.bookedTimes || [];
+            const unavailableTimes = response.unavailableTimes || [];
 
-    // Trim and clean input fields on blur
-    function cleanInputOnBlur(id, isStrict = false) {
-        const element = document.getElementById(id);
-        if (!element) return;
+            // Update time slots
+            document.querySelectorAll('.time-slot').forEach(slot => {
+                const time = slot.getAttribute('data-time');
+                slot.classList.remove('disabled', 'selected');
 
-        element.addEventListener('blur', () => {
-            let value = element.value.trim();
-
-            if (isStrict) {
-                // Remove all spaces for strict fields (phone/email)
-                value = value.replace(/\s+/g, '');
-            } else {
-                // Sanitize Description field
-                if (id === 'description') {
-                    value = sanitizeDescription(value);
+                if (bookedTimes.includes(time) || unavailableTimes.includes(time)) {
+                    slot.classList.add('disabled');
+                    slot.disabled = true;
                 } else {
-                    // Normalize spacing between words (one space only)
-                    value = value.replace(/\s+/g, ' ');
+                    slot.disabled = false;
                 }
-            }
+            });
 
-            element.value = value;
-        });
+        } catch (error) {
+            console.error('Error fetching time slots:', error);
+            // If API fails, just enable all slots
+            document.querySelectorAll('.time-slot').forEach(slot => {
+                slot.classList.remove('disabled');
+                slot.disabled = false;
+            });
+        }
     }
-
-    // Apply trimming logic to input fields
-    cleanInputOnBlur('phoneNumber', true); // strict: no space at all
-    cleanInputOnBlur('email', true);       // strict: no space at all
-    cleanInputOnBlur('description', false); // sanitize and normalize spaces
 </script>
 </body>
 </html>

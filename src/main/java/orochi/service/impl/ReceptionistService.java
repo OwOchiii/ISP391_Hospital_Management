@@ -2,6 +2,7 @@ package orochi.service.impl;
 
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.Set;
 import java.util.stream.Collectors;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -34,6 +35,7 @@ public class ReceptionistService {
     private final PatientContactRepository patientContactRepository;
     private final DoctorRepository DoctorRepository;
     private final ReceiptRepository receiptRepository;
+    private final RoomRepository roomRepository;
 
     @Autowired
     private TransactionRepository transactionRepository;
@@ -45,7 +47,8 @@ public class ReceptionistService {
             ReceptionistRepository receptionistRepository,
             PatientContactRepository patientContactRepository,
             DoctorRepository doctorRepository,
-            ReceiptRepository receiptRepository) {
+            ReceiptRepository receiptRepository,
+            RoomRepository roomRepository) {
         this.userRepository = userRepository;
         this.appointmentRepository = appointmentRepository;
         this.patientRepository = patientRepository;
@@ -53,6 +56,7 @@ public class ReceptionistService {
         this.patientContactRepository = patientContactRepository;
         this.DoctorRepository = doctorRepository;
         this.receiptRepository = receiptRepository;
+        this.roomRepository = roomRepository;
     }
 
     // Fetch all appointments for scheduling purposes
@@ -1097,6 +1101,115 @@ public class ReceptionistService {
 
         } catch (Exception e) {
             logger.error("Error fetching today's payment data (raw): {}", e.getMessage(), e);
+            return new ArrayList<>();
+        }
+    }
+
+    /**
+     * Get rooms by specialty and doctor based on the SQL logic:
+     * SELECT DISTINCT s.SpecName AS SpecializationName, u.FullName AS DoctorName,
+     * r.RoomID, r.RoomNumber, d.DeptName AS DepartmentName
+     * FROM Specialization s
+     * INNER JOIN DoctorSpecialization ds ON s.SpecID = ds.SpecID
+     * INNER JOIN Doctor doc ON ds.DoctorID = doc.DoctorID
+     * INNER JOIN Users u ON doc.UserID = u.UserID
+     * LEFT JOIN Schedule sch ON doc.DoctorID = sch.DoctorID
+     * LEFT JOIN Room r ON sch.RoomID = r.RoomID
+     * LEFT JOIN Department d ON r.DepartmentID = d.DepartmentID
+     * ORDER BY u.FullName, s.SpecName, r.RoomNumber;
+     */
+    public List<Map<String, Object>> getRoomsBySpecialtyAndDoctor(Integer specialtyId, Integer doctorId) {
+        try {
+            // First validate that the doctor has the required specialty
+            if (!validateDoctorSpecialty(doctorId, specialtyId)) {
+                return new ArrayList<>();
+            }
+
+            // Get doctor by ID to access schedule information
+            Optional<orochi.model.Doctor> doctorOptional = DoctorRepository.findById(doctorId);
+            if (doctorOptional.isEmpty()) {
+                return new ArrayList<>();
+            }
+
+            orochi.model.Doctor doctor = doctorOptional.get();
+
+            // Get specialty name for validation
+            String specializationName = doctor.getSpecializations().stream()
+                .filter(spec -> spec.getSpecId().equals(specialtyId))
+                .map(Specialization::getSpecName)
+                .findFirst()
+                .orElse("Unknown");
+
+            // Get rooms from doctor's schedule that match the department
+            List<Map<String, Object>> rooms = new ArrayList<>();
+
+            if (doctor.getSchedules() != null && !doctor.getSchedules().isEmpty()) {
+                // Get rooms from doctor's schedules
+                Set<Room> doctorRooms = doctor.getSchedules().stream()
+                    .map(Schedule::getRoom)
+                    .filter(Objects::nonNull)
+                    .collect(Collectors.toSet());
+
+                for (Room room : doctorRooms) {
+                    // Validate that the room's department matches the specialty
+                    if (room.getDepartment() != null) {
+                        String deptName = room.getDepartment().getDeptName();
+
+                        // Check if department name matches or contains the specialization
+                        // This is a simple matching logic - you can refine this based on your data
+                        if (deptName.toLowerCase().contains(specializationName.toLowerCase()) ||
+                            specializationName.toLowerCase().contains(deptName.toLowerCase())) {
+
+                            Map<String, Object> roomData = new HashMap<>();
+                            roomData.put("roomId", room.getRoomId());
+                            roomData.put("roomNumber", room.getRoomNumber());
+                            roomData.put("roomName", room.getRoomName());
+                            roomData.put("departmentName", deptName);
+                            roomData.put("specializationName", specializationName);
+                            roomData.put("doctorName", doctor.getUser().getFullName());
+                            roomData.put("capacity", room.getCapacity());
+                            roomData.put("status", room.getStatus());
+
+                            rooms.add(roomData);
+                        }
+                    }
+                }
+            }
+
+            // If no rooms found from schedule, get available rooms from the same department
+            if (rooms.isEmpty()) {
+                // Find specialty and get its associated department
+                // For now, we'll get all available rooms and let the frontend handle selection
+                List<Room> availableRooms = roomRepository.findAllAvailableRooms();
+
+                for (Room room : availableRooms) {
+                    if (room.getDepartment() != null) {
+                        Map<String, Object> roomData = new HashMap<>();
+                        roomData.put("roomId", room.getRoomId());
+                        roomData.put("roomNumber", room.getRoomNumber());
+                        roomData.put("roomName", room.getRoomName());
+                        roomData.put("departmentName", room.getDepartment().getDeptName());
+                        roomData.put("specializationName", specializationName);
+                        roomData.put("doctorName", doctor.getUser().getFullName());
+                        roomData.put("capacity", room.getCapacity());
+                        roomData.put("status", room.getStatus());
+
+                        rooms.add(roomData);
+                    }
+                }
+            }
+
+            // Sort by room number
+            rooms.sort((r1, r2) -> {
+                String room1 = (String) r1.get("roomNumber");
+                String room2 = (String) r2.get("roomNumber");
+                return room1.compareTo(room2);
+            });
+
+            return rooms;
+
+        } catch (Exception e) {
+            logger.error("Error fetching rooms by specialty and doctor: {}", e.getMessage(), e);
             return new ArrayList<>();
         }
     }

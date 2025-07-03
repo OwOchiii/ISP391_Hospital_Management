@@ -1121,7 +1121,9 @@
 
     // Apply filters with reset to page 1
     function applyFilters(status) {
-        const searchTerm = document.getElementById(`search-${status}`).value.trim();
+        // Trim và kiểm tra xem chuỗi tìm kiếm có chỉ chứa khoảng trắng không
+        const searchInput = document.getElementById(`search-${status}`).value;
+        const searchTerm = searchInput ? searchInput.trim() : '';
         const filterAgeGroup = document.getElementById(`filter-age-group-${status}`).value.trim();
         const filterDoctor = document.getElementById(`filter-doctor-${status}`).value.trim();
 

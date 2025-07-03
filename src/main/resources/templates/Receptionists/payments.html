@@ -981,7 +981,7 @@
                 <td>${payment.patientId || 'N/A'}</td>
                 <td>${payment.patientName || 'N/A'}</td>
                 <td>${payment.visitDate || 'N/A'}</td>
-                <td>${payment.amount ? Number(payment.amount).toLocaleString('vi-VN') : '0'} VND</td>
+                <td>$${payment.amount ? Number(payment.amount).toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2}) : '0.00'}</td>
                 <td>${getStatusDisplay(payment.status)}</td>
                 <td>
                     ${payment.status.toLowerCase() === 'pending' ? `<button class="btn btn-sm btn-success" onclick="payInvoice('${payment.patientId}', '${payment.receiptId}')"><i class="fas fa-money-check-alt"></i> Pay</button>` :
