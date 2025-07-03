@@ -585,23 +585,27 @@ public class ReceptionistController {
     @GetMapping("/appointmentRequest")
     public ResponseEntity<?> getAppointmentTableData(){
         try {
-            List<Map<String, Object>> appointmentTableData = receptionistService.getAppointmentTableData();
-            return ResponseEntity.ok(appointmentTableData);
+            // Sử dụng method mới để chỉ lấy appointments của ngày hiện tại
+            String todayStr = LocalDate.now().toString();
+            List<Map<String, Object>> todaysAppointmentTableData = receptionistService.getTodaysPendingAppointmentTableData(todayStr);
+            return ResponseEntity.ok(todaysAppointmentTableData);
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                    .body("Error retrieving appointment table data: " + e.getMessage());
+                    .body("Error retrieving today's appointment table data: " + e.getMessage());
         }
     }
 
-    // New endpoint for pending appointments only
+    // New endpoint for pending appointments only - also filter by today's date
     @GetMapping("/pendingAppointmentRequest")
     public ResponseEntity<?> getPendingAppointmentTableData(){
         try {
-            List<Map<String, Object>> pendingAppointmentTableData = receptionistService.getPendingAppointmentTableData();
-            return ResponseEntity.ok(pendingAppointmentTableData);
+            // Chỉ lấy pending appointments của ngày hiện tại
+            String todayStr = LocalDate.now().toString();
+            List<Map<String, Object>> todaysPendingAppointmentTableData = receptionistService.getTodaysPendingAppointmentTableData(todayStr);
+            return ResponseEntity.ok(todaysPendingAppointmentTableData);
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                    .body("Error retrieving pending appointment table data: " + e.getMessage());
+                    .body("Error retrieving today's pending appointment table data: " + e.getMessage());
         }
     }
 

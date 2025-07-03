@@ -18,4 +18,15 @@ public interface RoomRepository extends JpaRepository<Room, Integer> {
     // Đếm số phòng có trạng thái “Available” (có thể dùng nếu cần)
     @Query("SELECT COUNT(r) FROM Room r WHERE r.status = :status")
     Integer countByStatus(@Param("status") String status);
+
+    // Find rooms by department ID
+    @Query("SELECT r FROM Room r WHERE r.departmentId = :departmentId AND r.status = 'Available'")
+    List<Room> findByDepartmentIdAndStatusAvailable(@Param("departmentId") Integer departmentId);
+
+    // Find all available rooms - overload method để handle null departmentId
+    @Query("SELECT r FROM Room r WHERE r.status = 'Available'")
+    List<Room> findAllAvailableRooms();
+
+    // Find all rooms by department ID
+    List<Room> findByDepartmentId(Integer departmentId);
 }
