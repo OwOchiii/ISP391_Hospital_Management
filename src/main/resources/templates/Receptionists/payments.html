@@ -39,11 +39,22 @@
         }
 
         body {
-            font-family: 'Inter', sans-serif;
-            line-height: 1.6;
+            font-family: 'Inter', sans-serif; /* Tên bệnh nhân inherit từ body */
+            line-height: 1.6; /* Khoảng cách dòng 1.6 */
             color: var(--text-dark);
             background: var(--bg-light);
             overflow-x: hidden;
+        }
+
+        /* Table styling for patient names and data */
+        .table td {
+            /* Tên bệnh nhân hiển thị trong table cells */
+            font-family: 'Inter', sans-serif; /* inherit từ body */
+            font-weight: 400; /* Regular weight */
+            font-size: inherit; /* ~16px mặc định */
+            color: var(--text-dark);
+            vertical-align: middle;
+            padding: 1rem;
         }
 
         /* Sidebar Styles */
@@ -354,9 +365,13 @@
         }
 
         .table td {
-            font-size: 0.875rem;
+            /* Tên bệnh nhân hiển thị trong table cells */
+            font-family: 'Inter', sans-serif; /* inherit từ body */
+            font-weight: 400; /* Regular weight */
+            font-size: inherit; /* ~16px mặc định */
             color: var(--text-dark);
             vertical-align: middle;
+            padding: 1rem;
         }
 
         .btn-primary {
@@ -672,7 +687,7 @@
                             <table class="table table-hover" id="patientTable">
                                 <thead>
                                 <tr>
-                                    <th>#</th>
+                                    <th>No.</th>
                                     <th>Patient ID</th>
                                     <th>Full Name</th>
                                     <th>Phone Number</th>

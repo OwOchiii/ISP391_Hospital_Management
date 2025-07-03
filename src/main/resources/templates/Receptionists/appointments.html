@@ -37,8 +37,8 @@
         }
 
         body {
-            font-family: 'Inter', sans-serif;
-            line-height: 1.6;
+            font-family: 'Inter', sans-serif; /* Tên bệnh nhân inherit từ body */
+            line-height: 1.6; /* Khoảng cách dòng 1.6 */
             color: var(--text-dark);
             background: var(--bg-light);
             overflow-x: hidden;
@@ -309,9 +309,13 @@
         }
 
         .table td {
-            font-size: 0.875rem;
+            /* Tên bệnh nhân hiển thị trong table cells */
+            font-family: 'Inter', sans-serif; /* inherit từ body */
+            font-weight: 400; /* Regular weight */
+            font-size: inherit; /* ~16px mặc định */
             color: var(--text-dark);
             vertical-align: middle;
+            padding: 1rem;
         }
 
         .action-buttons {
@@ -641,7 +645,7 @@
                         <table class="table table-hover">
                             <thead>
                             <tr>
-                                <th>STT</th>
+                                <th style="width: 60px; text-align: center;">No.</th>
                                 <th>Name</th>
                                 <th>Age</th>
                                 <th>Phone</th>
@@ -686,7 +690,7 @@
                         <table class="table table-hover">
                             <thead>
                             <tr>
-                                <th>STT</th>
+                                <th style="width: 60px; text-align: center;">No.</th>
                                 <th>Name</th>
                                 <th>Age</th>
                                 <th>Phone</th>
@@ -731,7 +735,7 @@
                         <table class="table table-hover">
                             <thead>
                             <tr>
-                                <th>STT</th>
+                                <th style="width: 60px; text-align: center;">No.</th>
                                 <th>Name</th>
                                 <th>Age</th>
                                 <th>Phone</th>
@@ -781,7 +785,7 @@
                     <table class="table table-hover">
                         <thead>
                         <tr>
-                            <th>STT</th>
+                            <th style="width: 60px; text-align: center;">No.</th>
                             <th>Name</th>
                             <th>Age</th>
                             <th>Phone</th>
@@ -985,15 +989,19 @@
             if (paginatedAppointments.length === 0) {
                 tbody.innerHTML = '<tr><td colspan="7" class="text-center">No data available</td></tr>';
             } else {
-                paginatedAppointments.forEach(appt => {
+                paginatedAppointments.forEach((appt, index) => {
                     const row = document.createElement('tr');
+
+                    // Calculate sequence number: start from 1 for each status, continue across pages
+                    const sequenceNumber = (page - 1) * itemsPerPage + index + 1;
+
                     const actionsHtml = `
                         <button class="btn-view" onclick="viewAppointmentDetails(${appt.id || appt.stt})" title="View Details">
                             <i class="fas fa-eye"></i>
                         </button>
                     `;
                     row.innerHTML = `
-                        <td>${appt.stt}</td>
+                        <td style="text-align: center;">${sequenceNumber}</td>
                         <td>${appt.name}</td>
                         <td>${calculateAge(appt.dob)}</td>
                         <td>${appt.phone}</td>
@@ -1166,15 +1174,19 @@
                 // Limit to maxModalItems (16)
                 const limitedAppointments = filteredAppointments.slice(0, maxModalItems);
 
-                limitedAppointments.forEach(appt => {
+                limitedAppointments.forEach((appt, index) => {
                     const row = document.createElement('tr');
+
+                    // Calculate sequence number for modal: start from 1 for each status
+                    const sequenceNumber = index + 1;
+
                     const actionsHtml = `
                         <button class="btn-view" onclick="viewAppointmentDetails(${appt.id || appt.stt})" title="View Details">
                             <i class="fas fa-eye"></i>
                         </button>
                     `;
                     row.innerHTML = `
-                        <td>${appt.stt}</td>
+                        <td style="text-align: center;">${sequenceNumber}</td>
                         <td>${appt.name}</td>
                         <td>${calculateAge(appt.dob)}</td>
                         <td>${appt.phone}</td>
@@ -1208,6 +1220,45 @@
             modalList.innerHTML = '<tr><td colspan="7" class="text-center">Error loading appointments</td></tr>';
             appointmentModal.show();
         }
+    }
+
+    // Render appointment details in a new section
+    function renderAppointmentDetails(appointment) {
+        const detailsSection = document.getElementById('appointmentDetails');
+        detailsSection.innerHTML = '';
+
+        if (!appointment) {
+            detailsSection.innerHTML = '<p class="text-center text-muted">No appointment selected</p>';
+            return;
+        }
+
+        const { name, dob, phone, time, doctor, status, notes } = appointment;
+
+        const detailsHtml = `
+            <h5>Appointment Details</h5>
+            <div class="mb-3">
+                <strong>Name:</strong> ${name}
+            </div>
+            <div class="mb-3">
+                <strong>Age:</strong> ${calculateAge(dob)}
+            </div>
+            <div class="mb-3">
+                <strong>Phone:</strong> ${phone}
+            </div>
+            <div class="mb-3">
+                <strong>Time:</strong> ${formatDateTime(time)}
+            </div>
+            <div class="mb-3">
+                <strong>Doctor:</strong> ${doctor}
+            </div>
+            <div class="mb-3">
+                <strong>Status:</strong> ${status}
+            </div>
+            <div class="mb-3">
+                <strong>Notes:</strong> ${notes || 'N/A'}
+            </div>
+        `;
+        detailsSection.innerHTML = detailsHtml;
     }
 
     // Apply modal filters
@@ -1383,4 +1434,3 @@
 </script>
 </body>
 </html>
-

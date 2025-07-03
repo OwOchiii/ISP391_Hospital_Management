@@ -14,6 +14,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.validation.BindingResult;
@@ -43,6 +44,9 @@ public class ReceptionistController {
     private final SpecializationService specializationService;
     private final AppointmentService appointmentService;
     private final PatientRepository patientRepository;
+
+    @Autowired
+    private PasswordEncoder passwordEncoder;
 
     private static final Logger logger = LoggerFactory.getLogger(ReceptionistController.class);
 
@@ -894,7 +898,9 @@ public class ReceptionistController {
             registrationData.put("fullName", fullName.trim());
             registrationData.put("email", email.trim().toLowerCase());
             registrationData.put("phoneNumber", phoneNumber.trim());
-            registrationData.put("passwordHash", passwordHash);
+            // Hash the password before storing it
+            String hashedPassword = passwordEncoder.encode(passwordHash);
+            registrationData.put("passwordHash", hashedPassword);
             registrationData.put("dateOfBirth", dateOfBirth);
             registrationData.put("gender", gender);
             registrationData.put("streetAddress", streetAddress != null ? streetAddress.trim() : "");
