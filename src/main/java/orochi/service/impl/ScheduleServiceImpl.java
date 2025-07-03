@@ -395,4 +395,14 @@ public class ScheduleServiceImpl implements ScheduleService {
         // map sang DTO và trả về
         return pageEnt.map(this::convertToDTO);
     }
+
+    @Override
+    public List<Appointment> getAllAppointments() {
+        return appointmentRepository.findAll();
+    }
+
+    @Override
+    public List<Patient> getAllPatients() {
+        return patientRepository.findAll();
+    }
 }

@@ -61,4 +61,18 @@ public interface PatientRepository extends JpaRepository<Patient, Integer> {
 
     boolean existsByUserId(Integer userId);
 
+    @Query("""
+    SELECT p
+    FROM Patient p
+      JOIN p.user u
+    WHERE (:search      IS NULL OR LOWER(u.fullName) LIKE LOWER(CONCAT('%',:search,'%'))
+       OR LOWER(u.email) LIKE LOWER(CONCAT('%',:search,'%')))
+      AND (:statusFilter IS NULL OR u.status = :statusFilter)
+    ORDER BY p.patientId
+""")
+    Page<Patient> searchPatients(
+            @Param("search") String search,
+            @Param("statusFilter") String statusFilter,
+            Pageable pageable
+    );
 }

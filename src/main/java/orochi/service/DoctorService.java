@@ -4,18 +4,23 @@ import lombok.Getter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.dao.DataAccessException;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import orochi.model.Appointment;
 import orochi.model.Doctor;
+import orochi.model.DoctorEducation;
 import orochi.model.DoctorForm;
 import orochi.model.Patient;
 import orochi.model.Users;
 import orochi.repository.AppointmentRepository;
+import orochi.repository.DoctorEducationRepository;
 import orochi.repository.DoctorRepository;
 import orochi.repository.PatientContactRepository;
 import orochi.repository.PatientRepository;
@@ -23,6 +28,7 @@ import orochi.repository.UserRepository;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
@@ -39,18 +45,26 @@ public class DoctorService {
     private final UserRepository userRepository;
     @Getter
     private final PatientContactRepository patientContactRepository;
+    private final DoctorEducationRepository doctorEducationRepository;
+
+    @Autowired
+    private PasswordEncoder passwordEncoder;
+
+    @Value("${app.default.doctor.password}")
+    private String defaultPassword;
 
     @Autowired
     public DoctorService(AppointmentRepository appointmentRepository,
                          PatientRepository patientRepository,
                          DoctorRepository doctorRepository,
                          UserRepository userRepository,
-                         PatientContactRepository patientContactRepository) {
+                         PatientContactRepository patientContactRepository, DoctorEducationRepository doctorEducationRepository) {
         this.appointmentRepository = appointmentRepository;
         this.patientRepository = patientRepository;
         this.doctorRepository = doctorRepository;
         this.userRepository = userRepository;
         this.patientContactRepository = patientContactRepository;
+        this.doctorEducationRepository = doctorEducationRepository;
     }
 
     /**
@@ -268,17 +282,26 @@ public class DoctorService {
         }
     }
 
-    public List<Doctor> searchDoctors(String search, String statusFilter) {
+//    public List<Doctor> searchDoctors(String search, String statusFilter) {
+//        String trimmed = (search != null && !search.isBlank()) ? search.trim() : null;
+//        String status = (statusFilter != null && !statusFilter.isBlank()) ? statusFilter.trim() : null;
+//        try {
+//            logger.info("Searching doctors with keyword='{}' and status='{}'", trimmed, status);
+//            return doctorRepository.searchDoctors(trimmed, status);
+//        } catch (DataAccessException e) {
+//            logger.error("Error searching doctors with keyword='{}' and status='{}'", trimmed, status, e);
+//            return Collections.emptyList();
+//        }
+//    }
+
+    public Page<Doctor> searchDoctors(String search, String statusFilter, int page, int size) {
         String trimmed = (search != null && !search.isBlank()) ? search.trim() : null;
-        String status = (statusFilter != null && !statusFilter.isBlank()) ? statusFilter.trim() : null;
-        try {
-            logger.info("Searching doctors with keyword='{}' and status='{}'", trimmed, status);
-            return doctorRepository.searchDoctors(trimmed, status);
-        } catch (DataAccessException e) {
-            logger.error("Error searching doctors with keyword='{}' and status='{}'", trimmed, status, e);
-            return Collections.emptyList();
-        }
+        String status  = (statusFilter != null && !statusFilter.isBlank()) ? statusFilter.trim() : null;
+        Pageable pageable = PageRequest.of(page, size);
+
+        return doctorRepository.searchDoctors(trimmed, status, pageable);
     }
+
 
     public DoctorForm loadForm(int doctorId) {
         Doctor d = getDoctorById(doctorId);
@@ -291,39 +314,109 @@ public class DoctorService {
         form.setPhoneNumber(u.getPhoneNumber());
         form.setStatus(u.getStatus());
         form.setBioDescription(d.getBioDescription());
+        form.setImageUrl(d.getImageUrl());
+
+        // Load doctor education information if available
+        if (d.getEducations() != null && !d.getEducations().isEmpty()) {
+            List<String> degrees = new ArrayList<>();
+            List<String> institutions = new ArrayList<>();
+            List<Integer> graduations = new ArrayList<>();
+            List<String> educationDescriptions = new ArrayList<>();
+            List<String> certificateImageUrls = new ArrayList<>();
+
+            for (DoctorEducation education : d.getEducations()) {
+                degrees.add(education.getDegree());
+                institutions.add(education.getInstitution());
+                graduations.add(education.getGraduation());
+                educationDescriptions.add(education.getDescription());
+                certificateImageUrls.add(education.getCertificateImageUrl());
+            }
+
+            form.setDegrees(degrees);
+            form.setInstitutions(institutions);
+            form.setGraduations(graduations);
+            form.setEducationDescriptions(educationDescriptions);
+            form.setCertificateImageUrls(certificateImageUrls);
+        }
+
         return form;
     }
+        // … các field và constructor …
 
-    public void saveFromForm(DoctorForm form) {
-        // 1) xử lý Users
-        Users u;
-        if (form.getUserId() != null) {
-            u = userRepository.findById(form.getUserId())
-                    .orElseThrow(() -> new IllegalArgumentException("User not found: " + form.getUserId()));
-        } else {
-            u = new Users();
-            // thiết lập các mặc định: roleId, isGuest, createdAt,...
-            u.setRoleId(2);           // giả sử 2 = ROLE_DOCTOR
-            u.setGuest(false);
-            u.setCreatedAt(LocalDateTime.now());
-        }
-        u.setFullName(form.getFullName());
-        u.setEmail(form.getEmail());
-        u.setPhoneNumber(form.getPhoneNumber());
-        u.setStatus(form.getStatus());
-        userRepository.save(u);
+        /**
+         * Lưu hoặc cập nhật Doctor kèm Users, có kiểm tra trùng email trước khi persist.
+         */
+        public void saveFromForm(DoctorForm form) {
+            Users u;
+            Doctor d;
 
-        // 2) xử lý Doctor
-        Doctor d;
-        if (form.getDoctorId() != null) {
-            d = getDoctorById(form.getDoctorId());
-        } else {
-            d = new Doctor();
+            if (form.getDoctorId() != null) {
+                // CHỈNH SỬA
+                d = doctorRepository.findById(form.getDoctorId())
+                        .orElseThrow(() -> new IllegalArgumentException("Doctor not found " + form.getDoctorId()));
+                u = d.getUser();
+            } else {
+                // TẠO MỚI → gán password mặc định
+                u = new Users();
+                u.setRoleId(2);               // role doctor
+                u.setGuest(false);
+                u.setCreatedAt(LocalDateTime.now());
+                u.setStatus("Active");
+                u.setPasswordHash(passwordEncoder.encode(defaultPassword));
+                d = new Doctor();
+            }
+
+            // Cập nhật chung cho Users
+            u.setFullName(form.getFullName());
+            u.setEmail(form.getEmail());
+            u.setPhoneNumber(form.getPhoneNumber());
+            u.setStatus(form.getStatus());
+            userRepository.save(u);
+
+            // Cập nhật Doctor
+            d.setUserId(u.getUserId());
+            d.setBioDescription(form.getBioDescription());
+            d.setImageUrl(form.getImageUrl()); // Save the profile image URL
+            doctorRepository.save(d);
+
+            // Save doctor education information if available
+            if (form.getDegrees() != null && !form.getDegrees().isEmpty()) {
+                // First, delete existing education records to avoid duplicates
+                doctorEducationRepository.deleteByDoctorId(d.getDoctorId());
+
+                // Save new education records
+                for (int i = 0; i < form.getDegrees().size(); i++) {
+                    if (form.getDegrees().get(i) != null && !form.getDegrees().get(i).isEmpty()) {
+                        DoctorEducation education = new DoctorEducation();
+                        education.setDoctorId(d.getDoctorId());
+                        education.setDegree(form.getDegrees().get(i));
+
+                        // Set other fields if available
+                        if (form.getInstitutions() != null && i < form.getInstitutions().size()) {
+                            education.setInstitution(form.getInstitutions().get(i));
+                        }
+
+                        if (form.getGraduations() != null && i < form.getGraduations().size()) {
+                            education.setGraduation(form.getGraduations().get(i));
+                        }
+
+                        if (form.getEducationDescriptions() != null && i < form.getEducationDescriptions().size()) {
+                            education.setDescription(form.getEducationDescriptions().get(i));
+                        }
+
+                        if (form.getCertificateImageUrls() != null && i < form.getCertificateImageUrls().size()) {
+                            education.setCertificateImageUrl(form.getCertificateImageUrls().get(i));
+                        }
+
+                        // Save the education record
+                        doctorEducationRepository.save(education);
+                        logger.info("Saved education record for doctor ID: {}, degree: {}", d.getDoctorId(), education.getDegree());
+                    }
+                }
+            }
         }
-        d.setUserId(u.getUserId());
-        d.setBioDescription(form.getBioDescription());
-        doctorRepository.save(d);
-    }
+
+
 
     /**
      * Get doctor by ID
