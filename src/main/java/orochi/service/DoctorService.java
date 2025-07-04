@@ -277,25 +277,25 @@ public class DoctorService {
         }
     }
 
-//    public List<Doctor> searchDoctors(String search, String statusFilter) {
-//        String trimmed = (search != null && !search.isBlank()) ? search.trim() : null;
-//        String status = (statusFilter != null && !statusFilter.isBlank()) ? statusFilter.trim() : null;
-//        try {
-//            logger.info("Searching doctors with keyword='{}' and status='{}'", trimmed, status);
-//            return doctorRepository.searchDoctors(trimmed, status);
-//        } catch (DataAccessException e) {
-//            logger.error("Error searching doctors with keyword='{}' and status='{}'", trimmed, status, e);
-//            return Collections.emptyList();
-//        }
-//    }
+    public List<Doctor> searchDoctors(String search, String statusFilter) {
+        String trimmed = (search != null && !search.isBlank()) ? search.trim() : null;
+        String status = (statusFilter != null && !statusFilter.isBlank()) ? statusFilter.trim() : null;
+        try {
+            logger.info("Searching doctors with keyword='{}' and status='{}'", trimmed, status);
+            return doctorRepository.searchDoctors(trimmed, status);
+        } catch (DataAccessException e) {
+            logger.error("Error searching doctors with keyword='{}' and status='{}'", trimmed, status, e);
+            return Collections.emptyList();
+        }
+    }
 
-//    public Page<Doctor> searchDoctors(String search, String statusFilter, int page, int size) {
-//        String trimmed = (search != null && !search.isBlank()) ? search.trim() : null;
-//        String status  = (statusFilter != null && !statusFilter.isBlank()) ? statusFilter.trim() : null;
-//        Pageable pageable = PageRequest.of(page, size);
-//
-//        return doctorRepository.searchDoctors(trimmed, status, pageable);
-//    }
+    public Page<Doctor> searchDoctors(String search, String statusFilter, int page, int size) {
+        String trimmed = (search != null && !search.isBlank()) ? search.trim() : null;
+        String status  = (statusFilter != null && !statusFilter.isBlank()) ? statusFilter.trim() : null;
+        Pageable pageable = PageRequest.of(page, size);
+
+        return doctorRepository.searchDoctors(trimmed, pageable);
+    }
 
 
     public DoctorForm loadForm(int doctorId) {
@@ -448,3 +448,4 @@ public class DoctorService {
         }
     }
 }
+

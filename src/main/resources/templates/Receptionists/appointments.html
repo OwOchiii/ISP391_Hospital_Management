@@ -626,7 +626,7 @@
                     <div class="filter-group mb-3">
                         <div class="input-group">
                             <span class="input-group-text"><i class="fas fa-search"></i></span>
-                            <input type="text" class="form-control" id="search-in-progress" placeholder="Search by Name or Phone">
+                            <input type="text" class="form-control" id="search-in-progress" placeholder="Search by Name or Phone" pattern="[^\s]+" minlength="1" title="Search term cannot contain spaces">
                         </div>
                         <select class="form-control" id="filter-age-group-in-progress">
                             <option value="">All Age Groups</option>
@@ -671,7 +671,7 @@
                     <div class="filter-group mb-3">
                         <div class="input-group">
                             <span class="input-group-text"><i class="fas fa-search"></i></span>
-                            <input type="text" class="form-control" id="search-completed" placeholder="Search by Name or Phone">
+                            <input type="text" class="form-control" id="search-completed" placeholder="Search by Name or Phone" pattern="[^\s]+" minlength="1" title="Search term cannot contain spaces">
                         </div>
                         <select class="form-control" id="filter-age-group-completed">
                             <option value="">All Age Groups</option>
@@ -716,7 +716,7 @@
                     <div class="filter-group mb-3">
                         <div class="input-group">
                             <span class="input-group-text"><i class="fas fa-search"></i></span>
-                            <input type="text" class="form-control" id="search-rejected" placeholder="Search by Name or Phone">
+                            <input type="text" class="form-control" id="search-rejected" placeholder="Search by Name or Phone" pattern="[^\s]+" minlength="1" title="Search term cannot contain spaces">
                         </div>
                         <select class="form-control" id="filter-age-group-rejected">
                             <option value="">All Age Groups</option>
@@ -838,6 +838,21 @@
     checkScreenSize();
     window.addEventListener('load', checkScreenSize);
     window.addEventListener('resize', checkScreenSize);
+
+    // Add event listeners for search inputs to handle space key
+    document.addEventListener('DOMContentLoaded', function() {
+        // Add keydown event listeners to all search inputs
+        const searchInputs = document.querySelectorAll('[id^="search-"], #modalSearch');
+        searchInputs.forEach(input => {
+            input.addEventListener('keydown', function(event) {
+                // Check if space key was pressed
+                if (event.key === ' ' || event.keyCode === 32) {
+                    event.preventDefault(); // Prevent space from being entered
+                    // No error message display, just block the space character
+                }
+            });
+        });
+    });
 
     // Modal handling
     const appointmentModal = new bootstrap.Modal(document.getElementById('appointmentModal'));

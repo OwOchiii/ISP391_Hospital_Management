@@ -646,7 +646,7 @@
                 <div class="search-bar">
                     <div class="input-group mb-3">
                         <span class="input-group-text"><i class="fas fa-search"></i></span>
-                        <input type="text" class="form-control" id="searchInput" placeholder="Search by Name, Patient ID, Phone, or Visit Date...">
+                        <input type="text" class="form-control" id="searchInput" placeholder="Search by Name, Patient ID, Phone">
                     </div>
                     <!-- Filters -->
                     <button class="filter-toggle" type="button" data-bs-toggle="collapse" data-bs-target="#filterCollapse" aria-expanded="false" aria-controls="filterCollapse">
@@ -981,7 +981,7 @@
                 <td>${payment.patientId || 'N/A'}</td>
                 <td>${payment.patientName || 'N/A'}</td>
                 <td>${payment.visitDate || 'N/A'}</td>
-                <td>$${payment.amount ? Number(payment.amount).toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2}) : '0.00'}</td>
+                <td>${payment.amount ? Number(payment.amount).toLocaleString('vi-VN') : '0'} VND</td>
                 <td>${getStatusDisplay(payment.status)}</td>
                 <td>
                     ${payment.status.toLowerCase() === 'pending' ? `<button class="btn btn-sm btn-success" onclick="payInvoice('${payment.patientId}', '${payment.receiptId}')"><i class="fas fa-money-check-alt"></i> Pay</button>` :
@@ -1111,6 +1111,15 @@
     // Event listeners
     document.getElementById('searchInput').addEventListener('input', filterPayments);
     document.getElementById('statusFilter').addEventListener('change', filterPayments);
+
+    // Add event listener to block spaces in search input
+    document.getElementById('searchInput').addEventListener('keydown', function(event) {
+        // Check if space key was pressed
+        if (event.key === ' ' || event.keyCode === 32) {
+            event.preventDefault(); // Prevent space from being entered
+            // No error message, just block the space character
+        }
+    });
 
     // Initialize - Updated to load data from backend
     document.addEventListener('DOMContentLoaded', () => {

@@ -1,5 +1,7 @@
 package orochi.repository;
 
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -45,4 +47,7 @@ public interface DoctorRepository extends JpaRepository<Doctor, Integer> {
         """)
     List<Doctor> findBySpecialtyId(int specialtyId);
 
+    // Search doctors with optional keyword and pagination, removing status filter
+    @Query("SELECT d FROM Doctor d WHERE (:keyword IS NULL OR LOWER(d.bioDescription) LIKE LOWER(CONCAT('%', :keyword, '%')))")
+    Page<Doctor> searchDoctors(@Param("keyword") String keyword, Pageable pageable);
 }
