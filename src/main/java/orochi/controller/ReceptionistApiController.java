@@ -77,9 +77,9 @@ public class ReceptionistApiController {
                 return ResponseEntity.status(404).body("Appointment not found with ID: " + appointmentId);
             }
         } catch (IllegalArgumentException e) {
-            return ResponseEntity.badRequest().body("Error confirming appointment: " + e.getMessage());
+            return ResponseEntity.badRequest().body("Error: " + e.getMessage());
         } catch (Exception e) {
-            return ResponseEntity.badRequest().body("Error confirming appointment: " + e.getMessage());
+            return ResponseEntity.badRequest().body("Error: " + e.getMessage());
         }
     }
     @GetMapping("/doctors")
@@ -483,9 +483,9 @@ public class ReceptionistApiController {
                 return ResponseEntity.status(404).body("Appointment not found with ID: " + appointmentId);
             }
         } catch (IllegalArgumentException e) {
-            return ResponseEntity.badRequest().body("Error updating appointment status: " + e.getMessage());
+            return ResponseEntity.badRequest().body("Error: " + e.getMessage());
         } catch (Exception e) {
-            return ResponseEntity.badRequest().body("Error updating appointment status: " + e.getMessage());
+            return ResponseEntity.badRequest().body("Error: " + e.getMessage());
         }
     }
 
@@ -608,7 +608,6 @@ public class ReceptionistApiController {
             responseData.put("Country", updatedContact.getCountry());
 
             return ResponseEntity.ok(responseData);
-
         } catch (Exception e) {
             return ResponseEntity.badRequest().body("Error updating patient details: " + e.getMessage());
         }
