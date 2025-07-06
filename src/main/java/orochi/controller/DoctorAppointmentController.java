@@ -57,6 +57,9 @@ public class DoctorAppointmentController {
     @Autowired
     private DepartmentRepository departmentRepository;
 
+    @Autowired
+    private NotificationRepository notificationRepository;
+
     @GetMapping("")
     public String getAllAppointments(
             @RequestParam Integer doctorId,
@@ -156,6 +159,19 @@ public class DoctorAppointmentController {
             model.addAttribute("totalPages", 1);
             model.addAttribute("currentPage", page);
 
+            // Fetch notifications for the doctor
+            List<Notification> notifications = notificationRepository.findByUserIdOrderByCreatedAtDesc(doctor.getUserId());
+            if (notifications == null) {
+                notifications = new ArrayList<>();
+            }
+
+            // Count unread notifications
+            long unreadNotifications = notifications.stream()
+                    .filter(notification -> !notification.isRead())
+                    .count();
+
+            model.addAttribute("notifications", notifications);
+            model.addAttribute("unreadNotifications", unreadNotifications);
             logger.debug("Retrieved {} appointments for doctor ID: {}", appointments.size(), doctorId);
             return "doctor/appointments";
         } catch (Exception e) {

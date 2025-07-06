@@ -1,6 +1,8 @@
 // src/main/java/orochi/controller/AdminRoomController.java
 package orochi.controller;
 
+import jakarta.validation.Valid;
+import org.springframework.validation.BindingResult;
 import orochi.model.Room;
 import orochi.model.Department;
 import orochi.service.RoomService;
@@ -31,17 +33,24 @@ public class AdminRoomController {
     @GetMapping
     public String listRooms(
             @RequestParam("adminId") Integer adminId,
-            @RequestParam(value = "search", required = false) String search,
-            @RequestParam(value = "statusFilter", required = false) String statusFilter,
+
+            @RequestParam(value = "search",       required = false) String  search,
+            @RequestParam(value = "statusFilter", required = false) String  statusFilter,
+
+            @RequestParam(value = "typeFilter",   required = false) String  typeFilter,
+            @RequestParam(value = "deptFilter",   required = false) Integer deptFilter,
+
             @RequestParam(value = "page", defaultValue = "0") int page,
             @RequestParam(value = "size", defaultValue = "6") int size,
+
             Model model) {
 
-        // 1. Lấy danh sách phòng có filter/search
         List<Room> rooms = roomService.getAllRooms();
+
         if (search != null && !search.isBlank()) {
-            rooms = roomService.searchRooms(search);
+            rooms = roomService.searchRooms(search.trim());
         }
+
         if (statusFilter != null && !statusFilter.isBlank()) {
             String sf = statusFilter.trim();
             rooms = rooms.stream()
@@ -49,30 +58,52 @@ public class AdminRoomController {
                     .toList();
         }
 
-        // 2. Phân trang trên List<Room>
-        int totalItems = rooms.size();
-        int totalPages = totalItems > 0 ? (int) Math.ceil((double) totalItems / size) : 1;
-        if (page < 0) page = 0;
-        if (page >= totalPages) page = totalPages - 1;
+        if (typeFilter != null && !typeFilter.isBlank()) {
+            String tf = typeFilter.trim();
+            rooms = rooms.stream()
+                    .filter(r -> r.getType().equalsIgnoreCase(tf))
+                    .toList();
+        }
+
+        if (deptFilter != null) {
+            rooms = rooms.stream()
+                    .filter(r -> r.getDepartmentId().equals(deptFilter))
+                    .toList();
+        }
+
+        int totalItems  = rooms.size();
+        int totalPages  = totalItems > 0 ? (int) Math.ceil((double)totalItems / size) : 1;
+        page = Math.max(0, Math.min(page, totalPages - 1));
         int fromIndex = page * size;
-        int toIndex = Math.min(fromIndex + size, totalItems);
+        int toIndex   = Math.min(fromIndex + size, totalItems);
         List<Room> pageRooms = rooms.subList(fromIndex, toIndex);
 
-        // 3. Lấy danh sách departments
         List<Department> departments = departmentService.getAllDepartments();
 
-        // 4. Đẩy dữ liệu lên model
-        model.addAttribute("rooms", pageRooms);
-        model.addAttribute("departments", departments);
-        model.addAttribute("adminId", adminId);
-        model.addAttribute("search", search);
-        model.addAttribute("statusFilter", statusFilter);
-        model.addAttribute("currentPage", page);
-        model.addAttribute("totalPages", totalPages);
-        model.addAttribute("pageSize", size);
+        List<String> types = rooms.stream()
+                .map(Room::getType)
+                .distinct()
+                .toList();
 
+        model.addAttribute("rooms",         pageRooms);
+        model.addAttribute("departments",   departments);
+        model.addAttribute("types",         types);
+
+        model.addAttribute("search",        search);
+        model.addAttribute("statusFilter",  statusFilter);
+        model.addAttribute("typeFilter",    typeFilter);
+        model.addAttribute("deptFilter",    deptFilter);
+
+        model.addAttribute("currentPage",   page);
+        model.addAttribute("totalPages",    totalPages);
+        model.addAttribute("pageSize",      size);
+
+        model.addAttribute("room",          new Room());
+
+        model.addAttribute("adminId",       adminId);
         return "admin/room/list";
     }
+
 
     /**
      * POST /admin/rooms/{id}/toggleStatus?adminId=...
@@ -100,7 +131,16 @@ public class AdminRoomController {
     @PostMapping("/save")
     public String saveRoom(
             @RequestParam("adminId") Integer adminId,
-            @ModelAttribute Room room) {
+            @Valid @ModelAttribute("room") Room room,
+            BindingResult result,
+            Model model) {
+
+        if (result.hasErrors()) {
+            model.addAttribute("departments", departmentService.getAllDepartments());
+            model.addAttribute("search", null);
+            model.addAttribute("statusFilter", null);
+            return "admin/room/list";
+        }
 
         roomService.save(room);
         return "redirect:/admin/rooms?adminId=" + adminId;

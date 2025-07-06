@@ -89,10 +89,7 @@
     .success-message i { color: var(--success-color); }
     .error-message { color: var(--error-color); font-size: 0.875rem; margin-top: 0.5rem; display: flex; align-items: center; gap: 0.25rem; }
     .error-message i { font-size: 1rem; }
-    .required-asterisk {
-      color: var(--error-color);
-      font-weight: 700;
-    }
+    .required-asterisk { color: var(--error-color); font-weight: 700; }
     @media (max-width: 768px) { .patient-sidebar { transform: translateX(-100%); } .main-content { margin-left: 0; } .page-content { padding: 1rem; } .form-section { padding: 1.5rem; } .top-header { padding: 0 1rem; } .patient-info > div { display: none; } .confirmation-actions { flex-direction: column; } .page-title { font-size: 1.5rem; } }
   </style>
 </head>
@@ -113,18 +110,9 @@
     <div class="nav-item"><a th:href="@{/patient/appointment-list}" class="nav-link"><i class="bi bi-calendar-check"></i> My Appointments</a></div>
     <div class="nav-section-title">Account</div>
     <div class="nav-item"><a th:href="@{/patient/profile}" class="nav-link"><i class="bi bi-person"></i> My Profile</a></div>
-    <div class="nav-item">
-      <a th:href="@{/patient/payment-history}" class="nav-link">
-        <i class="bi bi-credit-card"></i>
-        Payment History
-      </a>
-    </div>
-    <div class="nav-item">
-      <a th:href="@{/patient/security-password}" class="nav-link">
-        <i class="bi bi-shield-lock"></i>
-        Security & Password
-      </a>
-    </div>
+    <div class="nav-item"><a th:href="@{/patient/payment-history}" class="nav-link"><i class="bi bi-credit-card"></i> Payment History</a></div>
+    <div class="nav-item"><a th:href="@{/patient/security-password}" class="nav-link"><i class="bi bi-shield-lock"></i> Security & Password</a></div>
+    <div class="nav-item"><a th:href="@{/patient/notifications}" class="nav-link"><i class="bi bi-bell"></i> Notifications</a></div>
     <div class="nav-section-title">Support</div>
     <div class="nav-item"><a th:href="@{/patient/feedback}" class="nav-link active"><i class="bi bi-chat-square-text"></i> Feedback</a></div>
     <div class="nav-section-title">System</div>
@@ -165,8 +153,29 @@
       <form id="feedbackForm" th:action="@{/patient/feedback}" method="post">
         <input type="hidden" th:name="userId" th:value="${userId}">
         <div class="mb-4">
-          <label for="feedbackTextarea" class="form-label">Your Feedback <span class="required-asterisk">*</span></label>
-          <textarea id="feedbackTextarea" name="description" class="form-control" rows="4" maxlength="250" placeholder="We’d love to hear your thoughts!" th:text="${description}" style="resize: none;" oninput="autoResize(this)" required></textarea>
+          <label for="feedbackType" class="form-label">Feedback Type <span class="required-asterisk">*</span></label>
+          <select id="feedbackType" name="feedbackType" class="form-control" th:value="${feedbackType}" required>
+            <option value="">Select a type</option>
+            <option value="Quality of medical services">Quality of medical services</option>
+            <option value="Facilities">Facilities</option>
+            <option value="Administrative procedures">Administrative procedures</option>
+            <option value="Online booking & application system">Online booking & application system</option>
+            <option value="Staff attitude and behavior">Staff attitude and behavior</option>
+            <option value="Costs & payment">Costs & payment</option>
+            <option value="Suggestions & improvements">Suggestions & improvements</option>
+            <option value="Timing & progress">Timing & progress</option>
+            <option value="Safety & security">Safety & security</option>
+            <option value="Other">Other</option>
+          </select>
+        </div>
+        <div class="mb-4">
+          <label for="title" class="form-label">Title <span class="required-asterisk">*</span></label>
+          <input type="text" id="title" name="title" class="form-control" maxlength="100" placeholder="Enter a brief title" th:value="${title}" required>
+          <small class="text-muted">Maximum 100 characters</small>
+        </div>
+        <div class="mb-4">
+          <label for="feedbackTextarea" class="form-label">Description <span class="required-asterisk">*</span></label>
+          <textarea id="feedbackTextarea" name="description" class="form-control" rows="4" maxlength="250" placeholder="Describe your feedback in detail" th:text="${description}" style="resize: none;" oninput="autoResize(this)" required></textarea>
           <small class="text-muted">Maximum 250 characters</small>
         </div>
         <div class="text-center">
@@ -212,9 +221,11 @@
     textarea.style.height = textarea.scrollHeight + 'px';
   }
   function showConfirmation() {
+    const feedbackType = document.getElementById('feedbackType').value.trim();
+    const title = document.getElementById('title').value.trim();
     const description = document.getElementById('feedbackTextarea').value.trim();
-    if (!description) {
-      alert('Please enter valid feedback before submitting.');
+    if (!feedbackType || !title || !description) {
+      alert('Please fill in all required fields before submitting.');
       return;
     }
     document.getElementById('confirmationOverlay').classList.add('active');
@@ -244,37 +255,30 @@
 
     // Step 4: Normalize whitespace and trim
     sanitized = sanitized.trim().replace(/\s+/g, ' ');
-
     return sanitized;
   }
 
-  // Trim and clean input fields on blur
   function cleanInputOnBlur(id, isStrict = false) {
     const element = document.getElementById(id);
     if (!element) return;
-
     element.addEventListener('blur', () => {
       let value = element.value.trim();
-
-      if (isStrict) {
-        // Remove all spaces for strict fields (phone/email)
-        value = value.replace(/\s+/g, '');
-      } else {
-        // Sanitize Description field
-        if (id === 'feedbackTextarea') {
-          value = sanitizeDescription(value);
-        } else {
-          // Normalize spacing between words (one space only)
-          value = value.replace(/\s+/g, ' ');
-        }
+      if (id === 'title' || id === 'feedbackTextarea') {
+        value = sanitizeInput(value);
       }
-
+      if (id === 'title' && value.length > 100) {
+        value = value.substring(0, 100);
+      }
+      if (id === 'feedbackTextarea' && value.length > 250) {
+        value = value.substring(0, 250);
+      }
       element.value = value;
     });
   }
 
-  // Apply trimming logic to input fields
-  cleanInputOnBlur('feedbackTextarea', false); // sanitize and normalize spaces
+  cleanInputOnBlur('feedbackType', false);
+  cleanInputOnBlur('title', false);
+  cleanInputOnBlur('feedbackTextarea', false);
 
   document.addEventListener('DOMContentLoaded', function() {
     checkScreenSize();

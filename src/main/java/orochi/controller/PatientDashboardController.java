@@ -8,6 +8,8 @@ import org.springframework.dao.DataAccessException;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
+import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -23,6 +25,7 @@ import orochi.model.*;
 import orochi.repository.*;
 import orochi.config.CustomUserDetails;
 import orochi.service.FeedbackService;
+import orochi.service.NotificationService;
 import orochi.service.PatientService;
 
 import java.time.LocalDate;
@@ -30,12 +33,14 @@ import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.time.format.DateTimeFormatter;
 import java.time.format.DateTimeParseException;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 
 @Controller
 @RequestMapping("/patient")
+@Slf4j
 public class PatientDashboardController {
 
     private static final Logger logger = LoggerFactory.getLogger(PatientDashboardController.class);
@@ -62,13 +67,29 @@ public class PatientDashboardController {
     private TransactionRepository transactionRepository;
 
     @Autowired
+    private DoctorRepository doctorRepository;
+
+    @Autowired
+    private SpecializationRepository specializationRepository;
+
+    @Autowired
     private PatientService patientService;
 
     @Autowired
     private FeedbackService feedbackService;
 
     @Autowired
+    private NotificationService notificationService;
+
+    @Autowired
     private PasswordEncoder passwordEncoder;
+
+    private static final List<String> ALLOWED_FEEDBACK_TYPES = Arrays.asList(
+            "Quality of medical services", "Facilities", "Administrative procedures",
+            "Online booking & application system", "Staff attitude and behavior",
+            "Costs & payment", "Suggestions & improvements", "Timing & progress",
+            "Safety & security", "Other"
+    );
 
     @GetMapping("/dashboard")
     public String dashboard(Model model) {
@@ -133,18 +154,31 @@ public class PatientDashboardController {
             Integer patientId = getCurrentPatientId();
             if (patientId != null) {
                 model.addAttribute("patientId", patientId);
+                Optional<Patient> patientOpt = patientRepository.findById(patientId);
+                if (patientOpt.isPresent()) {
+                    model.addAttribute("patientName", patientOpt.get().getUser().getFullName());
+                }
             }
+            List<Doctor> doctors = doctorRepository.findAll();
+            List<Specialization> specializations = specializationRepository.findAll();
+            model.addAttribute("doctors", doctors);
+            model.addAttribute("specializations", specializations);
             return "patient/search-doctor";
         } catch (Exception e) {
-            logger.error("Error loading search doctor page", e);
-            model.addAttribute("errorMessage", "An error occurred: " + e.getMessage());
+            logger.error("Error loading search doctor page: " + e.getMessage(), e);
+            model.addAttribute("errorMessage", "An error occurred while loading the search doctor page.");
             return "error";
         }
     }
 
-
     @GetMapping("/appointment-list")
-    public String appointmentList(Model model) {
+    public String appointmentList(
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(required = false) String search,
+            @RequestParam(required = false) String status,
+            @RequestParam(required = false) String fromDate,
+            @RequestParam(required = false) String toDate,
+            Model model) {
         try {
             Integer patientId = getCurrentPatientId();
             if (patientId == null) {
@@ -152,41 +186,63 @@ public class PatientDashboardController {
                 return "error";
             }
 
-            // Get patient info
             Optional<Patient> patientOpt = patientRepository.findById(patientId);
             if (patientOpt.isPresent()) {
                 Patient patient = patientOpt.get();
                 model.addAttribute("patientName", patient.getUser().getFullName());
             }
 
-            // Get all appointments for the patient
-            List<Appointment> appointments = appointmentRepository.findByPatientIdOrderByDateTimeDesc(patientId);
+            int pageSize = 5;
+            Pageable pageable = PageRequest.of(page, pageSize, Sort.by("dateTime").descending());
 
-            // Count appointments by status
-            long scheduledCount = appointments.stream()
-                    .filter(a -> "Scheduled".equals(a.getStatus()))
-                    .count();
+            String searchTerm = (search != null && !search.trim().isEmpty()) ? search.trim() : null;
+            String statusFilter = (status != null && !status.trim().isEmpty()) ? status.trim() : null;
+            LocalDateTime fromDateTime = null;
+            LocalDateTime toDateTime = null;
 
-            long pendingCount = appointments.stream()
-                    .filter(a -> "Pending".equals(a.getStatus()))
-                    .count();
+            if (fromDate != null && !fromDate.trim().isEmpty()) {
+                try {
+                    fromDateTime = LocalDateTime.parse(fromDate + "T00:00:00");
+                } catch (DateTimeParseException e) {
+                    model.addAttribute("errorMessage", "Invalid From Date format. Please use YYYY-MM-DD.");
+                    return "patient/appointment-list";
+                }
+            }
+            if (toDate != null && !toDate.trim().isEmpty()) {
+                try {
+                    toDateTime = LocalDateTime.parse(toDate + "T23:59:59");
+                    if (fromDateTime != null && toDateTime.isBefore(fromDateTime)) {
+                        model.addAttribute("errorMessage", "To Date cannot be before From Date.");
+                        return "patient/appointment-list";
+                    }
+                } catch (DateTimeParseException e) {
+                    model.addAttribute("errorMessage", "Invalid To Date format. Please use YYYY-MM-DD.");
+                    return "patient/appointment-list";
+                }
+            }
 
-            long completedCount = appointments.stream()
-                    .filter(a -> "Completed".equals(a.getStatus()))
-                    .count();
+            Page<Appointment> appointmentPage = appointmentRepository.findByPatientIdWithFilters(
+                    patientId, searchTerm, statusFilter, fromDateTime, toDateTime, pageable);
 
-            long cancelledCount = appointments.stream()
-                    .filter(a -> "Cancel".equals(a.getStatus()))
-                    .count();
+            long scheduledCount = appointmentRepository.countByPatientIdAndStatus(patientId, "Scheduled");
+            long pendingCount = appointmentRepository.countByPatientIdAndStatus(patientId, "Pending");
+            long completedCount = appointmentRepository.countByPatientIdAndStatus(patientId, "Completed");
+            long cancelledCount = appointmentRepository.countByPatientIdAndStatus(patientId, "Cancel");
 
-            // Add attributes to model
-            model.addAttribute("appointments", appointments);
+            model.addAttribute("appointments", appointmentPage.getContent());
+            model.addAttribute("totalPages", appointmentPage.getTotalPages());
+            model.addAttribute("currentPage", appointmentPage.getNumber());
+            model.addAttribute("pageSize", pageSize);
             model.addAttribute("patientId", patientId);
-            model.addAttribute("totalAppointments", appointments.size());
+            model.addAttribute("totalAppointments", appointmentPage.getTotalElements());
             model.addAttribute("scheduledAppointments", scheduledCount);
             model.addAttribute("pendingAppointments", pendingCount);
             model.addAttribute("completedAppointments", completedCount);
             model.addAttribute("cancelledAppointments", cancelledCount);
+            model.addAttribute("search", search);
+            model.addAttribute("status", status);
+            model.addAttribute("fromDate", fromDate);
+            model.addAttribute("toDate", toDate);
 
             return "patient/appointment-list";
         } catch (Exception e) {
@@ -366,9 +422,13 @@ public class PatientDashboardController {
         Patient patient = patientOpt.get();
         Users user = patient.getUser();
         String streetAddress = "";
+        String city = "";
+        String country = "Vietnam"; // Default to Vietnam
         if (patient.getContacts() != null && !patient.getContacts().isEmpty()) {
             PatientContact contact = patient.getContacts().get(0);
             streetAddress = contact.getStreetAddress();
+            city = contact.getCity();
+            country = contact.getCountry();
         }
 
         ProfileUpdateForm form = new ProfileUpdateForm();
@@ -379,10 +439,27 @@ public class PatientDashboardController {
         form.setGender(patient.getGender());
         form.setDescription(patient.getDescription());
         form.setStreetAddress(streetAddress);
+        form.setCity(city);
+        form.setCountry(country);
+
+        // List of all 63 cities/provinces in Vietnam
+        List<String> cities = Arrays.asList(
+                "An Giang", "Ba Ria-Vung Tau", "Bac Giang", "Bac Kan", "Bac Lieu", "Bac Ninh", "Ben Tre",
+                "Binh Dinh", "Binh Duong", "Binh Phuoc", "Binh Thuan", "Ca Mau", "Can Tho", "Cao Bang",
+                "Da Nang", "Dak Lak", "Dak Nong", "Dien Bien", "Dong Nai", "Dong Thap", "Gia Lai",
+                "Ha Giang", "Ha Nam", "Ha Noi", "Ha Tinh", "Hai Duong", "Hai Phong", "Hau Giang",
+                "Ho Chi Minh City", "Hoa Binh", "Hung Yen", "Khanh Hoa", "Kien Giang", "Kon Tum",
+                "Lai Chau", "Lam Dong", "Lang Son", "Lao Cai", "Long An", "Nam Dinh", "Nghe An",
+                "Ninh Binh", "Ninh Thuan", "Phu Tho", "Phu Yen", "Quang Binh", "Quang Nam", "Quang Ngai",
+                "Quang Ninh", "Quang Tri", "Soc Trang", "Son La", "Tay Ninh", "Thai Binh", "Thai Nguyen",
+                "Thanh Hoa", "Thua Thien Hue", "Tien Giang", "Tra Vinh", "Tuyen Quang", "Vinh Long",
+                "Vinh Phuc", "Yen Bai"
+        );
 
         model.addAttribute("profileForm", form);
         model.addAttribute("patientId", patientId);
         model.addAttribute("patientName", user.getFullName());
+        model.addAttribute("cities", cities);
 
         return "patient/update-profile";
     }
@@ -401,8 +478,25 @@ public class PatientDashboardController {
             return "redirect:/patient/profile";
         }
 
+        // Ensure country is always Vietnam
+        form.setCountry("Vietnam");
+
         if (bindingResult.hasErrors()) {
             System.out.println("Validation errors found: " + bindingResult.getAllErrors());
+            // Re-add cities to the model for form re-rendering
+            List<String> cities = Arrays.asList(
+                    "An Giang", "Ba Ria-Vung Tau", "Bac Giang", "Bac Kan", "Bac Lieu", "Bac Ninh", "Ben Tre",
+                    "Binh Dinh", "Binh Duong", "Binh Phuoc", "Binh Thuan", "Ca Mau", "Can Tho", "Cao Bang",
+                    "Da Nang", "Dak Lak", "Dak Nong", "Dien Bien", "Dong Nai", "Dong Thap", "Gia Lai",
+                    "Ha Giang", "Ha Nam", "Ha Noi", "Ha Tinh", "Hai Duong", "Hai Phong", "Hau Giang",
+                    "Ho Chi Minh City", "Hoa Binh", "Hung Yen", "Khanh Hoa", "Kien Giang", "Kon Tum",
+                    "Lai Chau", "Lam Dong", "Lang Son", "Lao Cai", "Long An", "Nam Dinh", "Nghe An",
+                    "Ninh Binh", "Ninh Thuan", "Phu Tho", "Phu Yen", "Quang Binh", "Quang Nam", "Quang Ngai",
+                    "Quang Ninh", "Quang Tri", "Soc Trang", "Son La", "Tay Ninh", "Thai Binh", "Thai Nguyen",
+                    "Thanh Hoa", "Thua Thien Hue", "Tien Giang", "Tra Vinh", "Tuyen Quang", "Vinh Long",
+                    "Vinh Phuc", "Yen Bai"
+            );
+            model.addAttribute("cities", cities);
             return "patient/update-profile";
         }
 
@@ -417,35 +511,9 @@ public class PatientDashboardController {
         Users user = patient.getUser();
         System.out.println("Found patient ID: " + patient.getPatientId() + ", user ID: " + user.getUserId());
 
-        String newEmail = form.getEmail();
-        String newPhoneNumber = form.getPhoneNumber();
-
-        if (!newEmail.equals(user.getEmail())) {
-            Optional<Users> emailCheck = userRepository.findByEmail(newEmail);
-            if (emailCheck.isPresent() && !emailCheck.get().getUserId().equals(user.getUserId())) {
-                System.out.println("Email already in use: " + newEmail);
-                bindingResult.addError(new FieldError("profileForm", "email", "This email is already in use."));
-            }
-        }
-
-        if (!newPhoneNumber.equals(user.getPhoneNumber()) && userRepository.existsByPhoneNumberAndUserIdNot(newPhoneNumber, user.getUserId())) {
-            System.out.println("Phone number already in use: " + newPhoneNumber);
-            bindingResult.addError(new FieldError("profileForm", "phoneNumber", "This phone number is already in use."));
-        }
-
-        if (bindingResult.hasErrors()) {
-            System.out.println("Post-validation errors found: " + bindingResult.getAllErrors());
-            return "patient/update-profile";
-        }
-
         try {
-            // Update Users entity
             user.setFullName(form.getFullName());
-            user.setEmail(newEmail);
-            user.setPhoneNumber(newPhoneNumber);
-            System.out.println("Saving user ID: " + user.getUserId() + ", email: " + user.getEmail());
             userRepository.save(user);
-
             // Update Patient entity
             patient.setDateOfBirth(form.getDateOfBirth());
             patient.setGender(form.getGender());
@@ -458,8 +526,8 @@ public class PatientDashboardController {
             if (contactOpt.isPresent()) {
                 PatientContact contact = contactOpt.get();
                 contact.setStreetAddress(form.getStreetAddress());
-                contact.setCity("OK");
-                contact.setCountry("OK");
+                contact.setCity(form.getCity());
+                contact.setCountry("Vietnam");
                 System.out.println("Saving existing contact ID: " + contact.getContactId());
                 patientContactRepository.save(contact);
             } else {
@@ -467,13 +535,12 @@ public class PatientDashboardController {
                 newContact.setPatientId(patientId);
                 newContact.setAddressType("Primary");
                 newContact.setStreetAddress(form.getStreetAddress());
-                newContact.setCity("OK");
-                newContact.setCountry("OK");
+                newContact.setCity(form.getCity());
+                newContact.setCountry("Vietnam");
                 System.out.println("Saving new contact for patient ID: " + patientId);
                 patientContactRepository.save(newContact);
             }
 
-            // Move success message after all saves
             System.out.println("Profile updated successfully for patient ID: " + patientId);
             redirectAttributes.addFlashAttribute("successMessage", "Profile updated successfully");
             return "redirect:/patient/profile";
@@ -481,6 +548,20 @@ public class PatientDashboardController {
             System.out.println("Error updating profile for patient ID: " + patientId + ", error: " + e.getMessage());
             e.printStackTrace();
             model.addAttribute("errorMessage", "Failed to update profile: " + e.getMessage());
+            // Re-add cities to the model for form re-rendering
+            List<String> cities = Arrays.asList(
+                    "An Giang", "Ba Ria-Vung Tau", "Bac Giang", "Bac Kan", "Bac Lieu", "Bac Ninh", "Ben Tre",
+                    "Binh Dinh", "Binh Duong", "Binh Phuoc", "Binh Thuan", "Ca Mau", "Can Tho", "Cao Bang",
+                    "Da Nang", "Dak Lak", "Dak Nong", "Dien Bien", "Dong Nai", "Dong Thap", "Gia Lai",
+                    "Ha Giang", "Ha Nam", "Ha Noi", "Ha Tinh", "Hai Duong", "Hai Phong", "Hau Giang",
+                    "Ho Chi Minh City", "Hoa Binh", "Hung Yen", "Khanh Hoa", "Kien Giang", "Kon Tum",
+                    "Lai Chau", "Lam Dong", "Lang Son", "Lao Cai", "Long An", "Nam Dinh", "Nghe An",
+                    "Ninh Binh", "Ninh Thuan", "Phu Tho", "Phu Yen", "Quang Binh", "Quang Nam", "Quang Ngai",
+                    "Quang Ninh", "Quang Tri", "Soc Trang", "Son La", "Tay Ninh", "Thai Binh", "Thai Nguyen",
+                    "Thanh Hoa", "Thua Thien Hue", "Tien Giang", "Tra Vinh", "Tuyen Quang", "Vinh Long",
+                    "Vinh Phuc", "Yen Bai"
+            );
+            model.addAttribute("cities", cities);
             return "patient/update-profile";
         }
     }
@@ -494,7 +575,6 @@ public class PatientDashboardController {
                 return "error";
             }
 
-            // Get patient info
             Optional<Patient> patientOpt = patientRepository.findById(patientId);
             Patient patient = patientOpt.orElseThrow(() -> new Exception("Patient not found"));
             model.addAttribute("userId", patient.getUser().getUserId());
@@ -510,7 +590,11 @@ public class PatientDashboardController {
     }
 
     @PostMapping("/feedback")
-    public String submitFeedback(@RequestParam("description") String description, Model model) {
+    public String submitFeedback(
+            @RequestParam("feedbackType") String feedbackType,
+            @RequestParam("title") String title,
+            @RequestParam("description") String description,
+            Model model) {
         try {
             Integer patientId = getCurrentPatientId();
             if (patientId == null) {
@@ -518,7 +602,6 @@ public class PatientDashboardController {
                 return "error";
             }
 
-            // Get userId from patient
             Optional<Patient> patientOpt = patientRepository.findById(patientId);
             if (!patientOpt.isPresent()) {
                 model.addAttribute("errorMessage", "Patient not found");
@@ -526,14 +609,32 @@ public class PatientDashboardController {
             }
             Integer userId = patientOpt.get().getUser().getUserId();
 
-            // Trim and normalize spaces, limit to 250 characters
+            String trimmedFeedbackType = feedbackType.trim();
+            String trimmedTitle = title.trim().replaceAll("\\s+", " ");
             String trimmedDescription = description.trim().replaceAll("\\s+", " ");
+
+            if (trimmedFeedbackType.isEmpty() || trimmedTitle.isEmpty() || trimmedDescription.isEmpty()) {
+                model.addAttribute("errorMessage", "All fields are required");
+                return "patient/feedback";
+            }
+
+            if (!ALLOWED_FEEDBACK_TYPES.contains(trimmedFeedbackType)) {
+                model.addAttribute("errorMessage", "Invalid feedback type");
+                return "patient/feedback";
+            }
+
+            if (trimmedTitle.length() > 100) {
+                trimmedTitle = trimmedTitle.substring(0, 100);
+            }
+
             if (trimmedDescription.length() > 250) {
                 trimmedDescription = trimmedDescription.substring(0, 250);
             }
 
             Feedback feedback = new Feedback();
             feedback.setUserId(userId);
+            feedback.setFeedbackType(trimmedFeedbackType);
+            feedback.setTitle(trimmedTitle);
             feedback.setDescription(trimmedDescription);
 
             feedbackService.saveFeedback(feedback);
@@ -545,8 +646,10 @@ public class PatientDashboardController {
         } catch (Exception e) {
             logger.error("Error submitting feedback", e);
             model.addAttribute("errorMessage", "Failed to submit feedback: " + e.getMessage());
-            model.addAttribute("description", description); // Preserve user input
-            return "error";
+            model.addAttribute("feedbackType", feedbackType);
+            model.addAttribute("title", title);
+            model.addAttribute("description", description);
+            return "patient/feedback";
         }
     }
 
@@ -556,6 +659,7 @@ public class PatientDashboardController {
             @RequestParam(defaultValue = "5") int size,
             @RequestParam(required = false) String fromDate,
             @RequestParam(required = false) String toDate,
+            @RequestParam(required = false) String feedbackType,
             Model model) {
         try {
             if (page < 0) {
@@ -570,12 +674,14 @@ public class PatientDashboardController {
             model.addAttribute("userId", userId);
             model.addAttribute("patientId", patientId);
             model.addAttribute("patientName", patient.getUser() != null ? patient.getUser().getFullName() : "Patient");
+            model.addAttribute("feedbackTypes", ALLOWED_FEEDBACK_TYPES); // Add feedback types for dropdown
 
             Pageable pageable = PageRequest.of(page, size);
-            Page<Feedback> feedbackPage = null; // Initialize to null
+            Page<Feedback> feedbackPage = null;
 
             String fromDateTrimmed = (fromDate != null) ? fromDate.trim() : null;
             String toDateTrimmed = (toDate != null) ? toDate.trim() : null;
+            String feedbackTypeTrimmed = (feedbackType != null) ? feedbackType.trim() : null;
 
             LocalDateTime start = null, end = null;
             if (fromDateTrimmed != null && !fromDateTrimmed.isEmpty()) {
@@ -583,12 +689,13 @@ public class PatientDashboardController {
                     start = LocalDateTime.parse(fromDateTrimmed + "T00:00:00");
                 } catch (DateTimeParseException e) {
                     model.addAttribute("errorMessage", "Invalid From Date format. Please use YYYY-MM-DD.");
-                    model.addAttribute("feedbacks", Collections.emptyList()); // Default to empty list
+                    model.addAttribute("feedbacks", Collections.emptyList());
                     model.addAttribute("currentPage", 0);
                     model.addAttribute("totalPages", 0);
                     model.addAttribute("size", size);
                     model.addAttribute("fromDate", fromDate);
                     model.addAttribute("toDate", toDate);
+                    model.addAttribute("feedbackType", feedbackType);
                     return "patient/my-feedback";
                 }
             }
@@ -603,6 +710,7 @@ public class PatientDashboardController {
                         model.addAttribute("size", size);
                         model.addAttribute("fromDate", fromDate);
                         model.addAttribute("toDate", toDate);
+                        model.addAttribute("feedbackType", feedbackType);
                         return "patient/my-feedback";
                     }
                 } catch (DateTimeParseException e) {
@@ -613,18 +721,42 @@ public class PatientDashboardController {
                     model.addAttribute("size", size);
                     model.addAttribute("fromDate", fromDate);
                     model.addAttribute("toDate", toDate);
+                    model.addAttribute("feedbackType", feedbackType);
                     return "patient/my-feedback";
                 }
             }
+            if (feedbackTypeTrimmed != null && !feedbackTypeTrimmed.isEmpty() && !ALLOWED_FEEDBACK_TYPES.contains(feedbackTypeTrimmed)) {
+                model.addAttribute("errorMessage", "Invalid Feedback Type.");
+                model.addAttribute("feedbacks", Collections.emptyList());
+                model.addAttribute("currentPage", 0);
+                model.addAttribute("totalPages", 0);
+                model.addAttribute("size", size);
+                model.addAttribute("fromDate", fromDate);
+                model.addAttribute("toDate", toDate);
+                model.addAttribute("feedbackType", feedbackType);
+                return "patient/my-feedback";
+            }
 
-            if (start != null && end != null) {
-                feedbackPage = feedbackService.getFeedbackByUserIdAndDateRange(userId, start, end, pageable);
-            } else if (start != null) {
-                feedbackPage = feedbackService.getFeedbackByUserIdAndDateRange(userId, start, LocalDateTime.now(), pageable);
-            } else if (end != null) {
-                feedbackPage = feedbackService.getFeedbackByUserIdAndDateRange(userId, LocalDateTime.of(1900, 1, 1, 0, 0), end, pageable);
+            if (feedbackTypeTrimmed != null && !feedbackTypeTrimmed.isEmpty()) {
+                if (start != null && end != null) {
+                    feedbackPage = feedbackService.getFeedbackByUserIdAndTypeAndDateRange(userId, feedbackTypeTrimmed, start, end, pageable);
+                } else if (start != null) {
+                    feedbackPage = feedbackService.getFeedbackByUserIdAndTypeAndDateRange(userId, feedbackTypeTrimmed, start, LocalDateTime.now(), pageable);
+                } else if (end != null) {
+                    feedbackPage = feedbackService.getFeedbackByUserIdAndTypeAndDateRange(userId, feedbackTypeTrimmed, LocalDateTime.of(1900, 1, 1, 0, 0), end, pageable);
+                } else {
+                    feedbackPage = feedbackService.getFeedbackByUserIdAndType(userId, feedbackTypeTrimmed, pageable);
+                }
             } else {
-                feedbackPage = feedbackService.getFeedbackByUserId(userId, pageable);
+                if (start != null && end != null) {
+                    feedbackPage = feedbackService.getFeedbackByUserIdAndDateRange(userId, start, end, pageable);
+                } else if (start != null) {
+                    feedbackPage = feedbackService.getFeedbackByUserIdAndDateRange(userId, start, LocalDateTime.now(), pageable);
+                } else if (end != null) {
+                    feedbackPage = feedbackService.getFeedbackByUserIdAndDateRange(userId, LocalDateTime.of(1900, 1, 1, 0, 0), end, pageable);
+                } else {
+                    feedbackPage = feedbackService.getFeedbackByUserId(userId, pageable);
+                }
             }
 
             model.addAttribute("feedbacks", feedbackPage != null ? feedbackPage.getContent() : Collections.emptyList());
@@ -633,16 +765,18 @@ public class PatientDashboardController {
             model.addAttribute("size", size);
             model.addAttribute("fromDate", fromDate);
             model.addAttribute("toDate", toDate);
+            model.addAttribute("feedbackType", feedbackType);
             return "patient/my-feedback";
         } catch (Exception e) {
             logger.error("Error fetching feedback", e);
             model.addAttribute("errorMessage", "Failed to fetch feedback: " + e.getMessage());
-            model.addAttribute("feedbacks", Collections.emptyList()); // Ensure feedbacks is never null
+            model.addAttribute("feedbacks", Collections.emptyList());
             model.addAttribute("currentPage", 0);
             model.addAttribute("totalPages", 0);
             model.addAttribute("size", size);
             model.addAttribute("fromDate", fromDate);
             model.addAttribute("toDate", toDate);
+            model.addAttribute("feedbackType", feedbackType);
             return "patient/my-feedback";
         }
     }
@@ -1010,6 +1144,92 @@ public class PatientDashboardController {
             logger.error("Error changing password", e);
             redirectAttributes.addFlashAttribute("errorMessage", "An error occurred while changing password");
             return "redirect:/patient/security-password";
+        }
+    }
+
+    @GetMapping("/notifications")
+    public String viewNotifications(Model model) {
+        try {
+            Integer patientId = getCurrentPatientId();
+            if (patientId == null) {
+                logger.error("No patientId found for authenticated user");
+                model.addAttribute("errorMessage", "Patient ID is required. Please contact support.");
+                return "error";
+            }
+
+            Optional<Patient> patientOpt = patientRepository.findById(patientId);
+            if (!patientOpt.isPresent()) {
+                logger.error("Patient not found for ID: {}", patientId);
+                model.addAttribute("errorMessage", "Patient not found");
+                return "error";
+            }
+
+            Patient patient = patientOpt.get();
+            Integer userId = patient.getUser().getUserId();
+            List<Notification> notifications = notificationService.findByUserIdOrderByCreatedAtDesc(userId);
+
+            // Log notification details for debugging
+            notifications.forEach(n -> logger.debug("Notification ID: {}, IsRead: {}", n.getNotificationId(), n.isRead()));
+
+            model.addAttribute("notifications", notifications);
+            model.addAttribute("totalNotifications", notifications.size());
+            model.addAttribute("unreadNotifications", notifications.stream().filter(n -> !n.isRead()).count());
+            model.addAttribute("readNotifications", notifications.stream().filter(Notification::isRead).count());
+            model.addAttribute("patientId", patientId);
+            model.addAttribute("patientName", patient.getUser().getFullName());
+
+            logger.info("Notifications loaded successfully for patient ID: {}, user ID: {}, total: {}, unread: {}, read: {}",
+                    patientId, userId, notifications.size(), notifications.stream().filter(n -> !n.isRead()).count(), notifications.stream().filter(Notification::isRead).count());
+            return "patient/notifications";
+        } catch (Exception e) {
+            logger.error("Error loading notifications for patient ID: {}", getCurrentPatientId(), e);
+            model.addAttribute("errorMessage", "An error occurred while loading notifications: " + e.getMessage());
+            return "error";
+        }
+    }
+
+    @PostMapping("/notifications/{id}/read")
+    @Transactional
+    @ResponseBody
+    public ResponseEntity<?> markNotificationAsRead(@PathVariable("id") Integer notificationId) {
+        try {
+            Integer patientId = getCurrentPatientId();
+            if (patientId == null) {
+                logger.error("No patientId found for authenticated user");
+                return ResponseEntity.badRequest().body("Patient ID is required");
+            }
+
+            Optional<Patient> patientOpt = patientRepository.findById(patientId);
+            if (!patientOpt.isPresent()) {
+                logger.error("Patient not found for ID: {}", patientId);
+                return ResponseEntity.notFound().build();
+            }
+
+            Patient patient = patientOpt.get();
+            Integer userId = patient.getUser().getUserId();
+            Notification notification = notificationService.findByIdAndUserId(notificationId, userId);
+            if (notification == null) {
+                logger.error("Notification ID: {} not found for user ID: {}", notificationId, userId);
+                return ResponseEntity.notFound().build();
+            }
+
+            logger.debug("Before update: Notification ID: {}, IsRead: {}", notification.getNotificationId(), notification.isRead());
+            notification.setRead(true);
+            notificationService.save(notification);
+            logger.debug("After update: Notification ID: {}, IsRead: {}", notification.getNotificationId(), notification.isRead());
+
+            // Verify database state
+            Notification updatedNotification = notificationService.findById(notificationId)
+                    .orElseThrow(() -> new IllegalStateException("Notification not found after save"));
+            logger.debug("Database state: Notification ID: {}, IsRead: {}",
+                    updatedNotification.getNotificationId(), updatedNotification.isRead());
+
+            logger.info("Notification ID: {} marked as read for patient ID: {}, user ID: {}",
+                    notificationId, patientId, userId);
+            return ResponseEntity.ok().build();
+        } catch (Exception e) {
+            logger.error("Error marking notification ID: {} as read", notificationId, e);
+            return ResponseEntity.status(500).body("Failed to mark notification as read: " + e.getMessage());
         }
     }
 

@@ -7,6 +7,36 @@
     <!-- Bootstrap CSS + Icons -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css" rel="stylesheet">
+    <!-- Cropperjs for image cropping -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.13/cropper.min.css" rel="stylesheet">
+    <style>
+        .profile-image-container {
+            max-width: 300px;
+            position: relative;
+            margin-bottom: 15px;
+        }
+        .current-image {
+            max-width: 100%;
+            border-radius: 5px;
+            box-shadow: 0 0 5px rgba(0,0,0,0.2);
+        }
+        .image-preview {
+            max-width: 100%;
+            max-height: 300px;
+            margin-top: 10px;
+            border-radius: 5px;
+            display: none;
+        }
+        .cropper-container {
+            margin-top: 15px;
+            margin-bottom: 15px;
+            display: none;
+        }
+        #cropImageBtn, #cancelCropBtn {
+            margin-top: 10px;
+            display: none;
+        }
+    </style>
 </head>
 <body>
 <!-- nếu có navbar/sidebar chung thì include ở đây -->
@@ -14,9 +44,46 @@
     <h2>Edit Doctor #<span th:text="${doctorForm.doctorId}">ID</span></h2>
     <form th:action="@{/admin/doctors/save(adminId=${adminId})}"
           th:object="${doctorForm}"
-          method="post">
+          method="post"
+          enctype="multipart/form-data">
         <input type="hidden" th:field="*{doctorId}"/>
         <input type="hidden" th:field="*{userId}"/>
+        <!-- Hidden field to store the cropped image data -->
+        <input type="hidden" id="croppedImageData" name="croppedImageData"/>
+        <!-- Hidden field to preserve existing image URL -->
+        <input type="hidden" th:field="*{imageUrl}" id="currentImageUrl"/>
+
+        <!-- Profile Image Section -->
+        <div class="mb-3">
+            <label class="form-label">Profile Image</label>
+            <div class="profile-image-container">
+                <!-- Show current image if exists -->
+                <img th:if="${doctorForm.imageUrl != null && !doctorForm.imageUrl.isEmpty()}"
+                     th:src="${doctorForm.imageUrl}"
+                     class="current-image mb-2" alt="Current profile image">
+                <div th:if="${doctorForm.imageUrl == null || doctorForm.imageUrl.isEmpty()}"
+                     class="alert alert-info">No profile image uploaded</div>
+            </div>
+
+            <div class="mb-3">
+                <label for="profileImage" class="form-label">Upload New Image</label>
+                <input type="file" class="form-control" id="profileImage" name="profileImage"
+                       accept="image/png, image/jpeg, image/jpg, image/gif">
+                <div class="form-text">Supported formats: JPG, JPEG, PNG, GIF. Max size: 5MB</div>
+            </div>
+
+            <!-- Image Preview -->
+            <img id="imagePreview" class="image-preview" alt="Image preview">
+
+            <!-- Cropper Container -->
+            <div class="cropper-container">
+                <div id="cropperCanvas"></div>
+                <div class="mt-2">
+                    <button type="button" id="cropImageBtn" class="btn btn-success btn-sm">Crop Image</button>
+                    <button type="button" id="cancelCropBtn" class="btn btn-secondary btn-sm ms-2">Cancel</button>
+                </div>
+            </div>
+        </div>
 
         <div class="mb-3">
             <label class="form-label">Full Name</label>
@@ -49,5 +116,125 @@
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.13/cropper.min.js"></script>
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const profileImageInput = document.getElementById('profileImage');
+        const imagePreview = document.getElementById('imagePreview');
+        const cropperContainer = document.querySelector('.cropper-container');
+        const cropperCanvas = document.getElementById('cropperCanvas');
+        const cropImageBtn = document.getElementById('cropImageBtn');
+        const cancelCropBtn = document.getElementById('cancelCropBtn');
+        const croppedImageData = document.getElementById('croppedImageData');
+
+        let cropper = null;
+
+        // Handle file selection
+        profileImageInput.addEventListener('change', function(e) {
+            const file = e.target.files[0];
+
+            if (!file) return;
+
+            // Validate file type
+            const validTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/gif'];
+            if (!validTypes.includes(file.type)) {
+                alert('Please select a valid image file (JPG, JPEG, PNG, GIF)');
+                profileImageInput.value = '';
+                return;
+            }
+
+            // Validate file size (5MB max)
+            if (file.size > 5 * 1024 * 1024) {
+                alert('Image file size must be less than 5MB');
+                profileImageInput.value = '';
+                return;
+            }
+
+            // Read and display the selected image
+            const reader = new FileReader();
+            reader.onload = function(event) {
+                // Create a new image element for the cropper
+                const img = document.createElement('img');
+                img.id = 'imageForCropper';
+                img.src = event.target.result;
+                img.style.maxWidth = '100%';
+
+                // Clear the previous content and add the new image
+                cropperCanvas.innerHTML = '';
+                cropperCanvas.appendChild(img);
+
+                // Show the cropper container and buttons
+                cropperContainer.style.display = 'block';
+                cropImageBtn.style.display = 'inline-block';
+                cancelCropBtn.style.display = 'inline-block';
+
+                // Initialize the cropper
+                if (cropper) {
+                    cropper.destroy();
+                }
+
+                cropper = new Cropper(img, {
+                    aspectRatio: 1, // Square aspect ratio
+                    viewMode: 1,    // Restrict the crop box to not exceed the size of the canvas
+                    responsive: true,
+                    zoomable: true,
+                    scalable: true,
+                    movable: true
+                });
+            };
+
+            reader.readAsDataURL(file);
+        });
+
+        // Handle crop button click
+        cropImageBtn.addEventListener('click', function() {
+            if (!cropper) return;
+
+            // Get the cropped canvas
+            const canvas = cropper.getCroppedCanvas({
+                width: 300,   // Output image width
+                height: 300,  // Output image height
+                minWidth: 100,
+                minHeight: 100,
+                maxWidth: 1000,
+                maxHeight: 1000,
+                fillColor: '#fff',
+                imageSmoothingEnabled: true,
+                imageSmoothingQuality: 'high'
+            });
+
+            // Convert canvas to data URL
+            const croppedImageUrl = canvas.toDataURL('image/jpeg', 0.9); // JPEG format, 90% quality
+
+            // Display the cropped image
+            imagePreview.src = croppedImageUrl;
+            imagePreview.style.display = 'block';
+
+            // Store the cropped image data to be sent with the form
+            croppedImageData.value = croppedImageUrl;
+
+            // Hide the cropper and buttons
+            cropperContainer.style.display = 'none';
+            cropImageBtn.style.display = 'none';
+            cancelCropBtn.style.display = 'none';
+        });
+
+        // Handle cancel button click
+        cancelCropBtn.addEventListener('click', function() {
+            if (cropper) {
+                cropper.destroy();
+                cropper = null;
+            }
+
+            // Reset the file input
+            profileImageInput.value = '';
+
+            // Hide the cropper and buttons
+            cropperContainer.style.display = 'none';
+            cropImageBtn.style.display = 'none';
+            cancelCropBtn.style.display = 'none';
+        });
+    });
+</script>
 </body>
 </html>

@@ -15,10 +15,12 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import orochi.model.Appointment;
 import orochi.model.Doctor;
+import orochi.model.DoctorEducation;
 import orochi.model.DoctorForm;
 import orochi.model.Patient;
 import orochi.model.Users;
 import orochi.repository.AppointmentRepository;
+import orochi.repository.DoctorEducationRepository;
 import orochi.repository.DoctorRepository;
 import orochi.repository.PatientContactRepository;
 import orochi.repository.PatientRepository;
@@ -26,6 +28,7 @@ import orochi.repository.UserRepository;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
@@ -309,6 +312,31 @@ public class DoctorService {
         form.setPhoneNumber(u.getPhoneNumber());
         form.setStatus(u.getStatus());
         form.setBioDescription(d.getBioDescription());
+        form.setImageUrl(d.getImageUrl());
+
+        // Load doctor education information if available
+        if (d.getEducations() != null && !d.getEducations().isEmpty()) {
+            List<String> degrees = new ArrayList<>();
+            List<String> institutions = new ArrayList<>();
+            List<Integer> graduations = new ArrayList<>();
+            List<String> educationDescriptions = new ArrayList<>();
+            List<String> certificateImageUrls = new ArrayList<>();
+
+            for (DoctorEducation education : d.getEducations()) {
+                degrees.add(education.getDegree());
+                institutions.add(education.getInstitution());
+                graduations.add(education.getGraduation());
+                educationDescriptions.add(education.getDescription());
+                certificateImageUrls.add(education.getCertificateImageUrl());
+            }
+
+            form.setDegrees(degrees);
+            form.setInstitutions(institutions);
+            form.setGraduations(graduations);
+            form.setEducationDescriptions(educationDescriptions);
+            form.setCertificateImageUrls(certificateImageUrls);
+        }
+
         return form;
     }
         // … các field và constructor …
@@ -346,7 +374,44 @@ public class DoctorService {
             // Cập nhật Doctor
             d.setUserId(u.getUserId());
             d.setBioDescription(form.getBioDescription());
+            d.setImageUrl(form.getImageUrl()); // Save the profile image URL
             doctorRepository.save(d);
+
+            // Save doctor education information if available
+            if (form.getDegrees() != null && !form.getDegrees().isEmpty()) {
+                // First, delete existing education records to avoid duplicates
+                doctorEducationRepository.deleteByDoctorId(d.getDoctorId());
+
+                // Save new education records
+                for (int i = 0; i < form.getDegrees().size(); i++) {
+                    if (form.getDegrees().get(i) != null && !form.getDegrees().get(i).isEmpty()) {
+                        DoctorEducation education = new DoctorEducation();
+                        education.setDoctorId(d.getDoctorId());
+                        education.setDegree(form.getDegrees().get(i));
+
+                        // Set other fields if available
+                        if (form.getInstitutions() != null && i < form.getInstitutions().size()) {
+                            education.setInstitution(form.getInstitutions().get(i));
+                        }
+
+                        if (form.getGraduations() != null && i < form.getGraduations().size()) {
+                            education.setGraduation(form.getGraduations().get(i));
+                        }
+
+                        if (form.getEducationDescriptions() != null && i < form.getEducationDescriptions().size()) {
+                            education.setDescription(form.getEducationDescriptions().get(i));
+                        }
+
+                        if (form.getCertificateImageUrls() != null && i < form.getCertificateImageUrls().size()) {
+                            education.setCertificateImageUrl(form.getCertificateImageUrls().get(i));
+                        }
+
+                        // Save the education record
+                        doctorEducationRepository.save(education);
+                        logger.info("Saved education record for doctor ID: {}, degree: {}", d.getDoctorId(), education.getDegree());
+                    }
+                }
+            }
         }
 
 
