@@ -45,6 +45,7 @@ public class DoctorService {
     private final UserRepository userRepository;
     @Getter
     private final PatientContactRepository patientContactRepository;
+    private final DoctorEducationRepository doctorEducationRepository;
 
     @Autowired
     private PasswordEncoder passwordEncoder;
@@ -57,12 +58,13 @@ public class DoctorService {
                          PatientRepository patientRepository,
                          DoctorRepository doctorRepository,
                          UserRepository userRepository,
-                         PatientContactRepository patientContactRepository) {
+                         PatientContactRepository patientContactRepository, DoctorEducationRepository doctorEducationRepository) {
         this.appointmentRepository = appointmentRepository;
         this.patientRepository = patientRepository;
         this.doctorRepository = doctorRepository;
         this.userRepository = userRepository;
         this.patientContactRepository = patientContactRepository;
+        this.doctorEducationRepository = doctorEducationRepository;
     }
 
     /**

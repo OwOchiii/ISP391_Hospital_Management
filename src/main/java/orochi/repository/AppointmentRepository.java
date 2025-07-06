@@ -159,4 +159,6 @@ public interface AppointmentRepository extends JpaRepository<Appointment, Intege
     @Query("SELECT a FROM Appointment a WHERE a.dateTime BETWEEN :startDate AND :endDate ORDER BY a.dateTime ASC")
     List<Appointment> findByDateTimeBetween(@Param("startDate") LocalDateTime startDate,
                                            @Param("endDate") LocalDateTime endDate);
+
+    List<Appointment> findByDoctorIdAndDateTimeBetween(Integer doctorId, LocalDateTime startOfDay, LocalDateTime endOfDay);
 }
