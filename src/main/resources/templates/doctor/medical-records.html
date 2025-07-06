@@ -851,54 +851,55 @@
                 <!-- Basic Information Form -->
                 <div class="form-row">
                     <div class="form-group">
-                        <label class="form-label required">
+                        <label class="form-label">
                             <i class="bi bi-person"></i>
                             Full Name
                         </label>
                         <input type="text" class="form-control" name="fullName"
                                th:value="${patient?.user?.fullName}"
-                               placeholder="Enter patient's full name" required>
+                               placeholder="Enter patient's full name" readonly>
                     </div>
                     <div class="form-group">
-                        <label class="form-label required">
+                        <label class="form-label">
                             <i class="bi bi-calendar3"></i>
                             Date of Birth
                         </label>
                         <input type="date" class="form-control" name="dateOfBirth"
-                               th:value="${patient?.dateOfBirth}" required>
+                               th:value="${patient?.dateOfBirth}" readonly>
                     </div>
                     <div class="form-group">
-                        <label class="form-label required">
+                        <label class="form-label">
                             <i class="bi bi-gender-ambiguous"></i>
                             Gender
                         </label>
-                        <select class="form-select" name="gender" required>
+                        <select class="form-select" name="gender" disabled>
                             <option value="">Select Gender</option>
                             <option value="Male" th:selected="${patient?.gender == 'Male'}">Male</option>
                             <option value="Female" th:selected="${patient?.gender == 'Female'}">Female</option>
                             <option value="Other" th:selected="${patient?.gender == 'Other'}">Other</option>
                         </select>
+                        <input type="hidden" name="gender" th:value="${patient?.gender}">
                     </div>
                 </div>
 
                 <div class="form-row">
                     <div class="form-group">
-                        <label class="form-label required">
+                        <label class="form-label">
                             <i class="bi bi-telephone"></i>
                             Phone Number
                         </label>
                         <input type="tel" class="form-control" name="phoneNumber"
                                th:value="${patient?.user?.phoneNumber}"
-                               placeholder="+1 (555) 123-4567" required>
+                               placeholder="+1 (555) 123-4567" readonly>
                     </div>
                     <div class="form-group">
-                        <label class="form-label required">
+                        <label class="form-label">
                             <i class="bi bi-envelope"></i>
                             Email Address
                         </label>
                         <input type="email" class="form-control" name="email"
                                th:value="${patient?.user?.email}"
-                               placeholder="patient@example.com" required>
+                               placeholder="patient@example.com" readonly>
                     </div>
                     <div class="form-group">
                         <label class="form-label">
@@ -907,7 +908,7 @@
                         </label>
                         <input type="tel" class="form-control" name="emergencyContact"
                                th:value="${patient.getUser().getPhoneNumber()}"
-                               placeholder="+1 (555) 987-6543">
+                               placeholder="+1 (555) 987-6543" readonly>
                     </div>
                 </div>
 
@@ -932,11 +933,11 @@
                         </label>
                         <select class="form-select" name="healthStatus">
                             <option value="">Select Health Status</option>
-                            <option value="Excellent">Excellent</option>
-                            <option value="Good">Good</option>
-                            <option value="Fair">Fair</option>
-                            <option value="Poor">Poor</option>
-                            <option value="Critical">Critical</option>
+                            <option value="Excellent" th:selected="${medicalRecord?.healthStatus == 'Excellent'}">Excellent</option>
+                            <option value="Good" th:selected="${medicalRecord?.healthStatus == 'Good'}">Good</option>
+                            <option value="Fair" th:selected="${medicalRecord?.healthStatus == 'Fair'}">Fair</option>
+                            <option value="Poor" th:selected="${medicalRecord?.healthStatus == 'Poor'}">Poor</option>
+                            <option value="Critical" th:selected="${medicalRecord?.healthStatus == 'Critical'}">Critical</option>
                         </select>
                     </div>
                     <div class="form-group">
@@ -946,14 +947,14 @@
                         </label>
                         <select class="form-select" name="bloodType">
                             <option value="">Select Blood Type</option>
-                            <option value="A+">A+</option>
-                            <option value="A-">A-</option>
-                            <option value="B+">B+</option>
-                            <option value="B-">B-</option>
-                            <option value="AB+">AB+</option>
-                            <option value="AB-">AB-</option>
-                            <option value="O+">O+</option>
-                            <option value="O-">O-</option>
+                            <option value="A+" th:selected="${medicalRecord?.bloodType == 'A+'}">A+</option>
+                            <option value="A-" th:selected="${medicalRecord?.bloodType == 'A-'}">A-</option>
+                            <option value="B+" th:selected="${medicalRecord?.bloodType == 'B+'}">B+</option>
+                            <option value="B-" th:selected="${medicalRecord?.bloodType == 'B-'}">B-</option>
+                            <option value="AB+" th:selected="${medicalRecord?.bloodType == 'AB+'}">AB+</option>
+                            <option value="AB-" th:selected="${medicalRecord?.bloodType == 'AB-'}">AB-</option>
+                            <option value="O+" th:selected="${medicalRecord?.bloodType == 'O+'}">O+</option>
+                            <option value="O-" th:selected="${medicalRecord?.bloodType == 'O-'}">O-</option>
                         </select>
                     </div>
                 </div>
@@ -1018,19 +1019,19 @@
                         <div class="medication-details">
                             <div class="medication-detail">
                                 <span class="detail-label">Dosage</span>
-                                <span class="detail-value" th:text="${medication.dosage}">10mg</span>
+                                <span class="detail-value" th:text="${medication.dosage}">N/A</span>
                             </div>
                             <div class="medication-detail">
                                 <span class="detail-label">Frequency</span>
-                                <span class="detail-value" th:text="${medication.frequency}">Once daily</span>
+                                <span class="detail-value" th:text="${medication.frequency}">N/A</span>
                             </div>
                             <div class="medication-detail">
                                 <span class="detail-label">Start Date</span>
-                                <span class="detail-value" th:text="${medication.startDate}">2024-01-15</span>
+                                <span class="detail-value" th:text="${medication.startDate}">N/A</span>
                             </div>
                             <div class="medication-detail">
                                 <span class="detail-label">End Date</span>
-                                <span class="detail-value" th:text="${medication.endDate}">2024-01-31</span>
+                                <span class="detail-value" th:text="${medication.endDate}">N/A</span>
                             </div>
                         </div>
                         <input type="hidden" th:name="'medications[' + ${iterStat.index} + '].name'" th:value="${medication.name}" />
@@ -1063,14 +1064,6 @@
                     </span>
                 </div>
                 <div>
-                    <button type="button" class="btn-secondary-custom" onclick="resetForm()">
-                        <i class="bi bi-arrow-clockwise"></i>
-                        Reset
-                    </button>
-                    <button type="button" class="btn-outline-custom" onclick="saveDraft()">
-                        <i class="bi bi-file-earmark"></i>
-                        Save Draft
-                    </button>
                     <button type="submit" class="btn-primary-custom">
                         <i class="bi bi-check-circle"></i>
                         Save Medical Record
