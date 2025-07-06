@@ -1,27 +1,26 @@
 package orochi.service.impl;
 
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 import orochi.model.Specialization;
-import java.math.BigDecimal;
 import orochi.repository.DoctorSpecializationRepository;
 import orochi.repository.ServiceRepository;
 import orochi.repository.SpecializationRepository;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.domain.Pageable;
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.math.BigDecimal;
 import java.util.List;
 
 @Service
 public class SpecializationServiceImpl {
 
-    private static final Logger logger = LoggerFactory.getLogger(SpecializationServiceImpl.class); // ADDED: Logger for debugging
+    private static final Logger logger = LoggerFactory.getLogger(SpecializationServiceImpl.class);
 
     @Autowired
     private SpecializationRepository specializationRepository;
@@ -32,24 +31,34 @@ public class SpecializationServiceImpl {
     @Autowired
     private ServiceRepository serviceRepository;
 
-    public List<Specialization> getAllSpecializations() {
-        return specializationRepository.findAll();
+    public Page<Specialization> getSpecializationsPage(int page, int size) {
+        Pageable pageable = PageRequest.of(page, size, Sort.by("specName").ascending());
+        return specializationRepository.findAllSpecializations(pageable);
+    }
+
+    public Page<Specialization> getSpecializationsPage(
+            int page, int size, String search, String symptomFilter) {
+
+        Pageable pageable = PageRequest.of(page, size, Sort.by("specName").ascending());
+
+        String qName = (search == null ? "" : search.trim());
+        String qSymptom = (symptomFilter == null ? "" : symptomFilter.trim());
+        if (qName.isEmpty() && qSymptom.isEmpty()) {
+            return specializationRepository.findAllSpecializations(pageable);
+        }
+        return specializationRepository
+                .findBySpecNameContainingIgnoreCaseAndSymptomContainingIgnoreCase(qName, qSymptom, pageable);
+    }
+
+    public List<String> getAllDistinctSymptoms() {
+        return specializationRepository.findDistinctSymptoms();
     }
 
     public Specialization saveSpecialization(Specialization specialization) {
         if (specialization == null) {
-            logger.error("Specialization is null, cannot save"); // ADDED: Log error
             throw new IllegalArgumentException("Specialization cannot be null");
         }
-        if (specialization.getSpecName() == null || specialization.getSpecName().trim().isEmpty()) {
-            logger.error("Invalid specialty name: {}", specialization.getSpecName()); // ADDED: Log error
-            throw new IllegalArgumentException("Specialty name cannot be empty");
-        }
-        if (specialization.getPrice() == null || specialization.getPrice().compareTo(BigDecimal.ZERO) <= 0) {
-            logger.error("Invalid price: {}", specialization.getPrice()); // ADDED: Log error
-            throw new IllegalArgumentException("Price must be positive");
-        }
-        logger.info("Saving specialization: {}", specialization); // ADDED: Log before saving
+        logger.info("Saving specialization: {}", specialization);
         return specializationRepository.save(specialization);
     }
 
@@ -62,10 +71,5 @@ public class SpecializationServiceImpl {
         doctorSpecializationRepository.deleteBySpecId(specId);
         serviceRepository.deleteBySpecId(specId);
         specializationRepository.deleteById(specId);
-    }
-
-    public Page<Specialization> getSpecializationsPage(int page, int size) {
-        Pageable pageable = PageRequest.of(page, size, Sort.by("specName").ascending()); // MODIFIED: Added sorting by specName
-        return specializationRepository.findAllSpecializations(pageable);
     }
 }
