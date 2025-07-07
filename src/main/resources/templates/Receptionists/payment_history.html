@@ -10,17 +10,17 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
     <style>
         :root {
-            --primary: #667eea;
-            --secondary: #764ba2;
-            --accent: #a78bfa;
-            --light: #f8fafc;
-            --dark: #3c366b;
+            --primary: #3b82f6;
+            --secondary: #1e40af;
+            --accent: #60a5fa;
+            --light: #eff6ff;
+            --dark: #1e3a8a;
             --text-dark: #1f2937;
             --text-light: #6b7280;
             --text-muted: #9ca3af;
             --bg-light: #f8fafc;
             --bg-white: #ffffff;
-            --success-color: #10b981;
+            --success-color: #3b82f6;
             --warning-color: #f59e0b;
             --error-color: #ef4444;
             --info-color: #3b82f6;
@@ -37,19 +37,20 @@
             font-family: 'Inter', sans-serif;
             line-height: 1.6;
             color: var(--text-dark);
-            background: var(--bg-light);
+            background: var(--light);
             overflow-x: hidden;
         }
 
         .main-content {
             min-height: 100vh;
+            padding: 1rem;
         }
 
         header {
             background: var(--bg-white);
             height: var(--header-height);
-            padding: 0 2rem;
-            box-shadow: 0 2px 20px rgba(0, 0, 0, 0.08);
+            padding: 0 1.5rem;
+            box-shadow: 0 2px 15px rgba(0, 0, 0, 0.1);
             display: flex;
             justify-content: space-between;
             align-items: center;
@@ -59,7 +60,7 @@
         }
 
         .h3 {
-            font-size: 1.5rem;
+            font-size: 1.75rem;
             font-weight: 700;
             color: var(--text-dark);
             margin: 0;
@@ -68,7 +69,7 @@
         .profile-info {
             display: flex;
             align-items: center;
-            gap: 1.5rem;
+            gap: 1rem;
         }
 
         .notification-bell {
@@ -81,6 +82,7 @@
 
         .notification-bell:hover {
             background: var(--light);
+            color: var(--primary);
         }
 
         .badge {
@@ -105,9 +107,9 @@
             max-height: 450px;
             overflow-y: auto;
             background: var(--bg-white);
-            border: 1px solid rgba(102, 126, 234, 0.1);
-            border-radius: 16px;
-            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+            border: 1px solid rgba(59, 130, 246, 0.1);
+            border-radius: 12px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
             padding: 1.5rem;
             z-index: 2000;
             display: none;
@@ -122,7 +124,7 @@
 
         .notification-item {
             padding: 0.75rem;
-            border-bottom: 1px solid rgba(102, 126, 234, 0.1);
+            border-bottom: 1px solid rgba(59, 130, 246, 0.1);
             transition: background 0.2s ease;
         }
 
@@ -135,71 +137,85 @@
         }
 
         .card {
-            background: white;
-            border-radius: 15px;
-            box-shadow: 0 2px 15px rgba(0, 0, 0, 0.08);
-            border: 2px solid rgba(102, 126, 234, 0.2);
+            background: var(--bg-white);
+            border-radius: 12px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+            border: none;
             transition: all 0.3s ease;
         }
 
         .card:hover {
-            box-shadow: 0 8px 30px rgba(102, 126, 234, 0.25);
+            box-shadow: 0 8px 30px rgba(59, 130, 246, 0.2);
         }
 
         .card-header {
-            background: linear-gradient(135deg, rgba(102, 126, 234, 0.05), rgba(167, 139, 250, 0.05));
-            border-bottom: 1px solid rgba(102, 126, 234, 0.2);
-            padding: 1.75rem;
+            background: linear-gradient(135deg, var(--light), var(--bg-white));
+            border-bottom: none;
+            padding: 1.5rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
         }
 
         .card-title {
-            font-size: 1.25rem;
+            font-size: 1.5rem;
             font-weight: 600;
             color: var(--text-dark);
         }
 
         .card-body {
-            padding: 0.8rem;
+            padding: 1.5rem;
         }
 
         .input-group-text {
             background: var(--light);
-            border: 1px solid rgba(102, 126, 234, 0.2);
+            border: 1px solid rgba(59, 130, 246, 0.2);
             color: var(--primary);
         }
 
         .form-control, .form-select {
-            border: 1px solid rgba(102, 126, 234, 0.2);
+            border: 1px solid rgba(59, 130, 246, 0.2);
             border-radius: 8px;
             font-size: 0.875rem;
+            padding: 0.5rem 1rem;
+            transition: all 0.3s ease;
+        }
+
+        .form-control:focus, .form-select:focus {
+            border-color: var(--primary);
+            box-shadow: 0 0 0 0.2rem rgba(59, 130, 246, 0.25);
         }
 
         .table {
-            --bs-table-hover-bg: var(--light);
+            --bs-table-hover-bg: rgba(59, 130, 246, 0.05);
+            --bs-table-striped-bg: #f8fafc;
         }
 
         .table th {
             font-size: 0.875rem;
             color: var(--text-muted);
-            font-weight: 500;
+            font-weight: 600;
+            padding: 1rem;
         }
 
         .table td {
             font-size: 0.875rem;
             color: var(--text-dark);
             vertical-align: middle;
+            padding: 1rem;
         }
 
         .status-dropdown {
             border-radius: 8px;
             font-size: 0.75rem;
-            padding: 0.25rem 0.5rem;
+            padding: 0.25rem 0.75rem;
             border: none;
+            font-weight: 500;
         }
 
         .status-dropdown.completed {
-            background-color: #c6f6d5;
-            color: #15803d;
+            background-color: rgba(59, 130, 246, 0.1);
+            color: var(--success-color);
         }
 
         .status-dropdown.pending {
@@ -223,24 +239,44 @@
         }
 
         .btn-back {
-            background: var(--text-muted);
-            border: none;
-            padding: 0.75rem 1.5rem;
+            background: var(--bg-white);
+            border: 1px solid var(--primary);
+            color: var(--primary);
+            padding: 0.5rem 1rem;
             border-radius: 8px;
-            font-weight: 600;
+            font-weight: 500;
             transition: all 0.3s ease;
         }
 
         .btn-back:hover {
-            background: var(--text-light);
+            background: var(--primary);
+            color: white;
+            transform: translateY(-2px);
+        }
+
+        .filter-toggle {
+            background: var(--primary);
+            color: white;
+            padding: 0.5rem 1rem;
+            border-radius: 8px;
+            font-size: 0.875rem;
+            border: none;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .filter-toggle:hover {
+            background: var(--secondary);
             transform: translateY(-2px);
         }
 
         .filter-group {
-            display: flex;
-            align-items: center;
-            gap: 1rem;
-            flex-wrap: wrap;
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 0.75rem;
+            margin-top: 0.75rem;
         }
 
         .filter-label {
@@ -249,18 +285,42 @@
             font-weight: 500;
         }
 
+        .dropdown-menu {
+            border: 1px solid rgba(59, 130, 246, 0.2);
+            border-radius: 8px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+        }
+
+        .dropdown-item {
+            font-size: 0.875rem;
+            padding: 0.5rem 1rem;
+        }
+
+        .dropdown-item:hover {
+            background: var(--light);
+        }
+
         @media (max-width: 768px) {
+            .main-content {
+                padding: 0.5rem;
+            }
+
             header {
                 padding: 0 1rem;
             }
 
             .filter-group {
-                flex-direction: column;
-                align-items: stretch;
+                grid-template-columns: 1fr;
             }
 
             .input-group, .form-select, .btn-export {
                 width: 100%;
+            }
+
+            .card-header {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 1rem;
             }
         }
 
@@ -298,11 +358,14 @@
 <div class="container-fluid">
     <main class="main-content col-12 px-0">
         <header>
-            <div class="d-flex align-items-center">
+            <div class="d-flex align-items-center gap-3">
+                <button class="btn-back" onclick="history.back()">
+                    <i class="fas fa-arrow-left me-2"></i> Back
+                </button>
                 <h3>Payment History</h3>
             </div>
             <div class="profile-info">
-                <div class="notification-bell" onclick="toggleNotificationModal()">
+                <div class="notification-bell" onclick="toggleNotificationModal()" aria-label="Notifications">
                     <i class="fas fa-bell"></i>
                     <span class="badge rounded-pill">3</span>
                 </div>
@@ -310,42 +373,48 @@
             </div>
         </header>
         <div class="container-fluid p-4">
-            <div class="mb-3">
-                <button class="btn btn-back" onclick="history.back()">Back</button>
-            </div>
             <div class="card">
-                <div class="card-header d-flex justify-content-between align-items-center flex-wrap">
+                <div class="card-header">
                     <h5 class="card-title">Payment History</h5>
-                    <div class="filter-group">
-                        <div class="input-group" style="width: 250px;">
-                            <span class="input-group-text"><i class="fas fa-search"></i></span>
-                            <input type="text" class="form-control" id="searchInput" placeholder="Search payments...">
-                        </div>
-                        <select class="form-select" id="statusFilter" style="width: 150px;">
-                            <option value="">All Statuses</option>
-                            <option value="completed">Completed</option>
-                            <option value="pending">Pending</option>
-                        </select>
-                        <div class="d-flex align-items-center gap-2">
-                            <span class="filter-label">From:</span>
-                            <input type="date" class="form-control" id="dateFrom" style="width: 150px;">
-                        </div>
-                        <div class="d-flex align-items-center gap-2">
-                            <span class="filter-label">To:</span>
-                            <input type="date" class="form-control" id="dateTo" style="width: 150px;">
-                        </div>
-                        <div class="d-flex align-items-center gap-2">
-                            <select class="form-select" id="exportFormat" style="width: 120px;">
-                                <option value="csv">Export CSV</option>
-                                <option value="xlsx">Export XLSX</option>
-                            </select>
-                            <button class="btn-export" onclick="exportData()"><i class="fas fa-download"></i> Export</button>
-                        </div>
+                    <div>
+                        <button class="filter-toggle" type="button" data-bs-toggle="collapse" data-bs-target="#filterCollapse" aria-expanded="false" aria-controls="filterCollapse">
+                            <i class="fas fa-filter"></i> Toggle Filters
+                        </button>
                     </div>
                 </div>
                 <div class="card-body">
-                    <div class="table-responsive">
-                        <table class="table table-hover" id="paymentTable">
+                    <div class="collapse" id="filterCollapse">
+                        <div class="filter-group">
+                            <div class="input-group">
+                                <span class="input-group-text"><i class="fas fa-search"></i></span>
+                                <input type="text" class="form-control" id="searchInput" placeholder="Search payments..." aria-label="Search payments">
+                            </div>
+                            <select class="form-select" id="statusFilter" aria-label="Filter by status">
+                                <option value="">All Statuses</option>
+                                <option value="completed">Completed</option>
+                                <option value="pending">Pending</option>
+                            </select>
+                            <div class="d-flex align-items-center gap-2">
+                                <span class="filter-label">From:</span>
+                                <input type="date" class="form-control" id="dateFrom" aria-label="Filter by start date">
+                            </div>
+                            <div class="d-flex align-items-center gap-2">
+                                <span class="filter-label">To:</span>
+                                <input type="date" class="form-control" id="dateTo" aria-label="Filter by end date">
+                            </div>
+                            <div class="dropdown">
+                                <button class="btn-export dropdown-toggle" type="button" id="exportDropdown" data-bs-toggle="dropdown" aria-expanded="false">
+                                    <i class="fas fa-download me-2"></i> Export
+                                </button>
+                                <ul class="dropdown-menu" aria-labelledby="exportDropdown">
+                                    <li><button class="dropdown-item" onclick="exportData('csv')">Export CSV</button></li>
+                                    <li><button class="dropdown-item" onclick="exportData('xlsx')">Export XLSX</button></li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="table-responsive mt-3">
+                        <table class="table table-hover table-striped" id="paymentTable">
                             <thead>
                             <tr>
                                 <th>Patient Name</th>
@@ -365,7 +434,7 @@
                         <div>
                             <span>Showing <span id="currentEntries">0-0</span> of <span id="totalEntries">0</span> entries</span>
                         </div>
-                        <nav>
+                        <nav aria-label="Table pagination">
                             <ul class="pagination pagination-sm" id="pagination">
                                 <li class="page-item disabled"><a class="page-link" href="#" onclick="changePage(-1)">Previous</a></li>
                                 <li class="page-item active"><a class="page-link" href="#" onclick="changePage(1)">1</a></li>
@@ -404,14 +473,13 @@
         { id: 5, invoiceId: 'INV-005', patientName: 'Tran Thi B', phone: '0901234567', amount: '$250.00', dueDate: '2025-06-05', status: 'pending' }
     ];
 
-    let payments = samplePayments; // Initialize with sample data
+    let payments = samplePayments;
     let currentPage = 1;
     const rowsPerPage = 5;
     let filteredPayments = [...payments];
 
     async function fetchPayments() {
-        // Simulate fetching data; in production, replace with actual API call
-        return samplePayments;
+        return samplePayments; // Replace with actual API call in production
     }
 
     function renderTable(data, page) {
@@ -435,7 +503,7 @@
                 <td>${payment.amount}</td>
                 <td>${payment.dueDate}</td>
                 <td><span class="status-dropdown ${payment.status.toLowerCase()}">${payment.status.charAt(0).toUpperCase() + payment.status.slice(1)}</span></td>
-                <td><button class="btn btn-sm btn-primary" onclick="viewPayment()"><i class="fas fa-eye"></i> View</button></td>
+                <td><button class="btn btn-sm btn-primary" onclick="viewPayment('${payment.invoiceId}')" aria-label="View payment details"><i class="fas fa-eye"></i> View</button></td>
             `;
             tableBody.appendChild(row);
         });
@@ -449,16 +517,16 @@
             return;
         }
         pagination.innerHTML = `
-            <li class="page-item ${page === 1 ? 'disabled' : ''}"><a class="page-link" href="#" onclick="changePage(${page - 1}); return false;">Previous</a></li>
+            <li class="page-item ${page === 1 ? 'disabled' : ''}"><a class="page-link" href="#" onclick="changePage(${page - 1}); return false;" aria-label="Previous page">Previous</a></li>
         `;
         const totalPages = Math.ceil(data.length / rowsPerPage);
         for (let i = 1; i <= totalPages; i++) {
             pagination.innerHTML += `
-                <li class="page-item ${i === page ? 'active' : ''}"><a class="page-link" href="#" onclick="changePage(${i}); return false;">${i}</a></li>
+                <li class="page-item ${i === page ? 'active' : ''}"><a class="page-link" href="#" onclick="changePage(${i}); return false;" aria-label="Page ${i}">${i}</a></li>
             `;
         }
         pagination.innerHTML += `
-            <li class="page-item ${page === totalPages ? 'disabled' : ''}"><a class="page-link" href="#" onclick="changePage(${page + 1}); return false;">Next</a></li>
+            <li class="page-item ${page === totalPages ? 'disabled' : ''}"><a class="page-link" href="#" onclick="changePage(${page + 1}); return false;" aria-label="Next page">Next</a></li>
         `;
     }
 
@@ -491,12 +559,16 @@
         renderTable(filteredPayments, currentPage);
     }
 
-    function viewPayment() {
-        window.location.href = '/receptionist/view_payment_details';
+    function viewPayment(invoiceId) {
+        window.location.href = `/receptionist/view_payment_details?invoiceId=${invoiceId}`;
     }
 
-    function exportData() {
-        const format = document.getElementById('exportFormat').value;
+    function exportData(format) {
+        if (filteredPayments.length === 0) {
+            alert('No data available to export.');
+            return;
+        }
+
         const headers = ['Patient Name', 'Phone', 'Invoice ID', 'Amount', 'Due Date', 'Status'];
         const rows = filteredPayments.map(payment => [
             payment.patientName,
@@ -506,11 +578,7 @@
             payment.dueDate,
             payment.status
         ]);
-
-        if (filteredPayments.length === 0) {
-            alert('No data available to export.');
-            return;
-        }
+        const exportDate = new Date().toLocaleString('en-US', { timeZone: 'Asia/Ho_Chi_Minh' });
 
         try {
             if (format === 'csv') {
@@ -520,23 +588,44 @@
                     if (str.includes(',') || str.includes('"') || str.includes('\n')) {
                         return `"${str.replace(/"/g, '""')}"`;
                     }
-                    return `"${str}"`;
+                    return str;
                 };
-                const csvContent = [headers, ...rows]
-                    .map(row => row.map(escapeCsvCell).join(','))
-                    .join('\n');
+                const csvContent = [
+                    'MediCare Plus Payment History',
+                    `Exported on ${exportDate}`,
+                    '',
+                    headers.join(','),
+                    ...rows.map(row => row.map(escapeCsvCell).join(','))
+                ].join('\n');
                 const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
                 const link = document.createElement('a');
                 link.href = URL.createObjectURL(blob);
-                link.download = 'payment_history.csv';
+                link.download = `payment_history_${exportDate.replace(/[, :]/g, '-')}.csv`;
                 link.click();
                 URL.revokeObjectURL(link.href);
             } else if (format === 'xlsx') {
-                const wsData = [headers, ...rows];
+                const wsData = [
+                    ['MediCare Plus Payment History'],
+                    [`Exported on ${exportDate}`],
+                    [],
+                    headers,
+                    ...rows
+                ];
                 const ws = XLSX.utils.aoa_to_sheet(wsData);
+                ws['!cols'] = headers.map(() => ({ wch: 20 }));
+                ws['!rows'] = [{}, { hpt: 20 }, {}, { hpt: 20 }];
+                const range = XLSX.utils.decode_range(ws['!ref']);
+                for (let C = range.s.c; C <= range.e.c; C++) {
+                    const cellAddress = XLSX.utils.encode_cell({ r: 3, c: C });
+                    ws[cellAddress].s = {
+                        font: { bold: true, color: { rgb: 'FFFFFF' } },
+                        fill: { fgColor: { rgb: '3b82f6' } },
+                        alignment: { horizontal: 'center', vertical: 'center' }
+                    };
+                }
                 const wb = XLSX.utils.book_new();
                 XLSX.utils.book_append_sheet(wb, ws, 'Payment History');
-                XLSX.writeFile(wb, 'payment_history.xlsx');
+                XLSX.writeFile(wb, `payment_history_${exportDate.replace(/[, :]/g, '-')}.xlsx`);
             }
         } catch (error) {
             console.error('Export failed:', error);
@@ -557,5 +646,6 @@
 
     document.addEventListener('DOMContentLoaded', init);
 </script>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
 </body>
 </html>

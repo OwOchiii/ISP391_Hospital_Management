@@ -34,6 +34,7 @@ public class Patient {
     @Column(name = "description", length = Integer.MAX_VALUE)
     private String description;
 
+
     @OneToOne
     @JoinColumn(name = "UserID", insertable = false, updatable = false)
     private Users user;
@@ -76,4 +77,5 @@ public class Patient {
                 ", description='" + description + '\'' +
                 '}';
     }
+
 }

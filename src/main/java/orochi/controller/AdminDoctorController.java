@@ -44,7 +44,6 @@ public class AdminDoctorController {
     @Qualifier("userServiceImpl")
     private UserService userService;
 
-
     @Autowired
     private RoleService roleService;
 
@@ -95,13 +94,13 @@ public class AdminDoctorController {
         return "admin/doctor/add";
     }
 
-//    @PostMapping("/{id}/edit")
-//    public String update(@PathVariable int id,
-//                         @RequestParam int adminId,
-//                         @ModelAttribute Doctor form) {
-//        doctorService.saveDoctor(form);
-//        return "redirect:/admin/doctors?adminId=" + adminId;
-//    }
+    @PostMapping("/{id}/edit")
+    public String update(@PathVariable int id,
+                         @RequestParam int adminId,
+                         @ModelAttribute Doctor form) {
+        doctorService.saveDoctor(form);
+        return "redirect:/admin/doctors?adminId=" + adminId;
+    }
 
     @PostMapping("/{id}/changeRole")
     public String changeDoctorRole(
