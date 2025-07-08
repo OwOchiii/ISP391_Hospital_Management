@@ -1,37 +1,35 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Patient Register - MediCare Plus</title>
+    <!-- Bootstrap CSS -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Font Awesome -->
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <!-- Bootstrap Icons -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css">
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;700&display=swap" rel="stylesheet">
     <style>
         :root {
-            --primary: #667eea;
-            --secondary: #764ba2;
-            --accent: #a78bfa;
-            --light: #f8fafc;
-            --dark: #3c366b;
+            --primary-color: #007bff;
+            --success-color: #007bff;
             --text-dark: #1f2937;
-            --text-light: #6b7280;
+            --text-light: #6c757d;
             --text-muted: #9ca3af;
-            --bg-light: #f8fafc;
+            --bg-light: #f8f9fa;
             --bg-white: #ffffff;
-            --success-color: #10b981;
-            --warning-color: #f59e0b;
             --error-color: #ef4444;
-            --info-color: #3b82f6;
+            --border-color: #e5e7eb;
             --header-height: 70px;
         }
-
         * {
             margin: 0;
             padding: 0;
             box-sizing: border-box;
         }
-
         body {
             font-family: 'Inter', sans-serif;
             line-height: 1.6;
@@ -39,12 +37,10 @@
             background: var(--bg-light);
             overflow-x: hidden;
         }
-
         .main-content {
             min-height: 100vh;
         }
-
-        header {
+        .top-header {
             background: var(--bg-white);
             height: var(--header-height);
             padding: 0 2rem;
@@ -56,575 +52,1017 @@
             top: 0;
             z-index: 999;
         }
-
-        .h3 {
-            font-size: 1.5rem;
-            font-weight: 700;
-            color: var(--text-dark);
-            margin: 0;
+        .header-left {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
         }
-
-        .profile-info {
+        .header-left h4 {
+            font-size: 1.8rem;
+        }
+        .header-right {
             display: flex;
             align-items: center;
             gap: 1.5rem;
         }
-
-        .notification-bell {
-            position: relative;
-            cursor: pointer;
-            padding: 0.5rem;
-            border-radius: 8px;
-            transition: all 0.3s ease;
+        .page-content {
+            padding: 2rem;
+            max-width: 1200px;
+            margin: 0 auto;
         }
-
-        .notification-bell:hover {
-            background: var(--light);
+        .page-header {
+            margin-bottom: 2rem;
         }
-
-        .badge {
-            font-size: 0.625rem;
-            padding: 0.25em 0.5em;
-            background: var(--error-color);
+        .page-title {
+            font-size: 2rem;
+            font-weight: 700;
+            color: var(--text-dark);
+            margin-bottom: 0.5rem;
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
         }
-
-        .rounded-circle {
-            width: 40px;
-            height: 40px;
-            border-radius: 50%;
-            background: linear-gradient(135deg, var(--primary), var(--accent));
-            object-fit: cover;
+        .page-title i {
+            color: var(--success-color);
         }
-
-        .notification-modal {
-            position: fixed;
-            top: 80px;
-            right: 20px;
-            width: 350px;
-            max-height: 450px;
-            overflow-y: auto;
+        .breadcrumb {
+            background: none;
+            padding: 0;
+            margin: 0;
+            font-size: 0.9rem;
+        }
+        .breadcrumb-item {
+            display: inline;
+        }
+        .breadcrumb-item + .breadcrumb-item::before {
+            content: '/';
+            color: var(--text-muted);
+            margin: 0 0.5rem;
+        }
+        .breadcrumb-item a {
+            color: var(--success-color);
+            text-decoration: none;
+        }
+        .breadcrumb-item a:hover {
+            text-decoration: underline;
+        }
+        .breadcrumb-item.active {
+            color: var(--text-muted);
+        }
+        .form-section {
             background: var(--bg-white);
-            border: 1px solid rgba(102, 126, 234, 0.1);
             border-radius: 16px;
             box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
-            padding: 1.5rem;
+            padding: 2.5rem;
+            margin-bottom: 2rem;
+        }
+        .section-title {
+            font-size: 1.5rem;
+            font-weight: 600;
+            color: var(--text-dark);
+            margin-bottom: 1.5rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        .section-title i {
+            color: var(--success-color);
+        }
+        .form-label {
+            font-weight: 600;
+            color: var(--text-dark);
+            margin-bottom: 0.5rem;
+            display: block;
+            font-size: 1rem;
+        }
+        .form-control, .form-select {
+            border: 2px solid var(--border-color);
+            border-radius: 12px;
+            padding: 0.875rem 1rem;
+            font-size: 1rem;
+            transition: all 0.3s ease;
+            background: var(--bg-white);
+            width: 100%;
+        }
+        .form-control:focus, .form-select:focus {
+            border-color: var(--success-color);
+            box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.25);
+            background: var(--bg-white);
+        }
+        .error-message {
+            color: var(--error-color);
+            font-size: 0.875rem;
+            margin-top: 0.25rem;
+            display: flex;
+            align-items: center;
+            gap: 0.25rem;
+        }
+        .error-message i {
+            font-size: 0.75rem;
+        }
+        .form-control.is-invalid {
+            border-color: var(--error-color) !important;
+            box-shadow: 0 0 0 0.2rem rgba(239, 68, 68, 0.25) !important;
+        }
+        .form-control.is-valid {
+            border-color: #28a745 !important;
+            box-shadow: 0 0 0 0.2rem rgba(40, 167, 69, 0.25) !important;
+        }
+        .alert-custom {
+            border-radius: 12px;
+            padding: 1rem 1.5rem;
+            margin-bottom: 1.5rem;
+            border: none;
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            font-weight: 500;
+        }
+        .alert-danger-custom {
+            background: #fef2f2;
+            color: #dc2626;
+            border-left: 4px solid #dc2626;
+        }
+        .alert-success-custom {
+            background: #f0f9ff;
+            color: #1e40af;
+            border-left: 4px solid #1e40af;
+        }
+        .required {
+            color: var(--error-color);
+        }
+        .confirmation-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.5);
             z-index: 2000;
             display: none;
+            align-items: center;
+            justify-content: center;
         }
-
-        .notification-modal h5 {
-            font-size: 1.25rem;
-            font-weight: 600;
+        .confirmation-overlay.active {
+            display: flex;
+        }
+        .confirmation-container {
+            background: var(--bg-white);
+            border-radius: 20px;
+            padding: 2rem;
+            max-width: 500px;
+            width: 90%;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            text-align: center;
+            animation: slideIn 0.3s ease-in-out;
+        }
+        .confirmation-icon {
+            width: 80px;
+            height: 80px;
+            border-radius: 50%;
+            background: var(--success-color);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 1.5rem;
+            color: white;
+            font-size: 2rem;
+        }
+        .confirmation-title {
+            font-size: 1.5rem;
+            font-weight: 700;
             color: var(--text-dark);
             margin-bottom: 1rem;
         }
-
-        .notification-item {
-            padding: 0.75rem;
-            border-bottom: 1px solid rgba(102, 126, 234, 0.1);
-            transition: background 0.2s ease;
+        .confirmation-message {
+            color: var(--text-light);
+            margin-bottom: 2rem;
+            line-height: 1.6;
         }
-
-        .notification-item:hover {
-            background: var(--light);
-        }
-
-        .notification-item:last-child {
-            border-bottom: none;
-        }
-
-        .card {
-            background: white;
-            border-radius: 15px;
-            box-shadow: 0 2px 15px rgba(0, 0, 0, 0.08);
-            border: 2px solid rgba(102, 126, 234, 0.2);
-            transition: all 0.3s ease;
-        }
-
-        .card:hover {
-            box-shadow: 0 8px 30px rgba(102, 126, 234, 0.25);
-        }
-
-        .card-header {
-            background: linear-gradient(135deg, rgba(102, 126, 234, 0.05), rgba(167, 139, 250, 0.05));
-            border-bottom: 1px solid rgba(102, 126, 234, 0.2);
-            padding: 1.75rem;
-        }
-
-        .card-title {
-            font-size: 1.25rem;
-            font-weight: 600;
-            color: var(--text-dark);
-        }
-
-        .card-body {
-            padding: 1.5rem;
-        }
-
-        .form-control, .form-select {
-            border: 1px solid rgba(102, 126, 234, 0.2);
-            border-radius: 8px;
-            font-size: 0.875rem;
-        }
-
-        .form-label {
-            font-size: 0.875rem;
-            font-weight: 500;
-            color: var(--text-dark);
-        }
-
-        .btn-primary {
-            background: var(--primary);
-            border: none;
-            padding: 0.75rem 1.5rem;
-            border-radius: 8px;
-            font-weight: 600;
-            transition: all 0.3s ease;
-        }
-
-        .btn-primary:hover {
-            background: var(--secondary);
-            transform: translateY(-2px);
-        }
-
-        .btn-back {
-            background: var(--text-muted);
-            border: none;
-            padding: 0.75rem 1.5rem;
-            border-radius: 8px;
-            font-weight: 600;
-            transition: all 0.3s ease;
-        }
-
-        .btn-back:hover {
-            background: var(--text-light);
-            transform: translateY(-2px);
-        }
-
-        .is-invalid {
-            border-color: var(--error-color);
-        }
-
-        .invalid-feedback {
-            font-size: 0.75rem;
-            color: var(--error-color);
-        }
-
-        .registration-container {
-            max-width: 900px;
-            margin: 0 auto;
-        }
-
-        .char-counter {
-            font-size: 0.75rem;
-            color: var(--text-muted);
-            text-align: right;
-            margin-top: 0.25rem;
-        }
-
-        .char-counter.warning {
-            color: var(--warning-color);
-        }
-
-        .address-row {
+        .confirmation-actions {
             display: flex;
             gap: 1rem;
+            justify-content: center;
         }
-
-        .address-row .col-md-4 {
-            flex: 1;
+        .success-message {
+            background: #e6f0ff;
+            border: 1px solid var(--success-color);
+            border-radius: 12px;
+            padding: 1rem;
+            margin-bottom: 1rem;
+            color: var(--text-dark);
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
         }
-
+        .success-message i {
+            color: var(--success-color);
+        }
+        .password-toggle {
+            position: absolute;
+            right: 10px;
+            top: 50%;
+            transform: translateY(-50%);
+            background: none;
+            border: none;
+            color: var(--text-muted);
+            cursor: pointer;
+        }
+        .password-field {
+            position: relative;
+        }
+        .btn-primary-custom {
+            background: var(--success-color);
+            border: none;
+            padding: 1rem 2rem;
+            border-radius: 12px;
+            color: white;
+            font-weight: 600;
+            font-size: 1.1rem;
+            transition: all 0.3s ease;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.75rem;
+            cursor: pointer;
+        }
+        .btn-primary-custom:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(0, 123, 255, 0.3);
+            color: white;
+        }
+        .btn-outline-custom {
+            border: 2px solid var(--success-color);
+            color: var(--success-color);
+            background: transparent;
+            padding: 0.75rem 1.5rem;
+            border-radius: 10px;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            text-decoration: none;
+            cursor: pointer;
+        }
+        .btn-outline-custom:hover {
+            background: var(--success-color);
+            color: white;
+            transform: translateY(-2px);
+        }
         @media (max-width: 768px) {
-            header {
-                padding: 0 1rem;
-            }
-
-            .card {
+            .page-content {
                 padding: 1rem;
             }
-
-            .registration-container {
-                max-width: 100%;
+            .form-section {
+                padding: 1.5rem;
+            }
+            .top-header {
                 padding: 0 1rem;
             }
-
-            .address-row {
+            .confirmation-actions {
                 flex-direction: column;
-                gap: 0;
+            }
+            .page-title {
+                font-size: 1.5rem;
             }
         }
-
-        @media (max-width: 576px) {
-            .card {
-                padding: 0.75rem;
-            }
-
-            .form-control, .form-select {
-                font-size: 0.75rem;
-            }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .animate-fadeIn {
+            animation: fadeIn 0.6s ease-out forwards;
+        }
+        @keyframes slideIn {
+            from { opacity: 0; transform: translateY(-30px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .animate-slideIn {
+            animation: slideIn 0.3s ease-out;
+        }
+        .d-none {
+            display: none !important;
         }
 
-        .main-content {
-            animation: fadeInUp 0.6s ease-out;
+        /* Loading styles */
+        .loading {
+            position: relative;
+            pointer-events: none;
+            opacity: 0.7;
         }
 
-        @keyframes fadeInUp {
-            from {
-                opacity: 0;
-                transform: translateY(30px);
-            }
-            to {
-                opacity: 1;
-                transform: translateY(0);
-            }
+        .loading::after {
+            content: '';
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(255, 255, 255, 0.8);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 9999;
+        }
+
+        .loading::before {
+            content: 'Processing...';
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: var(--bg-white);
+            padding: 2rem;
+            border-radius: 12px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+            font-weight: 600;
+            color: var(--text-dark);
+            z-index: 10000;
         }
     </style>
 </head>
 <body>
-<div class="container-fluid">
-    <main class="main-content col-12 px-0">
-        <header>
-            <div class="d-flex align-items-center">
-                <h3>Patient Register</h3>
-            </div>
-            <div class="profile-info">
-                <div class="notification-bell" onclick="toggleNotificationModal()">
-                    <i class="fas fa-bell"></i>
-                    <span class="badge rounded-pill">3</span>
-                </div>
-                <img src="/images/profile.jpg" alt="Profile" class="rounded-circle">
-            </div>
-        </header>
-        <div class="registration-container p-4">
-            <div class="mb-3">
-                <button class="btn btn-back" onclick="history.back()">Back</button>
-            </div>
-            <div class="card mb-4">
-                <div class="card-header">
-                    <h5 class="card-title">Patient Information</h5>
-                </div>
-                <div class="card-body">
-                    <form id="patientInfoForm">
-                        <div class="row">
-                            <div class="col-md-6 mb-3">
-                                <label for="name" class="form-label">Name</label>
-                                <input type="text" class="form-control" id="name" required>
-                                <div class="invalid-feedback">Please enter a name.</div>
-                            </div>
-                            <div class="col-md-6 mb-3">
-                                <label for="email" class="form-label">Email</label>
-                                <input type="email" class="form-control" id="email" required>
-                                <div class="invalid-feedback">Please enter a valid email.</div>
-                            </div>
-                            <div class="col-md-6 mb-3">
-                                <label for="password" class="form-label">Password</label>
-                                <input type="password" class="form-control" id="password" required>
-                                <div class="invalid-feedback">Please enter a password.</div>
-                            </div>
-                            <div class="col-md-6 mb-3">
-                                <label for="phone" class="form-label">Phone Number</label>
-                                <input type="tel" class="form-control" id="phone" pattern="[0-9]{10}" required>
-                                <div class="invalid-feedback">Please enter a valid 10-digit phone number.</div>
-                            </div>
-                            <div class="col-md-6 mb-3">
-                                <label for="gender" class="form-label">Gender</label>
-                                <select class="form-select" id="gender" required>
-                                    <option value="">Select Gender</option>
-                                    <option value="male">Male</option>
-                                    <option value="female">Female</option>
-                                    <option value="other">Other</option>
-                                </select>
-                                <div class="invalid-feedback">Please select a gender.</div>
-                            </div>
-                            <div class="col-md-6 mb-3">
-                                <label for="dob" class="form-label">Date of Birth</label>
-                                <input type="date" class="form-control" id="dob" max="2025-06-12" required>
-                                <div class="invalid-feedback">Please select a valid date of birth (not in the future).</div>
-                            </div>
-                            <div class="col-md-6 mb-3">
-                                <label for="addressType" class="form-label">Address Type</label>
-                                <select class="form-select" id="addressType" required>
-                                    <option value="">Select Address Type</option>
-                                    <option value="permanent">Permanent</option>
-                                    <option value="temporary">Temporary</option>
-                                </select>
-                                <div class="invalid-feedback">Please select an address type.</div>
-                            </div>
-                            <div class="col-md-12 mb-3">
-                                <div class="address-row">
-                                    <div class="col-md-4">
-                                        <label for="province" class="form-label">Province</label>
-                                        <select class="form-select" id="province" required>
-                                            <option value="">Select Province</option>
-                                        </select>
-                                        <div class="invalid-feedback">Please select a province.</div>
-                                    </div>
-                                    <div class="col-md-4">
-                                        <label for="district" class="form-label">District</label>
-                                        <select class="form-select" id="district" required disabled>
-                                            <option value="">Select District</option>
-                                        </select>
-                                        <div class="invalid-feedback">Please select a district.</div>
-                                    </div>
-                                    <div class="col-md-4">
-                                        <label for="ward" class="form-label">Ward</label>
-                                        <select class="form-select" id="ward" required disabled>
-                                            <option value="">Select Ward</option>
-                                        </select>
-                                        <div class="invalid-feedback">Please select a ward.</div>
-                                    </div>
-                                </div>
-                            </div>
-                            <div class="col-md-12 mb-3">
-                                <label for="specificAddress" class="form-label">Specific Address</label>
-                                <input type="text" class="form-control" id="specificAddress" required>
-                                <div class="invalid-feedback">Please enter a specific address.</div>
-                            </div>
-                        </div>
-                    </form>
-                </div>
-            </div>
-            <div class="card">
-                <div class="card-header">
-                    <h5 class="card-title">Appointment Booking</h5>
-                </div>
-                <div class="card-body">
-                    <form id="appointmentForm">
-                        <div class="row">
-                            <div class="col-md-6 mb-3">
-                                <label for="department" class="form-label">Department (Specialty)</label>
-                                <select class="form-select" id="department" required>
-                                    <option value="">Select Department</option>
-                                    <option value="cardiology">Cardiology</option>
-                                    <option value="neurology">Neurology</option>
-                                    <option value="orthopedics">Orthopedics</option>
-                                    <option value="pediatrics">Pediatrics</option>
-                                    <option value="general">General Medicine</option>
-                                </select>
-                                <div class="invalid-feedback">Please select a department.</div>
-                            </div>
-                            <div class="col-md-6 mb-3">
-                                <label for="bookingDate" class="form-label">Booking Date</label>
-                                <input type="date" class="form-control" id="bookingDate" min="2025-06-12" max="2025-06-19" required>
-                                <div class="invalid-feedback">Please select a valid booking date (within the next 7 days, excluding Sundays).</div>
-                            </div>
-                            <div class="col-md-6 mb-3">
-                                <label for="timeSlot" class="form-label">Time Slot</label>
-                                <select class="form-select" id="timeSlot" required>
-                                    <option value="">Select Time Slot</option>
-                                    <option value="09:00-10:00">09:00 - 10:00</option>
-                                    <option value="10:00-11:00">10:00 - 11:00</option>
-                                    <option value="14:00-15:00">14:00 - 15:00</option>
-                                    <option value="15:00-16:00">15:00 - 16:00</option>
-                                </select>
-                                <div class="invalid-feedback">Please select a time slot.</div>
-                            </div>
-                            <div class="col-md-12 mb-3">
-                                <label for="symptoms" class="form-label">Symptom Description</label>
-                                <textarea class="form-control" id="symptoms" rows="4" maxlength="500" required></textarea>
-                                <div class="char-counter" id="symptomsCounter">0/500 characters</div>
-                                <div class="invalid-feedback">Please describe the symptoms (max 500 characters).</div>
-                            </div>
-                        </div>
-                        <div class="text-end">
-                            <button type="submit" class="btn btn-primary">Register & Book Appointment</button>
-                        </div>
-                    </form>
-                </div>
+<div class="main-content" id="mainContent">
+    <!-- Header -->
+    <div class="top-header">
+        <div class="header-left">
+            <h4 class="mb-0">Patient Register</h4>
+        </div>
+        <div class="header-right">
+            <a href="/receptionist/dashboard" class="btn-outline-custom">
+                <i class="bi bi-arrow-left"></i>
+                Back to Dashboard
+            </a>
+        </div>
+    </div>
+
+    <!-- Success Message -->
+    <div id="successMessage" class="fixed-top mt-4 d-none">
+        <div class="container">
+            <div class="success-message animate-slideIn">
+                <i class="bi bi-check-circle-fill"></i>
+                <span>Patient registered successfully!</span>
             </div>
         </div>
-    </main>
-</div>
-<div class="notification-modal" id="notificationModal">
-    <h5>Notifications</h5>
-    <div class="notification-item">
-        <p><strong>New Patient:</strong> Registration pending.</p>
-        <small>1 hour ago</small>
+    </div>
+
+    <!-- Confirmation Popup -->
+    <div id="confirmationOverlay" class="confirmation-overlay">
+        <div class="confirmation-container">
+            <div class="confirmation-icon">
+                <i class="bi bi-check-circle"></i>
+            </div>
+            <h3 class="confirmation-title">Confirm Patient Register</h3>
+            <p class="confirmation-message">
+                Please review your patient details and confirm to proceed with the registration.
+            </p>
+            <div class="confirmation-actions">
+                <button onclick="confirmRegister(true)" class="btn-primary-custom">
+                    <i class="bi bi-check-circle"></i>
+                    Confirm Register
+                </button>
+                <button onclick="confirmRegister(false)" class="btn-outline-custom">
+                    <i class="bi bi-x-circle"></i>
+                    Cancel
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Main Content -->
+    <div class="page-content">
+        <div class="page-header">
+            <h1 class="page-title">
+                <i class="bi bi-person-plus"></i>
+                Register New Patient
+            </h1>
+            <nav>
+                <ol class="breadcrumb">
+                    <li class="breadcrumb-item"><a href="/receptionist/dashboard">Dashboard</a></li>
+                    <li class="breadcrumb-item active">Patient Register</li>
+                </ol>
+            </nav>
+        </div>
+
+        <div class="form-section animate-fadeIn">
+            <form id="patientForm" method="post" th:action="@{/receptionist/register-patient}">
+                <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
+
+                <!-- Personal Information -->
+                <div class="mb-5">
+                    <h3 class="section-title">
+                        <i class="bi bi-person-fill"></i>
+                        Personal Information
+                    </h3>
+                    <div class="row g-4">
+                        <div class="col-md-6">
+                            <label class="form-label">Full Name <span class="required">*</span></label>
+                            <input type="text" name="fullName" id="fullName" class="form-control" required>
+                            <div class="error-message d-none" id="fullNameError">
+                                <i class="fas fa-exclamation-circle"></i>
+                                <span></span>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">Email <span class="required">*</span></label>
+                            <input type="email" name="email" id="email" class="form-control" required>
+                            <div class="error-message d-none" id="emailError">
+                                <i class="fas fa-exclamation-circle"></i>
+                                <span></span>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">Phone Number <span class="required">*</span></label>
+                            <input type="tel" name="phoneNumber" id="phoneNumber" class="form-control" required>
+                            <div class="error-message d-none" id="phoneNumberError">
+                                <i class="fas fa-exclamation-circle"></i>
+                                <span></span>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">Password <span class="required">*</span></label>
+                            <div class="password-field">
+                                <input type="password" name="passwordHash" id="passwordHash" class="form-control" required>
+                                <button type="button" class="password-toggle" onclick="togglePassword()">
+                                    <i class="fas fa-eye" id="passwordIcon"></i>
+                                </button>
+                            </div>
+                            <div class="error-message d-none" id="passwordHashError">
+                                <i class="fas fa-exclamation-circle"></i>
+                                <span></span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Patient Information -->
+                <div class="mb-5">
+                    <h3 class="section-title">
+                        <i class="bi bi-clipboard2-pulse"></i>
+                        Patient Information
+                    </h3>
+                    <div class="row g-4">
+                        <div class="col-md-6">
+                            <label class="form-label">Date of Birth <span class="required">*</span></label>
+                            <input type="date" name="dateOfBirth" id="dateOfBirth" class="form-control" required>
+                            <div class="error-message d-none" id="dateOfBirthError">
+                                <i class="fas fa-exclamation-circle"></i>
+                                <span></span>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">Gender <span class="required">*</span></label>
+                            <select name="gender" id="gender" class="form-control" required>
+                                <option value="">Select Gender</option>
+                                <option value="male">Male</option>
+                                <option value="female">Female</option>
+                                <option value="other">Other</option>
+                            </select>
+                            <div class="error-message d-none" id="genderError">
+                                <i class="fas fa-exclamation-circle"></i>
+                                <span></span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Contact Address -->
+                <div class="mb-5">
+                    <h3 class="section-title">
+                        <i class="bi bi-geo-alt-fill"></i>
+                        Contact Address
+                    </h3>
+                    <div class="row g-4">
+                        <div class="col-md-6">
+                            <label class="form-label">Street Address <span class="required">*</span></label>
+                            <input type="text" name="streetAddress" id="streetAddress" class="form-control" required>
+                            <div class="error-message d-none" id="streetAddressError">
+                                <i class="fas fa-exclamation-circle"></i>
+                                <span></span>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">City <span class="required">*</span></label>
+                            <input type="text" name="city" id="city" class="form-control" required>
+                            <div class="error-message d-none" id="cityError">
+                                <i class="fas fa-exclamation-circle"></i>
+                                <span></span>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">Country <span class="required">*</span></label>
+                            <input type="text" name="country" id="country" class="form-control" required>
+                            <div class="error-message d-none" id="countryError">
+                                <i class="fas fa-exclamation-circle"></i>
+                                <span></span>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">Address Type <span class="required">*</span></label>
+                            <input type="text" name="addressType" id="addressType" class="form-control" required placeholder="e.g., Home, Work">
+                            <div class="error-message d-none" id="addressTypeError">
+                                <i class="fas fa-exclamation-circle"></i>
+                                <span></span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Additional Information -->
+                <div class="mb-5">
+                    <h3 class="section-title">
+                        <i class="bi bi-info-circle-fill"></i>
+                        Additional Information (Optional)
+                    </h3>
+                    <div class="row g-4">
+                        <div class="col-12">
+                            <label class="form-label">Description / Notes</label>
+                            <textarea name="description" id="description" rows="5" maxlength="200"
+                                    class="form-control" placeholder="Enter any additional notes or comments..."></textarea>
+                            <p class="text-muted mt-1 text-end">
+                                <span id="descriptionCount">0</span>/200 characters
+                            </p>
+                            <div class="error-message d-none" id="descriptionError"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Submit Button -->
+                <div class="text-center">
+                    <button type="submit" class="btn-primary-custom">
+                        <i class="bi bi-person-plus"></i>
+                        Register Patient
+                    </button>
+                </div>
+            </form>
+        </div>
     </div>
 </div>
+
+<!-- Bootstrap JS -->
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
 <script>
-    function toggleNotificationModal() {
-        const modal = document.getElementById('notificationModal');
-        modal.style.display = modal.style.display === 'block' ? 'none' : 'block';
+    // Set date limits: min date 1900-01-01, max date today
+    const dateOfBirthField = document.getElementById('dateOfBirth');
+    dateOfBirthField.min = '1900-01-01';
+    dateOfBirthField.max = new Date().toISOString().split('T')[0];
+
+    // Real-time validation for all fields
+    const formFields = [
+        { id: 'fullName', validator: validateFullName },
+        { id: 'email', validator: validateEmail },
+        { id: 'phoneNumber', validator: validatePhoneNumber },
+        { id: 'passwordHash', validator: validatePassword },
+        { id: 'dateOfBirth', validator: validateDateOfBirth },
+        { id: 'gender', validator: validateGender },
+        { id: 'streetAddress', validator: validateStreetAddress },
+        { id: 'city', validator: validateCity },
+        { id: 'country', validator: validateCountry },
+        { id: 'addressType', validator: validateAddressType }
+    ];
+
+    // Add real-time validation to all fields
+    formFields.forEach(field => {
+        const element = document.getElementById(field.id);
+        if (element) {
+            // Validate on blur (when user leaves the field)
+            element.addEventListener('blur', () => {
+                if (element.value.trim()) {
+                    field.validator(element.value, field.id);
+                }
+            });
+
+            // Validate on input (while user is typing) with debounce
+            let timeoutId;
+            element.addEventListener('input', () => {
+                // Clear previous validation states while typing
+                clearError(field.id + 'Error');
+                element.classList.remove('is-invalid', 'is-valid');
+
+                // Clear previous timeout
+                clearTimeout(timeoutId);
+
+                // Set new timeout to validate after user stops typing
+                timeoutId = setTimeout(() => {
+                    if (element.value.trim()) {
+                        field.validator(element.value, field.id);
+                    }
+                }, 500); // 500ms delay after user stops typing
+            });
+
+            // Immediate validation for certain fields on change
+            if (field.id === 'gender') {
+                element.addEventListener('change', () => {
+                    field.validator(element.value, field.id);
+                });
+            }
+        }
+    });
+
+    // Auto-set password to default value when name, email, phone are filled
+    function checkAndSetPassword() {
+        const fullName = document.getElementById('fullName').value.trim();
+        const email = document.getElementById('email').value.trim();
+        const phoneNumber = document.getElementById('phoneNumber').value.trim();
+        const passwordField = document.getElementById('passwordHash');
+
+        // If all three fields are filled, set default password
+        if (fullName && email && phoneNumber) {
+            passwordField.value = 'Aa123123@';
+            // Trigger validation for password field
+            validatePassword(passwordField.value, 'passwordHash');
+        }
     }
 
-    document.getElementById('dob').max = new Date().toISOString().split('T')[0];
+    // Add event listeners to trigger password auto-fill
+    document.getElementById('fullName').addEventListener('input', checkAndSetPassword);
+    document.getElementById('email').addEventListener('input', checkAndSetPassword);
+    document.getElementById('phoneNumber').addEventListener('input', checkAndSetPassword);
 
-    function validateBookingDate() {
-        const bookingDateInput = document.getElementById('bookingDate');
-        const date = new Date(bookingDateInput.value);
-        if (date.getDay() === 0) {
-            bookingDateInput.classList.add('is-invalid');
-            bookingDateInput.nextElementSibling.textContent = 'Sundays are not available for booking.';
-            return false;
+    // Character counter for description
+    document.getElementById('description').addEventListener('input', function() {
+        const count = this.value.length;
+        document.getElementById('descriptionCount').textContent = count;
+
+        // Validate description length in real-time
+        if (count > 200) {
+            showError('descriptionError', 'Description must not exceed 200 characters');
+            this.classList.add('is-invalid');
         } else {
-            bookingDateInput.classList.remove('is-invalid');
-            return true;
+            clearError('descriptionError');
+            this.classList.remove('is-invalid');
+        }
+    });
+
+    // Toggle password visibility
+    function togglePassword() {
+        const passwordField = document.getElementById('passwordHash');
+        const passwordIcon = document.getElementById('passwordIcon');
+
+        if (passwordField.type === 'password') {
+            passwordField.type = 'text';
+            passwordIcon.className = 'fas fa-eye-slash';
+        } else {
+            passwordField.type = 'password';
+            passwordIcon.className = 'fas fa-eye';
         }
     }
 
-    async function fetchProvinces() {
-        try {
-            const response = await fetch('https://provinces.open-api.vn/api/p/');
-            const provinces = await response.json();
-            const provinceSelect = document.getElementById('province');
-            provinceSelect.innerHTML = '<option value="">Select Province</option>';
-            provinces.forEach(province => {
-                const option = document.createElement('option');
-                option.value = province.code;
-                option.textContent = province.name;
-                provinceSelect.appendChild(option);
-            });
-        } catch (error) {
-            console.error('Error fetching provinces:', error);
-            alert('Failed to load provinces. Please try again.');
+    // Individual field validators
+    function validateFullName(value, fieldId) {
+        if (!value || value.trim().length < 2) {
+            showError(fieldId + 'Error', 'Please enter full name (minimum 2 characters)');
+            return false;
         }
+        if (!/^[a-zA-ZÀ-ỹ\s]+$/.test(value)) {
+            showError(fieldId + 'Error', 'Full name can only contain letters and spaces');
+            return false;
+        }
+        document.getElementById(fieldId).classList.add('is-valid');
+        return true;
     }
 
-    async function fetchDistricts(provinceCode) {
-        try {
-            const response = await fetch(`https://provinces.open-api.vn/api/p/${provinceCode}?depth=2`);
-            const data = await response.json();
-            const districtSelect = document.getElementById('district');
-            districtSelect.innerHTML = '<option value="">Select District</option>';
-            districtSelect.disabled = false;
-            data.districts.forEach(district => {
-                const option = document.createElement('option');
-                option.value = district.code;
-                option.textContent = district.name;
-                districtSelect.appendChild(option);
-            });
-            document.getElementById('ward').innerHTML = '<option value="">Select Ward</option>';
-            document.getElementById('ward').disabled = true;
-        } catch (error) {
-            console.error('Error fetching districts:', error);
-            alert('Failed to load districts. Please try again.');
+    function validateEmail(value, fieldId) {
+        if (!value) {
+            showError(fieldId + 'Error', 'Please enter email address');
+            return false;
         }
+        if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value)) {
+            showError(fieldId + 'Error', 'Please enter a valid email address (e.g., name@example.com)');
+            return false;
+        }
+        document.getElementById(fieldId).classList.add('is-valid');
+        return true;
     }
 
-    async function fetchWards(districtCode) {
-        try {
-            const response = await fetch(`https://provinces.open-api.vn/api/d/${districtCode}?depth=2`);
-            const data = await response.json();
-            const wardSelect = document.getElementById('ward');
-            wardSelect.innerHTML = '<option value="">Select Ward</option>';
-            wardSelect.disabled = false;
-            data.wards.forEach(ward => {
-                const option = document.createElement('option');
-                option.value = ward.code;
-                option.textContent = ward.name;
-                wardSelect.appendChild(option);
-            });
-        } catch (error) {
-            console.error('Error fetching wards:', error);
-            alert('Failed to load wards. Please try again.');
+    function validatePhoneNumber(value, fieldId) {
+        if (!value) {
+            showError(fieldId + 'Error', 'Please enter phone number');
+            return false;
         }
+        if (!/^(0[3|5|7|8|9])+([0-9]{8})$/.test(value)) {
+            showError(fieldId + 'Error', 'Please enter a valid phone number (10 digits, starting with 03, 05, 07, 08, 09)');
+            return false;
+        }
+        document.getElementById(fieldId).classList.add('is-valid');
+        return true;
     }
 
-    function validateForm(form) {
+    function validatePassword(value, fieldId) {
+        if (!value) {
+            showError(fieldId + 'Error', 'Please enter password');
+            return false;
+        }
+        if (value.length < 8) {
+            showError(fieldId + 'Error', 'Password must be at least 8 characters long');
+            return false;
+        }
+        if (!/(?=.*[a-z])(?=.*[A-Z])(?=.*\d)/.test(value)) {
+            showError(fieldId + 'Error', 'Password must contain at least 1 uppercase, 1 lowercase letter and 1 number');
+            return false;
+        }
+        document.getElementById(fieldId).classList.add('is-valid');
+        return true;
+    }
+
+    function validateDateOfBirth(value, fieldId) {
+        if (!value) {
+            showError(fieldId + 'Error', 'Please select date of birth');
+            return false;
+        }
+
+        const birthDate = new Date(value);
+        const today = new Date();
+        const age = today.getFullYear() - birthDate.getFullYear();
+
+        if (birthDate > today) {
+            showError(fieldId + 'Error', 'Date of birth cannot be in the future');
+            return false;
+        }
+        if (age > 120) {
+            showError(fieldId + 'Error', 'Invalid age (over 120 years old)');
+            return false;
+        }
+        if (age < 0) {
+            showError(fieldId + 'Error', 'Invalid date of birth');
+            return false;
+        }
+
+        document.getElementById(fieldId).classList.add('is-valid');
+        return true;
+    }
+
+    function validateGender(value, fieldId) {
+        if (!value) {
+            showError(fieldId + 'Error', 'Please select gender');
+            return false;
+        }
+        document.getElementById(fieldId).classList.add('is-valid');
+        return true;
+    }
+
+    function validateStreetAddress(value, fieldId) {
+        if (!value || value.trim().length < 5) {
+            showError(fieldId + 'Error', 'Please enter detailed address (minimum 5 characters)');
+            return false;
+        }
+        document.getElementById(fieldId).classList.add('is-valid');
+        return true;
+    }
+
+    function validateCity(value, fieldId) {
+        if (!value || value.trim().length < 2) {
+            showError(fieldId + 'Error', 'Please enter city name');
+            return false;
+        }
+        if (!/^[a-zA-ZÀ-ỹ\s]+$/.test(value)) {
+            showError(fieldId + 'Error', 'City name can only contain letters and spaces');
+            return false;
+        }
+        document.getElementById(fieldId).classList.add('is-valid');
+        return true;
+    }
+
+    function validateCountry(value, fieldId) {
+        if (!value || value.trim().length < 2) {
+            showError(fieldId + 'Error', 'Please enter country name');
+            return false;
+        }
+        if (!/^[a-zA-ZÀ-ỹ\s]+$/.test(value)) {
+            showError(fieldId + 'Error', 'Country name can only contain letters and spaces');
+            return false;
+        }
+        document.getElementById(fieldId).classList.add('is-valid');
+        return true;
+    }
+
+    function validateAddressType(value, fieldId) {
+        if (!value) {
+            showError(fieldId + 'Error', 'Please enter address type (e.g., Home, Office)');
+            return false;
+        }
+        document.getElementById(fieldId).classList.add('is-valid');
+        return true;
+    }
+
+    // Form validation
+    function validateForm() {
         let isValid = true;
-        form.querySelectorAll('[required]').forEach(input => {
-            if (!input.value) {
-                input.classList.add('is-invalid');
+        let firstErrorField = null;
+
+        // Clear previous errors
+        document.querySelectorAll('.error-message').forEach(el => el.classList.add('d-none'));
+        document.querySelectorAll('.form-control').forEach(el => {
+            el.classList.remove('is-invalid');
+            el.classList.remove('is-valid');
+        });
+
+        // Validate all fields
+        formFields.forEach(field => {
+            const element = document.getElementById(field.id);
+            if (element && !field.validator(element.value, field.id)) {
                 isValid = false;
-            } else {
-                input.classList.remove('is-invalid');
+                if (!firstErrorField) {
+                    firstErrorField = element;
+                }
             }
         });
+
+        // Show general error message if validation fails
+        if (!isValid) {
+            showGeneralErrorMessage('Please check and fill in all required fields marked with (*)', firstErrorField);
+        }
+
         return isValid;
     }
 
-    async function submitForms() {
-        const patientForm = document.getElementById('patientInfoForm');
-        const appointmentForm = document.getElementById('appointmentForm');
-        const symptomsInput = document.getElementById('symptoms');
+    function showError(elementId, message) {
+        const errorElement = document.getElementById(elementId);
+        const inputElement = document.getElementById(elementId.replace('Error', ''));
 
-        if (!validateForm(patientForm) || !validateForm(appointmentForm)) {
-            alert('Please fill in all required fields.');
-            return;
-        }
-
-        if (symptomsInput.value.length > 500) {
-            symptomsInput.classList.add('is-invalid');
-            symptomsInput.nextElementSibling.textContent = 'Symptoms description must not exceed 500 characters.';
-            alert('Symptoms description must not exceed 500 characters.');
-            return;
-        }
-
-        if (!validateBookingDate()) {
-            alert('Please select a valid booking date (Sundays are not allowed).');
-            return;
-        }
-
-        const patientData = {
-            name: document.getElementById('name').value,
-            email: document.getElementById('email').value,
-            password: document.getElementById('password').value,
-            phone: document.getElementById('phone').value,
-            gender: document.getElementById('gender').value,
-            dob: document.getElementById('dob').value,
-            addressType: document.getElementById('addressType').value,
-            province: document.getElementById('province').options[document.getElementById('province').selectedIndex].text,
-            district: document.getElementById('district').options[document.getElementById('district').selectedIndex].text,
-            ward: document.getElementById('ward').options[document.getElementById('ward').selectedIndex].text,
-            specificAddress: document.getElementById('specificAddress').value
-        };
-
-        const appointmentData = {
-            department: document.getElementById('department').value,
-            bookingDate: document.getElementById('bookingDate').value,
-            timeSlot: document.getElementById('timeSlot').value,
-            symptoms: document.getElementById('symptoms').value
-        };
-
-        try {
-            console.log('Patient Data:', patientData);
-            console.log('Appointment Data:', appointmentData);
-            alert('Patient registered and appointment booked successfully!');
-        } catch (error) {
-            console.error('Error submitting forms:', error);
-            alert('Failed to register patient. Please try again.');
+        if (errorElement && inputElement) {
+            const spanElement = errorElement.querySelector('span') || errorElement;
+            spanElement.textContent = message;
+            errorElement.classList.remove('d-none');
+            inputElement.classList.add('is-invalid');
+            inputElement.classList.remove('is-valid');
         }
     }
 
-    // Character counter for Symptom Description
-    const symptomsInput = document.getElementById('symptoms');
-    const symptomsCounter = document.getElementById('symptomsCounter');
-    symptomsInput.addEventListener('input', () => {
-        const charCount = symptomsInput.value.length;
-        symptomsCounter.textContent = `${charCount}/500 characters`;
-        if (charCount >= 500) {
-            symptomsCounter.classList.add('warning');
-            alert('You have reached the maximum limit of 500 characters for the symptom description.');
+    function clearError(elementId) {
+        const errorElement = document.getElementById(elementId);
+        if (errorElement) {
+            errorElement.classList.add('d-none');
+        }
+    }
+
+    function showGeneralErrorMessage(message, firstErrorField) {
+        // Create or update general error alert
+        let alertElement = document.getElementById('generalErrorAlert');
+        if (!alertElement) {
+            alertElement = document.createElement('div');
+            alertElement.id = 'generalErrorAlert';
+            alertElement.className = 'alert-custom alert-danger-custom animate-slideIn';
+            alertElement.innerHTML = `
+                <i class="fas fa-exclamation-triangle"></i>
+                <span>${message}</span>
+            `;
+
+            const formSection = document.querySelector('.form-section');
+            formSection.insertBefore(alertElement, formSection.firstChild);
         } else {
-            symptomsCounter.classList.remove('warning');
+            alertElement.querySelector('span').textContent = message;
+            alertElement.classList.remove('d-none');
         }
-    });
 
-    document.getElementById('province').addEventListener('change', (e) => {
-        if (e.target.value) fetchDistricts(e.target.value);
-        else {
-            document.getElementById('district').innerHTML = '<option value="">Select District</option>';
-            document.getElementById('district').disabled = true;
-            document.getElementById('ward').innerHTML = '<option value="">Select Ward</option>';
-            document.getElementById('ward').disabled = true;
+        // Scroll to first error field
+        if (firstErrorField) {
+            firstErrorField.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            firstErrorField.focus();
         }
-    });
-    document.getElementById('district').addEventListener('change', (e) => {
-        if (e.target.value) fetchWards(e.target.value);
-        else {
-            document.getElementById('ward').innerHTML = '<option value="">Select Ward</option>';
-            document.getElementById('ward').disabled = true;
-        }
-    });
-    document.getElementById('bookingDate').addEventListener('change', validateBookingDate);
-    document.getElementById('appointmentForm').addEventListener('submit', (e) => {
+
+        // Auto-hide after 5 seconds
+        setTimeout(() => {
+            if (alertElement) {
+                alertElement.classList.add('d-none');
+            }
+        }, 5000);
+    }
+
+    // Form submission
+    document.getElementById('patientForm').addEventListener('submit', function(e) {
         e.preventDefault();
-        submitForms();
+
+        if (validateForm()) {
+            document.getElementById('confirmationOverlay').classList.add('active');
+        } else {
+            alert('Please fill in all required fields correctly.');
+        }
     });
 
-    fetchProvinces();
+    // Confirmation functions
+    function confirmRegister(confirm) {
+        const confirmationOverlay = document.getElementById('confirmationOverlay');
+        if (confirmationOverlay) {
+            confirmationOverlay.classList.remove('active');
+        }
+
+        if (confirm) {
+            // Show loading state with proper null check
+            const mainContent = document.getElementById('mainContent');
+            if (mainContent) {
+                mainContent.classList.add('loading');
+            } else {
+                console.error('mainContent element not found');
+            }
+
+            // Get form data with null checks
+            const formData = new FormData();
+
+            // Helper function to safely get element value
+            function getElementValue(id, defaultValue = '') {
+                const element = document.getElementById(id);
+                return element ? element.value.trim() : defaultValue;
+            }
+
+            formData.append('fullName', getElementValue('fullName'));
+            formData.append('email', getElementValue('email').toLowerCase());
+            formData.append('phoneNumber', getElementValue('phoneNumber'));
+            formData.append('passwordHash', getElementValue('passwordHash'));
+            formData.append('dateOfBirth', getElementValue('dateOfBirth'));
+            formData.append('gender', getElementValue('gender'));
+            formData.append('streetAddress', getElementValue('streetAddress'));
+            formData.append('city', getElementValue('city'));
+            formData.append('country', getElementValue('country'));
+            formData.append('addressType', getElementValue('addressType'));
+            formData.append('description', getElementValue('description'));
+
+            // Add CSRF token with null check
+            const csrfElement = document.querySelector('input[name="_csrf"]');
+            if (csrfElement) {
+                formData.append('_csrf', csrfElement.value);
+            } else {
+                console.error('CSRF token not found');
+                alert('Security token not found. Please refresh the page and try again.');
+                if (mainContent) {
+                    mainContent.classList.remove('loading');
+                }
+                return;
+            }
+
+            // Send AJAX request to new endpoint
+            fetch('/receptionist/register-patient', {
+                method: 'POST',
+                body: formData
+            })
+            .then(response => {
+                if (mainContent) {
+                    mainContent.classList.remove('loading');
+                }
+
+                if (response.ok) {
+                    return response.json();
+                } else {
+                    return response.text().then(text => {
+                        throw new Error(text);
+                    });
+                }
+            })
+            .then(data => {
+                if (data.success) {
+                    showSuccessMessage(data.message);
+                    resetForm();
+                } else {
+                    alert('Error: ' + (data.message || 'Unknown error occurred'));
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('Error registering patient: ' + error.message);
+                if (mainContent) {
+                    mainContent.classList.remove('loading');
+                }
+            });
+        }
+    }
+
+    function showSuccessMessage(message = "Patient registered successfully!") {
+        const successMessage = document.getElementById('successMessage');
+        successMessage.querySelector('span').textContent = message;
+        successMessage.classList.remove('d-none');
+
+        setTimeout(() => {
+            successMessage.classList.add('d-none');
+        }, 5000);
+    }
+
+    function resetForm() {
+        // Reset all form fields
+        document.getElementById('fullName').value = '';
+        document.getElementById('email').value = '';
+        document.getElementById('phoneNumber').value = '';
+        document.getElementById('passwordHash').value = '';
+        document.getElementById('dateOfBirth').value = '';
+        document.getElementById('gender').value = '';
+        document.getElementById('streetAddress').value = '';
+        document.getElementById('city').value = '';
+        document.getElementById('country').value = '';
+        document.getElementById('addressType').value = '';
+        document.getElementById('description').value = '';
+
+        // Reset character counter
+        document.getElementById('descriptionCount').textContent = '0';
+
+        // Clear any validation states
+        document.querySelectorAll('.form-control, .form-select').forEach(el => {
+            el.classList.remove('is-valid', 'is-invalid');
+        });
+
+        // Hide all error messages
+        document.querySelectorAll('.error-message').forEach(el => {
+            el.classList.add('d-none');
+        });
+    }
 </script>
 </body>
 </html>

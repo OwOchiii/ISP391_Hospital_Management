@@ -2,14 +2,14 @@ package orochi.model;
 
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotNull;
-import lombok.AllArgsConstructor;
-import lombok.Data;
-import lombok.NoArgsConstructor;
+import lombok.*;
 import orochi.model.*;
 
 import java.time.LocalDateTime;
 import java.util.List;
 
+@ToString(exclude = {"doctor", "patient", "room", "transactions", "medicalResults", "medicalOrders", "prescriptions", "schedule"})
+@EqualsAndHashCode(exclude = {"doctor", "patient", "room", "transactions", "medicalResults", "medicalOrders", "prescriptions", "schedule"})
 @Entity
 @Table(name = "Appointment")
 @Data

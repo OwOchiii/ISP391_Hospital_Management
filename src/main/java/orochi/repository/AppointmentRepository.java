@@ -1,12 +1,16 @@
 package orochi.repository;
 
 import orochi.model.Appointment;
+import com.itextpdf.awt.PdfGraphics2D;
+import jakarta.validation.constraints.NotNull;
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
@@ -299,6 +303,7 @@ public interface AppointmentRepository extends JpaRepository<Appointment, Intege
             @Param("toDate") LocalDateTime toDate,
             Pageable pageable);
 
+
     @Query(value = """
       SELECT CONCAT(CAST(YEAR(a.DateTime) AS varchar(4)), '-Q', CAST(DATEPART(QUARTER,a.DateTime) AS varchar(1))) AS period, COUNT(*) AS cnt
         FROM Appointment a
@@ -354,5 +359,16 @@ public interface AppointmentRepository extends JpaRepository<Appointment, Intege
             @Param("end")   LocalDateTime end,
             @Param("status") String status
     );
+
+
+    @Query(value = "SELECT a FROM Appointment a WHERE a.doctorId = :doctorId AND CAST(a.dateTime AS DATE) = :date")
+    List<Appointment> findByDoctorIdAndDate(@Param("doctorId") Integer doctorId, @Param("date") LocalDate date);
+
+
+    @Query("SELECT a FROM Appointment a WHERE a.dateTime BETWEEN :startDate AND :endDate ORDER BY a.dateTime ASC")
+    List<Appointment> findByDateTimeBetween(@Param("startDate") LocalDateTime startDate,
+                                           @Param("endDate") LocalDateTime endDate);
+
+    List<Appointment> findByDoctorIdAndDateTimeBetween(Integer doctorId, LocalDateTime startOfDay, LocalDateTime endOfDay);
 
 }
