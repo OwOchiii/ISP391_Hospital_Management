@@ -128,7 +128,7 @@ public class AppointmentMetricServiceImpl implements AppointmentMetricService {
             Integer doctorId, Integer specId,
             String status, String search
     ) {
-        return appointmentService.fetchPeriodCounts(
+        return appointmentService.fetchPeriodCounts2(
                 from, to, doctorId, specId, status, "month"
         );
     }
@@ -141,7 +141,7 @@ public class AppointmentMetricServiceImpl implements AppointmentMetricService {
             Integer doctorId, Integer specId,
             String search
     ) {
-        return appointmentService.fetchPeriodCounts(
+        return appointmentService.fetchPeriodCounts2(
                 from, to, doctorId, specId, status, "month"
         );
     }
