@@ -198,12 +198,4 @@ public class AppointmentServiceImpl extends AppointmentService {
         logger.info("Appointment {} status updated to {}", appointmentId, status);
         return updatedAppointment;
     }
-
-    @Override
-    public List<Appointment> getAppointmentsByDoctorIdAndPatientName(Integer doctorId, String patientName) {
-        if (patientName == null || patientName.isBlank()) {
-            return appointmentRepository.findByDoctorIdOrderByDateTimeDesc(doctorId);
-        }
-        return appointmentRepository.findByDoctorIdAndPatientUserFullNameContainingIgnoreCase(doctorId, patientName.trim());
-    }
 }
