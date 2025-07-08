@@ -69,4 +69,7 @@ public class Doctor {
     )
     @JsonIgnore
     private List<Specialization> specializations;
+
+    @Transient
+    private DoctorEducation latestEducation;
 }

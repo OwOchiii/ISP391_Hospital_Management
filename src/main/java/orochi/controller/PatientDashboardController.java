@@ -33,10 +33,7 @@ import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.time.format.DateTimeFormatter;
 import java.time.format.DateTimeParseException;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.List;
-import java.util.Optional;
+import java.util.*;
 
 @Controller
 @RequestMapping("/patient")
@@ -90,6 +87,14 @@ public class PatientDashboardController {
             "Costs & payment", "Suggestions & improvements", "Timing & progress",
             "Safety & security", "Other"
     );
+
+    private static void accept(Doctor doctor) {
+        DoctorEducation latestEducation = doctor.getEducations().stream()
+                .filter(edu -> edu.getGraduation() != null)
+                .max(Comparator.comparing(DoctorEducation::getGraduation))
+                .orElse(null);
+        doctor.setLatestEducation(latestEducation); // Assumes a new setter in Doctor entity
+    }
 
     @GetMapping("/dashboard")
     public String dashboard(Model model) {
@@ -160,8 +165,10 @@ public class PatientDashboardController {
                 }
             }
             List<Doctor> doctors = doctorRepository.findAll();
-            List<Specialization> specializations = specializationRepository.findAll();
+            // Pre-process doctors to include latest education
+            doctors.forEach(PatientDashboardController::accept);
             model.addAttribute("doctors", doctors);
+            List<Specialization> specializations = specializationRepository.findAll();
             model.addAttribute("specializations", specializations);
             return "patient/search-doctor";
         } catch (Exception e) {

@@ -389,7 +389,7 @@
       text-decoration: none;
     }
     .btn-sm {
-      padding: 0.5rem 1rem;
+      padding: 0.5rem: 1rem;
       font-size: 0.875rem;
     }
     .empty-state {
@@ -596,7 +596,14 @@
           <div class="doctor-extra">No review</div>
         </div>
         <div class="doctor-info">
-          <div class="doctor-avatar" th:text="${#strings.substring(doctor.user.fullName, 0, 2).toUpperCase()}">JD</div>
+          <img th:if="${doctor.imageUrl != null && !doctor.imageUrl.isEmpty()}"
+               th:src="${doctor.imageUrl}"
+               alt="Doctor Profile"
+               class="doctor-avatar"
+               style="object-fit: cover;">
+          <div th:if="${doctor.imageUrl == null || doctor.imageUrl.isEmpty()}"
+               class="doctor-avatar"
+               th:text="${#strings.substring(doctor.user.fullName, 0, 2).toUpperCase()}">JD</div>
           <div class="doctor-details">
             <h6 th:text="${'Dr. ' + doctor.user.fullName}">Dr. John Doe</h6>
             <p th:text="${doctor.specializations.size() > 0 ? doctor.specializations[0].specName : 'General Practice'}">Cardiology</p>
@@ -604,16 +611,20 @@
         </div>
         <div class="doctor-details-grid">
           <div class="detail-item">
-            <span class="detail-label">Degree</span>
-            <span class="detail-value" th:text="${doctor.educations.size() > 0 ? doctor.educations[0].degree : 'MD'}">MD</span>
+            <span class="detail-label">Degrees</span>
+            <span class="detail-value" th:text="${doctor.educations.size() > 0 ? #strings.arrayJoin(doctor.educations.![degree], ', ') : 'MD'}">MD</span>
           </div>
           <div class="detail-item">
             <span class="detail-label">Specialty</span>
             <span class="detail-value" th:text="${doctor.specializations.size() > 0 ? #strings.arrayJoin(doctor.specializations.![specName], ', ') : 'General Practice'}">Cardiology</span>
           </div>
           <div class="detail-item">
+            <span class="detail-label">Graduation</span>
+            <span class="detail-value" th:text="${doctor.latestEducation != null ? doctor.latestEducation.graduation : 'Not Specified'}">Not Specified</span>
+          </div>
+          <div class="detail-item">
             <span class="detail-label">Institution</span>
-            <span class="detail-value" th:text="${doctor.educations.size() > 0 ? doctor.educations[0].institution : 'Not Specified'}">MediCare Plus Hospital</span>
+            <span class="detail-value" th:text="${doctor.latestEducation != null ? doctor.latestEducation.institution : 'Not Specified'}">Not Specified</span>
           </div>
         </div>
         <div class="bio-description" th:text="${doctor.bioDescription != null ? doctor.bioDescription : 'No bio description available.'}">No bio description available.</div>
@@ -692,3 +703,5 @@
   });
   window.addEventListener('resize', checkScreenSize);
 </script>
+</body>
+</html>
