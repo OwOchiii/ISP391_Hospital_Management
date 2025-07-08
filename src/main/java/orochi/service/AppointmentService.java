@@ -20,25 +20,18 @@ import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 
 @Service
 public class AppointmentService {
 
-    @Autowired
-    private AppointmentRepository appointmentRepository;
+    private static final int APPOINTMENT_DURATION = 30; // minutes
 
-    @Autowired
-    private DoctorRepository doctorRepository;
-
-    @Autowired
-    private PatientRepository patientRepository;
-
-    @Autowired
-    private SpecializationRepository specializationRepository;
-
-    // Standard appointment duration in minutes
-    private static final int APPOINTMENT_DURATION = 30;
+    @Autowired private AppointmentRepository appointmentRepository;
+    @Autowired private DoctorRepository doctorRepository;
+    @Autowired private PatientRepository patientRepository;
+    @Autowired private SpecializationRepository specializationRepository;
 
     public List<Specialization> getAllSpecializations() {
         return specializationRepository.findAllByOrderBySpecNameAsc();
@@ -48,72 +41,220 @@ public class AppointmentService {
         return doctorRepository.findBySpecializationId(specId);
     }
 
-    public Map<String, List<String>> getDoctorAvailability(LocalDate date, Integer doctorId, Integer excludeAppointmentId) {
+    /**
+     * Returns booked and unavailable time slots for a given doctor and date.
+     */
+    public Map<String,List<String>> getDoctorAvailability(
+            LocalDate date,
+            Integer doctorId,
+            Integer excludeAppointmentId  // pass null to fetch all
+    ) {
         LocalDateTime startOfDay = date.atStartOfDay();
-        LocalDateTime endOfDay = date.atTime(23, 59, 59);
+        LocalDateTime endOfDay   = date.atTime(23,59,59);
 
-        List<Appointment> bookedAppointments;
-        if (excludeAppointmentId != null) {
-            bookedAppointments = appointmentRepository.findByDoctorIdAndDateTimeBetweenAndAppointmentIdNotOrderByDateTime(
-                    doctorId, startOfDay, endOfDay, excludeAppointmentId);
-        } else {
-            bookedAppointments = appointmentRepository.findByDoctorIdAndDateTimeBetweenOrderByDateTime(
-                    doctorId, startOfDay, endOfDay);
-        }
+        List<Appointment> booked = (excludeAppointmentId != null
+                ? appointmentRepository.findByDoctorIdAndDateTimeBetweenAndAppointmentIdNotOrderByDateTime(
+                doctorId, startOfDay, endOfDay, excludeAppointmentId)
+                : appointmentRepository.findByDoctorIdAndDateTimeBetweenOrderByDateTime(
+                doctorId, startOfDay, endOfDay)
+        );
 
-        List<String> bookedTimes = bookedAppointments.stream()
-                .map(appointment -> appointment.getDateTime().toLocalTime().format(DateTimeFormatter.ofPattern("HH:mm:ss")))
+        List<String> bookedTimes = booked.stream()
+                .map(a -> a.getDateTime().toLocalTime()
+                        .format(DateTimeFormatter.ofPattern("HH:mm:ss")))
                 .collect(Collectors.toList());
 
-        List<String> unavailableTimes = new ArrayList<>();
-        Set<String> allTimeSlots = new HashSet<>(Arrays.asList(
-                "08:00:00", "08:30:00", "09:00:00", "09:30:00", "10:00:00", "10:30:00",
-                "11:00:00", "11:30:00", "14:00:00", "14:30:00", "15:00:00", "15:30:00",
-                "16:00:00", "16:30:00", "17:00:00", "17:30:00"
-        ));
+        Set<String> allSlots = Set.of(
+                "08:00:00","08:30:00","09:00:00","09:30:00",
+                "10:00:00","10:30:00","11:00:00","11:30:00",
+                "14:00:00","14:30:00","15:00:00","15:30:00",
+                "16:00:00","16:30:00","17:00:00","17:30:00"
+        );
 
-        for (Appointment appointment : bookedAppointments) {
-            LocalTime appointmentTime = appointment.getDateTime().toLocalTime();
-            for (String timeSlot : allTimeSlots) {
-                LocalTime slotTime = LocalTime.parse(timeSlot);
-                int minutesDifference = Math.abs(
-                        (slotTime.getHour() * 60 + slotTime.getMinute()) -
-                                (appointmentTime.getHour() * 60 + appointmentTime.getMinute())
+        // any slot within 30 minutes of an existing booking is “unavailable”
+        Set<String> unavailable = new HashSet<>();
+        for (Appointment a : booked) {
+            LocalTime t = a.getDateTime().toLocalTime();
+            for (String slot : allSlots) {
+                LocalTime s = LocalTime.parse(slot);
+                int diffMin = Math.abs(
+                        (t.getHour()*60 + t.getMinute()) -
+                                (s.getHour()*60 + s.getMinute())
                 );
-                if (minutesDifference < APPOINTMENT_DURATION && !bookedTimes.contains(timeSlot)) {
-                    unavailableTimes.add(timeSlot);
+                if (diffMin < APPOINTMENT_DURATION && !bookedTimes.contains(slot)) {
+                    unavailable.add(slot);
                 }
             }
         }
 
-        unavailableTimes = unavailableTimes.stream().distinct().collect(Collectors.toList());
-        Map<String, List<String>> result = new HashMap<>();
-        result.put("bookedTimes", bookedTimes);
-        result.put("unavailableTimes", unavailableTimes);
-        return result;
+        return Map.of(
+                "bookedTimes", bookedTimes,
+                "unavailableTimes", new ArrayList<>(unavailable)
+        );
     }
 
-    public Map<String, List<String>> getDoctorAvailability(LocalDate date, Integer doctorId) {
+    public Map<String,List<String>> getDoctorAvailability(LocalDate date, Integer doctorId) {
         return getDoctorAvailability(date, doctorId, null);
     }
 
-    @Deprecated
-    public List<String> getBookedTimeSlots(LocalDate date, Integer doctorId) {
-        LocalDateTime startOfDay = date.atStartOfDay();
-        LocalDateTime endOfDay = date.atTime(23, 59, 59);
+    @Transactional
+    public Appointment bookAppointment(AppointmentFormDTO dto) {
+        // validations omitted for brevity...
+        Doctor  doc = doctorRepository.findById(dto.getDoctorId())
+                .orElseThrow(() -> new RuntimeException("Doctor not found"));
+        Patient pat = patientRepository.findById(dto.getPatientId())
+                .orElseThrow(() -> new RuntimeException("Patient not found"));
 
-        List<Appointment> bookedAppointments = appointmentRepository
-            .findByDoctorIdAndDateTimeBetweenOrderByDateTime(doctorId, startOfDay, endOfDay);
+        LocalDateTime when = LocalDateTime.of(
+                dto.getAppointmentDate(),
+                LocalTime.parse(dto.getAppointmentTime())
+        );
 
-        return bookedAppointments.stream()
-            .map(appointment -> appointment.getDateTime().toLocalTime().format(DateTimeFormatter.ofPattern("HH:mm:ss")))
-            .collect(Collectors.toList());
+        // check availability
+        var avail = getDoctorAvailability(dto.getAppointmentDate(), dto.getDoctorId());
+        if (avail.get("bookedTimes").contains(dto.getAppointmentTime()) ||
+                avail.get("unavailableTimes").contains(dto.getAppointmentTime()))
+        {
+            throw new RuntimeException("Time slot unavailable");
+        }
+
+        Appointment appt = new Appointment();
+        appt.setDoctorId(doc.getDoctorId());
+        appt.setPatientId(pat.getPatientId());
+        appt.setDateTime(when);
+        appt.setStatus("Pending");
+        appt.setEmail(dto.getEmail());
+        appt.setPhoneNumber(dto.getPhoneNumber());
+        appt.setDescription(dto.getDescription());
+
+        return appointmentRepository.save(appt);
     }
 
+    public Appointment updateAppointmentStatus(Integer appointmentId, String status) {
+        Appointment appt = appointmentRepository.findById(appointmentId)
+                .orElseThrow(() -> new RuntimeException("Not found"));
+        appt.setStatus(status);
+        return appointmentRepository.save(appt);
+    }
+
+    public Page<Appointment> getAllAppointments(Pageable pg) {
+        return appointmentRepository.findAll(pg);
+    }
+
+    public Page<Appointment> getAppointmentsByDoctorId(Integer docId, Pageable pg) {
+        return new org.springframework.data.domain.PageImpl<>(
+                appointmentRepository
+                        .findByDoctorIdOrderByDateTimeDesc(docId)
+                        .subList((int)pg.getOffset(),
+                                Math.min((int)pg.getOffset() + pg.getPageSize(),
+                                        appointmentRepository.findByDoctorIdOrderByDateTimeDesc(docId).size())),
+                pg,
+                appointmentRepository.findByDoctorIdOrderByDateTimeDesc(docId).size()
+        );
+    }
+
+    public Page<Appointment> getAppointmentsByStatus(String status, Pageable pg) {
+        return appointmentRepository.findByStatusOrderByDateTimeDesc(status, pg);
+    }
+
+    /**
+     * Unified period‐counts method used by the controller
+     */
+    public Map<String, Long> fetchPeriodCounts(
+            LocalDate fromDate,
+            LocalDate toDate,
+            Integer doctorId,    // may be null
+            Integer specId,      // may be null
+            String status,       // 'ALL' or specific
+            String groupBy       // "month", "quarter", "year"
+    ) {
+        // 1) xác định khoảng thời gian
+        LocalDateTime start = fromDate.atStartOfDay();
+        LocalDateTime end   = toDate.atTime(23, 59, 59);
+
+        // 2) Lấy tất cả appointment đã filter doctor/spec/status/ngày
+        //    Truyền status = 'ALL' để không filter status, else filter đúng status
+        String statusFilter = "ALL".equalsIgnoreCase(status) ? "ALL" : status;
+        List<Appointment> list = appointmentRepository.findWithFilters(
+                doctorId,          // doctorId null = all
+                specId,            // specId null = all
+                statusFilter,
+                /*search*/ null,
+                start, end,
+                Pageable.unpaged() // lấy toàn bộ
+        ).getContent();
+
+        // 3) Stream grouping theo key
+        Function<Appointment, String> classifier;
+        switch(groupBy.toLowerCase()) {
+            case "quarter":
+                classifier = a -> {
+                    int y = a.getDateTime().getYear();
+                    int q = ((a.getDateTime().getMonthValue() - 1) / 3) + 1;
+                    return String.format("%d-Q%d", y, q);
+                };
+                break;
+            case "year":
+                classifier = a -> String.valueOf(a.getDateTime().getYear());
+                break;
+            default: // month
+                classifier = a -> a.getDateTime().format(DateTimeFormatter.ofPattern("yyyy-MM"));
+        }
+
+        // 4) Gom nhóm và đếm
+        return list.stream()
+                .collect(Collectors.groupingBy(
+                        classifier,
+                        // preserve order: LinkedHashMap
+                        LinkedHashMap::new,
+                        Collectors.counting()
+                ));
+    }
+
+
+    public List<Doctor> getAllDoctors() {
+        return doctorRepository.findAll();
+    }
+
+    public Page<Appointment> searchAppointmentsByDoctorId(
+            Integer doctorId,
+            String search,
+            Pageable pageable
+    ) {
+        LocalDateTime start = LocalDate.now().atStartOfDay();
+        LocalDateTime end   = LocalDate.now().plusYears(10).atTime(23,59,59);
+
+        return appointmentRepository.findWithFilters(
+                doctorId,                           // doctorId
+                null,                               // specId (không lọc chuyên khoa)
+                "ALL",                              // status
+                (search == null || search.isBlank())? null : search,
+                start,
+                end,
+                pageable
+        );
+    }
+
+    public List<String> getBookedTimeSlots(LocalDate date, Integer doctorId) {
+        // chỉ lấy bookedTimes, không cần unavailableTimes
+        return getDoctorAvailability(date, doctorId)
+                .get("bookedTimes");
+    }
+
+    /**
+     * Book mới (được gọi từ controller với các tham số rời rạc).
+     */
     @Transactional
-    public Appointment bookAppointment(Integer patientId, Integer doctorId, LocalDate appointmentDate,
-                                       String appointmentTime, String email, String phoneNumber,
-                                       String description) {
+    public Appointment bookAppointment(
+            Integer patientId,
+            Integer doctorId,
+            LocalDate appointmentDate,
+            String appointmentTime,
+            String email,
+            String phoneNumber,
+            String description) {
+
+        // validate giống trong bookAppointment(dto) của bạn
         if (email == null || email.isEmpty()) {
             throw new RuntimeException("Email is required.");
         }
@@ -129,8 +270,7 @@ public class AppointmentService {
         Patient patient = patientRepository.findById(patientId)
                 .orElseThrow(() -> new RuntimeException("Patient not found with ID: " + patientId));
 
-        LocalTime time = LocalTime.parse(appointmentTime);
-        LocalDateTime dateTime = LocalDateTime.of(appointmentDate, time);
+        LocalDateTime dateTime = LocalDateTime.of(appointmentDate, LocalTime.parse(appointmentTime));
 
         Map<String, List<String>> availability = getDoctorAvailability(appointmentDate, doctorId);
         if (availability.get("bookedTimes").contains(appointmentTime) ||
@@ -138,22 +278,32 @@ public class AppointmentService {
             throw new RuntimeException("The selected time slot is unavailable. Please choose another time.");
         }
 
-        Appointment appointment = new Appointment();
-        appointment.setPatientId(patientId);
-        appointment.setDoctorId(doctorId);
-        appointment.setDateTime(dateTime);
-        appointment.setStatus("Pending");
-        appointment.setEmail(email);
-        appointment.setPhoneNumber(phoneNumber);
-        appointment.setDescription(description);
+        Appointment appt = new Appointment();
+        appt.setPatientId(patientId);
+        appt.setDoctorId(doctorId);
+        appt.setDateTime(dateTime);
+        appt.setStatus("Pending");
+        appt.setEmail(email);
+        appt.setPhoneNumber(phoneNumber);
+        appt.setDescription(description);
 
-        return appointmentRepository.save(appointment);
+        return appointmentRepository.save(appt);
     }
 
+    /**
+     * Update (được gọi từ controller khi sửa appointment).
+     */
     @Transactional
-    public Appointment updateAppointment(Integer appointmentId, Integer patientId, Integer doctorId,
-                                         LocalDate appointmentDate, String appointmentTime,
-                                         String email, String phoneNumber, String description) {
+    public Appointment updateAppointment(
+            Integer appointmentId,
+            Integer patientId,
+            Integer doctorId,
+            LocalDate appointmentDate,
+            String appointmentTime,
+            String email,
+            String phoneNumber,
+            String description) {
+
         if (email == null || email.isEmpty()) {
             throw new RuntimeException("Email is required.");
         }
@@ -164,107 +314,31 @@ public class AppointmentService {
             throw new RuntimeException("Phone number must start with 0 and be either 10 or 12 digits.");
         }
 
-        Appointment appointment = appointmentRepository.findById(appointmentId)
+        Appointment appt = appointmentRepository.findById(appointmentId)
                 .orElseThrow(() -> new RuntimeException("Appointment not found with ID: " + appointmentId));
-        if (!appointment.getPatientId().equals(patientId)) {
+        if (!appt.getPatientId().equals(patientId)) {
             throw new RuntimeException("You do not have permission to update this appointment.");
         }
 
-        Doctor doctor = doctorRepository.findById(doctorId)
+        // kiểm tra doctor hợp lệ
+        doctorRepository.findById(doctorId)
                 .orElseThrow(() -> new RuntimeException("Doctor not found with ID: " + doctorId));
 
-        LocalTime time = LocalTime.parse(appointmentTime);
-        LocalDateTime dateTime = LocalDateTime.of(appointmentDate, time);
+        LocalDateTime dateTime = LocalDateTime.of(appointmentDate, LocalTime.parse(appointmentTime));
 
-        Map<String, List<String>> availability = getDoctorAvailability(appointmentDate, doctorId, appointmentId);
+        Map<String, List<String>> availability =
+                getDoctorAvailability(appointmentDate, doctorId, appointmentId);
         if (availability.get("bookedTimes").contains(appointmentTime) ||
                 availability.get("unavailableTimes").contains(appointmentTime)) {
             throw new RuntimeException("The selected time slot is unavailable. Please choose another time.");
         }
 
-        appointment.setDoctorId(doctorId);
-        appointment.setDateTime(dateTime);
-        appointment.setEmail(email);
-        appointment.setPhoneNumber(phoneNumber);
-        appointment.setDescription(description);
+        appt.setDoctorId(doctorId);
+        appt.setDateTime(dateTime);
+        appt.setEmail(email);
+        appt.setPhoneNumber(phoneNumber);
+        appt.setDescription(description);
 
-        return appointmentRepository.save(appointment);
-    }
-
-    //public abstract Appointment bookAppointment(AppointmentFormDTO appointmentDTO);
-    public Appointment updateAppointmentStatus(Integer appointmentId, String status) {
-        Appointment appointment = appointmentRepository.findById(appointmentId)
-            .orElseThrow(() -> new RuntimeException("Appointment not found with ID: " + appointmentId));
-        appointment.setStatus(status); // Direct assignment of enum value instead of toString()
-        appointmentRepository.save(appointment);
-        return appointment;
-    }
-
-    public Page<Appointment> searchAppointmentsByDoctorId(Integer doctorId, String search, Pageable pageable) {
-        // Search appointments for a specific doctor with a search term (patient name)
-        // Convert list to page for pagination
-        List<Appointment> appointments = appointmentRepository.findByDoctorIdAndPatientUserFullNameContainingIgnoreCase(doctorId, search);
-
-        int start = (int) pageable.getOffset();
-        int end = Math.min((start + pageable.getPageSize()), appointments.size());
-
-        List<Appointment> pageContent = appointments.subList(start, end);
-        return new org.springframework.data.domain.PageImpl<>(pageContent, pageable, appointments.size());
-    }
-
-    public Page<Appointment> getAppointmentsByDoctorId(Integer doctorId, Pageable pageable) {
-        List<Appointment> appointments = appointmentRepository.findByDoctorIdOrderByDateTimeDesc(doctorId);
-
-        int start = (int) pageable.getOffset();
-        int end = Math.min((start + pageable.getPageSize()), appointments.size());
-
-        List<Appointment> pageContent = appointments.subList(start, end);
-        return new org.springframework.data.domain.PageImpl<>(pageContent, pageable, appointments.size());
-    }
-
-    public Page<Appointment> getAllAppointments(Pageable pageable) {
-        return appointmentRepository.findAll(pageable);
-    }
-
-    /**
-     * Get appointments filtered by status
-     * @param status The status to filter by (Scheduled, Completed, Cancel, Pending)
-     * @param pageable Pagination information
-     * @return Page of filtered appointments
-     */
-    public Page<Appointment> getAppointmentsByStatus(String status, Pageable pageable) {
-        return appointmentRepository.findByStatusOrderByDateTimeDesc(status, pageable);
-    }
-
-    @Transactional
-    public Appointment bookAppointment(AppointmentFormDTO appointmentDTO) {
-        // Validate doctor and patient existence
-        Doctor doctor = doctorRepository.findById(appointmentDTO.getDoctorId())
-            .orElseThrow(() -> new RuntimeException("Doctor not found with ID: " + appointmentDTO.getDoctorId()));
-
-        Patient patient = patientRepository.findById(appointmentDTO.getPatientId())
-            .orElseThrow(() -> new RuntimeException("Patient not found with ID: " + appointmentDTO.getPatientId()));
-
-        // Get date and time
-        LocalDate appointmentDate = appointmentDTO.getAppointmentDate(); // Already a LocalDate, no need to parse
-        LocalTime appointmentTime = LocalTime.parse(appointmentDTO.getAppointmentTime());
-        LocalDateTime dateTime = LocalDateTime.of(appointmentDate, appointmentTime);
-
-        // Create new appointment
-        Appointment appointment = new Appointment();
-        appointment.setPatientId(appointmentDTO.getPatientId());
-        appointment.setDoctorId(appointmentDTO.getDoctorId());
-        appointment.setDateTime(dateTime);
-        appointment.setStatus("Pending"); // Default status
-        appointment.setEmail(appointmentDTO.getEmail());
-        appointment.setPhoneNumber(appointmentDTO.getPhoneNumber());
-        appointment.setDescription(appointmentDTO.getDescription());
-
-        // Save appointment
-        return appointmentRepository.save(appointment);
-    }
-
-    public List<Appointment> getAppointmentsByDoctorIdAndPatientName(Integer doctorId, String search) {
-        return null;
+        return appointmentRepository.save(appt);
     }
 }
