@@ -141,9 +141,9 @@ public class AdminAppointmentController {
         Integer specFilter = null;
 
         // 1) Lấy 3 map gốc
-        Map<String, Long> mapAll     = appointmentService.fetchPeriodCounts(fromDate, toDate, docFilter, specFilter, status,      groupBy);
-        Map<String, Long> mapDone    = appointmentService.fetchPeriodCounts(fromDate, toDate, docFilter, specFilter, STATUS_COMPLETED, groupBy);
-        Map<String, Long> mapCancel  = appointmentService.fetchPeriodCounts(fromDate, toDate, docFilter, specFilter, STATUS_CANCELLED, groupBy);
+        Map<String, Long> mapAll     = appointmentService.fetchPeriodCounts2(fromDate, toDate, docFilter, specFilter, status,      groupBy);
+        Map<String, Long> mapDone    = appointmentService.fetchPeriodCounts2(fromDate, toDate, docFilter, specFilter, STATUS_COMPLETED, groupBy);
+        Map<String, Long> mapCancel  = appointmentService.fetchPeriodCounts2(fromDate, toDate, docFilter, specFilter, STATUS_CANCELLED, groupBy);
 
         // 2) Tính tổng mỗi loại
         long totalSched = mapAll.values().stream().mapToLong(l -> l).sum()
