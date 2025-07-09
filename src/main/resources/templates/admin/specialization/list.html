@@ -557,32 +557,6 @@
       </div>
     </div>
 
-    <form th:action="@{/admin/specializations}" method="get" class="row g-2 mb-4">
-      <input type="hidden" name="adminId" th:value="${adminId}"/>
-      <div class="col-md-6">
-        <input type="text" name="search" th:value="${search}"
-               class="form-control" placeholder="Search by name…"/>
-      </div>
-      <div class="col-md-4">
-        <select name="symptomFilter" class="form-select">
-          <option value="" th:selected="${symptomFilter == null}">All Symptoms</option>
-          <option th:each="sym : ${symptomList}"
-                  th:value="${sym}"
-                  th:text="${sym}"
-                  th:selected="${sym == symptomFilter}">
-          </option>
-        </select>
-      </div>
-      <div class="col-auto">
-        <button class="btn btn-success"><i class="bi bi-search"></i> Filter</button>
-      </div>
-      <div class="col-auto">
-        <a th:href="@{/admin/specializations(adminId=${adminId})}" class="btn btn-secondary">
-          <i class="bi bi-x-circle"></i> Clear
-        </a>
-      </div>
-    </form>
-
     <!-- Display error message if present -->
     <div th:if="${errorMessage}" class="alert alert-danger" role="alert">
       <span th:text="${errorMessage}"></span> <!-- ADDED: Show error message from controller -->
@@ -623,46 +597,27 @@
       <nav aria-label="Page navigation">
         <ul class="pagination justify-content-center">
           <!-- previous -->
-          <!-- Previous -->
           <li class="page-item" th:classappend="${currentPage == 0} ? 'disabled'">
             <a class="page-link"
-               th:href="@{/admin/specializations(
-         adminId=${adminId},
-         page=${currentPage-1},
-         size=${pageSize},
-         search=${search},
-         symptomFilter=${symptomFilter}
-     )}"
+               th:href="@{/admin/specializations(adminId=${adminId}, page=${currentPage-1}, size=${pageSize})}"
                aria-label="Previous">
               «
             </a>
           </li>
 
-          <!-- Page numbers -->
+          <!-- page numbers -->
           <li class="page-item"
               th:each="i : ${#numbers.sequence(0, totalPages-1)}"
               th:classappend="${i == currentPage} ? 'active'">
             <a class="page-link"
-               th:href="@{/admin/specializations(
-         adminId=${adminId},
-         page=${i},
-         size=${pageSize},
-         search=${search},
-         symptomFilter=${symptomFilter}
-     )}"
+               th:href="@{/admin/specializations(adminId=${adminId}, page=${i}, size=${pageSize})}"
                th:text="${i + 1}">1</a>
           </li>
 
-          <!-- Next -->
+          <!-- next -->
           <li class="page-item" th:classappend="${currentPage == totalPages-1} ? 'disabled'">
             <a class="page-link"
-               th:href="@{/admin/specializations(
-         adminId=${adminId},
-         page=${currentPage+1},
-         size=${pageSize},
-         search=${search},
-         symptomFilter=${symptomFilter}
-     )}"
+               th:href="@{/admin/specializations(adminId=${adminId}, page=${currentPage+1}, size=${pageSize})}"
                aria-label="Next">
               »
             </a>

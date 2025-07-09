@@ -1,965 +1,410 @@
 <!DOCTYPE html>
-<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="_csrf" th:content="${_csrf.token}"/>
-    <meta name="_csrf_header" th:content="${_csrf.headerName}"/>
-    <title>Patient Details - MediCare Plus</title>
+    <title>Patient Details</title>
     <!-- Bootstrap CSS -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
     <!-- Font Awesome -->
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
-    <!-- Google Fonts -->
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;700;800&display=swap" rel="stylesheet">
     <style>
         body {
-            background: linear-gradient(135deg, #e6f0fa 0%, #f8f9fa 100%);
-            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-            color: #1f2937;
-            min-height: 100vh;
-            padding: 2rem 0;
+            background-color: #f1f4f8;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            color: #2d3748;
+            padding: 20px 0;
         }
+
         .container {
-            max-width: 1000px;
-            margin: 0 auto;
+            max-width: 1200px;
         }
-        .card {
-            background: #ffffff;
-            border: none;
-            border-radius: 1rem;
-            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.1);
-            overflow: hidden;
-            margin-bottom: 2rem;
-        }
-        .card-header {
-            background: #007bff;
-            color: white;
-            padding: 1.5rem;
-            font-size: 1.25rem;
-            font-weight: 600;
-            display: flex;
-            align-items: center;
-            gap: 0.75rem;
-            justify-content: space-between;
-        }
-        .card-body {
-            padding: 2rem;
-        }
+
         h1 {
-            font-size: 2.25rem;
-            font-weight: 800;
-            color: #1f2937;
-            text-align: center;
-            margin-bottom: 2rem;
-            text-transform: uppercase;
-            letter-spacing: 0.05em;
-        }
-        .section-title {
-            font-size: 1.5rem;
-            font-weight: 700;
             color: #007bff;
-            margin-bottom: 1.5rem;
-            position: relative;
-            display: inline-block;
+            font-weight: 700;
+            text-align: center;
+            margin-bottom: 30px;
         }
-        .section-title::after {
+
+        .card {
+            border: none;
+            border-radius: 12px;
+            margin-bottom: 20px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+            transition: transform 0.2s;
+            background-color: #e6f3ff; /* Màu thống nhất từ Personal Information */
+        }
+
+        .card:hover {
+            transform: translateY(-5px);
+        }
+
+        .card-header {
+            background-color: transparent;
+            border-bottom: none;
+            padding: 15px 20px;
+            cursor: pointer;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .card-header h2 {
+            margin: 0;
+            font-size: 1.5rem;
+            font-weight: 600;
+            color: #007bff;
+            position: relative;
+            padding-bottom: 5px;
+        }
+
+        .card-header h2::after {
             content: '';
             position: absolute;
-            bottom: -0.25rem;
+            bottom: 0;
             left: 0;
-            width: 50%;
+            width: 50px;
             height: 3px;
-            background: #007bff;
+            background-color: #007bff;
         }
+
+        .card-body {
+            padding: 20px;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
         .form-label {
-            font-size: 0.875rem;
             font-weight: 500;
-            color: #4b5563;
-            margin-bottom: 0.25rem;
-        }
-        p {
-            font-size: 1rem;
-            color: #1f2937;
-            background: #f1f5f9;
-            padding: 0.75rem;
-            border-radius: 0.375rem;
-            margin-bottom: 0;
-        }
-        .btn-back {
-            padding: 0.75rem 2rem;
-            font-size: 0.9rem;
-            font-weight: 500;
-            border-radius: 0.5rem;
-            background: #6b7280;
-            border: none;
-            color: white;
-            transition: all 0.3s ease;
-        }
-        .btn-back:hover {
-            background: #4b5563;
-            transform: translateY(-2px);
-        }
-        .alert {
-            border-radius: 0.5rem;
-            padding: 1rem;
-            font-size: 0.9rem;
-            margin-bottom: 1.5rem;
-        }
-        .stats-card {
-            background: linear-gradient(135deg, rgba(102, 126, 234, 0.08), rgba(167, 139, 250, 0.08));
-            border: 2px solid rgba(102, 126, 234, 0.15);
-            border-radius: 1rem;
-            padding: 1.75rem 1.5rem;
-            text-align: center;
-            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
-            cursor: pointer;
-            position: relative;
-            overflow: hidden;
-            backdrop-filter: blur(10px);
-            box-shadow: 0 4px 20px rgba(102, 126, 234, 0.08);
-            height: 160px;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
+            color: #2d3748;
         }
 
-        .stats-card:hover {
-            transform: translateY(-8px) scale(1.02);
-            box-shadow: 0 12px 40px rgba(102, 126, 234, 0.2);
-            background: linear-gradient(135deg, rgba(102, 126, 234, 0.12), rgba(167, 139, 250, 0.12));
-            border-color: rgba(102, 126, 234, 0.3);
+        .form-control, .form-select {
+            border-radius: 8px;
+            border: 1px solid #ced4da;
+            padding: 10px;
+            transition: border-color 0.3s, box-shadow 0.3s;
         }
 
-        .stats-icon {
-            opacity: 0.7;
-            color: #6366f1;
-            transition: all 0.3s ease;
-        }
-
-        .stats-card:hover .stats-icon {
-            opacity: 1;
-            transform: scale(1.1);
-        }
-
-        .stats-card.clickable-stat:hover {
+        .form-control:focus, .form-select:focus {
             border-color: #007bff;
-            background: linear-gradient(135deg, rgba(0, 123, 255, 0.12), rgba(102, 126, 234, 0.12));
+            box-shadow: 0 0 8px rgba(0, 123, 255, 0.2);
+            outline: none;
         }
 
-        .stats-card.clickable-stat:active {
-            transform: translateY(-4px) scale(0.98);
-            box-shadow: 0 6px 25px rgba(102, 126, 234, 0.25);
-        }
-
-        /* Individual card colors with enhanced hover effects */
-        .stats-card[data-status="all"] {
-            background: linear-gradient(135deg, rgba(99, 102, 241, 0.08), rgba(139, 92, 246, 0.08));
-            border-color: rgba(99, 102, 241, 0.15);
-        }
-
-        .stats-card[data-status="all"] .stats-icon {
-            color: #6366f1;
-        }
-
-        .stats-card[data-status="all"]:hover {
-            background: linear-gradient(135deg, rgba(99, 102, 241, 0.15), rgba(139, 92, 246, 0.15));
-            border-color: rgba(99, 102, 241, 0.3);
-            box-shadow: 0 12px 40px rgba(99, 102, 241, 0.2);
-        }
-
-        .stats-card[data-status="scheduled"] {
-            background: linear-gradient(135deg, rgba(59, 130, 246, 0.08), rgba(37, 99, 235, 0.08));
-            border-color: rgba(59, 130, 246, 0.15);
-        }
-
-        .stats-card[data-status="scheduled"] .stats-icon {
-            color: #3b82f6;
-        }
-
-        .stats-card[data-status="scheduled"]:hover {
-            background: linear-gradient(135deg, rgba(59, 130, 246, 0.15), rgba(37, 99, 235, 0.15));
-            border-color: rgba(59, 130, 246, 0.3);
-            box-shadow: 0 12px 40px rgba(59, 130, 246, 0.2);
-        }
-
-        .stats-card[data-status="completed"] {
-            background: linear-gradient(135deg, rgba(34, 197, 94, 0.08), rgba(22, 163, 74, 0.08));
-            border-color: rgba(34, 197, 94, 0.15);
-        }
-
-        .stats-card[data-status="completed"] .stats-icon {
-            color: #22c55e;
-        }
-
-        .stats-card[data-status="completed"]:hover {
-            background: linear-gradient(135deg, rgba(34, 197, 94, 0.15), rgba(22, 163, 74, 0.15));
-            border-color: rgba(34, 197, 94, 0.3);
-            box-shadow: 0 12px 40px rgba(34, 197, 94, 0.2);
-        }
-
-        .stats-card[data-status="pending"] {
-            background: linear-gradient(135deg, rgba(245, 158, 11, 0.08), rgba(217, 119, 6, 0.08));
-            border-color: rgba(245, 158, 11, 0.15);
-        }
-
-        .stats-card[data-status="pending"] .stats-icon {
-            color: #f59e0b;
-        }
-
-        .stats-card[data-status="pending"]:hover {
-            background: linear-gradient(135deg, rgba(245, 158, 11, 0.15), rgba(217, 119, 6, 0.15));
-            border-color: rgba(245, 158, 11, 0.3);
-            box-shadow: 0 12px 40px rgba(245, 158, 11, 0.2);
-        }
-
-        .stats-card[data-status="cancelled"] {
-            background: linear-gradient(135deg, rgba(239, 68, 68, 0.08), rgba(220, 38, 38, 0.08));
-            border-color: rgba(239, 68, 68, 0.15);
-        }
-
-        .stats-card[data-status="cancelled"] .stats-icon {
-            color: #ef4444;
-        }
-
-        .stats-card[data-status="cancelled"]:hover {
-            background: linear-gradient(135deg, rgba(239, 68, 68, 0.15), rgba(220, 38, 38, 0.15));
-            border-color: rgba(239, 68, 68, 0.3);
-            box-shadow: 0 12px 40px rgba(239, 68, 68, 0.2);
-        }
-
-        /* Modal styles for appointment details */
-        .appointment-modal {
-            display: none;
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: rgba(0, 0, 0, 0.5);
-            z-index: 1000;
-            justify-content: center;
-            align-items: center;
-            backdrop-filter: blur(5px);
-        }
-
-        .appointment-modal.show {
-            display: flex;
-        }
-
-        .modal-content {
-            background: white;
-            border-radius: 1rem;
-            width: 90%;
-            max-width: 800px;
-            max-height: 90vh;
-            overflow-y: auto;
-            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
-            animation: modalAppear 0.3s ease-out;
-        }
-        @keyframes modalAppear {
-            from {
-                opacity: 0;
-                transform: scale(0.9) translateY(-20px);
-            }
-            to {
-                opacity: 1;
-                transform: scale(1) translateY(0);
-            }
-        }
-        .modal-header {
-            background: #007bff;
-            color: white;
-            padding: 1.5rem;
-            border-radius: 1rem 1rem 0 0;
-            display: flex;
-            justify-content: between;
-            align-items: center;
-        }
-        .modal-title {
-            font-size: 1.25rem;
-            font-weight: 600;
-            margin: 0;
-        }
-        .modal-close {
-            background: none;
-            border: none;
-            color: white;
-            font-size: 1.5rem;
-            cursor: pointer;
-            padding: 0.25rem;
-            border-radius: 0.25rem;
-            transition: background 0.2s;
-        }
-        .modal-close:hover {
-            background: rgba(255, 255, 255, 0.1);
-        }
-        .modal-body {
-            padding: 1.5rem;
-        }
-        .appointment-item {
-            background: #f8f9fa;
-            border: 1px solid #e9ecef;
-            border-radius: 0.5rem;
-            padding: 1rem;
-            margin-bottom: 1rem;
-            transition: all 0.2s ease;
-        }
-        .appointment-item:hover {
-            background: #e3f2fd;
-            border-color: #007bff;
-            transform: translateY(-1px);
-            box-shadow: 0 2px 8px rgba(0, 123, 255, 0.1);
-        }
-        .appointment-item:last-child {
-            margin-bottom: 0;
-        }
-        .appointment-header {
-            display: flex;
-            justify-content: between;
-            align-items: center;
-            margin-bottom: 0.5rem;
-        }
-        .appointment-id {
-            font-weight: 600;
+        .edit-link {
             color: #007bff;
-        }
-        .appointment-status {
-            padding: 0.25rem 0.75rem;
-            border-radius: 1rem;
-            font-size: 0.75rem;
+            text-decoration: none;
             font-weight: 500;
-        }
-        .status-completed {
-            background: #d1fae5;
-            color: #065f46;
-        }
-        .status-pending {
-            background: #fef3c7;
-            color: #92400e;
-        }
-        .status-cancelled, .status-cancel {
-            background: #fee2e2;
-            color: #991b1b;
-        }
-        .status-scheduled {
-            background: #e0e7ff;
-            color: #3730a3;
-        }
-        .appointment-details {
-            color: #6b7280;
-            font-size: 0.875rem;
-        }
-        .appointment-details strong {
-            color: #374151;
-        }
-        .no-appointments {
-            text-align: center;
-            padding: 2rem;
-            color: #6b7280;
-        }
-        .no-appointments i {
-            font-size: 3rem;
-            margin-bottom: 1rem;
-            opacity: 0.5;
-        }
-        .loading {
-            text-align: center;
-            padding: 2rem;
-            color: #6b7280;
-        }
-        .loading-spinner {
-            width: 40px;
-            height: 40px;
-            border: 4px solid rgba(102, 126, 234, 0.1);
-            border-top: 4px solid #007bff;
-            border-radius: 50%;
-            animation: spin 1s linear infinite;
-            margin: 0 auto 1rem;
         }
 
-        /* Edit Mode Styles */
-        .btn-edit {
-            padding: 0.5rem 1.5rem;
-            font-size: 0.875rem;
-            font-weight: 500;
-            border-radius: 0.375rem;
-            background: #10b981;
+        .edit-link:hover {
+            color: #0056b3;
+            text-decoration: underline;
+        }
+
+        .btn-primary {
+            background-color: #007bff;
             border: none;
-            color: white;
-            transition: all 0.3s ease;
+            border-radius: 8px;
+            padding: 8px 16px;
+            font-weight: 500;
+            transition: background-color 0.3s, transform 0.2s;
         }
 
-        .btn-edit:hover {
-            background: #059669;
+        .btn-primary:hover {
+            background-color: #0056b3;
             transform: translateY(-2px);
         }
 
-        .btn-save {
-            padding: 0.5rem 1.5rem;
-            font-size: 0.875rem;
-            font-weight: 500;
-            border-radius: 0.375rem;
-            background: #007bff;
+        .btn-secondary {
+            background-color: #6c757d;
             border: none;
-            color: white;
-            transition: all 0.3s ease;
+            border-radius: 8px;
+            padding: 8px 16px;
+            font-weight: 500;
+            transition: background-color 0.3s, transform 0.2s;
         }
 
-        .btn-save:hover {
-            background: #0056b3;
+        .btn-secondary:hover {
+            background-color: #5a6268;
             transform: translateY(-2px);
         }
 
-        .btn-cancel {
-            padding: 0.5rem 1.5rem;
+        .alert {
+            border-radius: 8px;
+            padding: 15px;
+            margin-bottom: 20px;
+            animation: fadeIn 0.5s ease-in-out;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        .invalid-feedback {
             font-size: 0.875rem;
-            font-weight: 500;
-            border-radius: 0.375rem;
-            background: #6b7280;
-            border: none;
-            color: white;
-            transition: all 0.3s ease;
-            margin-left: 0.5rem;
+            color: #dc3545;
         }
 
-        .btn-cancel:hover {
-            background: #4b5563;
-            transform: translateY(-2px);
+        .is-valid {
+            border-color: #28a745 !important;
         }
 
-        .form-control {
-            border: 2px solid #e5e7eb;
-            border-radius: 0.375rem;
-            padding: 0.75rem;
-            font-size: 1rem;
-            transition: all 0.3s ease;
-            background: #ffffff;
+        .is-invalid {
+            border-color: #dc3545 !important;
         }
 
-        .form-control:focus {
-            border-color: #007bff;
-            box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.25);
-            background: #ffffff;
-            outline: none;
-        }
-
-        .form-select {
-            border: 2px solid #e5e7eb;
-            border-radius: 0.375rem;
-            padding: 0.75rem;
-            font-size: 1rem;
-            transition: all 0.3s ease;
-            background: #ffffff;
-        }
-
-        .form-select:focus {
-            border-color: #007bff;
-            box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.25);
-            background: #ffffff;
-            outline: none;
-        }
-
-        .editable-field {
-            display: none;
-        }
-
-        .readonly-field {
-            display: block;
-        }
-
-        .edit-mode .editable-field {
-            display: block;
-        }
-
-        .edit-mode .readonly-field {
-            display: none;
-        }
-
-        .success-message {
-            background: #d1fae5;
-            border: 1px solid #10b981;
-            border-radius: 0.5rem;
-            padding: 1rem;
-            margin-bottom: 1rem;
-            color: #065f46;
-            display: flex;
-            align-items: center;
-            gap: 0.5rem;
-        }
-
-        .success-message i {
-            color: #10b981;
-        }
-
-        /* Validation Styles */
-        .error-message {
-            background: #fef2f2;
-            border: 1px solid #dc2626;
-            border-radius: 0.5rem;
-            padding: 1rem;
-            margin-bottom: 1rem;
-            color: #dc2626;
-            display: flex;
-            align-items: center;
-            gap: 0.5rem;
-        }
-
-        .error-message i {
-            color: #dc2626;
-        }
-
-        .field-error {
-            color: #dc2626;
-            font-size: 0.875rem;
-            margin-top: 0.25rem;
-            display: none;
-        }
-
-        .form-control.is-invalid, .form-select.is-invalid {
-            border-color: #dc2626;
-            box-shadow: 0 0 0 0.2rem rgba(220, 38, 38, 0.25);
-        }
-
-        .form-control.is-valid, .form-select.is-valid {
-            border-color: #10b981;
-            box-shadow: 0 0 0 0.2rem rgba(16, 185, 129, 0.25);
-        }
-
-        .character-count {
-            font-size: 0.75rem;
-            color: #6b7280;
-            text-align: right;
-            margin-top: 0.25rem;
-        }
-
-        .character-count.limit-warning {
-            color: #f59e0b;
-        }
-
-        .character-count.limit-error {
-            color: #dc2626;
-        }
-
-        /* Confirmation Modal Styles */
-        .confirmation-modal {
-            display: none;
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: rgba(0, 0, 0, 0.5);
-            z-index: 2000;
-            justify-content: center;
-            align-items: center;
-            backdrop-filter: blur(5px);
-        }
-
-        .confirmation-modal.show {
-            display: flex;
-        }
-
-        .confirmation-modal-content {
-            background: white;
-            border-radius: 1rem;
-            width: 90%;
-            max-width: 500px;
-            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
-            animation: confirmationModalAppear 0.3s ease-out;
-            overflow: hidden;
-        }
-
-        @keyframes confirmationModalAppear {
-            from {
-                opacity: 0;
-                transform: scale(0.9) translateY(-20px);
-            }
-            to {
-                opacity: 1;
-                transform: scale(1) translateY(0);
-            }
-        }
-
-        .confirmation-modal-header {
-            background: #f59e0b;
-            color: white;
-            padding: 1.5rem;
-            display: flex;
-            align-items: center;
-            gap: 0.75rem;
-        }
-
-        .confirmation-modal-title {
-            font-size: 1.25rem;
-            font-weight: 600;
-            margin: 0;
-        }
-
-        .confirmation-modal-body {
-            padding: 2rem;
-            text-align: center;
-        }
-
-        .confirmation-modal-body p {
-            font-size: 1rem;
-            color: #374151;
-            margin-bottom: 1rem;
-            background: none;
-            padding: 0;
-            border-radius: 0;
-        }
-
-        .confirmation-modal-body .text-muted {
-            color: #6b7280 !important;
-            font-size: 0.875rem;
-        }
-
-        .confirmation-modal-footer {
-            padding: 1.5rem 2rem 2rem;
-            display: flex;
-            gap: 1rem;
-            justify-content: center;
-        }
-
-        .btn-confirm {
-            padding: 0.75rem 2rem;
-            font-size: 0.9rem;
-            font-weight: 500;
-            border-radius: 0.5rem;
-            background: #007bff;
-            border: none;
-            color: white;
-            transition: all 0.3s ease;
-            cursor: pointer;
-        }
-
-        .btn-confirm:hover {
-            background: #0056b3;
-            transform: translateY(-2px);
-        }
-
-        .btn-confirm-cancel {
-            padding: 0.75rem 2rem;
-            font-size: 0.9rem;
-            font-weight: 500;
-            border-radius: 0.5rem;
-            background: #6b7280;
-            border: none;
-            color: white;
-            transition: all 0.3s ease;
-            cursor: pointer;
-        }
-
-        .btn-confirm-cancel:hover {
-            background: #4b5563;
-            transform: translateY(-2px);
-        }
-
-        @keyframes spin {
-            0% { transform: rotate(0deg); }
-            100% { transform: rotate(360deg); }
-        }
-        @media (max-width: 767.98px) {
-            .card-body {
-                padding: 1.5rem;
-            }
-            h1 {
-                font-size: 1.75rem;
-            }
-            .section-title {
-                font-size: 1.25rem;
-            }
-            .btn-back {
-                padding: 0.5rem 1.5rem;
-                font-size: 0.85rem;
-            }
-            p {
-                font-size: 0.85rem;
-            }
+        .section-icon {
+            margin-right: 10px;
+            color: #007bff;
         }
     </style>
 </head>
 <body>
 <div class="container">
-    <h1>Patient Details</h1>
+    <div id="patientDetailsScreen">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <button id="backButton" class="btn btn-secondary"><i class="fas fa-arrow-left me-2"></i>Back</button>
+            <h1>Patient Details</h1>
+            <div style="width: 70px;"></div>
+        </div>
 
-    <!-- Loading State -->
-    <div id="loadingState" class="loading">
-        <div class="loading-spinner"></div>
-        <p>Loading patient details...</p>
-    </div>
+        <!-- Success/Error Messages -->
+        <div id="successMessage" class="alert alert-success d-none" role="alert"></div>
+        <div id="errorMessage" class="alert alert-danger d-none" role="alert"></div>
 
-    <!-- Error State -->
-    <div id="errorState" class="alert alert-danger d-none" role="alert">
-        <i class="fas fa-exclamation-triangle"></i>
-        <span id="errorMessage">Error loading patient details</span>
-    </div>
-
-    <!-- Patient Details Content -->
-    <div id="patientContent" class="d-none">
         <!-- Personal Information -->
-        <div class="card" id="personalInfoCard">
-            <div class="card-header">
-                <span><i class="fas fa-user"></i> Personal Information</span>
-                <button id="editAllBtn" class="btn-edit" onclick="toggleEditAllMode()">
-                    <i class="fas fa-edit me-2"></i>Update
-                </button>
-            </div>
-            <div class="card-body">
-                <!-- Success Message -->
-                <div id="updateSuccessMessage" class="success-message d-none">
-                    <i class="fas fa-check-circle"></i>
-                    <span>Patient information updated successfully!</span>
+        <div class="mb-4" id="personalInfo">
+            <div class="card">
+                <div class="card-header" data-bs-toggle="collapse" data-bs-target="#personalInfoCollapse" aria-expanded="true" aria-controls="personalInfoCollapse">
+                    <h2><i class="fas fa-user section-icon"></i>Personal Information</h2>
+                    <a href="#" id="editPersonalInfo" class="edit-link">Edit</a>
                 </div>
-
-                <div class="row g-4">
-                    <div class="col-md-6">
-                        <label class="form-label">Patient ID</label>
-                        <p id="patientId">-</p>
-                    </div>
-                    <div class="col-md-6">
-                        <label class="form-label">Full Name</label>
-                        <p id="fullName">-</p>
-                    </div>
-                    <div class="col-md-6">
-                        <label class="form-label">Date of Birth</label>
-                        <p id="dateOfBirth" class="readonly-field">-</p>
-                        <input type="date" id="dateOfBirthEdit" class="form-control editable-field" />
-                        <div class="field-error" id="dateOfBirthError">Date of Birth is required</div>
-                    </div>
-                    <div class="col-md-6">
-                        <label class="form-label">Age</label>
-                        <p id="age">-</p>
-                    </div>
-                    <div class="col-md-6">
-                        <label class="form-label">Gender</label>
-                        <p id="gender" class="readonly-field">-</p>
-                        <select id="genderEdit" class="form-select editable-field">
-                            <option value="">Select Gender</option>
-                            <option value="Male">Male</option>
-                            <option value="Female">Female</option>
-                            <option value="Other">Other</option>
-                        </select>
-                        <div class="field-error" id="genderError">Gender is required</div>
-                    </div>
-                    <div class="col-md-6">
-                        <label class="form-label">Status</label>
-                        <p id="status">-</p>
+                <div id="personalInfoCollapse" class="collapse show">
+                    <div class="card-body">
+                        <div class="row g-3">
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label for="fullName" class="form-label">Full Name*</label>
+                                    <p id="fullName" class="mt-1 mb-0"></p>
+                                    <input id="fullNameInput" type="text" class="form-control d-none" required>
+                                    <div id="fullNameError" class="invalid-feedback">Full Name is required.</div>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label for="patientID" class="form-label">Patient ID*</label>
+                                    <p id="patientID" class="mt-1 mb-0"></p>
+                                    <input id="patientIDInput" type="text" class="form-control d-none" readonly>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label for="gender" class="form-label">Gender*</label>
+                                    <p id="gender" class="mt-1 mb-0"></p>
+                                    <select id="genderInput" class="form-select d-none" required>
+                                        <option value="">Select Gender</option>
+                                        <option value="Male">Male</option>
+                                        <option value="Female">Female</option>
+                                        <option value="Other">Other</option>
+                                    </select>
+                                    <div id="genderError" class="invalid-feedback">Gender is required.</div>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label for="dob" class="form-label">Date of Birth*</label>
+                                    <p id="dob" class="mt-1 mb-0"></p>
+                                    <input id="dobInput" type="date" class="form-control d-none" max="2025-06-22" required>
+                                    <div id="dobError" class="invalid-feedback">Date of Birth cannot be in the future.</div>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label for="phone" class="form-label">Phone Number*</label>
+                                    <p id="phone" class="mt-1 mb-0"></p>
+                                    <input id="phoneInput" type="tel" class="form-control d-none" pattern="\d{10}" required>
+                                    <div id="phoneError" class="invalid-feedback">Phone Number must be exactly 10 digits.</div>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label for="email" class="form-label">Email</label>
+                                    <p id="email" class="mt-1 mb-0"></p>
+                                    <input id="emailInput" type="email" class="form-control d-none" pattern=".*@gmail\.com">
+                                    <div id="emailError" class="invalid-feedback">Email must end with @gmail.com.</div>
+                                </div>
+                            </div>
+                            <div class="col-md-12">
+                                <div class="form-group">
+                                    <label for="description" class="form-label">Description/Notes</label>
+                                    <p id="description" class="mt-1 mb-0"></p>
+                                    <textarea id="descriptionInput" class="form-control d-none" rows="4"></textarea>
+                                </div>
+                            </div>
+                        </div>
+                        <div id="savePersonalInfo" class="d-none mt-3">
+                            <button type="button" class="btn btn-primary btn-sm">Save Changes</button>
+                        </div>
                     </div>
                 </div>
             </div>
         </div>
 
         <!-- Contact Information -->
-        <div class="card" id="contactInfoCard">
-            <div class="card-header">
-                <span><i class="fas fa-address-book"></i> Contact Information</span>
-            </div>
-            <div class="card-body">
-                <div class="row g-4">
-                    <div class="col-md-6">
-                        <label class="form-label">Phone Number</label>
-                        <p id="phoneNumber">-</p>
-                    </div>
-                    <div class="col-md-6">
-                        <label class="form-label">Email</label>
-                        <p id="email">-</p>
-                    </div>
-                    <div class="col-md-6">
-                        <label class="form-label">Address Type</label>
-                        <p id="addressType" class="readonly-field">-</p>
-                        <input type="text" id="addressTypeEdit" class="form-control editable-field" placeholder="e.g., Home, Work" maxlength="50" />
-                        <div class="field-error" id="addressTypeError">Address Type is required</div>
-                    </div>
-                    <div class="col-md-6">
-                        <label class="form-label">Street Address</label>
-                        <p id="streetAddress" class="readonly-field">-</p>
-                        <input type="text" id="streetAddressEdit" class="form-control editable-field" placeholder="Enter street address" maxlength="50" />
-                        <div class="field-error" id="streetAddressError">Street Address is required</div>
-                    </div>
-                    <div class="col-md-6">
-                        <label class="form-label">City</label>
-                        <p id="city" class="readonly-field">-</p>
-                        <input type="text" id="cityEdit" class="form-control editable-field" placeholder="Enter city" maxlength="50" />
-                        <div class="field-error" id="cityError">City is required</div>
-                    </div>
-                    <div class="col-md-6">
-                        <label class="form-label">State/Province</label>
-                        <p id="state" class="readonly-field">-</p>
-                        <input type="text" id="stateEdit" class="form-control editable-field" placeholder="Enter state/province" maxlength="50" />
-                        <div class="field-error" id="stateError">State/Province is required</div>
-                    </div>
-                    <div class="col-md-6">
-                        <label class="form-label">Postal Code</label>
-                        <p id="postalCode" class="readonly-field">-</p>
-                        <input type="text" id="postalCodeEdit" class="form-control editable-field" placeholder="Enter postal code" maxlength="50" />
-                        <div class="field-error" id="postalCodeError">Postal Code is required</div>
-                    </div>
-                    <div class="col-md-6">
-                        <label class="form-label">Country</label>
-                        <p id="country" class="readonly-field">-</p>
-                        <input type="text" id="countryEdit" class="form-control editable-field" placeholder="Enter country" maxlength="50" />
-                        <div class="field-error" id="countryError">Country is required</div>
-                    </div>
+        <div class="mb-4" id="contactInfo">
+            <div class="card">
+                <div class="card-header" data-bs-toggle="collapse" data-bs-target="#contactInfoCollapse" aria-expanded="true" aria-controls="contactInfoCollapse">
+                    <h2><i class="fas fa-map-marker-alt section-icon"></i>Contact Information</h2>
+                    <a href="#" id="editContactInfo" class="edit-link">Edit</a>
                 </div>
-            </div>
-        </div>
-
-        <!-- Appointment Statistics -->
-        <div class="card">
-            <div class="card-header">
-                <span><i class="fas fa-chart-bar"></i> Appointment Statistics</span>
-                <small class="text-light opacity-75">Click on any statistic to view detailed appointments</small>
-            </div>
-            <div class="card-body">
-                <div class="row g-2 justify-content-center">
-                    <div class="col-xl-2 col-lg-3 col-md-4 col-sm-6 col-6 d-flex">
-                        <div class="stats-card clickable-stat flex-fill" onclick="showAppointmentModal('all')" data-status="all">
-                            <div class="stats-icon mb-2">
-                                <i class="fas fa-calendar-alt fa-2x"></i>
+                <div id="contactInfoCollapse" class="collapse show">
+                    <div class="card-body">
+                        <div class="row g-3">
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label for="addressType" class="form-label">Address Type</label>
+                                    <p id="addressType" class="mt-1 mb-0"></p>
+                                    <select id="addressTypeInput" class="form-select d-none">
+                                        <option value="">Select Address Type</option>
+                                        <option value="Home">Home</option>
+                                        <option value="Work">Work</option>
+                                        <option value="Other">Other</option>
+                                    </select>
+                                </div>
                             </div>
-                            <div class="stats-number" id="totalAppointments">0</div>
-                            <div class="stats-label">Total</div>
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label for="streetAddress" class="form-label">Street Address</label>
+                                    <p id="streetAddress" class="mt-1 mb-0"></p>
+                                    <input id="streetAddressInput" type="text" class="form-control d-none">
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label for="city" class="form-label">City</label>
+                                    <p id="city" class="mt-1 mb-0"></p>
+                                    <input id="cityInput" type="text" class="form-control d-none">
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label for="state" class="form-label">State/Province</label>
+                                    <p id="state" class="mt-1 mb-0"></p>
+                                    <input id="stateInput" type="text" class="form-control d-none">
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label for="postalCode" class="form-label">Postal Code</label>
+                                    <p id="postalCode" class="mt-1 mb-0"></p>
+                                    <input id="postalCodeInput" type="text" class="form-control d-none">
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label for="country" class="form-label">Country</label>
+                                    <p id="country" class="mt-1 mb-0"></p>
+                                    <input id="countryInput" type="text" class="form-control d-none">
+                                </div>
+                            </div>
                         </div>
-                    </div>
-                    <div class="col-xl-2 col-lg-3 col-md-4 col-sm-6 col-6 d-flex">
-                        <div class="stats-card clickable-stat flex-fill" onclick="showAppointmentModal('scheduled')" data-status="scheduled">
-                            <div class="stats-icon mb-2">
-                                <i class="fas fa-clock fa-2x"></i>
-                            </div>
-                            <div class="stats-number" id="scheduledAppointments">0</div>
-                            <div class="stats-label">Scheduled</div>
-                        </div>
-                    </div>
-                    <div class="col-xl-2 col-lg-3 col-md-4 col-sm-6 col-6 d-flex">
-                        <div class="stats-card clickable-stat flex-fill" onclick="showAppointmentModal('completed')" data-status="completed">
-                            <div class="stats-icon mb-2">
-                                <i class="fas fa-check-circle fa-2x"></i>
-                            </div>
-                            <div class="stats-number" id="completedAppointments">0</div>
-                            <div class="stats-label">Completed</div>
-                        </div>
-                    </div>
-                    <div class="col-xl-2 col-lg-3 col-md-4 col-sm-6 col-6 d-flex">
-                        <div class="stats-card clickable-stat flex-fill" onclick="showAppointmentModal('pending')" data-status="pending">
-                            <div class="stats-icon mb-2">
-                                <i class="fas fa-hourglass-half fa-2x"></i>
-                            </div>
-                            <div class="stats-number" id="pendingAppointments">0</div>
-                            <div class="stats-label">Pending</div>
-                        </div>
-                    </div>
-                    <div class="col-xl-2 col-lg-3 col-md-4 col-sm-6 col-6 d-flex">
-                        <div class="stats-card clickable-stat flex-fill" onclick="showAppointmentModal('cancelled')" data-status="cancelled">
-                            <div class="stats-icon mb-2">
-                                <i class="fas fa-times-circle fa-2x"></i>
-                            </div>
-                            <div class="stats-number" id="cancelledAppointments">0</div>
-                            <div class="stats-label">Cancelled</div>
+                        <div id="saveContactInfo" class="d-none mt-3">
+                            <button type="button" class="btn btn-primary btn-sm">Save Changes</button>
                         </div>
                     </div>
                 </div>
             </div>
         </div>
 
-        <!-- Appointment -->
-        <div class="card">
-            <div class="card-header">
-                <span><i class="fas fa-calendar-check"></i> Appointment</span>
-            </div>
-            <div class="card-body">
-                <div class="row g-4">
-                    <div class="col-md-6">
-                        <label class="form-label">Date & Time</label>
-                        <p id="appointmentDateTime">-</p>
-                    </div>
-                    <div class="col-md-6">
-                        <label class="form-label">Status</label>
-                        <p id="appointmentStatus">-</p>
+        <!-- Appointment History -->
+        <div class="mb-4" id="appointmentInfo">
+            <div class="card">
+                <div class="card-header" data-bs-toggle="collapse" data-bs-target="#appointmentInfoCollapse" aria-expanded="true" aria-controls="appointmentInfoCollapse">
+                    <h2><i class="fas fa-calendar-alt section-icon"></i>Appointment History</h2>
+                    <a href="#" id="editAppointmentInfo" class="edit-link">Edit</a>
+                </div>
+                <div id="appointmentInfoCollapse" class="collapse show">
+                    <div class="card-body">
+                        <div class="row g-3">
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label for="appointmentTime" class="form-label">Appointment Date and Time*</label>
+                                    <p id="appointmentTime" class="mt-1 mb-0"></p>
+                                    <input id="appointmentTimeInput" type="datetime-local" class="form-control d-none" min="2025-06-22T23:01" max="2025-07-22T23:59" required>
+                                    <div id="appointmentTimeError" class="invalid-feedback">Date and Time must be between now and 30 days in the future.</div>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label for="doctor" class="form-label">Assigned Doctor</label>
+                                    <p id="doctor" class="mt-1 mb-0"></p>
+                                    <input id="doctorInput" type="text" class="form-control d-none">
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label for="appointmentStatus" class="form-label">Appointment Status</label>
+                                    <p id="appointmentStatus" class="mt-1 mb-0"></p>
+                                    <select id="appointmentStatusInput" class="form-select d-none">
+                                        <option value="">Select Status</option>
+                                        <option value="Scheduled">Scheduled</option>
+                                        <option value="Completed">Completed</option>
+                                        <option value="Cancelled">Cancelled</option>
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="col-md-12">
+                                <div class="form-group">
+                                    <label for="reason" class="form-label">Reason for Visit*</label>
+                                    <p id="reason" class="mt-1 mb-0"></p>
+                                    <textarea id="reasonInput" class="form-control d-none" rows="4" required></textarea>
+                                    <div id="reasonError" class="invalid-feedback">Reason cannot exceed 100 words.</div>
+                                </div>
+                            </div>
+                        </div>
+                        <div id="saveAppointmentInfo" class="d-none mt-3">
+                            <button type="button" class="btn btn-primary btn-sm">Save Changes</button>
+                        </div>
                     </div>
                 </div>
             </div>
         </div>
 
-        <!-- Additional Information -->
-        <div class="card" id="additionalInfoCard">
-            <div class="card-header">
-                <span><i class="fas fa-info-circle"></i> Additional Information</span>
-            </div>
-            <div class="card-body">
-                <div class="row g-4">
-                    <div class="col-md-12">
-                        <label class="form-label">Description/Notes</label>
-                        <p id="description" class="readonly-field">-</p>
-                        <textarea id="descriptionEdit" class="form-control editable-field" rows="4" maxlength="200" placeholder="Enter description or notes..."></textarea>
-                        <div class="field-error" id="descriptionError">Description is required</div>
-                    </div>
-                    <div class="col-md-6">
-                        <label class="form-label">Registration Date</label>
-                        <p id="createdAt">-</p>
+        <!-- Payment Transactions -->
+        <div class="mb-4" id="transactionInfo">
+            <div class="card">
+                <div class="card-header" data-bs-toggle="collapse" data-bs-target="#transactionInfoCollapse" aria-expanded="true" aria-controls="transactionInfoCollapse">
+                    <h2><i class="fas fa-credit-card section-icon"></i>Payment Transactions</h2>
+                    <a href="#" id="editTransactionInfo" class="edit-link">Edit</a>
+                </div>
+                <div id="transactionInfoCollapse" class="collapse show">
+                    <div class="card-body">
+                        <div class="row g-3">
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label for="paymentStatus" class="form-label">Payment Status</label>
+                                    <p id="paymentStatus" class="mt-1 mb-0"></p>
+                                    <select id="paymentStatusInput" class="form-select d-none">
+                                        <option value="">Select Status</option>
+                                        <option value="Pending">Pending</option>
+                                        <option value="Completed">Completed</option>
+                                        <option value="Failed">Failed</option>
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+                        <div id="saveTransactionInfo" class="d-none mt-3">
+                            <button type="button" class="btn btn-primary btn-sm">Save Changes</button>
+                        </div>
                     </div>
                 </div>
             </div>
-        </div>
-
-        <!-- Update Buttons -->
-        <div id="updateButtonsSection" class="text-center mt-4 d-none">
-            <button class="btn-save" onclick="confirmUpdateAllInfo()">
-                <i class="fas fa-check me-2"></i>Confirm Update
-            </button>
-            <button class="btn-cancel" onclick="cancelEditAll()">
-                <i class="fas fa-times me-2"></i>Cancel
-            </button>
-        </div>
-    </div>
-
-    <!-- Back Button -->
-    <div class="text-center mt-4">
-        <button onclick="history.back()" class="btn btn-back"><i class="fas fa-arrow-left me-2"></i>Back to Patients List</button>
-    </div>
-</div>
-
-<!-- Appointment Modal -->
-<div id="appointmentModal" class="appointment-modal">
-    <div class="modal-content">
-        <div class="modal-header">
-            <h5 class="modal-title" id="modalTitle">Appointments</h5>
-            <button class="modal-close" onclick="closeAppointmentModal()">
-                <i class="fas fa-times"></i>
-            </button>
-        </div>
-        <div class="modal-body">
-            <div id="appointmentsList">
-                <!-- Appointments will be loaded here -->
-            </div>
-        </div>
-    </div>
-</div>
-
-<!-- Confirmation Modal (Hidden by default) -->
-<div id="confirmationModal" class="confirmation-modal">
-    <div class="confirmation-modal-content">
-        <div class="confirmation-modal-header">
-            <h5 class="confirmation-modal-title">
-                <i class="fas fa-exclamation-triangle me-2"></i>
-                Confirm Update
-            </h5>
-        </div>
-        <div class="confirmation-modal-body">
-            <p>Are you sure you want to update this patient's information?</p>
-            <p class="text-muted mb-0">
-                <small>This action will save all changes to the database and cannot be undone.</small>
-            </p>
-        </div>
-        <div class="confirmation-modal-footer">
-            <button type="button" class="btn-confirm" id="confirmYes">
-                <i class="fas fa-check me-2"></i>Yes, Update
-            </button>
-            <button type="button" class="btn-confirm-cancel" id="confirmNo">
-                <i class="fas fa-times me-2"></i>Cancel
-            </button>
         </div>
     </div>
 </div>
@@ -967,1142 +412,286 @@
 <!-- Bootstrap JS -->
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
 <script>
-    // Get patient ID from URL
-    const urlParams = new URLSearchParams(window.location.search);
-    const patientId = urlParams.get('patientId');
-
-    // Show loading state
-    function showLoading() {
-        document.getElementById('loadingState').classList.remove('d-none');
-        document.getElementById('errorState').classList.add('d-none');
-        document.getElementById('patientContent').classList.add('d-none');
-    }
-
-    // Show error state
-    function showError(message) {
-        document.getElementById('loadingState').classList.add('d-none');
-        document.getElementById('errorState').classList.remove('d-none');
-        document.getElementById('patientContent').classList.add('d-none');
-        document.getElementById('errorMessage').textContent = message || 'Error loading patient details';
-    }
-
-    // Show patient content
-    function showContent() {
-        document.getElementById('loadingState').classList.add('d-none');
-        document.getElementById('errorState').classList.add('d-none');
-        document.getElementById('patientContent').classList.remove('d-none');
-    }
-
-    // Format date for display
-    function formatDate(dateStr) {
-        if (!dateStr || dateStr === 'null') return '-';
+    // Load patient data from database
+    async function loadPatientData() {
         try {
-            const date = new Date(dateStr);
-            return date.toLocaleDateString('en-US', {
-                year: 'numeric',
-                month: 'long',
-                day: 'numeric'
-            });
-        } catch (e) {
-            return dateStr;
-        }
-    }
-
-    // Format datetime for display
-    function formatDateTime(dateTimeStr) {
-        if (!dateTimeStr || dateTimeStr === 'null') return '-';
-        try {
-            const dateTime = new Date(dateTimeStr);
-            return dateTime.toLocaleDateString('en-US', {
-                year: 'numeric',
-                month: 'short',
-                day: 'numeric',
-                hour: '2-digit',
-                minute: '2-digit'
-            });
-        } catch (e) {
-            return dateTimeStr;
-        }
-    }
-
-    // Set element text content with null check
-    function setElementContent(id, value) {
-        const element = document.getElementById(id);
-        if (element) {
-            element.textContent = value && value !== 'null' ? value : '-';
-        }
-    }
-
-    // Load patient details
-    async function loadPatientDetails() {
-        if (!patientId) {
-            showError('Patient ID is required');
-            return;
-        }
-
-        showLoading();
-
-        try {
-            // Sửa lại endpoint API cho đúng
-            const response = await fetch(`/api/patients/${patientId}/details`);
-
-            if (!response.ok) {
-                if (response.status === 404) {
-                    showError('Patient not found');
-                } else {
-                    showError('Failed to load patient details');
-                }
-                return;
-            }
-
-            const patient = await response.json();
-            console.log('Patient data received:', patient); // Debug log
-
-            // Personal Information
-            setElementContent('patientId', patient.PatientID);
-            setElementContent('fullName', patient.FullName);
-            setElementContent('dateOfBirth', formatDate(patient.DateOfBirth));
-            setElementContent('age', patient.Age);
-            setElementContent('gender', patient.Gender);
-            setElementContent('status', 'Active'); // Default status
-
-            // Contact Information
-            setElementContent('phoneNumber', patient.PhoneNumber);
-            setElementContent('email', patient.Email);
-            setElementContent('addressType', patient.AddressType);
-            setElementContent('streetAddress', patient.StreetAddress);
-            setElementContent('city', patient.City);
-            setElementContent('state', patient.State);
-            setElementContent('postalCode', patient.PostalCode);
-            setElementContent('country', patient.Country);
-
-            // Calculate appointment statistics from appointments array
-            let totalAppointments = 0;
-            let completedAppointments = 0;
-            let pendingAppointments = 0;
-            let cancelledAppointments = 0;
-            let latestAppointmentDateTime = '-';
-            let latestAppointmentStatus = '-';
-
-            if (patient.Appointments && Array.isArray(patient.Appointments)) {
-                totalAppointments = patient.Appointments.length;
-
-                patient.Appointments.forEach(appointment => {
-                    const status = appointment.Status;
-                    if (status === 'Completed') {
-                        completedAppointments++;
-                    } else if (status === 'Pending') {
-                        pendingAppointments++;
-                    } else if (status === 'Cancel' || status === 'Cancelled') {
-                        cancelledAppointments++;
-                    }
-                });
-
-                // Get latest appointment (first one since they're sorted by date descending)
-                if (patient.Appointments.length > 0) {
-                    const latestAppointment = patient.Appointments[0];
-                    latestAppointmentDateTime = latestAppointment.DateTime;
-                    latestAppointmentStatus = latestAppointment.Status;
-                }
-            }
-
-            // Appointment Statistics
-            setElementContent('totalAppointments', totalAppointments);
-            setElementContent('scheduledAppointments', totalAppointments - completedAppointments - pendingAppointments - cancelledAppointments);
-            setElementContent('completedAppointments', completedAppointments);
-            setElementContent('pendingAppointments', pendingAppointments);
-            setElementContent('cancelledAppointments', cancelledAppointments);
-
-            // Latest Appointment
-            setElementContent('appointmentDateTime', formatDateTime(latestAppointmentDateTime));
-            setElementContent('appointmentStatus', latestAppointmentStatus);
-
-            // Additional Information
-            setElementContent('description', patient.Description);
-            setElementContent('createdAt', formatDateTime(new Date().toISOString())); // Default to current date
-
-            // Store patient appointments data for modal - assign to global variable
-            patientAppointments = patient.Appointments || [];
-
-            showContent();
-
-        } catch (error) {
-            console.error('Error loading patient details:', error);
-            showError('Error loading patient details. Please try again.');
-        }
-    }
-
-    // Toggle edit mode for all editable fields across all sections
-    function toggleEditAllMode() {
-        const personalCard = document.getElementById('personalInfoCard');
-        const contactCard = document.getElementById('contactInfoCard');
-        const additionalCard = document.getElementById('additionalInfoCard');
-        const editButton = document.getElementById('editAllBtn');
-        const successMessage = document.getElementById('updateSuccessMessage');
-
-        const isCurrentlyEditing = personalCard.classList.contains('edit-mode');
-
-        if (isCurrentlyEditing) {
-            // Exit edit mode without saving
-            exitEditMode();
-        } else {
-            // Enter edit mode
-            enterEditMode();
-        }
-    }
-
-    // Enter edit mode for all sections
-    function enterEditMode() {
-        const personalCard = document.getElementById('personalInfoCard');
-        const contactCard = document.getElementById('contactInfoCard');
-        const additionalCard = document.getElementById('additionalInfoCard');
-        const editButton = document.getElementById('editAllBtn');
-        const successMessage = document.getElementById('updateSuccessMessage');
-
-        // Add edit-mode class to all relevant cards
-        personalCard.classList.add('edit-mode');
-        contactCard.classList.add('edit-mode');
-        additionalCard.classList.add('edit-mode');
-
-        // Update button text
-        editButton.innerHTML = '<i class="fas fa-times me-2"></i>Cancel';
-        editButton.classList.remove('btn-edit');
-        editButton.classList.add('btn-cancel');
-
-        // Hide success message
-        successMessage.classList.add('d-none');
-
-        // Show all editable fields and hide readonly fields across all sections
-        const allEditableFields = document.querySelectorAll('.editable-field');
-        const allReadonlyFields = document.querySelectorAll('.readonly-field');
-
-        allEditableFields.forEach(field => {
-            field.style.display = 'block';
-            field.removeAttribute('disabled');
-        });
-
-        allReadonlyFields.forEach(field => {
-            field.style.display = 'none';
-        });
-
-        // Populate edit fields with current values
-        populateEditFields();
-
-        // Show update buttons section
-        document.getElementById('updateButtonsSection').classList.remove('d-none');
-    }
-
-    // Exit edit mode without saving
-    function exitEditMode() {
-        const personalCard = document.getElementById('personalInfoCard');
-        const contactCard = document.getElementById('contactInfoCard');
-        const additionalCard = document.getElementById('additionalInfoCard');
-        const editButton = document.getElementById('editAllBtn');
-
-        // Remove edit-mode class from all cards
-        personalCard.classList.remove('edit-mode');
-        contactCard.classList.remove('edit-mode');
-        additionalCard.classList.remove('edit-mode');
-
-        // Reset button
-        editButton.innerHTML = '<i class="fas fa-edit me-2"></i>Update';
-        editButton.classList.add('btn-edit');
-        editButton.classList.remove('btn-cancel');
-
-        // Hide all editable fields and show readonly fields
-        const allEditableFields = document.querySelectorAll('.editable-field');
-        const allReadonlyFields = document.querySelectorAll('.readonly-field');
-
-        allEditableFields.forEach(field => {
-            field.style.display = 'none';
-            field.setAttribute('disabled', 'disabled');
-        });
-
-        allReadonlyFields.forEach(field => {
-            field.style.display = 'block';
-        });
-
-        // Hide update buttons section
-        document.getElementById('updateButtonsSection').classList.add('d-none');
-    }
-
-    // Populate edit fields with current displayed values
-    function populateEditFields() {
-        // Personal Information
-        const dateOfBirthText = document.getElementById('dateOfBirth').textContent;
-        if (dateOfBirthText && dateOfBirthText !== '-') {
-            // Convert from display format to input format (YYYY-MM-DD)
-            try {
-                const date = new Date(dateOfBirthText);
-                const year = date.getFullYear();
-                const month = String(date.getMonth() + 1).padStart(2, '0');
-                const day = String(date.getDate()).padStart(2, '0');
-                document.getElementById('dateOfBirthEdit').value = `${year}-${month}-${day}`;
-            } catch (e) {
-                console.error('Error parsing date:', e);
-            }
-        }
-
-        const genderText = document.getElementById('gender').textContent;
-        if (genderText && genderText !== '-') {
-            document.getElementById('genderEdit').value = genderText;
-        }
-
-        // Contact Information
-        const addressTypeText = document.getElementById('addressType').textContent;
-        if (addressTypeText && addressTypeText !== '-') {
-            document.getElementById('addressTypeEdit').value = addressTypeText;
-        }
-
-        const streetAddressText = document.getElementById('streetAddress').textContent;
-        if (streetAddressText && streetAddressText !== '-') {
-            document.getElementById('streetAddressEdit').value = streetAddressText;
-        }
-
-        const cityText = document.getElementById('city').textContent;
-        if (cityText && cityText !== '-') {
-            document.getElementById('cityEdit').value = cityText;
-        }
-
-        const stateText = document.getElementById('state').textContent;
-        if (stateText && stateText !== '-') {
-            document.getElementById('stateEdit').value = stateText;
-        }
-
-        const postalCodeText = document.getElementById('postalCode').textContent;
-        if (postalCodeText && postalCodeText !== '-') {
-            document.getElementById('postalCodeEdit').value = postalCodeText;
-        }
-
-        const countryText = document.getElementById('country').textContent;
-        if (countryText && countryText !== '-') {
-            document.getElementById('countryEdit').value = countryText;
-        }
-
-        // Additional Information
-        const descriptionText = document.getElementById('description').textContent;
-        if (descriptionText && descriptionText !== '-') {
-            document.getElementById('descriptionEdit').value = descriptionText;
-        }
-
-        // Set up date constraints for Date of Birth
-        setupDateConstraints();
-
-        // Add real-time validation event listeners
-        addValidationListeners();
-    }
-
-    // Set up date constraints for Date of Birth field
-    function setupDateConstraints() {
-        const dateInput = document.getElementById('dateOfBirthEdit');
-        if (dateInput) {
-            // Set maximum date to today
-            const today = new Date();
-            const todayString = today.toISOString().split('T')[0];
-            dateInput.setAttribute('max', todayString);
-
-            // Set minimum date to January 1, 1900
-            dateInput.setAttribute('min', '1900-01-01');
-        }
-    }
-
-    // Add real-time validation event listeners
-    function addValidationListeners() {
-        // Date of Birth validation
-        document.getElementById('dateOfBirthEdit').addEventListener('input', validateDateOfBirth);
-        document.getElementById('dateOfBirthEdit').addEventListener('change', validateDateOfBirth);
-
-        // Gender validation
-        document.getElementById('genderEdit').addEventListener('change', validateGender);
-
-        // Address fields validation
-        document.getElementById('addressTypeEdit').addEventListener('input', validateAddressType);
-        document.getElementById('streetAddressEdit').addEventListener('input', validateStreetAddress);
-        document.getElementById('cityEdit').addEventListener('input', validateCity);
-        document.getElementById('stateEdit').addEventListener('input', validateState);
-        document.getElementById('postalCodeEdit').addEventListener('input', validatePostalCode);
-        document.getElementById('countryEdit').addEventListener('input', validateCountry);
-
-        // Description validation
-        document.getElementById('descriptionEdit').addEventListener('input', validateDescription);
-    }
-
-    // Validate Date of Birth
-    function validateDateOfBirth() {
-        const input = document.getElementById('dateOfBirthEdit');
-        const error = document.getElementById('dateOfBirthError');
-        const value = input.value.trim();
-
-        // Clear previous validation
-        input.classList.remove('is-valid', 'is-invalid');
-        error.style.display = 'none';
-
-        if (!value) {
-            input.classList.add('is-invalid');
-            error.textContent = 'Date of Birth is required';
-            error.style.display = 'block';
-            return false;
-        }
-
-        const selectedDate = new Date(value);
-        const today = new Date();
-        const minDate = new Date('1900-01-01');
-
-        // Check if date is in the future
-        if (selectedDate > today) {
-            input.classList.add('is-invalid');
-            error.textContent = 'Date of Birth cannot be in the future';
-            error.style.display = 'block';
-            return false;
-        }
-
-        // Check if date is before 1900
-        if (selectedDate < minDate) {
-            input.classList.add('is-invalid');
-            error.textContent = 'Date of Birth cannot be before January 1, 1900';
-            error.style.display = 'block';
-            return false;
-        }
-
-        // Check if date is valid
-        if (isNaN(selectedDate.getTime())) {
-            input.classList.add('is-invalid');
-            error.textContent = 'Please enter a valid date';
-            error.style.display = 'block';
-            return false;
-        }
-
-        input.classList.add('is-valid');
-        return true;
-    }
-
-    // Validate Gender
-    function validateGender() {
-        const input = document.getElementById('genderEdit');
-        const error = document.getElementById('genderError');
-        const value = input.value.trim();
-
-        // Clear previous validation
-        input.classList.remove('is-valid', 'is-invalid');
-        error.style.display = 'none';
-
-        if (!value) {
-            input.classList.add('is-invalid');
-            error.textContent = 'Gender is required';
-            error.style.display = 'block';
-            return false;
-        }
-
-        input.classList.add('is-valid');
-        return true;
-    }
-
-    // Validate Address Type
-    function validateAddressType() {
-        const input = document.getElementById('addressTypeEdit');
-        const error = document.getElementById('addressTypeError');
-        const value = input.value.trim();
-
-        // Clear previous validation
-        input.classList.remove('is-valid', 'is-invalid');
-        error.style.display = 'none';
-
-        if (!value) {
-            input.classList.add('is-invalid');
-            error.textContent = 'Address Type is required';
-            error.style.display = 'block';
-            return false;
-        }
-
-        if (value.length < 2) {
-            input.classList.add('is-invalid');
-            error.textContent = 'Address Type must be at least 2 characters';
-            error.style.display = 'block';
-            return false;
-        }
-
-        if (value.length > 50) {
-            input.classList.add('is-invalid');
-            error.textContent = 'Address Type cannot exceed 50 characters';
-            error.style.display = 'block';
-            return false;
-        }
-
-        input.classList.add('is-valid');
-        return true;
-    }
-
-    // Validate Street Address
-    function validateStreetAddress() {
-        const input = document.getElementById('streetAddressEdit');
-        const error = document.getElementById('streetAddressError');
-        const value = input.value.trim();
-
-        // Clear previous validation
-        input.classList.remove('is-valid', 'is-invalid');
-        error.style.display = 'none';
-
-        if (!value) {
-            input.classList.add('is-invalid');
-            error.textContent = 'Street Address is required';
-            error.style.display = 'block';
-            return false;
-        }
-
-        if (value.length > 150) {
-            input.classList.add('is-invalid');
-            error.textContent = 'Street Address cannot exceed 50 characters';
-            error.style.display = 'block';
-            return false;
-        }
-
-        input.classList.add('is-valid');
-        return true;
-    }
-
-    // Validate City
-    function validateCity() {
-        const input = document.getElementById('cityEdit');
-        const error = document.getElementById('cityError');
-        const value = input.value.trim();
-
-        // Clear previous validation
-        input.classList.remove('is-valid', 'is-invalid');
-        error.style.display = 'none';
-
-        if (!value) {
-            input.classList.add('is-invalid');
-            error.textContent = 'City is required';
-            error.style.display = 'block';
-            return false;
-        }
-
-        if (value.length < 2) {
-            input.classList.add('is-invalid');
-            error.textContent = 'City must be at least 2 characters';
-            error.style.display = 'block';
-            return false;
-        }
-
-        if (value.length > 100) {
-            input.classList.add('is-invalid');
-            error.textContent = 'City cannot exceed 100 characters';
-            error.style.display = 'block';
-            return false;
-        }
-
-        // Check for valid characters (letters, spaces, hyphens, apostrophes)
-        const cityPattern = /^[a-zA-ZÀ-ÿ\s\-\'\.]+$/;
-        if (!cityPattern.test(value)) {
-            input.classList.add('is-invalid');
-            error.textContent = 'City can only contain letters, spaces, hyphens, and apostrophes';
-            error.style.display = 'block';
-            return false;
-        }
-
-        input.classList.add('is-valid');
-        return true;
-    }
-
-    // Validate State/Province
-    function validateState() {
-        const input = document.getElementById('stateEdit');
-        const error = document.getElementById('stateError');
-        const value = input.value.trim();
-
-        // Clear previous validation
-        input.classList.remove('is-valid', 'is-invalid');
-        error.style.display = 'none';
-
-        if (!value) {
-            input.classList.add('is-invalid');
-            error.textContent = 'State/Province is required';
-            error.style.display = 'block';
-            return false;
-        }
-
-        if (value.length < 2) {
-            input.classList.add('is-invalid');
-            error.textContent = 'State/Province must be at least 2 characters';
-            error.style.display = 'block';
-            return false;
-        }
-
-        if (value.length > 100) {
-            input.classList.add('is-invalid');
-            error.textContent = 'State/Province cannot exceed 100 characters';
-            error.style.display = 'block';
-            return false;
-        }
-
-        // Check for valid characters (letters, spaces, hyphens, apostrophes)
-        const statePattern = /^[a-zA-ZÀ-ÿ\s\-\'\.]+$/;
-        if (!statePattern.test(value)) {
-            input.classList.add('is-invalid');
-            error.textContent = 'State/Province can only contain letters, spaces, hyphens, and apostrophes';
-            error.style.display = 'block';
-            return false;
-        }
-
-        input.classList.add('is-valid');
-        return true;
-    }
-
-    // Validate Postal Code
-    function validatePostalCode() {
-        const input = document.getElementById('postalCodeEdit');
-        const error = document.getElementById('postalCodeError');
-        const value = input.value.trim();
-
-        // Clear previous validation
-        input.classList.remove('is-valid', 'is-invalid');
-        error.style.display = 'none';
-
-        if (!value) {
-            input.classList.add('is-invalid');
-            error.textContent = 'Postal Code is required';
-            error.style.display = 'block';
-            return false;
-        }
-
-        // Check if postal code contains only numbers
-        const numbersOnlyPattern = /^\d+$/;
-        if (!numbersOnlyPattern.test(value)) {
-            input.classList.add('is-invalid');
-            error.textContent = 'Postal Code must contain only numbers';
-            error.style.display = 'block';
-            return false;
-        }
-
-        if (value.length > 50) {
-            input.classList.add('is-invalid');
-            error.textContent = 'Postal Code cannot exceed 50 characters';
-            error.style.display = 'block';
-            return false;
-        }
-
-        input.classList.add('is-valid');
-        return true;
-    }
-
-    // Validate Country
-    function validateCountry() {
-        const input = document.getElementById('countryEdit');
-        const error = document.getElementById('countryError');
-        const value = input.value.trim();
-
-        // Clear previous validation
-        input.classList.remove('is-valid', 'is-invalid');
-        error.style.display = 'none';
-
-        if (!value) {
-            input.classList.add('is-invalid');
-            error.textContent = 'Country is required';
-            error.style.display = 'block';
-            return false;
-        }
-
-        if (value.length < 2) {
-            input.classList.add('is-invalid');
-            error.textContent = 'Country must be at least 2 characters';
-            error.style.display = 'block';
-            return false;
-        }
-
-        if (value.length > 100) {
-            input.classList.add('is-invalid');
-            error.textContent = 'Country cannot exceed 100 characters';
-            error.style.display = 'block';
-            return false;
-        }
-
-        // Check for valid characters (letters, spaces, hyphens, apostrophes)
-        const countryPattern = /^[a-zA-ZÀ-ÿ\s\-\'\.]+$/;
-        if (!countryPattern.test(value)) {
-            input.classList.add('is-invalid');
-            error.textContent = 'Country can only contain letters, spaces, hyphens, and apostrophes';
-            error.style.display = 'block';
-            return false;
-        }
-
-        input.classList.add('is-valid');
-        return true;
-    }
-
-    // Validate Description/Notes (max 200 characters)
-    function validateDescription() {
-        const input = document.getElementById('descriptionEdit');
-        const error = document.getElementById('descriptionError');
-        const value = input.value.trim();
-        const maxLength = 200;
-
-        // Clear previous validation
-        input.classList.remove('is-valid', 'is-invalid');
-        error.style.display = 'none';
-
-        // Update character count display
-        updateCharacterCount(value.length, maxLength);
-
-        if (value.length > maxLength) {
-            input.classList.add('is-invalid');
-            error.textContent = `Description cannot exceed ${maxLength} characters`;
-            error.style.display = 'block';
-            return false;
-        }
-
-        if (value.length > 0) {
-            input.classList.add('is-valid');
-        }
-        return true;
-    }
-
-    // Update character count display for description
-    function updateCharacterCount(currentLength, maxLength) {
-        let countElement = document.getElementById('descriptionCharCount');
-        if (!countElement) {
-            // Create character count element if it doesn't exist
-            countElement = document.createElement('div');
-            countElement.id = 'descriptionCharCount';
-            countElement.className = 'character-count';
-            const textareaParent = document.getElementById('descriptionEdit').parentNode;
-            textareaParent.appendChild(countElement);
-        }
-
-        countElement.textContent = `${currentLength}/${maxLength} characters`;
-
-        // Update styling based on character count
-        countElement.classList.remove('limit-warning', 'limit-error');
-        if (currentLength > maxLength * 0.9) {
-            countElement.classList.add('limit-warning');
-        }
-        if (currentLength > maxLength) {
-            countElement.classList.add('limit-error');
-        }
-    }
-
-    // Validate all fields before submission and focus on first invalid field
-    function validateAllFields() {
-        const validations = [
-            { validate: validateDateOfBirth, fieldId: 'dateOfBirthEdit' },
-            { validate: validateGender, fieldId: 'genderEdit' },
-            { validate: validateAddressType, fieldId: 'addressTypeEdit' },
-            { validate: validateStreetAddress, fieldId: 'streetAddressEdit' },
-            { validate: validateCity, fieldId: 'cityEdit' },
-            { validate: validateState, fieldId: 'stateEdit' },
-            { validate: validatePostalCode, fieldId: 'postalCodeEdit' },
-            { validate: validateCountry, fieldId: 'countryEdit' },
-            { validate: validateDescription, fieldId: 'descriptionEdit' }
-        ];
-
-        // Find first invalid field
-        for (let validation of validations) {
-            if (!validation.validate()) {
-                // Focus on the first invalid field
-                const field = document.getElementById(validation.fieldId);
-                if (field) {
-                    field.focus();
-                    field.scrollIntoView({ behavior: 'smooth', block: 'center' });
-                }
-                return false;
-            }
-        }
-
-        return true;
-    }
-
-    // Confirm and save all information with confirmation popup
-    async function confirmUpdateAllInfo() {
-        const patientIdElement = document.getElementById('patientId');
-        if (!patientIdElement) {
-            showError('Patient ID not found');
-            return;
-        }
-
-        // Run comprehensive validation before submitting and focus on first invalid field
-        if (!validateAllFields()) {
-            // Don't show generic error message, validation functions already show specific errors
-            return;
-        }
-
-        // Show confirmation popup
-        const isConfirmed = await showConfirmationModal();
-        if (!isConfirmed) {
-            return; // User cancelled the operation
-        }
-
-        // Execute the actual save operation
-        await executeUpdatePatientInfo();
-    }
-
-    // Execute the actual update operation
-    async function executeUpdatePatientInfo() {
-        const patientIdElement = document.getElementById('patientId');
-        const patientId = patientIdElement.textContent;
-        const dateOfBirth = document.getElementById('dateOfBirthEdit').value;
-        const gender = document.getElementById('genderEdit').value;
-        const addressType = document.getElementById('addressTypeEdit').value;
-        const streetAddress = document.getElementById('streetAddressEdit').value;
-        const city = document.getElementById('cityEdit').value;
-        const state = document.getElementById('stateEdit').value;
-        const postalCode = document.getElementById('postalCodeEdit').value;
-        const country = document.getElementById('countryEdit').value;
-        const description = document.getElementById('descriptionEdit').value;
-
-        showLoading();
-
-        try {
-            // Get CSRF token from meta tag or cookie
-            let csrfToken = '';
-            let csrfHeader = '';
-
-            // Try to get CSRF token from meta tags first
-            const csrfTokenMeta = document.querySelector('meta[name="_csrf"]');
-            const csrfHeaderMeta = document.querySelector('meta[name="_csrf_header"]');
-
-            if (csrfTokenMeta && csrfHeaderMeta) {
-                csrfToken = csrfTokenMeta.getAttribute('content');
-                csrfHeader = csrfHeaderMeta.getAttribute('content');
+            const response = await fetch('/api/patient'); // Replace with your API endpoint
+            if (response.ok) {
+                const data = await response.json();
+
+                // Personal Information
+                document.getElementById('fullName').textContent = data.fullName || '-';
+                document.getElementById('patientID').textContent = data.patientID || '-';
+                document.getElementById('gender').textContent = data.gender || '-';
+                document.getElementById('dob').textContent = data.dateOfBirth ? new Date(data.dateOfBirth).toLocaleDateString('en-GB') : '-';
+                document.getElementById('phone').textContent = data.phoneNumber || '-';
+                document.getElementById('email').textContent = data.email || '-';
+                document.getElementById('description').textContent = data.description || '-';
+
+                document.getElementById('fullNameInput').value = data.fullName || '';
+                document.getElementById('patientIDInput').value = data.patientID || '';
+                document.getElementById('genderInput').value = data.gender || '';
+                document.getElementById('dobInput').value = data.dateOfBirth || '';
+                document.getElementById('phoneInput').value = data.phoneNumber || '';
+                document.getElementById('emailInput').value = data.email || '';
+                document.getElementById('descriptionInput').value = data.description || '';
+
+                // Contact Information
+                document.getElementById('addressType').textContent = data.addressType || '-';
+                document.getElementById('streetAddress').textContent = data.streetAddress || '-';
+                document.getElementById('city').textContent = data.city || '-';
+                document.getElementById('state').textContent = data.state || '-';
+                document.getElementById('postalCode').textContent = data.postalCode || '-';
+                document.getElementById('country').textContent = data.country || '-';
+
+                document.getElementById('addressTypeInput').value = data.addressType || '';
+                document.getElementById('streetAddressInput').value = data.streetAddress || '';
+                document.getElementById('cityInput').value = data.city || '';
+                document.getElementById('stateInput').value = data.state || '';
+                document.getElementById('postalCodeInput').value = data.postalCode || '';
+                document.getElementById('countryInput').value = data.country || '';
+
+                // Appointment Information
+                document.getElementById('appointmentTime').textContent = data.appointmentTime ? new Date(data.appointmentTime).toLocaleString('en-GB') : '-';
+                document.getElementById('doctor').textContent = data.doctor || '-';
+                document.getElementById('appointmentStatus').textContent = data.appointmentStatus || '-';
+                document.getElementById('reason').textContent = data.reason || '-';
+
+                document.getElementById('appointmentTimeInput').value = data.appointmentTime || '';
+                document.getElementById('doctorInput').value = data.doctor || '';
+                document.getElementById('appointmentStatusInput').value = data.appointmentStatus || '';
+                document.getElementById('reasonInput').value = data.reason || '';
+
+                // Transaction Information
+                document.getElementById('paymentStatus').textContent = data.paymentStatus || '-';
+                document.getElementById('paymentStatusInput').value = data.paymentStatus || '';
             } else {
-                // Try to get from cookie as fallback
-                const cookies = document.cookie.split(';');
-                for (let cookie of cookies) {
-                    const [name, value] = cookie.trim().split('=');
-                    if (name === 'XSRF-TOKEN') {
-                        csrfToken = decodeURIComponent(value);
-                        csrfHeader = 'X-XSRF-TOKEN';
-                        break;
-                    }
-                }
+                showError('Failed to load patient data.');
             }
-
-            // Prepare headers
-            const headers = {
-                'Content-Type': 'application/json'
-            };
-
-            // Add CSRF token to headers if available
-            if (csrfToken && csrfHeader) {
-                headers[csrfHeader] = csrfToken;
-            }
-
-            console.log('Sending update request with headers:', headers);
-
-            const response = await fetch(`/api/patients/${patientId}/details`, {
-                method: 'PUT',
-                headers: headers,
-                credentials: 'same-origin', // Include cookies for authentication
-                body: JSON.stringify({
-                    DateOfBirth: dateOfBirth,
-                    Gender: gender,
-                    AddressType: addressType,
-                    StreetAddress: streetAddress,
-                    City: city,
-                    State: state,
-                    PostalCode: postalCode,
-                    Country: country,
-                    Description: description || ''
-                })
-            });
-
-            console.log('Response status:', response.status);
-            console.log('Response headers:', Object.fromEntries(response.headers.entries()));
-
-            if (!response.ok) {
-                let errorMessage = 'Failed to update patient information';
-
-                // Handle specific error status codes
-                if (response.status === 403) {
-                    errorMessage = 'Access denied. You do not have permission to update patient information. Please check your login status and try again.';
-                } else if (response.status === 401) {
-                    errorMessage = 'Authentication required. Please log in again.';
-                    // Redirect to login page
-                    window.location.href = '/login';
-                    return;
-                } else if (response.status === 404) {
-                    errorMessage = 'Patient not found.';
-                } else {
-                    // Try to get error message from response
-                    try {
-                        const errorText = await response.text();
-                        if (errorText) {
-                            errorMessage = errorText;
-                        }
-                    } catch (e) {
-                        console.error('Error parsing error response:', e);
-                    }
-                }
-
-                throw new Error(errorMessage);
-            }
-
-            const patient = await response.json();
-            console.log('Updated patient data:', patient);
-
-            // Update displayed information
-            setElementContent('dateOfBirth', formatDate(patient.DateOfBirth));
-            setElementContent('gender', patient.Gender);
-            setElementContent('addressType', patient.AddressType);
-            setElementContent('streetAddress', patient.StreetAddress);
-            setElementContent('city', patient.City);
-            setElementContent('state', patient.State);
-            setElementContent('postalCode', patient.PostalCode);
-            setElementContent('country', patient.Country);
-            setElementContent('description', patient.Description);
-
-            // Calculate and update age if date of birth changed
-            if (patient.DateOfBirth) {
-                try {
-                    const birthDate = new Date(patient.DateOfBirth);
-                    const today = new Date();
-                    let age = today.getFullYear() - birthDate.getFullYear();
-                    const monthDiff = today.getMonth() - birthDate.getMonth();
-                    if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birthDate.getDate())) {
-                        age--;
-                    }
-                    setElementContent('age', age);
-                } catch (e) {
-                    console.error('Error calculating age:', e);
-                }
-            }
-
-            // Show success message
-            const successMessage = document.getElementById('updateSuccessMessage');
-            successMessage.classList.remove('d-none');
-            setTimeout(() => {
-                successMessage.classList.add('d-none');
-            }, 3000);
-
-            // Exit edit mode
-            exitEditMode();
-
-            showContent();
-
         } catch (error) {
-            console.error('Error saving patient information:', error);
-            showError('Error saving patient information: ' + error.message);
+            showError('Error loading patient data.');
         }
     }
 
-    // Show confirmation modal and return a promise
-    function showConfirmationModal() {
-        return new Promise((resolve) => {
-            const modal = document.getElementById('confirmationModal');
-            const confirmYes = document.getElementById('confirmYes');
-            const confirmNo = document.getElementById('confirmNo');
-
-            // Show the modal
-            modal.classList.add('show');
-            document.body.style.overflow = 'hidden';
-
-            // Remove any existing event listeners to prevent multiple bindings
-            const newConfirmYes = confirmYes.cloneNode(true);
-            const newConfirmNo = confirmNo.cloneNode(true);
-            confirmYes.parentNode.replaceChild(newConfirmYes, confirmYes);
-            confirmNo.parentNode.replaceChild(newConfirmNo, confirmNo);
-
-            // Handle Yes button
-            newConfirmYes.addEventListener('click', () => {
-                closeConfirmationModal();
-                resolve(true);
+    // Save patient data to database
+    async function savePatientData(sectionId, data) {
+        try {
+            const response = await fetch('/api/patient', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(data)
             });
+            if (response.ok) {
+                showSuccess('Updated successfully!');
+                loadPatientData();
+            } else {
+                throw new Error('Failed to save data');
+            }
+        } catch (error) {
+            showError('Error saving data.');
+        }
+    }
 
-            // Handle No button
-            newConfirmNo.addEventListener('click', () => {
-                closeConfirmationModal();
-                resolve(false);
-            });
+    // Show success message
+    function showSuccess(message) {
+        const successMessage = document.getElementById('successMessage');
+        successMessage.textContent = message;
+        successMessage.classList.remove('d-none');
+        setTimeout(() => successMessage.classList.add('d-none'), 3000);
+    }
 
-            // Handle click outside modal
-            modal.addEventListener('click', (e) => {
-                if (e.target === modal) {
-                    closeConfirmationModal();
-                    resolve(false);
+    // Show error message
+    function showError(message) {
+        const errorMessage = document.getElementById('errorMessage');
+        errorMessage.textContent = message;
+        errorMessage.classList.remove('d-none');
+        setTimeout(() => errorMessage.classList.add('d-none'), 3000);
+    }
+
+    // Real-time validation functions
+    function validatePhoneNumber() {
+        const input = document.getElementById('phoneInput');
+        const error = document.getElementById('phoneError');
+        const value = input.value.trim();
+        const isValid = /^\d{10}$/.test(value);
+
+        if (value === '') {
+            input.classList.remove('is-invalid', 'is-valid');
+            error.style.display = 'none';
+        } else if (isValid) {
+            input.classList.remove('is-invalid');
+            input.classList.add('is-valid');
+            error.style.display = 'none';
+        } else {
+            input.classList.remove('is-valid');
+            input.classList.add('is-invalid');
+            error.style.display = 'block';
+        }
+        return isValid || value === '';
+    }
+
+    function validateEmail() {
+        const input = document.getElementById('emailInput');
+        const error = document.getElementById('emailError');
+        const value = input.value.trim();
+        const isValid = value === '' || /^[^\s@]+@gmail\.com$/.test(value);
+
+        if (value === '') {
+            input.classList.remove('is-invalid', 'is-valid');
+            error.style.display = 'none';
+        } else if (isValid) {
+            input.classList.remove('is-invalid');
+            input.classList.add('is-valid');
+            error.style.display = 'none';
+        } else {
+            input.classList.remove('is-valid');
+            input.classList.add('is-invalid');
+            error.style.display = 'block';
+        }
+        return isValid;
+    }
+
+    // Toggle edit mode with validation
+    function toggleEdit(sectionId, buttonId, saveId) {
+        const editButton = document.getElementById(buttonId);
+        const saveSection = document.getElementById(saveId);
+        const section = document.getElementById(sectionId);
+
+        editButton.addEventListener('click', (e) => {
+            e.preventDefault();
+            section.querySelectorAll('p').forEach(p => p.classList.add('d-none'));
+            section.querySelectorAll('input, select, textarea').forEach(i => i.classList.remove('d-none'));
+            saveSection.classList.remove('d-none');
+            editButton.classList.add('d-none');
+
+            if (sectionId === 'personalInfo') {
+                document.getElementById('phoneInput').addEventListener('input', validatePhoneNumber);
+                document.getElementById('emailInput').addEventListener('input', validateEmail);
+            }
+        });
+
+        saveSection.querySelector('button').addEventListener('click', async () => {
+            let isValid = true;
+            section.querySelectorAll('.invalid-feedback').forEach(error => error.style.display = 'none');
+
+            let data = {};
+
+            // Validation for Personal Information
+            if (sectionId === 'personalInfo') {
+                const fullName = document.getElementById('fullNameInput').value.trim();
+                const gender = document.getElementById('genderInput').value;
+                const dob = document.getElementById('dobInput').value;
+                const phone = document.getElementById('phoneInput').value.trim();
+                const email = document.getElementById('emailInput').value.trim();
+                const description = document.getElementById('descriptionInput').value.trim();
+
+                if (!fullName) {
+                    document.getElementById('fullNameError').style.display = 'block';
+                    document.getElementById('fullNameInput').classList.add('is-invalid');
+                    isValid = false;
+                } else {
+                    document.getElementById('fullNameInput').classList.add('is-valid');
                 }
-            });
-
-            // Handle Escape key
-            const handleEscape = (e) => {
-                if (e.key === 'Escape') {
-                    closeConfirmationModal();
-                    resolve(false);
-                    document.removeEventListener('keydown', handleEscape);
+                if (!gender) {
+                    document.getElementById('genderError').style.display = 'block';
+                    document.getElementById('genderInput').classList.add('is-invalid');
+                    isValid = false;
+                } else {
+                    document.getElementById('genderInput').classList.add('is-valid');
                 }
-            };
-            document.addEventListener('keydown', handleEscape);
+                const today = new Date('2025-06-22');
+                const dobDate = new Date(dob);
+                if (!dob || dobDate > today) {
+                    document.getElementById('dobError').style.display = 'block';
+                    document.getElementById('dobInput').classList.add('is-invalid');
+                    isValid = false;
+                } else {
+                    document.getElementById('dobInput').classList.add('is-valid');
+                }
+                if (!validatePhoneNumber()) {
+                    isValid = false;
+                }
+                if (!validateEmail()) {
+                    isValid = false;
+                }
 
-            function closeConfirmationModal() {
-                modal.classList.remove('show');
-                document.body.style.overflow = 'auto';
-                document.removeEventListener('keydown', handleEscape);
+                data = { fullName, gender, dateOfBirth: dob, phoneNumber: phone, email, description };
+            }
+
+            // Validation for Contact Information
+            if (sectionId === 'contactInfo') {
+                const addressType = document.getElementById('addressTypeInput').value;
+                const streetAddress = document.getElementById('streetAddressInput').value.trim();
+                const city = document.getElementById('cityInput').value.trim();
+                const state = document.getElementById('stateInput').value.trim();
+                const postalCode = document.getElementById('postalCodeInput').value.trim();
+                const country = document.getElementById('countryInput').value.trim();
+
+                data = { addressType, streetAddress, city, state, postalCode, country };
+            }
+
+            // Validation for Appointment Information
+            if (sectionId === 'appointmentInfo') {
+                const appointmentTime = document.getElementById('appointmentTimeInput').value;
+                const doctor = document.getElementById('doctorInput').value.trim();
+                const appointmentStatus = document.getElementById('appointmentStatusInput').value;
+                const reason = document.getElementById('reasonInput').value.trim();
+
+                const now = new Date('2025-06-22T23:01:00+07:00');
+                const oneMonthLater = new Date(now);
+                oneMonthLater.setDate(now.getDate() + 30);
+                const preferred = new Date(appointmentTime);
+                if (!appointmentTime || preferred < now || preferred > oneMonthLater) {
+                    document.getElementById('appointmentTimeError').style.display = 'block';
+                    document.getElementById('appointmentTimeInput').classList.add('is-invalid');
+                    isValid = false;
+                } else {
+                    document.getElementById('appointmentTimeInput').classList.add('is-valid');
+                }
+                const wordCount = reason.split(/\s+/).filter(word => word.length > 0).length;
+                if (!reason || wordCount > 100) {
+                    document.getElementById('reasonError').style.display = 'block';
+                    document.getElementById('reasonInput').classList.add('is-invalid');
+                    isValid = false;
+                } else {
+                    document.getElementById('reasonInput').classList.add('is-valid');
+                }
+
+                data = { appointmentTime, doctor, appointmentStatus, reason };
+            }
+
+            // Validation for Transaction Information
+            if (sectionId === 'transactionInfo') {
+                const paymentStatus = document.getElementById('paymentStatusInput').value;
+                data = { paymentStatus };
+            }
+
+            if (isValid) {
+                await savePatientData(sectionId, data);
+                section.querySelectorAll('p').forEach(p => p.classList.remove('d-none'));
+                section.querySelectorAll('input, select, textarea').forEach(i => i.classList.add('d-none'));
+                section.querySelectorAll('.form-control, .form-select').forEach(i => i.classList.remove('is-valid', 'is-invalid'));
+                saveSection.classList.add('d-none');
+                editButton.classList.remove('d-none');
+            } else {
+                showError('Please correct the errors in the form.');
             }
         });
     }
-    // Cancel edit mode
-    function cancelEditAll() {
-        exitEditMode();
-    }
 
-    // Global variable to store patient appointments data
-    let patientAppointments = [];
+    // Initialize edit toggles
+    toggleEdit('personalInfo', 'editPersonalInfo', 'savePersonalInfo');
+    toggleEdit('contactInfo', 'editContactInfo', 'saveContactInfo');
+    toggleEdit('appointmentInfo', 'editAppointmentInfo', 'saveAppointmentInfo');
+    toggleEdit('transactionInfo', 'editTransactionInfo', 'saveTransactionInfo');
 
-    // Show appointment modal with filtered appointments by status
-    function showAppointmentModal(status) {
-        const modal = document.getElementById('appointmentModal');
-        const modalTitle = document.getElementById('modalTitle');
-        const appointmentsList = document.getElementById('appointmentsList');
-
-        // Set modal title based on status
-        let title = '';
-        switch(status) {
-            case 'all':
-                title = 'All Appointments';
-                break;
-            case 'completed':
-                title = 'Completed Appointments';
-                break;
-            case 'pending':
-                title = 'Pending Appointments';
-                break;
-            case 'cancelled':
-                title = 'Cancelled Appointments';
-                break;
-            default:
-                title = 'Appointments';
-        }
-        modalTitle.textContent = title;
-
-        // Filter appointments based on status
-        let filteredAppointments = [];
-        if (status === 'all') {
-            filteredAppointments = patientAppointments;
-        } else {
-            filteredAppointments = patientAppointments.filter(appointment => {
-                const appointmentStatus = appointment.Status.toLowerCase();
-                if (status === 'cancelled') {
-                    return appointmentStatus === 'cancel' || appointmentStatus === 'cancelled';
-                }
-                return appointmentStatus === status.toLowerCase();
-            });
-        }
-
-        // Render appointments list
-        renderAppointmentsList(filteredAppointments, appointmentsList);
-
-        // Show modal
-        modal.classList.add('show');
-        document.body.style.overflow = 'hidden'; // Prevent background scrolling
-    }
-
-    // Close appointment modal
-    function closeAppointmentModal() {
-        const modal = document.getElementById('appointmentModal');
-        modal.classList.remove('show');
-        document.body.style.overflow = 'auto'; // Restore background scrolling
-    }
-
-    // Render appointments list in modal
-    function renderAppointmentsList(appointments, container) {
-        container.innerHTML = '';
-
-        if (!appointments || appointments.length === 0) {
-            container.innerHTML = `
-                <div class="no-appointments">
-                    <i class="fas fa-calendar-times"></i>
-                    <p>No appointments found for this status.</p>
-                </div>
-            `;
-            return;
-        }
-
-        appointments.forEach(appointment => {
-            const appointmentDiv = document.createElement('div');
-            appointmentDiv.className = 'appointment-item';
-
-            // Get status class for styling
-            const statusClass = getStatusClass(appointment.Status);
-
-            // Format appointment date and time
-            const formattedDateTime = formatDateTime(appointment.DateTime);
-
-            appointmentDiv.innerHTML = `
-                <div class="appointment-header">
-                    <span class="appointment-id">Appointment #${appointment.AppointmentID}</span>
-                    <span class="appointment-status ${statusClass}">${appointment.Status}</span>
-                </div>
-                <div class="appointment-details">
-                    <div class="row">
-                        <div class="col-md-6">
-                            <strong>Date & Time:</strong> ${formattedDateTime}
-                        </div>
-                        <div class="col-md-6">
-                            <strong>Doctor:</strong> ${appointment.DoctorName || 'Not Assigned'}
-                        </div>
-                    </div>
-                    ${appointment.DoctorSpecialty ? `
-                        <div class="mt-2">
-                            <strong>Specialty:</strong> ${appointment.DoctorSpecialty}
-                        </div>
-                    ` : ''}
-                    ${appointment.Description ? `
-                        <div class="mt-2">
-                            <strong>Description:</strong> ${appointment.Description}
-                        </div>
-                    ` : ''}
-                    ${appointment.Email ? `
-                        <div class="mt-2">
-                            <strong>Contact Email:</strong> ${appointment.Email}
-                        </div>
-                    ` : ''}
-                    ${appointment.PhoneNumber ? `
-                        <div class="mt-2">
-                            <strong>Contact Phone:</strong> ${appointment.PhoneNumber}
-                        </div>
-                    ` : ''}
-                </div>
-            `;
-
-            container.appendChild(appointmentDiv);
-        });
-    }
-
-    // Get CSS class for appointment status
-    function getStatusClass(status) {
-        const statusLower = status.toLowerCase();
-        switch(statusLower) {
-            case 'completed':
-                return 'status-completed';
-            case 'pending':
-                return 'status-pending';
-            case 'cancel':
-            case 'cancelled':
-                return 'status-cancelled';
-            case 'scheduled':
-                return 'status-scheduled';
-            default:
-                return 'status-pending';
-        }
-    }
-
-    // Close modal when clicking outside
-    document.addEventListener('click', function(event) {
-        const modal = document.getElementById('appointmentModal');
-        if (event.target === modal) {
-            closeAppointmentModal();
-        }
+    // Navigation
+    document.getElementById('backButton').addEventListener('click', () => {
+        window.history.back();
     });
 
-    // Close modal with Escape key
-    document.addEventListener('keydown', function(event) {
-        if (event.key === 'Escape') {
-            closeAppointmentModal();
-        }
-    });
-
-    // Initialize page
-    document.addEventListener('DOMContentLoaded', function() {
-        console.log('Loading patient details for ID:', patientId);
-        loadPatientDetails();
-    });
+    // Load data on page load
+    document.addEventListener('DOMContentLoaded', loadPatientData);
 </script>
 </body>
 </html>

@@ -16,9 +16,6 @@ public interface UserRepository extends JpaRepository<Users, Integer>, JpaSpecif
     // Basic CRUD operations provided by JpaRepository
     Optional<Users> findByEmail(String email);
 
-    // Find user by phone number
-    Optional<Users> findByPhoneNumber(String phoneNumber);
-
     // Check phone number exist in the database
     boolean existsByPhoneNumber(String phoneNumber);
 

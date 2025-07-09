@@ -62,6 +62,8 @@
             font-weight: 700;
             color: var(--text-dark);
             margin: 0;
+            flex-grow: 1;
+            text-align: center;
         }
 
         .profile-info {
@@ -148,7 +150,7 @@
         .card-header {
             background: linear-gradient(135deg, rgba(102, 126, 234, 0.05), rgba(167, 139, 250, 0.05));
             border-bottom: 1px solid rgba(102, 126, 234, 0.2);
-            padding: 1.75rem;
+            padding: 0rem;
         }
 
         .card-title {
@@ -285,7 +287,7 @@
 <div class="container-fluid">
     <main class="main-content col-12 px-0">
         <header>
-            <div class="d-flex align-items-center">
+            <div class="d-flex align-items-center justify-content-center w-100"> <!-- Center the title -->
                 <h3>Patient Register</h3>
             </div>
             <div class="profile-info">
@@ -436,11 +438,16 @@
         </div>
     </main>
 </div>
+<!-- Notification Modal -->
 <div class="notification-modal" id="notificationModal">
     <h5>Notifications</h5>
     <div class="notification-item">
-        <p><strong>New Patient:</strong> Registration pending.</p>
-        <small>1 hour ago</small>
+        <p><strong>New Payment:</strong> INV-001 completed.</p>
+        <small>2 hours ago</small>
+    </div>
+    <div class="notification-item">
+        <p><strong>Pending Payment:</strong> INV-002 awaiting confirmation.</p>
+        <small>1 day ago</small>
     </div>
 </div>
 <script>
@@ -588,7 +595,6 @@
         }
     }
 
-    // Character counter for Symptom Description
     const symptomsInput = document.getElementById('symptoms');
     const symptomsCounter = document.getElementById('symptomsCounter');
     symptomsInput.addEventListener('input', () => {

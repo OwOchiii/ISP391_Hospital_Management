@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -201,250 +201,225 @@
             align-items: center;
             position: sticky;
             top: 0;
-            z-index: 100;
+            z-index: 999;
         }
 
-        .header-left {
-            display: flex;
-            align-items: center;
-            gap: 1rem;
-        }
-
-        .toggle-sidebar {
+        .sidebar-toggle {
             background: none;
             border: none;
-            color: var(--text-light);
             font-size: 1.25rem;
+            color: var(--text-dark);
             cursor: pointer;
             padding: 0.5rem;
             border-radius: 8px;
             transition: all 0.3s ease;
         }
 
-        .toggle-sidebar:hover {
-            background: var(--bg-light);
-            color: var(--text-dark);
+        .sidebar-toggle:hover {
+            background: var(--light);
+            color: var(--primary);
         }
 
-        .page-title {
+        .h3 {
             font-size: 1.5rem;
             font-weight: 700;
             color: var(--text-dark);
             margin: 0;
         }
 
-        /* Content */
-        .content {
-            padding: 2rem;
-        }
-
-        /* Statistics Cards */
-        .stats-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-            gap: 1.5rem;
-            margin-bottom: 2rem;
-        }
-
-        .stat-card {
-            background: var(--bg-white);
-            border-radius: 16px;
-            padding: 1.5rem;
-            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
-            transition: all 0.3s ease;
-            border-left: 4px solid transparent;
-            position: relative;
-            overflow: hidden;
-        }
-
-        .stat-card::before {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: 0;
-            right: 0;
-            height: 4px;
-            background: linear-gradient(90deg, var(--primary), var(--accent));
-        }
-
-        .stat-card:hover {
-            transform: translateY(-4px);
-            box-shadow: 0 8px 30px rgba(0, 0, 0, 0.12);
-        }
-
-        .stat-card.success::before {
-            background: linear-gradient(90deg, var(--success-color), #34d399);
-        }
-
-        .stat-card.warning::before {
-            background: linear-gradient(90deg, var(--warning-color), #fbbf24);
-        }
-
-        .stat-card.error::before {
-            background: linear-gradient(90deg, var(--error-color), #f87171);
-        }
-
-        .stat-card.info::before {
-            background: linear-gradient(90deg, var(--info-color), #60a5fa);
-        }
-
-        .stat-header {
+        .profile-info {
             display: flex;
-            justify-content: space-between;
             align-items: center;
+            gap: 1.5rem;
+        }
+
+        .notification-bell {
+            position: relative;
+            cursor: pointer;
+            padding: 0.5rem;
+            border-radius: 8px;
+            transition: all 0.3s ease;
+        }
+
+        .notification-bell:hover {
+            background: var(--light);
+        }
+
+        .badge {
+            font-size: 0.625rem;
+            padding: 0.25em 0.5em;
+            background: var(--error-color);
+        }
+
+        .rounded-circle {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, var(--primary), var(--accent));
+            object-fit: cover;
+        }
+
+        /* Notification Modal */
+        .notification-modal {
+            position: fixed;
+            top: 80px;
+            right: 20px;
+            width: 350px;
+            max-height: 450px;
+            overflow-y: auto;
+            background: var(--bg-white);
+            border: 1px solid rgba(102, 126, 234, 0.1);
+            border-radius: 16px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+            padding: 1.5rem;
+            z-index: 2000;
+            display: none;
+        }
+
+        .notification-modal h5 {
+            font-size: 1.25rem;
+            font-weight: 600;
+            color: var(--text-dark);
             margin-bottom: 1rem;
         }
 
-        .stat-title {
-            font-size: 0.875rem;
-            font-weight: 600;
-            color: var(--text-light);
-            text-transform: uppercase;
-            letter-spacing: 0.05em;
+        .notification-item {
+            padding: 0.75rem;
+            border-bottom: 1px solid rgba(102, 126, 234, 0.1);
+            transition: background 0.2s ease;
         }
 
-        .stat-icon {
-            width: 40px;
-            height: 40px;
-            border-radius: 12px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 1.25rem;
-            color: white;
+        .notification-item:hover {
+            background: var(--light);
         }
 
-        .stat-icon.success {
-            background: linear-gradient(135deg, var(--success-color), #34d399);
+        .notification-item:last-child {
+            border-bottom: none;
         }
 
-        .stat-icon.warning {
-            background: linear-gradient(135deg, var(--warning-color), #fbbf24);
-        }
-
-        .stat-icon.error {
-            background: linear-gradient(135deg, var(--error-color), #f87171);
-        }
-
-        .stat-icon.info {
-            background: linear-gradient(135deg, var(--info-color), #60a5fa);
-        }
-
-        .stat-value {
-            font-size: 2rem;
-            font-weight: 700;
-            color: var(--text-dark);
-            margin-bottom: 0.5rem;
-        }
-
-        .stat-change {
-            font-size: 0.875rem;
-            font-weight: 500;
-            display: flex;
-            align-items: center;
-            gap: 0.25rem;
-        }
-
-        .stat-change.positive {
-            color: var(--success-color);
-        }
-
-        .stat-change.negative {
-            color: var(--error-color);
-        }
-
-        /* Chart Cards */
-        .chart-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
-            gap: 1.5rem;
-            margin-bottom: 2rem;
-        }
-
-        .chart-card {
+        /* Chart Container */
+        .chart-container {
             background: var(--bg-white);
             border-radius: 16px;
-            padding: 1.5rem;
+            padding: 2rem;
             box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+            border: 1px solid rgba(102, 126, 234, 0.1);
         }
 
         .chart-header {
             display: flex;
             justify-content: space-between;
             align-items: center;
-            margin-bottom: 1.5rem;
+            margin-bottom: 1rem;
         }
 
-        .chart-title {
-            font-size: 1.125rem;
+        .chart-container h5 {
+            font-size: 1.25rem;
             font-weight: 600;
             color: var(--text-dark);
+            margin: 0;
         }
 
-        .chart-container {
+        .form-select {
+            border-radius: 8px;
+            font-size: 0.875rem;
+            padding: 0.5rem 1rem;
+            border: 1px solid rgba(102, 126, 234, 0.2);
+            width: auto;
+        }
+
+        .chart-content {
             position: relative;
             height: 300px;
         }
 
-        /* Filter Controls */
-        .filter-controls {
-            background: var(--bg-white);
-            border-radius: 16px;
-            padding: 1.5rem;
-            margin-bottom: 2rem;
-            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+        .chart-legend {
+            display: flex;
+            justify-content: center;
+            gap: 1.5rem;
+            margin-top: 1rem;
         }
 
-        .filter-row {
+        .legend-item {
             display: flex;
-            flex-wrap: wrap;
-            gap: 1rem;
+            align-items: center;
+            gap: 0.5rem;
+            font-size: 0.875rem;
+            color: var(--text-muted);
+        }
+
+        .legend-color {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            display: inline-block;
+        }
+
+        .legend-color.appointments { background: #3b82f6; }
+        .legend-color.income { background: #10b981; }
+
+        .dashboard-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1.5rem;
+            margin-bottom: 2rem;
+        }
+
+        .search-box {
+            position: relative;
+            display: flex;
             align-items: center;
         }
 
-        .form-group {
-            flex: 1;
-            min-width: 200px;
+        .search-box .input-group-text {
+            background: var(--light);
+            border: 1px solid rgba(102, 126, 234, 0.2);
+            color: var(--primary);
+            border-radius: 8px 0 0 8px;
         }
 
-        .form-label {
+        .search-box input {
+            border: 1px solid rgba(102, 126, 234, 0.2);
+            border-radius: 0 8px 8px 0;
             font-size: 0.875rem;
-            font-weight: 500;
-            color: var(--text-light);
-            margin-bottom: 0.5rem;
-            display: block;
+            padding: 0.75rem 1rem;
+            color: var(--text-dark);
         }
 
-        .form-control {
-            border: 2px solid #e5e7eb;
-            border-radius: 8px;
-            padding: 0.75rem;
-            font-size: 0.875rem;
-            transition: all 0.3s ease;
-        }
-
-        .form-control:focus {
+        .search-box input:focus {
             border-color: var(--primary);
             box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
             outline: none;
         }
 
-        .btn-primary {
-            background: linear-gradient(135deg, var(--primary), var(--secondary));
-            border: none;
+        /* Notification Toast */
+        .notification-toast {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            padding: 1rem 1.5rem;
+            border-radius: 12px;
             color: white;
-            padding: 0.75rem 1.5rem;
-            border-radius: 8px;
-            font-weight: 500;
-            transition: all 0.3s ease;
+            z-index: 2000;
+            display: none;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
         }
 
-        .btn-primary:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 8px 25px rgba(102, 126, 234, 0.3);
+        .notification-toast.success {
+            background: var(--success-color);
         }
 
-        /* Responsive */
+        .notification-toast.error {
+            background: var(--error-color);
+        }
+
+        /* Responsive Design */
+        @media (max-width: 1200px) {
+            .dashboard-row {
+                grid-template-columns: 1fr;
+            }
+        }
+
         @media (max-width: 768px) {
             .sidebar {
                 transform: translateX(-100%);
@@ -454,861 +429,508 @@
                 margin-left: 0;
             }
 
-            .content {
+            .sidebar.collapsed {
+                transform: translateX(0);
+            }
+
+            .main-content.expanded {
+                margin-left: var(--sidebar-width);
+            }
+
+            header {
+                padding: 0 1rem;
+            }
+
+            .search-box input {
+                width: 100%;
+            }
+
+            .chart-container {
+                padding: 1.5rem;
+            }
+        }
+
+        @media (max-width: 576px) {
+            .chart-container {
                 padding: 1rem;
             }
 
-            .stats-grid {
-                grid-template-columns: 1fr;
+            .form-select {
+                font-size: 0.75rem;
+                padding: 0.5rem;
             }
 
-            .chart-grid {
-                grid-template-columns: 1fr;
-            }
-
-            .filter-row {
-                flex-direction: column;
-                align-items: stretch;
-            }
-
-            .form-group {
-                min-width: unset;
+            .chart-container h5 {
+                font-size: 1rem;
             }
         }
 
-        /* Loading spinner */
-        .loading-spinner {
-            display: inline-block;
-            width: 20px;
-            height: 20px;
-            border: 3px solid rgba(255, 255, 255, 0.3);
-            border-radius: 50%;
-            border-top-color: #fff;
-            animation: spin 1s ease-in-out infinite;
+        /* Animation */
+        .main-content {
+            animation: fadeInUp 0.6s ease-out;
         }
 
-        @keyframes spin {
-            to { transform: rotate(360deg); }
-        }
-
-        .d-none {
-            display: none !important;
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
         }
     </style>
 </head>
 <body>
-    <!-- Sidebar -->
-    <aside class="sidebar" id="sidebar">
-        <div class="logo">
-            <a href="/receptionist/dashboard">
-                <i class="fas fa-hospital-symbol"></i>
-                <div>
-                    <h2>MediCare Plus</h2>
-                    <small>Receptionist Portal</small>
-                </div>
-            </a>
-        </div>
-
-        <nav class="nav-menu">
-            <div class="nav-section-title">Main</div>
-            <div class="nav-item">
-                <a href="/receptionist/dashboard" class="nav-link">
-                    <i class="fas fa-tachometer-alt"></i>
-                    <span>Dashboard</span>
-                </a>
-            </div>
-            <div class="nav-item">
-                <a href="/receptionist/appointments" class="nav-link">
-                    <i class="fas fa-calendar-check"></i>
-                    <span>Appointments</span>
-                </a>
-            </div>
-            <div class="nav-item">
-                <a href="/receptionist/new_appointment" class="nav-link">
-                    <i class="fas fa-plus-circle"></i>
-                    <span>New Appointment</span>
-                </a>
-            </div>
-            <div class="nav-item">
-                <a href="/receptionist/patients" class="nav-link">
-                    <i class="fas fa-users"></i>
-                    <span>Patients</span>
-                </a>
-            </div>
-            <div class="nav-item">
-                <a href="/receptionist/doctors" class="nav-link">
+<div class="container-fluid">
+    <div class="row">
+        <!-- Sidebar -->
+        <nav class="sidebar col-lg-3 col-xl-2 d-none d-lg-block" id="patientSidebar">
+            <div class="logo">
+                <a href="#">
                     <i class="fas fa-user-md"></i>
-                    <span>Doctors</span>
+                    <div>
+                        <h2>MediCare Plus</h2>
+                        <small>Healthcare Portal</small>
+                    </div>
                 </a>
             </div>
-            <div class="nav-item">
-                <a href="/receptionist/payments" class="nav-link">
-                    <i class="fas fa-credit-card"></i>
-                    <span>Payments</span>
-                </a>
-            </div>
-            <div class="nav-item">
-                <a href="/receptionist/reports" class="nav-link active">
-                    <i class="fas fa-chart-bar"></i>
-                    <span>Reports</span>
-                </a>
-            </div>
+            <a href="/receptionist/new_appointment" class="btn btn-light mx-3 mb-3">
+                <i class="fas fa-plus"></i> New Appointment
+            </a>
+            <nav class="sidebar-nav">
+                <div class="nav-section-title">Navigation</div>
+                <ul class="nav flex-column">
+                    <li class="nav-item">
+                        <a href="/receptionist/dashboard" class="nav-link"><i class="fas fa-th-large"></i> Dashboard</a>
+                    </li><!-- Sidebar -->
+                    <nav class="sidebar col-lg-3 col-xl-2 d-none d-lg-block" id="patientSidebar">
+                        <div class="logo">
+                            <a href="#">
+                                <i class="fas fa-user-md"></i>
+                                <div>
+                                    <h2>MediCare Plus</h2>
+                                    <small>Healthcare Portal</small>
+                                </div>
+                            </a>
+                        </div>
+                        <nav class="sidebar-nav">
+                            <div class="nav-section-title">Navigation</div>
+                            <ul class="nav flex-column">
+                                <li class="nav-item">
+                                    <a href="/receptionist/dashboard" class="nav-link "><i class="fas fa-th-large"></i>
+                                        Dashboard</a>
+                                </li>
+                                <div class="nav-section-title">Medical Services</div>
+                                <ul class="nav flex-column">
+                                    <li class="nav-item">
+                                        <a href="/receptionist/appointments" class="nav-link"><i class="fas fa-calendar-alt"></i>
+                                            Appointments</a>
+                                    </li>
+                                    <li class="nav-item">
+                                        <a href="/receptionist/doctors" class="nav-link"><i class="fas fa-user-md"></i> Doctors</a>
+                                    </li>
+                                    <li class="nav-item">
+                                        <a href="/receptionist/patients" class="nav-link"><i class="fas fa-users"></i> Patients</a>
+                                    </li>
+                                    <li class="nav-item">
+                                        <a href="/receptionist/payments" class="nav-link"><i class="fas fa-money-bill-wave"></i> Payments</a>
+                                    </li>
+                                    <li class="nav-item">
+                                        <a href="/receptionist/reports" class="nav-link active"><i class="fas fa-chart-bar"></i>
+                                            Reports</a>
+                                    </li>
+                                </ul>
 
-            <div class="nav-section-title">Settings</div>
-            <div class="nav-item">
-                <a href="/receptionist/profile" class="nav-link">
-                    <i class="fas fa-user-circle"></i>
-                    <span>Profile</span>
-                </a>
-            </div>
-            <div class="nav-item">
-                <a href="/auth/logout" class="nav-link">
-                    <i class="fas fa-sign-out-alt"></i>
-                    <span>Logout</span>
-                </a>
-            </div>
-        </nav>
-    </aside>
+                                <div class="nav-section-title">Account</div>
+                                <ul class="nav flex-column">
+                                    <li class="nav-item">
+                                        <a href="/receptionist/profile" class="nav-link"><i class="fas fa-stethoscope"></i> Profile</a>
+                                    </li>
+                                </ul>
+                                <div class="nav-section-title">System</div>
+                                <ul class="nav flex-column">
+                                    <li class="nav-item">
+                                        <a href="/receptionist/settings" class="nav-link"><i class="fas fa-cog"></i> Settings</a>
+                                    </li>
+                                </ul>
+                                <form class="nav-item" th:action="@{/auth/logout}" method="post">
+                                    <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
+                                    <button type="submit" class="nav-link logout-btn">
+                                        <i class="fas fa-sign-out-alt"></i>
+                                        Logout
+                                    </button>
+                                </form>
+                            </ul>
+                        </nav>
+                    </nav>
 
-    <!-- Main Content -->
-    <main class="main-content" id="mainContent">
-        <!-- Header -->
-        <header>
-            <div class="header-left">
-                <button class="toggle-sidebar" id="toggleSidebar">
-                    <i class="fas fa-bars"></i>
-                </button>
-                <h1 class="page-title">Reports & Analytics</h1>
-            </div>
-        </header>
-
-        <!-- Content -->
-        <div class="content">
-            <!-- Filter Controls -->
-            <div class="filter-controls">
-                <div class="filter-row">
-                    <div class="form-group">
-                        <label class="form-label">Date Range</label>
-                        <select class="form-control" id="dateRange">
-                            <option value="today">Today</option>
-                            <option value="week">This Week</option>
-                            <option value="month" selected>This Month</option>
-                            <option value="quarter">This Quarter</option>
-                            <option value="year">This Year</option>
-                        </select>
-                    </div>
-                    <div class="form-group">
-                        <label class="form-label">Start Date</label>
-                        <input type="date" class="form-control" id="startDate">
-                    </div>
-                    <div class="form-group">
-                        <label class="form-label">End Date</label>
-                        <input type="date" class="form-control" id="endDate">
-                    </div>
-                    <div class="form-group">
-                        <label class="form-label">&nbsp;</label>
-                        <button class="btn btn-primary" onclick="refreshReports()">
-                            <i class="fas fa-sync-alt"></i> Refresh
-                        </button>
-                    </div>
+        <!-- Main Content -->
+        <main class="main-content col-lg-9 col-xl-10" id="mainContent">
+            <header class="d-flex justify-content-between align-items-center mb-4">
+                <div class="d-flex align-items-center gap-3">
+                    <button class="sidebar-toggle" onclick="toggleSidebar()">
+                        <i class="fas fa-list"></i>
+                    </button>
+                    <h1 class="h3">Reports</h1>
                 </div>
-            </div>
-
-            <!-- Statistics Cards -->
-            <div class="stats-grid">
-                <!-- Total Appointments -->
-                <div class="stat-card info">
-                    <div class="stat-header">
-                        <div class="stat-title">Total Appointments</div>
-                        <div class="stat-icon info">
-                            <i class="fas fa-calendar-check"></i>
+                <div class="profile-info">
+                    <div class="search-box">
+                        <div class="input-group">
+                            <span class="input-group-text"><i class="fas fa-search"></i></span>
+                            <input type="text" id="search-input" class="form-control" placeholder="Search reports">
                         </div>
                     </div>
-                    <div class="stat-value" id="totalAppointments">--</div>
-                    <div class="stat-change" id="appointmentsChange">
-                        <i class="fas fa-arrow-up"></i>
-                        <span>Loading...</span>
+                    <div class="notification-bell" role="button" onclick="toggleNotificationModal()">
+                        <i class="fas fa-bell fs-5"></i>
+                        <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger" id="notificationCount">0</span>
                     </div>
+                    <img src="images/profile.jpg" alt="Profile" class="rounded-circle" onerror="this.src='https://via.placeholder.com/40';">
                 </div>
+            </header>
 
-                <!-- New Patients -->
-                <div class="stat-card success">
-                    <div class="stat-header">
-                        <div class="stat-title">New Patients</div>
-                        <div class="stat-icon success">
-                            <i class="fas fa-user-plus"></i>
-                        </div>
-                    </div>
-                    <div class="stat-value" id="newPatients">--</div>
-                    <div class="stat-change" id="patientsChange">
-                        <i class="fas fa-arrow-up"></i>
-                        <span>Loading...</span>
-                    </div>
-                </div>
-
-                <!-- Total Revenue -->
-                <div class="stat-card warning">
-                    <div class="stat-header">
-                        <div class="stat-title">Total Revenue</div>
-                        <div class="stat-icon warning">
-                            <i class="fas fa-dollar-sign"></i>
-                        </div>
-                    </div>
-                    <div class="stat-value" id="totalRevenue">--</div>
-                    <div class="stat-change" id="revenueChange">
-                        <i class="fas fa-arrow-up"></i>
-                        <span>Loading...</span>
-                    </div>
-                </div>
-
-                <!-- Completed Appointments -->
-                <div class="stat-card success">
-                    <div class="stat-header">
-                        <div class="stat-title">Completed Appointments</div>
-                        <div class="stat-icon success">
-                            <i class="fas fa-check-circle"></i>
-                        </div>
-                    </div>
-                    <div class="stat-value" id="completedAppointments">--</div>
-                    <div class="stat-change" id="completedChange">
-                        <i class="fas fa-arrow-up"></i>
-                        <span>Loading...</span>
-                    </div>
-                </div>
-
-                <!-- Pending Appointments -->
-                <div class="stat-card warning">
-                    <div class="stat-header">
-                        <div class="stat-title">Pending Appointments</div>
-                        <div class="stat-icon warning">
-                            <i class="fas fa-clock"></i>
-                        </div>
-                    </div>
-                    <div class="stat-value" id="pendingAppointments">--</div>
-                    <div class="stat-change" id="pendingChange">
-                        <i class="fas fa-arrow-up"></i>
-                        <span>Loading...</span>
-                    </div>
-                </div>
-
-                <!-- Cancelled Appointments -->
-                <div class="stat-card error">
-                    <div class="stat-header">
-                        <div class="stat-title">Cancelled Appointments</div>
-                        <div class="stat-icon error">
-                            <i class="fas fa-times-circle"></i>
-                        </div>
-                    </div>
-                    <div class="stat-value" id="cancelledAppointments">--</div>
-                    <div class="stat-change" id="cancelledChange">
-                        <i class="fas fa-arrow-down"></i>
-                        <span>Loading...</span>
-                    </div>
-                </div>
+            <!-- Notification Modal -->
+            <div id="notificationModal" class="notification-modal">
+                <h5>System Notifications</h5>
+                <div id="notificationList"></div>
             </div>
 
             <!-- Charts -->
-            <div class="chart-grid">
-                <!-- Appointments Trend -->
-                <div class="chart-card">
+            <div class="dashboard-row">
+                <!-- Appointment Statistics -->
+                <div class="chart-container">
                     <div class="chart-header">
-                        <h3 class="chart-title">Appointments Trend</h3>
-                        <select class="form-control" style="width: auto;" id="appointmentsTrendPeriod">
-                            <option value="week">Last 7 Days</option>
-                            <option value="month" selected>Last 30 Days</option>
-                            <option value="quarter">Last 3 Months</option>
+                        <h5>Appointment Statistics</h5>
+                        <select class="form-select" id="appointmentStatsPeriod">
+                            <option value="month">This Month</option>
+                            <option value="year">This Year</option>
                         </select>
                     </div>
-                    <div class="chart-container">
-                        <canvas id="appointmentsTrendChart"></canvas>
+                    <div class="chart-content">
+                        <canvas id="appointmentStatsChart" height="300"></canvas>
+                        <div class="chart-legend">
+                            <div class="legend-item">
+                                <span class="legend-color appointments"></span>
+                                Appointments
+                            </div>
+                        </div>
                     </div>
                 </div>
 
-                <!-- Appointment Status Distribution -->
-                <div class="chart-card">
+                <!-- Income Statistics -->
+                <div class="chart-container">
                     <div class="chart-header">
-                        <h3 class="chart-title">Appointment Status Distribution</h3>
-                    </div>
-                    <div class="chart-container">
-                        <canvas id="appointmentStatusChart"></canvas>
-                    </div>
-                </div>
-
-                <!-- Revenue Trend -->
-                <div class="chart-card">
-                    <div class="chart-header">
-                        <h3 class="chart-title">Revenue Trend</h3>
-                        <select class="form-control" style="width: auto;" id="revenueTrendPeriod">
-                            <option value="week">Last 7 Days</option>
-                            <option value="month" selected>Last 30 Days</option>
-                            <option value="quarter">Last 3 Months</option>
+                        <h5>Income Statistics</h5>
+                        <select class="form-select" id="incomeStatsPeriod">
+                            <option value="month">This Month</option>
+                            <option value="year">This Year</option>
                         </select>
                     </div>
-                    <div class="chart-container">
-                        <canvas id="revenueTrendChart"></canvas>
-                    </div>
-                </div>
-
-                <!-- Patient Registration Trend -->
-                <div class="chart-card">
-                    <div class="chart-header">
-                        <h3 class="chart-title">Patient Registration Trend</h3>
-                    </div>
-                    <div class="chart-container">
-                        <canvas id="patientRegistrationChart"></canvas>
+                    <div class="chart-content">
+                        <canvas id="incomeStatsChart" height="300"></canvas>
+                        <div class="chart-legend">
+                            <div class="legend-item">
+                                <span class="legend-color income"></span>
+                                Income
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>
-        </div>
-    </main>
 
-    <!-- Bootstrap JS -->
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
-    <script>
-        // Global variables
-        let appointmentsTrendChart, appointmentStatusChart, revenueTrendChart, patientRegistrationChart;
-        let isLoadingData = false;
+            <!-- Notification Toast -->
+            <div id="statusNotification" class="notification-toast success">
+                Data loaded successfully
+            </div>
+        </main>
+    </div>
+</div>
 
-        // DOM Elements
-        const sidebar = document.getElementById('sidebar');
+<!-- Bootstrap JS -->
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+<script>
+    // Sidebar toggle functionality
+    function toggleSidebar() {
+        const sidebar = document.getElementById('patientSidebar');
         const mainContent = document.getElementById('mainContent');
-        const toggleSidebar = document.getElementById('toggleSidebar');
 
-        // Sidebar toggle
-        toggleSidebar.addEventListener('click', () => {
-            sidebar.classList.toggle('collapsed');
-            mainContent.classList.toggle('expanded');
-        });
+        sidebar.classList.toggle('collapsed');
+        mainContent.classList.toggle('expanded');
+    }
 
-        // Initialize charts and load data
-        document.addEventListener('DOMContentLoaded', function() {
-            initializeDateFilters();
-            initializeCharts();
-            loadDashboardData();
+    // Auto-hide sidebar on mobile
+    function checkScreenSize() {
+        const sidebar = document.getElementById('patientSidebar');
+        const mainContent = document.getElementById('mainContent');
 
-            // Set up event listeners for filters
-            document.getElementById('dateRange').addEventListener('change', handleDateRangeChange);
-            document.getElementById('appointmentsTrendPeriod').addEventListener('change', updateAppointmentsTrendChart);
-            document.getElementById('revenueTrendPeriod').addEventListener('change', updateRevenueTrendChart);
-        });
+        if (window.innerWidth <= 768) {
+            sidebar.classList.add('collapsed');
+            mainContent.classList.add('expanded');
+        } else {
+            sidebar.classList.remove('collapsed');
+            mainContent.classList.remove('expanded');
+        }
+    }
 
-        // Initialize date filters
-        function initializeDateFilters() {
-            const today = new Date();
-            const firstDayOfMonth = new Date(today.getFullYear(), today.getMonth(), 1);
+    // Notification modal toggle
+    function toggleNotificationModal() {
+        const modal = document.getElementById('notificationModal');
+        modal.style.display = modal.style.display === 'block' ? 'none' : 'block';
+    }
 
-            document.getElementById('startDate').value = firstDayOfMonth.toISOString().split('T')[0];
-            document.getElementById('endDate').value = today.toISOString().split('T')[0];
+    // Initialize
+    checkScreenSize();
+    window.addEventListener('load', checkScreenSize);
+    window.addEventListener('resize', checkScreenSize);
+
+    // Close notification modal when clicking outside
+    window.onclick = function(event) {
+        const notificationModal = document.getElementById('notificationModal');
+        if (event.target !== notificationModal &&
+            !notificationModal.contains(event.target) &&
+            !event.target.closest('.notification-bell')) {
+            notificationModal.style.display = 'none';
+        }
+    };
+
+    // Chart initialization
+    let appointmentStatsChart = null;
+    let incomeStatsChart = null;
+
+    // Debounce function for API calls
+    function debounce(func, wait) {
+        let timeout;
+        return function executedFunction(...args) {
+            const later = () => {
+                clearTimeout(timeout);
+                func(...args);
+            };
+            clearTimeout(timeout);
+            timeout = setTimeout(later, wait);
+        };
+    }
+
+    // Display no data message
+    function displayNoDataMessage(ctx, message) {
+        ctx.canvas.parentNode.innerHTML = `
+            <div class="d-flex justify-content-center align-items-center" style="height: 300px;">
+                <p class="text-muted">${message}</p>
+            </div>
+        `;
+    }
+
+    // Initialize Appointment Statistics Chart
+    function initAppointmentStatsChart() {
+        const ctx = document.getElementById('appointmentStatsChart');
+        if (!ctx) return;
+
+        if (appointmentStatsChart) {
+            appointmentStatsChart.destroy();
         }
 
-        // Handle date range change
-        function handleDateRangeChange() {
-            const dateRange = document.getElementById('dateRange').value;
-            const today = new Date();
-            let startDate, endDate;
+        appointmentStatsChart = new Chart(ctx.getContext('2d'), {
+            type: 'bar',
+            data: {
+                labels: [],
+                datasets: [{
+                    label: 'Appointments',
+                    data: [],
+                    backgroundColor: '#3b82f6',
+                    borderColor: '#3b82f6',
+                    borderWidth: 1,
+                    borderRadius: 8
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: { display: false },
+                    tooltip: {
+                        backgroundColor: 'rgba(0, 0, 0, 0.8)',
+                        cornerRadius: 8
+                    }
+                },
+                scales: {
+                    x: {
+                        grid: { display: false },
+                        title: { display: true, text: 'Period' }
+                    },
+                    y: {
+                        grid: { color: '#e9ecef' },
+                        title: { display: true, text: 'Number of Appointments' }
+                    }
+                }
+            }
+        });
 
-            switch(dateRange) {
-                case 'today':
-                    startDate = endDate = today;
-                    break;
-                case 'week':
-                    startDate = new Date(today.getFullYear(), today.getMonth(), today.getDate() - 7);
-                    endDate = today;
-                    break;
-                case 'month':
-                    startDate = new Date(today.getFullYear(), today.getMonth(), 1);
-                    endDate = today;
-                    break;
-                case 'quarter':
-                    const quarter = Math.floor(today.getMonth() / 3);
-                    startDate = new Date(today.getFullYear(), quarter * 3, 1);
-                    endDate = today;
-                    break;
-                case 'year':
-                    startDate = new Date(today.getFullYear(), 0, 1);
-                    endDate = today;
-                    break;
-                default:
+        updateAppointmentStatsChart('month');
+    }
+
+    // Update Appointment Statistics Chart
+    const updateAppointmentStatsChart = debounce(function(period) {
+        const ctx = document.getElementById('appointmentStatsChart');
+        if (!ctx) return;
+
+        fetch(`/getAppointmentStats?period=${period}`)
+            .then(response => {
+                if (!response.ok) throw new Error('Failed to fetch appointment stats');
+                return response.json();
+            })
+            .then(data => {
+                if (!data || !data.labels || !data.data || data.data.length === 0) {
+                    displayNoDataMessage(ctx, 'Waiting for appointment statistics data...');
                     return;
-            }
+                }
 
-            document.getElementById('startDate').value = startDate.toISOString().split('T')[0];
-            document.getElementById('endDate').value = endDate.toISOString().split('T')[0];
+                if (!ctx.getContext) {
+                    const parent = ctx.parentNode;
+                    parent.innerHTML = '<canvas id="appointmentStatsChart" height="300"></canvas>';
+                    initAppointmentStatsChart();
+                }
 
-            refreshReports();
-        }
-
-        // Refresh reports
-        function refreshReports() {
-            if (isLoadingData) return;
-
-            loadDashboardData();
-            updateAllCharts();
-        }
-
-        // Load dashboard statistics
-        async function loadDashboardData() {
-            if (isLoadingData) return;
-
-            isLoadingData = true;
-
-            try {
-                // Show loading state
-                showLoadingState();
-
-                // Load various statistics in parallel
-                const [
-                    appointmentsData,
-                    patientsData,
-                    revenueData,
-                    statusData
-                ] = await Promise.all([
-                    fetchAppointmentStats(),
-                    fetchPatientStats(),
-                    fetchRevenueStats(),
-                    fetchAppointmentStatusStats()
-                ]);
-
-                // Update UI with fetched data
-                updateStatistics(appointmentsData, patientsData, revenueData, statusData);
-
-            } catch (error) {
-                console.error('Error loading dashboard data:', error);
-                showErrorState('Failed to load dashboard data');
-            } finally {
-                isLoadingData = false;
-            }
-        }
-
-        // Show loading state
-        function showLoadingState() {
-            const loadingElements = ['totalAppointments', 'newPatients', 'totalRevenue',
-                                   'completedAppointments', 'pendingAppointments', 'cancelledAppointments'];
-
-            loadingElements.forEach(id => {
-                document.getElementById(id).innerHTML = '<div class="loading-spinner"></div>';
-            });
-        }
-
-        // Show error state
-        function showErrorState(message) {
-            console.error(message);
-            // You can add error UI here if needed
-        }
-
-        // Fetch appointment statistics
-        async function fetchAppointmentStats() {
-            try {
-                const response = await fetch('/api/appointments?status=all&fetchAll=true');
-                if (!response.ok) throw new Error('Failed to fetch appointments');
-
-                const data = await response.json();
-                return {
-                    total: data.total || 0,
-                    appointments: data.appointments || []
-                };
-            } catch (error) {
+                if (appointmentStatsChart) {
+                    appointmentStatsChart.data.labels = data.labels;
+                    appointmentStatsChart.data.datasets[0].data = data.data;
+                    appointmentStatsChart.options.scales.x.title.text = period === 'month' ? 'Day' : 'Month';
+                    appointmentStatsChart.update();
+                }
+            })
+            .catch(error => {
                 console.error('Error fetching appointment stats:', error);
-                return { total: 0, appointments: [] };
-            }
+                displayNoDataMessage(ctx, 'Error loading appointment statistics. Please try again later.');
+                showNotification('Failed to load appointment statistics', 'error');
+            });
+    }, 500);
+
+    // Initialize Income Statistics Chart
+    function initIncomeStatsChart() {
+        const ctx = document.getElementById('incomeStatsChart');
+        if (!ctx) return;
+
+        if (incomeStatsChart) {
+            incomeStatsChart.destroy();
         }
 
-        // Fetch patient statistics
-        async function fetchPatientStats() {
-            try {
-                const response = await fetch('/api/patients/detailed?page=1&search=');
-                if (!response.ok) throw new Error('Failed to fetch patients');
-
-                const data = await response.json();
-                return {
-                    total: data.total || 0,
-                    patients: data.patients || []
-                };
-            } catch (error) {
-                console.error('Error fetching patient stats:', error);
-                return { total: 0, patients: [] };
-            }
-        }
-
-        // Fetch revenue statistics
-        async function fetchRevenueStats() {
-            try {
-                const response = await fetch('/receptionist/api/payments/today/total');
-                if (!response.ok) throw new Error('Failed to fetch revenue');
-
-                const data = await response.json();
-                return {
-                    total: data.total || 0
-                };
-            } catch (error) {
-                console.error('Error fetching revenue stats:', error);
-                return { total: 0 };
-            }
-        }
-
-        // Fetch appointment status statistics
-        async function fetchAppointmentStatusStats() {
-            try {
-                // Fetch different appointment statuses
-                const [pendingResponse, completedResponse, cancelledResponse] = await Promise.all([
-                    fetch('/api/appointments?status=pending&fetchAll=true'),
-                    fetch('/api/appointments?status=completed&fetchAll=true'),
-                    fetch('/api/appointments?status=cancelled&fetchAll=true')
-                ]);
-
-                const [pendingData, completedData, cancelledData] = await Promise.all([
-                    pendingResponse.ok ? pendingResponse.json() : { total: 0 },
-                    completedResponse.ok ? completedResponse.json() : { total: 0 },
-                    cancelledResponse.ok ? cancelledResponse.json() : { total: 0 }
-                ]);
-
-                return {
-                    pending: pendingData.total || 0,
-                    completed: completedData.total || 0,
-                    cancelled: cancelledData.total || 0
-                };
-            } catch (error) {
-                console.error('Error fetching appointment status stats:', error);
-                return { pending: 0, completed: 0, cancelled: 0 };
-            }
-        }
-
-        // Update statistics display
-        function updateStatistics(appointmentsData, patientsData, revenueData, statusData) {
-            // Update total appointments
-            document.getElementById('totalAppointments').textContent = appointmentsData.total;
-            document.getElementById('appointmentsChange').innerHTML =
-                `<i class="fas fa-arrow-up"></i><span>+${Math.floor(appointmentsData.total * 0.1)} this month</span>`;
-
-            // Update new patients
-            document.getElementById('newPatients').textContent = patientsData.total;
-            document.getElementById('patientsChange').innerHTML =
-                `<i class="fas fa-arrow-up"></i><span>+${Math.floor(patientsData.total * 0.15)} this month</span>`;
-
-            // Update total revenue
-            const formattedRevenue = new Intl.NumberFormat('vi-VN', {
-                style: 'currency',
-                currency: 'VND'
-            }).format(revenueData.total);
-            document.getElementById('totalRevenue').textContent = formattedRevenue;
-            document.getElementById('revenueChange').innerHTML =
-                `<i class="fas fa-arrow-up"></i><span>+12% this month</span>`;
-
-            // Update appointment status counts
-            document.getElementById('completedAppointments').textContent = statusData.completed;
-            document.getElementById('completedChange').innerHTML =
-                `<i class="fas fa-arrow-up"></i><span>+${Math.floor(statusData.completed * 0.08)} this month</span>`;
-
-            document.getElementById('pendingAppointments').textContent = statusData.pending;
-            document.getElementById('pendingChange').innerHTML =
-                `<i class="fas fa-arrow-up"></i><span>+${Math.floor(statusData.pending * 0.05)} this month</span>`;
-
-            document.getElementById('cancelledAppointments').textContent = statusData.cancelled;
-            document.getElementById('cancelledChange').innerHTML =
-                `<i class="fas fa-arrow-down"></i><span>-${Math.floor(statusData.cancelled * 0.02)} this month</span>`;
-        }
-
-        // Initialize all charts
-        function initializeCharts() {
-            try {
-                initializeAppointmentsTrendChart();
-                initializeAppointmentStatusChart();
-                initializeRevenueTrendChart();
-                initializePatientRegistrationChart();
-            } catch (error) {
-                console.error('Error initializing charts:', error);
-            }
-        }
-
-        // Initialize appointments trend chart
-        function initializeAppointmentsTrendChart() {
-            const ctx = document.getElementById('appointmentsTrendChart').getContext('2d');
-
-            // Generate sample data for last 7 days
-            const labels = [];
-            const data = [];
-            const today = new Date();
-
-            for (let i = 6; i >= 0; i--) {
-                const date = new Date(today);
-                date.setDate(today.getDate() - i);
-                labels.push(date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }));
-                data.push(Math.floor(Math.random() * 20) + 10);
-            }
-
-            appointmentsTrendChart = new Chart(ctx, {
-                type: 'line',
-                data: {
-                    labels: labels,
-                    datasets: [{
-                        label: 'Appointments',
-                        data: data,
-                        borderColor: '#667eea',
-                        backgroundColor: 'rgba(102, 126, 234, 0.1)',
-                        borderWidth: 3,
-                        fill: true,
-                        tension: 0.4,
-                        pointBackgroundColor: '#667eea',
-                        pointBorderColor: '#ffffff',
-                        pointBorderWidth: 2,
-                        pointRadius: 6
-                    }]
+        incomeStatsChart = new Chart(ctx.getContext('2d'), {
+            type: 'bar',
+            data: {
+                labels: [],
+                datasets: [{
+                    label: 'Income',
+                    data: [],
+                    backgroundColor: '#10b981',
+                    borderColor: '#10b981',
+                    borderWidth: 1,
+                    borderRadius: 8
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: { display: false },
+                    tooltip: {
+                        backgroundColor: 'rgba(0, 0, 0, 0.8)',
+                        cornerRadius: 8
+                    }
                 },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    plugins: {
-                        legend: {
-                            display: false
-                        }
+                scales: {
+                    x: {
+                        grid: { display: false },
+                        title: { display: true, text: 'Period' }
                     },
-                    scales: {
-                        y: {
-                            beginAtZero: true,
-                            grid: {
-                                color: 'rgba(0, 0, 0, 0.05)'
-                            }
-                        },
-                        x: {
-                            grid: {
-                                display: false
-                            }
-                        }
+                    y: {
+                        grid: { color: '#e9ecef' },
+                        title: { display: true, text: 'Income ($)' }
                     }
                 }
-            });
-        }
-
-        // Initialize appointment status chart
-        function initializeAppointmentStatusChart() {
-            const ctx = document.getElementById('appointmentStatusChart').getContext('2d');
-
-            appointmentStatusChart = new Chart(ctx, {
-                type: 'doughnut',
-                data: {
-                    labels: ['Completed', 'Pending', 'Scheduled', 'Cancelled'],
-                    datasets: [{
-                        data: [45, 25, 20, 10],
-                        backgroundColor: [
-                            '#10b981',
-                            '#f59e0b',
-                            '#3b82f6',
-                            '#ef4444'
-                        ],
-                        borderWidth: 0,
-                        cutout: '60%'
-                    }]
-                },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    plugins: {
-                        legend: {
-                            position: 'bottom',
-                            labels: {
-                                padding: 20,
-                                usePointStyle: true
-                            }
-                        }
-                    }
-                }
-            });
-        }
-
-        // Initialize revenue trend chart
-        function initializeRevenueTrendChart() {
-            const ctx = document.getElementById('revenueTrendChart').getContext('2d');
-
-            // Generate sample data for last 7 days
-            const labels = [];
-            const data = [];
-            const today = new Date();
-
-            for (let i = 6; i >= 0; i--) {
-                const date = new Date(today);
-                date.setDate(today.getDate() - i);
-                labels.push(date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }));
-                data.push(Math.floor(Math.random() * 2000000) + 500000);
             }
-
-            revenueTrendChart = new Chart(ctx, {
-                type: 'bar',
-                data: {
-                    labels: labels,
-                    datasets: [{
-                        label: 'Revenue (VND)',
-                        data: data,
-                        backgroundColor: 'rgba(245, 158, 11, 0.8)',
-                        borderColor: '#f59e0b',
-                        borderWidth: 1,
-                        borderRadius: 6,
-                        borderSkipped: false
-                    }]
-                },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    plugins: {
-                        legend: {
-                            display: false
-                        }
-                    },
-                    scales: {
-                        y: {
-                            beginAtZero: true,
-                            grid: {
-                                color: 'rgba(0, 0, 0, 0.05)'
-                            },
-                            ticks: {
-                                callback: function(value) {
-                                    return new Intl.NumberFormat('vi-VN', {
-                                        style: 'currency',
-                                        currency: 'VND',
-                                        minimumFractionDigits: 0
-                                    }).format(value);
-                                }
-                            }
-                        },
-                        x: {
-                            grid: {
-                                display: false
-                            }
-                        }
-                    }
-                }
-            });
-        }
-
-        // Initialize patient registration chart
-        function initializePatientRegistrationChart() {
-            const ctx = document.getElementById('patientRegistrationChart').getContext('2d');
-
-            // Generate sample data for last 7 days
-            const labels = [];
-            const data = [];
-            const today = new Date();
-
-            for (let i = 6; i >= 0; i--) {
-                const date = new Date(today);
-                date.setDate(today.getDate() - i);
-                labels.push(date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }));
-                data.push(Math.floor(Math.random() * 15) + 5);
-            }
-
-            patientRegistrationChart = new Chart(ctx, {
-                type: 'line',
-                data: {
-                    labels: labels,
-                    datasets: [{
-                        label: 'New Patients',
-                        data: data,
-                        borderColor: '#10b981',
-                        backgroundColor: 'rgba(16, 185, 129, 0.1)',
-                        borderWidth: 3,
-                        fill: true,
-                        tension: 0.4,
-                        pointBackgroundColor: '#10b981',
-                        pointBorderColor: '#ffffff',
-                        pointBorderWidth: 2,
-                        pointRadius: 6
-                    }]
-                },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    plugins: {
-                        legend: {
-                            display: false
-                        }
-                    },
-                    scales: {
-                        y: {
-                            beginAtZero: true,
-                            grid: {
-                                color: 'rgba(0, 0, 0, 0.05)'
-                            }
-                        },
-                        x: {
-                            grid: {
-                                display: false
-                            }
-                        }
-                    }
-                }
-            });
-        }
-
-        // Update all charts
-        function updateAllCharts() {
-            updateAppointmentsTrendChart();
-            updateRevenueTrendChart();
-            // Status chart and patient registration chart update automatically with real data
-        }
-
-        // Update appointments trend chart
-        function updateAppointmentsTrendChart() {
-            if (!appointmentsTrendChart) return;
-
-            const period = document.getElementById('appointmentsTrendPeriod').value;
-            const labels = [];
-            const data = [];
-
-            let days = 7;
-            if (period === 'month') days = 30;
-            if (period === 'quarter') days = 90;
-
-            const today = new Date();
-            for (let i = days - 1; i >= 0; i--) {
-                const date = new Date(today);
-                date.setDate(today.getDate() - i);
-                labels.push(date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }));
-                data.push(Math.floor(Math.random() * 20) + 10);
-            }
-
-            appointmentsTrendChart.data.labels = labels;
-            appointmentsTrendChart.data.datasets[0].data = data;
-            appointmentsTrendChart.update('none'); // Disable animation for performance
-        }
-
-        // Update revenue trend chart
-        function updateRevenueTrendChart() {
-            if (!revenueTrendChart) return;
-
-            const period = document.getElementById('revenueTrendPeriod').value;
-            const labels = [];
-            const data = [];
-
-            let days = 7;
-            if (period === 'month') days = 30;
-            if (period === 'quarter') days = 90;
-
-            const today = new Date();
-            for (let i = days - 1; i >= 0; i--) {
-                const date = new Date(today);
-                date.setDate(today.getDate() - i);
-                labels.push(date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }));
-                data.push(Math.floor(Math.random() * 2000000) + 500000);
-            }
-
-            revenueTrendChart.data.labels = labels;
-            revenueTrendChart.data.datasets[0].data = data;
-            revenueTrendChart.update('none'); // Disable animation for performance
-        }
-
-        // Auto-refresh data every 5 minutes
-        setInterval(() => {
-            if (!isLoadingData) {
-                loadDashboardData();
-            }
-        }, 300000); // 5 minutes
-
-        // Cleanup charts on page unload to prevent memory leaks
-        window.addEventListener('beforeunload', () => {
-            if (appointmentsTrendChart) appointmentsTrendChart.destroy();
-            if (appointmentStatusChart) appointmentStatusChart.destroy();
-            if (revenueTrendChart) revenueTrendChart.destroy();
-            if (patientRegistrationChart) patientRegistrationChart.destroy();
         });
-    </script>
+
+        updateIncomeStatsChart('month');
+    }
+
+    // Update Income Statistics Chart
+    const updateIncomeStatsChart = debounce(function(period) {
+        const ctx = document.getElementById('incomeStatsChart');
+        if (!ctx) return;
+
+        fetch(`/getIncomeStats?period=${period}`)
+            .then(response => {
+                if (!response.ok) throw new Error('Failed to fetch income stats');
+                return response.json();
+            })
+            .then(data => {
+                if (!data || !data.labels || !data.data || data.data.length === 0) {
+                    displayNoDataMessage(ctx, 'Waiting for income statistics data...');
+                    return;
+                }
+
+                if (!ctx.getContext) {
+                    const parent = ctx.parentNode;
+                    parent.innerHTML = '<canvas id="incomeStatsChart" height="300"></canvas>';
+                    initIncomeStatsChart();
+                }
+
+                if (incomeStatsChart) {
+                    incomeStatsChart.data.labels = data.labels;
+                    incomeStatsChart.data.datasets[0].data = data.data;
+                    incomeStatsChart.options.scales.x.title.text = period === 'month' ? 'Day' : 'Month';
+                    incomeStatsChart.update();
+                }
+            })
+            .catch(error => {
+                console.error('Error fetching income stats:', error);
+                displayNoDataMessage(ctx, 'Error loading income statistics. Please try again later.');
+                showNotification('Failed to load income statistics', 'error');
+            });
+    }, 500);
+
+    // Event Listeners
+    document.addEventListener('DOMContentLoaded', () => {
+        initAppointmentStatsChart();
+        initIncomeStatsChart();
+
+        // Period select listeners
+        const appointmentPeriod = document.getElementById('appointmentStatsPeriod');
+        appointmentPeriod.addEventListener('change', function() {
+            updateAppointmentStatsChart(this.value);
+        });
+
+        const incomePeriod = document.getElementById('incomeStatsPeriod');
+        incomePeriod.addEventListener('change', function() {
+            updateIncomeStatsChart(this.value);
+        });
+
+        // Search input (placeholder for filtering)
+        document.getElementById('search-input').addEventListener('input', function() {
+            const query = this.value.trim();
+            if (query) {
+                showNotification('Search functionality not implemented yet.', 'info');
+            }
+        });
+
+        // Periodic data refresh
+        setInterval(() => {
+            const appointmentPeriod = document.getElementById('appointmentStatsPeriod').value;
+            const incomePeriod = document.getElementById('incomeStatsPeriod').value;
+            updateAppointmentStatsChart(appointmentPeriod);
+            updateIncomeStatsChart(incomePeriod);
+        }, 30000);
+    });
+
+    // Show notification toast
+    function showNotification(message, type) {
+        const toast = document.getElementById('statusNotification');
+        toast.textContent = message;
+        toast.className = `notification-toast ${type}`;
+        toast.style.display = 'block';
+        setTimeout(() => {
+            toast.style.display = 'none';
+        }, 3000);
+    }
+</script>
 </body>
 </html>

@@ -4,7 +4,6 @@ package orochi.service;
 import orochi.model.Room;
 
 import java.util.List;
-import java.util.Map;
 import java.util.Optional;
 
 public interface RoomService {
@@ -28,13 +27,4 @@ public interface RoomService {
 
     // Tìm theo từ khóa (search)
     List<Room> searchRooms(String keyword);
-
-    // NEW: Get rooms by specialty ID
-    List<Room> getRoomsBySpecialtyId(Integer specialtyId);
-
-    // NEW: Get room details by specialty ID with department info
-    List<Map<String, Object>> getRoomDetailsWithDepartmentBySpecialtyId(Integer specialtyId);
-
-    // NEW: Get available rooms by department ID
-    List<Room> getAvailableRoomsByDepartmentId(Integer departmentId);
 }

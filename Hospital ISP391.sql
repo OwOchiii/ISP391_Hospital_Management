@@ -801,23 +801,3 @@ DELETE FROM [Feedback];
 ALTER TABLE [Feedback]
 ADD [FeedbackType] varchar(50) NOT NULL,
     [Title] varchar(100) NOT NULL;
-
-
---update constraint notification
-ALTER TABLE [dbo].[Notification]
-    ADD CONSTRAINT chk_notification_type
-    CHECK ([Type] IN (
-    'AdminNotice',
-    'BillingUpdate',
-    'Reminder',
-    'SecurityAlert'
-    ));
-
-CREATE TRIGGER TR_UpdateCreatedAt
-    ON Notification
-    AFTER UPDATE
-              AS
-UPDATE n
-SET n.CreatedAt = GETDATE()
-    FROM Notification n
-  JOIN inserted i ON n.NotificationID = i.NotificationID;

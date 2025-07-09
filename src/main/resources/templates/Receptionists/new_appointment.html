@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -14,44 +14,40 @@
 
     <style>
         :root {
-            --primary-color: #007bff;
-            --secondary-color: #007bff;
-            --accent-color: #007bff;
-            --patient-primary: #007bff;
-            --patient-secondary: #007bff;
-            --patient-accent: #007bff;
-            --patient-light: #e6f0ff;
-            --patient-dark: #007bff;
+            --primary-color: #2563eb;
+            --secondary-color: #1e40af;
+            --accent-color: #06b6d4;
+            --patient-primary: #059669;
+            --patient-secondary: #047857;
+            --patient-accent: #10b981;
+            --patient-light: #ecfdf5;
+            --patient-dark: #06454b;
             --text-dark: #1f2937;
             --text-light: #6c757d;
             --text-muted: #9ca3af;
             --bg-light: #f8f9fa;
             --bg-white: #ffffff;
-            --success-color: #007bff;
+            --success-color: #10b981;
             --warning-color: #f59e0b;
             --error-color: #ef4444;
-            --info-color: #007bff;
+            --info-color: #3b82f6;
             --border-color: #e5e7eb;
             --header-height: 70px;
         }
-
         * {
             margin: 0;
             padding: 0;
             box-sizing: border-box;
         }
-
         .char-counter {
             font-size: 0.75rem;
             color: var(--text-muted);
             text-align: right;
             margin-top: 0.25rem;
         }
-
         .char-counter.warning {
             color: var(--warning-color);
         }
-
         body {
             font-family: 'Inter', sans-serif;
             line-height: 1.6;
@@ -59,11 +55,9 @@
             background: var(--bg-light);
             overflow-x: hidden;
         }
-
         .main-content {
             min-height: 100vh;
         }
-
         .top-header {
             background: var(--bg-white);
             height: var(--header-height);
@@ -76,33 +70,24 @@
             top: 0;
             z-index: 999;
         }
-
         .header-left {
             display: flex;
             align-items: center;
             gap: 1rem;
         }
-
-        .header-left h4 {
-            font-size: 1.8rem; /* Updated font size for Book Appointment header */
-        }
-
         .header-right {
             display: flex;
             align-items: center;
             gap: 1.5rem;
         }
-
         .page-content {
             padding: 2rem;
             max-width: 1200px;
             margin: 0 auto;
         }
-
         .page-header {
             margin-bottom: 2rem;
         }
-
         .page-title {
             font-size: 2rem;
             font-weight: 700;
@@ -112,26 +97,21 @@
             align-items: center;
             gap: 0.75rem;
         }
-
         .page-title i {
             color: var(--success-color);
         }
-
         .breadcrumb {
             background: none;
             padding: 0;
             margin: 0;
         }
-
         .breadcrumb-item a {
             color: var(--success-color);
             text-decoration: none;
         }
-
         .breadcrumb-item.active {
             color: var(--text-muted);
         }
-
         .search-section {
             background: var(--bg-white);
             border-radius: 16px;
@@ -139,15 +119,12 @@
             padding: 2rem;
             margin-bottom: 2rem;
         }
-
         .search-bar {
             position: relative;
         }
-
         .search-bar input {
             padding-right: 3rem;
         }
-
         .search-bar button {
             position: absolute;
             right: 0.5rem;
@@ -160,7 +137,6 @@
             cursor: pointer;
             padding: 0.5rem;
         }
-
         .search-results {
             margin-top: 1.5rem;
             max-height: 300px;
@@ -168,32 +144,26 @@
             border: 1px solid var(--border-color);
             border-radius: 12px;
         }
-
         .search-results table {
             width: 100%;
             border-collapse: collapse;
         }
-
         .search-results th, .search-results td {
             padding: 0.75rem;
             text-align: left;
             border-bottom: 1px solid var(--border-color);
         }
-
         .search-results th {
             background: var(--bg-light);
             font-weight: 600;
         }
-
         .search-results tr {
             cursor: pointer;
             transition: background 0.3s ease;
         }
-
         .search-results tr:hover {
             background: var(--patient-light);
         }
-
         .form-section {
             background: var(--bg-white);
             border-radius: 16px;
@@ -201,7 +171,6 @@
             padding: 2rem;
             margin-bottom: 2rem;
         }
-
         .section-title {
             font-size: 1.5rem;
             font-weight: 600;
@@ -211,11 +180,9 @@
             align-items: center;
             gap: 0.5rem;
         }
-
         .section-title i {
             color: var(--success-color);
         }
-
         .form-label {
             font-weight: 600;
             color: var(--text-dark);
@@ -224,12 +191,10 @@
             align-items: center;
             gap: 0.25rem;
         }
-
         .required-asterisk {
             color: var(--error-color);
             font-weight: 700;
         }
-
         .form-control, .form-select {
             border: 2px solid var(--border-color);
             border-radius: 12px;
@@ -238,29 +203,24 @@
             transition: all 0.3s ease;
             background: var(--bg-white);
         }
-
         .form-control:focus, .form-select:focus {
             border-color: var(--success-color);
-            box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.25);
+            box-shadow: 0 0 0 0.2rem rgba(16, 185, 129, 0.25);
             background: var(--bg-white);
         }
-
-        .form-control:read-only, .form-control:disabled {
+        .form-control:read-only {
             background: var(--bg-light);
             color: var(--text-muted);
         }
-
         .time-selection {
             margin-top: 1rem;
         }
-
         .time-grid {
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(100px, 1fr));
             gap: 0.75rem;
             margin-top: 1rem;
         }
-
         .time-slot {
             padding: 0.3rem 0.9rem;
             border: 2px solid var(--border-color);
@@ -273,27 +233,23 @@
             transition: all 0.3s ease;
             position: relative;
         }
-
         .time-slot:hover:not(.disabled) {
             border-color: var(--success-color);
-            background: rgba(0, 123, 255, 0.1);
+            background: rgba(16, 185, 129, 0.1);
             transform: translateY(-2px);
         }
-
         .time-slot.selected {
             background: var(--success-color);
             border-color: var(--success-color);
             color: white;
-            box-shadow: 0 4px 12px rgba(0, 123, 255, 0.3);
+            box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);
         }
-
         .time-slot.disabled {
             background: #f3f4f6;
             border-color: #d1d5db;
             color: #9ca3af;
             cursor: not-allowed;
         }
-
         .time-slot.disabled::after {
             content: '✕';
             position: absolute;
@@ -303,11 +259,27 @@
             color: var(--error-color);
             font-weight: 700;
         }
-
         .contact-field {
             position: relative;
         }
-
+        .reset-btn {
+            position: absolute;
+            right: 0.75rem;
+            top: 50%;
+            transform: translateY(-50%);
+            background: none;
+            border: none;
+            color: var(--text-light);
+            font-size: 0.875rem;
+            cursor: pointer;
+            padding: 0.25rem 0.5rem;
+            border-radius: 6px;
+            transition: all 0.3s ease;
+        }
+        .reset-btn:hover {
+            background: var(--bg-light);
+            color: var(--success-color);
+        }
         .error-message {
             color: var(--error-color);
             font-size: 0.875rem;
@@ -316,13 +288,11 @@
             align-items: center;
             gap: 0.25rem;
         }
-
         .error-message i {
             font-size: 1rem;
         }
-
         .btn-primary-custom {
-            background: var(--success-color);
+            background: linear-gradient(135deg, var(--success-color), #059669);
             border: none;
             padding: 1rem 2rem;
             border-radius: 12px;
@@ -336,13 +306,11 @@
             gap: 0.75rem;
             cursor: pointer;
         }
-
         .btn-primary-custom:hover {
             transform: translateY(-2px);
             box-shadow: 0 8px 25px rgba(16, 185, 129, 0.3);
             color: white;
         }
-
         .btn-outline-custom {
             border: 2px solid var(--success-color);
             color: var(--success-color);
@@ -356,14 +324,12 @@
             align-items: center;
             gap: 0.5rem;
         }
-
         .btn-outline-custom:hover {
             background: var(--success-color);
             color: white;
             transform: translateY(-2px);
             text-decoration: none;
         }
-        /* Confirmation Modal */
         .confirmation-overlay {
             position: fixed;
             top: 0;
@@ -371,12 +337,14 @@
             width: 100%;
             height: 100%;
             background: rgba(0, 0, 0, 0.5);
-            display: flex;
-            justify-content: center;
+            z-index: 2000;
+            display: none;
             align-items: center;
-            z-index: 1049;
+            justify-content: center;
         }
-
+        .confirmation-overlay.active {
+            display: flex;
+        }
         .confirmation-dialog {
             background: var(--bg-white);
             border-radius: 20px;
@@ -386,12 +354,7 @@
             box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
             text-align: center;
             animation: slideIn 0.3s ease-out;
-            position: fixed;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
         }
-
         @keyframes slideIn {
             from {
                 opacity: 0;
@@ -402,12 +365,11 @@
                 transform: translateY(0);
             }
         }
-
         .confirmation-icon {
             width: 80px;
             height: 80px;
             border-radius: 50%;
-            background: linear-gradient(135deg, var(--success-color), #007bff);
+            background: linear-gradient(135deg, var(--success-color), #059669);
             display: flex;
             align-items: center;
             justify-content: center;
@@ -415,26 +377,22 @@
             color: white;
             font-size: 2rem;
         }
-
         .confirmation-title {
             font-size: 1.5rem;
             font-weight: 700;
             color: var(--text-dark);
             margin-bottom: 1rem;
         }
-
         .confirmation-message {
             color: var(--text-light);
             margin-bottom: 2rem;
             line-height: 1.6;
         }
-
         .confirmation-actions {
             display: flex;
             gap: 1rem;
             justify-content: center;
         }
-
         .doctor-info-display {
             background: var(--bg-light);
             border-radius: 12px;
@@ -442,72 +400,59 @@
             margin-top: 0.5rem;
             display: none;
         }
-
         .doctor-info-display.show {
             display: block;
         }
-
         .doctor-card {
             display: flex;
             align-items: center;
             gap: 1rem;
         }
-
         .doctor-avatar {
             width: 50px;
             height: 50px;
             border-radius: 50%;
-            background: var(--success-color);
+            background: linear-gradient(135deg, var(--primary-color), var(--accent-color));
             display: flex;
             align-items: center;
             justify-content: center;
             color: white;
             font-weight: 700;
         }
-
         .doctor-details h6 {
             margin: 0;
             font-weight: 600;
             color: var(--text-dark);
         }
-
         .doctor-details p {
             margin: 0;
             font-size: 0.875rem;
             color: var(--text-light);
         }
-
         @media (max-width: 768px) {
             .page-content {
                 padding: 1rem;
             }
-
             .form-section, .search-section {
                 padding: 1.5rem;
             }
-
             .top-header {
                 padding: 0 1rem;
             }
-
             .time-grid {
                 grid-template-columns: repeat(2, 1fr);
             }
-
             .confirmation-actions {
                 flex-direction: column;
             }
-
             .page-title {
                 font-size: 1.5rem;
             }
         }
-
         .loading {
             opacity: 0.6;
             pointer-events: none;
         }
-
         .spinner {
             display: inline-block;
             width: 20px;
@@ -517,53 +462,28 @@
             border-radius: 50%;
             animation: spin 1s linear infinite;
         }
-
         @keyframes spin {
-            0% {
-                transform: rotate(0deg);
-            }
-            100% {
-                transform: rotate(360deg);
-            }
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
         }
-
         .success-message {
-            background: var(--patient-light);
-            border: 1px solid var(--success-color);
+            background: #d1fae5;
+            border: 1px solid #a7f3d0;
             border-radius: 12px;
             padding: 1rem;
             margin-bottom: 1rem;
-            color: var(--patient-dark);
+            color: #065f46;
             display: flex;
             align-items: center;
             gap: 0.5rem;
         }
-
         .success-message i {
             color: var(--success-color);
         }
-
-        .readonly, .form-control:disabled {
+        .readonly {
             background: #f8f9fa;
             color: #6c757d;
             pointer-events: none;
-        }
-
-        .form-control.error, .form-select.error {
-            border-color: var(--error-color) !important;
-            box-shadow: 0 0 0 0.2rem rgba(239, 68, 68, 0.25) !important;
-        }
-
-        .time-grid.error {
-            border: 2px solid var(--error-color);
-            border-radius: 12px;
-            padding: 1rem;
-            background: rgba(239, 68, 68, 0.05);
-        }
-
-        .textarea.error {
-            border-color: var(--error-color) !important;
-            box-shadow: 0 0 0 0.2rem rgba(239, 68, 68, 0.25) !important;
         }
     </style>
 </head>
@@ -574,7 +494,7 @@
             <h4 class="mb-0">Book Appointment</h4>
         </div>
         <div class="header-right">
-            <a th:href="@{/receptionist/dashboard}" class="btn-outline-custom">
+            <a href="javascript:history.back()" class="btn-outline-custom">
                 <i class="bi bi-arrow-left"></i>
                 Back to Dashboard
             </a>
@@ -589,7 +509,7 @@
             </h1>
             <nav>
                 <ol class="breadcrumb">
-                    <li class="breadcrumb-item"><a th:href="@{/receptionist/dashboard}">Dashboard</a></li>
+                    <li class="breadcrumb-item"><a href="javascript:history.back()">Dashboard</a></li>
                     <li class="breadcrumb-item active">Book Appointment</li>
                 </ol>
             </nav>
@@ -608,18 +528,12 @@
             <form id="searchPatientForm" onsubmit="searchPatients(event)">
                 <div class="row">
                     <div class="col-md-12 mb-3">
-                        <label for="searchQuery" class="form-label">Search by Name, Phone</label>
+                        <label for="searchQuery" class="form-label">Search by Name, Phone, or Patient ID</label>
                         <div class="search-bar">
-                            <input type="text" id="searchQuery" class="form-control"
-                                   placeholder="Enter name, phone, or patient ID"/>
+                            <input type="text" id="searchQuery" class="form-control" placeholder="Enter name, phone, or patient ID" />
                             <button type="submit">
                                 <i class="bi bi-search"></i>
                             </button>
-                        </div>
-                        <!-- Thêm phần hiển thị lỗi search -->
-                        <div id="searchError" class="error-message d-none">
-                            <i class="bi bi-exclamation-circle"></i>
-                            <span>Please search for a patient by name or phone number first.</span>
                         </div>
                     </div>
                 </div>
@@ -646,27 +560,23 @@
             </h2>
 
             <form id="appointmentForm" onsubmit="submitForm(event)">
-                <input type="hidden" name="appointmentId" id="appointmentId"/>
-                <input type="hidden" name="patientId" id="patientIdInput"/>
-                <input type="hidden" name="_csrf" th:value="${_csrf.token}"/>
+                <input type="hidden" name="appointmentId" id="appointmentId" />
+                <input type="hidden" name="patientId" id="patientIdInput" />
 
                 <div class="row">
                     <div class="col-md-6 mb-3">
                         <label for="specialtyId" class="form-label">
                             Medical Specialty <span class="required-asterisk">*</span>
                         </label>
-                        <select id="specialtyId" name="specialtyId" class="form-select" onchange="updateDoctors()"
-                                required>
+                        <select id="specialtyId" name="specialtyId" class="form-select" onchange="updateDoctors()" required>
                             <option value="">Select Medical Specialty</option>
-                            <option th:each="spec : ${specializations}"
-                                    th:value="${spec.specId}"
-                                    th:data-price="${spec.price}"
-                                    th:text="${spec.specName} + ' - $' + ${spec.price}">
-                            </option>
+                            <option value="1" data-price="150">Cardiology - $150</option>
+                            <option value="2" data-price="120">Dermatology - $120</option>
+                            <option value="3" data-price="100">Pediatrics - $100</option>
                         </select>
                         <div id="specialtyIdError" class="error-message d-none">
                             <i class="bi bi-exclamation-circle"></i>
-                            <span>Please select a medical specialty</span>
+                            <span>Specialty is required</span>
                         </div>
                     </div>
 
@@ -674,13 +584,12 @@
                         <label for="doctorId" class="form-label">
                             Select Doctor <span class="required-asterisk">*</span>
                         </label>
-                        <select id="doctorId" name="doctorId" class="form-select" onchange="updateDoctorsAndTimeSlots()"
-                                required>
+                        <select id="doctorId" name="doctorId" class="form-select" onchange="updateDoctorsAndTimeSlots()" required>
                             <option value="">Choose a Doctor</option>
                         </select>
                         <div id="doctorIdError" class="error-message d-none">
                             <i class="bi bi-exclamation-circle"></i>
-                            <span>Please select a doctor</span>
+                            <span>Doctor selection is required</span>
                         </div>
                         <div class="doctor-info-display" id="doctorInfoDisplay">
                             <div class="doctor-card">
@@ -697,35 +606,13 @@
 
                 <div class="row">
                     <div class="col-md-6 mb-3">
-                        <label for="roomId" class="form-label">
-                            Select Room <span class="required-asterisk">*</span>
-                        </label>
-                        <select id="roomId" name="roomId" class="form-select" required>
-                            <option value="">Choose a Room</option>
-                        </select>
-                        <div id="roomIdError" class="error-message d-none">
-                            <i class="bi bi-exclamation-circle"></i>
-                            <span>Please select a room</span>
-                        </div>
-                        <div class="room-info-display d-none" id="roomInfoDisplay">
-                            <div class="room-card">
-                                <div class="room-details">
-                                    <small class="text-muted">Room Details:</small>
-                                    <p id="roomDetails" class="mb-0"></p>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div class="col-md-6 mb-3">
                         <label for="appointmentDate" class="form-label">
                             Appointment Date <span class="required-asterisk">*</span>
                         </label>
-                        <input type="text" id="appointmentDate" name="appointmentDate" class="form-control" required
-                               placeholder="MM/DD/YYYY"/>
+                        <input type="text" id="appointmentDate" name="appointmentDate" class="form-control" required placeholder="YYYY-MM-DD" />
                         <div id="appointmentDateError" class="error-message d-none">
                             <i class="bi bi-exclamation-circle"></i>
-                            <span>Please select an appointment date</span>
+                            <span>Date is required</span>
                         </div>
                     </div>
                 </div>
@@ -736,59 +623,27 @@
                     </label>
                     <div class="time-selection">
                         <div class="time-grid" id="timeGrid">
-                            <button type="button" class="time-slot" onclick="selectTime('08:00:00', this)"
-                                    data-time="08:00:00">08:00 AM
-                            </button>
-                            <button type="button" class="time-slot" onclick="selectTime('08:30:00', this)"
-                                    data-time="08:30:00">08:30 AM
-                            </button>
-                            <button type="button" class="time-slot" onclick="selectTime('09:00:00', this)"
-                                    data-time="09:00:00">09:00 AM
-                            </button>
-                            <button type="button" class="time-slot" onclick="selectTime('09:30:00', this)"
-                                    data-time="09:30:00">09:30 AM
-                            </button>
-                            <button type="button" class="time-slot" onclick="selectTime('10:00:00', this)"
-                                    data-time="10:00:00">10:00 AM
-                            </button>
-                            <button type="button" class="time-slot" onclick="selectTime('10:30:00', this)"
-                                    data-time="10:30:00">10:30 AM
-                            </button>
-                            <button type="button" class="time-slot" onclick="selectTime('11:00:00', this)"
-                                    data-time="11:00:00">11:00 AM
-                            </button>
-                            <button type="button" class="time-slot" onclick="selectTime('11:30:00', this)"
-                                    data-time="11:30:00">11:30 AM
-                            </button>
-                            <button type="button" class="time-slot" onclick="selectTime('14:00:00', this)"
-                                    data-time="14:00:00">02:00 PM
-                            </button>
-                            <button type="button" class="time-slot" onclick="selectTime('14:30:00', this)"
-                                    data-time="14:30:00">02:30 PM
-                            </button>
-                            <button type="button" class="time-slot" onclick="selectTime('15:00:00', this)"
-                                    data-time="15:00:00">03:00 PM
-                            </button>
-                            <button type="button" class="time-slot" onclick="selectTime('15:30:00', this)"
-                                    data-time="15:30:00">03:30 PM
-                            </button>
-                            <button type="button" class="time-slot" onclick="selectTime('16:00:00', this)"
-                                    data-time="16:00:00">04:00 PM
-                            </button>
-                            <button type="button" class="time-slot" onclick="selectTime('16:30:00', this)"
-                                    data-time="16:30:00">04:30 PM
-                            </button>
-                            <button type="button" class="time-slot" onclick="selectTime('17:00:00', this)"
-                                    data-time="17:00:00">05:00 PM
-                            </button>
-                            <button type="button" class="time-slot" onclick="selectTime('17:30:00', this)"
-                                    data-time="17:30:00">05:30 PM
-                            </button>
+                            <button type="button" class="time-slot" onclick="selectTime('08:00:00', this)" data-time="08:00:00">08:00 AM</button>
+                            <button type="button" class="time-slot" onclick="selectTime('08:30:00', this)" data-time="08:30:00">08:30 AM</button>
+                            <button type="button" class="time-slot" onclick="selectTime('09:00:00', this)" data-time="09:00:00">09:00 AM</button>
+                            <button type="button" class="time-slot" onclick="selectTime('09:30:00', this)" data-time="09:30:00">09:30 AM</button>
+                            <button type="button" class="time-slot" onclick="selectTime('10:00:00', this)" data-time="10:00:00">10:00 AM</button>
+                            <button type="button" class="time-slot" onclick="selectTime('10:30:00', this)" data-time="10:30:00">10:30 AM</button>
+                            <button type="button" class="time-slot" onclick="selectTime('11:00:00', this)" data-time="11:00:00">11:00 AM</button>
+                            <button type="button" class="time-slot" onclick="selectTime('11:30:00', this)" data-time="11:30:00">11:30 AM</button>
+                            <button type="button" class="time-slot" onclick="selectTime('14:00:00', this)" data-time="14:00:00">02:00 PM</button>
+                            <button type="button" class="time-slot" onclick="selectTime('14:30:00', this)" data-time="14:30:00">02:30 PM</button>
+                            <button type="button" class="time-slot" onclick="selectTime('15:00:00', this)" data-time="15:00:00">03:00 PM</button>
+                            <button type="button" class="time-slot" onclick="selectTime('15:30:00', this)" data-time="15:30:00">03:30 PM</button>
+                            <button type="button" class="time-slot" onclick="selectTime('16:00:00', this)" data-time="16:00:00">04:00 PM</button>
+                            <button type="button" class="time-slot" onclick="selectTime('16:30:00', this)" data-time="16:30:00">04:30 PM</button>
+                            <button type="button" class="time-slot" onclick="selectTime('17:00:00', this)" data-time="17:00:00">05:00 PM</button>
+                            <button type="button" class="time-slot" onclick="selectTime('17:30:00', this)" data-time="17:30:00">05:30 PM</button>
                         </div>
-                        <input type="hidden" value="" id="appointmentTime" name="appointmentTime" required/>
+                        <input type="hidden" id="appointmentTime" name="appointmentTime" required />
                         <div id="appointmentTimeError" class="error-message d-none">
                             <i class="bi bi-exclamation-circle"></i>
-                            <span>Please select an appointment time</span>
+                            <span>Time selection is required</span>
                         </div>
                     </div>
                 </div>
@@ -800,10 +655,8 @@
 
                 <div class="row">
                     <div class="col-md-6 mb-3">
-                        <label for="fullName" class="form-label">Full Name <span
-                                class="required-asterisk">*</span></label>
-                        <input type="text" id="fullName" name="fullName" class="form-control readonly" readonly
-                               required/>
+                        <label for="fullName" class="form-label">Full Name <span class="required-asterisk">*</span></label>
+                        <input type="text" id="fullName" name="fullName" class="form-control" required />
                         <div id="fullNameError" class="error-message d-none">
                             <i class="bi bi-exclamation-circle"></i>
                             <span>Full name is required</span>
@@ -814,8 +667,12 @@
                         <label for="phoneNumber" class="form-label">
                             Phone Number <span class="required-asterisk">*</span>
                         </label>
-                        <input type="tel" id="phoneNumber" name="phoneNumber" class="form-control readonly" readonly
-                               required/>
+                        <div class="contact-field">
+                            <input type="tel" id="phoneNumber" name="phoneNumber" class="form-control" placeholder="0123456789" required />
+                            <button type="button" class="reset-btn" onclick="resetPhoneNumber()">
+                                <i class="bi bi-arrow-clockwise"></i>
+                            </button>
+                        </div>
                         <div id="phoneNumberError" class="error-message d-none">
                             <i class="bi bi-exclamation-circle"></i>
                             <span>Valid phone number is required</span>
@@ -828,8 +685,12 @@
                         <label for="email" class="form-label">
                             Email Address <span class="required-asterisk">*</span>
                         </label>
-                        <input type="email" id="email" name="email" class="form-control readonly" maxlength="50"
-                               readonly required/>
+                        <div class="contact-field">
+                            <input type="email" id="email" name="email" class="form-control" placeholder="patient@example.com" maxlength="50" required />
+                            <button type="button" class="reset-btn" onclick="resetEmail()">
+                                <i class="bi bi-arrow-clockwise"></i>
+                            </button>
+                        </div>
                         <div id="emailError" class="error-message d-none">
                             <i class="bi bi-exclamation-circle"></i>
                             <span>Valid email address is required</span>
@@ -840,8 +701,7 @@
                         <label for="dateOfBirth" class="form-label">
                             Date of Birth <span class="required-asterisk">*</span>
                         </label>
-                        <input type="text" id="dateOfBirth" name="dateOfBirth" class="form-control readonly" readonly
-                               required/>
+                        <input type="date" id="dateOfBirth" name="dateOfBirth" class="form-control" max="2025-06-21" required />
                         <div id="dateOfBirthError" class="error-message d-none">
                             <i class="bi bi-exclamation-circle"></i>
                             <span>Valid date of birth is required</span>
@@ -854,7 +714,12 @@
                         <label for="gender" class="form-label">
                             Gender <span class="required-asterisk">*</span>
                         </label>
-                        <input type="text" id="gender" name="gender" class="form-control readonly" readonly required/>
+                        <select id="gender" name="gender" class="form-select" required>
+                            <option value="">Select Gender</option>
+                            <option value="Male">Male</option>
+                            <option value="Female">Female</option>
+                            <option value="Other">Other</option>
+                        </select>
                         <div id="genderError" class="error-message d-none">
                             <i class="bi bi-exclamation-circle"></i>
                             <span>Gender is required</span>
@@ -862,62 +727,67 @@
                     </div>
 
                     <div class="col-md-6 mb-3">
-                        <label for="country" class="form-label">Country <span class="required-asterisk">*</span></label>
-                        <input type="text" id="country" name="country" class="form-control readonly" readonly required/>
-                        <div id="countryError" class="error-message d-none">
-                            <i class="bi bi-exclamation-circle"></i>
-                            <span>Country is required</span>
-                        </div>
+                        <label for="emergencyContact" class="form-label">Emergency Contact (Optional)</label>
+                        <input type="tel" id="emergencyContact" name="emergencyContact" class="form-control" placeholder="Emergency contact number" />
                     </div>
                 </div>
 
                 <div class="row">
                     <div class="col-md-6 mb-3">
+                        <label for="country" class="form-label">Country</label>
+                        <input type="text" id="country" name="country" class="form-control" value="Việt Nam" readonly />
+                    </div>
+
+                    <div class="col-md-6 mb-3">
                         <label for="province" class="form-label">Province/City <span class="required-asterisk">*</span></label>
-                        <input type="text" id="province" name="province" class="form-control readonly" readonly
-                               required/>
+                        <select id="province" name="province" class="form-select" required onchange="loadDistricts(); updatePostalCode()">
+                            <option value="">Select Province/City</option>
+                        </select>
                         <div id="provinceError" class="error-message d-none">
                             <i class="bi bi-exclamation-circle"></i>
                             <span>Province/City is required</span>
                         </div>
                     </div>
+                </div>
 
+                <div class="row">
                     <div class="col-md-6 mb-3">
-                        <label for="district" class="form-label">District <span
-                                class="required-asterisk">*</span></label>
-                        <input type="text" id="district" name="district" class="form-control readonly" readonly
-                               required/>
+                        <label for="district" class="form-label">District <span class="required-asterisk">*</span></label>
+                        <select id="district" name="district" class="form-select" required onchange="loadWards()">
+                            <option value="">Select District</option>
+                        </select>
                         <div id="districtError" class="error-message d-none">
                             <i class="bi bi-exclamation-circle"></i>
                             <span>District is required</span>
                         </div>
                     </div>
-                </div>
 
-                <div class="row">
                     <div class="col-md-6 mb-3">
-                        <label for="streetAddress" class="form-label">Street Address <span
-                                class="required-asterisk">*</span></label>
-                        <input type="text" id="streetAddress" name="streetAddress" class="form-control readonly"
-                               readonly required/>
+                        <label for="streetAddress" class="form-label">Street Address <span class="required-asterisk">*</span></label>
+                        <select id="streetAddress" name="streetAddress" class="form-select" required>
+                            <option value="">Select Ward</option>
+                        </select>
                         <div id="streetAddressError" class="error-message d-none">
                             <i class="bi bi-exclamation-circle"></i>
                             <span>Street Address is required</span>
                         </div>
                     </div>
-
-                    <div class="col-md-6 mb-3">
-                        <label for="postalCode" class="form-label">Postal Code</label>
-                        <input type="text" id="postalCode" name="postalCode" class="form-control readonly" readonly/>
-                    </div>
                 </div>
 
                 <div class="row">
                     <div class="col-md-6 mb-3">
-                        <label for="addressType" class="form-label">Address Type <span
-                                class="required-asterisk">*</span></label>
-                        <input type="text" id="addressType" name="addressType" class="form-control readonly" readonly
-                               required/>
+                        <label for="postalCode" class="form-label">Postal Code</label>
+                        <input type="text" id="postalCode" name="postalCode" class="form-control" readonly />
+                    </div>
+
+                    <div class="col-md-6 mb-3">
+                        <label for="addressType" class="form-label">Address Type <span class="required-asterisk">*</span></label>
+                        <select id="addressType" name="addressType" class="form-select" required>
+                            <option value="">Select Address Type</option>
+                            <option value="Home">Home</option>
+                            <option value="Work">Work</option>
+                            <option value="Primary">Primary</option>
+                        </select>
                         <div id="addressTypeError" class="error-message d-none">
                             <i class="bi bi-exclamation-circle"></i>
                             <span>Address Type is required</span>
@@ -927,17 +797,12 @@
 
                 <div class="mb-4">
                     <label for="description" class="form-label">
-                        Reason for Visit / Symptoms <span class="required-asterisk">*</span>
+                        Reason for Visit / Symptoms (Optional)
                     </label>
-                    <textarea id="description" name="description" class="form-control readonly" rows="4" maxlength="250"
+                    <textarea id="description" name="description" class="form-control" rows="4" maxlength="250"
                               placeholder="Please describe your symptoms or reason for the appointment..."
-                              style="resize: none;" oninput="sanitizeOnInput(this); autoResize(this)"
-                              disabled required></textarea>
+                              style="resize: none;" oninput="sanitizeOnInput(this); autoResize(this)"></textarea>
                     <small class="text-muted">Maximum 250 characters</small>
-                    <div id="descriptionError" class="error-message d-none">
-                        <i class="bi bi-exclamation-circle"></i>
-                        <span>Please describe your reason for visit or symptoms</span>
-                    </div>
                 </div>
 
                 <div class="text-center">
@@ -949,23 +814,26 @@
             </form>
         </div>
     </div>
-</div>
 
-<!--Here ís model-->
-<div id="confirmationModal" style="display: none;" class="confirmation-overlay">
-    <div class="confirmation-dialog">
-        <div class="confirmation-icon">
-            <i class="bi bi-check-circle"></i>
-        </div>
-        <h3 class="confirmation-title">Confirm Appointment</h3>
-        <p class="confirmation-message">Are you sure you want to book this appointment?</p>
-        <div class="confirmation-actions">
-            <button class="btn-primary-custom" onclick="confirmBooking(true)">
-                <i class="bi bi-check-circle"></i> Confirm
-            </button>
-            <button class="btn-outline-custom" onclick="confirmBooking(false)">
-                <i class="bi bi-x-circle"></i> Cancel
-            </button>
+    <div class="confirmation-overlay" id="confirmationOverlay">
+        <div class="confirmation-dialog">
+            <div class="confirmation-icon">
+                <i class="bi bi-calendar-check"></i>
+            </div>
+            <h3 class="confirmation-title">Confirm Appointment</h3>
+            <p class="confirmation-message">
+                Please review your appointment details and confirm to proceed with the booking.
+            </p>
+            <div class="confirmation-actions">
+                <button class="btn-primary-custom" onclick="confirmBooking(true)">
+                    <i class="bi bi-check-circle"></i>
+                    Confirm Booking
+                </button>
+                <button class="btn-outline-custom" onclick="confirmBooking(false)">
+                    <i class="bi bi-x-circle"></i>
+                    Cancel
+                </button>
+            </div>
         </div>
     </div>
 </div>
@@ -973,36 +841,76 @@
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 
 <script>
+    const mockSpecialties = [
+        { specId: "1", specName: "Cardiology", price: 150 },
+        { specId: "2", specName: "Dermatology", price: 120 },
+        { specId: "3", specName: "Pediatrics", price: 100 }
+    ];
 
-    // Initialize date picker and set fields read-only on page load
-    document.addEventListener('DOMContentLoaded', function () {
+    const mockDoctors = {
+        "1": [
+            { doctorId: "101", fullName: "John Smith", bioDescription: "Experienced cardiologist with 15+ years of practice" },
+            { doctorId: "102", fullName: "Emily Davis", bioDescription: "Specialist in heart surgery" }
+        ],
+        "2": [
+            { doctorId: "201", fullName: "Sarah Johnson", bioDescription: "Expert in skin conditions" }
+        ],
+        "3": [
+            { doctorId: "301", fullName: "Michael Lee", bioDescription: "Pediatrician with 10 years of experience" }
+        ]
+    };
+
+    const mockPatients = [
+        {
+            patientId: "P001",
+            fullName: "John Doe",
+            phoneNumber: "0123456789",
+            email: "john.doe@gmail.com",
+            dateOfBirth: "1990-05-15",
+            gender: "Male",
+            country: "Việt Nam",
+            province: "Thành phố Hà Nội",
+            district: "Quận Ba Đình",
+            streetAddress: "Phường Cống Vị",
+            postalCode: "100000",
+            addressType: "Home",
+            emergencyContact: "0987654321",
+            description: "Routine checkup"
+        },
+        {
+            patientId: "P002",
+            fullName: "Jane Smith",
+            phoneNumber: "0123456790",
+            email: "jane.smith@gmail.com",
+            dateOfBirth: "1985-08-20",
+            gender: "Female",
+            country: "Việt Nam",
+            province: "Thành phố Hồ Chí Minh",
+            district: "Quận 1",
+            streetAddress: "Phường Bến Nghé",
+            postalCode: "700000",
+            addressType: "Work",
+            emergencyContact: "",
+            description: "Skin irritation"
+        }
+    ];
+
+    // API endpoints
+    const API_PROVINCES = 'https://provinces.open-api.vn/api/p/';
+    const API_DISTRICTS = 'https://provinces.open-api.vn/api/d/';
+    const API_WARDS = 'https://provinces.open-api.vn/api/w/';
+
+    // Mock postal codes by province code
+    const postalCodes = {
+        '1': '100000', // Hà Nội
+        '79': '700000', // TP Hồ Chí Minh
+        // Add more mappings as needed
+    };
+
+    // Load provinces on page load
+    document.addEventListener('DOMContentLoaded', function() {
+        loadProvinces();
         initializeDatePicker();
-        setFieldsReadOnly();
-
-        // Add event listener to clear date error when user selects
-        const appointmentDate = document.getElementById('appointmentDate');
-        if (appointmentDate) {
-            appointmentDate.addEventListener('change', function() {
-                const dateError = document.getElementById('appointmentDateError');
-                if (dateError) {
-                    dateError.classList.add('d-none');
-                }
-                this.classList.remove('error');
-            });
-        }
-
-        // Add room selection change event
-        const roomSelect = document.getElementById('roomId');
-        if (roomSelect) {
-            roomSelect.addEventListener('change', function() {
-                const roomError = document.getElementById('roomIdError');
-                if (roomError) {
-                    roomError.classList.add('d-none');
-                }
-                this.classList.remove('error');
-                updateRoomInfo();
-            });
-        }
     });
 
     function initializeDatePicker() {
@@ -1015,35 +923,121 @@
         const dateInput = document.getElementById('appointmentDate');
         if (dateInput) {
             $(dateInput).datepicker({
-                dateFormat: 'mm/dd/yy',
+                dateFormat: 'yy-mm-dd',
                 minDate: tomorrow,
                 maxDate: maxDate,
-                beforeShowDay: function (date) {
+                beforeShowDay: function(date) {
                     const day = date.getDay();
                     return [day !== 0 && day !== 6, day !== 0 && day !== 6 ? '' : 'ui-state-disabled'];
                 },
-                onSelect: function (dateText) {
+                onSelect: function(dateText) {
                     updateTimeSlots();
                 }
             });
         }
     }
 
-    function setFieldsReadOnly() {
-        const fields = ['fullName', 'phoneNumber', 'email', 'dateOfBirth', 'gender', 'country', 'province', 'district', 'streetAddress', 'postalCode', 'addressType'];
-        fields.forEach(id => {
-            const el = document.getElementById(id);
-            if (el) {
-                el.readOnly = true;
-                el.classList.add('readonly');
-            }
-        });
-        // Disable description textarea by default
-        const description = document.getElementById('description');
-        if (description) {
-            description.disabled = true;
-            description.classList.add('readonly');
+    async function loadProvinces() {
+        const provinceSelect = document.getElementById('province');
+        provinceSelect.classList.add('loading');
+        try {
+            const response = await fetch(API_PROVINCES);
+            const provinces = await response.json();
+            provinceSelect.innerHTML = '<option value="">Select Province/City</option>';
+            provinces.forEach(province => {
+                const option = document.createElement('option');
+                option.value = province.name;
+                option.text = province.name;
+                option.setAttribute('data-code', province.code);
+                provinceSelect.appendChild(option);
+            });
+        } catch (error) {
+            console.error('Error loading provinces:', error);
+            provinceSelect.innerHTML = '<option value="">Error loading provinces</option>';
+        } finally {
+            provinceSelect.classList.remove('loading');
         }
+    }
+
+    async function loadDistricts() {
+        const provinceSelect = document.getElementById('province');
+        const districtSelect = document.getElementById('district');
+        const streetAddressSelect = document.getElementById('streetAddress');
+
+        const selectedProvince = provinceSelect.options[provinceSelect.selectedIndex];
+        const provinceCode = selectedProvince ? selectedProvince.getAttribute('data-code') : null;
+
+        districtSelect.innerHTML = '<option value="">Select District</option>';
+        streetAddressSelect.innerHTML = '<option value="">Select Ward</option>';
+
+        if (!provinceCode) {
+            districtSelect.disabled = true;
+            streetAddressSelect.disabled = true;
+            return;
+        }
+
+        districtSelect.disabled = false;
+        districtSelect.classList.add('loading');
+        try {
+            const response = await fetch(`${API_PROVINCES}${provinceCode}?depth=2`);
+            const provinceData = await response.json();
+            const districts = provinceData.districts || [];
+            districts.forEach(district => {
+                const option = document.createElement('option');
+                option.value = district.name;
+                option.text = district.name;
+                option.setAttribute('data-code', district.code);
+                districtSelect.appendChild(option);
+            });
+        } catch (error) {
+            console.error('Error loading districts:', error);
+            districtSelect.innerHTML = '<option value="">Error loading districts</option>';
+        } finally {
+            districtSelect.classList.remove('loading');
+        }
+    }
+
+    async function loadWards() {
+        const districtSelect = document.getElementById('district');
+        const streetAddressSelect = document.getElementById('streetAddress');
+
+        const selectedDistrict = districtSelect.options[districtSelect.selectedIndex];
+        const districtCode = selectedDistrict ? selectedDistrict.getAttribute('data-code') : null;
+
+        streetAddressSelect.innerHTML = '<option value="">Select Ward</option>';
+
+        if (!districtCode) {
+            streetAddressSelect.disabled = true;
+            return;
+        }
+
+        streetAddressSelect.disabled = false;
+        streetAddressSelect.classList.add('loading');
+        try {
+            const response = await fetch(`${API_DISTRICTS}${districtCode}?depth=2`);
+            const districtData = await response.json();
+            const wards = districtData.wards || [];
+            wards.forEach(ward => {
+                const option = document.createElement('option');
+                option.value = ward.name;
+                option.text = ward.name;
+                streetAddressSelect.appendChild(option);
+            });
+        } catch (error) {
+            console.error('Error loading wards:', error);
+            streetAddressSelect.innerHTML = '<option value="">Error loading wards</option>';
+        } finally {
+            streetAddressSelect.classList.remove('loading');
+        }
+    }
+
+    function updatePostalCode() {
+        const provinceSelect = document.getElementById('province');
+        const postalCodeInput = document.getElementById('postalCode');
+        const selectedProvince = provinceSelect.options[provinceSelect.selectedIndex];
+        const provinceCode = selectedProvince ? selectedProvince.getAttribute('data-code') : null;
+
+        postalCodeInput.value = provinceCode && postalCodes[provinceCode] ? postalCodes[provinceCode] : '';
     }
 
     function searchPatients(event) {
@@ -1056,37 +1050,31 @@
         $.ajax({
             url: '/api/patients',
             method: 'GET',
-            data: {search: query, page: 1}, // Always send page=1
-            success: function (response) {
+            data: { search: query },
+            success: function(response) {
                 const resultsContainer = document.getElementById('searchResults');
                 const resultsBody = document.getElementById('searchResultsBody');
                 resultsBody.innerHTML = '';
                 if (response && response.patients && response.patients.length > 0) {
-                    response.patients.forEach(function (patient) {
+                    response.patients.forEach(function(patient) {
                         const row = document.createElement('tr');
-                        // Sử dụng patient.patientId để lấy đúng Patient ID
                         row.innerHTML = `
                             <td>${patient.id}</td>
                             <td>${patient.name}</td>
                             <td>${patient.phone}</td>
                             <td>${patient.email}</td>
                         `;
-                        row.addEventListener('click', function () {
-                            selectPatient(patient);
-                        });
+                        row.addEventListener('click', function() { selectPatient(patient); });
                         resultsBody.appendChild(row);
                     });
                     resultsContainer.classList.remove('d-none');
                 } else {
-                    resultsBody.innerHTML = '<tr><td colspan="4" class="text-center">No data available</td></tr>';
+                    resultsBody.innerHTML = '<tr><td colspan="4" class="text-center">No patients found.</td></tr>';
                     resultsContainer.classList.remove('d-none');
                 }
             },
-            error: function () {
-                const resultsContainer = document.getElementById('searchResults');
-                const resultsBody = document.getElementById('searchResultsBody');
-                resultsBody.innerHTML = '<tr><td colspan="4" class="text-center">No data available</td></tr>';
-                resultsContainer.classList.remove('d-none');
+            error: function() {
+                alert('Error searching for patients.');
             }
         });
     }
@@ -1096,410 +1084,161 @@
         setReadOnlyField('fullName', patient.name);
         setReadOnlyField('phoneNumber', patient.phone);
         setReadOnlyField('email', patient.email);
-        // Format dateOfBirth to MM/DD/YYYY
-        const dob = patient.dateOfBirth ? new Date(patient.dateOfBirth).toLocaleDateString('en-US', {
-            month: '2-digit',
-            day: '2-digit',
-            year: 'numeric'
-        }) : '';
-        setReadOnlyField('dateOfBirth', dob);
+        setReadOnlyField('dateOfBirth', patient.dateOfBirth);
         setReadOnlyField('gender', patient.gender);
         setReadOnlyField('country', patient.country || 'Việt Nam');
-        setReadOnlyField('province', patient.province);
-        setReadOnlyField('district', patient.district);
-        setReadOnlyField('streetAddress', patient.streetAddress);
+        setProvinceDistrictWardReadOnly(patient);
         setReadOnlyField('postalCode', patient.postalCode);
         setReadOnlyField('addressType', patient.addressType);
-        // Enable description textarea
-        const description = document.getElementById('description');
-        description.disabled = false;
-        description.classList.remove('readonly');
-        description.value = patient.description ? patient.description.substring(0, 250) : '';
-
-        // Add event listener to clear description error
-        description.addEventListener('input', function() {
-            if (this.value.trim()) {
-                const descError = document.getElementById('descriptionError');
-                if (descError) {
-                    descError.classList.add('d-none');
-                }
-                this.classList.remove('error');
-            }
-        });
-
+        setReadOnlyField('emergencyContact', patient.emergencyContact);
+        setReadOnlyField('description', patient.description ? patient.description.substring(0, 250) : '');
         document.getElementById('searchResults').classList.add('d-none');
     }
 
-    function setReadOnlyField(id, value) {
-        const el = document.getElementById(id);
-        if (!el) return;
-        el.value = value || '';
-        el.readOnly = true;
-        el.classList.add('readonly');
-    }
+    // Sửa lại hàm này để load options bất đồng bộ đúng thứ tự
+    async function setProvinceDistrictWardReadOnly(patient) {
+        const provinceSelect = document.getElementById('province');
+        const districtSelect = document.getElementById('district');
+        const streetAddressSelect = document.getElementById('streetAddress');
 
-    // Enhanced validation function with scroll to error
-    function validateForm() {
-        let isValid = true;
-        let firstErrorField = null;
-
-        // Clear previous errors
-        clearAllErrors();
-
-        // Define required fields with their validation messages
-        const requiredFields = [
-            { id: 'specialtyId', errorId: 'specialtyIdError', message: 'Please select a medical specialty' },
-            { id: 'doctorId', errorId: 'doctorIdError', message: 'Please select a doctor' },
-            { id: 'roomId', errorId: 'roomIdError', message: 'Please select a room' },
-            { id: 'appointmentDate', errorId: 'appointmentDateError', message: 'Please select an appointment date' },
-            { id: 'fullName', errorId: 'fullNameError', message: 'Full name is required. Please search and select a patient first.' },
-            { id: 'phoneNumber', errorId: 'phoneNumberError', message: 'Phone number is required. Please search and select a patient first.' },
-            { id: 'email', errorId: 'emailError', message: 'Email address is required. Please search and select a patient first.' },
-            { id: 'dateOfBirth', errorId: 'dateOfBirthError', message: 'Date of birth is required. Please search and select a patient first.' },
-            { id: 'gender', errorId: 'genderError', message: 'Gender is required. Please search and select a patient first.' },
-            { id: 'description', errorId: 'descriptionError', message: 'Please describe your reason for visit or symptoms' }
-        ];
-
-        // Validate all required fields
-        requiredFields.forEach(field => {
-            const element = document.getElementById(field.id);
-            if (!element || !element.value || element.value.trim() === '') {
-                showError(field.id, field.errorId, field.message);
-                isValid = false;
-
-                // Set first error field for scrolling
-                if (!firstErrorField) {
-                    firstErrorField = element;
-                }
-            }
-        });
-
-        // Special validation for appointment time
-        const appointmentTime = document.getElementById('appointmentTime');
-        if (!appointmentTime.value) {
-            showTimeError();
-            isValid = false;
-
-            if (!firstErrorField) {
-                firstErrorField = document.getElementById('timeGrid');
-            }
+        // 1. Load provinces nếu chưa có
+        if (provinceSelect.options.length <= 1) {
+            await loadProvinces();
         }
 
-        // If there are validation errors, scroll to the first error field
-        if (!isValid && firstErrorField) {
-            scrollToErrorField(firstErrorField);
+        // 2. Set province
+        let provinceFound = false;
+        for (let i = 0; i < provinceSelect.options.length; i++) {
+            if (provinceSelect.options[i].value === patient.province) {
+                provinceSelect.selectedIndex = i;
+                provinceFound = true;
+                break;
+            }
         }
-
-        return isValid;
-    }
-
-    // Function to scroll to error field smoothly
-    function scrollToErrorField(element) {
-        const rect = element.getBoundingClientRect();
-        const elementTop = rect.top + window.pageYOffset;
-        const offset = 100; // Offset from top of viewport
-
-        window.scrollTo({
-            top: elementTop - offset,
-            behavior: 'smooth'
-        });
-
-        // Focus on the element if it's focusable
-        setTimeout(() => {
-            if (element.focus && typeof element.focus === 'function') {
-                element.focus();
-            }
-        }, 500);
-    }
-
-    // Function to validate patient data fields specifically
-    function validatePatientData() {
-        const patientFields = ['fullName', 'phoneNumber', 'email', 'dateOfBirth', 'gender'];
-        let hasPatientData = false;
-
-        patientFields.forEach(fieldId => {
-            const field = document.getElementById(fieldId);
-            if (field && field.value && field.value.trim() !== '') {
-                hasPatientData = true;
-            }
-        });
-
-        return hasPatientData;
-    }
-
-    // Enhanced showConfirmation function with inline error display
-    function showConfirmation() {
-        // Clear any previous search errors
-        clearSearchError();
-
-        // First check if user has searched for a patient
-        const searchQuery = document.getElementById('searchQuery').value.trim();
-        const patientId = document.getElementById('patientIdInput').value;
-
-        // If no search query and no patient selected, show error inline at search field
-        if (!searchQuery && !patientId) {
-            showSearchError('Please search for a patient by name or phone number first.');
-            const searchInput = document.getElementById('searchQuery');
-            if (searchInput) {
-                scrollToErrorField(searchInput);
-                searchInput.focus();
-                searchInput.classList.add('error');
-                setTimeout(() => {
-                    searchInput.classList.remove('error');
-                }, 3000);
-            }
+        provinceSelect.disabled = true;
+        if (!provinceFound) {
+            console.warn('Province not found in select:', patient.province);
             return;
         }
 
-        // If search was done but no patient selected, show different message
-        if (searchQuery && !patientId) {
-            showSearchError('Please select a patient from the search results before booking an appointment.');
-            const searchResults = document.getElementById('searchResults');
-            if (searchResults && !searchResults.classList.contains('d-none')) {
-                scrollToErrorField(searchResults);
-            } else {
-                const searchInput = document.getElementById('searchQuery');
-                if (searchInput) {
-                    scrollToErrorField(searchInput);
-                    searchInput.focus();
-                }
-            }
+        // 3. Load districts theo province
+        const selectedProvinceOption = provinceSelect.options[provinceSelect.selectedIndex];
+        const provinceCode = selectedProvinceOption.getAttribute('data-code');
+        if (!provinceCode) {
+            console.warn('Province code not found for:', patient.province);
             return;
         }
-
-        // Check if patient data is available
-        if (!validatePatientData()) {
-            showSearchError('Patient information is incomplete. Please search and select a patient first.');
-            const searchInput = document.getElementById('searchQuery');
-            if (searchInput) {
-                scrollToErrorField(searchInput);
-                searchInput.focus();
-            }
-            return;
-        }
-
-        // Then validate the form
-        if (!validateForm()) {
-            return;
-        }
-
-        document.getElementById('confirmationModal').style.display = 'block';
-    }
-
-    // Function to show search error inline
-    function showSearchError(message) {
-        const searchError = document.getElementById('searchError');
-        const searchInput = document.getElementById('searchQuery');
-
-        if (searchError) {
-            searchError.classList.remove('d-none');
-            searchError.querySelector('span').textContent = message;
-        }
-
-        if (searchInput) {
-            searchInput.classList.add('error');
-        }
-    }
-
-    // Function to clear search error
-    function clearSearchError() {
-        const searchError = document.getElementById('searchError');
-        const searchInput = document.getElementById('searchQuery');
-
-        if (searchError) {
-            searchError.classList.add('d-none');
-        }
-
-        if (searchInput) {
-            searchInput.classList.remove('error');
-        }
-    }
-
-    // Add event listener to clear search error when user starts typing
-    document.addEventListener('DOMContentLoaded', function () {
-        // ...existing code...
-
-        // Add search input event listener to clear errors
-        const searchInput = document.getElementById('searchQuery');
-        if (searchInput) {
-            searchInput.addEventListener('input', function() {
-                if (this.value.trim()) {
-                    clearSearchError();
-                }
-            });
-        }
-    });
-
-    function confirmBooking(confirm) {
-        document.getElementById('confirmationModal').style.display = 'none';
-
-        if (confirm) {
-            submitAppointment();
-        }
-    }
-
-    // Add function to submit appointment
-    async function submitAppointment() {
-        const formData = new FormData();
-
-        // Collect all form data
-        formData.append('patientId', document.getElementById('patientIdInput').value);
-        formData.append('specialtyId', document.getElementById('specialtyId').value);
-        formData.append('doctorId', document.getElementById('doctorId').value);
-        formData.append('roomId', document.getElementById('roomId').value);
-
-        // Convert date format from MM/DD/YYYY to YYYY-MM-DD
-        const appointmentDate = document.getElementById('appointmentDate').value;
-        const dateParts = appointmentDate.split('/');
-        const formattedDate = `${dateParts[2]}-${dateParts[0].padStart(2, '0')}-${dateParts[1].padStart(2, '0')}`;
-        formData.append('appointmentDate', formattedDate);
-
-        formData.append('appointmentTime', document.getElementById('appointmentTime').value);
-        formData.append('email', document.getElementById('email').value);
-        formData.append('phoneNumber', document.getElementById('phoneNumber').value);
-        formData.append('description', document.getElementById('description').value);
-
-        // Add CSRF token
-        const csrfToken = document.querySelector('input[name="_csrf"]').value;
-        formData.append('_csrf', csrfToken);
+        districtSelect.innerHTML = '<option value="">Select District</option>';
+        streetAddressSelect.innerHTML = '<option value="">Select Ward</option>';
+        districtSelect.disabled = true;
+        streetAddressSelect.disabled = true;
 
         try {
-            const response = await $.ajax({
-                url: '/receptionist/appointments/book',
-                method: 'POST',
-                data: Object.fromEntries(formData),
-                dataType: 'json'
+            const provinceRes = await fetch(`https://provinces.open-api.vn/api/p/${provinceCode}?depth=2`);
+            const provinceData = await provinceRes.json();
+            const districts = provinceData.districts || [];
+            let districtFound = false;
+            districts.forEach(district => {
+                const option = document.createElement('option');
+                option.value = district.name;
+                option.text = district.name;
+                option.setAttribute('data-code', district.code);
+                if (district.name === patient.district) {
+                    option.selected = true;
+                    districtFound = true;
+                }
+                districtSelect.appendChild(option);
             });
-
-            if (response.success) {
-                // Show success message
-                document.getElementById('successMessage').classList.remove('d-none');
-                // Reset form
-                document.getElementById('appointmentForm').reset();
-                // Scroll to top
-                window.scrollTo(0, 0);
-            } else {
-                alert('Error booking appointment: ' + (response.message || 'Unknown error'));
+            districtSelect.disabled = true;
+            if (!districtFound) {
+                console.warn('District not found in select:', patient.district);
+                return;
             }
-        } catch (error) {
-            console.error('Error booking appointment:', error);
-            alert('Error booking appointment. Please try again.');
-        }
-    }
 
-    // Add input sanitization functions
-    function sanitizeOnInput(element) {
-        element.value = element.value.replace(/<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>/gi, '');
-    }
-
-    function autoResize(element) {
-        element.style.height = 'auto';
-        element.style.height = element.scrollHeight + 'px';
-    }
-
-    function sanitizeDescription(description) {
-        return description.replace(/<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>/gi, '').trim();
-    }
-
-    function showError(fieldId, errorId, message) {
-        const field = document.getElementById(fieldId);
-        const errorDiv = document.getElementById(errorId);
-
-        if (field) {
-            field.classList.add('error');
-        }
-
-        if (errorDiv) {
-            errorDiv.classList.remove('d-none');
-            errorDiv.querySelector('span').textContent = message;
-        }
-    }
-
-    function showTimeError() {
-        const timeGrid = document.getElementById('timeGrid');
-        const errorDiv = document.getElementById('appointmentTimeError');
-
-        if (timeGrid) {
-            timeGrid.classList.add('error');
-        }
-
-        if (errorDiv) {
-            errorDiv.classList.remove('d-none');
-            errorDiv.querySelector('span').textContent = 'Please select an appointment time';
-        }
-    }
-
-    function clearAllErrors() {
-        // Clear field errors
-        const fields = ['specialtyId', 'doctorId', 'roomId', 'appointmentDate', 'description', 'fullName', 'phoneNumber', 'email', 'dateOfBirth', 'gender'];
-        fields.forEach(fieldId => {
-            const field = document.getElementById(fieldId);
-            const errorDiv = document.getElementById(fieldId + 'Error');
-
-            if (field) {
-                field.classList.remove('error');
+            // 4. Load wards theo district
+            const selectedDistrictOption = Array.from(districtSelect.options).find(opt => opt.value === patient.district);
+            const districtCode = selectedDistrictOption ? selectedDistrictOption.getAttribute('data-code') : null;
+            if (!districtCode) {
+                console.warn('District code not found for:', patient.district);
+                return;
             }
-            if (errorDiv) {
-                errorDiv.classList.add('d-none');
+            const districtRes = await fetch(`https://provinces.open-api.vn/api/d/${districtCode}?depth=2`);
+            const districtData = await districtRes.json();
+            const wards = districtData.wards || [];
+            let wardFound = false;
+            wards.forEach(ward => {
+                const option = document.createElement('option');
+                option.value = ward.name;
+                option.text = ward.name;
+                if (ward.name === patient.streetAddress) {
+                    option.selected = true;
+                    wardFound = true;
+                }
+                streetAddressSelect.appendChild(option);
+            });
+            streetAddressSelect.disabled = true;
+            if (!wardFound) {
+                console.warn('Ward not found in select:', patient.streetAddress);
+            }
+        } catch (err) {
+            console.error('Error loading district/ward:', err);
+        }
+    }
+
+    function setReadOnlyField(id, value) {
+        var el = document.getElementById(id);
+        if (!el) return;
+        if (el.tagName === 'SELECT') {
+            // Set value and disable
+            for (let i = 0; i < el.options.length; i++) {
+                if (el.options[i].value === value) {
+                    el.selectedIndex = i;
+                    break;
+                }
+            }
+            el.disabled = true;
+        } else {
+            el.value = value || '';
+            el.readOnly = true;
+            el.classList.add('readonly');
+        }
+    }
+
+    function clearReadOnlyFields() {
+        var ids = ['fullName','phoneNumber','email','dateOfBirth','gender','country','province','district','streetAddress','postalCode','addressType','emergencyContact','description'];
+        ids.forEach(function(id) {
+            var el = document.getElementById(id);
+            if (!el) return;
+            el.readOnly = false;
+            el.classList.remove('readonly');
+            if (el.tagName === 'SELECT') {
+                el.disabled = false;
             }
         });
-
-        // Clear time grid error
-        const timeGrid = document.getElementById('timeGrid');
-        const timeErrorDiv = document.getElementById('appointmentTimeError');
-
-        if (timeGrid) {
-            timeGrid.classList.remove('error');
-        }
-        if (timeErrorDiv) {
-            timeErrorDiv.classList.add('d-none');
-        }
     }
 
-    async function updateDoctors() {
-        // Clear specialty error when user selects
-        const specialtyError = document.getElementById('specialtyIdError');
-        if (specialtyError) {
-            specialtyError.classList.add('d-none');
-        }
-        document.getElementById('specialtyId').classList.remove('error');
-
+    function updateDoctors() {
         const specialtyId = document.getElementById('specialtyId').value;
         const doctorSelect = document.getElementById('doctorId');
         const doctorInfo = document.getElementById('doctorInfoDisplay');
-        const roomSelect = document.getElementById('roomId');
 
-        // Clear previous selections
         doctorSelect.innerHTML = '<option value="">Choose a Doctor</option>';
-        roomSelect.innerHTML = '<option value="">Choose a Room</option>';
         doctorInfo.classList.remove('show');
 
         if (specialtyId) {
             doctorSelect.classList.add('loading');
-            try {
-                // Get the single doctor for this specialty
-                let doctors = await getDoctorBySpecialtyId(specialtyId);
-                setTimeout(() => {
-                    if (doctors && doctors.length > 0) {
-                        // Since each specialty has only 1 doctor, take the first one and auto-select
-                        const doctor = doctors[0];
-                        const option = document.createElement('option');
-                        option.value = doctor.doctorId;
-                        option.text = `Dr. ${doctor.fullName}`;
-                        option.setAttribute('data-bio', doctor.bioDescription);
-                        option.setAttribute('data-name', doctor.fullName);
-                        option.selected = true; // Auto-select the doctor
-                        doctorSelect.appendChild(option);
-
-                        // Auto-update doctor info and rooms
-                        updateDoctorsAndTimeSlots();
-                    }
-                    doctorSelect.classList.remove('loading');
-                }, 500);
-            } catch (error) {
-                console.error('Error fetching doctors:', error);
+            const doctors = mockDoctors[specialtyId] || [];
+            setTimeout(() => {
+                doctors.forEach(doctor => {
+                    const option = document.createElement('option');
+                    option.value = doctor.doctorId;
+                    option.text = `Dr. ${doctor.fullName}`;
+                    option.setAttribute('data-bio', doctor.bioDescription);
+                    option.setAttribute('data-name', doctor.fullName);
+                    doctorSelect.appendChild(option);
+                });
                 doctorSelect.classList.remove('loading');
-            }
+            }, 500);
         }
 
         const appointmentDate = document.getElementById('appointmentDate').value;
@@ -1508,239 +1247,175 @@
         }
     }
 
-    function getDoctorBySpecialtyId(specialtyId) {
-        return new Promise((resolve, reject) => {
-            $.ajax({
-                url: '/receptionist/api/doctor/specialty/' + specialtyId,
-                method: 'GET',
-                dataType: 'json',
-                success: function (response) {
-                    resolve(response);
-                },
-                error: function (xhr, status, error) {
-                    console.error('Error fetching doctors:', error);
-                    reject([]);
-                }
-            });
-        });
+    function updateDoctorsAndTimeSlots() {
+        showDoctorInfo();
+        const appointmentDate = document.getElementById('appointmentDate').value;
+        if (appointmentDate) {
+            updateTimeSlots();
+        }
     }
 
-    function updateDoctorsAndTimeSlots() {
-        // Clear doctor error when user selects
-        const doctorError = document.getElementById('doctorIdError');
-        if (doctorError) {
-            doctorError.classList.add('d-none');
-        }
-        document.getElementById('doctorId').classList.remove('error');
-
+    function showDoctorInfo() {
         const doctorSelect = document.getElementById('doctorId');
         const selectedOption = doctorSelect.options[doctorSelect.selectedIndex];
         const doctorInfo = document.getElementById('doctorInfoDisplay');
 
-        if (doctorSelect.value && selectedOption) {
+        if (selectedOption && selectedOption.value) {
             const doctorName = selectedOption.getAttribute('data-name');
             const doctorBio = selectedOption.getAttribute('data-bio');
-            const specialtyName = document.getElementById('specialtyId').options[document.getElementById('specialtyId').selectedIndex].text.split(' - ')[0];
+            const specialtySelect = document.getElementById('specialtyId');
+            const specialtyName = specialtySelect.options[specialtySelect.selectedIndex].text.split(' - ')[0];
 
-            // Update doctor info display
             document.getElementById('doctorName').textContent = `Dr. ${doctorName}`;
             document.getElementById('doctorSpecialty').textContent = specialtyName;
-            document.getElementById('doctorBio').textContent = doctorBio || 'No additional information available.';
-
-            // Get initials for avatar
-            const initials = doctorName.split(' ').map(name => name.charAt(0)).join('').toUpperCase();
-            document.getElementById('doctorAvatar').textContent = initials;
+            document.getElementById('doctorBio').textContent = doctorBio;
+            document.getElementById('doctorAvatar').textContent = doctorName.substring(0, 2).toUpperCase();
 
             doctorInfo.classList.add('show');
-
-            // Update rooms when doctor is selected - auto-select the single room
-            updateRooms();
         } else {
             doctorInfo.classList.remove('show');
-            // Clear rooms when no doctor selected
-            const roomSelect = document.getElementById('roomId');
-            roomSelect.innerHTML = '<option value="">Choose a Room</option>';
-            const roomInfo = document.getElementById('roomInfoDisplay');
-            roomInfo.classList.add('d-none');
-        }
-
-        // Update time slots if date is also selected
-        const appointmentDate = document.getElementById('appointmentDate').value;
-        if (appointmentDate && doctorSelect.value) {
-            updateTimeSlots();
         }
     }
 
-    // New function to update rooms based on selected doctor and specialty
-    async function updateRooms() {
-        const specialtyId = document.getElementById('specialtyId').value;
+    function updateTimeSlots() {
+        const dateInput = document.getElementById('appointmentDate').value;
         const doctorId = document.getElementById('doctorId').value;
-        const roomSelect = document.getElementById('roomId');
-        const roomInfo = document.getElementById('roomInfoDisplay');
 
-        // Clear previous room selection
-        roomSelect.innerHTML = '<option value="">Choose a Room</option>';
-        roomInfo.classList.add('d-none');
+        if (dateInput && doctorId) {
+            const timeSlots = document.querySelectorAll('.time-slot');
+            timeSlots.forEach(slot => {
+                slot.classList.remove('selected', 'disabled');
+                slot.title = "Available";
+            });
+            document.getElementById('appointmentTime').value = '';
 
-        if (specialtyId && doctorId) {
-            roomSelect.classList.add('loading');
-
-            try {
-                const rooms = await getRoomsBySpecialty(specialtyId);
-
-                setTimeout(() => {
-                    if (rooms && rooms.length > 0) {
-                        // Since each specialty has only 1 room, take the first one and auto-select
-                        const room = rooms[0];
-                        const option = document.createElement('option');
-                        option.value = room.roomId;
-                        option.text = `Room ${room.roomNumber} - ${room.departmentName}`;
-                        option.setAttribute('data-room-number', room.roomNumber);
-                        option.setAttribute('data-department', room.departmentName);
-                        option.selected = true; // Auto-select the room
-                        roomSelect.appendChild(option);
-
-                        // Auto-update room info
-                        updateRoomInfo();
+            const bookedTimes = ['09:00:00', '14:30:00'];
+            setTimeout(() => {
+                timeSlots.forEach(slot => {
+                    const time = slot.getAttribute('data-time');
+                    if (bookedTimes.includes(time)) {
+                        slot.classList.add('disabled');
+                        slot.title = "This time slot is already booked";
                     } else {
-                        const noRoomOption = document.createElement('option');
-                        noRoomOption.value = '';
-                        noRoomOption.text = 'No rooms available for this specialty';
-                        noRoomOption.disabled = true;
-                        roomSelect.appendChild(noRoomOption);
+                        slot.title = "Available";
                     }
-                    roomSelect.classList.remove('loading');
-                }, 500);
-            } catch (error) {
-                console.error('Error fetching rooms:', error);
-                roomSelect.classList.remove('loading');
-                const errorOption = document.createElement('option');
-                errorOption.value = '';
-                errorOption.text = 'Error loading rooms';
-                errorOption.disabled = true;
-                roomSelect.appendChild(errorOption);
+                });
+            }, 500);
+        }
+    }
+
+    function selectTime(time, button) {
+        if (!button.classList.contains('disabled')) {
+            document.querySelectorAll('.time-slot').forEach(btn => btn.classList.remove('selected'));
+            button.classList.add('selected');
+            document.getElementById('appointmentTime').value = time;
+        }
+    }
+
+    function resetPhoneNumber() {
+        document.getElementById('phoneNumber').value = '';
+    }
+
+    function resetEmail() {
+        document.getElementById('email').value = '';
+    }
+
+    function sanitizeOnInput(element) {
+        let value = element.value;
+        value = value.replace(/[<>"'&]/g, '');
+        value = value.trim().replace(/\s+/g, ' ');
+        if (value.length > 250) {
+            value = value.substring(0, 250);
+            alert('Tối đa 250 ký tự được phép cho mô tả triệu chứng.');
+        }
+        element.value = value;
+        autoResize(element);
+    }
+
+    function confirmBooking(confirm) {
+        const overlay = document.getElementById('confirmationOverlay');
+        overlay.classList.remove('active');
+
+        if (confirm) {
+            const phoneNumber = document.getElementById('phoneNumber').value.replace(/\s+/g, '');
+            const email = document.getElementById('email').value.replace(/\s+/g, '');
+            let description = document.getElementById('description').value.trim();
+            description = description.replace(/[<>"'&]/g, '').substring(0, 250);
+
+            document.getElementById('phoneNumber').value = phoneNumber;
+            document.getElementById('email').value = email;
+            document.getElementById('description').value = description;
+
+            document.getElementById('successMessage').classList.remove('d-none');
+            document.getElementById('appointmentForm').reset();
+            document.getElementById('doctorInfoDisplay').classList.remove('show');
+            document.getElementById('searchResults').classList.add('d-none');
+            document.getElementById('province').innerHTML = '<option value="">Select Province/City</option>';
+            document.getElementById('district').innerHTML = '<option value="">Select District</option>';
+            document.getElementById('streetAddress').innerHTML = '<option value="">Select Ward</option>';
+            document.getElementById('postalCode').value = '';
+            document.getElementById('addressType').value = '';
+            loadProvinces();
+            setTimeout(() => {
+                document.getElementById('successMessage').classList.add('d-none');
+            }, 3000);
+        }
+    }
+
+    function submitForm(event) {
+        event.preventDefault();
+        document.getElementById('successMessage').classList.remove('d-none');
+        setTimeout(() => {
+            document.getElementById('successMessage').classList.add('d-none');
+        }, 3000);
+    }
+
+    function showConfirmation() {
+        const overlay = document.getElementById('confirmationOverlay');
+        overlay.classList.add('active');
+    }
+
+    function autoResize(textarea) {
+        textarea.style.height = 'auto';
+        textarea.style.height = textarea.scrollHeight + 'px';
+    }
+
+    $(document).ready(function() {
+        // Auto-fill contact info by phone number
+        $('#phoneNumber').on('blur', function() {
+            var phone = $(this).val().trim();
+            if (phone.length >= 8) { // Adjust length as needed
+                $.ajax({
+                    url: '/api/patients',
+                    method: 'GET',
+                    data: { phone: phone },
+                    success: function(response) {
+                        if (response && response.patients && response.patients.length > 0) {
+                            var patient = response.patients[0];
+                            $('#fullName').val(patient.name || '');
+                            $('#email').val(patient.email || '');
+                            $('#dateOfBirth').val(patient.dateOfBirth || '');
+                            $('#gender').val(patient.gender || '');
+                            $('#country').val(patient.country || 'Việt Nam');
+                            $('#province').val(patient.province || '');
+                            loadDistricts();
+                            setTimeout(function() {
+                                $('#district').val(patient.district || '');
+                                loadWards();
+                                setTimeout(function() {
+                                    $('#streetAddress').val(patient.streetAddress || '');
+                            }, 300);
+                        }, 300);
+                            $('#postalCode').val(patient.postalCode || '');
+                            $('#addressType').val(patient.addressType || '');
+                            $('#emergencyContact').val(patient.emergencyContact || '');
+                            $('#description').val(patient.description ? patient.description.substring(0, 250) : '');
+                        }
+                    }
+                });
             }
-        }
-    }
-
-    // Modified function to get rooms by specialty instead of doctor+specialty
-    function getRoomsBySpecialty(specialtyId) {
-        return new Promise((resolve, reject) => {
-            $.ajax({
-                url: `/receptionist/api/rooms/specialty/${specialtyId}`,
-                method: 'GET',
-                dataType: 'json',
-                success: function (response) {
-                    resolve(response);
-                },
-                error: function (xhr, status, error) {
-                    console.error('Error fetching rooms:', error);
-                    // Fallback: return mock room data for demonstration
-                    const mockRooms = [{
-                        roomId: 1,
-                        roomNumber: '101',
-                        departmentName: 'General'
-                    }];
-                    resolve(mockRooms);
-                }
-            });
         });
-    }
-
-    // New function to handle room selection and display room info
-    function updateRoomInfo() {
-        // Clear room error when user selects
-        const roomError = document.getElementById('roomIdError');
-        if (roomError) {
-            roomError.classList.add('d-none');
-        }
-        document.getElementById('roomId').classList.remove('error');
-
-        const roomSelect = document.getElementById('roomId');
-        const selectedOption = roomSelect.options[roomSelect.selectedIndex];
-        const roomInfo = document.getElementById('roomInfoDisplay');
-
-        if (roomSelect.value && selectedOption) {
-            const roomNumber = selectedOption.getAttribute('data-room-number');
-            const departmentName = selectedOption.getAttribute('data-department');
-
-            // Update room info display
-            const roomDetails = `Room ${roomNumber} - ${departmentName} Department`;
-            document.getElementById('roomDetails').textContent = roomDetails;
-
-            roomInfo.classList.remove('d-none');
-        } else {
-            roomInfo.classList.add('d-none');
-        }
-    }
-
-    // Add missing time selection functions
-    function selectTime(time, element) {
-        // Clear time error when user selects
-        const timeError = document.getElementById('appointmentTimeError');
-        if (timeError) {
-            timeError.classList.add('d-none');
-        }
-        document.getElementById('timeGrid').classList.remove('error');
-
-        // Remove selected class from all time slots
-        document.querySelectorAll('.time-slot').forEach(slot => {
-            slot.classList.remove('selected');
-        });
-
-        // Add selected class to clicked element
-        element.classList.add('selected');
-
-        // Set the hidden input value
-        document.getElementById('appointmentTime').value = time;
-    }
-
-    // Add missing time slots update function
-    async function updateTimeSlots() {
-        const doctorId = document.getElementById('doctorId').value;
-        const appointmentDate = document.getElementById('appointmentDate').value;
-
-        if (!doctorId || !appointmentDate) {
-            return;
-        }
-
-        try {
-            // Convert MM/DD/YYYY to YYYY-MM-DD format for API
-            const dateParts = appointmentDate.split('/');
-            const apiDate = `${dateParts[2]}-${dateParts[0].padStart(2, '0')}-${dateParts[1].padStart(2, '0')}`;
-
-            const response = await $.ajax({
-                url: `/api/doctor/${doctorId}/availability`,
-                method: 'GET',
-                data: { date: apiDate },
-                dataType: 'json'
-            });
-
-            const bookedTimes = response.bookedTimes || [];
-            const unavailableTimes = response.unavailableTimes || [];
-
-            // Update time slots
-            document.querySelectorAll('.time-slot').forEach(slot => {
-                const time = slot.getAttribute('data-time');
-                slot.classList.remove('disabled', 'selected');
-
-                if (bookedTimes.includes(time) || unavailableTimes.includes(time)) {
-                    slot.classList.add('disabled');
-                    slot.disabled = true;
-                } else {
-                    slot.disabled = false;
-                }
-            });
-
-        } catch (error) {
-            console.error('Error fetching time slots:', error);
-            // If API fails, just enable all slots
-            document.querySelectorAll('.time-slot').forEach(slot => {
-                slot.classList.remove('disabled');
-                slot.disabled = false;
-            });
-        }
-    }
+    });
 </script>
 </body>
 </html>

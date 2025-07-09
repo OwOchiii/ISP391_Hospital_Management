@@ -17,7 +17,6 @@ import orochi.repository.DoctorRepository;
 import orochi.repository.MedicalOrderRepository;
 import orochi.repository.NotificationRepository;
 import orochi.service.DoctorService;
-import orochi.service.MedicalRecordService;
 import orochi.config.CustomUserDetails;
 
 import java.time.LocalDate;
@@ -41,9 +40,6 @@ public class DoctorController {
 
     @Autowired
     private NotificationRepository notificationRepository;
-
-    @Autowired
-    private MedicalRecordService medicalRecordService;
 
     @GetMapping("/dashboard")
     public String getDashboard(@RequestParam(required = false) Integer doctorId,
@@ -147,7 +143,7 @@ public class DoctorController {
     public String getPatientsWithAppointments(
             @RequestParam(required = false) Integer doctorId,
             @RequestParam(defaultValue = "0") int page,
-            @RequestParam(defaultValue = "5") int size,
+            @RequestParam(defaultValue = "10") int size,
             @RequestParam(required = false) String status,
             Model model,
             Authentication authentication) {
@@ -359,16 +355,6 @@ public class DoctorController {
             Patient patient = patientOpt.get();
             model.addAttribute("patient", patient);
 
-            // Fetch medical record and medications
-            Optional<MedicalRecord> medicalRecordOpt = medicalRecordService.getMedicalRecordByPatientId(patientId);
-            if (medicalRecordOpt.isPresent()) {
-                MedicalRecord medicalRecord = medicalRecordOpt.get();
-                model.addAttribute("medicalRecord", medicalRecord);
-                model.addAttribute("medications", medicalRecord.getMedications());
-            } else {
-                model.addAttribute("medications", new ArrayList<RecordMedication>());
-            }
-
             // Calculate age if date of birth is available
             if (patient.getDateOfBirth() != null) {
                 int age = java.time.Period.between(
@@ -522,11 +508,11 @@ public class DoctorController {
             @RequestParam(required = false) String type,
             @RequestParam(required = false) String date,
             @RequestParam(defaultValue = "0") int page,
-            @RequestParam(defaultValue = "5") int size, // Fixed page size of 5
+            @RequestParam(defaultValue = "10") int size,
             Model model) {
         try {
-            logger.info("Fetching medical orders for doctor ID: {} with filters - status: {}, type: {}, date: {}, page: {}",
-                    doctorId, status, type, date, page);
+            logger.info("Fetching medical orders for doctor ID: {} with filters - status: {}, type: {}, date: {}",
+                    doctorId, status, type, date);
             long startTime = System.currentTimeMillis();
 
             Doctor doctor = doctorRepository.findById(doctorId)
@@ -539,47 +525,26 @@ public class DoctorController {
             }
 
             // Get outgoing orders with a single optimized query
-            List<MedicalOrder> allOutgoingOrders = medicalOrderRepository.findByDoctorIdAndFiltersWithDetails(
+            List<MedicalOrder> outgoingOrders = medicalOrderRepository.findByDoctorIdAndFiltersWithDetails(
                     doctorId,
                     (status != null && !status.isEmpty()) ? status : null,
                     (type != null && !type.isEmpty()) ? type : null,
                     parsedDate);
 
             // Get incoming orders with a single optimized query
-            List<MedicalOrder> allIncomingOrders = new ArrayList<>();
+            List<MedicalOrder> incomingOrders = new ArrayList<>();
             List<Department> headedDepartments = doctor.getDepartmentsLed();
             if (headedDepartments != null && !headedDepartments.isEmpty()) {
                 List<Integer> departmentIds = headedDepartments.stream()
                         .map(Department::getDepartmentId)
                         .collect(Collectors.toList());
 
-                allIncomingOrders = medicalOrderRepository.findByDepartmentIdsAndFiltersWithDetails(
+                incomingOrders = medicalOrderRepository.findByDepartmentIdsAndFiltersWithDetails(
                         departmentIds,
                         (status != null && !status.isEmpty()) ? status : null,
                         (type != null && !type.isEmpty()) ? type : null,
                         parsedDate);
             }
-
-            // Create paginated lists for outgoing and incoming orders
-            int outgoingTotal = allOutgoingOrders.size();
-            int incomingTotal = allIncomingOrders.size();
-
-            // Calculate pagination details
-            int outgoingStart = page * size;
-            int outgoingEnd = Math.min(outgoingStart + size, outgoingTotal);
-            int incomingStart = page * size;
-            int incomingEnd = Math.min(incomingStart + size, incomingTotal);
-
-            // Create paged sublists
-            List<MedicalOrder> outgoingOrders = (outgoingStart < outgoingTotal) ?
-                allOutgoingOrders.subList(outgoingStart, outgoingEnd) : new ArrayList<>();
-            List<MedicalOrder> incomingOrders = (incomingStart < incomingTotal) ?
-                allIncomingOrders.subList(incomingStart, incomingEnd) : new ArrayList<>();
-
-            // Calculate total pages for each type
-            int outgoingTotalPages = (int) Math.ceil((double) outgoingTotal / size);
-            int incomingTotalPages = (int) Math.ceil((double) incomingTotal / size);
-            int maxTotalPages = Math.max(outgoingTotalPages, incomingTotalPages);
 
             List<Notification> notifications = notificationRepository.findByUserIdOrderByCreatedAtDesc(doctor.getUserId());
             if (notifications == null) {
@@ -602,17 +567,7 @@ public class DoctorController {
             model.addAttribute("selectedType", type);
             model.addAttribute("selectedDate", date);
 
-            // Add pagination attributes
-            model.addAttribute("currentPage", page);
-            model.addAttribute("pageSize", size);
-            model.addAttribute("totalPages", maxTotalPages);
-            model.addAttribute("outgoingTotalItems", outgoingTotal);
-            model.addAttribute("incomingTotalItems", incomingTotal);
-            model.addAttribute("outgoingTotalPages", outgoingTotalPages);
-            model.addAttribute("incomingTotalPages", incomingTotalPages);
-
             long totalTime = System.currentTimeMillis() - startTime;
-            logger.debug("Medical orders loaded in {} ms", totalTime);
 
             return "doctor/medical-orders";
         } catch (Exception e) {
@@ -751,7 +706,7 @@ public class DoctorController {
 
             long appointmentCount = notifications.stream()
                     .filter(notification -> notification.getType() != null &&
-                           notification.getType().toString().toLowerCase().contains("appointment"))
+                           notification.getType().toLowerCase().contains("appointment"))
                     .count();
 
             model.addAttribute("doctorName", doctor.getUser().getFullName());

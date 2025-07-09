@@ -6,7 +6,6 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import jakarta.validation.constraints.NotBlank;
-import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Positive;
 import java.math.BigDecimal;
 import java.util.List;
@@ -32,7 +31,6 @@ public class Specialization {
     private String symptom;
 
     @Column(name = "Price", precision = 10, scale = 2)
-    @NotNull(message = "Price is required")
     @Positive(message = "Price must be positive")
     private BigDecimal price;
 
@@ -44,3 +42,4 @@ public class Specialization {
     @JsonIgnore
     private List<MedicalService> services;
 }
+

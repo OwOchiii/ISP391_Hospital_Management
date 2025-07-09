@@ -857,10 +857,6 @@
         <i class="bi bi-arrow-left"></i>
         Back to Patients
       </a>
-      <a th:href="@{/doctor/medical-records(patientId=${patient.patientId}, doctorId=${doctorId})}" class="btn-primary-custom">
-        <i class="bi bi-file-medical"></i>
-        Medical Records
-      </a>
       <div class="notification-dropdown">
         <a th:href="@{/doctor/notifications(doctorId=${doctorId})}" class="notification-btn position-relative">
           <i class="bi bi-bell"></i>
@@ -981,72 +977,9 @@
         <i class="bi bi-clipboard2-pulse"></i>
         <h3 class="card-title">Medical Information</h3>
       </div>
-
-      <!-- Medical Record Overview (if available) -->
-      <div class="medical-record-section" th:if="${medicalRecord != null}">
-        <div class="appointment-description mb-3">
-          <h6>Medical Summary</h6>
-          <p th:text="${medicalRecord.medicalConditions}">Patient has a history of hypertension and diabetes. Regular monitoring required.</p>
-        </div>
-
-        <div class="row mb-3" th:if="${medicalRecord.bloodType != null or medicalRecord.healthStatus != null}">
-          <div class="col-md-6" th:if="${medicalRecord.bloodType != null}">
-            <div class="info-item">
-              <span class="info-label">Blood Type</span>
-              <span class="info-value" th:text="${medicalRecord.bloodType}">O+</span>
-            </div>
-          </div>
-          <div class="col-md-6" th:if="${medicalRecord.healthStatus != null}">
-            <div class="info-item">
-              <span class="info-label">Health Status</span>
-              <span class="info-value" th:text="${medicalRecord.healthStatus}">Stable</span>
-            </div>
-          </div>
-        </div>
-
-        <div class="mb-3" th:if="${medicalRecord.allergies != null and !#strings.isEmpty(medicalRecord.allergies)}">
-          <div class="info-item">
-            <span class="info-label">Known Allergies</span>
-            <span class="info-value" th:text="${medicalRecord.allergies}">Penicillin, Peanuts</span>
-          </div>
-        </div>
-
-        <!-- Current Medications (if available) -->
-        <div class="mb-3" th:if="${!#lists.isEmpty(medications)}">
-          <div class="info-label mb-2">Current Medications</div>
-          <div class="table-responsive">
-            <table class="table table-sm table-hover">
-              <thead class="table-light">
-                <tr>
-                  <th>Medication</th>
-                  <th>Dosage</th>
-                  <th>Frequency</th>
-                  <th>Start Date</th>
-                </tr>
-              </thead>
-              <tbody>
-                <tr th:each="medication : ${medications}">
-                  <td th:text="${medication.name}">Lisinopril</td>
-                  <td th:text="${medication.dosage}">10mg</td>
-                  <td th:text="${medication.frequency}">Once daily</td>
-                  <td th:text="${#temporals.format(medication.startDate, 'MMM d, yyyy')}">Jan 15, 2025</td>
-                </tr>
-              </tbody>
-            </table>
-          </div>
-        </div>
-      </div>
-
-      <!-- Original Patient Notes (if no medical record available) -->
-      <div class="appointment-description" th:if="${medicalRecord == null}">
+      <div class="appointment-description">
         <h6>Patient Notes</h6>
         <p th:text="${patient.description}">Patient has a history of hypertension and diabetes. Regular monitoring required.</p>
-      </div>
-
-      <div class="text-end mt-3">
-        <a th:href="@{/doctor/medical-records(patientId=${patient.patientId}, doctorId=${doctorId})}" class="btn btn-sm btn-primary">
-          <i class="bi bi-file-medical"></i> View Full Medical Record
-        </a>
       </div>
     </div>
 

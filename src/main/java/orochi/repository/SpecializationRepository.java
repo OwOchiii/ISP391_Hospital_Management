@@ -15,10 +15,4 @@ public interface SpecializationRepository extends JpaRepository<Specialization, 
 
     @Query("SELECT s FROM Specialization s")
     Page<Specialization> findAllSpecializations(Pageable pageable);
-
-    Page<Specialization> findBySpecNameContainingIgnoreCaseAndSymptomContainingIgnoreCase(
-            String specName, String symptom, Pageable pageable);
-
-    @Query("SELECT DISTINCT s.symptom FROM Specialization s WHERE s.symptom IS NOT NULL")
-    List<String> findDistinctSymptoms();
 }

@@ -1,13 +1,13 @@
 package orochi.model;
 
 import jakarta.persistence.*;
-import lombok.*;
+import lombok.AllArgsConstructor;
+import lombok.Data;
+import lombok.NoArgsConstructor;
 
 import java.time.LocalDateTime;
 import java.util.List;
 
-@ToString(exclude = {"appointment", "user", "processedByUser", "receipt"})
-@EqualsAndHashCode(exclude = {"appointment", "user", "processedByUser", "receipt"})
 @Entity
 @Table(name = "[Transaction]")
 @Data

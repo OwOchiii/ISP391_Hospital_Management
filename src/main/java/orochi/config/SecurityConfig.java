@@ -42,12 +42,6 @@ public class SecurityConfig {
         http
                 // Add the captcha filter before the username/password authentication filter
                 .addFilterBefore(captchaFilter, UsernamePasswordAuthenticationFilter.class)
-
-                // Disable CSRF for API endpoints
-                .csrf(csrf -> csrf
-                        .ignoringRequestMatchers("/receptionist/api/**", "/admin/api/**", "/doctor/api/**", "/patient/api/**")
-                )
-
                 .authorizeHttpRequests(authorizeRequests ->
                         authorizeRequests
                                 .requestMatchers("/auth/**","/auth/reset-password", "/css/**", "/js/**", "/images/**", "/", "/test/url-sanitizer", "/test/xss").permitAll()

@@ -13,8 +13,6 @@ import jakarta.validation.Valid;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.List;
-
 @Controller
 @RequestMapping("/admin/specializations")
 public class AdminSpecializationController {
@@ -29,25 +27,16 @@ public class AdminSpecializationController {
             @RequestParam("adminId") Integer adminId,
             @RequestParam(value="page", defaultValue="0") int page,
             @RequestParam(value="size", defaultValue="6") int size,
-            @RequestParam(value="search", required=false) String search,
-            @RequestParam(value="symptomFilter", required=false) String symptomFilter,
             Model model) {
 
-        Page<Specialization> specPage =
-                specializationService.getSpecializationsPage(page, size, search, symptomFilter);
-
-        List<String> symptomList = specializationService.getAllDistinctSymptoms();
-
+        Page<Specialization> specPage = specializationService.getSpecializationsPage(page, size);
         model.addAttribute("specializations", specPage.getContent());
         model.addAttribute("currentPage", page);
         model.addAttribute("totalPages", specPage.getTotalPages());
         model.addAttribute("pageSize", size);
         model.addAttribute("adminId", adminId);
-        model.addAttribute("search", search);
-        model.addAttribute("symptomFilter", symptomFilter);
-        model.addAttribute("symptomList", symptomList);
         model.addAttribute("isAddMode", false);
-        model.addAttribute("specialization", new Specialization());
+        model.addAttribute("specialization", new Specialization()); // ADDED: Default specialization to prevent null errors in form
         return "admin/specialization/list";
     }
 
@@ -55,15 +44,10 @@ public class AdminSpecializationController {
     public String showAddForm(
             @RequestParam("adminId") Integer adminId,
             @RequestParam(value="page", defaultValue="0") int page, // ADDED: Support pagination
-            @RequestParam(value="size", defaultValue="6") int size,
-            @RequestParam(value="search", required=false) String search,
-            @RequestParam(value="symptomFilter", required=false) String symptomFilter,  // ADDED: Support pagination
+            @RequestParam(value="size", defaultValue="6") int size, // ADDED: Support pagination
             Model model) {
-        Page<Specialization> specPage =
-                specializationService.getSpecializationsPage(page, size, search, symptomFilter); // ADDED: Fetch specialization list
-        model.addAttribute("specializations", specPage.getContent()); // ADDED: Add specialization
-        model.addAttribute("search", search);
-        model.addAttribute("symptomFilter", symptomFilter);
+        Page<Specialization> specPage = specializationService.getSpecializationsPage(page, size); // ADDED: Fetch specialization list
+        model.addAttribute("specializations", specPage.getContent()); // ADDED: Add specialization list
         model.addAttribute("currentPage", page); // ADDED: Add pagination info
         model.addAttribute("totalPages", specPage.getTotalPages()); // ADDED: Add pagination info
         model.addAttribute("pageSize", size); // ADDED: Add pagination info
@@ -78,53 +62,36 @@ public class AdminSpecializationController {
             @RequestParam("adminId") Integer adminId,
             @RequestParam(value="page", defaultValue="0") int page,
             @RequestParam(value="size", defaultValue="6") int size,
-            @RequestParam(value="search", required=false) String search,
-            @RequestParam(value="symptomFilter", required=false) String symptomFilter,
             @Valid @ModelAttribute Specialization specialization,
             BindingResult result,
             Model model) {
-
         if (result.hasErrors()) {
-            logger.warn("Validation errors: {}", result.getAllErrors());
-            Page<Specialization> specPage =
-                    specializationService.getSpecializationsPage(page, size, search, symptomFilter);
+            logger.warn("Validation errors while saving specialization: {}", result.getAllErrors());
+            Page<Specialization> specPage = specializationService.getSpecializationsPage(page, size);
             model.addAttribute("specializations", specPage.getContent());
             model.addAttribute("currentPage", page);
             model.addAttribute("totalPages", specPage.getTotalPages());
             model.addAttribute("pageSize", size);
             model.addAttribute("adminId", adminId);
-            model.addAttribute("search", search);
-            model.addAttribute("symptomFilter", symptomFilter);
-            model.addAttribute("symptomList", specializationService.getAllDistinctSymptoms());
             model.addAttribute("isAddMode", specialization.getSpecId() == null);
             return "admin/specialization/list";
         }
-
         try {
             specializationService.saveSpecialization(specialization);
+            logger.info("Successfully saved specialization: {}", specialization);
         } catch (Exception e) {
             logger.error("Error saving specialization: {}", e.getMessage());
             model.addAttribute("errorMessage", "Cannot save specialization: " + e.getMessage());
-            Page<Specialization> specPage =
-                    specializationService.getSpecializationsPage(page, size, search, symptomFilter);
+            Page<Specialization> specPage = specializationService.getSpecializationsPage(page, size);
             model.addAttribute("specializations", specPage.getContent());
             model.addAttribute("currentPage", page);
             model.addAttribute("totalPages", specPage.getTotalPages());
             model.addAttribute("pageSize", size);
             model.addAttribute("adminId", adminId);
-            model.addAttribute("search", search);
-            model.addAttribute("symptomFilter", symptomFilter);
-            model.addAttribute("symptomList", specializationService.getAllDistinctSymptoms());
             model.addAttribute("isAddMode", specialization.getSpecId() == null);
             return "admin/specialization/list";
         }
-
-        return "redirect:/admin/specializations"
-                + "?adminId=" + adminId
-                + "&page=" + page
-                + "&size=" + size
-                + (search != null ? "&search=" + search : "")
-                + (symptomFilter != null ? "&symptomFilter=" + symptomFilter : "");
+        return "redirect:/admin/specializations?adminId=" + adminId + "&page=" + page + "&size=" + size;
     }
 
     @GetMapping("/edit/{specId}")

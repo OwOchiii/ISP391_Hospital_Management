@@ -3,20 +3,21 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Pay Invoice - MediCare Plus</title>
+    <title>Pay_invoice - MediCare Plus</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css">
     <style>
         @media print {
             .no-print { display: none; }
-            body { margin: 0; font-size: 10pt; }
-            .invoice-container { box-shadow: none; border: none; padding: 8mm; }
+            body { margin: 0; }
+            .invoice-container { box-shadow: none; border: none; }
             .page-break { page-break-before: always; }
         }
         .barcode-placeholder {
             font-family: 'Courier New', Courier, monospace;
-            letter-spacing: 4px;
-            padding: 8px 12px;
+            letter-spacing: 3px;
+            border: 2px solid #000;
+            padding: 6px 10px;
             display: inline-block;
             font-size: 14px;
         }
@@ -24,10 +25,7 @@
             width: 210mm; /* A4 width */
             min-height: 297mm; /* A4 height */
             margin: 0 auto;
-            padding: 12mm;
-            background: #FFFFFF;
-            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
-            border-radius: 8px;
+            padding: 10mm;
         }
         @page {
             size: A4;
@@ -40,294 +38,245 @@
             left: 0;
             width: 100%;
             height: 100%;
-            background-color: rgba(0, 0, 0, 0.6);
+            background-color: rgba(0, 0, 0, 0.5);
             z-index: 1000;
             justify-content: center;
             align-items: center;
         }
         .modal-content {
-            background: #FFFFFF;
-            padding: 24px;
-            border-radius: 12px;
+            background-color: white;
+            padding: 20px;
+            border-radius: 10px;
             text-align: center;
-            max-width: 420px;
+            max-width: 400px;
             width: 90%;
-            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
         }
         .qr-placeholder {
-            width: 180px;
-            height: 180px;
-            background: linear-gradient(to bottom, #F3F4F6, #E5E7EB);
+            width: 200px;
+            height: 200px;
+            background-color: #f0f0f0;
             margin: 0 auto;
             display: flex;
             align-items: center;
             justify-content: center;
-            border: 2px dashed #6B7280;
-            border-radius: 8px;
+            border: 2px dashed #ccc;
             font-size: 14px;
-            color: #4B5563;
-        }
-        .section-title {
-            background: linear-gradient(to right, #1E3A8A, #3B82F6);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-        }
-        table {
-            border-collapse: separate;
-            border-spacing: 0;
-        }
-        th, td {
-            border: 1px solid #E5E7EB;
-            padding: 12px;
-        }
-        th {
-            background: #EFF6FF;
-            color: #1E3A8A;
-        }
-        tr:nth-child(even) {
-            background: #F9FAFB;
-        }
-        .input-focus {
-            transition: all 0.2s ease;
-        }
-        .input-focus:focus {
-            border-color: #3B82F6;
-            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
-        }
-        .payment-section .grid p {
-            margin-bottom: 12px;
-            line-height: 1.8;
-        }
-        .payment-section .grid > div {
-            padding: 8px;
-        }
-        .payment-section .mb-4 {
-            margin-bottom: 20px;
-        }
-        .status-pending {
-            color: #D69E2E; /* Yellow color for Pending status */
-        }
-        .success-popup {
-            display: none;
-            position: fixed;
-            top: 20px;
-            right: 20px;
-            background: #10B981;
-            color: white;
-            padding: 16px 24px;
-            border-radius: 8px;
-            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
-            z-index: 1001;
-            animation: slideIn 0.3s ease;
-        }
-        @keyframes slideIn {
-            from { transform: translateX(100%); }
-            to { transform: translateX(0); }
+            color: #666;
         }
     </style>
 </head>
-<body class="bg-gray-100 font-sans">
-<div class="invoice-container bg-white p-8">
+<body class="bg-white font-sans">
+<div class="invoice-container bg-white p-6">
     <!-- Back Button -->
-    <div class="no-print mb-6">
-        <button onclick="window.history.back()" class="bg-gray-700 text-white px-5 py-2.5 rounded-lg hover:bg-gray-800 flex items-center gap-2 transition duration-300">
-            <i class="fas fa-arrow-left"></i> Back to Payment
+    <div class="no-print mb-4">
+        <button onclick="window.history.back()" class="bg-gray-600 text-white px-4 py-2 rounded-lg hover:bg-gray-700 flex items-center gap-2 transition duration-200">
+            <i class="fas fa-arrow-left"></i> Back
         </button>
     </div>
 
     <!-- Header -->
-    <div class="bg-gradient-to-r from-[#1E3A8A] to-[#3B82F6] text-white rounded-lg p-8 mb-8">
+    <div class="bg-[#1E3A8A] text-white rounded-t-lg p-6 mb-6">
         <div class="flex justify-between items-center">
-            <div class="flex items-center gap-5">
-                <div class="w-20 h-20 bg-white rounded-full flex items-center justify-center text-blue-600 font-bold text-3xl shadow-md">
+            <div class="flex items-center gap-4">
+                <div class="w-16 h-16 bg-white rounded-full flex items-center justify-center text-blue-600 font-bold text-2xl">
                     <i class="fas fa-hospital"></i>
                 </div>
                 <div>
-                    <h1 class="text-3xl font-extrabold">MediCare Plus</h1>
-                    <p class="text-sm mt-1">Tax Code: 123456789-0</p>
-                    <p class="text-sm">123 Lang Street, Dong Da, Hanoi, Vietnam</p>
+                    <h1 class="text-2xl font-bold">MediCare Plus</h1>
+                    <p class="text-sm">Tax Code: 123456789-0</p>
+                    <p class="text-sm">Address: 123 Lang Street, Dong Da, Hanoi, Vietnam</p>
                     <p class="text-sm">Phone: (+84) 912 345 678 | Email: contact@sunrisehospital.vn</p>
                 </div>
             </div>
-            <div class="text-right">
-                <h2 class="text-xl font-semibold">INVOICE</h2>
-                <p class="text-sm mt-2"><span class="font-medium">Receipt Number:</span> REC20250529001</p>
-                <p class="text-sm"><span class="font-medium">Issued Date:</span> May 29, 2025</p>
-                <p class="text-sm"><span class="font-medium">Due Date:</span> May 29, 2025</p>
-                <div class="barcode-placeholder mt-4">REC20250529001</div>
+            <div class="text-right text-sm">
+                <h2 class="text-lg font-semibold">INVOICE</h2>
+                <p><span class="font-medium">Invoice Number:</span> INV20250529001</p>
+                <p><span class="font-medium">Issue Date:</span> May 29, 2025</p>
+                <p><span class="font-medium">Due Date:</span> May 29, 2025</p>
+                <div class="barcode-placeholder mt-3">INV7890123456</div>
             </div>
         </div>
     </div>
 
     <!-- Patient Information -->
     <div class="mb-8">
-        <h3 class="text-2xl font-bold section-title flex items-center gap-3 mb-5">
+        <h3 class="text-xl font-semibold text-gray-800 flex items-center gap-2 mb-4 border-b-2 border-blue-200 pb-2">
             <i class="fas fa-user text-blue-600"></i> Patient Information
         </h3>
-        <div class="grid grid-cols-2 gap-6 bg-gray-50 p-6 rounded-lg shadow-sm">
+        <div class="grid grid-cols-2 gap-4 text-sm">
             <div>
-                <p><span class="font-semibold text-gray-700">Patient ID:</span> PAT123456</p>
-                <p><span class="font-semibold text-gray-700">Full Name:</span> John Doe</p>
-                <p><span class="font-semibold text-gray-700">Date of Birth:</span> 01/01/1990</p>
-                <p><span class="font-semibold text-gray-700">Gender:</span> Male</p>
+                <p><span class="font-medium text-gray-700">Patient ID:</span> PAT123456</p>
+                <p><span class="font-medium text-gray-700">Full Name:</span> John Doe</p>
+                <p><span class="font-medium text-gray-700">Date of Birth:</span> 01/01/1990</p>
+                <p><span class="font-medium text-gray-700">Gender:</span> Male</p>
             </div>
             <div>
-                <p><span class="font-semibold text-gray-700">Appointment ID:</span> APP789012</p>
-                <p><span class="font-semibold text-gray-700">Payer Name:</span> John Doe</p>
-                <p><span class="font-semibold text-gray-700">Contact:</span> (+84) 901 234 567</p>
+                <p><span class="font-medium text-gray-700">Visit ID:</span> VIS789012</p>
+                <p><span class="font-medium text-gray-700">Payer Name:</span> John Doe</p>
+                <p><span class="font-medium text-gray-700">Contact:</span> (+84) 901 234 567</p>
             </div>
         </div>
     </div>
 
     <!-- Services Used -->
     <div class="mb-8">
-        <h3 class="text-2xl font-bold section-title flex items-center gap-3 mb-5">
+        <h3 class="text-xl font-semibold text-gray-800 flex items-center gap-2 mb-4 border-b-2 border-blue-200 pb-2">
             <i class="fas fa-list-ul text-blue-600"></i> Services Used
         </h3>
-        <div class="overflow-x-auto rounded-lg shadow-sm">
-            <table class="w-full text-sm">
-                <thead>
-                <tr>
-                    <th class="py-3 px-4 text-left">Service ID</th>
-                    <th class="py-3 px-4 text-left">Specialization</th>
-                    <th class="py-3 px-4 text-left">Service Name</th>
-                    <th class="py-3 px-4 text-left">Quantity</th>
-                    <th class="py-3 px-4 text-left">Price (VND)</th>
-                    <th class="py-3 px-4 text-left">Tax (%)</th>
-                    <th class="py-3 px-4 text-left">Total (VND)</th>
-                    <th class="py-3 px-4 text-left">Date</th>
-                </tr>
-                </thead>
-                <tbody>
-                <tr>
-                    <td class="py-3 px-4">SRV001</td>
-                    <td class="py-3 px-4">General Medicine</td>
-                    <td class="py-3 px-4">General Consultation</td>
-                    <td class="py-3 px-4">1</td>
-                    <td class="py-3 px-4">300,000</td>
-                    <td class="py-3 px-4">10</td>
-                    <td class="py-3 px-4 font-semibold">330,000</td>
-                    <td class="py-3 px-4">2025-05-29</td>
-                </tr>
-                <tr>
-                    <td class="py-3 px-4">SRV002</td>
-                    <td class="py-3 px-4">Pathology</td>
-                    <td class="py-3 px-4">Blood Test</td>
-                    <td class="py-3 px-4">1</td>
-                    <td class="py-3 px-4">500,000</td>
-                    <td class="py-3 px-4">10</td>
-                    <td class="py-3 px-4 font-semibold">550,000</td>
-                    <td class="py-3 px-4">2025-05-29</td>
-                </tr>
-                <tr>
-                    <td class="py-3 px-4">SRV003</td>
-                    <td class="py-3 px-4">Pharmacy</td>
-                    <td class="py-3 px-4">Medication</td>
-                    <td class="py-3 px-4">2</td>
-                    <td class="py-3 px-4">100,000</td>
-                    <td class="py-3 px-4">10</td>
-                    <td class="py-3 px-4 font-semibold">220,000</td>
-                    <td class="py-3 px-4">2025-05-29</td>
-                </tr>
-                <tr class="font-semibold bg-blue-50">
-                    <td class="py-3 px-4" colspan="6">Subtotal</td>
-                    <td class="py-3 px-4">1,100,000</td>
-                    <td class="py-3 px-4"></td>
-                </tr>
-                </tbody>
-            </table>
-        </div>
+        <table class="w-full border-collapse text-sm">
+            <thead>
+            <tr class="bg-blue-50 text-gray-700">
+                <th class="py-3 px-4 text-left font-medium">Service Code</th>
+                <th class="py-3 px-4 text-left font-medium">Service Name</th>
+                <th class="py-3 px-4 text-left font-medium">Quantity</th>
+                <th class="py-3 px-4 text-left font-medium">Unit Price (VND)</th>
+                <th class="py-3 px-4 text-left font-medium">VAT (%)</th>
+                <th class="py-3 px-4 text-left font-medium">Total (VND)</th>
+                <th class="py-3 px-4 text-left font-medium">Date</th>
+                <th class="py-3 px-4 text-left font-medium">Provider</th>
+            </tr>
+            </thead>
+            <tbody>
+            <tr class="border-t bg-white">
+                <td class="py-3 px-4">SRV001</td>
+                <td class="py-3 px-4">General Consultation</td>
+                <td class="py-3 px-4">1</td>
+                <td class="py-3 px-4">300,000</td>
+                <td class="py-3 px-4">10</td>
+                <td class="py-3 px-4 font-medium">330,000</td>
+                <td class="py-3 px-4">2025-05-29</td>
+                <td class="py-3 px-4">Dr. John Smith</td>
+            </tr>
+            <tr class="border-t bg-gray-50">
+                <td class="py-3 px-4">SRV002</td>
+                <td class="py-3 px-4">Blood Test</td>
+                <td class="py-3 px-4">1</td>
+                <td class="py-3 px-4">500,000</td>
+                <td class="py-3 px-4">10</td>
+                <td class="py-3 px-4 font-medium">550,000</td>
+                <td class="py-3 px-4">2025-05-29</td>
+                <td class="py-3 px-4">Lab Unit</td>
+            </tr>
+            <tr class="border-t bg-white">
+                <td class="py-3 px-4">SRV003</td>
+                <td class="py-3 px-4">Medication</td>
+                <td class="py-3 px-4">2</td>
+                <td class="py-3 px-4">100,000</td>
+                <td class="py-3 px-4">10</td>
+                <td class="py-3 px-4 font-medium">220,000</td>
+                <td class="py-3 px-4">2025-05-29</td>
+                <td class="py-3 px-4">Pharmacy</td>
+            </tr>
+            <tr class="border-t bg-blue-100 font-semibold">
+                <td class="py-3 px-4" colspan="5">Subtotal</td>
+                <td class="py-3 px-4">1,100,000</td>
+                <td class="py-3 px-4"></td>
+                <td class="py-3 px-4"></td>
+            </tr>
+            </tbody>
+        </table>
     </div>
 
-    <!-- Payment Section -->
-    <div class="mb-8 payment-section">
-        <h3 class="text-2xl font-bold section-title flex items-center gap-3 mb-5">
-            <i class="fas fa-wallet text-blue-600"></i> Payment & Receipt
+    <div class="mb-8">
+        <h3 class="text-xl font-semibold text-gray-800 flex items-center gap-2 mb-4 border-b-2 border-blue-200 pb-2">
+            <i class="fas fa-wallet text-blue-600"></i> Payment Summary
         </h3>
-        <div class="grid grid-cols-2 gap-10 bg-gray-50 p-8 rounded-lg shadow-sm">
+        <div class="grid grid-cols-2 gap-4 text-sm">
             <div>
-                <p><span class="font-semibold text-gray-700">Transaction ID:</span> TRX20250529001</p>
-                <p><span class="font-semibold text-gray-700">Receipt Number:</span> REC20250529001</p>
-                <p><span class="font-semibold text-gray-700">Total Amount (incl. Tax):</span> 1,100,000 VND</p>
-                <p><span class="font-semibold text-gray-700">Tax Amount:</span> 100,000 VND</p>
-                <p><span class="font-semibold text-gray-700">Discount Amount:</span> 0 VND</p>
-                <p><span class="font-semibold text-gray-700">Insurance Payment:</span> 880,000 VND</p>
-                <p><span class="font-semibold text-gray-700">Patient Payment:</span> 220,000 VND</p>
-                <p><span class="font-semibold text-gray-700">Status:</span> <span id="transactionStatus" class="status-pending">Pending</span></p>
+                <p><span class="font-medium text-gray-700">Subtotal (incl. VAT):</span> 1,100,000 VND</p>
+                <p><span class="font-medium text-gray-700">Insurance Coverage:</span> 80%</p>
+                <p><span class="font-medium text-gray-700">Insurance Payment:</span> 880,000 VND</p>
             </div>
             <div>
-                <div class="mb-4">
-                    <label class="block text-sm font-semibold text-gray-700 mb-2">Payment Method</label>
-                    <select id="paymentMethod" class="input-focus block w-full border-gray-300 rounded-lg shadow-sm focus:ring-blue-500 focus:border-blue-500 text-sm py-3">
+                <p><span class="font-medium text-gray-700">Patient Payment:</span> 220,000 VND</p>
+                <p><span class="font-medium text-gray-700">Discount/Free:</span> 0 VND</p>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700">Payment Method</label>
+                    <select id="paymentMethod" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 text-sm">
                         <option value="">Select Method</option>
                         <option value="Cash">Cash</option>
-                        <option value="Banking">Banking</option>
+                        <option value="Bank Transfer">Bank Transfer</option>
+                        <option value="Insurance">Insurance</option>
                     </select>
                 </div>
-                <div id="amountReceivedContainer" class="hidden mb-4">
-                    <label class="block text-sm font-semibold text-gray-700 mb-2">Amount Received (VND)</label>
-                    <input id="amountReceived" type="text" class="input-focus block w-full border-gray-300 rounded-lg shadow-sm focus:ring-blue-500 focus:border-blue-500 text-sm py-3" placeholder="Enter amount received">
-                    <p id="changeReturned" class="mt-3 text-sm text-gray-600">Change Returned: 0 VND</p>
-                </div>
-                <div>
-                    <label class="block text-sm font-semibold text-gray-700 mb-2">Notes</label>
-                    <textarea id="receiptNotes" class="input-focus block w-full border-gray-300 rounded-lg shadow-sm focus:ring-blue-500 focus:border-blue-500 text-sm py-3" placeholder="Enter any notes" rows="4"></textarea>
+                <div id="amountReceivedContainer" class="hidden mt-2">
+                    <label class="block text-sm font-medium text-gray-700">Amount Received (VND):</label>
+                    <input id="amountReceived" type="text" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 text-sm" placeholder="Enter amount received" value="">
+                    <p id="changeReturned" class="mt-2 text-sm text-gray-600">Change Returned: 0 VND</p>
                 </div>
             </div>
         </div>
-        <div class="mt-8 p-8 bg-blue-50 rounded-lg text-sm shadow-sm">
-            <p class="mb-3"><span class="font-semibold text-gray-700">Processed By:</span> <span id="processedBy">Mr. A (ID: STAFF001)</span></p>
-            <p class="mb-3"><span class="font-semibold text-gray-700">Time of Payment:</span> <span id="timeOfPayment">Not yet paid</span></p>
+        <div class="mt-4 p-4 bg-blue-50 rounded-lg text-sm">
+            <p><span class="font-medium text-gray-700">Total Amount Paid:</span> 220,000 VND</p>
         </div>
     </div>
 
-    <!-- Terms and Conditions -->
     <div class="mb-8">
-        <h3 class="text-2xl font-bold section-title flex items-center gap-3 mb-5">
-            <i class="fas fa-file-alt text-blue-600"></i> Terms & Conditions
+        <h3 class="text-xl font-semibold text-gray-800 flex items-center gap-2 mb-4 border-b-2 border-blue-200 pb-2">
+            <i class="fas fa-file-invoice text-blue-600"></i> Invoice Details
         </h3>
-        <div class="text-sm text-gray-600 bg-gray-50 p-6 rounded-lg shadow-sm">
-            <p class="mb-2">1. Payment is due upon receipt of this invoice.</p>
-            <p class="mb-2">2. All services are non-refundable once provided.</p>
-            <p class="mb-2">3. For insurance claims, please contact your provider within 30 days.</p>
+        <div class="grid grid-cols-2 gap-4 text-sm">
+            <div>
+                <p><span class="font-medium text-gray-700">Payment Status:</span> Paid</p>
+                <p><span class="font-medium text-gray-700">Payment Date & Time:</span> 10:44 PM, May 29, 2025</p>
+                <p><span class="font-medium text-gray-700">VAT Invoice Required:</span> Yes</p>
+            </div>
+            <div>
+                <p><span class="font-medium text-gray-700">Guarantee Unit Code:</span> INS123</p>
+                <p><span class="font-medium text-gray-700">Payment Batch Code:</span> BATCH001</p>
+                <p><span class="font-medium text-gray-700">Invoice Notes:</span> Includes 10% VAT, non-refunded</p>
+            </div>
+        </div>
+    </div>
+
+    <div class="mb-8">
+        <h3 class="text-xl font-semibold text-gray-800 flex items-center gap-2 mb-4 border-b-2 border-blue-200 pb-2">
+            <i class="fas fa-file-alt text-blue-600"></i> Terms and Conditions
+        </h3>
+        <div class="text-sm text-gray-600">
+            <p>1. Payment is due upon receipt of this invoice.</p>
+            <p>2. All services are not refundable once provided.</p>
+            <p>3. For insurance claims, please contact your provider within 30 days.</p>
             <p>4. Disputes must be reported to Sunrise Hospital within 7 days.</p>
         </div>
     </div>
 
-    <!-- Footer -->
-    <div class="border-t-2 border-blue-600 pt-6 text-center text-sm text-gray-600">
-        <p class="font-semibold">Thank you for choosing MediCare Plus</p>
-        <p>Contact us at (+84) 912 345 678 or contact@sunrisehospital.vn</p>
-        <p>123 Lang Street, Dong Da, Hanoi, Vietnam</p>
+    <div class="mb-8">
+        <div class="text-sm">
+            <p class="font-medium text-gray-700">Processed by:</p>
+            <p id="cashierName" class="mt-8 border-t border-gray-400 w-48 text-center">Mr. A</p>
+        </div>
     </div>
 
-    <!-- Action Buttons -->
-    <div class="no-print text-center mt-10 flex justify-center gap-6">
-        <button id="paymentButton" class="bg-green-600 text-white px-8 py-3 rounded-lg hover:bg-green-700 flex items-center gap-2 transition duration-300 text-sm font-semibold">
-            <i class="fas fa-money-bill-wave"></i> Process Payment
+    <div class="border-t-2 border-blue-600 pt-4 text-center text-sm text-gray-600">
+        <p>Thank you for choosing Sunrise Hospital.</p>
+        <p>Contact us at (+84) 912 345 678 or contact@sunrisehospital.vn for inquiries.</p>
+        <p>Issued by Sunrise Hospital System, 123 Lang Street, Hanoi, Vietnam.</p>
+    </div>
+
+    <div class="no-print text-center mt-8 flex justify-center gap-4">
+        <button onclick="window.print()" class="bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700 flex items-center gap-2 transition duration-200">
+            <i class="fas fa-print"></i> Print Invoice
+        </button>
+        <button id="paymentButton" class="bg-green-600 text-white px-6 py-3 rounded-lg hover:bg-green-700 flex items-center gap-2 transition duration-200">
+            <i class="fas fa-money-bill-wave"></i> Proceed to Payment
         </button>
     </div>
 </div>
 
-<!-- QR Modal -->
 <div id="qrModal" class="modal">
     <div class="modal-content">
-        <h3 class="text-lg font-semibold text-gray-800 mb-4">Scan to Pay via Banking</h3>
+        <h3 class="text-lg font-semibold text-gray-800 mb-4">Scan to Pay via VNPay</h3>
         <div class="qr-placeholder">[Simulated QR Code]</div>
         <p class="mt-4 text-sm text-gray-600">Amount: 220,000 VND</p>
-        <p class="text-sm text-gray-600">Receipt: REC20250529001</p>
-        <button id="simulatePayment" class="mt-6 bg-blue-600 text-white px-6 py-2.5 rounded-lg hover:bg-blue-700 transition duration-300 text-sm font-semibold">
+        <p class="text-sm text-gray-600">Invoice: INV20250529001</p>
+        <button id="simulatePayment" class="mt-4 bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition duration-200">
             Simulate Payment
         </button>
-        <button id="closeModal" class="mt-3 bg-gray-300 text-gray-800 px-6 py-2.5 rounded-lg hover:bg-gray-400 transition duration-300 text-sm font-semibold">
+        <button id="closeModal" class="mt-2 bg-gray-300 text-gray-800 px-4 py-2 rounded-lg hover:bg-gray-400 transition duration-200">
             Cancel
         </button>
     </div>
-</div>
-
-<!-- Success Popup -->
-<div id="successPopup" class="success-popup">
-    <p>Payment Successful!</p>
 </div>
 
 <script>
@@ -335,28 +284,16 @@
     const amountReceivedContainer = document.getElementById('amountReceivedContainer');
     const amountReceivedInput = document.getElementById('amountReceived');
     const changeReturnedDisplay = document.getElementById('changeReturned');
-    const receiptNotesInput = document.getElementById('receiptNotes');
-    const transactionStatusDisplay = document.getElementById('transactionStatus');
-    const processedByDisplay = document.getElementById('processedBy');
-    const timeOfPaymentDisplay = document.getElementById('timeOfPayment');
-    const paymentButton = document.getElementById('paymentButton');
-    const qrModal = document.getElementById('qrModal');
-    const simulatePaymentButton = document.getElementById('simulatePayment');
-    const closeModalButton = document.getElementById('closeModal');
-    const successPopup = document.getElementById('successPopup');
-
     const patientPayment = 220000;
-    const transactionId = 'TRX20250529001';
-    const receiptId = 'REC20250529001';
-    const appointmentId = 'APP789012';
-    const userId = 'USER001';
-    const issuerId = 'STAFF001';
+    const invoiceId = 'INV20250529001'; // Example invoice ID
 
     paymentMethodSelect.addEventListener('change', () => {
-        amountReceivedContainer.classList.toggle('hidden', paymentMethodSelect.value !== 'Cash');
         if (paymentMethodSelect.value === 'Cash') {
+            amountReceivedContainer.classList.remove('hidden');
             amountReceivedInput.value = '';
             changeReturnedDisplay.textContent = 'Change Returned: 0 VND';
+        } else {
+            amountReceivedContainer.classList.add('hidden');
         }
     });
 
@@ -366,119 +303,61 @@
         changeReturnedDisplay.textContent = `Change Returned: ${change >= 0 ? change.toLocaleString('vi-VN') : 0} VND`;
     });
 
-    function showSuccessPopup(callback) {
-        successPopup.style.display = 'block';
-        setTimeout(() => {
-            successPopup.style.display = 'none';
-            if (callback) callback();
-        }, 1100 );
-    }
-
-    function updateInvoice(data) {
-        paymentMethodSelect.value = data.method || '';
-        receiptNotesInput.value = data.notes || '';
-        transactionStatusDisplay.textContent = data.status || 'Pending';
-        transactionStatusDisplay.className = data.status === 'Paid' ? 'text-green-600' : 'status-pending';
-        processedByDisplay.textContent = `${data.processedByName || 'Mr. A'} (ID: ${data.processedById || 'STAFF001'})`;
-        timeOfPaymentDisplay.textContent = data.timeOfPayment || 'Not yet paid';
-        if (data.method === 'Cash') {
+    function updateInvoice(paymentMethod, cashierName, amountReceived) {
+        paymentMethodSelect.value = paymentMethod || '';
+        document.getElementById('cashierName').textContent = cashierName || 'Mr. A';
+        if (paymentMethod === 'Cash') {
             amountReceivedContainer.classList.remove('hidden');
-            amountReceivedInput.value = data.amountReceived || '';
-            const change = data.amountReceived ? (parseFloat(data.amountReceived.replace(/,/g, '')) - patientPayment) : 0;
+            amountReceivedInput.value = amountReceived || '';
+            const change = amountReceived ? (parseFloat(amountReceived.replace(/,/g, '')) - patientPayment) : 0;
             changeReturnedDisplay.textContent = `Change Returned: ${change >= 0 ? change.toLocaleString('vi-VN') : 0} VND`;
-        } else {
-            amountReceivedContainer.classList.add('hidden');
         }
     }
 
-    // Initial invoice data
-    updateInvoice({
-        method: 'Cash',
-        processedByName: 'Mr. A',
-        processedById: 'STAFF001',
-        amountReceived: '300,000',
-        notes: 'Includes 10% VAT, non-refunded',
-        status: 'Pending',
-        timeOfPayment: 'Not yet paid'
-    });
+    updateInvoice('Cash', 'Mr. A', '300,000');
 
-    function handlePaymentSuccess(paymentData) {
-        updateInvoice({
-            method: paymentData.method,
-            processedByName: 'Mr. A',
-            processedById: paymentData.processedByUserId,
-            amountReceived: paymentData.method === 'Cash' ? amountReceivedInput.value : undefined,
-            notes: paymentData.receipt.notes,
-            status: paymentData.status,
-            timeOfPayment: new Date(paymentData.timeOfPayment).toLocaleString('en-GB')
-        });
+    const paymentButton = document.getElementById('paymentButton');
+    const qrModal = document.getElementById('qrModal');
+    const simulatePaymentButton = document.getElementById('simulatePayment');
+    const closeModalButton = document.getElementById('closeModal');
 
-        showSuccessPopup(() => {
-            // Set up afterprint event listener to redirect after print dialog closes
-            const onAfterPrint = () => {
-                window.removeEventListener('afterprint', onAfterPrint);
-                window.location.href = '/receptionist/payments';
-            };
-            window.addEventListener('afterprint', onAfterPrint);
-
-            // Trigger print dialog
-            window.print();
-
-            // Fallback for browsers that don't support afterprint (e.g., some mobile browsers)
-            setTimeout(() => {
-                window.removeEventListener('afterprint', onAfterPrint);
-                window.location.href = '/receptionist/payments';
-            }, 5000);
-        });
-    }
-
+    // Payment submission
     paymentButton.addEventListener('click', async () => {
         if (!paymentMethodSelect.value) {
-            paymentMethodSelect.classList.add('border-red-500');
+            paymentMethodSelect.classList.add('is-invalid');
             alert('Please select a payment method.');
             return;
         }
-        paymentMethodSelect.classList.remove('border-red-500');
+        paymentMethodSelect.classList.remove('is-invalid');
 
         if (paymentMethodSelect.value === 'Cash') {
             const amountReceived = parseFloat(amountReceivedInput.value.replace(/[^\d]/g, '')) || 0;
             if (amountReceived < patientPayment) {
-                amountReceivedInput.classList.add('border-red-500');
+                amountReceivedInput.classList.add('is-invalid');
                 alert('Amount received is less than the required patient payment.');
                 return;
             }
-            amountReceivedInput.classList.remove('border-red-500');
+            amountReceivedInput.classList.remove('is-invalid');
 
             try {
-                const paymentData = {
-                    transactionId,
-                    appointmentId,
-                    userId,
-                    method: paymentMethodSelect.value,
-                    timeOfPayment: new Date().toISOString(),
-                    status: 'Paid',
-                    processedByUserId: issuerId,
-                    receipt: {
-                        receiptId,
-                        receiptNumber: receiptId,
-                        issuedDate: new Date().toISOString(),
-                        taxAmount: 100000,
-                        discountAmount: 0,
-                        totalAmount: patientPayment,
-                        notes: receiptNotesInput.value,
-                        issuerId
-                    }
-                };
-
-                // Simulated API call
-                // const response = await fetch('/api/transactions', {
+                // *** INSERT DATABASE SUBMISSION CODE HERE ***
+                // Example API call:
+                // const response = await fetch('/api/payments', {
                 //     method: 'POST',
                 //     headers: { 'Content-Type': 'application/json' },
-                //     body: JSON.stringify(paymentData)
+                //     body: JSON.stringify({
+                //         invoiceId: invoiceId,
+                //         paymentMethod: 'Cash',
+                //         amount: patientPayment,
+                //         transactionId: '',
+                //         paymentDate: new Date().toISOString()
+                //     })
                 // });
                 // if (!response.ok) throw new Error('Payment submission failed');
 
-                handlePaymentSuccess(paymentData);
+                alert('Payment Successful!');
+                window.print();
+                window.location.href = '/receptionist/payments';
             } catch (error) {
                 console.error('Error submitting payment:', error);
                 alert('Failed to process payment. Please try again.');
@@ -488,44 +367,35 @@
         }
     });
 
+    // Simulate QR payment
     simulatePaymentButton.addEventListener('click', async () => {
         qrModal.style.display = 'none';
         try {
-            const paymentData = {
-                transactionId,
-                appointmentId,
-                userId,
-                method: paymentMethodSelect.value,
-                timeOfPayment: new Date().toISOString(),
-                status: 'Paid',
-                processedByUserId: issuerId,
-                receipt: {
-                    receiptId,
-                    receiptNumber: receiptId,
-                    issuedDate: new Date().toISOString(),
-                    taxAmount: 100000,
-                    discountAmount: 0,
-                    totalAmount: patientPayment,
-                    notes: receiptNotesInput.value,
-                    issuerId
-                }
-            };
-
-            // Simulated API call
-            // const response = await fetch('/api/transactions', {
+            // *** INSERT DATABASE SUBMISSION CODE HERE ***
+            // Example API call:
+            // const response = await fetch('/api/payments', {
             //     method: 'POST',
             //     headers: { 'Content-Type': 'application/json' },
-            //     body: JSON.stringify(paymentData)
+            //     body: JSON.stringify({
+            //         invoiceId: invoiceId,
+            //         paymentMethod: paymentMethodSelect.value,
+            //         amount: patientPayment,
+            //         transactionId: 'VNPAY-' + Date.now(),
+            //         paymentDate: new Date().toISOString()
+            //     })
             // });
             // if (!response.ok) throw new Error('Payment submission failed');
 
-            handlePaymentSuccess(paymentData);
+            alert('Payment Successful!');
+            window.print();
+            window.location.href = '/receptionist/payments';
         } catch (error) {
             console.error('Error submitting payment:', error);
             alert('Failed to process payment. Please try again.');
         }
     });
 
+    // Close QR modal
     closeModalButton.addEventListener('click', () => {
         qrModal.style.display = 'none';
     });

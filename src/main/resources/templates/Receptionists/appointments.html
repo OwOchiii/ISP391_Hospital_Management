@@ -37,8 +37,8 @@
         }
 
         body {
-            font-family: 'Inter', sans-serif; /* Tên bệnh nhân inherit từ body */
-            line-height: 1.6; /* Khoảng cách dòng 1.6 */
+            font-family: 'Inter', sans-serif;
+            line-height: 1.6;
             color: var(--text-dark);
             background: var(--bg-light);
             overflow-x: hidden;
@@ -309,13 +309,9 @@
         }
 
         .table td {
-            /* Tên bệnh nhân hiển thị trong table cells */
-            font-family: 'Inter', sans-serif; /* inherit từ body */
-            font-weight: 400; /* Regular weight */
-            font-size: inherit; /* ~16px mặc định */
+            font-size: 0.875rem;
             color: var(--text-dark);
             vertical-align: middle;
-            padding: 1rem;
         }
 
         .action-buttons {
@@ -415,7 +411,7 @@
 
         /* Scrollable Table in Modal */
         .table-responsive {
-            max-height: 500px;
+            max-height: 500px; /* Adjust as needed */
             overflow-y: auto;
         }
 
@@ -437,35 +433,6 @@
             background: var(--secondary);
         }
 
-        /* Filter Styles */
-        .filter-group {
-            display: flex;
-            gap: 1rem;
-            flex-wrap: wrap;
-            margin-bottom: 1rem;
-            align-items: center;
-        }
-
-        .filter-group .form-control {
-            flex: 1;
-            min-width: 150px;
-        }
-
-        .filter-group .btn-reset {
-            padding: 0.5rem 1rem;
-            border-radius: 8px;
-            font-size: 0.875rem;
-            cursor: pointer;
-            transition: all 0.3s ease;
-            background: var(--light);
-            color: var(--text-dark);
-            border: 1px solid rgba(102, 126, 234, 0.2);
-        }
-
-        .filter-group .btn-reset:hover {
-            background: var(--bg-white);
-        }
-
         /* Responsive Design */
         @media (max-width: 768px) {
             .sidebar {
@@ -482,15 +449,6 @@
 
             .card {
                 padding: 1rem;
-            }
-
-            .filter-group {
-                flex-direction: column;
-            }
-
-            .filter-group .form-control,
-            .filter-group .btn-reset {
-                min-width: 100%;
             }
         }
 
@@ -623,29 +581,15 @@
                     <a href="#" class="text-primary" onclick="openAppointmentModal('in-progress')">View All</a>
                 </div>
                 <div class="card-body">
-                    <div class="filter-group mb-3">
-                        <div class="input-group">
-                            <span class="input-group-text"><i class="fas fa-search"></i></span>
-                            <input type="text" class="form-control" id="search-in-progress" placeholder="Search by Name or Phone" pattern="[^\s]+" minlength="1" title="Search term cannot contain spaces">
-                        </div>
-                        <select class="form-control" id="filter-age-group-in-progress">
-                            <option value="">All Age Groups</option>
-                            <option value="children">Children (1-12 years)</option>
-                            <option value="adolescence">Adolescence (13-19 years)</option>
-                            <option value="youth">Youth (20-39 years)</option>
-                            <option value="middle-aged">Middle-aged (40-59 years)</option>
-                            <option value="elderly">Elderly (60+ years)</option>
-                        </select>
-                        <select class="form-control" id="filter-doctor-in-progress">
-                            <option value="">All Doctors</option>
-                        </select>
-                        <button class="btn-reset" onclick="resetFilters('in-progress')">Reset</button>
+                    <div class="input-group mb-3">
+                        <span class="input-group-text"><i class="fas fa-search"></i></span>
+                        <input type="text" class="form-control" id="search-in-progress" placeholder="Search by Name or Phone" onkeyup="searchAppointments('in-progress')">
                     </div>
                     <div class="table-responsive">
                         <table class="table table-hover">
                             <thead>
                             <tr>
-                                <th style="width: 60px; text-align: center;">No.</th>
+                                <th>STT</th>
                                 <th>Name</th>
                                 <th>Age</th>
                                 <th>Phone</th>
@@ -668,29 +612,15 @@
                     <a href="#" class="text-primary" onclick="openAppointmentModal('completed')">View All</a>
                 </div>
                 <div class="card-body">
-                    <div class="filter-group mb-3">
-                        <div class="input-group">
-                            <span class="input-group-text"><i class="fas fa-search"></i></span>
-                            <input type="text" class="form-control" id="search-completed" placeholder="Search by Name or Phone" pattern="[^\s]+" minlength="1" title="Search term cannot contain spaces">
-                        </div>
-                        <select class="form-control" id="filter-age-group-completed">
-                            <option value="">All Age Groups</option>
-                            <option value="children">Children (1-12 years)</option>
-                            <option value="adolescence">Adolescence (13-19 years)</option>
-                            <option value="youth">Youth (20-39 years)</option>
-                            <option value="middle-aged">Middle-aged (40-59 years)</option>
-                            <option value="elderly">Elderly (60+ years)</option>
-                        </select>
-                        <select class="form-control" id="filter-doctor-completed">
-                            <option value="">All Doctors</option>
-                        </select>
-                        <button class="btn-reset" onclick="resetFilters('completed')">Reset</button>
+                    <div class="input-group mb-3">
+                        <span class="input-group-text"><i class="fas fa-search"></i></span>
+                        <input type="text" class="form-control" id="search-completed" placeholder="Search by Name, or Phone" onkeyup="searchAppointments('completed')">
                     </div>
                     <div class="table-responsive">
                         <table class="table table-hover">
                             <thead>
                             <tr>
-                                <th style="width: 60px; text-align: center;">No.</th>
+                                <th>STT</th>
                                 <th>Name</th>
                                 <th>Age</th>
                                 <th>Phone</th>
@@ -713,29 +643,15 @@
                     <a href="#" class="text-primary" onclick="openAppointmentModal('rejected')">View All</a>
                 </div>
                 <div class="card-body">
-                    <div class="filter-group mb-3">
-                        <div class="input-group">
-                            <span class="input-group-text"><i class="fas fa-search"></i></span>
-                            <input type="text" class="form-control" id="search-rejected" placeholder="Search by Name or Phone" pattern="[^\s]+" minlength="1" title="Search term cannot contain spaces">
-                        </div>
-                        <select class="form-control" id="filter-age-group-rejected">
-                            <option value="">All Age Groups</option>
-                            <option value="children">Children (1-12 years)</option>
-                            <option value="adolescence">Adolescence (13-19 years)</option>
-                            <option value="youth">Youth (20-39 years)</option>
-                            <option value="middle-aged">Middle-aged (40-59 years)</option>
-                            <option value="elderly">Elderly (60+ years)</option>
-                        </select>
-                        <select class="form-control" id="filter-doctor-rejected">
-                            <option value="">All Doctors</option>
-                        </select>
-                        <button class="btn-reset" onclick="resetFilters('rejected')">Reset</button>
+                    <div class="input-group mb-3">
+                        <span class="input-group-text"><i class="fas fa-search"></i></span>
+                        <input type="text" class="form-control" id="search-rejected" placeholder="Search by Name, or Phone" onkeyup="searchAppointments('rejected')">
                     </div>
                     <div class="table-responsive">
                         <table class="table table-hover">
                             <thead>
                             <tr>
-                                <th style="width: 60px; text-align: center;">No.</th>
+                                <th>STT</th>
                                 <th>Name</th>
                                 <th>Age</th>
                                 <th>Phone</th>
@@ -763,29 +679,15 @@
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
             <div class="modal-body">
-                <div class="filter-group mb-3">
-                    <div class="input-group">
-                        <span class="input-group-text"><i class="fas fa-search"></i></span>
-                        <input type="text" class="form-control" id="modalSearch" placeholder="Search by Name or Phone">
-                    </div>
-                    <select class="form-control" id="modalFilterAgeGroup">
-                        <option value="">All Age Groups</option>
-                        <option value="children">Children (1-12 years)</option>
-                        <option value="adolescence">Adolescence (13-19 years)</option>
-                        <option value="youth">Youth (20-39 years)</option>
-                        <option value="middle-aged">Middle-aged (40-59 years)</option>
-                        <option value="elderly">Elderly (60+ years)</option>
-                    </select>
-                    <select class="form-control" id="modalFilterDoctor">
-                        <option value="">Select Doctor</option>
-                    </select>
-                    <button class="btn-reset" onclick="resetModalFilters()">Reset</button>
+                <div class="input-group mb-3">
+                    <span class="input-group-text"><i class="fas fa-search"></i></span>
+                    <input type="text" class="form-control" id="modalSearch" placeholder="Search by Name, or Phone" onkeyup="searchModalAppointments()">
                 </div>
                 <div class="table-responsive">
                     <table class="table table-hover">
                         <thead>
                         <tr>
-                            <th style="width: 60px; text-align: center;">No.</th>
+                            <th>STT</th>
                             <th>Name</th>
                             <th>Age</th>
                             <th>Phone</th>
@@ -810,7 +712,6 @@
         'completed': 'Completed',
         'rejected': 'Cancel'
     };
-
     // Sidebar toggle functionality
     function toggleSidebar() {
         const sidebar = document.getElementById('patientSidebar');
@@ -839,21 +740,6 @@
     window.addEventListener('load', checkScreenSize);
     window.addEventListener('resize', checkScreenSize);
 
-    // Add event listeners for search inputs to handle space key
-    document.addEventListener('DOMContentLoaded', function() {
-        // Add keydown event listeners to all search inputs
-        const searchInputs = document.querySelectorAll('[id^="search-"], #modalSearch');
-        searchInputs.forEach(input => {
-            input.addEventListener('keydown', function(event) {
-                // Check if space key was pressed
-                if (event.key === ' ' || event.keyCode === 32) {
-                    event.preventDefault(); // Prevent space from being entered
-                    // No error message display, just block the space character
-                }
-            });
-        });
-    });
-
     // Modal handling
     const appointmentModal = new bootstrap.Modal(document.getElementById('appointmentModal'));
 
@@ -861,15 +747,10 @@
     const itemsPerPage = 5;
     const maxModalItems = 16; // Maximum items to display in modal
     const paginationStates = {
-        'in-progress': { currentPage: 1, searchTerm: '', filterAgeGroup: '', filterDoctor: '', allAppointments: [] },
-        'completed': { currentPage: 1, searchTerm: '', filterAgeGroup: '', filterDoctor: '', allAppointments: [] },
-        'rejected': { currentPage: 1, searchTerm: '', filterAgeGroup: '', filterDoctor: '', allAppointments: [] }
+        'in-progress': { currentPage: 1, searchTerm: '' },
+        'completed': { currentPage: 1, searchTerm: '' },
+        'rejected': { currentPage: 1, searchTerm: '' }
     };
-
-    // Add viewAppointmentDetails function
-    function viewAppointmentDetails(appointmentId) {
-        window.location.href = `/receptionist/appointment-details?id=${appointmentId}`;
-    }
 
     // Debounce function to limit fetch calls
     function debounce(func, wait) {
@@ -884,474 +765,197 @@
         };
     }
 
-    // Fetch doctors from server
-    async function fetchDoctors() {
-        try {
-            const response = await fetch('/api/doctors');
-            if (!response.ok) {
-                throw new Error(`Failed to fetch doctors: ${response.statusText}`);
-            }
-            const doctors = await response.json();
-            return doctors; // Expected format: [{ id: 1, name: 'Dr. Smith' }, ...]
-        } catch (error) {
-            console.error('Error fetching doctors:', error);
-            return [];
-        }
-    }
-
-    // Populate doctor dropdowns
-    async function populateDoctorDropdowns() {
-        const doctorSelects = document.querySelectorAll('[id^="filter-doctor-"], #modalFilterDoctor');
-        const doctors = await fetchDoctors();
-        doctorSelects.forEach(select => {
-            // Clear existing options except the first one
-            select.innerHTML = '<option value="">All Doctors</option>';
-            doctors.forEach(doctor => {
-                const option = document.createElement('option');
-                option.value = doctor.name; // Use name for filtering
-                option.textContent = doctor.name;
-                select.appendChild(option);
-            });
-        });
-    }
-
-    // Fetch appointments from server (fetch all, then filter and paginate client-side)
-    async function fetchAppointments(status, searchTerm = '') {
+    // Fetch appointments from server
+    async function fetchAppointments(status, page, searchTerm = '', fetchAll = false) {
         try {
             const apiStatus = statusMap[status];
             if (!apiStatus) {
                 throw new Error(`Invalid status provided: ${status}`);
             }
+            let url = `/api/appointments?status=${apiStatus}&page=${page}&search=${encodeURIComponent(searchTerm)}`;
+            if (fetchAll) {
+                url += '&fetchAll=true';
+            }
 
-            // Fetch all appointments with search term only (server-side search)
-            let url = `/api/appointments?status=${encodeURIComponent(apiStatus)}&search=${encodeURIComponent(searchTerm)}&fetchAll=true`;
-
-            console.log(`Fetching appointments with URL: ${url}`);
             const response = await fetch(url);
             if (!response.ok) {
                 const errorText = await response.text();
                 throw new Error(`Failed to fetch appointments: ${errorText || response.statusText}`);
             }
             const data = await response.json();
-            console.log(`Received appointments:`, data);
-
-            return data.appointments || [];
-
+            return data; // Expected format: { appointments: [], total: number }
         } catch (error) {
-            console.error(`Error fetching ${status} appointments:`, error);
-            throw error;
+            console.error(`Error fetching ${apiStatus} appointments:`, error);
+            throw error; // Propagate the error to caller for better error handling
         }
     }
 
-    // Apply client-side filtering
-    function applyClientSideFilters(appointments, filterAgeGroup, filterDoctor) {
-        let filteredAppointments = [...appointments];
-
-        // Filter by age group with new categories
-        if (filterAgeGroup) {
-            filteredAppointments = filteredAppointments.filter(appt => {
-                const age = calculateAge(appt.dob);
-                switch (filterAgeGroup) {
-                    case 'children': return age >= 1 && age <= 12;
-                    case 'adolescence': return age >= 13 && age <= 19;
-                    case 'youth': return age >= 20 && age <= 39;
-                    case 'middle-aged': return age >= 40 && age <= 59;
-                    case 'elderly': return age >= 60;
-                    default: return true;
-                }
-            });
-        }
-
-        // Filter by doctor (exact match)
-        if (filterDoctor) {
-            filteredAppointments = filteredAppointments.filter(appt => {
-                return appt.doctor && appt.doctor.trim() === filterDoctor.trim();
-            });
-        }
-
-        return filteredAppointments;
-    }
-
-    // Apply pagination to filtered results
-    function applyPagination(appointments, page) {
-        const startIndex = (page - 1) * itemsPerPage;
-        const endIndex = startIndex + itemsPerPage;
-        return appointments.slice(startIndex, endIndex);
-    }
-
-    // Render appointments with improved pagination
+    // Render appointments
     async function renderAppointments(status, page = 1) {
         const tbody = document.getElementById(`${status}-list`);
         const pagination = document.getElementById(`${status}-pagination`);
-        const { searchTerm, filterAgeGroup, filterDoctor } = paginationStates[status];
+        const { searchTerm } = paginationStates[status];
 
         try {
-            // Fetch all appointments from server (with search term)
-            const allAppointments = await fetchAppointments(status, searchTerm);
-
-            // Store all appointments for this status
-            paginationStates[status].allAppointments = allAppointments;
-
-            // Apply client-side filtering
-            const filteredAppointments = applyClientSideFilters(allAppointments, filterAgeGroup, filterDoctor);
-
-            // Apply pagination
-            const paginatedAppointments = applyPagination(filteredAppointments, page);
-
-            // Clear table body
+            const { appointments, total } = await fetchAppointments(status, page, searchTerm);
             tbody.innerHTML = '';
 
-            if (paginatedAppointments.length === 0) {
-                tbody.innerHTML = '<tr><td colspan="7" class="text-center">No data available</td></tr>';
-            } else {
-                paginatedAppointments.forEach((appt, index) => {
-                    const row = document.createElement('tr');
+            appointments.forEach(appt => {
+                const row = document.createElement('tr');
+                const actionsHtml = `
+                    <a href="appointment-details.jsp?stt=${appt.stt}" class="btn-view"><i class="fas fa-eye"></i></a>
+                    ${status === 'in-progress' ? `
+                    ` : ''}
+                `;
+                row.innerHTML = `
+                    <td>${appt.stt}</td>
+                    <td>${appt.name}</td>
+                    <td>${calculateAge(appt.dob)}</td>
+                    <td>${appt.phone}</td>
+                    <td>${appt.time}</td>
+                    <td>${appt.doctor}</td>
+                    <td class="action-buttons">${actionsHtml}</td>
+                `;
+                tbody.appendChild(row);
+            });
 
-                    // Calculate sequence number: start from 1 for each status, continue across pages
-                    const sequenceNumber = (page - 1) * itemsPerPage + index + 1;
+            // Render pagination
+            const totalPages = Math.ceil(total / itemsPerPage);
+            pagination.innerHTML = '';
+            if (totalPages > 1) {
+                const prevButton = document.createElement('button');
+                prevButton.textContent = 'Previous';
+                prevButton.disabled = page === 1;
+                prevButton.onclick = () => {
+                    paginationStates[status].currentPage--;
+                    renderAppointments(status, paginationStates[status].currentPage);
+                };
+                pagination.appendChild(prevButton);
 
-                    const actionsHtml = `
-                        <button class="btn-view" onclick="viewAppointmentDetails(${appt.id || appt.stt})" title="View Details">
-                            <i class="fas fa-eye"></i>
-                        </button>
-                    `;
-                    row.innerHTML = `
-                        <td style="text-align: center;">${sequenceNumber}</td>
-                        <td>${appt.name}</td>
-                        <td>${calculateAge(appt.dob)}</td>
-                        <td>${appt.phone}</td>
-                        <td>${formatDateTime(appt.time)}</td>
-                        <td>${appt.doctor}</td>
-                        <td class="action-buttons">${actionsHtml}</td>
-                    `;
-                    tbody.appendChild(row);
-                });
+                for (let j = 1; j <= totalPages; j++) {
+                    const pageButton = document.createElement('button');
+                    pageButton.textContent = j;
+                    pageButton.disabled = j === page;
+                    pageButton.onclick = () => {
+                        paginationStates[status].currentPage = j;
+                        renderAppointments(status, j);
+                    };
+                    pagination.appendChild(pageButton);
+                }
+
+                const nextButton = document.createElement('button');
+                nextButton.textContent = 'Next';
+                nextButton.disabled = page === totalPages;
+                nextButton.onclick = () => {
+                    paginationStates[status].currentPage++;
+                    renderAppointments(status, paginationStates[status].currentPage);
+                };
+                pagination.appendChild(nextButton);
             }
-
-            // Render pagination controls
-            renderPaginationControls(status, filteredAppointments.length, page);
-
         } catch (error) {
             console.error(`Error rendering ${status} appointments:`, error);
-            tbody.innerHTML = '<tr><td colspan="7" class="text-center">Error loading appointments</td></tr>';
         }
     }
 
-    // Render pagination controls
-    function renderPaginationControls(status, totalItems, currentPage) {
-        const pagination = document.getElementById(`${status}-pagination`);
-        const totalPages = Math.ceil(totalItems / itemsPerPage);
-
-        pagination.innerHTML = '';
-
-        if (totalPages <= 1) {
-            return; // No pagination needed
+    // Update appointment status
+    async function updateStatus(stt, newStatus) {
+        try {
+            const newApiStatus = statusMap[newStatus];
+            const response = await fetch('/api/appointments/update', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ stt, status: newApiStatus })
+            });
+            console.log(response)
+            if (!response.ok) throw new Error('Failed to update status');
+            // Refresh all tables
+            await Promise.all([
+                renderAppointments('in-progress', paginationStates['in-progress'].currentPage),
+                renderAppointments('completed', paginationStates['completed'].currentPage),
+                renderAppointments('rejected', paginationStates['rejected'].currentPage)
+            ]);
+        } catch (error) {
+            console.error('Error updating status:', error);
         }
-
-        // Previous button
-        const prevButton = document.createElement('button');
-        prevButton.textContent = 'Previous';
-        prevButton.disabled = currentPage === 1;
-        prevButton.className = currentPage === 1 ? 'disabled' : '';
-        prevButton.onclick = () => {
-            if (currentPage > 1) {
-                paginationStates[status].currentPage = currentPage - 1;
-                renderAppointments(status, currentPage - 1);
-            }
-        };
-        pagination.appendChild(prevButton);
-
-        // Page number buttons (show max 5 pages)
-        const startPage = Math.max(1, currentPage - 2);
-        const endPage = Math.min(totalPages, startPage + 4);
-
-        if (startPage > 1) {
-            const firstButton = document.createElement('button');
-            firstButton.textContent = '1';
-            firstButton.onclick = () => {
-                paginationStates[status].currentPage = 1;
-                renderAppointments(status, 1);
-            };
-            pagination.appendChild(firstButton);
-
-            if (startPage > 2) {
-                const ellipsis = document.createElement('span');
-                ellipsis.textContent = '...';
-                ellipsis.style.padding = '0.5rem';
-                pagination.appendChild(ellipsis);
-            }
-        }
-
-        for (let i = startPage; i <= endPage; i++) {
-            const pageButton = document.createElement('button');
-            pageButton.textContent = i;
-            pageButton.className = i === currentPage ? 'active' : '';
-            pageButton.disabled = i === currentPage;
-            pageButton.onclick = () => {
-                paginationStates[status].currentPage = i;
-                renderAppointments(status, i);
-            };
-            pagination.appendChild(pageButton);
-        }
-
-        if (endPage < totalPages) {
-            if (endPage < totalPages - 1) {
-                const ellipsis = document.createElement('span');
-                ellipsis.textContent = '...';
-                ellipsis.style.padding = '0.5rem';
-                pagination.appendChild(ellipsis);
-            }
-
-            const lastButton = document.createElement('button');
-            lastButton.textContent = totalPages;
-            lastButton.onclick = () => {
-                paginationStates[status].currentPage = totalPages;
-                renderAppointments(status, totalPages);
-            };
-            pagination.appendChild(lastButton);
-        }
-
-        // Next button
-        const nextButton = document.createElement('button');
-        nextButton.textContent = 'Next';
-        nextButton.disabled = currentPage === totalPages;
-        nextButton.className = currentPage === totalPages ? 'disabled' : '';
-        nextButton.onclick = () => {
-            if (currentPage < totalPages) {
-                paginationStates[status].currentPage = currentPage + 1;
-                renderAppointments(status, currentPage + 1);
-            }
-        };
-        pagination.appendChild(nextButton);
-
-        // Add page info
-        const pageInfo = document.createElement('div');
-        pageInfo.style.marginTop = '0.5rem';
-        pageInfo.style.textAlign = 'center';
-        pageInfo.style.fontSize = '0.875rem';
-        pageInfo.style.color = 'var(--text-muted)';
-        pageInfo.textContent = `Showing page ${currentPage} of ${totalPages} (${totalItems} total items)`;
-        pagination.appendChild(pageInfo);
     }
 
-    // Apply filters with reset to page 1
-    function applyFilters(status) {
-        // Trim và kiểm tra xem chuỗi tìm kiếm có chỉ chứa khoảng trắng không
-        const searchInput = document.getElementById(`search-${status}`).value;
-        const searchTerm = searchInput ? searchInput.trim() : '';
-        const filterAgeGroup = document.getElementById(`filter-age-group-${status}`).value.trim();
-        const filterDoctor = document.getElementById(`filter-doctor-${status}`).value.trim();
-
-        // Update pagination state
-        paginationStates[status].searchTerm = searchTerm;
-        paginationStates[status].filterAgeGroup = filterAgeGroup;
-        paginationStates[status].filterDoctor = filterDoctor;
-        paginationStates[status].currentPage = 1; // Reset to page 1
-
-        console.log(`Applying filters for ${status}:`, { searchTerm, filterAgeGroup, filterDoctor });
-        renderAppointments(status, 1);
-    }
-
-    // Reset filters
-    function resetFilters(status) {
-        document.getElementById(`search-${status}`).value = '';
-        document.getElementById(`filter-age-group-${status}`).value = '';
-        document.getElementById(`filter-doctor-${status}`).value = '';
-
-        // Reset pagination state
-        paginationStates[status].searchTerm = '';
-        paginationStates[status].filterAgeGroup = '';
-        paginationStates[status].filterDoctor = '';
+    // Search appointments
+    const searchAppointments = debounce(function(status) {
+        paginationStates[status].searchTerm = document.getElementById(`search-${status}`).value;
         paginationStates[status].currentPage = 1;
-
-        console.log(`Resetting filters for ${status}`);
         renderAppointments(status, 1);
-    }
+    }, 300);
 
-    // Open modal with filtered appointments
+    // Open modal with all appointments
     async function openAppointmentModal(status) {
         const modalTitle = document.getElementById('appointmentModalLabel');
         const modalList = document.getElementById('modalAppointmentList');
-        modalTitle.textContent = `${status.charAt(0).toUpperCase() + status.slice(1).replace('-', ' ')} Appointments`;
+        modalTitle.textContent = `${status.charAt(0).toUpperCase() + status.slice(1)} Appointments`;
 
-        const { searchTerm, filterAgeGroup, filterDoctor, allAppointments } = paginationStates[status];
+        const { appointments } = await fetchAppointments(status, 1, '', true); // Fetch all
+        modalList.innerHTML = '';
 
-        try {
-            // Use already fetched appointments if available, otherwise fetch
-            let appointments = allAppointments.length > 0 ? allAppointments : await fetchAppointments(status, searchTerm);
+        // Limit to maxModalItems (16)
+        const limitedAppointments = appointments.slice(0, maxModalItems);
 
-            // Apply client-side filtering
-            const filteredAppointments = applyClientSideFilters(appointments, filterAgeGroup, filterDoctor);
+        limitedAppointments.forEach(appt => {
+            const row = document.createElement('tr');
+            const actionsHtml = `
+                <a href="appointment-details.jsp?stt=${appt.stt}" class="btn-view"><i class="fas fa-eye"></i></a>
+                ${status === 'in-progress' ? `
+                ` : ''}
+            `;
+            row.innerHTML = `
+                <td>${appt.stt}</td>
+                <td>${appt.name}</td>
+                <td>${calculateAge(appt.dob)}</td>
+                <td>${appt.phone}</td>
+                <td>${appt.time}</td>
+                <td>${appt.doctor}</td>
+                <td class="action-buttons">${actionsHtml}</td>
+            `;
+            modalList.appendChild(row);
+        });
 
-            modalList.innerHTML = '';
-
-            if (filteredAppointments.length === 0) {
-                modalList.innerHTML = '<tr><td colspan="7" class="text-center">No data available</td></tr>';
-            } else {
-                // Limit to maxModalItems (16)
-                const limitedAppointments = filteredAppointments.slice(0, maxModalItems);
-
-                limitedAppointments.forEach((appt, index) => {
-                    const row = document.createElement('tr');
-
-                    // Calculate sequence number for modal: start from 1 for each status
-                    const sequenceNumber = index + 1;
-
-                    const actionsHtml = `
-                        <button class="btn-view" onclick="viewAppointmentDetails(${appt.id || appt.stt})" title="View Details">
-                            <i class="fas fa-eye"></i>
-                        </button>
-                    `;
-                    row.innerHTML = `
-                        <td style="text-align: center;">${sequenceNumber}</td>
-                        <td>${appt.name}</td>
-                        <td>${calculateAge(appt.dob)}</td>
-                        <td>${appt.phone}</td>
-                        <td>${formatDateTime(appt.time)}</td>
-                        <td>${appt.doctor}</td>
-                        <td class="action-buttons">${actionsHtml}</td>
-                    `;
-                    modalList.appendChild(row);
-                });
-
-                // Add info about limited results
-                if (filteredAppointments.length > maxModalItems) {
-                    const infoRow = document.createElement('tr');
-                    infoRow.innerHTML = `<td colspan="7" class="text-center text-muted">Showing first ${maxModalItems} of ${filteredAppointments.length} appointments</td>`;
-                    modalList.appendChild(infoRow);
-                }
-            }
-
-            // Set current filter values in modal
-            document.getElementById('modalSearch').value = searchTerm || '';
-
-            // Set modal age group values to match the main filter options
-            const modalAgeGroup = document.getElementById('modalFilterAgeGroup');
-            modalAgeGroup.value = filterAgeGroup || '';
-
-            document.getElementById('modalFilterDoctor').value = filterDoctor || '';
-
-            appointmentModal.show();
-        } catch (error) {
-            console.error(`Error opening modal for ${status}:`, error);
-            modalList.innerHTML = '<tr><td colspan="7" class="text-center">Error loading appointments</td></tr>';
-            appointmentModal.show();
-        }
+        appointmentModal.show();
     }
 
-    // Render appointment details in a new section
-    function renderAppointmentDetails(appointment) {
-        const detailsSection = document.getElementById('appointmentDetails');
-        detailsSection.innerHTML = '';
-
-        if (!appointment) {
-            detailsSection.innerHTML = '<p class="text-center text-muted">No appointment selected</p>';
-            return;
-        }
-
-        const { name, dob, phone, time, doctor, status, notes } = appointment;
-
-        const detailsHtml = `
-            <h5>Appointment Details</h5>
-            <div class="mb-3">
-                <strong>Name:</strong> ${name}
-            </div>
-            <div class="mb-3">
-                <strong>Age:</strong> ${calculateAge(dob)}
-            </div>
-            <div class="mb-3">
-                <strong>Phone:</strong> ${phone}
-            </div>
-            <div class="mb-3">
-                <strong>Time:</strong> ${formatDateTime(time)}
-            </div>
-            <div class="mb-3">
-                <strong>Doctor:</strong> ${doctor}
-            </div>
-            <div class="mb-3">
-                <strong>Status:</strong> ${status}
-            </div>
-            <div class="mb-3">
-                <strong>Notes:</strong> ${notes || 'N/A'}
-            </div>
-        `;
-        detailsSection.innerHTML = detailsHtml;
-    }
-
-    // Apply modal filters
-    function applyModalFilters() {
+    // Search in modal
+    const searchModalAppointments = debounce(async function() {
+        const searchTerm = document.getElementById('modalSearch').value;
         const modalTitle = document.getElementById('appointmentModalLabel').textContent.toLowerCase();
-        let status = 'in-progress'; // default
+        const status = modalTitle.split(' ')[0];
+        const modalList = document.getElementById('modalAppointmentList');
 
-        if (modalTitle.includes('completed')) {
-            status = 'completed';
-        } else if (modalTitle.includes('rejected')) {
-            status = 'rejected';
-        }
+        const { appointments } = await fetchAppointments(status, 1, searchTerm, true);
+        modalList.innerHTML = '';
 
-        const searchTerm = document.getElementById('modalSearch').value.trim();
-        const filterAgeGroup = document.getElementById('modalFilterAgeGroup').value.trim();
-        const filterDoctor = document.getElementById('modalFilterDoctor').value.trim();
+        // Limit to maxModalItems (16)
+        const limitedAppointments = appointments.slice(0, maxModalItems);
 
-        // Update main filters to match modal filters
-        document.getElementById(`search-${status}`).value = searchTerm;
-        document.getElementById(`filter-age-group-${status}`).value = filterAgeGroup;
-        document.getElementById(`filter-doctor-${status}`).value = filterDoctor;
+        limitedAppointments.forEach(appt => {
+            const row = document.createElement('tr');
+            const actionsHtml = `
+                <a href="appointment-details.jsp?stt=${appt.stt}" class="btn-view"><i class="fas fa-eye"></i></a>
+                ${status === 'in-progress' ? `
+                ` : ''}
+            `;
+            row.innerHTML = `
+                <td>${appt.stt}</td>
+                <td>${appt.name}</td>
+                <td>${calculateAge(appt.dob)}</td>
+                <td>${appt.phone}</td>
+                <td>${appt.time}</td>
+                <td>${appt.doctor}</td>
+                <td class="action-buttons">${actionsHtml}</td>
+            `;
+            modalList.appendChild(row);
+        });
+    }, 300);
 
-        // Update pagination state
-        paginationStates[status].searchTerm = searchTerm;
-        paginationStates[status].filterAgeGroup = filterAgeGroup;
-        paginationStates[status].filterDoctor = filterDoctor;
-        paginationStates[status].currentPage = 1;
-
-        console.log(`Applying modal filters for ${status}:`, { searchTerm, filterAgeGroup, filterDoctor });
-
-        // Re-render the modal and main table
-        openAppointmentModal(status);
-        renderAppointments(status, 1);
-    }
-
-    // Reset modal filters
-    function resetModalFilters() {
-        const modalTitle = document.getElementById('appointmentModalLabel').textContent.toLowerCase();
-        let status = 'in-progress'; // default
-
-        if (modalTitle.includes('completed')) {
-            status = 'completed';
-        } else if (modalTitle.includes('rejected')) {
-            status = 'rejected';
-        }
-
-        document.getElementById('modalSearch').value = '';
-        document.getElementById('modalFilterAgeGroup').value = '';
-        document.getElementById('modalFilterDoctor').value = '';
-
-        // Reset main filters too
-        document.getElementById(`search-${status}`).value = '';
-        document.getElementById(`filter-age-group-${status}`).value = '';
-        document.getElementById(`filter-doctor-${status}`).value = '';
-
-        // Reset pagination state
-        paginationStates[status].searchTerm = '';
-        paginationStates[status].filterAgeGroup = '';
-        paginationStates[status].filterDoctor = '';
-        paginationStates[status].currentPage = 1;
-
-        console.log(`Resetting modal filters for ${status}`);
-
-        // Re-render the modal and main table
-        openAppointmentModal(status);
-        renderAppointments(status, 1);
-    }
-
-    // Calculate age from date of birth
     function calculateAge(birthDate) {
-        if (!birthDate) return 'N/A';
-
         const today = new Date();
         const birth = new Date(birthDate);
-
-        if (isNaN(birth.getTime())) return 'N/A';
 
         let age = today.getFullYear() - birth.getFullYear();
 
@@ -1366,88 +970,12 @@
         return age;
     }
 
-    // Format date time for display
-    function formatDateTime(dateTimeStr) {
-        if (!dateTimeStr) return 'N/A';
-
-        try {
-            const date = new Date(dateTimeStr);
-            if (isNaN(date.getTime())) return dateTimeStr;
-
-            return date.toLocaleString('en-US', {
-                year: 'numeric',
-                month: '2-digit',
-                day: '2-digit',
-                hour: '2-digit',
-                minute: '2-digit',
-                hour12: true
-            });
-        } catch (error) {
-            return dateTimeStr;
-        }
-    }
-
-    // Update appointment status
-    async function updateStatus(stt, newStatus) {
-        try {
-            const newApiStatus = statusMap[newStatus];
-            const response = await fetch('/api/appointments/update', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ stt, status: newApiStatus })
-            });
-            if (!response.ok) throw new Error('Failed to update status');
-
-            // Refresh all tables
-            await Promise.all([
-                renderAppointments('in-progress', paginationStates['in-progress'].currentPage),
-                renderAppointments('completed', paginationStates['completed'].currentPage),
-                renderAppointments('rejected', paginationStates['rejected'].currentPage)
-            ]);
-        } catch (error) {
-            console.error('Error updating status:', error);
-            alert('Failed to update appointment status. Please try again.');
-        }
-    }
-
-    // Initialize everything when DOM is ready
-    document.addEventListener('DOMContentLoaded', async () => {
-        try {
-            // Populate doctor dropdowns first
-            await populateDoctorDropdowns();
-
-            // Render initial tables
-            await Promise.all([
-                renderAppointments('in-progress'),
-                renderAppointments('completed'),
-                renderAppointments('rejected')
-            ]);
-
-            // Add event listeners for filters with debouncing
-            ['in-progress', 'completed', 'rejected'].forEach(status => {
-                const debouncedApplyFilters = debounce(() => applyFilters(status), 500);
-
-                document.getElementById(`search-${status}`).addEventListener('input', debouncedApplyFilters);
-                document.getElementById(`filter-age-group-${status}`).addEventListener('change', () => applyFilters(status));
-                document.getElementById(`filter-doctor-${status}`).addEventListener('change', () => applyFilters(status));
-            });
-
-            // Add event listeners for modal filters
-            const debouncedApplyModalFilters = debounce(applyModalFilters, 500);
-            document.getElementById('modalSearch').addEventListener('input', debouncedApplyModalFilters);
-            document.getElementById('modalFilterAgeGroup').addEventListener('change', applyModalFilters);
-            document.getElementById('modalFilterDoctor').addEventListener('change', applyModalFilters);
-
-        } catch (error) {
-            console.error('Error initializing appointments page:', error);
-        }
+    // Initialize tables
+    document.addEventListener('DOMContentLoaded', () => {
+        renderAppointments('in-progress');
+        renderAppointments('completed');
+        renderAppointments('rejected');
     });
-
-    // Notification functionality (placeholder)
-    function toggleNotificationModal() {
-        // Placeholder for notification functionality
-        console.log('Notification modal toggled');
-    }
 </script>
 </body>
 </html>

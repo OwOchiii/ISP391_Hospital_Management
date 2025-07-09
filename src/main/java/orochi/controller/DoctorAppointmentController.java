@@ -68,7 +68,6 @@ public class DoctorAppointmentController {
             @RequestParam(required = false) String status,
             @RequestParam(required = false) LocalDate dateFrom,
             @RequestParam(required = false, defaultValue = "0") Integer page,
-            @RequestParam(required = false, defaultValue = "2") Integer size,
             Model model) {
         try {
             logger.info("Fetching appointments for doctor ID: {} with filters: filter={}, search={}, status={}, dateFrom={}",
@@ -93,14 +92,6 @@ public class DoctorAppointmentController {
                 filterTitle = "Upcoming Appointments";
             } else {
                 appointments = doctorService.getAppointments(doctorId);
-            }
-
-            // Filter out "Pending" appointments unless specifically requested
-            if (status == null || !status.equals("Pending")) {
-                appointments = appointments.stream()
-                    .filter(a -> a.getDoctorId() != null && a.getDoctorId().equals(doctorId) ||
-                           !"Pending".equals(a.getStatus()))
-                    .toList();
             }
 
             // Then apply additional filters one by one
@@ -150,6 +141,7 @@ public class DoctorAppointmentController {
             }
 
             // Set all required template attributes
+            model.addAttribute("appointments", appointments);
             model.addAttribute("doctorId", doctorId);
             model.addAttribute("title", filterTitle);
             model.addAttribute("currentFilter", filter != null ? filter : "all");
@@ -163,38 +155,9 @@ public class DoctorAppointmentController {
             model.addAttribute("todayCount", doctorService.getTodayAppointments(doctorId).size());
             model.addAttribute("upcomingCount", doctorService.getUpcomingAppointments(doctorId).size());
 
-            // Implement pagination
-            int totalItems = appointments.size();
-            int totalPages = (int) Math.ceil((double) totalItems / size);
-
-            // Validate page number
-            if (page < 0) {
-                page = 0;
-            } else if (page >= totalPages && totalPages > 0) {
-                page = totalPages - 1;
-            }
-
-            // Get paginated subset of appointments
-            List<Appointment> paginatedAppointments;
-            if (!appointments.isEmpty()) {
-                int fromIndex = page * size;
-                int toIndex = Math.min(fromIndex + size, appointments.size());
-
-                // Check if fromIndex is valid
-                if (fromIndex < appointments.size()) {
-                    paginatedAppointments = appointments.subList(fromIndex, toIndex);
-                } else {
-                    paginatedAppointments = new ArrayList<>();
-                }
-            } else {
-                paginatedAppointments = new ArrayList<>();
-            }
-
-            model.addAttribute("appointments", paginatedAppointments);
-            model.addAttribute("totalPages", totalPages);
+            // Pagination (simplified)
+            model.addAttribute("totalPages", 1);
             model.addAttribute("currentPage", page);
-            model.addAttribute("pageSize", size);
-            model.addAttribute("totalItems", totalItems);
 
             // Fetch notifications for the doctor
             List<Notification> notifications = notificationRepository.findByUserIdOrderByCreatedAtDesc(doctor.getUserId());
@@ -209,8 +172,7 @@ public class DoctorAppointmentController {
 
             model.addAttribute("notifications", notifications);
             model.addAttribute("unreadNotifications", unreadNotifications);
-            logger.debug("Retrieved {} appointments (showing {} per page) for doctor ID: {}",
-                    totalItems, paginatedAppointments.size(), doctorId);
+            logger.debug("Retrieved {} appointments for doctor ID: {}", appointments.size(), doctorId);
             return "doctor/appointments";
         } catch (Exception e) {
             logger.error("Error fetching appointments for doctor ID: {}", doctorId, e);

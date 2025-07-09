@@ -108,9 +108,6 @@ public class DoctorSettingsController {
             model.addAttribute("doctorEmail", user.getEmail());
             model.addAttribute("doctorPhone", user.getPhoneNumber());
 
-            // Add doctor's image URL to the model
-            model.addAttribute("doctorImageUrl", doctor.getImageUrl());
-
             // Handle doctor specialization(s)
             String specializationText = "Not specified";
             if (doctor.getSpecializations() != null && !doctor.getSpecializations().isEmpty()) {
