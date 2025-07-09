@@ -120,6 +120,8 @@ public class DoctorController {
                     .filter(notification -> !notification.isRead())
                     .count();
 
+            Notification latestNotification = notifications.isEmpty() ? null : notifications.get(0);
+            model.addAttribute("latestNotification", latestNotification);
 
             model.addAttribute("todayAppointments", todayAppointments);
             model.addAttribute("upcomingAppointments", upcomingAppointments);
