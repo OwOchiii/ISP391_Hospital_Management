@@ -39,12 +39,13 @@ public interface AppointmentRepository extends JpaRepository<Appointment, Intege
       SELECT a
         FROM Appointment a
        WHERE a.doctorId = :doctorId
-         AND FUNCTION('DATE', a.dateTime) = CURRENT_DATE
+         AND CAST(a.dateTime AS date) = CURRENT_DATE
        ORDER BY a.dateTime ASC
     """)
     List<Appointment> findTodayAppointmentsForDoctor(@Param("doctorId") Integer doctorId);
 
-    /** 3) Lịch hôm nay với khoảng thời gian */
+
+
     @Query("""
       SELECT a
         FROM Appointment a
@@ -57,6 +58,7 @@ public interface AppointmentRepository extends JpaRepository<Appointment, Intege
             @Param("startOfDay") LocalDateTime startOfDay,
             @Param("endOfDay")   LocalDateTime endOfDay
     );
+
 
     /** 4) Các cuộc hẹn sắp tới */
     @Query("""

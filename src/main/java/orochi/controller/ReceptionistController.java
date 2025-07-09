@@ -8,6 +8,7 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
+import jakarta.transaction.Transactional;
 import jakarta.validation.Valid;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -15,6 +16,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
@@ -25,14 +27,11 @@ import orochi.config.CustomUserDetails;
 import orochi.dto.AppointmentDTO;
 import orochi.dto.AppointmentFormDTO;
 import orochi.dto.SpecializationDTO;
-import orochi.model.Appointment;
-import orochi.model.Doctor;
-import orochi.model.Patient;
-import orochi.model.Specialization;
-import orochi.model.Users;
+import orochi.model.*;
 import orochi.repository.PatientRepository;
 import orochi.repository.UserRepository;
 import orochi.service.AppointmentService;
+import orochi.service.NotificationService;
 import orochi.service.SpecializationService;
 import orochi.service.impl.ReceptionistService;
 import orochi.service.RoomService;
@@ -45,6 +44,8 @@ public class ReceptionistController {
     private final UserRepository userRepository;
     private final SpecializationService specializationService;
     private final AppointmentService appointmentService;
+
+    private final NotificationService notificationService;
     private final PatientRepository patientRepository;
     private final RoomService roomService; // Add RoomService injection
 
@@ -56,13 +57,14 @@ public class ReceptionistController {
     @Autowired
     public ReceptionistController(ReceptionistService receptionistService, UserRepository userRepository,
                                  SpecializationService specializationService, AppointmentService appointmentService,
-                                 PatientRepository patientRepository, RoomService roomService) {
+                                 PatientRepository patientRepository, RoomService roomService, NotificationService notificationService) {
         this.receptionistService = receptionistService;
         this.userRepository = userRepository;
         this.specializationService = specializationService;
         this.appointmentService = appointmentService;
         this.patientRepository = patientRepository;
         this.roomService = roomService; // Initialize RoomService
+        this.notificationService = notificationService;
     }
 
     @GetMapping("/dashboard")
@@ -100,6 +102,17 @@ public class ReceptionistController {
         model.addAttribute("ourDoctor", receptionistService.ourDoctors());
         model.addAttribute("totalAppointments", receptionistService.totalAppointment());
         model.addAttribute("activeStaff", receptionistService.activeStaff());
+        List<Notification> notifications = notificationService.findByUserIdOrderByCreatedAtDesc(userId);
+        long unreadCount = notifications.stream()
+                .filter(n -> !n.isRead())
+                .count();
+
+        Notification latestNotification = notifications.isEmpty() ? null : notifications.get(0);
+
+        model.addAttribute("notifications", notifications);
+        model.addAttribute("unreadCount", unreadCount);
+        model.addAttribute("latestNotification", latestNotification);
+
         return "Receptionists/dashboard";
     }
 
@@ -1109,6 +1122,44 @@ public class ReceptionistController {
             errorResponse.put("unavailableTimes", new ArrayList<>());
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(errorResponse);
         }
+    }
+
+    private Integer getCurrentUserId() {
+        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+        if (auth != null && auth.getPrincipal() instanceof CustomUserDetails) {
+            return ((CustomUserDetails) auth.getPrincipal()).getUserId();
+        }
+        return null;
+    }
+
+    @PostMapping("/notifications/{id}/read")
+    @Transactional
+    @ResponseBody
+    public ResponseEntity<?> markNotificationAsRead(@PathVariable("id") Integer notificationId) {
+        Integer userId = getCurrentUserId();
+        if (userId == null) {
+            logger.error("No userId found for authenticated user");
+            return ResponseEntity.badRequest().body("User ID is required");
+        }
+
+        Notification notification = notificationService.findByIdAndUserId(notificationId, userId);
+        if (notification == null) {
+            logger.error("Notification ID: {} not found for user ID: {}", notificationId, userId);
+            return ResponseEntity.notFound().build();
+        }
+
+        notification.setRead(true);
+        notificationService.save(notification);
+        logger.info("Notification ID: {} marked as read for user ID: {}", notificationId, userId);
+        return ResponseEntity.ok().build();
+    }
+
+
+    @PostMapping("/notifications/mark-read/{id}")
+    @Transactional
+    @ResponseBody
+    public ResponseEntity<?> markReadAlias(@PathVariable("id") Integer id) {
+        return markNotificationAsRead(id);
     }
 
 }
