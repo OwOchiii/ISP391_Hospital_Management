@@ -17,7 +17,7 @@ import orochi.repository.DoctorRepository;
 import orochi.repository.NotificationRepository;
 import orochi.service.DoctorService;
 import orochi.service.MedicalRecordService;
-import orochi.service.PDFExportService;
+import orochi.service.PdfExportService;
 import orochi.service.RecordMedicationService;
 
 import java.time.LocalDateTime;
@@ -45,7 +45,7 @@ public class MedicalRecordController {
     private NotificationRepository notificationRepository;
 
     @Autowired
-    private PDFExportService pdfExportService;
+    private PdfExportService pdfExportService;
 
     @Autowired
     private RecordMedicationService medicationService;
