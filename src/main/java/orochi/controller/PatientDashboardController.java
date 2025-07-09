@@ -139,6 +139,12 @@ public class PatientDashboardController {
             }
             model.addAttribute("lastVisit", lastVisit);
 
+            //Lay thong bao moi nhat va list thong bao
+            Integer userId = patient.getUser().getUserId();
+            List<Notification> notes = notificationService.findByUserIdOrderByCreatedAtDesc(userId);
+            Notification latest = notes.isEmpty() ? null : notes.get(0);
+            model.addAttribute("latestNotification", latest);
+
             logger.info("Dashboard loaded successfully for patient ID: {}", patientId);
             return "patient/dashboard";
         } catch (Exception e) {
@@ -1259,6 +1265,13 @@ public class PatientDashboardController {
             DateTimeFormatter formatter = DateTimeFormatter.ofPattern("MMM d, yyyy");
             return dateTime.format(formatter);
         }
+    }
+
+    @PostMapping("/notifications/mark-read/{id}")
+    @Transactional
+    @ResponseBody
+    public ResponseEntity<?> markReadViaAlias(@PathVariable("id") Integer notificationId) {
+        return markNotificationAsRead(notificationId);
     }
 }
 
