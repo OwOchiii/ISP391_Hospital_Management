@@ -1,11 +1,16 @@
 package orochi.repository;
 
+import org.springframework.data.domain.Page;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 import orochi.model.Notification;
 
+import org.springframework.data.domain.Pageable;
+import orochi.model.NotificationType;
+
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 
@@ -23,4 +28,24 @@ public interface NotificationRepository extends JpaRepository<Notification, Inte
 
     @Query("SELECT n FROM Notification n WHERE n.notificationId = :notificationId AND n.userId = :userId")
     Optional<Notification> findByNotificationIdAndUserId(Integer notificationId, Integer userId);
+
+    Page<Notification> findAllByOrderByCreatedAtDesc(Pageable pageable);
+
+    @Query("""
+  SELECT n FROM Notification n
+   WHERE (:search IS NULL 
+          OR LOWER(n.message) LIKE LOWER(CONCAT('%',:search,'%'))
+          OR CAST(n.notificationId AS string) LIKE CONCAT('%',:search,'%'))
+     AND (:type IS NULL OR n.type = :type)
+     AND (:isRead IS NULL OR n.isRead = :isRead)
+     AND (:fromDate IS NULL OR n.createdAt >= :fromDate)
+     AND (:toDate IS NULL OR n.createdAt <= :toDate)
+""")
+    Page<Notification> findByFilter(
+            @Param("search") String search,
+            @Param("type") NotificationType type,
+            @Param("isRead") Boolean isRead,
+            @Param("fromDate") LocalDateTime fromDate,
+            @Param("toDate") LocalDateTime toDate,
+            Pageable pageable);
 }
