@@ -706,7 +706,7 @@ public class DoctorController {
 
             long appointmentCount = notifications.stream()
                     .filter(notification -> notification.getType() != null &&
-                           notification.getType().toLowerCase().contains("appointment"))
+                           notification.getType().toString().toLowerCase().contains("appointment"))
                     .count();
 
             model.addAttribute("doctorName", doctor.getUser().getFullName());
