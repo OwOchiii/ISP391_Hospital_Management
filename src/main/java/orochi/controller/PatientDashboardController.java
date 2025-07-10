@@ -27,6 +27,7 @@ import orochi.config.CustomUserDetails;
 import orochi.service.FeedbackService;
 import orochi.service.NotificationService;
 import orochi.service.PatientService;
+import orochi.service.MedicalRecordService;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -80,6 +81,9 @@ public class PatientDashboardController {
 
     @Autowired
     private PasswordEncoder passwordEncoder;
+
+    @Autowired
+    private MedicalRecordService medicalRecordService;
 
     private static final List<String> ALLOWED_FEEDBACK_TYPES = Arrays.asList(
             "Quality of medical services", "Facilities", "Administrative procedures",
@@ -409,6 +413,10 @@ public class PatientDashboardController {
             model.addAttribute("patient", patient);
             model.addAttribute("patientName", patient.getUser().getFullName());
             model.addAttribute("patientId", patientId);
+
+            // Fetch the most recent medical record
+            Optional<MedicalRecord> medicalRecordOpt = medicalRecordService.getMedicalRecordByPatientId(patientId);
+            model.addAttribute("medicalRecord", medicalRecordOpt.orElse(null));
 
             return "patient/profile";
         } catch (Exception e) {
@@ -798,114 +806,6 @@ public class PatientDashboardController {
     public String deleteFeedback(@RequestParam("feedbackId") Integer feedbackId) {
         feedbackService.deleteFeedback(feedbackId);
         return "redirect:/patient/my-feedback";
-    }
-
-    @GetMapping("/appointment-list/{id}/reschedule")
-    public String showRescheduleAppointment(@PathVariable("id") Integer appointmentId,
-                                            @RequestParam("patientId") Integer patientId,
-                                            Model model,
-                                            RedirectAttributes redirectAttributes) {
-        try {
-            Integer currentPatientId = getCurrentPatientId();
-            if (currentPatientId == null || !currentPatientId.equals(patientId)) {
-                logger.error("Unauthorized access attempt for patient ID: {}", patientId);
-                redirectAttributes.addFlashAttribute("errorMessage", "Unauthorized access");
-                return "redirect:/patient/appointment-list";
-            }
-
-            Optional<Appointment> appointmentOpt = appointmentRepository.findById(appointmentId);
-            if (!appointmentOpt.isPresent()) {
-                logger.error("Appointment not found for ID: {}", appointmentId);
-                redirectAttributes.addFlashAttribute("errorMessage", "Appointment not found");
-                return "redirect:/patient/appointment-list";
-            }
-            Appointment appointment = appointmentOpt.get();
-
-            if (!appointment.getPatient().getPatientId().equals(patientId)) {
-                logger.error("Appointment ID: {} does not belong to patient ID: {}", appointmentId, patientId);
-                redirectAttributes.addFlashAttribute("errorMessage", "You are not authorized to reschedule this appointment");
-                return "redirect:/patient/appointment-list";
-            }
-
-            if (!"Scheduled".equals(appointment.getStatus())) {
-                logger.warn("Attempt to reschedule non-scheduled appointment ID: {}", appointmentId);
-                redirectAttributes.addFlashAttribute("errorMessage", "Only scheduled appointments can be rescheduled");
-                return "redirect:/patient/appointment-list";
-            }
-
-            model.addAttribute("appointment", appointment);
-            model.addAttribute("patientId", patientId);
-            model.addAttribute("patientName", appointment.getPatient().getUser().getFullName());
-
-            return "patient/reschedule-appointment";
-        } catch (Exception e) {
-            logger.error("Error loading reschedule appointment page", e);
-            redirectAttributes.addFlashAttribute("errorMessage", "An error occurred: " + e.getMessage());
-            return "redirect:/patient/appointment-list";
-        }
-    }
-
-    @PostMapping("/appointment-list/{id}/reschedule")
-    public String rescheduleAppointment(@PathVariable("id") Integer appointmentId,
-                                        @RequestParam("patientId") Integer patientId,
-                                        @RequestParam("newTime") String newTime,
-                                        RedirectAttributes redirectAttributes) {
-        try {
-            Integer currentPatientId = getCurrentPatientId();
-            if (currentPatientId == null || !currentPatientId.equals(patientId)) {
-                logger.error("Unauthorized access attempt for patient ID: {}", patientId);
-                redirectAttributes.addFlashAttribute("errorMessage", "Unauthorized access");
-                return "redirect:/patient/appointment-list";
-            }
-
-            Optional<Appointment> appointmentOpt = appointmentRepository.findById(appointmentId);
-            if (!appointmentOpt.isPresent()) {
-                logger.error("Appointment not found for ID: {}", appointmentId);
-                redirectAttributes.addFlashAttribute("errorMessage", "Appointment not found");
-                return "redirect:/patient/appointment-list";
-            }
-            Appointment appointment = appointmentOpt.get();
-
-            if (!appointment.getPatient().getPatientId().equals(patientId)) {
-                logger.error("Appointment ID: {} does not belong to patient ID: {}", appointmentId, patientId);
-                redirectAttributes.addFlashAttribute("errorMessage", "You are not authorized to reschedule this appointment");
-                return "redirect:/patient/appointment-list";
-            }
-
-            if (!"Scheduled".equals(appointment.getStatus())) {
-                logger.warn("Attempt to reschedule non-scheduled appointment ID: {}", appointmentId);
-                redirectAttributes.addFlashAttribute("errorMessage", "Only scheduled appointments can be rescheduled");
-                return "redirect:/patient/appointment-list";
-            }
-
-            // Get existing appointment date
-            LocalDate existingDate = appointment.getDateTime().toLocalDate();
-
-            // Parse new time
-            LocalTime newLocalTime;
-            try {
-                newLocalTime = LocalTime.parse(newTime);
-            } catch (DateTimeParseException e) {
-                logger.error("Invalid time format: {}", newTime);
-                redirectAttributes.addFlashAttribute("errorMessage", "Invalid time format");
-                return "redirect:/patient/appointment-list/" + appointmentId + "/reschedule?patientId=" + patientId;
-            }
-
-            // Combine existing date with new time
-            LocalDateTime newDateTime = LocalDateTime.of(existingDate, newLocalTime);
-
-            // Update the appointment time
-            appointment.setDateTime(newDateTime);
-            appointmentRepository.save(appointment);
-
-            logger.info("Appointment ID {} rescheduled to {} by patient ID: {}", appointmentId, newDateTime, patientId);
-            redirectAttributes.addFlashAttribute("successMessage", "Appointment rescheduled successfully");
-            return "redirect:/patient/appointment-list";
-        } catch (Exception e) {
-            logger.error("Error rescheduling appointment ID: {}", appointmentId, e);
-            redirectAttributes.addFlashAttribute("errorMessage", "Failed to reschedule appointment: " + e.getMessage());
-            return "redirect:/patient/appointment-list";
-        }
     }
 
     @GetMapping("/appointment-list/{id}/report")

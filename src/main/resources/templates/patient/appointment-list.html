@@ -1229,11 +1229,6 @@
           </div>
 
           <div th:if="${appointment.status == 'Scheduled'}">
-            <a th:href="@{/patient/appointment-list/{id}/reschedule(id=${appointment.appointmentId}, patientId=${patientId}, search=${search}, status=${status}, fromDate=${fromDate}, toDate=${toDate})}"
-               class="btn-warning-custom btn-sm">
-              <i class="bi bi-calendar-event"></i>
-              Reschedule
-            </a>
             <a th:href="@{/patient/appointment-list/{id}/cancel(id=${appointment.appointmentId}, patientId=${patientId}, search=${search}, status=${status}, fromDate=${fromDate}, toDate=${toDate})}"
                class="btn-danger-custom btn-sm">
               <i class="bi bi-x-circle"></i>

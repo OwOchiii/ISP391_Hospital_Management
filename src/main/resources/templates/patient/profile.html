@@ -238,7 +238,7 @@
     .patient-info {
       display: flex;
       align-items: center;
-      gap: 0.75rem;
+      gallery: 0.75rem;
       padding: 0.5rem;
       border-radius: 12px;
       transition: all 0.3s ease;
@@ -308,6 +308,7 @@
       padding: 2rem;
       border-left: 4px solid var(--patient-primary);
       position: relative;
+      margin-bottom: 2rem;
     }
 
     .profile-header {
@@ -611,7 +612,7 @@
       </div>
     </div>
 
-    <!-- Profile Card -->
+    <!-- Personal Information Card -->
     <div th:if="${patient != null}" class="profile-card">
       <div class="profile-header">
         <div class="profile-info">
@@ -674,6 +675,64 @@
           Update Profile
         </a>
       </div>
+    </div>
+
+    <!-- Medical Record Card -->
+    <div th:if="${medicalRecord != null}" class="profile-card">
+      <div class="profile-header">
+        <div class="profile-info">
+          <div class="profile-title">
+            <i class="bi bi-file-medical"></i>
+            Medical Record
+          </div>
+          <div class="profile-id">Record ID: <span th:text="${medicalRecord.recordId}">ID</span></div>
+        </div>
+      </div>
+
+      <div class="profile-details">
+        <div class="detail-item">
+          <span class="detail-label">Record Date</span>
+          <span class="detail-value" th:text="${#temporals.format(medicalRecord.recordDate, 'yyyy-MM-dd HH:mm')}">Not provided</span>
+        </div>
+        <div class="detail-item">
+          <span class="detail-label">Last Updated</span>
+          <span class="detail-value" th:text="${#temporals.format(medicalRecord.lastUpdated, 'yyyy-MM-dd HH:mm')}">Not provided</span>
+        </div>
+        <div class="detail-item">
+          <span class="detail-label">Medical Conditions</span>
+          <span class="detail-value" th:text="${medicalRecord.medicalConditions != null ? medicalRecord.medicalConditions : 'Not provided'}">Not provided</span>
+        </div>
+        <div class="detail-item">
+          <span class="detail-label">Medical History</span>
+          <span class="detail-value" th:text="${medicalRecord.medicalHistory != null ? medicalRecord.medicalHistory : 'Not provided'}">Not provided</span>
+        </div>
+        <div class="detail-item">
+          <span class="detail-label">Allergies</span>
+          <span class="detail-value" th:text="${medicalRecord.allergies != null ? medicalRecord.allergies : 'Not provided'}">Not provided</span>
+        </div>
+        <div class="detail-item">
+          <span class="detail-label">Blood Type</span>
+          <span class="detail-value" th:text="${medicalRecord.bloodType != null ? medicalRecord.bloodType : 'Not provided'}">Not provided</span>
+        </div>
+        <div class="detail-item">
+          <span class="detail-label">Health Status</span>
+          <span class="detail-value" th:text="${medicalRecord.healthStatus != null ? medicalRecord.healthStatus : 'Not provided'}">Not provided</span>
+        </div>
+      </div>
+
+      <div th:if="${medicalRecord.medications != null and not #lists.isEmpty(medicalRecord.medications)}" class="profile-description">
+        <h6>
+          <i class="bi bi-capsule"></i>
+          Medications
+        </h6>
+        <ul class="list-unstyled">
+          <li th:each="med : ${medicalRecord.medications}" th:text="${med.medicationName + ' - ' + med.dosage}">Medication - Dosage</li>
+        </ul>
+      </div>
+    </div>
+
+    <div th:if="${patient != null and medicalRecord == null}" class="alert alert-info">
+      No medical record found.
     </div>
 
     <div th:unless="${patient != null}" class="alert alert-danger alert-dismissible fade show" role="alert">
