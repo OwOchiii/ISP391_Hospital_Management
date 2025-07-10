@@ -4,11 +4,13 @@ import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import org.hibernate.annotations.DynamicUpdate;
 
 import java.time.LocalDateTime;
 
 @Entity
 @Table(name = "Notification")
+@DynamicUpdate
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
@@ -37,4 +39,8 @@ public class Notification {
     @ManyToOne
     @JoinColumn(name = "UserID", insertable = false, updatable = false)
     private Users user;
+
+    public boolean isRead() {
+        return isRead;
+    }
 }

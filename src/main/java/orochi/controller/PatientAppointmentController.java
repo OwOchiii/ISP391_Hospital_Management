@@ -47,6 +47,8 @@ public class PatientAppointmentController {
     public String showBookAppointmentForm(
             @RequestParam(required = false) Integer patientId,
             @RequestParam(required = false) Integer appointmentId,
+            @RequestParam(required = false) Integer doctorId,
+            @RequestParam(required = false) Integer specialtyId,
             Model model,
             RedirectAttributes redirectAttributes) {
         if (patientId == null) {
@@ -106,6 +108,12 @@ public class PatientAppointmentController {
             if (patient.getUser() != null) {
                 appointmentForm.setEmail(patient.getUser().getEmail());
                 appointmentForm.setPhoneNumber(patient.getUser().getPhoneNumber());
+            }
+            if (specialtyId != null) {
+                appointmentForm.setSpecialtyId(specialtyId);
+            }
+            if (doctorId != null) {
+                appointmentForm.setDoctorId(doctorId);
             }
         }
 
@@ -216,12 +224,6 @@ public class PatientAppointmentController {
         }
     }
 
-    /**
-     * View latest medical report for an appointment
-     * @param id The appointment ID
-     * @param patientId The patient ID for authorization
-     * @return The medical report PDF or an error page
-     */
     @GetMapping("/appointment-list-legacy/{id}/report")
     public String viewLatestMedicalReport(
             @PathVariable Integer id,
@@ -229,7 +231,6 @@ public class PatientAppointmentController {
             Model model,
             RedirectAttributes redirectAttributes) {
 
-        // Validate patient authorization
         if (patientId == null) {
             Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
             if (authentication != null && authentication.getPrincipal() instanceof CustomUserDetails) {
@@ -243,7 +244,6 @@ public class PatientAppointmentController {
             return "redirect:/patient/appointment-list";
         }
 
-        // Check if appointment exists and belongs to the patient
         Appointment appointment = appointmentRepository.findById(id).orElse(null);
         if (appointment == null) {
             redirectAttributes.addFlashAttribute("errorMessage", "Appointment not found");
@@ -255,7 +255,6 @@ public class PatientAppointmentController {
             return "redirect:/patient/appointment-list";
         }
 
-        // Get the latest medical report for this appointment
         List<MedicalReport> reports = medicalReportRepository.findByAppointmentIdOrderByReportDateDesc(id);
         if (reports.isEmpty()) {
             redirectAttributes.addFlashAttribute("errorMessage", "No medical report available for this appointment");
@@ -268,7 +267,6 @@ public class PatientAppointmentController {
             return "redirect:/patient/appointment-list";
         }
 
-        // Redirect to the file download controller to serve the PDF
         return "redirect:/download/report/" + latestReport.getReportId() + "?inline=true";
     }
 

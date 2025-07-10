@@ -163,6 +163,29 @@ function initializeFilterTabs() {
 }
 
 /**
+ * Initialize advanced filters functionality
+ */
+function initializeAdvancedFilters() {
+    // Get filter elements
+    const genderFilter = document.getElementById('genderFilter');
+    const ageFilter = document.getElementById('ageFilter');
+    const lastVisitFilter = document.getElementById('lastVisitFilter');
+
+    // Add event listeners to filter elements
+    if (genderFilter) {
+        genderFilter.addEventListener('change', applyFilters);
+    }
+
+    if (ageFilter) {
+        ageFilter.addEventListener('change', applyFilters);
+    }
+
+    if (lastVisitFilter) {
+        lastVisitFilter.addEventListener('change', applyFilters);
+    }
+}
+
+/**
  * Toggle advanced filters visibility
  */
 function toggleAdvancedFilters() {
@@ -170,6 +193,125 @@ function toggleAdvancedFilters() {
     if (advancedFilters) {
         advancedFilters.classList.toggle('show');
     }
+}
+
+/**
+ * Apply all filters to the patient list
+ */
+function applyFilters() {
+    const searchTerm = document.getElementById('searchInput')?.value.toLowerCase() || '';
+    const genderValue = document.getElementById('genderFilter')?.value || '';
+    const ageRange = document.getElementById('ageFilter')?.value || '';
+    const lastVisitValue = document.getElementById('lastVisitFilter')?.value || '';
+
+    const patientCards = document.querySelectorAll('.patient-card');
+    let visibleCount = 0;
+
+    patientCards.forEach(card => {
+        // Get patient information from the card
+        const patientNameEl = card.querySelector('.patient-name');
+        const patientIdEl = card.querySelector('.patient-id');
+        const patientName = patientNameEl ? patientNameEl.textContent.toLowerCase() : '';
+        const patientId = patientIdEl ? patientIdEl.textContent.toLowerCase() : '';
+
+        // Extract gender from gender icon class
+        const genderIcon = card.querySelector('.gender-icon');
+        let gender = '';
+        if (genderIcon) {
+            if (genderIcon.classList.contains('gender-male')) gender = 'male';
+            else if (genderIcon.classList.contains('gender-female')) gender = 'female';
+            else gender = 'other';
+        }
+
+        // Extract age from the age detail element
+        let age = 0;
+        const ageEl = Array.from(card.querySelectorAll('.detail-label'))
+            .find(el => el.textContent.includes('Age'))?.nextElementSibling;
+        if (ageEl) {
+            const ageText = ageEl.textContent;
+            age = parseInt(ageText);
+        }
+
+        // Extract last visit from the last visit stat
+        let lastVisit = '';
+        const lastVisitEl = Array.from(card.querySelectorAll('.stat-label'))
+            .find(el => el.textContent.includes('Last Visit'))?.previousElementSibling;
+        if (lastVisitEl) {
+            lastVisit = lastVisitEl.textContent.toLowerCase();
+        }
+
+        // Check if the patient matches the search term
+        const matchesSearch = patientName.includes(searchTerm) || patientId.includes(searchTerm);
+
+        // Check if the patient matches the gender filter
+        const matchesGender = !genderValue ||
+            (gender && gender.toLowerCase() === genderValue.toLowerCase());
+
+        // Check if the patient matches the age range filter
+        let matchesAge = true;
+        if (ageRange && !isNaN(age)) {
+            if (ageRange === '0-18') {
+                matchesAge = age >= 0 && age <= 18;
+            } else if (ageRange === '19-35') {
+                matchesAge = age >= 19 && age <= 35;
+            } else if (ageRange === '36-50') {
+                matchesAge = age >= 36 && age <= 50;
+            } else if (ageRange === '51-65') {
+                matchesAge = age >= 51 && age <= 65;
+            } else if (ageRange === '65+') {
+                matchesAge = age >= 65;
+            }
+        }
+
+        // Check if the patient matches the last visit filter
+        let matchesLastVisit = true;
+        if (lastVisitValue && lastVisit) {
+            if (lastVisitValue === 'week' &&
+                !(lastVisit.includes('today') || lastVisit.includes('yesterday') ||
+                (lastVisit.includes('days ago') && parseInt(lastVisit) <= 7))) {
+                matchesLastVisit = false;
+            } else if (lastVisitValue === 'month' &&
+                !(lastVisit.includes('today') || lastVisit.includes('yesterday') ||
+                (lastVisit.includes('days ago') && parseInt(lastVisit) <= 30))) {
+                matchesLastVisit = false;
+            } else if (lastVisitValue === '3months' &&
+                !(lastVisit.includes('today') || lastVisit.includes('yesterday') ||
+                (lastVisit.includes('days ago') && parseInt(lastVisit) <= 90))) {
+                matchesLastVisit = false;
+            } else if (lastVisitValue === '6months' &&
+                !(lastVisit.includes('today') || lastVisit.includes('yesterday') ||
+                (lastVisit.includes('days ago') && parseInt(lastVisit) <= 180))) {
+                matchesLastVisit = false;
+            } else if (lastVisitValue === 'year' &&
+                !(lastVisit.includes('today') || lastVisit.includes('yesterday') ||
+                (lastVisit.includes('days ago') && parseInt(lastVisit) <= 365))) {
+                matchesLastVisit = false;
+            }
+        }
+
+        // Show or hide the card based on all filters
+        if (matchesSearch && matchesGender && matchesAge && matchesLastVisit) {
+            card.style.display = 'block';
+            visibleCount++;
+        } else {
+            card.style.display = 'none';
+        }
+    });
+
+    // Show/hide empty state
+    const emptyState = document.getElementById('emptyState');
+    const patientsContainer = document.getElementById('patientsContainer');
+
+    if (visibleCount === 0) {
+        if (emptyState) emptyState.style.display = 'block';
+        if (patientsContainer) patientsContainer.style.display = 'none';
+    } else {
+        if (emptyState) emptyState.style.display = 'none';
+        if (patientsContainer) patientsContainer.style.display = 'grid';
+    }
+
+    // Update filter tab counts
+    updateFilterCounts(visibleCount);
 }
 
 /**

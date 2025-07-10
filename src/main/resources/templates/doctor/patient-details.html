@@ -775,7 +775,7 @@
     <div class="nav-section">
       <div class="nav-section-title">Dashboard</div>
       <div class="nav-item">
-        <a th:href="@{/doctor/dashboard(doctorId=${doctorId})}" class="nav-link active">
+        <a th:href="@{/doctor/dashboard(doctorId=${doctorId})}" class="nav-link">
           <i class="bi bi-speedometer2"></i>
           Dashboard
         </a>
@@ -791,7 +791,7 @@
         </a>
       </div>
       <div class="nav-item">
-        <a th:href="@{/doctor/patients(doctorId=${doctorId})}" class="nav-link">
+        <a th:href="@{/doctor/patients(doctorId=${doctorId})}" class="nav-link active">
           <i class="bi bi-people"></i>
           Patients
         </a>
@@ -857,33 +857,11 @@
         <i class="bi bi-arrow-left"></i>
         Back to Patients
       </a>
-      <div class="notification-dropdown dropdown">
-        <button class="notification-btn" id="notificationDropdown" data-bs-toggle="dropdown" aria-expanded="false">
+      <div class="notification-dropdown">
+        <a th:href="@{/doctor/notifications(doctorId=${doctorId})}" class="notification-btn position-relative">
           <i class="bi bi-bell"></i>
           <span class="notification-badge" th:if="${unreadNotifications > 0}" th:text="${unreadNotifications}">0</span>
-        </button>
-        <ul class="dropdown-menu dropdown-menu-end notification-menu" aria-labelledby="notificationDropdown">
-          <li class="dropdown-header">Notifications</li>
-          <div class="notification-list" th:if="${notifications != null && !notifications.isEmpty()}">
-            <li th:each="notification : ${notifications}" class="notification-item" th:classappend="${!notification.isRead ? 'unread' : ''}">
-              <div class="notification-content">
-                <div class="notification-message" th:text="${notification.message}">Notification message</div>
-                <div class="notification-time" th:text="${#temporals.format(notification.createdAt, 'MMM dd, yyyy HH:mm')}">Jun 18, 2025</div>
-              </div>
-              <button th:if="${!notification.isRead}" class="mark-read-btn" th:data-id="${notification.notificationId}">
-                <i class="bi bi-check-circle"></i>
-              </button>
-            </li>
-          </div>
-          <li class="empty-notification" th:if="${notifications == null || notifications.isEmpty()}">
-            <div class="text-center py-3">
-              <i class="bi bi-bell-slash"></i>
-              <p>No notifications</p>
-            </div>
-          </li>
-          <li><hr class="dropdown-divider"></li>
-          <li class="text-center"><a href="#" class="dropdown-item text-primary">View all notifications</a></li>
-        </ul>
+        </a>
       </div>
       <div class="doctor-info">
         <div class="doctor-avatar">
@@ -1122,20 +1100,7 @@
     </div>
 
     <!-- Action Buttons -->
-    <div class="d-flex gap-3 justify-content-center mt-4">
-      <a th:href="@{/doctor/appointments/new(doctorId=${doctorId}, patientId=${patient.patientId})}" class="btn-primary-custom">
-        <i class="bi bi-calendar-plus"></i>
-        Schedule New Appointment
-      </a>
-      <a th:href="@{/doctor/prescriptions/new(doctorId=${doctorId}, patientId=${patient.patientId})}" class="btn-outline-custom">
-        <i class="bi bi-prescription2"></i>
-        Write Prescription
-      </a>
-      <a th:href="@{/doctor/medical-reports/new(doctorId=${doctorId}, patientId=${patient.patientId})}" class="btn-outline-custom">
-        <i class="bi bi-file-medical"></i>
-        Create Medical Report
-      </a>
-    </div>
+
   </div>
 </div>
 

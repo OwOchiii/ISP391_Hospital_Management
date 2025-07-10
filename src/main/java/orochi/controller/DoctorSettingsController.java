@@ -10,12 +10,16 @@ import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 import orochi.model.Doctor;
+import orochi.model.Notification;
 import orochi.model.Specialization;
 import orochi.model.Users;
 import orochi.repository.DoctorRepository;
+import orochi.repository.NotificationRepository;
 import orochi.repository.UserRepository;
 import orochi.config.CustomUserDetails;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.stream.Collectors;
 
 @Controller
@@ -32,6 +36,9 @@ public class DoctorSettingsController {
 
     @Autowired
     private PasswordEncoder passwordEncoder;
+
+    @Autowired
+    private NotificationRepository notificationRepository;
 
     /**
      * Display the settings page for a doctor
@@ -81,6 +88,19 @@ public class DoctorSettingsController {
                 model.addAttribute("errorMessage", "Doctor not found");
                 return "error";
             }
+
+            List<Notification> notifications = notificationRepository.findByUserIdOrderByCreatedAtDesc(doctor.getUserId());
+            if (notifications == null) {
+                notifications = new ArrayList<>();
+            }
+
+            // Count unread notifications
+            long unreadNotifications = notifications.stream()
+                    .filter(notification -> !notification.isRead())
+                    .count();
+
+            model.addAttribute("notifications", notifications);
+            model.addAttribute("unreadNotifications", unreadNotifications);
 
             Users user = doctor.getUser();
             model.addAttribute("doctorId", doctorId);
