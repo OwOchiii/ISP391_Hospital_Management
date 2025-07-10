@@ -35,17 +35,16 @@ public interface AppointmentRepository extends JpaRepository<Appointment, Intege
     List<Appointment> findByDoctorIdOrderByDateTimeDesc(@Param("doctorId") Integer doctorId);
 
     /** 2) Lịch hôm nay của bác sĩ (dạng đơn giản) */
-    @Query("""
-      SELECT a
+    @Query(value = """
+      SELECT a.*
         FROM Appointment a
-       WHERE a.doctorId = :doctorId
-         AND CAST(a.dateTime AS date) = CURRENT_DATE
-       ORDER BY a.dateTime ASC
-    """)
+       WHERE a.DoctorID = :doctorId
+        AND CONVERT(DATE, a.DateTime) = CONVERT(DATE, GETDATE())
+      ORDER BY a.DateTime ASC
+    """, nativeQuery = true)
     List<Appointment> findTodayAppointmentsForDoctor(@Param("doctorId") Integer doctorId);
 
-
-
+    /** 3) Lịch hôm nay với khoảng thời gian */
     @Query("""
       SELECT a
         FROM Appointment a
@@ -58,7 +57,6 @@ public interface AppointmentRepository extends JpaRepository<Appointment, Intege
             @Param("startOfDay") LocalDateTime startOfDay,
             @Param("endOfDay")   LocalDateTime endOfDay
     );
-
 
     /** 4) Các cuộc hẹn sắp tới */
     @Query("""
@@ -275,15 +273,15 @@ public interface AppointmentRepository extends JpaRepository<Appointment, Intege
             @Param("status") String status
     );
 
-    @Query("""
-      SELECT FUNCTION('FORMAT', a.dateTime, 'yyyy-MM') AS period, COUNT(a) AS cnt
-        FROM Appointment a
-       WHERE a.dateTime BETWEEN :start AND :end
-         AND a.status = :status
-       GROUP BY FUNCTION('FORMAT', a.dateTime, 'yyyy-MM')
-       ORDER BY period
-    """)
-    List<Object[]> findMonthlyCountsByStatus(
+    @Query(value = """
+  SELECT CONCAT(CAST(YEAR(a.DateTime) AS varchar(4)), '-Q', CAST(DATEPART(QUARTER,a.DateTime) AS varchar(1))) AS period, COUNT(*) AS cnt
+  FROM Appointment a
+  WHERE a.DateTime BETWEEN :start AND :end
+    AND a.Status = :status
+  GROUP BY YEAR(a.DateTime), DATEPART(QUARTER,a.DateTime)
+  ORDER BY YEAR(a.DateTime), DATEPART(QUARTER,a.DateTime)
+""", nativeQuery = true)
+    List<Object[]> findQuarterlyCountsByStatus(
             @Param("start") LocalDateTime start,
             @Param("end")   LocalDateTime end,
             @Param("status") String status
@@ -308,11 +306,11 @@ public interface AppointmentRepository extends JpaRepository<Appointment, Intege
 
     @Query(value = """
       SELECT CONCAT(CAST(YEAR(a.DateTime) AS varchar(4)), '-Q', CAST(DATEPART(QUARTER,a.DateTime) AS varchar(1))) AS period, COUNT(*) AS cnt
-        FROM Appointment a
-       WHERE a.DateTime BETWEEN :start AND :end
-         AND (:status = 'ALL' OR a.Status = :status)
-       GROUP BY YEAR(a.DateTime), DATEPART(QUARTER,a.DateTime)
-       ORDER BY YEAR(a.DateTime), DATEPART(QUARTER,a.DateTime)
+      FROM Appointment a
+      WHERE a.DateTime BETWEEN :start AND :end
+        AND a.Status = :status
+      GROUP BY YEAR(a.DateTime), DATEPART(QUARTER,a.DateTime)
+      ORDER BY YEAR(a.DateTime), DATEPART(QUARTER,a.DateTime)
     """, nativeQuery = true)
     List<Object[]> findQuarterlyCounts(
             @Param("start") LocalDateTime start,
@@ -326,7 +324,7 @@ public interface AppointmentRepository extends JpaRepository<Appointment, Intege
        WHERE a.dateTime BETWEEN :start AND :end
          AND (:status = 'ALL' OR a.status = :status)
        GROUP BY FUNCTION('YEAR', a.dateTime)
-       ORDER BY period
+       ORDER BY FUNCTION('YEAR', a.dateTime)
     """)
     List<Object[]> findYearlyCounts(
             @Param("start") LocalDateTime start,
@@ -334,19 +332,6 @@ public interface AppointmentRepository extends JpaRepository<Appointment, Intege
             @Param("status") String status
     );
 
-    @Query("""
-      SELECT CONCAT(FUNCTION('YEAR', a.dateTime), '-Q', FUNCTION('QUARTER', a.dateTime)) AS period, COUNT(a) AS cnt
-        FROM Appointment a
-       WHERE a.dateTime BETWEEN :start AND :end
-         AND a.status = :status
-       GROUP BY FUNCTION('YEAR', a.dateTime), FUNCTION('QUARTER', a.dateTime)
-       ORDER BY FUNCTION('YEAR', a.dateTime), FUNCTION('QUARTER', a.dateTime)
-    """)
-    List<Object[]> findQuarterlyCountsByStatus(
-            @Param("start") LocalDateTime start,
-            @Param("end")   LocalDateTime end,
-            @Param("status") String status
-    );
 
     @Query("""
       SELECT FUNCTION('YEAR', a.dateTime) AS period, COUNT(a) AS cnt

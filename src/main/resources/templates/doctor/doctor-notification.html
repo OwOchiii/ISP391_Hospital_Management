@@ -489,28 +489,34 @@
         <!-- Notifications List -->
         <div class="notifications-container" id="notificationsContainer">
             <!-- Display notifications from the model directly using Thymeleaf -->
-            <div th:each="notification : ${notifications}" th:class="'notification-card ' + (${!notification.isRead()} ? 'unread' : 'read')" th:data-type="${notification.type?.toLowerCase()}">
+            <div th:each="notification : ${notifications}" th:class="'notification-card ' + (${!notification.isRead()} ? 'unread' : 'read')" th:data-type="${notification.type != null ? notification.type.name().toLowerCase() : ''}">
                 <div class="notification-icon">
                     <i th:class="${'bi ' +
                         (notification.type != null ?
-                            (notification.type.toLowerCase() == 'info' ? 'bi-info-circle' :
-                            notification.type.toLowerCase() == 'warning' ? 'bi-exclamation-triangle' :
-                            notification.type.toLowerCase() == 'alert' ? 'bi-exclamation-circle' :
-                            notification.type.toLowerCase() == 'appointment' ? 'bi-calendar-check' :
-                            notification.type.toLowerCase() == 'system' ? 'bi-gear' : 'bi-bell')
+                            (notification.type.name().toLowerCase() == 'adminnotice' ? 'bi-info-circle' :
+                            notification.type.name().toLowerCase() == 'billingupdate' ? 'bi-exclamation-triangle' :
+                            notification.type.name().toLowerCase() == 'reminder' ? 'bi-calendar-check' :
+                            notification.type.name().toLowerCase() == 'securityalert' ? 'bi-exclamation-circle' :
+                            notification.type.name().toLowerCase() == 'testing' ? 'bi-gear' : 'bi-bell')
                             : 'bi-bell')}"></i>
                 </div>
                 <div class="notification-content">
                     <div class="notification-header">
                         <span th:class="${'notification-type ' +
                        (notification.type != null ?
-                         (notification.type.toLowerCase() == 'info' ? 'type-info' :
-                          notification.type.toLowerCase() == 'warning' ? 'type-warning' :
-                          notification.type.toLowerCase() == 'alert' ? 'type-alert' :
-                          notification.type.toLowerCase() == 'appointment' ? 'type-appointment' :
-                          notification.type.toLowerCase() == 'system' ? 'type-system' : 'type-default')
+                         (notification.type.name().toLowerCase() == 'adminnotice' ? 'type-info' :
+                          notification.type.name().toLowerCase() == 'billingupdate' ? 'type-warning' :
+                          notification.type.name().toLowerCase() == 'reminder' ? 'type-appointment' :
+                          notification.type.name().toLowerCase() == 'securityalert' ? 'type-alert' :
+                          notification.type.name().toLowerCase() == 'testing' ? 'type-system' : 'type-default')
                          : 'type-default')}"
-                      th:text="${notification.type != null ? notification.type : 'Notification'}">Type</span>
+                      th:text="${notification.type != null ?
+                                (notification.type.name() == 'AdminNotice' ? 'Admin Notice' :
+                                 notification.type.name() == 'BillingUpdate' ? 'Billing Update' :
+                                 notification.type.name() == 'Reminder' ? 'Reminder' :
+                                 notification.type.name() == 'SecurityAlert' ? 'Security Alert' :
+                                 notification.type.name() == 'testing' ? 'Testing' :
+                                 notification.type.name()) : 'Notification'}">Type</span>
                         <span class="notification-time" th:text="${#temporals.format(notification.createdAt, 'MMM dd, yyyy HH:mm')}">Time</span>
                     </div>
                     <p class="notification-message" th:text="${notification.message}">Message</p>
