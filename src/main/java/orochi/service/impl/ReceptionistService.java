@@ -1,5 +1,6 @@
 package orochi.service.impl;
 
+import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Set;
@@ -1210,6 +1211,189 @@ public class ReceptionistService {
 
         } catch (Exception e) {
             logger.error("Error fetching rooms by specialty and doctor: {}", e.getMessage(), e);
+            return new ArrayList<>();
+        }
+    }
+
+    /**
+     * Get payment history data according to user requirements
+     * Using the new query with proper joins and field mapping
+     */
+    public List<Map<String, Object>> getPaymentHistoryData() {
+        try {
+            List<Map<String, Object>> rawData = receiptRepository.getAllPaymentHistoryData();
+
+            logger.info("Payment history data count: {}", rawData.size());
+            if (!rawData.isEmpty()) {
+                logger.info("First payment history record: {}", rawData.get(0));
+            }
+
+            return rawData.stream().map(payment -> {
+                Map<String, Object> processedPayment = new HashMap<>();
+
+                // Patient ID từ Patient table
+                processedPayment.put("patientId", payment.get("patientId"));
+
+                // Patient Name từ Users table với RoleID = 4
+                processedPayment.put("patientName", payment.get("patientName"));
+
+                // Phone từ Users.PhoneNumber
+                processedPayment.put("phone", payment.get("phone"));
+
+                // Appointment ID từ Appointment table
+                processedPayment.put("appointmentId", payment.get("appointmentId"));
+
+                // DateTime từ Appointment table - format để hiển thị
+                Object dateTime = payment.get("dateTime");
+                if (dateTime != null) {
+                    processedPayment.put("dateTime", dateTime.toString());
+                } else {
+                    processedPayment.put("dateTime", "");
+                }
+
+                // Status từ Transaction table (chỉ Status = 'Paid')
+                processedPayment.put("status", payment.get("status"));
+
+                // Method từ Transaction table
+                Object method = payment.get("method");
+                processedPayment.put("method", method != null ? method : "Unknown");
+
+                // Amount từ Receipt.TotalAmount - format với $ và số
+                Object amount = payment.get("amount");
+                if (amount != null) {
+                    try {
+                        double amountValue = Double.parseDouble(amount.toString());
+                        processedPayment.put("amount", String.format("$%.2f", amountValue));
+                    } catch (NumberFormatException e) {
+                        processedPayment.put("amount", "$0.00");
+                    }
+                } else {
+                    processedPayment.put("amount", "$0.00");
+                }
+
+                // Additional fields cho debug và reference
+                processedPayment.put("transactionId", payment.get("transactionId"));
+                processedPayment.put("receiptId", payment.get("receiptId"));
+                processedPayment.put("timeOfPayment", payment.get("timeOfPayment"));
+
+                return processedPayment;
+            }).collect(Collectors.toList());
+
+        } catch (Exception e) {
+            logger.error("Error fetching payment history data: {}", e.getMessage(), e);
+            return new ArrayList<>();
+        }
+    }
+
+    /**
+     * Get payment history data with date range filter
+     */
+    public List<Map<String, Object>> getPaymentHistoryDataByDateRange(LocalDate fromDate, LocalDate toDate) {
+        try {
+            List<Map<String, Object>> rawData = receiptRepository.getPaymentHistoryDataByDateRange(fromDate, toDate);
+
+            logger.info("Payment history data count for date range {}-{}: {}", fromDate, toDate, rawData.size());
+
+            return rawData.stream().map(payment -> {
+                Map<String, Object> processedPayment = new HashMap<>();
+
+                processedPayment.put("patientId", payment.get("patientId"));
+                processedPayment.put("patientName", payment.get("patientName"));
+                processedPayment.put("phone", payment.get("phone"));
+                processedPayment.put("appointmentId", payment.get("appointmentId"));
+
+                // DateTime formatting
+                Object dateTime = payment.get("dateTime");
+                if (dateTime != null) {
+                    processedPayment.put("dateTime", dateTime.toString());
+                } else {
+                    processedPayment.put("dateTime", "");
+                }
+
+                processedPayment.put("status", payment.get("status"));
+
+                Object method = payment.get("method");
+                processedPayment.put("method", method != null ? method : "Unknown");
+
+                // Amount formatting
+                Object amount = payment.get("amount");
+                if (amount != null) {
+                    try {
+                        double amountValue = Double.parseDouble(amount.toString());
+                        processedPayment.put("amount", String.format("$%.2f", amountValue));
+                    } catch (NumberFormatException e) {
+                        processedPayment.put("amount", "$0.00");
+                    }
+                } else {
+                    processedPayment.put("amount", "$0.00");
+                }
+
+                processedPayment.put("transactionId", payment.get("transactionId"));
+                processedPayment.put("receiptId", payment.get("receiptId"));
+                processedPayment.put("timeOfPayment", payment.get("timeOfPayment"));
+
+                return processedPayment;
+            }).collect(Collectors.toList());
+
+        } catch (Exception e) {
+            logger.error("Error fetching payment history data by date range: {}", e.getMessage(), e);
+            return new ArrayList<>();
+        }
+    }
+
+    /**
+     * Get all payment history data for testing (without Status filter)
+     */
+    public List<Map<String, Object>> getAllPaymentHistoryDataForTesting() {
+        try {
+            List<Map<String, Object>> rawData = receiptRepository.getAllPaymentHistoryData();
+
+            logger.info("All payment history data count: {}", rawData.size());
+            if (!rawData.isEmpty()) {
+                logger.info("First payment history record (all): {}", rawData.get(0));
+            }
+
+            return rawData.stream().map(payment -> {
+                Map<String, Object> processedPayment = new HashMap<>();
+
+                processedPayment.put("patientId", payment.get("patientId"));
+                processedPayment.put("patientName", payment.get("patientName"));
+                processedPayment.put("phone", payment.get("phone"));
+                processedPayment.put("appointmentId", payment.get("appointmentId"));
+
+                Object dateTime = payment.get("dateTime");
+                if (dateTime != null) {
+                    processedPayment.put("dateTime", dateTime.toString());
+                } else {
+                    processedPayment.put("dateTime", "");
+                }
+
+                processedPayment.put("status", payment.get("status"));
+
+                Object method = payment.get("method");
+                processedPayment.put("method", method != null ? method : "Unknown");
+
+                Object amount = payment.get("amount");
+                if (amount != null) {
+                    try {
+                        double amountValue = Double.parseDouble(amount.toString());
+                        processedPayment.put("amount", String.format("$%.2f", amountValue));
+                    } catch (NumberFormatException e) {
+                        processedPayment.put("amount", "$0.00");
+                    }
+                } else {
+                    processedPayment.put("amount", "$0.00");
+                }
+
+                processedPayment.put("transactionId", payment.get("transactionId"));
+                processedPayment.put("receiptId", payment.get("receiptId"));
+                processedPayment.put("timeOfPayment", payment.get("timeOfPayment"));
+
+                return processedPayment;
+            }).collect(Collectors.toList());
+
+        } catch (Exception e) {
+            logger.error("Error fetching all payment history data: {}", e.getMessage(), e);
             return new ArrayList<>();
         }
     }

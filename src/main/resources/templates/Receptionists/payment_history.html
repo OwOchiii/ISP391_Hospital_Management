@@ -218,6 +218,11 @@
             color: var(--success-color);
         }
 
+        .status-dropdown.paid {
+            background-color: rgba(34, 197, 94, 0.1);
+            color: #16a34a;
+        }
+
         .status-dropdown.pending {
             background-color: #fefcbf;
             color: #b45309;
@@ -391,8 +396,8 @@
                             </div>
                             <select class="form-select" id="statusFilter" aria-label="Filter by status">
                                 <option value="">All Statuses</option>
-                                <option value="completed">Completed</option>
-                                <option value="pending">Pending</option>
+                                <option value="paid">Paid</option>
+                                <option value="refunded">Refunded</option>
                             </select>
                             <div class="d-flex align-items-center gap-2">
                                 <span class="filter-label">From:</span>
@@ -417,11 +422,13 @@
                         <table class="table table-hover table-striped" id="paymentTable">
                             <thead>
                             <tr>
+                                <th>No.</th>
+                                <th>Patient ID</th>
                                 <th>Patient Name</th>
                                 <th>Phone</th>
-                                <th>Invoice ID</th>
+                                <th>Appointment ID</th>
                                 <th>Amount</th>
-                                <th>Due Date</th>
+                                <th>DateTime</th>
                                 <th>Status</th>
                                 <th>Action</th>
                             </tr>
@@ -458,28 +465,115 @@
         <small>1 day ago</small>
     </div>
 </div>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
 <script>
     function toggleNotificationModal() {
         const modal = document.getElementById('notificationModal');
         modal.style.display = modal.style.display === 'block' ? 'none' : 'block';
     }
 
-    // Sample data
-    const samplePayments = [
-        { id: 1, invoiceId: 'INV-001', patientName: 'John Doe', phone: '0123456789', amount: '$150.00', dueDate: '2025-06-01', status: 'completed' },
-        { id: 2, invoiceId: 'INV-002', patientName: 'Jane Smith', phone: '0987654321', amount: '$200.00', dueDate: '2025-06-02', status: 'pending' },
-        { id: 3, invoiceId: 'INV-003', patientName: 'Alice Johnson', phone: '0912345678', amount: '$300.00', dueDate: '2025-06-03', status: 'completed' },
-        { id: 4, invoiceId: 'INV-004', patientName: 'Nguyen Van A', phone: '0932145678', amount: '$180.00', dueDate: '2025-06-04', status: 'completed' },
-        { id: 5, invoiceId: 'INV-005', patientName: 'Tran Thi B', phone: '0901234567', amount: '$250.00', dueDate: '2025-06-05', status: 'pending' }
-    ];
-
-    let payments = samplePayments;
+    let payments = [];
     let currentPage = 1;
-    const rowsPerPage = 5;
-    let filteredPayments = [...payments];
+    const rowsPerPage = 10;
+    let filteredPayments = [];
+    let groupedPayments = {};
 
     async function fetchPayments() {
-        return samplePayments; // Replace with actual API call in production
+        try {
+            const response = await fetch('/receptionist/api/payment_history');
+            if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`);
+            }
+            const data = await response.json();
+            console.log('Fetched payment data:', data);
+            return data || [];
+        } catch (error) {
+            console.error('Error fetching payment data:', error);
+            alert('Error loading payment data. Please try again.');
+            return [];
+        }
+    }
+
+    // Group payments by date from DateTime
+    function groupPaymentsByDate(payments) {
+        const grouped = {};
+        payments.forEach(payment => {
+            if (payment.dateTime) {
+                let paymentDate;
+
+                // Handle different datetime formats
+                if (payment.dateTime.includes('T')) {
+                    // ISO format: 2025-07-10T14:30:00
+                    paymentDate = payment.dateTime.split('T')[0];
+                } else if (payment.dateTime.includes(' ')) {
+                    // SQL datetime format: 2025-07-10 14:30:00
+                    paymentDate = payment.dateTime.split(' ')[0];
+                } else {
+                    // Date only: 2025-07-10
+                    paymentDate = payment.dateTime;
+                }
+
+                if (!grouped[paymentDate]) {
+                    grouped[paymentDate] = [];
+                }
+                grouped[paymentDate].push(payment);
+            }
+        });
+
+        // Sort dates in descending order (newest first)
+        const sortedDates = Object.keys(grouped).sort((a, b) => new Date(b) - new Date(a));
+        const sortedGrouped = {};
+        sortedDates.forEach(date => {
+            sortedGrouped[date] = grouped[date];
+            // Sort transactions within day by time in descending order
+            sortedGrouped[date].sort((a, b) => {
+                const timeA = new Date(a.dateTime);
+                const timeB = new Date(b.dateTime);
+                return timeB - timeA;
+            });
+        });
+
+        return sortedGrouped;
+    }
+
+    // Format date display in English
+    function formatDateDisplay(dateStr) {
+        try {
+            const date = new Date(dateStr);
+            if (isNaN(date.getTime())) {
+                return dateStr;
+            }
+
+            return date.toLocaleDateString('en-US', {
+                weekday: 'long',
+                year: 'numeric',
+                month: 'long',
+                day: 'numeric'
+            });
+        } catch (error) {
+            console.error('Error formatting date:', error, dateStr);
+            return dateStr;
+        }
+    }
+
+    // Format datetime for display in English (time only)
+    function formatTimeOnly(dateTimeStr) {
+        if (!dateTimeStr) return 'N/A';
+        try {
+            const date = new Date(dateTimeStr);
+            if (isNaN(date.getTime())) {
+                return dateTimeStr;
+            }
+
+            return date.toLocaleTimeString('en-US', {
+                hour: '2-digit',
+                minute: '2-digit',
+                hour12: true
+            });
+        } catch (error) {
+            console.error('Error formatting time:', error, dateTimeStr);
+            return dateTimeStr;
+        }
     }
 
     function renderTable(data, page) {
@@ -490,77 +584,257 @@
         }
         tableBody.innerHTML = '';
 
+        // Group data by date from DateTime
+        groupedPayments = groupPaymentsByDate(data);
+        const dates = Object.keys(groupedPayments);
+
+        if (dates.length === 0) {
+            tableBody.innerHTML = `
+                <tr>
+                    <td colspan="9" class="text-center text-muted py-4">
+                        <i class="fas fa-info-circle me-2"></i>
+                        No payment data to display
+                    </td>
+                </tr>
+            `;
+            updatePaginationInfo(0, 0, 0);
+            return;
+        }
+
+        // Paginate by date
         const start = (page - 1) * rowsPerPage;
         const end = start + rowsPerPage;
-        const paginatedData = data.slice(start, end);
+        const paginatedDates = dates.slice(start, end);
 
-        paginatedData.forEach(payment => {
-            const row = document.createElement('tr');
-            row.innerHTML = `
-                <td>${payment.patientName}</td>
-                <td>${payment.phone}</td>
-                <td>${payment.invoiceId}</td>
-                <td>${payment.amount}</td>
-                <td>${payment.dueDate}</td>
-                <td><span class="status-dropdown ${payment.status.toLowerCase()}">${payment.status.charAt(0).toUpperCase() + payment.status.slice(1)}</span></td>
-                <td><button class="btn btn-sm btn-primary" onclick="viewPayment('${payment.invoiceId}')" aria-label="View payment details"><i class="fas fa-eye"></i> View</button></td>
+        let globalRowNumber = 1; // Track row numbers across all dates
+
+        paginatedDates.forEach(date => {
+            const paymentsForDate = groupedPayments[date];
+
+            // Add date header with calendar emoji and proper formatting
+            const dateHeaderRow = document.createElement('tr');
+            dateHeaderRow.className = 'table-light';
+            dateHeaderRow.innerHTML = `
+                <td colspan="9" class="fw-bold py-3" style="background: linear-gradient(135deg, #e3f2fd, #bbdefb); border-left: 5px solid #2196f3;">
+                    <div class="d-flex align-items-center">
+                        <span class="me-2">📅</span>
+                        <span class="me-auto fs-6">${formatDateDisplay(date)}</span>
+                        <span class="badge bg-primary ms-2">[${paymentsForDate.length} transaction${paymentsForDate.length !== 1 ? 's' : ''}]</span>
+                    </div>
+                </td>
             `;
-            tableBody.appendChild(row);
+            tableBody.appendChild(dateHeaderRow);
+
+            // Add payments for this date with proper formatting
+            paymentsForDate.forEach(payment => {
+                const row = document.createElement('tr');
+                row.className = 'payment-row';
+                row.style.borderLeft = '4px solid #e3f2fd';
+                row.innerHTML = `
+                    <td class="ps-4 text-center fw-bold text-primary">${globalRowNumber}</td>
+                    <td class="ps-4"><span class="text-muted">|</span> &nbsp;${payment.patientId || 'N/A'}</td>
+                    <td>${payment.patientName || 'N/A'}</td>
+                    <td>${payment.phone || 'N/A'}</td>
+                    <td>${payment.appointmentId || 'N/A'}</td>
+                    <td class="fw-bold text-success">${formatAmount(payment.amount)}</td>
+                    <td>${formatTimeOnly(payment.dateTime)}</td>
+                    <td>
+                        <span class="status-dropdown ${getStatusClass(payment.status)}">
+                            ${payment.status || 'N/A'}
+                        </span>
+                    </td>
+                    <td>
+                        <button class="btn btn-sm btn-primary"
+                                onclick="viewPayment('${payment.appointmentId}')"
+                                aria-label="View payment details">
+                            <i class="fas fa-eye"></i> View
+                        </button>
+                    </td>
+                `;
+                tableBody.appendChild(row);
+                globalRowNumber++; // Increment row number for each payment
+            });
         });
 
-        document.getElementById('currentEntries').textContent = `${start + 1}-${Math.min(end, data.length)}`;
-        document.getElementById('totalEntries').textContent = data.length;
+        // Update pagination info
+        updatePaginationInfo(start + 1, Math.min(end, dates.length), dates.length);
+        updatePagination(page, Math.ceil(dates.length / rowsPerPage));
+    }
 
+    // Format amount with $ sign
+    function formatAmount(amount) {
+        if (!amount) return '$0.00';
+        try {
+            const numAmount = parseFloat(amount.toString().replace(/[$,]/g, ''));
+            if (isNaN(numAmount)) return '$0.00';
+            return `$${numAmount.toFixed(2)}`;
+        } catch (error) {
+            return '$0.00';
+        }
+    }
+
+    // Get CSS class for status
+    function getStatusClass(status) {
+        if (!status) return 'pending';
+        switch (status.toLowerCase()) {
+            case 'paid': return 'paid';
+            case 'completed': return 'paid';
+            case 'success': return 'paid';
+            case 'pending': return 'pending';
+            case 'failed': return 'failed';
+            case 'cancelled': return 'cancelled';
+            default: return 'pending';
+        }
+    }
+
+    // Update pagination info
+    function updatePaginationInfo(start, end, total) {
+        document.getElementById('currentEntries').textContent = `${start}-${end}`;
+        document.getElementById('totalEntries').textContent = `${total} day${total !== 1 ? 's' : ''}`;
+    }
+
+    // Update pagination navigation
+    function updatePagination(currentPage, totalPages) {
         const pagination = document.getElementById('pagination');
         if (!pagination) {
             console.error('Pagination element not found');
             return;
         }
-        pagination.innerHTML = `
-            <li class="page-item ${page === 1 ? 'disabled' : ''}"><a class="page-link" href="#" onclick="changePage(${page - 1}); return false;" aria-label="Previous page">Previous</a></li>
+
+        pagination.innerHTML = '';
+
+        if (totalPages <= 1) return;
+
+        // Previous button
+        const prevLi = document.createElement('li');
+        prevLi.className = `page-item ${currentPage === 1 ? 'disabled' : ''}`;
+        prevLi.innerHTML = `
+            <a class="page-link" href="#" onclick="changePage(${currentPage - 1}); return false;" aria-label="Previous page">
+                <i class="fas fa-chevron-left"></i> Previous
+            </a>
         `;
-        const totalPages = Math.ceil(data.length / rowsPerPage);
-        for (let i = 1; i <= totalPages; i++) {
-            pagination.innerHTML += `
-                <li class="page-item ${i === page ? 'active' : ''}"><a class="page-link" href="#" onclick="changePage(${i}); return false;" aria-label="Page ${i}">${i}</a></li>
-            `;
+        pagination.appendChild(prevLi);
+
+        // Page numbers
+        const startPage = Math.max(1, currentPage - 2);
+        const endPage = Math.min(totalPages, currentPage + 2);
+
+        if (startPage > 1) {
+            const firstLi = document.createElement('li');
+            firstLi.className = 'page-item';
+            firstLi.innerHTML = `<a class="page-link" href="#" onclick="changePage(1); return false;">1</a>`;
+            pagination.appendChild(firstLi);
+
+            if (startPage > 2) {
+                const dotsLi = document.createElement('li');
+                dotsLi.className = 'page-item disabled';
+                dotsLi.innerHTML = `<span class="page-link">...</span>`;
+                pagination.appendChild(dotsLi);
+            }
         }
-        pagination.innerHTML += `
-            <li class="page-item ${page === totalPages ? 'disabled' : ''}"><a class="page-link" href="#" onclick="changePage(${page + 1}); return false;" aria-label="Next page">Next</a></li>
+
+        for (let i = startPage; i <= endPage; i++) {
+            const pageLi = document.createElement('li');
+            pageLi.className = `page-item ${i === currentPage ? 'active' : ''}`;
+            pageLi.innerHTML = `
+                <a class="page-link" href="#" onclick="changePage(${i}); return false;" aria-label="Page ${i}">${i}</a>
+            `;
+            pagination.appendChild(pageLi);
+        }
+
+        if (endPage < totalPages) {
+            if (endPage < totalPages - 1) {
+                const dotsLi = document.createElement('li');
+                dotsLi.className = 'page-item disabled';
+                dotsLi.innerHTML = `<span class="page-link">...</span>`;
+                pagination.appendChild(dotsLi);
+            }
+
+            const lastLi = document.createElement('li');
+            lastLi.className = 'page-item';
+            lastLi.innerHTML = `<a class="page-link" href="#" onclick="changePage(${totalPages}); return false;">${totalPages}</a>`;
+            pagination.appendChild(lastLi);
+        }
+
+        // Next button
+        const nextLi = document.createElement('li');
+        nextLi.className = `page-item ${currentPage === totalPages ? 'disabled' : ''}`;
+        nextLi.innerHTML = `
+            <a class="page-link" href="#" onclick="changePage(${currentPage + 1}); return false;" aria-label="Next page">
+                Next <i class="fas fa-chevron-right"></i>
+            </a>
         `;
+        pagination.appendChild(nextLi);
     }
 
     function changePage(page) {
-        if (page < 1 || page > Math.ceil(filteredPayments.length / rowsPerPage)) return;
+        const dates = Object.keys(groupedPayments);
+        const totalPages = Math.ceil(dates.length / rowsPerPage);
+
+        if (page < 1 || page > totalPages) return;
         currentPage = page;
         renderTable(filteredPayments, currentPage);
     }
 
     function filterPayments() {
         const searchInput = document.getElementById('searchInput').value.trim().toLowerCase();
-        const statusFilter = document.getElementById('statusFilter').value;
+        const statusFilter = document.getElementById('statusFilter').value.toLowerCase();
         const dateFrom = document.getElementById('dateFrom').value;
         const dateTo = document.getElementById('dateTo').value;
 
+        console.log('Filtering with:', { searchInput, statusFilter, dateFrom, dateTo });
+
         filteredPayments = payments.filter(payment => {
+            // Search by text
             const matchesSearch = !searchInput ||
-                payment.invoiceId.toLowerCase().includes(searchInput) ||
-                payment.patientName.toLowerCase().includes(searchInput) ||
-                payment.phone.toLowerCase().includes(searchInput);
-            const matchesStatus = !statusFilter || payment.status.toLowerCase() === statusFilter;
-            const paymentDate = new Date(payment.dueDate);
-            const matchesDate = (!dateFrom || paymentDate >= new Date(dateFrom)) &&
-                (!dateTo || paymentDate <= new Date(dateTo));
+                (payment.appointmentId && payment.appointmentId.toString().toLowerCase().includes(searchInput)) ||
+                (payment.patientId && payment.patientId.toString().toLowerCase().includes(searchInput)) ||
+                (payment.patientName && payment.patientName.toLowerCase().includes(searchInput)) ||
+                (payment.phone && payment.phone.toLowerCase().includes(searchInput));
+
+            // Filter by status
+            const matchesStatus = !statusFilter ||
+                (payment.status && payment.status.toLowerCase().includes(statusFilter));
+
+            // Filter by date from DateTime
+            let matchesDate = true;
+            if (payment.dateTime && (dateFrom || dateTo)) {
+                let paymentDate;
+                if (payment.dateTime.includes('T')) {
+                    paymentDate = payment.dateTime.split('T')[0];
+                } else if (payment.dateTime.includes(' ')) {
+                    paymentDate = payment.dateTime.split(' ')[0];
+                } else {
+                    paymentDate = payment.dateTime;
+                }
+
+                const paymentDateObj = new Date(paymentDate);
+
+                if (dateFrom) {
+                    const fromDateObj = new Date(dateFrom);
+                    matchesDate = matchesDate && paymentDateObj >= fromDateObj;
+                }
+
+                if (dateTo) {
+                    const toDateObj = new Date(dateTo);
+                    matchesDate = matchesDate && paymentDateObj <= toDateObj;
+                }
+            }
 
             return matchesSearch && matchesStatus && matchesDate;
         });
 
+        console.log('Filtered results:', filteredPayments.length, 'out of', payments.length);
         currentPage = 1;
         renderTable(filteredPayments, currentPage);
     }
 
-    function viewPayment(invoiceId) {
-        window.location.href = `/receptionist/view_payment_details?invoiceId=${invoiceId}`;
+    function viewPayment(appointmentId) {
+        if (appointmentId && appointmentId !== 'N/A') {
+            window.location.href = `/receptionist/view_payment_details?appointmentId=${appointmentId}`;
+        } else {
+            alert('Cannot view details for this payment');
+        }
     }
 
     function exportData(format) {
@@ -569,83 +843,153 @@
             return;
         }
 
-        const headers = ['Patient Name', 'Phone', 'Invoice ID', 'Amount', 'Due Date', 'Status'];
+        const headers = ['Patient ID', 'Patient Name', 'Phone', 'Appointment ID', 'Amount', 'DateTime', 'Status', 'Method'];
         const rows = filteredPayments.map(payment => [
-            payment.patientName,
-            payment.phone,
-            payment.invoiceId,
-            payment.amount,
-            payment.dueDate,
-            payment.status
+            payment.patientId || '',
+            payment.patientName || '',
+            payment.phone || '',
+            payment.appointmentId || '',
+            payment.amount || '',
+            payment.dateTime || '',
+            payment.status || '',
+            payment.method || ''
         ]);
+
         const exportDate = new Date().toLocaleString('en-US', { timeZone: 'Asia/Ho_Chi_Minh' });
 
         try {
             if (format === 'csv') {
                 const escapeCsvCell = cell => {
-                    if (cell == null) return '""';
-                    const str = cell.toString();
-                    if (str.includes(',') || str.includes('"') || str.includes('\n')) {
-                        return `"${str.replace(/"/g, '""')}"`;
+                    if (cell == null) return '';
+                    const cellStr = String(cell);
+                    if (cellStr.includes(',') || cellStr.includes('"') || cellStr.includes('\n')) {
+                        return `"${cellStr.replace(/"/g, '""')}"`;
                     }
-                    return str;
+                    return cellStr;
                 };
+
                 const csvContent = [
-                    'MediCare Plus Payment History',
-                    `Exported on ${exportDate}`,
-                    '',
-                    headers.join(','),
+                    headers.map(escapeCsvCell).join(','),
                     ...rows.map(row => row.map(escapeCsvCell).join(','))
                 ].join('\n');
+
                 const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
                 const link = document.createElement('a');
-                link.href = URL.createObjectURL(blob);
-                link.download = `payment_history_${exportDate.replace(/[, :]/g, '-')}.csv`;
+                const url = URL.createObjectURL(blob);
+                link.setAttribute('href', url);
+                link.setAttribute('download', `payment_history_${exportDate.replace(/[\/\s:]/g, '_')}.csv`);
+                link.style.visibility = 'hidden';
+                document.body.appendChild(link);
                 link.click();
-                URL.revokeObjectURL(link.href);
+                document.body.removeChild(link);
+
             } else if (format === 'xlsx') {
-                const wsData = [
-                    ['MediCare Plus Payment History'],
-                    [`Exported on ${exportDate}`],
-                    [],
-                    headers,
-                    ...rows
-                ];
-                const ws = XLSX.utils.aoa_to_sheet(wsData);
-                ws['!cols'] = headers.map(() => ({ wch: 20 }));
-                ws['!rows'] = [{}, { hpt: 20 }, {}, { hpt: 20 }];
-                const range = XLSX.utils.decode_range(ws['!ref']);
-                for (let C = range.s.c; C <= range.e.c; C++) {
-                    const cellAddress = XLSX.utils.encode_cell({ r: 3, c: C });
-                    ws[cellAddress].s = {
-                        font: { bold: true, color: { rgb: 'FFFFFF' } },
-                        fill: { fgColor: { rgb: '3b82f6' } },
-                        alignment: { horizontal: 'center', vertical: 'center' }
-                    };
-                }
+                const ws = XLSX.utils.aoa_to_sheet([headers, ...rows]);
                 const wb = XLSX.utils.book_new();
                 XLSX.utils.book_append_sheet(wb, ws, 'Payment History');
-                XLSX.writeFile(wb, `payment_history_${exportDate.replace(/[, :]/g, '-')}.xlsx`);
+                XLSX.writeFile(wb, `payment_history_${exportDate.replace(/[\/\s:]/g, '_')}.xlsx`);
             }
         } catch (error) {
-            console.error('Export failed:', error);
-            alert('An error occurred during export. Please try again.');
+            console.error('Export error:', error);
+            alert('Error exporting data. Please try again.');
         }
     }
 
-    document.getElementById('searchInput').addEventListener('input', filterPayments);
-    document.getElementById('statusFilter').addEventListener('change', filterPayments);
-    document.getElementById('dateFrom').addEventListener('change', filterPayments);
-    document.getElementById('dateTo').addEventListener('change', filterPayments);
-
-    async function init() {
-        payments = await fetchPayments();
-        filteredPayments = [...payments];
-        renderTable(filteredPayments, currentPage);
+    // Debounce function to reduce search calls
+    function debounce(func, wait) {
+        let timeout;
+        return function executedFunction(...args) {
+            const later = () => {
+                clearTimeout(timeout);
+                func(...args);
+            };
+            clearTimeout(timeout);
+            timeout = setTimeout(later, wait);
+        };
     }
 
-    document.addEventListener('DOMContentLoaded', init);
+    // Initialize page when DOM is ready
+    document.addEventListener('DOMContentLoaded', async function() {
+        console.log('Payment history page loaded, fetching data...');
+
+        try {
+            // Show loading
+            const tableBody = document.getElementById('paymentTableBody');
+            if (tableBody) {
+                tableBody.innerHTML = `
+                    <tr>
+                        <td colspan="9" class="text-center py-4">
+                            <div class="spinner-border text-primary" role="status">
+                                <span class="visually-hidden">Loading...</span>
+                            </div>
+                            <div class="mt-2">Loading payment data...</div>
+                        </td>
+                    </tr>
+                `;
+            }
+
+            // Fetch payment data from API
+            payments = await fetchPayments();
+            filteredPayments = [...payments];
+
+            console.log('Loaded payments:', payments.length);
+
+            if (payments.length === 0) {
+                console.warn('No payment data received from API');
+                tableBody.innerHTML = `
+                    <tr>
+                        <td colspan="9" class="text-center text-warning py-4">
+                            <i class="fas fa-exclamation-triangle me-2"></i>
+                            No payment data found. Please check if there are any paid transactions in the system.
+                        </td>
+                    </tr>
+                `;
+                return;
+            }
+
+            // Display initial table
+            renderTable(filteredPayments, currentPage);
+
+            // Add event listeners for filters
+            const searchInput = document.getElementById('searchInput');
+            const statusFilter = document.getElementById('statusFilter');
+            const dateFrom = document.getElementById('dateFrom');
+            const dateTo = document.getElementById('dateTo');
+
+            if (searchInput) searchInput.addEventListener('input', debounce(filterPayments, 500));
+            if (statusFilter) statusFilter.addEventListener('change', filterPayments);
+            if (dateFrom) dateFrom.addEventListener('change', filterPayments);
+            if (dateTo) dateTo.addEventListener('change', filterPayments);
+
+            console.log('Payment history initialized successfully');
+        } catch (error) {
+            console.error('Error initializing payment history:', error);
+
+            // Show error message in table
+            const tableBody = document.getElementById('paymentTableBody');
+            if (tableBody) {
+                tableBody.innerHTML = `
+                    <tr>
+                        <td colspan="9" class="text-center text-danger py-4">
+                            <i class="fas fa-exclamation-triangle me-2"></i>
+                            Error loading payment data. Please refresh the page or contact support.
+                            <br><small class="text-muted mt-1">Error details: ${error.message}</small>
+                        </td>
+                    </tr>
+                `;
+            }
+        }
+    });
+
+    // Close notification modal when clicking outside
+    document.addEventListener('click', function(event) {
+        const modal = document.getElementById('notificationModal');
+        const bell = document.querySelector('.notification-bell');
+
+        if (modal && bell && !modal.contains(event.target) && !bell.contains(event.target)) {
+            modal.style.display = 'none';
+        }
+    });
 </script>
-<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
 </body>
 </html>

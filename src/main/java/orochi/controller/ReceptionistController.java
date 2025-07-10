@@ -545,6 +545,57 @@ public class ReceptionistController {
         return "Receptionists/payment_history";
     }
 
+    @GetMapping("/api/payment_history")
+    @ResponseBody
+    public ResponseEntity<?> getPaymentHistoryData(Authentication authentication) {
+        try {
+            // Ensure authentication is not null
+            if (authentication == null || !authentication.isAuthenticated()) {
+                return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Authentication required");
+            }
+
+            // Get payment history data from database using new method
+            List<Map<String, Object>> paymentData = receptionistService.getPaymentHistoryData();
+
+            logger.info("Payment history API returned {} records", paymentData.size());
+            return ResponseEntity.ok(paymentData);
+
+        } catch (Exception e) {
+            logger.error("Error in payment history API: {}", e.getMessage(), e);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body("Error fetching payment history: " + e.getMessage());
+        }
+    }
+
+    @GetMapping("/api/payment_history/date-range")
+    @ResponseBody
+    public ResponseEntity<?> getPaymentHistoryDataByDateRange(
+            @RequestParam String fromDate,
+            @RequestParam String toDate,
+            Authentication authentication) {
+        try {
+            // Ensure authentication is not null
+            if (authentication == null || !authentication.isAuthenticated()) {
+                return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Authentication required");
+            }
+
+            // Parse dates
+            LocalDate from = LocalDate.parse(fromDate);
+            LocalDate to = LocalDate.parse(toDate);
+
+            // Get payment history data from database with date filter
+            List<Map<String, Object>> paymentData = receptionistService.getPaymentHistoryDataByDateRange(from, to);
+
+            logger.info("Payment history API returned {} records for date range {}-{}", paymentData.size(), fromDate, toDate);
+            return ResponseEntity.ok(paymentData);
+
+        } catch (Exception e) {
+            logger.error("Error in payment history date range API: {}", e.getMessage(), e);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body("Error fetching payment history by date range: " + e.getMessage());
+        }
+    }
+
     @GetMapping("/view_payment_details")
     public String viewPaymentDetails(Authentication authentication) {
         // Ensure authentication is not null
@@ -1108,6 +1159,68 @@ public class ReceptionistController {
             errorResponse.put("bookedTimes", new ArrayList<>());
             errorResponse.put("unavailableTimes", new ArrayList<>());
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(errorResponse);
+        }
+    }
+
+    /**
+     * API endpoint to test payment history data retrieval
+     */
+    @GetMapping("/api/payment_history/test")
+    @ResponseBody
+    public ResponseEntity<?> testPaymentHistoryData(Authentication authentication) {
+        try {
+            // Ensure authentication is not null
+            if (authentication == null || !authentication.isAuthenticated()) {
+                return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Authentication required");
+            }
+
+            // Test direct repository call
+            List<Map<String, Object>> directData = receptionistService.getAllPaymentHistoryDataForTesting();
+
+            Map<String, Object> testResult = new HashMap<>();
+            testResult.put("directRepositoryData", directData);
+            testResult.put("dataCount", directData.size());
+
+            if (!directData.isEmpty()) {
+                testResult.put("sampleRecord", directData.get(0));
+            }
+
+            logger.info("Test payment history API returned {} records", directData.size());
+            return ResponseEntity.ok(testResult);
+
+        } catch (Exception e) {
+            logger.error("Error in test payment history API: {}", e.getMessage(), e);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body("Error testing payment history: " + e.getMessage());
+        }
+    }
+
+    /**
+     * API endpoint to get today's PENDING payment data only
+     * For Today's Payment List - only show transactions with Pending status for current date
+     */
+    @GetMapping("/api/payments/today/pending")
+    @ResponseBody
+    public ResponseEntity<List<Map<String, Object>>> getTodaysPendingPayments() {
+        try {
+            // Get today's payment data filtered by Pending status
+            List<Map<String, Object>> allTodaysPayments = receptionistService.getTodaysAppointmentPaymentData();
+
+            // Filter to only include Pending transactions
+            List<Map<String, Object>> pendingPayments = allTodaysPayments.stream()
+                .filter(payment -> {
+                    String status = (String) payment.get("status");
+                    return status != null && ("pending".equalsIgnoreCase(status) ||
+                                            "unpaid".equalsIgnoreCase(status) ||
+                                            "Pending".equalsIgnoreCase(status));
+                })
+                .collect(Collectors.toList());
+
+            logger.info("Today's pending payments API returned {} records", pendingPayments.size());
+            return ResponseEntity.ok(pendingPayments);
+        } catch (Exception e) {
+            logger.error("Error fetching today's pending payments: {}", e.getMessage(), e);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
         }
     }
 
