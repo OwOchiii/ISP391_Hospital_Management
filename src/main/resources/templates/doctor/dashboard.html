@@ -662,6 +662,36 @@
             </div>
         </div>
 
+        <!-- Latest Notification Alert -->
+        <div id="latest-notice"
+             th:if="${latestNotification != null and !latestNotification.read}"
+             class="alert alert-info mt-4 d-flex justify-content-between align-items-start">
+            <div>
+                <h5 class="mb-2">
+                    <i class="bi bi-bell-fill me-2"></i>
+                    You have a new notification
+                </h5>
+                <p class="mb-0" th:text="${latestNotification.message}">
+                    Nội dung thông báo mới…
+                </p>
+                <small class="text-muted"
+                       th:text="${#temporals.format(latestNotification.createdAt, 'dd MMM yyyy HH:mm')}">
+                    01 Jan 2023 09:00
+                </small>
+            </div>
+            <div class="text-end d-flex flex-column align-items-end">
+                <button type="button" id="mark-read-btn-doctor"
+                        class="btn btn-sm btn-link mb-1">
+                    Mark as read
+                </button>
+                <a th:href="@{/doctor/notifications(doctorId=${doctorId})}"
+                   class="btn btn-sm btn-primary">
+                    View All <i class="bi bi-arrow-right-circle ms-1"></i>
+                </a>
+            </div>
+        </div>
+
+
         <!-- Stats Grid -->
         <div class="stats-grid">
             <div class="stat-card">
@@ -918,6 +948,39 @@
 
         // Update greeting
         updateGreeting();
+    });
+    /*]]>*/
+</script>
+<script th:inline="javascript">
+    /*<![CDATA[*/
+    const csrfHeader = /*[[${_csrf.headerName}]]*/ 'X-CSRF-TOKEN';
+    const csrfToken  = /*[[${_csrf.token}]]*/ '';
+
+    document.addEventListener('DOMContentLoaded', () => {
+        const btn    = document.getElementById('mark-read-btn-doctor');
+        const notice = document.getElementById('latest-notice');
+        if (btn && notice) {
+            btn.addEventListener('click', () => {
+                const id = /*[[${latestNotification.notificationId}]]*/ 0;
+                // Gửi POST để mark as read
+                fetch(`/doctor/notifications/mark-read?notificationId=${id}&doctorId=${/*[[${doctorId}]]*/0}`, {
+                    method: 'POST',
+                    headers: {
+                        [csrfHeader]: csrfToken,
+                        'Content-Type': 'application/x-www-form-urlencoded'
+                    },
+                    credentials: 'same-origin'
+                })
+                    .then(res => {
+                        if (res.ok) {
+                            notice.remove();
+                        } else {
+                            console.error('Mark-as-read failed, status:', res.status);
+                        }
+                    })
+                    .catch(err => console.error('Error marking as read:', err));
+            });
+        }
     });
     /*]]>*/
 </script>
