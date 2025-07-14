@@ -120,7 +120,7 @@ public class DoctorService {
             LocalDateTime startOfDay = LocalDateTime.now().toLocalDate().atStartOfDay();
             LocalDateTime endOfDay = startOfDay.plusDays(1).minusSeconds(1);
             logger.info("Fetching today's appointments for doctor ID: {} (from {} to {})", doctorId, startOfDay, endOfDay);
-            return appointmentRepository.findTodayAppointmentsForDoctor(doctorId);
+            return appointmentRepository.findTodayAppointmentsForDoctorWithTimeRange(doctorId, startOfDay, endOfDay);
         } catch (DataAccessException e) {
             logger.error("Failed to fetch today's appointments for doctor ID: {}", doctorId, e);
             return Collections.emptyList();
@@ -515,4 +515,3 @@ public class DoctorService {
         }
     }
 }
-

@@ -23,6 +23,7 @@ import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 
 @Service
@@ -421,4 +422,224 @@ public class AppointmentService {
             return new ArrayList<>();
         }
     }
+  
+  // 1) Overload lấy availability (full logic)
+public Map<String, List<String>> getDoctorAvailability2(
+        LocalDate date,
+        Integer doctorId,
+        Integer excludeAppointmentId) {
+    LocalDateTime startOfDay = date.atStartOfDay();
+    LocalDateTime endOfDay   = date.atTime(23,59,59);
+
+    List<Appointment> booked = (excludeAppointmentId != null
+        ? appointmentRepository.findByDoctorIdAndDateTimeBetweenAndAppointmentIdNotOrderByDateTime(
+            doctorId, startOfDay, endOfDay, excludeAppointmentId)
+        : appointmentRepository.findByDoctorIdAndDateTimeBetweenOrderByDateTime(
+            doctorId, startOfDay, endOfDay)
+    );
+
+    List<String> bookedTimes = booked.stream()
+        .map(a -> a.getDateTime().toLocalTime()
+            .format(DateTimeFormatter.ofPattern("HH:mm:ss")))
+        .collect(Collectors.toList());
+
+    Set<String> allSlots = Set.of(
+        "08:00:00","08:30:00","09:00:00","09:30:00",
+        "10:00:00","10:30:00","11:00:00","11:30:00",
+        "14:00:00","14:30:00","15:00:00","15:30:00",
+        "16:00:00","16:30:00","17:00:00","17:30:00"
+    );
+
+    Set<String> unavailable = new HashSet<>();
+    for (Appointment a : booked) {
+        LocalTime t = a.getDateTime().toLocalTime();
+        for (String slot : allSlots) {
+            LocalTime s = LocalTime.parse(slot);
+            int diffMin = Math.abs(
+                (t.getHour()*60 + t.getMinute()) -
+                (s.getHour()*60 + s.getMinute())
+            );
+            if (diffMin < APPOINTMENT_DURATION && !bookedTimes.contains(slot)) {
+                unavailable.add(slot);
+            }
+        }
+    }
+
+    return Map.of(
+        "bookedTimes", bookedTimes,
+        "unavailableTimes", new ArrayList<>(unavailable)
+    );
+}
+
+public Map<String, List<String>> getDoctorAvailability2(LocalDate date, Integer doctorId) {
+    return getDoctorAvailability2(date, doctorId, null);
+}
+
+// 2) Book appointment từ DTO (đầy đủ)
+@Transactional
+public Appointment bookAppointment2(AppointmentFormDTO dto) {
+    Doctor doc = doctorRepository.findById(dto.getDoctorId())
+        .orElseThrow(() -> new RuntimeException("Doctor not found"));
+    Patient pat = patientRepository.findById(dto.getPatientId())
+        .orElseThrow(() -> new RuntimeException("Patient not found"));
+
+    LocalDateTime when = LocalDateTime.of(
+        dto.getAppointmentDate(),
+        LocalTime.parse(dto.getAppointmentTime())
+    );
+
+    Map<String, List<String>> avail = getDoctorAvailability(dto.getAppointmentDate(), dto.getDoctorId());
+    if (avail.get("bookedTimes").contains(dto.getAppointmentTime()) ||
+        avail.get("unavailableTimes").contains(dto.getAppointmentTime())) {
+        throw new RuntimeException("Time slot unavailable");
+    }
+
+    Appointment appt = new Appointment();
+    appt.setDoctorId(doc.getDoctorId());
+    appt.setPatientId(pat.getPatientId());
+    appt.setDateTime(when);
+    appt.setStatus("Pending");
+    appt.setEmail(dto.getEmail());
+    appt.setPhoneNumber(dto.getPhoneNumber());
+    appt.setDescription(dto.getDescription());
+
+    return appointmentRepository.save(appt);
+}
+
+// 3) Update status
+public Appointment updateAppointmentStatus2(Integer appointmentId, String status) {
+    Appointment appt = appointmentRepository.findById(appointmentId)
+        .orElseThrow(() -> new RuntimeException("Not found"));
+    appt.setStatus(status);
+    return appointmentRepository.save(appt);
+}
+
+// 4) Get all appointments paging
+public Page<Appointment> getAllAppointments2(Pageable pg) {
+    return appointmentRepository.findAll(pg);
+}
+
+// 5) Get appointments by doctor paging (full subList logic)
+public Page<Appointment> getAppointmentsByDoctorId2(Integer docId, Pageable pg) {
+    List<Appointment> list = appointmentRepository.findByDoctorIdOrderByDateTimeDesc(docId);
+    int start = (int) pg.getOffset();
+    int end   = Math.min(start + pg.getPageSize(), list.size());
+    return new org.springframework.data.domain.PageImpl<>(list.subList(start, end), pg, list.size());
+}
+
+// 6) Get appointments by status paging
+public Page<Appointment> getAppointmentsByStatus2(String status, Pageable pg) {
+    return appointmentRepository.findByStatusOrderByDateTimeDesc(status, pg);
+}
+
+// 7) Fetch period counts (unified)
+public Map<String, Long> fetchPeriodCounts2(
+        LocalDate fromDate,
+        LocalDate toDate,
+        Integer doctorId,
+        Integer specId,
+        String status,
+        String groupBy) {
+    LocalDateTime start = fromDate.atStartOfDay();
+    LocalDateTime end   = toDate.atTime(23,59,59);
+
+    String statusFilter = "ALL".equalsIgnoreCase(status) ? "ALL" : status;
+    List<Appointment> list = appointmentRepository.findWithFilters(
+        doctorId, specId, statusFilter, null, start, end, Pageable.unpaged()
+    ).getContent();
+
+    Function<Appointment, String> classifier;
+    switch (groupBy.toLowerCase()) {
+        case "quarter":
+            classifier = a -> {
+                int y = a.getDateTime().getYear();
+                int q = ((a.getDateTime().getMonthValue() - 1) / 3) + 1;
+                return String.format("%d-Q%d", y, q);
+            }; break;
+        case "year":
+            classifier = a -> String.valueOf(a.getDateTime().getYear()); break;
+        default:
+            classifier = a -> a.getDateTime().format(DateTimeFormatter.ofPattern("yyyy-MM"));
+    }
+
+    return list.stream()
+        .collect(Collectors.groupingBy(
+            classifier,
+            LinkedHashMap::new,
+            Collectors.counting()
+        ));
+}
+
+// 8) Search appointments
+public Page<Appointment> searchAppointmentsByDoctorId2(
+        Integer doctorId,
+        String search,
+        Pageable pageable) {
+    LocalDateTime start = LocalDate.now().atStartOfDay();
+    LocalDateTime end   = LocalDate.now().plusYears(10).atTime(23,59,59);
+
+    return appointmentRepository.findWithFilters(
+        doctorId, null, "ALL",
+        (search == null || search.isBlank()) ? null : search,
+        start, end, pageable
+    );
+}
+
+// 9) Lấy booked time slots
+public List<String> getBookedTimeSlots2(LocalDate date, Integer doctorId) {
+    return getDoctorAvailability(date, doctorId).get("bookedTimes");
+}
+
+// 10) Update full appointment
+@Transactional
+public Appointment updateAppointment2(
+        Integer appointmentId,
+        Integer patientId,
+        Integer doctorId,
+        LocalDate appointmentDate,
+        String appointmentTime,
+        String email,
+        String phoneNumber,
+        String description) {
+
+    if (email == null || email.isEmpty()) {
+        throw new RuntimeException("Email is required.");
+    }
+    if (phoneNumber == null || phoneNumber.isEmpty()) {
+        throw new RuntimeException("Phone number is required.");
+    }
+    if (!phoneNumber.matches("^0\\d{9}$|^0\\d{11}$")) {
+        throw new RuntimeException("Phone number must start with 0 and be either 10 or 12 digits.");
+    }
+
+    Appointment appt = appointmentRepository.findById(appointmentId)
+        .orElseThrow(() -> new RuntimeException("Appointment not found with ID: " + appointmentId));
+    if (!appt.getPatientId().equals(patientId)) {
+        throw new RuntimeException("You do not have permission to update this appointment.");
+    }
+
+    doctorRepository.findById(doctorId)
+        .orElseThrow(() -> new RuntimeException("Doctor not found with ID: " + doctorId));
+
+    LocalDateTime dateTime = LocalDateTime.of(appointmentDate, LocalTime.parse(appointmentTime));
+    Map<String, List<String>> availability =
+        getDoctorAvailability(appointmentDate, doctorId, appointmentId);
+    if (availability.get("bookedTimes").contains(appointmentTime) ||
+        availability.get("unavailableTimes").contains(appointmentTime)) {
+        throw new RuntimeException("The selected time slot is unavailable. Please choose another time.");
+    }
+
+    appt.setDoctorId(doctorId);
+    appt.setDateTime(dateTime);
+    appt.setEmail(email);
+    appt.setPhoneNumber(phoneNumber);
+    appt.setDescription(description);
+
+    return appointmentRepository.save(appt);
+}
+
+    public List<Doctor> getAllDoctors() {
+        return doctorRepository.findAll();
+    }
+
 }

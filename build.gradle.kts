@@ -56,6 +56,10 @@ dependencies {
     // PDF Generation - updated libraries
     implementation("com.itextpdf:itextpdf:5.5.13.3")
     implementation("com.itextpdf:html2pdf:4.0.5")
+
+    // Excel export dependencies
+    implementation("org.apache.poi:poi:5.2.3")
+    implementation("org.apache.poi:poi-ooxml:5.2.3")
 }
 
 tasks.withType<Test> {
