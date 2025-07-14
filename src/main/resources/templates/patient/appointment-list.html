@@ -1108,34 +1108,44 @@
           Completed
           <span class="badge bg-success ms-2" th:text="${completedAppointments ?: '0'}">0</span>
         </a>
-        <a th:href="@{/patient/appointment-list(patientId=${patientId}, status='Cancel', search=${search}, fromDate=${fromDate}, toDate=${toDate})}"
-           class="filter-tab" th:classappend="${status == 'Cancel'} ? 'active' : ''">
+        <a th:href="@{/patient/appointment-list(patientId=${patientId}, status='Cancelled', search=${search}, fromDate=${fromDate}, toDate=${toDate})}"
+           class="filter-tab" th:classappend="${status == 'Cancelled'} ? 'active' : ''">
           <i class="bi bi-x-circle"></i>
           Cancelled
           <span class="badge bg-danger ms-2" th:text="${cancelledAppointments ?: '0'}">0</span>
         </a>
+
+        <!-- Export Button -->
+        <a th:href="@{/patient/appointments/export}"
+           class="filter-tab"
+           style="background-color: var(--patient-primary); color: white; border-color: var(--patient-primary);">
+          <i class="bi bi-file-excel"></i>
+          Export to Excel
+        </a>
       </div>
 
-      <!-- Search and Controls -->
-      <form id="filter-form" th:action="@{/patient/appointment-list}" method="get" class="d-flex justify-content-between align-items-center flex-wrap gap-3">
-        <input type="hidden" name="patientId" th:value="${patientId}">
-        <div class="d-flex gap-3 align-items-center flex-wrap">
-          <div class="search-container">
-            <i class="bi bi-search search-icon"></i>
-            <input type="text" name="search" class="search-input" maxlength="50" th:value="${search}" placeholder="Search by doctor or description">
+      <!-- Search Form -->
+      <div class="d-flex flex-wrap gap-3 align-items-center">
+        <form id="filter-form" th:action="@{/patient/appointment-list}" method="get" class="d-flex justify-content-between align-items-center flex-wrap gap-3">
+          <input type="hidden" name="patientId" th:value="${patientId}">
+          <div class="d-flex gap-3 align-items-center flex-wrap">
+            <div class="search-container">
+              <i class="bi bi-search search-icon"></i>
+              <input type="text" name="search" class="search-input" maxlength="50" th:value="${search}" placeholder="Search by doctor or description">
+            </div>
+            <div class="date-range-container">
+              <input type="date" name="fromDate" class="date-input" id="fromDate" th:value="${fromDate}">
+              <i class="bi bi-calendar date-icon"></i>
+              <input type="date" name="toDate" class="date-input" id="toDate" th:value="${toDate}">
+              <i class="bi bi-calendar date-icon"></i>
+            </div>
+            <button type="submit" class="btn-primary-custom btn-sm">
+              <i class="bi bi-funnel"></i>
+              Apply Filters
+            </button>
           </div>
-          <div class="date-range-container">
-            <input type="date" name="fromDate" class="date-input" id="fromDate" th:value="${fromDate}">
-            <i class="bi bi-calendar date-icon"></i>
-            <input type="date" name="toDate" class="date-input" id="toDate" th:value="${toDate}">
-            <i class="bi bi-calendar date-icon"></i>
-          </div>
-          <button type="submit" class="btn-primary-custom btn-sm">
-            <i class="bi bi-funnel"></i>
-            Apply Filters
-          </button>
-        </div>
-      </form>
+        </form>
+      </div>
     </div>
 
     <!-- Appointments List -->
@@ -1414,3 +1424,4 @@
 </script>
 </body>
 </html>
+
