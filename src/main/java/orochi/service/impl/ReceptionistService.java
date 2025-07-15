@@ -119,7 +119,7 @@ public class ReceptionistService {
             // Save Users first to get UserID
             Users savedUser = userRepository.save(newUser);
 
-            // Create Patient entity (without address field)
+            // Create Patient entity
             Patient newPatient = new Patient();
             newPatient.setUserId(savedUser.getUserId());
             newPatient.setDateOfBirth(dateOfBirth);
@@ -128,6 +128,10 @@ public class ReceptionistService {
 
             // Save Patient
             Patient savedPatient = patientRepository.save(newPatient);
+
+            // QUAN TRỌNG: Thiết lập quan hệ bidirectional để email template có thể truy cập dữ liệu
+            savedPatient.setUser(savedUser); // Set user relationship in patient
+            savedUser.setPatient(savedPatient); // Set patient relationship in user
 
             // Create PatientContact entity for address information
             PatientContact patientContact = new PatientContact();
@@ -143,8 +147,13 @@ public class ReceptionistService {
             // Save PatientContact
             patientContactRepository.save(patientContact);
 
-            // Set the patient relationship in user for return
-            savedUser.setPatient(savedPatient);
+            // Log để debug
+            logger.info("=== Patient Registration Debug ===");
+            logger.info("Created User - ID: {}, FullName: {}, Email: {}, Phone: {}",
+                       savedUser.getUserId(), savedUser.getFullName(), savedUser.getEmail(), savedUser.getPhoneNumber());
+            logger.info("Created Patient - ID: {}, UserID: {}, Gender: {}, DOB: {}",
+                       savedPatient.getPatientId(), savedPatient.getUserId(), savedPatient.getGender(), savedPatient.getDateOfBirth());
+            logger.info("Patient.User relationship: {}", savedPatient.getUser() != null ? "SET" : "NULL");
 
             return savedUser;
 
@@ -1444,7 +1453,7 @@ public class ReceptionistService {
                 logger.info("Latest appointment ID: {}", latestAppointment.getAppointmentId());
             }
 
-            // Tạo dữ liệu invoice
+            // T��o dữ liệu invoice
             Map<String, Object> invoiceData = new HashMap<>();
 
             // Patient Information - Đảm bảo lấy đúng FullName từ Users table
@@ -1729,7 +1738,7 @@ public class ReceptionistService {
                     addDefaultServices(servicesUsed, patientId);
                 }
             } else {
-                // Nếu không có appointment hoặc specialization, tạo dịch vụ m���c định
+                // Nếu không có appointment hoặc specialization, tạo dịch vụ mặc định
                 addDefaultServices(servicesUsed, patientId);
             }
 
