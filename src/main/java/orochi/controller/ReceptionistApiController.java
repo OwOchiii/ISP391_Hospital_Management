@@ -189,11 +189,7 @@ public class ReceptionistApiController {
             @RequestParam(value = "page", required = false) Integer page,
             @RequestParam(defaultValue = "") String search) {
         try {
-            // Default page to 1 if null or invalid
-            int pageNumber = (page == null || page < 1) ? 1 : page;
-            int itemsPerPage = 12;
-
-            // Lấy tất cả patients có RoleID = 4 (Patient role)
+            // Lấy tất cả patients có RoleID = 4 (Patient role) - KHÔNG PHÂN TRANG
             List<Patient> allPatients = receptionistService.getAllPatients().stream()
                     .filter(patient -> patient.getUser() != null && patient.getUser().getRoleId() == 4)
                     .collect(Collectors.toList());
@@ -209,12 +205,11 @@ public class ReceptionistApiController {
                         .collect(Collectors.toList());
             }
 
-            // Calculate pagination
+            // KHÔNG PHÂN TRANG - Trả về toàn bộ dữ liệu
             int total = allPatients.size();
-            int start = (pageNumber - 1) * itemsPerPage;
-            int end = Math.min(start + itemsPerPage, total);
 
-            List<Map<String, Object>> paginatedPatients = allPatients.subList(start, end).stream()
+            // Map toàn bộ patients (không slice)
+            List<Map<String, Object>> allPatientsData = allPatients.stream()
                     .map(patient -> {
                         Map<String, Object> patientMap = new HashMap<>();
 
@@ -290,11 +285,14 @@ public class ReceptionistApiController {
                     .collect(Collectors.toList());
 
             Map<String, Object> response = new HashMap<>();
-            response.put("patients", paginatedPatients);
+            response.put("patients", allPatientsData);
             response.put("total", total);
 
+            System.out.println("API Response: Found " + total + " patients in database");
             return ResponseEntity.ok(response);
         } catch (Exception e) {
+            System.err.println("Error in getPatientsDetailed: " + e.getMessage());
+            e.printStackTrace();
             return ResponseEntity.badRequest().body("Error fetching patients: " + e.getMessage());
         }
     }

@@ -1501,28 +1501,98 @@ public class ReceptionistService {
                         invoiceData.put("transactionStatus", latestTransaction.getStatus());
                         invoiceData.put("paymentMethod", latestTransaction.getMethod());
 
-                        // Receipt information
+                        // Generate receipt number based on transaction ID
+                        invoiceData.put("receiptNumber", "REC" + latestTransaction.getTransactionId());
+
+                        // Add financial calculation properties that template expects
+                        double calculatedTotal = calculateTotalFromServices(servicesUsed);
+                        invoiceData.put("totalAmount", calculatedTotal);
+                        invoiceData.put("taxAmount", calculatedTotal * 0.1); // 10% tax
+                        invoiceData.put("discountAmount", 0.0);
+                        invoiceData.put("issuedDate", LocalDate.now().toString());
+
+                        // Add receipt information
                         if (latestTransaction.getReceipt() != null) {
-                            Receipt receipt = latestTransaction.getReceipt();
-                            invoiceData.put("receiptId", receipt.getReceiptId());
-                            invoiceData.put("receiptNumber", "REC" + receipt.getReceiptId());
-                            invoiceData.put("totalAmount", receipt.getTotalAmount() != null ?
-                                    receipt.getTotalAmount().doubleValue() : 0.0);
-                            invoiceData.put("taxAmount", receipt.getTaxAmount() != null ?
-                                    receipt.getTaxAmount().doubleValue() : 0.0);
-                            invoiceData.put("discountAmount", receipt.getDiscountAmount() != null ?
-                                    receipt.getDiscountAmount().doubleValue() : 0.0);
-                            invoiceData.put("issuedDate", receipt.getIssuedDate() != null ?
-                                    receipt.getIssuedDate().toString() : LocalDate.now().toString());
+                            invoiceData.put("receiptId", latestTransaction.getReceipt().getReceiptId());
+                            // Use receipt total amount if available, otherwise use calculated
+                            if (latestTransaction.getReceipt().getTotalAmount() != null) {
+                                double receiptTotal = latestTransaction.getReceipt().getTotalAmount().doubleValue();
+                                invoiceData.put("totalAmount", receiptTotal);
+                                invoiceData.put("taxAmount", receiptTotal * 0.1);
+                            }
                         } else {
-                            // Calculate total from services
-                            double calculatedTotal = calculateTotalFromServices(servicesUsed);
                             invoiceData.put("receiptId", "N/A");
-                            invoiceData.put("receiptNumber", "PENDING");
-                            invoiceData.put("totalAmount", calculatedTotal);
-                            invoiceData.put("taxAmount", calculatedTotal * 0.1); // 10% tax
-                            invoiceData.put("discountAmount", 0.0);
-                            invoiceData.put("issuedDate", LocalDate.now().toString());
+                        }
+
+                        // Thêm thông tin payment details từ transaction
+                        invoiceData.put("timeOfPayment", latestTransaction.getTimeOfPayment() != null ?
+                               latestTransaction.getTimeOfPayment().toString() : "");
+
+                        // Parse payment details from refundReason field - SỬA ĐỂ PARSE CHÍNH XÁC
+                        String refundReason = latestTransaction.getRefundReason();
+                        logger.info("=== Parsing refundReason ===");
+                        logger.info("Raw refundReason: {}", refundReason);
+
+                        if (refundReason != null && !refundReason.trim().isEmpty()) {
+                            // Parse Amount Received
+                            if (refundReason.contains("Amount Received:")) {
+                                try {
+                                    String amountPart = refundReason.substring(refundReason.indexOf("Amount Received: $") + 18);
+                                    String amountStr = amountPart;
+
+                                    // Tìm end của amount (trước | hoặc Notes:)
+                                    if (amountStr.contains(" |")) {
+                                        amountStr = amountStr.substring(0, amountStr.indexOf(" |")).trim();
+                                    } else if (amountStr.contains(" Notes:")) {
+                                        amountStr = amountStr.substring(0, amountStr.indexOf(" Notes:")).trim();
+                                    }
+
+                                    double amountReceived = Double.parseDouble(amountStr);
+                                    invoiceData.put("amountReceived", amountReceived);
+                                    logger.info("Successfully parsed amountReceived: {}", amountReceived);
+
+                                    // Calculate change từ total amount nếu có
+                                    Object totalAmountFromInvoice = invoiceData.get("totalAmount");
+                                    double totalForChange = totalAmountFromInvoice != null ?
+                                        ((Number) totalAmountFromInvoice).doubleValue() :
+                                        calculateTotalFromServices(servicesUsed);
+                                    double change = amountReceived - totalForChange;
+                                    invoiceData.put("changeReturned", change > 0 ? change : 0.0);
+                                    logger.info("Calculated change: {} (amountReceived: {} - total: {})", change, amountReceived, totalForChange);
+
+                                } catch (Exception e) {
+                                    logger.warn("Could not parse amount received from refund reason: {}", refundReason);
+                                    invoiceData.put("amountReceived", 0.0);
+                                    invoiceData.put("changeReturned", 0.0);
+                                }
+                            } else {
+                                invoiceData.put("amountReceived", 0.0);
+                                invoiceData.put("changeReturned", 0.0);
+                            }
+
+                            // Parse Notes
+                            if (refundReason.contains("Notes:")) {
+                                try {
+                                    String notesPart = refundReason.substring(refundReason.indexOf("Notes:") + 6).trim();
+                                    invoiceData.put("notes", notesPart);
+                                    logger.info("Successfully parsed notes: {}", notesPart);
+                                } catch (Exception e) {
+                                    logger.warn("Could not parse notes from refund reason: {}", refundReason);
+                                    invoiceData.put("notes", "Payment completed successfully");
+                                }
+                            } else {
+                                // Nếu không có "Notes:" prefix, coi toàn bộ refundReason là notes
+                                if (!refundReason.contains("Amount Received:")) {
+                                    invoiceData.put("notes", refundReason);
+                                    logger.info("Using entire refundReason as notes: {}", refundReason);
+                                } else {
+                                    invoiceData.put("notes", "Payment completed successfully");
+                                }
+                            }
+                        } else {
+                            invoiceData.put("amountReceived", 0.0);
+                            invoiceData.put("changeReturned", 0.0);
+                            invoiceData.put("notes", "Payment completed successfully");
                         }
                     } else {
                         // Calculate total from services
@@ -1536,6 +1606,11 @@ public class ReceptionistService {
                         invoiceData.put("taxAmount", calculatedTotal * 0.1); // 10% tax
                         invoiceData.put("discountAmount", 0.0);
                         invoiceData.put("issuedDate", LocalDate.now().toString());
+                        // Add default payment fields
+                        invoiceData.put("amountReceived", 0.0);
+                        invoiceData.put("changeReturned", 0.0);
+                        invoiceData.put("notes", "Payment pending");
+                        invoiceData.put("timeOfPayment", "");
                     }
                 } else {
                     // Calculate total from services
@@ -1549,6 +1624,11 @@ public class ReceptionistService {
                     invoiceData.put("taxAmount", calculatedTotal * 0.1); // 10% tax
                     invoiceData.put("discountAmount", 0.0);
                     invoiceData.put("issuedDate", LocalDate.now().toString());
+                    // Add default payment fields
+                    invoiceData.put("amountReceived", 0.0);
+                    invoiceData.put("changeReturned", 0.0);
+                    invoiceData.put("notes", "No appointment found");
+                    invoiceData.put("timeOfPayment", "");
                 }
             } catch (Exception e) {
                 logger.error("Error fetching transaction data for patient {}: {}", patientId, e.getMessage());
@@ -1563,11 +1643,20 @@ public class ReceptionistService {
                 invoiceData.put("taxAmount", calculatedTotal * 0.1); // 10% tax
                 invoiceData.put("discountAmount", 0.0);
                 invoiceData.put("issuedDate", LocalDate.now().toString());
+                // Add default payment fields
+                invoiceData.put("amountReceived", 0.0);
+                invoiceData.put("changeReturned", 0.0);
+                invoiceData.put("notes", "Error retrieving payment details");
+                invoiceData.put("timeOfPayment", "");
             }
 
             logger.info("=== Final Invoice Data ===");
             logger.info("Full Name in invoice: {}", invoiceData.get("fullName"));
             logger.info("Payer Name in invoice: {}", invoiceData.get("payerName"));
+            logger.info("Amount Received: {}", invoiceData.get("amountReceived"));
+            logger.info("Change Returned: {}", invoiceData.get("changeReturned"));
+            logger.info("Notes: {}", invoiceData.get("notes"));
+            logger.info("Time of Payment: {}", invoiceData.get("timeOfPayment"));
             logger.info("Invoice data prepared for patient ID {}: {}", patientId, invoiceData);
             return invoiceData;
 
@@ -1770,6 +1859,28 @@ public class ReceptionistService {
     }
 
     /**
+     * Get a receptionist user (role = 3) to process the transaction
+     */
+    private Integer getReceptionistUserId() {
+        try {
+            List<Users> receptionists = userRepository.findByRoleId(3);
+            if (receptionists.isEmpty()) {
+                logger.warn("No receptionist found with role = 3");
+                return null;
+            }
+
+            // Get the first active receptionist
+            Users receptionist = receptionists.get(0);
+            logger.info("Selected receptionist {} for processing transaction", receptionist.getUserId());
+            return receptionist.getUserId();
+
+        } catch (Exception e) {
+            logger.error("Error getting receptionist user: {}", e.getMessage(), e);
+            return null;
+        }
+    }
+
+    /**
      * Process payment and update transaction status to "Paid"
      * Updates Transaction status and Receipt information in database
      */
@@ -1789,57 +1900,172 @@ public class ReceptionistService {
             logger.info("PatientId: {}, AppointmentId: {}, Method: {}, TotalAmount: {}",
                        patientId, appointmentId, method, totalAmount);
 
-            // Find or create transaction
-            Transaction transaction = null;
-
-            if (transactionIdStr != null && !transactionIdStr.equals("N/A")) {
-                try {
-                    Integer transactionId = Integer.parseInt(transactionIdStr);
-                    Optional<Transaction> existingTransaction = transactionRepository.findById(transactionId);
-                    if (existingTransaction.isPresent()) {
-                        transaction = existingTransaction.get();
-                        logger.info("Found existing transaction: {}", transactionId);
-                    }
-                } catch (NumberFormatException e) {
-                    logger.warn("Invalid transaction ID format: {}", transactionIdStr);
-                }
+            // STEP 1: Validate AppointmentID and UserID exist in database
+            if (!validateAppointmentAndPatient(appointmentId, patientId)) {
+                throw new RuntimeException("Invalid AppointmentID or PatientID - not found in database");
             }
 
-            // If no existing transaction found, create new one
-            if (transaction == null) {
+            // STEP 2: Check for existing transaction by AppointmentID (more reliable than transactionIdStr)
+            Transaction transaction = null;
+            List<Transaction> existingTransactions = transactionRepository.findByAppointmentId(appointmentId);
+
+            if (!existingTransactions.isEmpty()) {
+                // Found existing transaction for this appointment
+                transaction = existingTransactions.get(0); // Get the first (latest) transaction
+                logger.info("Found existing transaction {} for appointment {}",
+                           transaction.getTransactionId(), appointmentId);
+
+                // Validate that the transaction belongs to the correct patient
+                if (!transaction.getUserId().equals(patientId)) {
+                    throw new RuntimeException("Transaction UserID mismatch - security violation");
+                }
+
+                // Check if already paid to prevent double payment
+                if ("Paid".equalsIgnoreCase(transaction.getStatus())) {
+                    logger.warn("Transaction {} is already paid", transaction.getTransactionId());
+                    // Return existing transaction info instead of throwing error
+                    return buildPaymentResult(transaction, "Already Paid");
+                }
+
+                logger.info("Updating existing transaction {} from {} to Paid",
+                           transaction.getTransactionId(), transaction.getStatus());
+            } else {
+                // No existing transaction found, create new one
                 transaction = new Transaction();
                 transaction.setAppointmentId(appointmentId);
-                transaction.setUserId(patientId); // Set patient ID as user ID
+                transaction.setUserId(patientId);
                 logger.info("Creating new transaction for appointment: {}", appointmentId);
             }
 
-            // Update transaction details
+            // STEP 3: Update transaction details
             transaction.setStatus("Paid");
             transaction.setMethod(method);
             transaction.setTimeOfPayment(java.time.LocalDateTime.now());
 
-            // For Cash payments, store amount received
-            if ("Cash".equals(method) && amountReceived != null) {
-                // You can add amountReceived field to Transaction entity if needed
-                // For now, we'll store it in notes or description
-                String cashDetails = String.format("Amount Received: $%.2f", amountReceived);
-                if (notes != null && !notes.trim().isEmpty()) {
-                    transaction.setRefundReason(notes + " | " + cashDetails);
-                } else {
-                    transaction.setRefundReason(cashDetails);
-                }
+            // Set ProcessedByUserID to a receptionist user (role = 3)
+            Integer receptionistUserId = getReceptionistUserId();
+            if (receptionistUserId != null) {
+                transaction.setProcessedByUserId(receptionistUserId);
+                logger.info("Set ProcessedByUserID to receptionist: {}", receptionistUserId);
             } else {
-                transaction.setRefundReason(notes);
+                logger.warn("No receptionist found, ProcessedByUserID will remain null");
             }
 
-            // Save transaction
+            // Store payment details in notes/description
+            String paymentDetails = buildPaymentDetails(method, amountReceived, notes);
+            transaction.setRefundReason(paymentDetails);
+
+            // STEP 4: Save transaction to get TransactionID
             Transaction savedTransaction = transactionRepository.save(transaction);
-            logger.info("Transaction saved with ID: {}", savedTransaction.getTransactionId());
+            logger.info("Transaction saved with ID: {} and Status: {}",
+                       savedTransaction.getTransactionId(), savedTransaction.getStatus());
 
-            // Find or create receipt
-            Receipt receipt = null;
+            // STEP 5: Handle Receipt - find existing or create new
+            Receipt receipt = findOrCreateReceipt(receiptIdStr, savedTransaction, patientId, totalAmount, notes);
 
-            if (receiptIdStr != null && !receiptIdStr.equals("N/A")) {
+            // STEP 6: Update Appointment status if needed
+            updateAppointmentStatusIfNeeded(appointmentId);
+
+            logger.info("Payment processing completed successfully - Transaction: {}, Receipt: {}",
+                       savedTransaction.getTransactionId(), receipt.getReceiptId());
+
+            return buildPaymentResult(savedTransaction, "Paid");
+
+        } catch (Exception e) {
+            logger.error("Error processing payment: {}", e.getMessage(), e);
+            throw new RuntimeException("Failed to process payment: " + e.getMessage());
+        }
+    }
+
+    /**
+     * Validate that AppointmentID exists and belongs to the specified PatientID
+     */
+    private boolean validateAppointmentAndPatient(Integer appointmentId, Integer patientId) {
+        try {
+            logger.info("Validating appointmentId: {} and patientId: {}", appointmentId, patientId);
+
+            if (appointmentId == null || patientId == null) {
+                logger.error("AppointmentID or PatientID is null");
+                return false;
+            }
+
+            Optional<Appointment> appointmentOpt = appointmentRepository.findById(appointmentId);
+            if (appointmentOpt.isEmpty()) {
+                logger.error("Appointment {} not found in database", appointmentId);
+                return false;
+            }
+
+            Appointment appointment = appointmentOpt.get();
+
+            // Check if patient exists and is not null
+            if (appointment.getPatient() == null) {
+                logger.error("Appointment {} has no associated patient", appointmentId);
+                return false;
+            }
+
+            // Check if patient ID matches
+            if (appointment.getPatient().getPatientId() == null) {
+                logger.error("Appointment {} patient has null PatientID", appointmentId);
+                return false;
+            }
+
+            if (!appointment.getPatient().getPatientId().equals(patientId)) {
+                logger.error("Appointment {} does not belong to patient {}. Found patient: {}",
+                           appointmentId, patientId, appointment.getPatient().getPatientId());
+                return false;
+            }
+
+            logger.info("Validation passed - Appointment {} belongs to patient {}", appointmentId, patientId);
+            return true;
+
+        } catch (Exception e) {
+            logger.error("Error validating appointment and patient: {}", e.getMessage(), e);
+            return false;
+        }
+    }
+
+    /**
+     * Build payment details string for storage - CẢI THIỆN ĐỂ LƯU CHÍNH XÁC
+     */
+    private String buildPaymentDetails(String method, Double amountReceived, String notes) {
+        StringBuilder details = new StringBuilder();
+
+        try {
+            // Luôn lưu amount received cho tất cả payment methods, không chỉ Cash
+            if (amountReceived != null && amountReceived > 0) {
+                details.append(String.format("Amount Received: $%.2f", amountReceived));
+                logger.info("Storing amount received: ${}", amountReceived);
+            }
+
+            // Luôn lưu notes nếu có
+            if (notes != null && !notes.trim().isEmpty()) {
+                if (details.length() > 0) {
+                    details.append(" | ");
+                }
+                details.append("Notes: ").append(notes.trim());
+                logger.info("Storing notes: {}", notes.trim());
+            }
+
+            String finalDetails = details.toString();
+            logger.info("Final payment details string: {}", finalDetails);
+            return finalDetails;
+
+        } catch (Exception e) {
+            logger.warn("Error building payment details: {}", e.getMessage());
+            return notes != null ? notes : "";
+        }
+    }
+
+    /**
+     * Find existing receipt or create new one with proper TransactionID
+     */
+    private Receipt findOrCreateReceipt(String receiptIdStr, Transaction savedTransaction,
+                                      Integer patientId, Double totalAmount, String notes) {
+        Receipt receipt = null;
+
+        try {
+            // Try to find existing receipt first
+            if (receiptIdStr != null && !receiptIdStr.equals("N/A") && !receiptIdStr.equals("null")) {
                 try {
                     Integer receiptId = Integer.parseInt(receiptIdStr);
                     Optional<Receipt> existingReceipt = receiptRepository.findById(receiptId);
@@ -1852,45 +2078,108 @@ public class ReceptionistService {
                 }
             }
 
-            // If no existing receipt found, create new one
+            // Create new receipt if not found
             if (receipt == null) {
                 receipt = new Receipt();
-                receipt.setIssuerId(patientId); // Use setIssuerId instead of setUserId
+                receipt.setIssuerId(patientId != null ? patientId : 1); // Default to 1 if null
                 receipt.setIssuedDate(java.time.LocalDate.now());
-                receipt.setReceiptNumber("REC" + System.currentTimeMillis()); // Generate receipt number
+                receipt.setReceiptNumber("REC" + System.currentTimeMillis());
                 logger.info("Creating new receipt for patient: {}", patientId);
             }
 
-            // Update receipt details
-            receipt.setTotalAmount(java.math.BigDecimal.valueOf(totalAmount));
-            receipt.setTaxAmount(java.math.BigDecimal.valueOf(totalAmount * 0.1)); // 10% tax
-            receipt.setDiscountAmount(java.math.BigDecimal.valueOf(0)); // No discount for now
-            receipt.setNotes(notes);
-            // Note: Receipt entity doesn't have a status field, so we skip setting status
+            // Validate savedTransaction is not null
+            if (savedTransaction == null || savedTransaction.getTransactionId() == null) {
+                throw new RuntimeException("SavedTransaction or TransactionID is null");
+            }
+
+            // Set TransactionID and update receipt details
+            receipt.setTransactionId(savedTransaction.getTransactionId());
+            receipt.setTotalAmount(java.math.BigDecimal.valueOf(totalAmount != null ? totalAmount : 0.0));
+            receipt.setTaxAmount(java.math.BigDecimal.valueOf((totalAmount != null ? totalAmount : 0.0) * 0.1));
+            receipt.setDiscountAmount(java.math.BigDecimal.valueOf(0));
+            receipt.setNotes(notes != null ? notes : "");
+            receipt.setFormat("Digital");
 
             // Save receipt
             Receipt savedReceipt = receiptRepository.save(receipt);
-            logger.info("Receipt saved with ID: {}", savedReceipt.getReceiptId());
+            logger.info("Receipt saved with ID: {} and TransactionID: {}",
+                       savedReceipt.getReceiptId(), savedReceipt.getTransactionId());
 
-            // Link receipt to transaction (Receipt has transactionId field)
-            savedReceipt.setTransactionId(savedTransaction.getTransactionId());
-            receiptRepository.save(savedReceipt);
+            return savedReceipt;
 
-            // Prepare result
-            Map<String, Object> result = new HashMap<>();
-            result.put("transactionId", savedTransaction.getTransactionId());
-            result.put("receiptId", savedReceipt.getReceiptId());
-            result.put("status", "Paid");
-            result.put("method", method);
-            result.put("totalAmount", totalAmount);
-            result.put("timeOfPayment", savedTransaction.getTimeOfPayment().toString());
+        } catch (Exception e) {
+            logger.error("Error finding or creating receipt: {}", e.getMessage(), e);
+            throw new RuntimeException("Failed to create receipt: " + e.getMessage());
+        }
+    }
 
-            logger.info("Payment processing completed successfully");
+    /**
+     * Update appointment status to Completed if payment is successful
+     */
+    private void updateAppointmentStatusIfNeeded(Integer appointmentId) {
+        try {
+            if (appointmentId == null) {
+                logger.warn("AppointmentID is null, cannot update status");
+                return;
+            }
+
+            Optional<Appointment> appointmentOpt = appointmentRepository.findById(appointmentId);
+            if (appointmentOpt.isPresent()) {
+                Appointment appointment = appointmentOpt.get();
+                String currentStatus = appointment.getStatus();
+
+                if ("Scheduled".equals(currentStatus) || "Pending".equals(currentStatus)) {
+                    appointment.setStatus("Completed");
+                    appointmentRepository.save(appointment);
+                    logger.info("Updated appointment {} status from {} to Completed", appointmentId, currentStatus);
+                } else {
+                    logger.info("Appointment {} status is already {}, no update needed", appointmentId, currentStatus);
+                }
+            } else {
+                logger.warn("Appointment {} not found for status update", appointmentId);
+            }
+        } catch (Exception e) {
+            logger.warn("Could not update appointment status for {}: {}", appointmentId, e.getMessage());
+        }
+    }
+
+    /**
+     * Build standardized payment result
+     */
+    private Map<String, Object> buildPaymentResult(Transaction transaction, String status) {
+        Map<String, Object> result = new HashMap<>();
+
+        try {
+            if (transaction == null) {
+                throw new RuntimeException("Transaction is null");
+            }
+
+            result.put("transactionId", transaction.getTransactionId());
+            result.put("status", status != null ? status : "Unknown");
+            result.put("method", transaction.getMethod() != null ? transaction.getMethod() : "Unknown");
+            result.put("timeOfPayment", transaction.getTimeOfPayment() != null ?
+                      transaction.getTimeOfPayment().toString() : java.time.LocalDateTime.now().toString());
+            result.put("appointmentId", transaction.getAppointmentId());
+            result.put("userId", transaction.getUserId());
+
+            // Add receipt info if available
+            if (transaction.getReceipt() != null) {
+                result.put("receiptId", transaction.getReceipt().getReceiptId());
+                if (transaction.getReceipt().getTotalAmount() != null) {
+                    result.put("totalAmount", transaction.getReceipt().getTotalAmount());
+                }
+            }
+
             return result;
 
         } catch (Exception e) {
-            logger.error("Error processing payment: {}", e.getMessage(), e);
-            throw new RuntimeException("Failed to process payment: " + e.getMessage());
+            logger.error("Error building payment result: {}", e.getMessage(), e);
+            // Return minimal result if error occurs
+            Map<String, Object> errorResult = new HashMap<>();
+            errorResult.put("transactionId", transaction != null ? transaction.getTransactionId() : null);
+            errorResult.put("status", "Error");
+            errorResult.put("error", e.getMessage());
+            return errorResult;
         }
     }
 }

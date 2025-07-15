@@ -607,14 +607,52 @@ public class ReceptionistController {
     }
 
     @GetMapping("/view_payment_details")
-    public String viewPaymentDetails(Authentication authentication) {
-        // Ensure authentication is not null
-        if (authentication == null || !authentication.isAuthenticated()) {
-            return "redirect:/login";
-        }
+    public String viewPaymentDetails(@RequestParam(required = false) Integer patientId,
+                                   @RequestParam(required = false) Integer receiptId,
+                                   Authentication authentication,
+                                   Model model) {
+        try {
+            // Ensure authentication is not null
+            if (authentication == null || !authentication.isAuthenticated()) {
+                return "redirect:/login";
+            }
 
-        // Fetch payment details based on payment ID from request parameter ...
-        return "Receptionists/view_payment_details";
+            // Check if patientId is provided
+            if (patientId == null) {
+                model.addAttribute("errorMessage", "Patient ID is required to view payment details");
+                return "redirect:/receptionist/payments";
+            }
+
+            // Lấy thông tin bệnh nhân và cuộc hẹn giống như pay_invoice
+            Map<String, Object> invoiceData = receptionistService.getInvoiceDataByPatientId(patientId);
+
+            if (invoiceData == null) {
+                model.addAttribute("errorMessage", "Patient not found");
+                return "redirect:/receptionist/payments";
+            }
+
+            // Lấy thông tin staff để hiển thị trong "Processed By"
+            Map<String, Object> staffInfo = receptionistService.getReceptionistStaffInfo();
+            logger.info("=== Controller staffInfo debug ===");
+            logger.info("Controller received staffInfo: {}", staffInfo);
+            logger.info("staffInfo fullName: {}", staffInfo.get("fullName"));
+            logger.info("staffInfo userId: {}", staffInfo.get("userId"));
+
+            model.addAttribute("invoiceData", invoiceData);
+            model.addAttribute("staffInfo", staffInfo);
+            model.addAttribute("patientId", patientId);
+            model.addAttribute("receiptId", receiptId);
+
+            // Debug model attributes
+            logger.info("=== Model attributes debug ===");
+            logger.info("Model staffInfo: {}", model.getAttribute("staffInfo"));
+
+            return "Receptionists/view_payment_details";
+        } catch (Exception e) {
+            logger.error("Error loading view payment details page: {}", e.getMessage(), e);
+            model.addAttribute("errorMessage", "Error loading payment details: " + e.getMessage());
+            return "redirect:/receptionist/payments";
+        }
     }
 
     @GetMapping("/view_patient_details")
@@ -1285,20 +1323,19 @@ public class ReceptionistController {
     @ResponseBody
     public ResponseEntity<List<Map<String, Object>>> getTodaysPendingPayments() {
         try {
-            // Get today's payment data filtered by Pending status
+            // Get today's payment data filtered by Pending status ONLY
             List<Map<String, Object>> allTodaysPayments = receptionistService.getTodaysAppointmentPaymentData();
 
-            // Filter to only include Pending transactions
+            // Filter to STRICTLY include ONLY Pending transactions
             List<Map<String, Object>> pendingPayments = allTodaysPayments.stream()
                     .filter(payment -> {
                         String status = (String) payment.get("status");
-                        return status != null && ("pending".equalsIgnoreCase(status) ||
-                                "unpaid".equalsIgnoreCase(status) ||
-                                "Pending".equalsIgnoreCase(status));
+                        // CHỈ LẤY STATUS "Pending" - KHÔNG LẤY CÁC STATUS KHÁC
+                        return status != null && "Pending".equalsIgnoreCase(status.trim());
                     })
                     .collect(Collectors.toList());
 
-            logger.info("Today's pending payments API returned {} records", pendingPayments.size());
+            logger.info("Today's pending payments API returned {} PENDING records only", pendingPayments.size());
             return ResponseEntity.ok(pendingPayments);
         } catch (Exception e) {
             logger.error("Error fetching today's pending payments: {}", e.getMessage(), e);
@@ -1361,8 +1398,6 @@ public class ReceptionistController {
             String notes = (String) paymentRequest.get("notes");
             Object totalAmountObj = paymentRequest.get("totalAmount");
             Object amountReceivedObj = paymentRequest.get("amountReceived");
-            // Lấy status nếu có (không bắt buộc vì service đã set "Paid")
-            String status = paymentRequest.get("status") != null ? paymentRequest.get("status").toString() : "Paid";
 
             logger.info("Processing payment request: {}", paymentRequest);
 
@@ -1391,7 +1426,7 @@ public class ReceptionistController {
                 }
             }
 
-            // Process payment through service
+            // Process payment through service - this will update status from Pending to Paid
             Map<String, Object> result = receptionistService.processPayment(
                 patientId,
                 appointmentId,
@@ -1410,7 +1445,7 @@ public class ReceptionistController {
                 "message", "Payment processed successfully",
                 "transactionId", result.get("transactionId"),
                 "receiptId", result.get("receiptId"),
-                "status", "Paid",
+                "status", "Paid", // Status is now Paid
                 "timeOfPayment", java.time.LocalDateTime.now().toString()
             ));
 
