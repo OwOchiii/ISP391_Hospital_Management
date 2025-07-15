@@ -1114,8 +1114,31 @@ public class ReceptionistController {
             // Send registration confirmation email
             try {
                 logger.info("Sending registration confirmation email to: {}", email);
-                emailService.sendPatientRegistrationEmail(email, newPatient.getPatient(), passwordHash);
-                logger.info("Registration confirmation email sent successfully");
+
+                // QUAN TRỌNG: Đảm bảo patient object có đầy đủ thông tin user
+                Patient patientForEmail = newPatient.getPatient();
+                if (patientForEmail != null) {
+                    // Đảm bảo user relationship được set
+                    if (patientForEmail.getUser() == null) {
+                        patientForEmail.setUser(newPatient);
+                    }
+
+                    logger.info("=== Email Patient Data Debug ===");
+                    logger.info("Patient ID: {}", patientForEmail.getPatientId());
+                    logger.info("Patient User: {}", patientForEmail.getUser() != null ? "SET" : "NULL");
+                    if (patientForEmail.getUser() != null) {
+                        logger.info("User FullName: {}", patientForEmail.getUser().getFullName());
+                        logger.info("User Email: {}", patientForEmail.getUser().getEmail());
+                        logger.info("User Phone: {}", patientForEmail.getUser().getPhoneNumber());
+                        logger.info("User ID: {}", patientForEmail.getUser().getUserId());
+                    }
+
+                    emailService.sendPatientRegistrationEmail(email, patientForEmail, passwordHash);
+                    logger.info("Registration confirmation email sent successfully");
+                } else {
+                    logger.error("Patient object is null after registration");
+                    throw new RuntimeException("Patient object not found after registration");
+                }
             } catch (Exception e) {
                 logger.error("Failed to send registration confirmation email: {}", e.getMessage(), e);
                 // Continue with registration even if email fails
