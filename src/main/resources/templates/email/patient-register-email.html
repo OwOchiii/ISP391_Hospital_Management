@@ -102,6 +102,9 @@
             justify-content: center;
             font-size: 40px;
             color: white;
+            position: relative;
+            left: 50%;
+            transform: translateX(-50%);
         }
 
         .welcome-title {
@@ -441,7 +444,7 @@
 
         <!-- Action Button -->
         <div class="button-container">
-            <a href="https://localhost:8090" class="primary-button" th:href="${patientPortalUrl}">
+            <a href="http://localhost:8089/" class="primary-button" th:href="${patientPortalUrl}">
                 Go to the website
             </a>
         </div>
