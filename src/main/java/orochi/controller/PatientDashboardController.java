@@ -967,6 +967,14 @@ public class PatientDashboardController {
                 logger.warn("No receipt found for transaction ID: {}", transactionId);
                 model.addAttribute("errorMessage", "No receipt available for this transaction");
             } else {
+                // Fetch issuer details
+                Optional<Users> issuerOpt = userRepository.findById(receipt.getIssuerId());
+                if (issuerOpt.isPresent()) {
+                    receipt.setIssuer(issuerOpt.get());
+                } else {
+                    logger.warn("Issuer not found for ID: {}", receipt.getIssuerId());
+                    receipt.setIssuer(null); // Handle missing issuer
+                }
                 model.addAttribute("receipt", receipt);
             }
 

@@ -48,6 +48,10 @@ public class Receipt {
     @JoinColumn(name = "TransactionID", insertable = false, updatable = false)
     private Transaction transaction;
 
+    @ManyToOne
+    @JoinColumn(name = "IssuerID", insertable = false, updatable = false)
+    private Users issuer;
+
     // Constructors
     public Receipt() {}
 
@@ -146,5 +150,13 @@ public class Receipt {
 
     public void setTransaction(Transaction transaction) {
         this.transaction = transaction;
+    }
+
+    public Users getIssuer() {
+        return issuer;
+    }
+
+    public void setIssuer(Users issuer) {
+        this.issuer = issuer;
     }
 }

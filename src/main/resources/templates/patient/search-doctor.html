@@ -393,25 +393,43 @@
       font-size: 0.875rem;
     }
     .empty-state {
-      text-align: center;
-      padding: 4rem 2rem;
-      background: var(--bg-white);
-      border-radius: 16px;
-      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
-    }
-    .empty-state i {
-      font-size: 4rem;
-      color: var(--text-muted);
-      margin-bottom: 1rem;
-    }
-    .empty-state h3 {
-      color: var(--text-dark);
-      margin-bottom: 0.5rem;
-    }
-    .empty-state p {
-      color: var(--text-light);
-      margin-bottom: 2rem;
-    }
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 300px;
+  width: 100%;
+  background-color: #f8f9fa;
+  border-radius: 8px;
+}
+
+.empty-state-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  gap: 16px;
+  padding: 24px;
+  max-width: 400px;
+}
+
+.empty-state-container i.bi-search {
+  font-size: 48px;
+  color: #6c757d;
+}
+
+.empty-state-container h3 {
+  font-size: 24px;
+  font-weight: 600;
+  color: #343a40;
+  margin: 0;
+}
+
+.empty-state-container p {
+  font-size: 16px;
+  color: #6c757d;
+  margin: 0;
+  line-height: 1.5;
+}
     @media (max-width: 768px) {
       .patient-sidebar {
         transform: translateX(-100%);
@@ -637,9 +655,11 @@
       </div>
     </div>
     <div class="empty-state" id="emptyState" style="display: none;">
-      <i class="bi bi-search"></i>
-      <h3>No Doctors Found</h3>
-      <p>No doctors match your search criteria. Try adjusting your search or filter.</p>
+      <div class="empty-state-container">
+        <i class="bi bi-search"></i>
+        <h3>No Doctors Found</h3>
+        <p>No doctors match your search criteria. Try adjusting your search or filters.</p>
+      </div>
     </div>
   </div>
 </div>
