@@ -645,7 +645,7 @@
                     </td>
                     <td>
                         <button class="btn btn-sm btn-primary"
-                                onclick="viewPayment('${payment.appointmentId}')"
+                                onclick="viewPayment('${payment.patientId}', '${payment.appointmentId}')"
                                 aria-label="View payment details">
                             <i class="fas fa-eye"></i> View
                         </button>
@@ -829,11 +829,27 @@
         renderTable(filteredPayments, currentPage);
     }
 
-    function viewPayment(appointmentId) {
-        if (appointmentId && appointmentId !== 'N/A') {
-            window.location.href = `/receptionist/view_payment_details?appointmentId=${appointmentId}`;
-        } else {
-            alert('Cannot view details for this payment');
+    function viewPayment(patientId, appointmentId) {
+        // Validate patientId first
+        if (!patientId || patientId === 'N/A' || patientId === 'null' || patientId === '') {
+            alert('Cannot view payment details - Patient ID not available');
+            return;
+        }
+
+        // Build URL with patientId and optionally appointmentId
+        let url = `/receptionist/view_payment_details?patientId=${patientId}`;
+
+        // Add appointmentId if available
+        if (appointmentId && appointmentId !== 'N/A' && appointmentId !== 'null' && appointmentId !== '') {
+            url += `&appointmentId=${appointmentId}`;
+        }
+
+        // Navigate to the view payment details page
+        try {
+            window.location.href = url;
+        } catch (error) {
+            console.error('Error navigating to payment details:', error);
+            alert('Error opening payment details page. Please try again.');
         }
     }
 
@@ -860,12 +876,10 @@
         try {
             if (format === 'csv') {
                 const escapeCsvCell = cell => {
-                    if (cell == null) return '';
-                    const cellStr = String(cell);
-                    if (cellStr.includes(',') || cellStr.includes('"') || cellStr.includes('\n')) {
-                        return `"${cellStr.replace(/"/g, '""')}"`;
+                    if (typeof cell === 'string') {
+                        return `"${cell.replace(/"/g, '""')}"`;
                     }
-                    return cellStr;
+                    return cell;
                 };
 
                 const csvContent = [
@@ -874,121 +888,50 @@
                 ].join('\n');
 
                 const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
-                const link = document.createElement('a');
                 const url = URL.createObjectURL(blob);
-                link.setAttribute('href', url);
-                link.setAttribute('download', `payment_history_${exportDate.replace(/[\/\s:]/g, '_')}.csv`);
-                link.style.visibility = 'hidden';
-                document.body.appendChild(link);
-                link.click();
-                document.body.removeChild(link);
 
+                const a = document.createElement('a');
+                a.setAttribute('href', url);
+                a.setAttribute('download', `payment_history_${exportDate}.csv`);
+                a.style.visibility = 'hidden';
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
             } else if (format === 'xlsx') {
-                const ws = XLSX.utils.aoa_to_sheet([headers, ...rows]);
-                const wb = XLSX.utils.book_new();
-                XLSX.utils.book_append_sheet(wb, ws, 'Payment History');
-                XLSX.writeFile(wb, `payment_history_${exportDate.replace(/[\/\s:]/g, '_')}.xlsx`);
+                const worksheet = XLSX.utils.json_to_sheet(rows.map(row => {
+                    return {
+                        'Patient ID': row[0],
+                        'Patient Name': row[1],
+                        'Phone': row[2],
+                        'Appointment ID': row[3],
+                        'Amount': row[4],
+                        'DateTime': row[5],
+                        'Status': row[6],
+                        'Method': row[7]
+                    };
+                }));
+
+                const workbook = XLSX.utils.book_new();
+                XLSX.utils.book_append_sheet(workbook, worksheet, 'Payment History');
+
+                XLSX.writeFile(workbook, `payment_history_${exportDate}.xlsx`);
             }
         } catch (error) {
-            console.error('Export error:', error);
+            console.error('Error exporting data:', error);
             alert('Error exporting data. Please try again.');
         }
     }
 
-    // Debounce function to reduce search calls
-    function debounce(func, wait) {
-        let timeout;
-        return function executedFunction(...args) {
-            const later = () => {
-                clearTimeout(timeout);
-                func(...args);
-            };
-            clearTimeout(timeout);
-            timeout = setTimeout(later, wait);
-        };
-    }
+    document.addEventListener('DOMContentLoaded', async () => {
+        payments = await fetchPayments();
+        filteredPayments = payments;
+        renderTable(filteredPayments, currentPage);
 
-    // Initialize page when DOM is ready
-    document.addEventListener('DOMContentLoaded', async function() {
-        console.log('Payment history page loaded, fetching data...');
-
-        try {
-            // Show loading
-            const tableBody = document.getElementById('paymentTableBody');
-            if (tableBody) {
-                tableBody.innerHTML = `
-                    <tr>
-                        <td colspan="9" class="text-center py-4">
-                            <div class="spinner-border text-primary" role="status">
-                                <span class="visually-hidden">Loading...</span>
-                            </div>
-                            <div class="mt-2">Loading payment data...</div>
-                        </td>
-                    </tr>
-                `;
-            }
-
-            // Fetch payment data from API
-            payments = await fetchPayments();
-            filteredPayments = [...payments];
-
-            console.log('Loaded payments:', payments.length);
-
-            if (payments.length === 0) {
-                console.warn('No payment data received from API');
-                tableBody.innerHTML = `
-                    <tr>
-                        <td colspan="9" class="text-center text-warning py-4">
-                            <i class="fas fa-exclamation-triangle me-2"></i>
-                            No payment data found. Please check if there are any paid transactions in the system.
-                        </td>
-                    </tr>
-                `;
-                return;
-            }
-
-            // Display initial table
-            renderTable(filteredPayments, currentPage);
-
-            // Add event listeners for filters
-            const searchInput = document.getElementById('searchInput');
-            const statusFilter = document.getElementById('statusFilter');
-            const dateFrom = document.getElementById('dateFrom');
-            const dateTo = document.getElementById('dateTo');
-
-            if (searchInput) searchInput.addEventListener('input', debounce(filterPayments, 500));
-            if (statusFilter) statusFilter.addEventListener('change', filterPayments);
-            if (dateFrom) dateFrom.addEventListener('change', filterPayments);
-            if (dateTo) dateTo.addEventListener('change', filterPayments);
-
-            console.log('Payment history initialized successfully');
-        } catch (error) {
-            console.error('Error initializing payment history:', error);
-
-            // Show error message in table
-            const tableBody = document.getElementById('paymentTableBody');
-            if (tableBody) {
-                tableBody.innerHTML = `
-                    <tr>
-                        <td colspan="9" class="text-center text-danger py-4">
-                            <i class="fas fa-exclamation-triangle me-2"></i>
-                            Error loading payment data. Please refresh the page or contact support.
-                            <br><small class="text-muted mt-1">Error details: ${error.message}</small>
-                        </td>
-                    </tr>
-                `;
-            }
-        }
-    });
-
-    // Close notification modal when clicking outside
-    document.addEventListener('click', function(event) {
-        const modal = document.getElementById('notificationModal');
-        const bell = document.querySelector('.notification-bell');
-
-        if (modal && bell && !modal.contains(event.target) && !bell.contains(event.target)) {
-            modal.style.display = 'none';
-        }
+        // Initialize tooltips
+        const tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
+        const tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
+            return new bootstrap.Tooltip(tooltipTriggerEl);
+        });
     });
 </script>
 </body>

@@ -896,9 +896,9 @@
         console.warn('Displaying sample data - please check database connection');
     }
 
-    // Load payments data from backend - UPDATED: Show only PENDING payments for today
+    // Load payments data from backend - UPDATED: Show only PENDING payments for today + Hide paid patients
     function loadPaymentsData() {
-        console.log('Loading today\'s PENDING payments data...');
+        console.log('Loading today\'s PENDING payments data (hiding paid patients)...');
 
         // Use the new pending-only API endpoint for Today's Payment List
         fetch('/receptionist/api/payments/today/pending')
@@ -907,8 +907,19 @@
                 console.log('Today\'s pending payment data from database:', pendingPaymentData);
 
                 if (pendingPaymentData && pendingPaymentData.length > 0) {
+                    // Filter out patients who have already paid successfully
+                    const unpaidOnly = pendingPaymentData.filter(payment => {
+                        const status = payment.status ? payment.status.toLowerCase() : '';
+                        // Only show pending/unpaid payments, hide paid/completed/successful payments
+                        return status === 'pending' || status === 'unpaid' ||
+                               status.includes('pending') || status.includes('unpaid') ||
+                               status === 'scheduled' || status === 'waiting';
+                    });
+
+                    console.log('Filtered unpaid-only data:', unpaidOnly);
+
                     // Process the data to match frontend expectations
-                    payments = pendingPaymentData.map(payment => ({
+                    payments = unpaidOnly.map(payment => ({
                         appointmentId: payment.appointmentId,
                         patientId: payment.patientId,
                         patientName: payment.patientName,
@@ -929,7 +940,7 @@
                     renderTable(filteredPayments, currentPage);
                     updateDailyStats();
 
-                    console.log('Processed pending payment data:', payments);
+                    console.log('Processed pending payment data (paid patients hidden):', payments);
                 } else {
                     // No pending payment data available for today
                     payments = [];
@@ -941,19 +952,31 @@
             .catch(error => {
                 console.error('Error fetching pending payment data:', error);
 
-                // Fallback: try the general appointment-based endpoint and filter for pending
-                console.log('Falling back to general appointment data and filtering for pending...');
+                // Fallback: try the general appointment-based endpoint and filter for pending only
+                console.log('Falling back to general appointment data and filtering for pending only...');
                 fetch('/receptionist/api/payments/appointments-today-only')
                     .then(response => response.json())
                     .then(appointmentPaymentData => {
                         console.log('All appointment payment data:', appointmentPaymentData);
 
                         if (appointmentPaymentData && appointmentPaymentData.length > 0) {
-                            // Filter to only show pending transactions
+                            // Filter to only show pending/unpaid transactions, hide paid patients
                             const pendingOnly = appointmentPaymentData.filter(payment => {
                                 const status = payment.status ? payment.status.toLowerCase() : '';
-                                return status === 'pending' || status === 'unpaid' || status.includes('pending');
+                                // Explicitly hide paid/completed/successful payments
+                                const isPaid = status === 'paid' || status === 'completed' ||
+                                             status === 'successful' || status === 'done' ||
+                                             status.includes('paid') || status.includes('completed');
+
+                                // Only show pending/unpaid
+                                const isPending = status === 'pending' || status === 'unpaid' ||
+                                                status.includes('pending') || status.includes('unpaid') ||
+                                                status === 'scheduled' || status === 'waiting';
+
+                                return !isPaid && isPending;
                             });
+
+                            console.log('Filtered pending-only data (paid patients hidden):', pendingOnly);
 
                             payments = pendingOnly.map(payment => ({
                                 appointmentId: payment.appointmentId,
@@ -1235,9 +1258,13 @@
         XLSX.writeFile(wb, 'payments_export.xlsx');
     }
 
-    // Updated payInvoice function to redirect to pay_invoice.html
+    // Updated payInvoice function to redirect to pay_invoice.html - Fix null receiptId issue
     function payInvoice(patientId, receiptId) {
-        window.location.href = `/receptionist/pay_invoice?patientId=${patientId}&receiptId=${receiptId}`;
+        // Handle null or undefined receiptId properly
+        const receiptParam = (receiptId && receiptId !== 'null' && receiptId !== 'undefined') ?
+            `&receiptId=${receiptId}` : '';
+
+        window.location.href = `/receptionist/pay_invoice?patientId=${patientId}${receiptParam}`;
     }
 
     // Event listeners

@@ -247,12 +247,13 @@
                         <option value="Cash">Cash</option>
                         <option value="Banking">Banking</option>
                     </select>
+                    <p id="paymentMethodError" class="mt-2 text-sm text-red-600 hidden">Please select a payment method</p>
                 </div>
                 <div id="amountReceivedContainer" class="hidden mb-4">
                     <label class="block text-sm font-semibold text-gray-700 mb-2">Amount Received ($)</label>
-                    <input id="amountReceived" type="number" min="0" step="0.01" class="input-focus block w-full border-gray-300 rounded-lg shadow-sm focus:ring-blue-500 focus:border-blue-500 text-sm py-3" placeholder="Enter amount received">
+                    <input id="amountReceived" type="text" class="input-focus block w-full border-gray-300 rounded-lg shadow-sm focus:ring-blue-500 focus:border-blue-500 text-sm py-3" placeholder="Enter amount received">
                     <p id="changeReturned" class="mt-3 text-sm text-gray-600">Change Returned: 0 $</p>
-                    <p id="paymentValidationError" class="mt-2 text-sm text-red-600 hidden">Amount must be at least equal to Patient Payment</p>
+                    <p id="amountReceivedError" class="mt-2 text-sm text-red-600 hidden">Amount must be at least equal to Patient Payment</p>
                 </div>
                 <div>
                     <label class="block text-sm font-semibold text-gray-700 mb-2">Notes</label>
@@ -324,7 +325,7 @@
             <h3 class="text-xl font-semibold text-gray-800 mb-4">Confirm Payment</h3>
             <p class="text-gray-600 mb-2">Are you sure you want to process this payment?</p>
             <div id="confirmPaymentDetails" class="bg-gray-50 p-4 rounded-lg mb-6 text-left">
-                <p class="text-sm"><span class="font-semibold">Patient:</span> <span id="confirmPatientName"></span></p>
+                <p class="text-sm"><span class="font-semibold">Full Name:</span> <span id="confirmPatientName"></span></p>
                 <p class="text-sm"><span class="font-semibold">Amount:</span> <span id="confirmAmount"></span> $</p>
                 <p class="text-sm"><span class="font-semibold">Method:</span> <span id="confirmMethod"></span></p>
                 <p class="text-sm" id="confirmCashDetails" style="display: none;">
@@ -381,6 +382,12 @@
     const cancelPaymentBtn = document.getElementById('cancelPaymentBtn');
     const processingModal = document.getElementById('processingModal');
 
+    // Extract URL parameters as fallback for missing data
+    const urlParams = new URLSearchParams(window.location.search);
+    const urlPatientId = urlParams.get('patientId');
+    const urlReceiptId = urlParams.get('receiptId');
+    const urlAppointmentId = urlParams.get('appointmentId');
+
     // Lấy dữ liệu thực từ Thymeleaf template thay vì hardcode
     const invoiceData = {
         patientPayment: /*[[${invoiceData.totalAmount != null ? invoiceData.totalAmount * 0.2 : 0}]]*/ 0,
@@ -398,6 +405,75 @@
         description: /*[[${invoiceData.description != null ? invoiceData.description : 'General Consultation'}]]*/ 'General Consultation'
     };
 
+    // Override with URL parameters if backend data is missing or invalid
+    if (invoiceData.userId === 'N/A' && urlPatientId) {
+        invoiceData.userId = urlPatientId;
+        console.log('Using URL patientId:', urlPatientId);
+    }
+    if (invoiceData.receiptId === 'N/A' && urlReceiptId) {
+        invoiceData.receiptId = urlReceiptId;
+        console.log('Using URL receiptId:', urlReceiptId);
+    }
+    if (invoiceData.appointmentId === 'N/A' && urlAppointmentId) {
+        invoiceData.appointmentId = urlAppointmentId;
+        console.log('Using URL appointmentId:', urlAppointmentId);
+    }
+
+    // Try to extract appointmentId from DOM if available
+    // AppointmentID trong database là số nguyên, không phải string với tiền tố
+    const appointmentIdFromDOM = document.querySelector('span[th\\:text*="invoiceData.appointmentId"]');
+    if (appointmentIdFromDOM && appointmentIdFromDOM.textContent) {
+        const extractedAppointmentId = appointmentIdFromDOM.textContent.trim();
+        // Kiểm tra xem có phải là số nguyên hợp lệ không (AppointmentID trong DB)
+        const appointmentIdNumber = parseInt(extractedAppointmentId);
+        if (!isNaN(appointmentIdNumber) && appointmentIdNumber > 0 && extractedAppointmentId !== 'N/A') {
+            invoiceData.appointmentId = appointmentIdNumber;
+            console.log('Using DOM appointmentId:', appointmentIdNumber);
+        }
+    }
+
+    // Additional check for all spans that might contain appointment ID
+    const allSpans = document.querySelectorAll('span');
+    allSpans.forEach((span, index) => {
+        if (span.parentElement && span.parentElement.textContent.includes('Appointment ID:')) {
+            const appointmentText = span.textContent.trim();
+            // Kiểm tra xem có phải là số nguyên hợp lệ không
+            const appointmentIdNumber = parseInt(appointmentText);
+            if (!isNaN(appointmentIdNumber) && appointmentIdNumber > 0 && appointmentText !== 'N/A') {
+                invoiceData.appointmentId = appointmentIdNumber;
+                console.log(`Found appointmentId in DOM span ${index}:`, appointmentIdNumber);
+            }
+        }
+    });
+
+    // Debug: Log the invoice data to see what's actually being passed
+    console.log('=== Invoice Data Debug ===');
+    console.log('Full invoiceData object:', invoiceData);
+    console.log('Patient Name from invoiceData:', invoiceData.patientName);
+    console.log('AppointmentID from invoiceData:', invoiceData.appointmentId, 'Type:', typeof invoiceData.appointmentId);
+
+    // Debug: Check what's in the Thymeleaf variables directly
+    console.log('=== Thymeleaf Variables Debug ===');
+    console.log('invoiceData.fullName from Thymeleaf:', /*[[${invoiceData.fullName}]]*/ 'undefined');
+    console.log('invoiceData.patientId from Thymeleaf:', /*[[${invoiceData.patientId}]]*/ 'undefined');
+    console.log('invoiceData object keys from Thymeleaf:', /*[[${invoiceData.keySet()}]]*/ 'undefined');
+
+    // Debug: Check what's in the DOM elements
+    const fullNameSpan = document.querySelector('span[th\\:text*="invoiceData.fullName"]');
+    if (fullNameSpan) {
+        console.log('Full Name DOM element found, text content:', fullNameSpan.textContent);
+    } else {
+        console.log('Full Name DOM element not found');
+    }
+
+    // Additional check for all spans with fullName
+    const allFullNameSpans = document.querySelectorAll('span');
+    allFullNameSpans.forEach((span, index) => {
+        if (span.parentElement && span.parentElement.textContent.includes('Full Name:')) {
+            console.log(`Full Name span ${index} content:`, span.textContent);
+        }
+    });
+
     const patientPayment = invoiceData.patientPayment;
     const transactionId = invoiceData.transactionId;
     const receiptId = invoiceData.receiptId;
@@ -413,10 +489,39 @@
         }
     });
 
+    // Real-time validation for Amount Received với hiển thị lỗi đỏ
     amountReceivedInput.addEventListener('input', () => {
-        const amountReceived = parseFloat(amountReceivedInput.value.replace(/,/g, '')) || 0;
+        const amountReceived = parseFloat(amountReceivedInput.value) || 0;
+        const patientPayment = window.calculatedPatientPayment || 0;
+        const errorElement = document.getElementById('amountReceivedError');
+
+        // Clear error state first
+        errorElement.classList.add('hidden');
+        amountReceivedInput.classList.remove('border-red-500');
+
+        if (amountReceivedInput.value && amountReceived < patientPayment) {
+            errorElement.textContent = 'Amount must be at least equal to Patient Payment';
+            errorElement.classList.remove('hidden');
+            amountReceivedInput.classList.add('border-red-500');
+        }
+
+        // Calculate and display change
         const change = amountReceived - patientPayment;
-        changeReturnedDisplay.textContent = `Change Returned: ${change >= 0 ? change.toLocaleString('vi-VN') : 0} $`;
+        changeReturnedDisplay.textContent = `Change Returned: ${change >= 0 ? change.toLocaleString('en-US') : 0} $`;
+    });
+
+    // Clear validation errors when payment method changes
+    paymentMethodSelect.addEventListener('change', () => {
+        document.getElementById('paymentMethodError').classList.add('hidden');
+        paymentMethodSelect.classList.remove('border-red-500');
+
+        amountReceivedContainer.classList.toggle('hidden', paymentMethodSelect.value !== 'Cash');
+        if (paymentMethodSelect.value === 'Cash') {
+            amountReceivedInput.value = '';
+            changeReturnedDisplay.textContent = 'Change Returned: 0 $';
+            document.getElementById('amountReceivedError').classList.add('hidden');
+            amountReceivedInput.classList.remove('border-red-500');
+        }
     });
 
     function showSuccessPopup(callback) {
@@ -487,23 +592,57 @@
     }
 
     function showPaymentConfirmation(paymentData) {
-        // Update confirmation modal with payment details
-        document.getElementById('confirmPatientName').textContent = invoiceData.patientName;
-        document.getElementById('confirmAmount').textContent = window.calculatedPatientPayment?.toLocaleString('en-US') || '0';
-        document.getElementById('confirmMethod').textContent = paymentData.method;
+        // Ensure paymentData exists and has method
+        if (!paymentData || !paymentData.method) {
+            console.error('Invalid payment data:', paymentData);
+            alert('Payment data is invalid. Please try again.');
+            return;
+        }
 
-        if (paymentData.method === 'Cash') {
-            document.getElementById('confirmCashDetails').style.display = 'block';
-            document.getElementById('confirmAmountReceived').textContent = paymentData.amountReceived?.toLocaleString('en-US') || '0';
-            document.getElementById('confirmChange').textContent = paymentData.change?.toLocaleString('en-US') || '0';
-        } else {
-            document.getElementById('confirmCashDetails').style.display = 'none';
+        // Update confirmation modal with payment details - with null checks
+        const confirmPatientNameElement = document.getElementById('confirmPatientName');
+        const confirmAmountElement = document.getElementById('confirmAmount');
+        const confirmMethodElement = document.getElementById('confirmMethod');
+        const confirmCashDetailsElement = document.getElementById('confirmCashDetails');
+        const confirmAmountReceivedElement = document.getElementById('confirmAmountReceived');
+        const confirmChangeElement = document.getElementById('confirmChange');
+
+        // Safe updates with null checks
+        if (confirmPatientNameElement) {
+            confirmPatientNameElement.textContent = invoiceData.patientName || 'N/A';
+        }
+
+        if (confirmAmountElement) {
+            confirmAmountElement.textContent = window.calculatedPatientPayment?.toLocaleString('en-US') || '0';
+        }
+
+        if (confirmMethodElement) {
+            confirmMethodElement.textContent = paymentData.method;
+        }
+
+        if (paymentData.method === 'Cash' && confirmCashDetailsElement) {
+            confirmCashDetailsElement.style.display = 'block';
+
+            if (confirmAmountReceivedElement) {
+                confirmAmountReceivedElement.textContent = paymentData.amountReceived?.toLocaleString('en-US') || '0';
+            }
+
+            if (confirmChangeElement) {
+                confirmChangeElement.textContent = paymentData.change?.toLocaleString('en-US') || '0';
+            }
+        } else if (confirmCashDetailsElement) {
+            confirmCashDetailsElement.style.display = 'none';
         }
 
         paymentConfirmModal.style.display = 'flex';
 
-        // Store payment data for confirmation
-        window.pendingPaymentData = paymentData;
+        // Store payment data for confirmation with validation
+        window.pendingPaymentData = {
+            method: paymentData.method,
+            amountReceived: paymentData.amountReceived || null,
+            change: paymentData.change || 0,
+            receipt: paymentData.receipt || { notes: 'Medical consultation and services' }
+        };
     }
 
     function hidePaymentConfirmation() {
@@ -524,18 +663,31 @@
             showProcessingModal();
 
             const requestData = {
-                patientId: invoiceData.userId,
-                appointmentId: invoiceData.appointmentId,
-                transactionId: invoiceData.transactionId,
-                receiptId: invoiceData.receiptId,
+                patientId: invoiceData.userId && invoiceData.userId !== 'N/A' ? parseInt(invoiceData.userId) : null,
+                appointmentId: invoiceData.appointmentId && invoiceData.appointmentId !== 'N/A' ? parseInt(invoiceData.appointmentId) : 1, // Backend requires non-null appointmentId
+                transactionId: invoiceData.transactionId !== 'N/A' ? invoiceData.transactionId : null,
+                receiptId: invoiceData.receiptId !== 'N/A' ? invoiceData.receiptId : null,
+                receiptNumber: invoiceData.receiptNumber !== 'PENDING' ? invoiceData.receiptNumber : null,
                 method: paymentData.method,
-                amountReceived: paymentData.amountReceived,
-                notes: paymentData.receipt.notes,
-                processedByUserId: invoiceData.issuerId,
-                totalAmount: window.calculatedPatientPayment || 0
+                paymentMethod: paymentData.method, // Alternative field name
+                amountReceived: paymentData.amountReceived || null,
+                amountPaid: paymentData.amountReceived || window.calculatedPatientPayment || 0,
+                change: paymentData.change || 0,
+                notes: paymentData.receipt ? paymentData.receipt.notes : 'Medical consultation and services',
+                description: paymentData.receipt ? paymentData.receipt.notes : 'Medical consultation and services',
+                totalAmount: window.calculatedPatientPayment || 0,
+                patientPayment: window.calculatedPatientPayment || 0,
+                status: 'Paid',
+                paymentStatus: 'Paid',
+                processedBy: invoiceData.issuerId,
+                staffId: invoiceData.issuerId,
+                timestamp: new Date().toISOString(),
+                paymentDate: new Date().toISOString().split('T')[0],
+                paymentTime: new Date().toLocaleTimeString('en-GB', { hour12: false })
             };
 
-            console.log('Sending payment data to server:', requestData);
+            console.log('Request Data to Backend:', requestData);
+            console.log('Request Data JSON:', JSON.stringify(requestData, null, 2));
 
             const response = await fetch('/receptionist/api/process-payment', {
                 method: 'POST',
@@ -565,27 +717,52 @@
         }
     }
 
-    // Updated payment button click handler
+    // Updated payment button click handler với validation đầy đủ
     paymentButton.addEventListener('click', async () => {
+        let hasErrors = false;
+
+        // Reset all error states
+        document.getElementById('paymentMethodError').classList.add('hidden');
+        document.getElementById('amountReceivedError').classList.add('hidden');
+        paymentMethodSelect.classList.remove('border-red-500');
+        amountReceivedInput.classList.remove('border-red-500');
+
+        // Validate Payment Method - hiển thị lỗi đỏ nếu không chọn
         if (!paymentMethodSelect.value) {
+            document.getElementById('paymentMethodError').classList.remove('hidden');
             paymentMethodSelect.classList.add('border-red-500');
-            alert('Please select a payment method.');
+            hasErrors = true;
+        }
+
+        // Validate Amount Received for Cash payment - hiển thị lỗi đỏ nếu không nhập và phải >= Patient Payment
+        if (paymentMethodSelect.value === 'Cash') {
+            const amountReceived = parseFloat(amountReceivedInput.value) || 0;
+            const patientPayment = window.calculatedPatientPayment || 0;
+
+            if (amountReceived === 0 || !amountReceivedInput.value) {
+                document.getElementById('amountReceivedError').textContent = 'Please enter amount received';
+                document.getElementById('amountReceivedError').classList.remove('hidden');
+                amountReceivedInput.classList.add('border-red-500');
+                hasErrors = true;
+            } else if (amountReceived < patientPayment) {
+                document.getElementById('amountReceivedError').textContent = 'Amount must be at least equal to Patient Payment';
+                document.getElementById('amountReceivedError').classList.remove('hidden');
+                amountReceivedInput.classList.add('border-red-500');
+                hasErrors = true;
+            }
+        }
+
+        // If there are validation errors, stop here
+        if (hasErrors) {
             return;
         }
-        paymentMethodSelect.classList.remove('border-red-500');
 
+        // Proceed with payment if validation passes
         if (paymentMethodSelect.value === 'Cash') {
             const amountReceived = parseFloat(amountReceivedInput.value.replace(/[^\d.]/g, '')) || 0;
             const patientPayment = window.calculatedPatientPayment || 0;
-
-            if (amountReceived < patientPayment) {
-                amountReceivedInput.classList.add('border-red-500');
-                alert('Amount received is less than the required patient payment.');
-                return;
-            }
-            amountReceivedInput.classList.remove('border-red-500');
-
             const change = amountReceived - patientPayment;
+
             const paymentData = {
                 method: paymentMethodSelect.value,
                 amountReceived: amountReceived,
@@ -621,71 +798,164 @@
         }
     });
 
-    // Confirmation button handler
+    // Confirmation button handler - Cập nhật Status từ Pending sang Paid và lưu vào database
     confirmPaymentBtn.addEventListener('click', async () => {
+        // Validate pending payment data exists
         if (!window.pendingPaymentData) {
-            alert('No pending payment data found.');
+            console.error('No pending payment data found');
+            alert('No pending payment data found. Please try again.');
+            return;
+        }
+
+        // Validate payment method exists
+        const paymentData = window.pendingPaymentData;
+        const selectedMethod = paymentData.method || paymentMethodSelect.value;
+
+        if (!selectedMethod || selectedMethod.trim() === '') {
+            console.error('Payment method is missing');
+            alert('Payment method is missing. Please select a payment method.');
             return;
         }
 
         hidePaymentConfirmation();
+        showProcessingModal();
 
         try {
-            const paymentData = window.pendingPaymentData;
-            if (!paymentData || !paymentData.method) {
-                alert('Payment method is missing. Please select a payment method.');
-                return;
-            }
+            console.log('=== Starting Payment Processing ===');
+            console.log('Payment Data:', paymentData);
+            console.log('Selected Method:', selectedMethod);
 
-            // Create request data for backend processing
+            // Create request data for backend processing with proper null handling
+            // FIXED: Generate a temporary TransactionID to avoid null constraint
+            const tempTransactionId = `TXN_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+            const tempReceiptNumber = `REC_${Date.now()}_${Math.random().toString(36).substr(2, 6)}`;
+
             const requestData = {
-                patientId: invoiceData.userId,
-                appointmentId: invoiceData.appointmentId,
-                transactionId: invoiceData.transactionId,
-                receiptId: invoiceData.receiptId,
-                method: paymentData.method,
-                amountReceived: paymentData.amountReceived,
-                notes: paymentData.receipt ? paymentData.receipt.notes : '',
+                patientId: invoiceData.userId && invoiceData.userId !== 'N/A' ? parseInt(invoiceData.userId) : null,
+                appointmentId: invoiceData.appointmentId && invoiceData.appointmentId !== 'N/A' ? parseInt(invoiceData.appointmentId) : 1, // Backend requires non-null appointmentId
+                // Generate TransactionID instead of sending null
+                transactionId: tempTransactionId,
+                receiptId: invoiceData.receiptId !== 'N/A' ? invoiceData.receiptId : null,
+                receiptNumber: tempReceiptNumber, // Generate receipt number
+                method: selectedMethod,
+                paymentMethod: selectedMethod, // Alternative field name
+                amountReceived: paymentData.amountReceived || null,
+                amountPaid: paymentData.amountReceived || window.calculatedPatientPayment || 0,
+                change: paymentData.change || 0,
+                notes: paymentData.receipt ? paymentData.receipt.notes : 'Medical consultation and services',
+                description: paymentData.receipt ? paymentData.receipt.notes : 'Medical consultation and services',
                 totalAmount: window.calculatedPatientPayment || 0,
-                status: "Paid" // Đảm bảo gửi status lên backend
-            };
-
-            // Process payment to database
-            const result = await processPaymentToDatabase(requestData);
-
-            // Create response data for UI update
-            const responseData = {
-                transactionId: result.transactionId,
-                appointmentId: invoiceData.appointmentId,
-                userId: invoiceData.userId,
-                method: paymentData.method,
-                timeOfPayment: result.timeOfPayment,
+                patientPayment: window.calculatedPatientPayment || 0,
                 status: 'Paid',
-                processedByUserId: invoiceData.issuerId,
-                receipt: {
-                    receiptId: result.receiptId,
-                    receiptNumber: invoiceData.receiptNumber,
-                    issuedDate: new Date().toISOString(),
-                    taxAmount: (window.calculatedPatientPayment || 0) * 0.1,
-                    discountAmount: 0,
-                    totalAmount: window.calculatedPatientPayment || 0,
-                    notes: paymentData.receipt.notes,
-                    issuerId: invoiceData.issuerId
-                }
+                paymentStatus: 'Paid',
+                processedBy: invoiceData.issuerId,
+                staffId: invoiceData.issuerId,
+                timestamp: new Date().toISOString(),
+                paymentDate: new Date().toISOString().split('T')[0],
+                paymentTime: new Date().toLocaleTimeString('en-GB', { hour12: false }),
+                // Additional fields for proper transaction creation
+                issuerId: invoiceData.issuerId || 'STAFF001',
+                userId: invoiceData.userId && invoiceData.userId !== 'N/A' ? parseInt(invoiceData.userId) : null
             };
 
-            // Add cash-specific data
-            if (paymentData.method === 'Cash') {
-                responseData.amountReceived = paymentData.amountReceived;
-                responseData.change = paymentData.change;
+            console.log('Request Data to Backend (with TransactionID):', requestData);
+            console.log('Request Data JSON:', JSON.stringify(requestData, null, 2));
+
+            // Call API to process payment and update status to "Paid"
+            const response = await fetch('/receptionist/api/process-payment', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-Requested-With': 'XMLHttpRequest'
+                },
+                body: JSON.stringify(requestData)
+            });
+
+            console.log('API Response Status:', response.status);
+
+            if (!response.ok) {
+                const errorText = await response.text();
+                console.error('Payment API error:', errorText);
+                hideProcessingModal();
+                throw new Error(`Payment failed: ${errorText}`);
             }
 
-            // Update UI with successful payment
-            handlePaymentSuccess(responseData);
+            const result = await response.json();
+            console.log('Payment API Success Response:', result);
+
+            hideProcessingModal();
+
+            // === UPDATE UI TO REFLECT PAID STATUS ===
+            console.log('=== Updating UI to Paid Status ===');
+
+            // 1. Update transaction status display to "Paid"
+            transactionStatusDisplay.textContent = 'Paid';
+            transactionStatusDisplay.className = 'text-green-600 font-semibold';
+            console.log('Status updated to: Paid');
+
+            // 2. Update time of payment to current time
+            const currentTime = new Date().toLocaleString('en-GB');
+            timeOfPaymentDisplay.textContent = currentTime;
+            console.log('Time of payment updated to:', currentTime);
+
+            // 3. Update payment method and amount display
+            paymentMethodSelect.value = selectedMethod;
+            console.log('Payment method set to:', selectedMethod);
+
+            if (selectedMethod === 'Cash' && paymentData.amountReceived) {
+                amountReceivedContainer.classList.remove('hidden');
+                amountReceivedInput.value = paymentData.amountReceived;
+                const patientPayment = window.calculatedPatientPayment || 0;
+                const change = paymentData.amountReceived - patientPayment;
+                changeReturnedDisplay.textContent = `Change Returned: ${change >= 0 ? change.toLocaleString('en-US') : 0} $`;
+                console.log('Cash payment details updated - Amount received:', paymentData.amountReceived, 'Change:', change);
+            } else if (selectedMethod === 'Banking') {
+                amountReceivedContainer.classList.add('hidden');
+                console.log('Banking payment - amount received container hidden');
+            }
+
+            // 4. Update notes if provided
+            if (paymentData.receipt && paymentData.receipt.notes) {
+                receiptNotesInput.value = paymentData.receipt.notes;
+                console.log('Notes updated:', paymentData.receipt.notes);
+            }
+
+            // 5. Disable payment button to prevent double payment
+            paymentButton.disabled = true;
+            paymentButton.textContent = 'Payment Completed';
+            paymentButton.className = 'bg-gray-400 text-white px-8 py-3 rounded-lg cursor-not-allowed flex items-center gap-2 text-sm font-semibold';
+
+            console.log('=== Payment Processing Completed Successfully ===');
+
+            // Show success popup and handle redirect
+            showSuccessPopup(() => {
+                console.log('Showing success popup and preparing for print/redirect');
+
+                // Set up afterprint event listener to redirect after print dialog closes
+                const onAfterPrint = () => {
+                    window.removeEventListener('afterprint', onAfterPrint);
+                    console.log('Print dialog closed, redirecting to payments page');
+                    window.location.href = '/receptionist/payments';
+                };
+                window.addEventListener('afterprint', onAfterPrint);
+
+                // Trigger print dialog
+                console.log('Triggering print dialog');
+                window.print();
+
+                // Fallback for browsers that don't support afterprint
+                setTimeout(() => {
+                    window.removeEventListener('afterprint', onAfterPrint);
+                    console.log('Fallback redirect after 5 seconds');
+                    window.location.href = '/receptionist/payments';
+                }, 5000);
+            });
 
         } catch (error) {
-            console.error('Error confirming payment:', error);
-            alert('Failed to process payment. Please try again.');
+            hideProcessingModal();
+            console.error('=== Payment Processing Error ===');
+            console.error('Error details:', error);
+            alert('Failed to process payment: ' + error.message + '. Please try again.');
         }
     });
 
@@ -716,7 +986,13 @@
     function validateCashPayment() {
         const amountReceived = parseFloat(amountReceivedInput.value) || 0;
         const patientPayment = window.calculatedPatientPayment || 0;
-        const errorElement = document.getElementById('paymentValidationError');
+        const errorElement = document.getElementById('amountReceivedError');
+
+        // Check if error element exists before using it
+        if (!errorElement) {
+            console.warn('amountReceivedError element not found');
+            return false;
+        }
 
         if (amountReceived < patientPayment) {
             errorElement.classList.remove('hidden');
@@ -728,7 +1004,7 @@
 
             // Tính change với Patient Payment thực tế
             const change = amountReceived - patientPayment;
-            changeReturnedDisplay.textContent = `Change Returned: ${change.toLocaleString('en-US')} $`;
+            changeReturnedDisplay.textContent = `Change Returned: ${change >= 0 ? change.toLocaleString('en-US') : 0} $`;
             return true;
         }
     }
@@ -860,13 +1136,17 @@
     amountReceivedInput.addEventListener('input', validateCashPayment);
     receiptNotesInput.addEventListener('input', updateCharacterCount);
 
-    // Cập nhật payment method change handler
+    // Cập nhật payment method change handler với null checks
     paymentMethodSelect.addEventListener('change', () => {
         amountReceivedContainer.classList.toggle('hidden', paymentMethodSelect.value !== 'Cash');
         if (paymentMethodSelect.value === 'Cash') {
             amountReceivedInput.value = '';
             changeReturnedDisplay.textContent = 'Change Returned: 0 $';
-            document.getElementById('paymentValidationError').classList.add('hidden');
+            // Check if element exists before using it
+            const validationError = document.getElementById('paymentValidationError');
+            if (validationError) {
+                validationError.classList.add('hidden');
+            }
         }
     });
 
