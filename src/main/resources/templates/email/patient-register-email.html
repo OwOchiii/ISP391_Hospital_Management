@@ -17,15 +17,18 @@
     <![endif]-->
 
     <style>
-        /* Reset styles for email clients */
+        /* Reset styles for email clients - Gmail Compatible */
         body, table, td, p, a, li, blockquote {
             -webkit-text-size-adjust: 100%;
             -ms-text-size-adjust: 100%;
+            margin: 0;
+            padding: 0;
         }
 
         table, td {
             mso-table-lspace: 0pt;
             mso-table-rspace: 0pt;
+            border-collapse: collapse;
         }
 
         img {
@@ -35,32 +38,37 @@
             line-height: 100%;
             outline: none;
             text-decoration: none;
+            display: block;
         }
 
-        /* Client-specific styles */
+        /* Gmail-specific styles */
         body {
             height: 100% !important;
             margin: 0 !important;
             padding: 0 !important;
             width: 100% !important;
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background-color: #f4f6f9;
+            font-family: Arial, sans-serif;
+            background-color: #f8f9fa;
+            color: #333333;
         }
 
-        /* Prevent auto-linking */
+        /* Prevent auto-linking in Gmail */
         .appleNoLinks a {
             color: inherit !important;
             text-decoration: none !important;
         }
 
-        /* Main container */
+        /* Main container - Gmail optimized */
         .email-container {
             max-width: 600px;
-            margin: 0 auto;
+            margin: 20px auto;
             background-color: #ffffff;
+            border-radius: 8px;
+            overflow: hidden;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
         }
 
-        /* Header styles */
+        /* Header - Simplified for Gmail */
         .header {
             background: linear-gradient(135deg, #2563eb 0%, #1e40af 100%);
             padding: 30px 20px;
@@ -79,39 +87,52 @@
             color: rgba(255, 255, 255, 0.9);
             font-size: 14px;
             margin: 0;
+            font-weight: 300;
         }
 
         /* Content styles */
         .content {
-            padding: 40px 30px;
+            padding: 30px 25px;
         }
 
         .welcome-section {
             text-align: center;
-            margin-bottom: 35px;
+            margin-bottom: 30px;
         }
 
-        .success-icon {
-            width: 80px;
-            height: 80px;
-            background: linear-gradient(135deg, #10b981, #059669);
-            border-radius: 50%;
+        /* Enhanced Success Icon - Gmail Compatible */
+        .m_-5102434287653975299success-icon {
+            width: 100px;
+            height: 100px;
             margin: 0 auto 20px;
-            display: flex;
+            position: relative;
+            display: inline-block;
+        }
+
+        .success-icon-container {
+            width: 100px;
+            height: 100px;
+            background: #10b981;
+            border-radius: 50%;
             align-items: center;
             justify-content: center;
+            position: relative;
+            box-shadow: 0 4px 15px rgba(16, 185, 129, 0.3);
+        }
+
+        .checkmark {
             font-size: 40px;
             color: white;
-            position: relative;
-            left: 50%;
-            transform: translateX(-50%);
+            font-weight: bold;
+            line-height: 1;
         }
 
         .welcome-title {
             font-size: 24px;
             font-weight: bold;
             color: #1f2937;
-            margin-bottom: 10px;
+            margin-bottom: 12px;
+            line-height: 1.3;
         }
 
         .welcome-message {
@@ -121,12 +142,12 @@
             margin-bottom: 0;
         }
 
-        /* Patient info section */
+        /* Patient info section - Gmail optimized */
         .patient-info-section {
             background: #f8fafc;
-            border-radius: 12px;
+            border-radius: 8px;
             padding: 25px;
-            margin-bottom: 30px;
+            margin-bottom: 25px;
             border-left: 4px solid #2563eb;
         }
 
@@ -135,29 +156,32 @@
             font-weight: bold;
             color: #1f2937;
             margin-bottom: 20px;
-            display: flex;
-            align-items: center;
+            display: block;
         }
 
         .section-icon {
-            margin-right: 10px;
-            font-size: 20px;
+            margin-right: 8px;
+            font-size: 18px;
             color: #2563eb;
         }
 
-        .info-grid {
-            display: table;
+        /* Info grid - Table-based for Gmail compatibility */
+        .info-table {
             width: 100%;
             border-collapse: collapse;
+            margin-top: 10px;
         }
 
-        .info-row {
-            display: table-row;
+        .info-table tr {
+            border-bottom: 1px solid #e5e7eb;
+        }
+
+        .info-table tr:last-child {
+            border-bottom: none;
         }
 
         .info-label {
-            display: table-cell;
-            padding: 8px 15px 8px 0;
+            padding: 10px 15px 10px 0;
             font-weight: 600;
             color: #374151;
             font-size: 14px;
@@ -166,11 +190,32 @@
         }
 
         .info-value {
-            display: table-cell;
-            padding: 8px 0;
+            padding: 10px 0;
             color: #1f2937;
             font-size: 14px;
             vertical-align: top;
+            font-weight: 500;
+        }
+
+        /* Highlight important values */
+        .highlight-value {
+            background: #fef3c7;
+            padding: 6px 10px;
+            border-radius: 4px;
+            font-weight: 600;
+            color: #92400e;
+            display: inline-block;
+        }
+
+        /* Status badge */
+        .status-active {
+            background: #d1fae5;
+            color: #047857;
+            padding: 4px 10px;
+            border-radius: 12px;
+            font-weight: 600;
+            font-size: 12px;
+            display: inline-block;
         }
 
         /* Description section */
@@ -178,7 +223,7 @@
             background: #fef3c7;
             border-radius: 8px;
             padding: 20px;
-            margin-bottom: 30px;
+            margin-bottom: 25px;
             border-left: 4px solid #f59e0b;
         }
 
@@ -199,14 +244,14 @@
         /* Next steps section */
         .next-steps {
             background: #e0f2fe;
-            border-radius: 12px;
-            padding: 25px;
-            margin-bottom: 30px;
+            border-radius: 8px;
+            padding: 20px;
+            margin-bottom: 25px;
             border-left: 4px solid #0891b2;
         }
 
         .steps-list {
-            margin: 0;
+            margin: 10px 0 0 0;
             padding-left: 20px;
         }
 
@@ -223,7 +268,7 @@
             border-radius: 8px;
             padding: 20px;
             text-align: center;
-            margin-bottom: 30px;
+            margin-bottom: 25px;
         }
 
         .contact-title {
@@ -236,33 +281,34 @@
         .contact-info {
             font-size: 14px;
             color: #4b5563;
-            margin-bottom: 10px;
+            margin-bottom: 8px;
+            line-height: 1.4;
         }
 
         .contact-info:last-child {
             margin-bottom: 0;
         }
 
-        /* Button styles */
+        /* Button styles - Gmail compatible */
         .button-container {
             text-align: center;
-            margin: 30px 0;
+            margin: 25px 0;
         }
 
         .primary-button {
             display: inline-block;
-            background: linear-gradient(135deg, #2563eb, #1e40af);
+            background: #2563eb;
             color: #ffffff;
             text-decoration: none;
-            padding: 15px 30px;
-            border-radius: 8px;
+            padding: 12px 30px;
+            border-radius: 6px;
             font-weight: bold;
-            font-size: 16px;
-            transition: all 0.3s ease;
+            font-size: 14px;
+            line-height: 1.4;
         }
 
         .primary-button:hover {
-            background: linear-gradient(135deg, #1d4ed8, #1e3a8a);
+            background: #1d4ed8;
             text-decoration: none;
             color: #ffffff;
         }
@@ -271,7 +317,7 @@
         .footer {
             background: #1f2937;
             color: #d1d5db;
-            padding: 30px 20px;
+            padding: 25px 20px;
             text-align: center;
         }
 
@@ -288,7 +334,7 @@
         .footer-link {
             color: #60a5fa;
             text-decoration: none;
-            margin: 0 10px;
+            margin: 0 8px;
             font-size: 12px;
         }
 
@@ -302,31 +348,36 @@
             margin-top: 15px;
             padding-top: 15px;
             border-top: 1px solid #374151;
+            line-height: 1.4;
         }
 
-        /* Responsive styles */
+        /* Mobile responsive - Gmail mobile app */
         @media only screen and (max-width: 600px) {
             .email-container {
                 width: 100% !important;
+                margin: 10px auto !important;
+                border-radius: 0 !important;
             }
 
             .content {
-                padding: 30px 20px !important;
+                padding: 20px 15px !important;
             }
 
             .patient-info-section {
-                padding: 20px !important;
+                padding: 20px 15px !important;
             }
 
             .info-label {
                 width: 100% !important;
                 display: block !important;
                 padding-bottom: 5px !important;
+                font-weight: bold !important;
             }
 
             .info-value {
                 display: block !important;
                 padding-bottom: 15px !important;
+                padding-left: 0 !important;
             }
 
             .welcome-title {
@@ -334,12 +385,26 @@
             }
 
             .primary-button {
-                padding: 12px 25px !important;
+                padding: 10px 25px !important;
                 font-size: 14px !important;
+            }
+
+            .m_-5102434287653975299success-icon {
+                width: 80px !important;
+                height: 80px !important;
+            }
+
+            .success-icon-container {
+                width: 80px !important;
+                height: 80px !important;
+            }
+
+            .checkmark {
+                font-size: 32px !important;
             }
         }
 
-        /* Dark mode support */
+        /* Dark mode support for Gmail Dark Theme */
         @media (prefers-color-scheme: dark) {
             .email-container {
                 background-color: #1f2937 !important;
@@ -356,6 +421,10 @@
             .section-title {
                 color: #f9fafb !important;
             }
+
+            .patient-info-section {
+                background: #374151 !important;
+            }
         }
     </style>
 </head>
@@ -371,12 +440,17 @@
     <div class="content">
         <!-- Welcome Section -->
         <div class="welcome-section">
-            <div class="success-icon">✓</div>
+            <!-- Enhanced Success Icon -->
+            <div class="m_-5102434287653975299success-icon">
+                <div class="success-icon-container">
+                    <div class="checkmark">✓</div>
+                </div>
+            </div>
+
             <h1 class="welcome-title">Registration Successful!</h1>
             <p class="welcome-message">
                 Welcome to MediCare Plus! Your patient registration has been successfully completed.
                 We're excited to have you as part of our healthcare family.
-                You have received this email because you have been to MediCare Plus Hospital and registered as a patient.
             </p>
         </div>
 
@@ -387,46 +461,54 @@
                 Your Registration Details
             </h2>
 
-            <div class="info-grid">
-                <div class="info-row">
-                    <div class="info-label">Full Name:</div>
-                    <div class="info-value" th:text="${patient.user?.fullName ?: 'John Doe'}">John Doe</div>
-                </div>
-                <div class="info-row">
-                    <div class="info-label">Email Address:</div>
-                    <div class="info-value" th:text="${patient.user?.email ?: 'john.doe@email.com'}">john.doe@email.com</div>
-                </div>
-                <div>
-                    <div class="info-label">Generated Password:</div>
-                    <div class="info-value" th:text="${ unhashedPassword?: 'Idk'}">N/A</div>
-                </div>
-                <div class="info-row">
-                    <div class="info-label">Phone Number:</div>
-                    <div class="info-value" th:text="${patient.user?.phoneNumber ?: '+1 (555) 123-4567'}">+1 (555) 123-4567</div>
-                </div>
-                <div class="info-row">
-                    <div class="info-label">Date of Birth:</div>
-                    <div class="info-value" th:text="${patient.dateOfBirth != null ? #temporals.format(patient.dateOfBirth, 'MMMM dd, yyyy') : 'January 15, 1990'}">January 15, 1990</div>
-                </div>
-                <div class="info-row">
-                    <div class="info-label">Gender:</div>
-                    <div class="info-value" th:text="${patient.gender ?: 'Male'}">Male</div>
-                </div>
-                <div class="info-row">
-                    <div class="info-label">Patient ID:</div>
-                    <div class="info-value" th:text="${patient.getPatientId() ?: 'P001234'}">P001234</div>
-                </div>
-            </div>
+            <table class="info-table">
+                <tr>
+                    <td class="info-label">Full Name:</td>
+                    <td class="info-value" th:text="${patient.user?.fullName ?: 'Not Provided'}"></td>
+                </tr>
+                <tr>
+                    <td class="info-label">Email Address:</td>
+                    <td class="info-value" th:text="${patient.user?.email ?: 'Not Provided'}"></td>
+                </tr>
+                <tr>
+                    <td class="info-label">Phone Number:</td>
+                    <td class="info-value" th:text="${patient.user?.phoneNumber ?: 'Not Provided'}"></td>
+                </tr>
+                <tr>
+                    <td class="info-label">Date of Birth:</td>
+                    <td class="info-value" th:text="${patient.dateOfBirth != null ? #temporals.format(patient.dateOfBirth, 'MMMM dd, yyyy') : 'Not Provided'}"></td>
+                </tr>
+                <tr>
+                    <td class="info-label">Gender:</td>
+                    <td class="info-value" th:text="${patient.gender ?: 'Not Provided'}"></td>
+                </tr>
+                <tr>
+                    <td class="info-label">Generated Password:</td>
+                    <td class="info-value">
+                        <span class="highlight-value" th:text="${unhashedPassword ?: 'N/A'}"></span>
+                    </td>
+                </tr>
+                <tr>
+                    <td class="info-label">User ID:</td>
+                    <td class="info-value" th:text="${patient.user?.userId ?: 'Not Assigned'}"></td>
+                </tr>
+                <tr>
+                    <td class="info-label">Registration Date:</td>
+                    <td class="info-value" th:text="${patient.user?.createdAt != null ? #temporals.format(patient.user.createdAt, 'MMMM dd, yyyy HH:mm') : 'Today'}"></td>
+                </tr>
+                <tr>
+                    <td class="info-label">Account Status:</td>
+                    <td class="info-value">
+                        <span class="status-active" th:text="${patient.user?.status ?: 'Active'}"></span>
+                    </td>
+                </tr>
+            </table>
         </div>
-
-
 
         <!-- Description Section (if provided) -->
         <div class="description-section" th:if="${patient.description != null and !#strings.isEmpty(patient.description)}">
             <h3 class="description-title">📝 Additional Information</h3>
-            <p class="description-text" th:text="${patient.description}">
-                Patient has provided additional information during registration that will help us provide better care.
-            </p>
+            <p class="description-text" th:text="${patient.description}"></p>
         </div>
 
         <!-- Next Steps -->
@@ -438,14 +520,15 @@
             <ul class="steps-list">
                 <li>You can now book appointments online or by calling our office</li>
                 <li>Complete your medical history form before your first appointment</li>
-                <li>You can receive history of the appointment as well as medical report </li>
+                <li>You can receive history of appointments as well as medical reports</li>
+                <li>Keep your User ID and password safe for future logins</li>
             </ul>
         </div>
 
         <!-- Action Button -->
         <div class="button-container">
-            <a href="http://localhost:8089/" class="primary-button" th:href="${patientPortalUrl}">
-                Go to the website
+            <a href="http://localhost:8089/" class="primary-button">
+                🌐 Visit Our Website
             </a>
         </div>
 
