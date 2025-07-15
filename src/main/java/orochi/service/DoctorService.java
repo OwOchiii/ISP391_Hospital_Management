@@ -120,7 +120,7 @@ public class DoctorService {
             LocalDateTime startOfDay = LocalDateTime.now().toLocalDate().atStartOfDay();
             LocalDateTime endOfDay = startOfDay.plusDays(1).minusSeconds(1);
             logger.info("Fetching today's appointments for doctor ID: {} (from {} to {})", doctorId, startOfDay, endOfDay);
-            return appointmentRepository.findTodayAppointmentsForDoctorWithTimeRange(doctorId, startOfDay, endOfDay);
+            return appointmentRepository.findTodayAppointmentsForDoctorWithTime(doctorId, startOfDay, endOfDay);
         } catch (DataAccessException e) {
             logger.error("Failed to fetch today's appointments for doctor ID: {}", doctorId, e);
             return Collections.emptyList();
@@ -344,7 +344,7 @@ public class DoctorService {
         // … các field và constructor …
 
         /**
-         * Lưu hoặc cập nhật Doctor kèm Users, có kiểm tra trùng email trước khi persist.
+         * L��u hoặc cập nhật Doctor kèm Users, có kiểm tra trùng email trước khi persist.
          */
         public void saveFromForm(DoctorForm form) {
             Users u;

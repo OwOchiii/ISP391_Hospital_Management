@@ -56,8 +56,8 @@ public class ReceptionistController {
 
     @Autowired
     public ReceptionistController(ReceptionistService receptionistService, UserRepository userRepository,
-                                 SpecializationService specializationService, AppointmentService appointmentService,
-                                 PatientRepository patientRepository, RoomService roomService, NotificationService notificationService) {
+                                  SpecializationService specializationService, AppointmentService appointmentService,
+                                  PatientRepository patientRepository, RoomService roomService, NotificationService notificationService) {
         this.receptionistService = receptionistService;
         this.userRepository = userRepository;
         this.specializationService = specializationService;
@@ -117,7 +117,7 @@ public class ReceptionistController {
     }
 
     @GetMapping("/new_appointment")
-    public String newAppointment(Authentication authentication,Model model) {
+    public String newAppointment(Authentication authentication, Model model) {
         // Ensure authentication is not null
         if (authentication == null || !authentication.isAuthenticated()) {
             return "redirect:/login";
@@ -219,7 +219,6 @@ public class ReceptionistController {
     }
 
 
-
     @GetMapping("/doctors")
     public String doctors(Authentication authentication) {
         if (authentication == null || !authentication.isAuthenticated()) {
@@ -310,6 +309,7 @@ public class ReceptionistController {
 
         return "Receptionists/patients";
     }
+
     @GetMapping("/payments")
     public String payments(Authentication authentication) {
         if (authentication == null || !authentication.isAuthenticated()) {
@@ -513,7 +513,6 @@ public class ReceptionistController {
     }
 
 
-
     @PostMapping("/register")
     public String registerPatient(@ModelAttribute("newUser") Users user) {
         receptionistService.registerPatient(user);
@@ -632,14 +631,45 @@ public class ReceptionistController {
     }
 
     @GetMapping("/pay_invoice")
-    public String payInvoice(Authentication authentication) {
-        // Ensure authentication is not null
-        if (authentication == null || !authentication.isAuthenticated()) {
-            return "redirect:/login";
-        }
+    public String payInvoice(@RequestParam Integer patientId,
+                            @RequestParam(required = false) Integer receiptId,
+                            Model model,
+                            Authentication authentication) {
+        try {
+            if (authentication == null || !authentication.isAuthenticated()) {
+                return "redirect:/login";
+            }
 
-        // Fetch invoice details based on invoice ID from request parameter ...
-        return "Receptionists/pay_invoice";
+            // Lấy thông tin bệnh nhân và cuộc hẹn
+            Map<String, Object> invoiceData = receptionistService.getInvoiceDataByPatientId(patientId);
+
+            if (invoiceData == null) {
+                model.addAttribute("errorMessage", "Patient not found");
+                return "redirect:/receptionist/payments";
+            }
+
+            // Lấy thông tin staff để hiển thị trong "Processed By"
+            Map<String, Object> staffInfo = receptionistService.getReceptionistStaffInfo();
+            logger.info("=== Controller staffInfo debug ===");
+            logger.info("Controller received staffInfo: {}", staffInfo);
+            logger.info("staffInfo fullName: {}", staffInfo.get("fullName"));
+            logger.info("staffInfo userId: {}", staffInfo.get("userId"));
+
+            model.addAttribute("invoiceData", invoiceData);
+            model.addAttribute("staffInfo", staffInfo);
+            model.addAttribute("patientId", patientId);
+            model.addAttribute("receiptId", receiptId);
+
+            // Debug model attributes
+            logger.info("=== Model attributes debug ===");
+            logger.info("Model staffInfo: {}", model.getAttribute("staffInfo"));
+
+            return "Receptionists/pay_invoice";
+        } catch (Exception e) {
+            logger.error("Error loading pay invoice page: {}", e.getMessage(), e);
+            model.addAttribute("errorMessage", "Error loading invoice data: " + e.getMessage());
+            return "redirect:/receptionist/payments";
+        }
     }
 
     @GetMapping("/patientStatus")
@@ -653,7 +683,7 @@ public class ReceptionistController {
     }
 
     @GetMapping("/appointmentRequest")
-    public ResponseEntity<?> getAppointmentTableData(){
+    public ResponseEntity<?> getAppointmentTableData() {
         try {
             // Sử dụng method mới để chỉ lấy appointments của ngày hiện tại
             String todayStr = LocalDate.now().toString();
@@ -667,7 +697,7 @@ public class ReceptionistController {
 
     // New endpoint for pending appointments only - also filter by today's date
     @GetMapping("/pendingAppointmentRequest")
-    public ResponseEntity<?> getPendingAppointmentTableData(){
+    public ResponseEntity<?> getPendingAppointmentTableData() {
         try {
             // Chỉ lấy pending appointments của ngày hiện tại
             String todayStr = LocalDate.now().toString();
@@ -681,7 +711,7 @@ public class ReceptionistController {
 
     // New endpoint for today's pending appointments
     @GetMapping("/pendingAppointmentRequest/today")
-    public ResponseEntity<?> getTodaysPendingAppointmentTableData(@RequestParam String date){
+    public ResponseEntity<?> getTodaysPendingAppointmentTableData(@RequestParam String date) {
         try {
             System.out.println("Fetching appointments for date: " + date);
             List<Map<String, Object>> todaysPendingAppointments = receptionistService.getTodaysPendingAppointmentTableData(date);
@@ -698,11 +728,11 @@ public class ReceptionistController {
     @PostMapping("/confirmAppointment")
     public ResponseEntity<?> updateAppointmentStatus(
             @RequestParam int id
-    ){
+    ) {
         try {
             // Update status to "Scheduled" (Approved)
             boolean isSuccess = receptionistService.updateAppointmentStatus(id, "Scheduled");
-            if(isSuccess) {
+            if (isSuccess) {
                 return ResponseEntity.ok("Appointment approved successfully");
             } else {
                 return ResponseEntity.badRequest().body("Failed to approve appointment");
@@ -711,6 +741,7 @@ public class ReceptionistController {
             return ResponseEntity.badRequest().body("Error approving appointment: " + e.getMessage());
         }
     }
+
     @PostMapping("/api/appointment/update")
     @ResponseBody
     public ResponseEntity<?> updateAppointmentDetails(@RequestBody Map<String, Object> request, Authentication authentication) {
@@ -877,6 +908,7 @@ public class ReceptionistController {
         }
 
     }
+
     private String formatTimeForDisplay(String time) {
         String[] parts = time.split(":");
         int hour = Integer.parseInt(parts[0]);
@@ -987,10 +1019,10 @@ public class ReceptionistController {
             Users newPatient = receptionistService.registerNewPatient(registrationData);
 
             return ResponseEntity.ok().body(Map.of(
-                "success", true,
-                "message", "Patient registered successfully",
-                "patientId", newPatient.getPatient().getPatientId(),
-                "userId", newPatient.getUserId()
+                    "success", true,
+                    "message", "Patient registered successfully",
+                    "patientId", newPatient.getPatient().getPatientId(),
+                    "userId", newPatient.getUserId()
             ));
 
         } catch (Exception e) {
@@ -1175,7 +1207,7 @@ public class ReceptionistController {
         }
     }
 
-<<<<<<< HEAD
+
     /**
      * API endpoint to test payment history data retrieval
      */
@@ -1222,13 +1254,13 @@ public class ReceptionistController {
 
             // Filter to only include Pending transactions
             List<Map<String, Object>> pendingPayments = allTodaysPayments.stream()
-                .filter(payment -> {
-                    String status = (String) payment.get("status");
-                    return status != null && ("pending".equalsIgnoreCase(status) ||
-                                            "unpaid".equalsIgnoreCase(status) ||
-                                            "Pending".equalsIgnoreCase(status));
-                })
-                .collect(Collectors.toList());
+                    .filter(payment -> {
+                        String status = (String) payment.get("status");
+                        return status != null && ("pending".equalsIgnoreCase(status) ||
+                                "unpaid".equalsIgnoreCase(status) ||
+                                "Pending".equalsIgnoreCase(status));
+                    })
+                    .collect(Collectors.toList());
 
             logger.info("Today's pending payments API returned {} records", pendingPayments.size());
             return ResponseEntity.ok(pendingPayments);
@@ -1236,7 +1268,8 @@ public class ReceptionistController {
             logger.error("Error fetching today's pending payments: {}", e.getMessage(), e);
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
         }
-=======
+    }
+
     private Integer getCurrentUserId() {
         Authentication auth = SecurityContextHolder.getContext().getAuthentication();
         if (auth != null && auth.getPrincipal() instanceof CustomUserDetails) {
@@ -1273,7 +1306,82 @@ public class ReceptionistController {
     @ResponseBody
     public ResponseEntity<?> markReadAlias(@PathVariable("id") Integer id) {
         return markNotificationAsRead(id);
->>>>>>> 6984ceb77c810a6abb9656844d44b89dbea5e39f
     }
 
+    @PostMapping("/api/process-payment")
+    @ResponseBody
+    public ResponseEntity<?> processPayment(@RequestBody Map<String, Object> paymentRequest, Authentication authentication) {
+        try {
+            if (authentication == null || !authentication.isAuthenticated()) {
+                return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Authentication required");
+            }
+
+            // Extract payment data from request
+            Integer patientId = (Integer) paymentRequest.get("patientId");
+            Integer appointmentId = (Integer) paymentRequest.get("appointmentId");
+            String transactionIdStr = (String) paymentRequest.get("transactionId");
+            String receiptIdStr = (String) paymentRequest.get("receiptId");
+            String method = (String) paymentRequest.get("method");
+            String notes = (String) paymentRequest.get("notes");
+            Object totalAmountObj = paymentRequest.get("totalAmount");
+            Object amountReceivedObj = paymentRequest.get("amountReceived");
+            // Lấy status nếu có (không bắt buộc vì service đã set "Paid")
+            String status = paymentRequest.get("status") != null ? paymentRequest.get("status").toString() : "Paid";
+
+            logger.info("Processing payment request: {}", paymentRequest);
+
+            // Validate required fields
+            if (patientId == null || appointmentId == null || method == null) {
+                return ResponseEntity.badRequest().body("Missing required payment fields");
+            }
+
+            // Convert totalAmount to proper type
+            Double totalAmount = 0.0;
+            if (totalAmountObj != null) {
+                if (totalAmountObj instanceof Number) {
+                    totalAmount = ((Number) totalAmountObj).doubleValue();
+                } else {
+                    totalAmount = Double.parseDouble(totalAmountObj.toString());
+                }
+            }
+
+            // Convert amountReceived for Cash payments
+            Double amountReceived = null;
+            if ("Cash".equals(method) && amountReceivedObj != null) {
+                if (amountReceivedObj instanceof Number) {
+                    amountReceived = ((Number) amountReceivedObj).doubleValue();
+                } else {
+                    amountReceived = Double.parseDouble(amountReceivedObj.toString());
+                }
+            }
+
+            // Process payment through service
+            Map<String, Object> result = receptionistService.processPayment(
+                patientId,
+                appointmentId,
+                transactionIdStr,
+                receiptIdStr,
+                method,
+                totalAmount,
+                amountReceived,
+                notes
+            );
+
+            logger.info("Payment processed successfully: {}", result);
+
+            return ResponseEntity.ok(Map.of(
+                "success", true,
+                "message", "Payment processed successfully",
+                "transactionId", result.get("transactionId"),
+                "receiptId", result.get("receiptId"),
+                "status", "Paid",
+                "timeOfPayment", java.time.LocalDateTime.now().toString()
+            ));
+
+        } catch (Exception e) {
+            logger.error("Error processing payment: {}", e.getMessage(), e);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body("Error processing payment: " + e.getMessage());
+        }
+    }
 }

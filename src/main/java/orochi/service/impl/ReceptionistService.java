@@ -336,7 +336,7 @@ public class ReceptionistService {
 
                         if (isToday && isPending) {
                             System.out.println("Found matching appointment: " + appointment.getAppointmentId() +
-                                             " on " + appointmentDate + " with status " + appointment.getStatus());
+                                    " on " + appointmentDate + " with status " + appointment.getStatus());
                         }
 
                         return isToday && isPending;
@@ -400,8 +400,8 @@ public class ReceptionistService {
                         // For better readability, show only the first specialty in lists
                         // but keep all specialties for detailed views
                         specialty = doctor.getSpecializations().stream()
-                            .map(Specialization::getSpecName)
-                            .collect(Collectors.joining(", "));
+                                .map(Specialization::getSpecName)
+                                .collect(Collectors.joining(", "));
                     }
                     doctorMap.put("specialty", specialty);
 
@@ -444,8 +444,8 @@ public class ReceptionistService {
             String specialty = "General Practice";
             if (doctor.getSpecializations() != null && !doctor.getSpecializations().isEmpty()) {
                 specialty = doctor.getSpecializations().stream()
-                    .map(Specialization::getSpecName)
-                    .collect(Collectors.joining(", "));
+                        .map(Specialization::getSpecName)
+                        .collect(Collectors.joining(", "));
             }
             doctorDetails.put("specialty", specialty);
 
@@ -471,7 +471,7 @@ public class ReceptionistService {
         // Check if doctor has the required specialty
         if (doctor.getSpecializations() != null && !doctor.getSpecializations().isEmpty()) {
             return doctor.getSpecializations().stream()
-                .anyMatch(spec -> spec.getSpecId().equals(specialtyId));
+                    .anyMatch(spec -> spec.getSpecId().equals(specialtyId));
         }
 
         return false;
@@ -487,27 +487,27 @@ public class ReceptionistService {
         List<orochi.model.Doctor> doctors = DoctorRepository.findBySpecializationId(specialtyId);
 
         return doctors.stream()
-            .distinct() // Additional protection against duplicates
-            .limit(1) // Only take the first doctor for each specialty
-            .map(doctor -> {
-                Map<String, Object> doctorMap = new HashMap<>();
-                doctorMap.put("id", doctor.getDoctorId());
-                doctorMap.put("name", doctor.getUser() != null ? doctor.getUser().getFullName() : "Unknown");
-                doctorMap.put("email", doctor.getUser() != null ? doctor.getUser().getEmail() : "");
-                doctorMap.put("phone", doctor.getUser() != null ? doctor.getUser().getPhoneNumber() : "");
+                .distinct() // Additional protection against duplicates
+                .limit(1) // Only take the first doctor for each specialty
+                .map(doctor -> {
+                    Map<String, Object> doctorMap = new HashMap<>();
+                    doctorMap.put("id", doctor.getDoctorId());
+                    doctorMap.put("name", doctor.getUser() != null ? doctor.getUser().getFullName() : "Unknown");
+                    doctorMap.put("email", doctor.getUser() != null ? doctor.getUser().getEmail() : "");
+                    doctorMap.put("phone", doctor.getUser() != null ? doctor.getUser().getPhoneNumber() : "");
 
-                // Get specialty information
-                String specialty = "General Practice";
-                if (doctor.getSpecializations() != null && !doctor.getSpecializations().isEmpty()) {
-                    specialty = doctor.getSpecializations().stream()
-                        .map(Specialization::getSpecName)
-                        .collect(Collectors.joining(", "));
-                }
-                doctorMap.put("specialty", specialty);
+                    // Get specialty information
+                    String specialty = "General Practice";
+                    if (doctor.getSpecializations() != null && !doctor.getSpecializations().isEmpty()) {
+                        specialty = doctor.getSpecializations().stream()
+                                .map(Specialization::getSpecName)
+                                .collect(Collectors.joining(", "));
+                    }
+                    doctorMap.put("specialty", specialty);
 
-                return doctorMap;
-            })
-            .collect(Collectors.toList());
+                    return doctorMap;
+                })
+                .collect(Collectors.toList());
     }
 
     // New method to get the single doctor assigned to a specialty
@@ -535,8 +535,8 @@ public class ReceptionistService {
         String specialty = "General Practice";
         if (doctor.getSpecializations() != null && !doctor.getSpecializations().isEmpty()) {
             specialty = doctor.getSpecializations().stream()
-                .map(Specialization::getSpecName)
-                .collect(Collectors.joining(", "));
+                    .map(Specialization::getSpecName)
+                    .collect(Collectors.joining(", "));
         }
         doctorMap.put("specialty", specialty);
 
@@ -579,9 +579,9 @@ public class ReceptionistService {
 
                 // Log để debug mapping
                 System.out.println("Processing payment - PatientID: " + payment.get("patientId") +
-                                 ", Amount: " + totalAmount +
-                                 ", Transaction Status: " + transactionStatus +
-                                 " -> Payment Status: " + processedPayment.get("status"));
+                        ", Amount: " + totalAmount +
+                        ", Transaction Status: " + transactionStatus +
+                        " -> Payment Status: " + processedPayment.get("status"));
 
                 return processedPayment;
             }).collect(Collectors.toList());
@@ -883,9 +883,9 @@ public class ReceptionistService {
                     result.add(patientPaymentData);
 
                     System.out.println("Processed appointment " + appointment.getAppointmentId() +
-                                     " for patient " + patient.getPatientId() +
-                                     " with status: " + transactionStatus +
-                                     " and amount: " + amount);
+                            " for patient " + patient.getPatientId() +
+                            " with status: " + transactionStatus +
+                            " and amount: " + amount);
 
                 } catch (Exception e) {
                     logger.error("Error processing appointment {}: {}", appointment.getAppointmentId(), e.getMessage(), e);
@@ -997,9 +997,9 @@ public class ReceptionistService {
                     result.add(patientPaymentData);
 
                     System.out.println("Processed appointment " + appointment.getAppointmentId() +
-                                     " for patient " + patient.getPatientId() +
-                                     " with status: " + transactionStatus +
-                                     " and amount: " + amount);
+                            " for patient " + patient.getPatientId() +
+                            " with status: " + transactionStatus +
+                            " and amount: " + amount);
 
                 } catch (Exception e) {
                     logger.error("Error processing appointment {}: {}", appointment.getAppointmentId(), e.getMessage(), e);
@@ -1136,10 +1136,10 @@ public class ReceptionistService {
 
             // Get specialty name for validation
             String specializationName = doctor.getSpecializations().stream()
-                .filter(spec -> spec.getSpecId().equals(specialtyId))
-                .map(Specialization::getSpecName)
-                .findFirst()
-                .orElse("Unknown");
+                    .filter(spec -> spec.getSpecId().equals(specialtyId))
+                    .map(Specialization::getSpecName)
+                    .findFirst()
+                    .orElse("Unknown");
 
             // Get rooms from doctor's schedule that match the department
             List<Map<String, Object>> rooms = new ArrayList<>();
@@ -1147,9 +1147,9 @@ public class ReceptionistService {
             if (doctor.getSchedules() != null && !doctor.getSchedules().isEmpty()) {
                 // Get rooms from doctor's schedules
                 Set<Room> doctorRooms = doctor.getSchedules().stream()
-                    .map(Schedule::getRoom)
-                    .filter(Objects::nonNull)
-                    .collect(Collectors.toSet());
+                        .map(Schedule::getRoom)
+                        .filter(Objects::nonNull)
+                        .collect(Collectors.toSet());
 
                 for (Room room : doctorRooms) {
                     // Validate that the room's department matches the specialty
@@ -1159,7 +1159,7 @@ public class ReceptionistService {
                         // Check if department name matches or contains the specialization
                         // This is a simple matching logic - you can refine this based on your data
                         if (deptName.toLowerCase().contains(specializationName.toLowerCase()) ||
-                            specializationName.toLowerCase().contains(deptName.toLowerCase())) {
+                                specializationName.toLowerCase().contains(deptName.toLowerCase())) {
 
                             Map<String, Object> roomData = new HashMap<>();
                             roomData.put("roomId", room.getRoomId());
@@ -1395,6 +1395,501 @@ public class ReceptionistService {
         } catch (Exception e) {
             logger.error("Error fetching all payment history data: {}", e.getMessage(), e);
             return new ArrayList<>();
+        }
+    }
+
+    /**
+     * Get invoice data by patient ID including patient info and appointment details
+     * Patient ID: lấy theo Patient ID trong bảng Patient
+     * Full Name: lấy theo FullName trong bảng User
+     * Date of Birth: lấy theo dateOfBirth trong bảng Patient
+     * Gender: lấy theo Gender trong bảng Patient
+     * Appointment ID: lấy theo Patient ID trong b��ng Patient
+     * Payer Name: lấy theo AppointmentID trong bảng Appointment
+     * Contact: lấy theo PhoneNumber trong bảng User
+     */
+    public Map<String, Object> getInvoiceDataByPatientId(Integer patientId) {
+        try {
+            // Tìm bệnh nhân theo PatientID
+            Optional<Patient> patientOptional = patientRepository.findById(patientId);
+            if (patientOptional.isEmpty()) {
+                logger.error("Patient not found with ID: {}", patientId);
+                return null;
+            }
+
+            Patient patient = patientOptional.get();
+            Users user = patient.getUser();
+
+            if (user == null) {
+                logger.error("User not found for patient ID: {}", patientId);
+                return null;
+            }
+
+            logger.info("=== Patient Info Debug ===");
+            logger.info("Patient ID: {}", patient.getPatientId());
+            logger.info("User ID: {}", user.getUserId());
+            logger.info("Full Name: {}", user.getFullName());
+            logger.info("Email: {}", user.getEmail());
+            logger.info("Phone: {}", user.getPhoneNumber());
+
+            // Tìm appointment gần nhất của bệnh nhân này
+            List<Appointment> appointments = appointmentRepository.findByPatientPatientIdOrderByDateTimeDesc(patientId);
+            Appointment latestAppointment = null;
+            if (!appointments.isEmpty()) {
+                latestAppointment = appointments.get(0); // Lấy appointment gần nhất
+                logger.info("Latest appointment ID: {}", latestAppointment.getAppointmentId());
+            }
+
+            // Tạo dữ liệu invoice
+            Map<String, Object> invoiceData = new HashMap<>();
+
+            // Patient Information - Đảm bảo lấy đúng FullName từ Users table
+            invoiceData.put("patientId", patient.getPatientId());
+            invoiceData.put("fullName", user.getFullName() != null ? user.getFullName() : "Unknown Patient");
+            invoiceData.put("dateOfBirth", patient.getDateOfBirth() != null ?
+                    patient.getDateOfBirth().toString() : "N/A");
+            invoiceData.put("gender", patient.getGender() != null ? patient.getGender() : "N/A");
+            invoiceData.put("contact", user.getPhoneNumber() != null ? user.getPhoneNumber() : "N/A");
+            invoiceData.put("email", user.getEmail() != null ? user.getEmail() : "N/A");
+
+            // Appointment Information
+            if (latestAppointment != null) {
+                invoiceData.put("appointmentId", latestAppointment.getAppointmentId());
+                // Payer name should be the same as patient name (FullName from Users table)
+                invoiceData.put("payerName", user.getFullName() != null ? user.getFullName() : "Unknown Patient");
+                invoiceData.put("appointmentDate", latestAppointment.getDateTime().toLocalDate().toString());
+                invoiceData.put("appointmentTime", latestAppointment.getDateTime().toLocalTime().toString());
+                invoiceData.put("description", latestAppointment.getDescription() != null ?
+                        latestAppointment.getDescription() : "General Consultation");
+
+                // Doctor information
+                if (latestAppointment.getDoctor() != null && latestAppointment.getDoctor().getUser() != null) {
+                    invoiceData.put("doctorName", latestAppointment.getDoctor().getUser().getFullName());
+                } else {
+                    invoiceData.put("doctorName", "Not Assigned");
+                }
+
+                // Room information
+                if (latestAppointment.getRoom() != null) {
+                    invoiceData.put("roomNumber", latestAppointment.getRoom().getRoomNumber());
+                } else {
+                    invoiceData.put("roomNumber", "Not Assigned");
+                }
+            } else {
+                invoiceData.put("appointmentId", "N/A");
+                // Even without appointment, payer name should be patient name
+                invoiceData.put("payerName", user.getFullName() != null ? user.getFullName() : "Unknown Patient");
+                invoiceData.put("appointmentDate", "N/A");
+                invoiceData.put("appointmentTime", "N/A");
+                invoiceData.put("description", "No appointment found");
+                invoiceData.put("doctorName", "N/A");
+                invoiceData.put("roomNumber", "N/A");
+            }
+
+            // Service Information - Lấy dữ liệu từ bảng Service
+            List<Map<String, Object>> servicesUsed = getServicesUsedByPatient(patientId, latestAppointment);
+            invoiceData.put("servicesUsed", servicesUsed);
+
+            // Payment/Transaction Information
+            try {
+                if (latestAppointment != null) {
+                    List<Transaction> transactions = transactionRepository.findByAppointmentId(latestAppointment.getAppointmentId());
+                    if (!transactions.isEmpty()) {
+                        Transaction latestTransaction = transactions.get(0);
+                        invoiceData.put("transactionId", latestTransaction.getTransactionId());
+                        invoiceData.put("transactionStatus", latestTransaction.getStatus());
+                        invoiceData.put("paymentMethod", latestTransaction.getMethod());
+
+                        // Receipt information
+                        if (latestTransaction.getReceipt() != null) {
+                            Receipt receipt = latestTransaction.getReceipt();
+                            invoiceData.put("receiptId", receipt.getReceiptId());
+                            invoiceData.put("receiptNumber", "REC" + receipt.getReceiptId());
+                            invoiceData.put("totalAmount", receipt.getTotalAmount() != null ?
+                                    receipt.getTotalAmount().doubleValue() : 0.0);
+                            invoiceData.put("taxAmount", receipt.getTaxAmount() != null ?
+                                    receipt.getTaxAmount().doubleValue() : 0.0);
+                            invoiceData.put("discountAmount", receipt.getDiscountAmount() != null ?
+                                    receipt.getDiscountAmount().doubleValue() : 0.0);
+                            invoiceData.put("issuedDate", receipt.getIssuedDate() != null ?
+                                    receipt.getIssuedDate().toString() : LocalDate.now().toString());
+                        } else {
+                            // Calculate total from services
+                            double calculatedTotal = calculateTotalFromServices(servicesUsed);
+                            invoiceData.put("receiptId", "N/A");
+                            invoiceData.put("receiptNumber", "PENDING");
+                            invoiceData.put("totalAmount", calculatedTotal);
+                            invoiceData.put("taxAmount", calculatedTotal * 0.1); // 10% tax
+                            invoiceData.put("discountAmount", 0.0);
+                            invoiceData.put("issuedDate", LocalDate.now().toString());
+                        }
+                    } else {
+                        // Calculate total from services
+                        double calculatedTotal = calculateTotalFromServices(servicesUsed);
+                        invoiceData.put("transactionId", "N/A");
+                        invoiceData.put("transactionStatus", "Pending");
+                        invoiceData.put("paymentMethod", "N/A");
+                        invoiceData.put("receiptId", "N/A");
+                        invoiceData.put("receiptNumber", "PENDING");
+                        invoiceData.put("totalAmount", calculatedTotal);
+                        invoiceData.put("taxAmount", calculatedTotal * 0.1); // 10% tax
+                        invoiceData.put("discountAmount", 0.0);
+                        invoiceData.put("issuedDate", LocalDate.now().toString());
+                    }
+                } else {
+                    // Calculate total from services
+                    double calculatedTotal = calculateTotalFromServices(servicesUsed);
+                    invoiceData.put("transactionId", "N/A");
+                    invoiceData.put("transactionStatus", "Pending");
+                    invoiceData.put("paymentMethod", "N/A");
+                    invoiceData.put("receiptId", "N/A");
+                    invoiceData.put("receiptNumber", "PENDING");
+                    invoiceData.put("totalAmount", calculatedTotal);
+                    invoiceData.put("taxAmount", calculatedTotal * 0.1); // 10% tax
+                    invoiceData.put("discountAmount", 0.0);
+                    invoiceData.put("issuedDate", LocalDate.now().toString());
+                }
+            } catch (Exception e) {
+                logger.error("Error fetching transaction data for patient {}: {}", patientId, e.getMessage());
+                // Calculate total from services for fallback
+                double calculatedTotal = calculateTotalFromServices(servicesUsed);
+                invoiceData.put("transactionId", "N/A");
+                invoiceData.put("transactionStatus", "Pending");
+                invoiceData.put("paymentMethod", "N/A");
+                invoiceData.put("receiptId", "N/A");
+                invoiceData.put("receiptNumber", "PENDING");
+                invoiceData.put("totalAmount", calculatedTotal);
+                invoiceData.put("taxAmount", calculatedTotal * 0.1); // 10% tax
+                invoiceData.put("discountAmount", 0.0);
+                invoiceData.put("issuedDate", LocalDate.now().toString());
+            }
+
+            logger.info("=== Final Invoice Data ===");
+            logger.info("Full Name in invoice: {}", invoiceData.get("fullName"));
+            logger.info("Payer Name in invoice: {}", invoiceData.get("payerName"));
+            logger.info("Invoice data prepared for patient ID {}: {}", patientId, invoiceData);
+            return invoiceData;
+
+        } catch (Exception e) {
+            logger.error("Error getting invoice data for patient ID {}: {}", patientId, e.getMessage(), e);
+            return null;
+        }
+    }
+
+    /**
+     * Get services used by patient based on appointment and patient history
+     * Service ID: lấy theo ServiceID trong bảng Service
+     * Specialization -> Symptom: lấy theo ServiceName trong bảng Service
+     * Service Name: lấy theo ServiceName trong bảng Service
+     * Quantity: count (tổng số lần sử dụng 1 Service)
+     * Price: lấy theo Price trong bảng Service
+     * Tax (%): 10%
+     * Total (VND): Quantity * Price + Tax (10%)
+     * Date: lấy theo ngày hiện tại
+     */
+    private List<Map<String, Object>> getServicesUsedByPatient(Integer patientId, Appointment appointment) {
+        List<Map<String, Object>> servicesUsed = new ArrayList<>();
+
+        try {
+            // Lấy dữ liệu từ bảng Service thông qua specialization của appointment
+            if (appointment != null && appointment.getDoctor() != null &&
+                    appointment.getDoctor().getSpecializations() != null &&
+                    !appointment.getDoctor().getSpecializations().isEmpty()) {
+
+                // Lấy specialization đầu tiên của doctor
+                Specialization specialization = appointment.getDoctor().getSpecializations().iterator().next();
+
+                // Kiểm tra null để tránh NullPointerException
+                if (specialization != null) {
+                    Map<String, Object> service = new HashMap<>();
+                    service.put("serviceId", "SRV" + String.format("%03d", specialization.getSpecId() != null ? specialization.getSpecId() : 1));
+                    service.put("symptom", specialization.getSymptom() != null ? specialization.getSymptom() :
+                               (specialization.getSpecName() != null ? specialization.getSpecName() : "General Medicine"));
+                    service.put("serviceName", "General Consultation - " + (specialization.getSpecName() != null ? specialization.getSpecName() : "General"));
+                    service.put("quantity", 1); // Mặc định 1 lần sử dụng
+
+                    // Lấy price từ specialization price hoặc giá mặc định với null check
+                    double price = 300000.0; // Giá mặc định
+                    if (specialization.getPrice() != null) {
+                        price = specialization.getPrice().doubleValue();
+                    }
+                    service.put("price", price);
+                    service.put("taxPercent", 10); // 10% tax
+
+                    // Tính total: Quantity * Price + Tax
+                    double baseAmount = 1 * price; // quantity * price
+                    double taxAmount = baseAmount * 0.1; // 10% tax
+                    double total = baseAmount + taxAmount;
+                    service.put("total", total);
+                    service.put("date", LocalDate.now().toString());
+
+                    servicesUsed.add(service);
+
+                    // Thêm các dịch vụ bổ sung nếu cần với null check
+                    String specName = specialization.getSpecName();
+                    if (specName != null && (specName.toLowerCase().contains("internal") ||
+                            specName.toLowerCase().contains("general"))) {
+                        addAdditionalServices(servicesUsed, patientId);
+                    }
+                } else {
+                    // Nếu specialization null, tạo dịch vụ mặc định
+                    addDefaultServices(servicesUsed, patientId);
+                }
+            } else {
+                // Nếu không có appointment hoặc specialization, tạo dịch vụ mặc định
+                addDefaultServices(servicesUsed, patientId);
+            }
+
+        } catch (Exception e) {
+            logger.error("Error getting services for patient {}: {}", patientId, e.getMessage(), e);
+            // Fallback: tạo dịch vụ mặc định
+            addDefaultServices(servicesUsed, patientId);
+        }
+
+        return servicesUsed;
+    }
+
+    /**
+     * Add additional services based on patient history or common medical procedures
+     */
+    private void addAdditionalServices(List<Map<String, Object>> servicesUsed, Integer patientId) {
+        // Blood Test
+        Map<String, Object> bloodTest = new HashMap<>();
+        bloodTest.put("serviceId", "SRV002");
+        bloodTest.put("symptom", "Health Screening");
+        bloodTest.put("serviceName", "Blood Test");
+        bloodTest.put("quantity", 1);
+        bloodTest.put("price", 500000.0);
+        bloodTest.put("taxPercent", 10);
+        double bloodTestTotal = 500000.0 * 1.1; // price + 10% tax
+        bloodTest.put("total", bloodTestTotal);
+        bloodTest.put("date", LocalDate.now().toString());
+        servicesUsed.add(bloodTest);
+
+        // Medication
+        Map<String, Object> medication = new HashMap<>();
+        medication.put("serviceId", "SRV003");
+        medication.put("symptom", "Treatment");
+        medication.put("serviceName", "Medication");
+        medication.put("quantity", 2);
+        medication.put("price", 100000.0);
+        medication.put("taxPercent", 10);
+        double medicationTotal = 100000.0 * 2 * 1.1; // quantity * price + 10% tax
+        medication.put("total", medicationTotal);
+        medication.put("date", LocalDate.now().toString());
+        servicesUsed.add(medication);
+    }
+
+    /**
+     * Add default services when no specific data is available
+     */
+    private void addDefaultServices(List<Map<String, Object>> servicesUsed, Integer patientId) {
+        // General Consultation
+        Map<String, Object> consultation = new HashMap<>();
+        consultation.put("serviceId", "SRV001");
+        consultation.put("symptom", "General Medicine");
+        consultation.put("serviceName", "General Consultation");
+        consultation.put("quantity", 1);
+        consultation.put("price", 300000.0);
+        consultation.put("taxPercent", 10);
+        double consultationTotal = 300000.0 * 1.1; // price + 10% tax
+        consultation.put("total", consultationTotal);
+        consultation.put("date", LocalDate.now().toString());
+        servicesUsed.add(consultation);
+    }
+
+    /**
+     * Calculate total amount from services with proper null and type checking
+     */
+    private double calculateTotalFromServices(List<Map<String, Object>> servicesUsed) {
+        if (servicesUsed == null || servicesUsed.isEmpty()) {
+            return 0.0;
+        }
+
+        return servicesUsed.stream()
+                .mapToDouble(service -> {
+                    Object total = service.get("total");
+                    if (total == null) {
+                        return 0.0;
+                    }
+                    if (total instanceof Number) {
+                        return ((Number) total).doubleValue();
+                    }
+                    try {
+                        return Double.parseDouble(total.toString());
+                    } catch (NumberFormatException e) {
+                        logger.warn("Invalid total value in service: {}", total);
+                        return 0.0;
+                    }
+                })
+                .sum();
+    }
+
+    /**
+     * Get staff member with roleID = 3 (Receptionist) for "Processed By" field
+     */
+    public Map<String, Object> getReceptionistStaffInfo() {
+        try {
+            logger.info("=== Starting getReceptionistStaffInfo ===");
+            // Find a receptionist user with roleID = 3
+            List<Users> receptionists = userRepository.findByRoleId(3);
+            logger.info("Found {} users with roleID = 3", receptionists.size());
+
+            if (!receptionists.isEmpty()) {
+                Users receptionist = receptionists.get(0); // Get first receptionist
+                logger.info("Selected receptionist - UserID: {}, FullName: {}, Email: {}",
+                    receptionist.getUserId(), receptionist.getFullName(), receptionist.getEmail());
+
+                Map<String, Object> staffInfo = new HashMap<>();
+                staffInfo.put("userId", receptionist.getUserId());
+                staffInfo.put("fullName", receptionist.getFullName());
+                staffInfo.put("email", receptionist.getEmail());
+
+                logger.info("Returning staffInfo: {}", staffInfo);
+                return staffInfo;
+            }
+
+            // Fallback if no receptionist found
+            logger.warn("No receptionist found with roleID = 3, using default staff info");
+            Map<String, Object> defaultStaff = new HashMap<>();
+            defaultStaff.put("userId", "STAFF001");
+            defaultStaff.put("fullName", "Staff Member");
+            defaultStaff.put("email", "staff@medicareplus.com");
+            return defaultStaff;
+
+        } catch (Exception e) {
+            logger.error("Error getting receptionist staff info: {}", e.getMessage(), e);
+            // Return default staff info
+            Map<String, Object> defaultStaff = new HashMap<>();
+            defaultStaff.put("userId", "STAFF001");
+            defaultStaff.put("fullName", "Staff Member");
+            defaultStaff.put("email", "staff@medicareplus.com");
+            return defaultStaff;
+        }
+    }
+
+    /**
+     * Process payment and update transaction status to "Paid"
+     * Updates Transaction status and Receipt information in database
+     */
+    @Transactional
+    public Map<String, Object> processPayment(
+            Integer patientId,
+            Integer appointmentId,
+            String transactionIdStr,
+            String receiptIdStr,
+            String method,
+            Double totalAmount,
+            Double amountReceived,
+            String notes) {
+
+        try {
+            logger.info("=== Processing Payment ===");
+            logger.info("PatientId: {}, AppointmentId: {}, Method: {}, TotalAmount: {}",
+                       patientId, appointmentId, method, totalAmount);
+
+            // Find or create transaction
+            Transaction transaction = null;
+
+            if (transactionIdStr != null && !transactionIdStr.equals("N/A")) {
+                try {
+                    Integer transactionId = Integer.parseInt(transactionIdStr);
+                    Optional<Transaction> existingTransaction = transactionRepository.findById(transactionId);
+                    if (existingTransaction.isPresent()) {
+                        transaction = existingTransaction.get();
+                        logger.info("Found existing transaction: {}", transactionId);
+                    }
+                } catch (NumberFormatException e) {
+                    logger.warn("Invalid transaction ID format: {}", transactionIdStr);
+                }
+            }
+
+            // If no existing transaction found, create new one
+            if (transaction == null) {
+                transaction = new Transaction();
+                transaction.setAppointmentId(appointmentId);
+                transaction.setUserId(patientId); // Set patient ID as user ID
+                logger.info("Creating new transaction for appointment: {}", appointmentId);
+            }
+
+            // Update transaction details
+            transaction.setStatus("Paid");
+            transaction.setMethod(method);
+            transaction.setTimeOfPayment(java.time.LocalDateTime.now());
+
+            // For Cash payments, store amount received
+            if ("Cash".equals(method) && amountReceived != null) {
+                // You can add amountReceived field to Transaction entity if needed
+                // For now, we'll store it in notes or description
+                String cashDetails = String.format("Amount Received: $%.2f", amountReceived);
+                if (notes != null && !notes.trim().isEmpty()) {
+                    transaction.setRefundReason(notes + " | " + cashDetails);
+                } else {
+                    transaction.setRefundReason(cashDetails);
+                }
+            } else {
+                transaction.setRefundReason(notes);
+            }
+
+            // Save transaction
+            Transaction savedTransaction = transactionRepository.save(transaction);
+            logger.info("Transaction saved with ID: {}", savedTransaction.getTransactionId());
+
+            // Find or create receipt
+            Receipt receipt = null;
+
+            if (receiptIdStr != null && !receiptIdStr.equals("N/A")) {
+                try {
+                    Integer receiptId = Integer.parseInt(receiptIdStr);
+                    Optional<Receipt> existingReceipt = receiptRepository.findById(receiptId);
+                    if (existingReceipt.isPresent()) {
+                        receipt = existingReceipt.get();
+                        logger.info("Found existing receipt: {}", receiptId);
+                    }
+                } catch (NumberFormatException e) {
+                    logger.warn("Invalid receipt ID format: {}", receiptIdStr);
+                }
+            }
+
+            // If no existing receipt found, create new one
+            if (receipt == null) {
+                receipt = new Receipt();
+                receipt.setIssuerId(patientId); // Use setIssuerId instead of setUserId
+                receipt.setIssuedDate(java.time.LocalDate.now());
+                receipt.setReceiptNumber("REC" + System.currentTimeMillis()); // Generate receipt number
+                logger.info("Creating new receipt for patient: {}", patientId);
+            }
+
+            // Update receipt details
+            receipt.setTotalAmount(java.math.BigDecimal.valueOf(totalAmount));
+            receipt.setTaxAmount(java.math.BigDecimal.valueOf(totalAmount * 0.1)); // 10% tax
+            receipt.setDiscountAmount(java.math.BigDecimal.valueOf(0)); // No discount for now
+            receipt.setNotes(notes);
+            // Note: Receipt entity doesn't have a status field, so we skip setting status
+
+            // Save receipt
+            Receipt savedReceipt = receiptRepository.save(receipt);
+            logger.info("Receipt saved with ID: {}", savedReceipt.getReceiptId());
+
+            // Link receipt to transaction (Receipt has transactionId field)
+            savedReceipt.setTransactionId(savedTransaction.getTransactionId());
+            receiptRepository.save(savedReceipt);
+
+            // Prepare result
+            Map<String, Object> result = new HashMap<>();
+            result.put("transactionId", savedTransaction.getTransactionId());
+            result.put("receiptId", savedReceipt.getReceiptId());
+            result.put("status", "Paid");
+            result.put("method", method);
+            result.put("totalAmount", totalAmount);
+            result.put("timeOfPayment", savedTransaction.getTimeOfPayment().toString());
+
+            logger.info("Payment processing completed successfully");
+            return result;
+
+        } catch (Exception e) {
+            logger.error("Error processing payment: {}", e.getMessage(), e);
+            throw new RuntimeException("Failed to process payment: " + e.getMessage());
         }
     }
 }
