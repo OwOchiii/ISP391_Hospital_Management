@@ -234,7 +234,7 @@ public class PatientAppointmentController {
      * @param patientId The patient ID for authorization
      * @return The medical report PDF or an error page
      */
-    @GetMapping("/appointment-list/{id}/report")
+    @GetMapping("/appointment-list/{id}/medical-report")
     public String viewLatestMedicalReport(
             @PathVariable Integer id,
             @RequestParam(required = false) Integer patientId,
