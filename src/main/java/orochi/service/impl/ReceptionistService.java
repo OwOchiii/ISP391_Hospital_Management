@@ -33,6 +33,7 @@ public class ReceptionistService {
     private final AppointmentRepository appointmentRepository;
     private final PatientRepository patientRepository;
     private final ReceptionistRepository receptionistRepository;
+    private final ReceptionistEntityRepository receptionistEntityRepository;
     private final PatientContactRepository patientContactRepository;
     private final DoctorRepository DoctorRepository;
     private final ReceiptRepository receiptRepository;
@@ -46,6 +47,7 @@ public class ReceptionistService {
             AppointmentRepository appointmentRepository,
             PatientRepository patientRepository,
             ReceptionistRepository receptionistRepository,
+            ReceptionistEntityRepository receptionistEntityRepository,
             PatientContactRepository patientContactRepository,
             DoctorRepository doctorRepository,
             ReceiptRepository receiptRepository,
@@ -54,6 +56,7 @@ public class ReceptionistService {
         this.appointmentRepository = appointmentRepository;
         this.patientRepository = patientRepository;
         this.receptionistRepository = receptionistRepository;
+        this.receptionistEntityRepository = receptionistEntityRepository;
         this.patientContactRepository = patientContactRepository;
         this.DoctorRepository = doctorRepository;
         this.receiptRepository = receiptRepository;
@@ -552,7 +555,7 @@ public class ReceptionistService {
      */
     public List<Map<String, Object>> getTodaysPaymentData() {
         try {
-            // Sử dụng getAllReceiptsWithTransactionData() để lấy dữ liệu thực
+            // Sử dụng getAllReceiptsWithTransactionData() để lấy dữ liệu th���c
             List<Map<String, Object>> rawData = receiptRepository.getAllReceiptsWithTransactionData();
 
             // Log để debug
@@ -1675,7 +1678,7 @@ public class ReceptionistService {
      * Price: lấy theo Price trong bảng Service
      * Tax (%): 10%
      * Total (VND): Quantity * Price + Tax (10%)
-     * Date: lấy theo ngày hiện tại
+     * Date: l���y theo ngày hiện tại
      */
     private List<Map<String, Object>> getServicesUsedByPatient(Integer patientId, Appointment appointment) {
         List<Map<String, Object>> servicesUsed = new ArrayList<>();
@@ -1726,7 +1729,7 @@ public class ReceptionistService {
                     addDefaultServices(servicesUsed, patientId);
                 }
             } else {
-                // Nếu không có appointment hoặc specialization, tạo dịch vụ mặc định
+                // Nếu không có appointment hoặc specialization, tạo dịch vụ m���c định
                 addDefaultServices(servicesUsed, patientId);
             }
 
@@ -2181,5 +2184,20 @@ public class ReceptionistService {
             errorResult.put("error", e.getMessage());
             return errorResult;
         }
+    }
+
+    // Phương thức để tìm Receptionist theo UserId
+    public Receptionist findByUserId(Integer userId) {
+        return receptionistEntityRepository.findByUserId(userId).orElse(null);
+    }
+
+    // Phương thức để lưu Receptionist
+    public Receptionist save(Receptionist receptionist) {
+        return receptionistEntityRepository.save(receptionist);
+    }
+
+    // Phương thức để tìm Receptionist theo ID
+    public Optional<Receptionist> findById(Integer receptionistId) {
+        return receptionistEntityRepository.findById(receptionistId);
     }
 }

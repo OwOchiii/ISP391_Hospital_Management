@@ -1,5 +1,6 @@
 package orochi.controller;
 
+import java.io.File;
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -22,6 +23,7 @@ import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 import orochi.config.CustomUserDetails;
 import orochi.dto.AppointmentDTO;
@@ -32,6 +34,7 @@ import orochi.repository.PatientRepository;
 import orochi.repository.UserRepository;
 import orochi.service.*;
 import orochi.service.impl.ReceptionistService;
+import orochi.service.FileStorageService;
 
 @Controller
 @RequestMapping("/receptionist")
@@ -41,11 +44,12 @@ public class ReceptionistController {
     private final UserRepository userRepository;
     private final SpecializationService specializationService;
     private final AppointmentService appointmentService;
-
     private final NotificationService notificationService;
     private final PatientRepository patientRepository;
-    private final RoomService roomService; // Add RoomService injection
+    private final RoomService roomService;
     private final EmailService emailService;
+    private final FileStorageService fileStorageService;
+
     @Autowired
     private PasswordEncoder passwordEncoder;
 
@@ -54,15 +58,18 @@ public class ReceptionistController {
     @Autowired
     public ReceptionistController(ReceptionistService receptionistService, UserRepository userRepository,
                                   SpecializationService specializationService, AppointmentService appointmentService,
-                                  PatientRepository patientRepository, RoomService roomService, NotificationService notificationService, EmailService emailService) {
+                                  PatientRepository patientRepository, RoomService roomService,
+                                  NotificationService notificationService, EmailService emailService,
+                                  FileStorageService fileStorageService) {
         this.receptionistService = receptionistService;
         this.userRepository = userRepository;
         this.specializationService = specializationService;
         this.appointmentService = appointmentService;
         this.patientRepository = patientRepository;
-        this.roomService = roomService; // Initialize RoomService
+        this.roomService = roomService;
         this.notificationService = notificationService;
         this.emailService = emailService;
+        this.fileStorageService = fileStorageService;
     }
 
     @GetMapping("/dashboard")
@@ -493,10 +500,32 @@ public class ReceptionistController {
     }
 
     @GetMapping("/profile")
-    public String profile(Authentication authentication) {
+    public String profile(Authentication authentication, Model model) {
         if (authentication == null || !authentication.isAuthenticated()) {
             return "redirect:/login";
         }
+
+        // Extract CustomUserDetails from the principal
+        Object principal = authentication.getPrincipal();
+        if (!(principal instanceof CustomUserDetails)) {
+            return "redirect:/error";
+        }
+
+        // Extract userId from CustomUserDetails
+        CustomUserDetails userDetails = (CustomUserDetails) principal;
+        Integer userId = userDetails.getUserId();
+
+        // Fetch the Users entity from the database
+        Users user = userRepository.findById(userId)
+                .orElseThrow(() -> new RuntimeException("User not found with ID: " + userId));
+
+        // Verify the user is a Receptionist
+        if (!user.getRole().getRoleName().equals("RECEPTIONIST")) {
+            return "redirect:/error";
+        }
+
+        // Add user data to model for profile display
+        model.addAttribute("user", user);
 
         return "Receptionists/profile";
     }
@@ -1381,6 +1410,9 @@ public class ReceptionistController {
         return markNotificationAsRead(id);
     }
 
+    /**
+     * API endpoint to process payment
+     */
     @PostMapping("/api/process-payment")
     @ResponseBody
     public ResponseEntity<?> processPayment(@RequestBody Map<String, Object> paymentRequest, Authentication authentication) {
@@ -1453,6 +1485,242 @@ public class ReceptionistController {
             logger.error("Error processing payment: {}", e.getMessage(), e);
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                     .body("Error processing payment: " + e.getMessage());
+        }
+    }
+
+    /**
+     * API endpoint to update receptionist profile
+     * Validates and updates Full Name, Email, and Phone Number
+     * ID field is read-only and cannot be modified
+     */
+    @PostMapping("/api/profile/update")
+    @ResponseBody
+    public ResponseEntity<Map<String, Object>> updateProfile(
+            @RequestParam("fullName") String fullName,
+            @RequestParam("email") String email,
+            @RequestParam("phoneNumber") String phoneNumber,
+            @RequestParam(value = "avatarFile", required = false) MultipartFile avatarFile,
+            Authentication authentication) {
+
+        Map<String, Object> response = new HashMap<>();
+
+        try {
+            // Get current user
+            if (authentication == null || !authentication.isAuthenticated()) {
+                response.put("success", false);
+                response.put("message", "User not authenticated");
+                return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(response);
+            }
+
+            CustomUserDetails userDetails = (CustomUserDetails) authentication.getPrincipal();
+            Integer userId = userDetails.getUserId();
+
+            Users user = userRepository.findById(userId)
+                    .orElseThrow(() -> new RuntimeException("User not found"));
+
+            // Update basic info
+            user.setFullName(fullName);
+            user.setEmail(email);
+            user.setPhoneNumber(phoneNumber);
+
+            String avatarUrl = null;
+
+            // Handle avatar upload
+            if (avatarFile != null && !avatarFile.isEmpty()) {
+                try {
+                    // Get the current working directory (project root)
+                    String projectRoot = System.getProperty("user.dir");
+                    String uploadDir = projectRoot + File.separator + "uploads" + File.separator + "receptionist-avatars" + File.separator;
+
+                    // Create uploads directory if it doesn't exist
+                    File uploadDirFile = new File(uploadDir);
+                    if (!uploadDirFile.exists()) {
+                        boolean created = uploadDirFile.mkdirs();
+                        logger.info("Created upload directory: {} - Success: {}", uploadDir, created);
+                    }
+
+                    // Generate unique filename
+                    String originalFilename = avatarFile.getOriginalFilename();
+                    String fileExtension = originalFilename.substring(originalFilename.lastIndexOf("."));
+                    String newFilename = "receptionist_" + userId + "_" +
+                                       java.time.LocalDateTime.now().format(java.time.format.DateTimeFormatter.ofPattern("yyyyMMdd_HHmmss")) +
+                                       fileExtension;
+
+                    // Save file
+                    File destinationFile = new File(uploadDir + newFilename);
+                    logger.info("Saving file to: {}", destinationFile.getAbsolutePath());
+                    avatarFile.transferTo(destinationFile);
+
+                    // Set avatar URL for web access
+                    avatarUrl = "/uploads/receptionist-avatars/" + newFilename;
+                    user.setAvatarUrl(avatarUrl);
+                    logger.info("Avatar saved successfully. URL: {}", avatarUrl);
+
+                } catch (Exception e) {
+                    logger.error("Error uploading avatar: ", e);
+                    response.put("success", false);
+                    response.put("message", "Error uploading avatar: " + e.getMessage());
+                    return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
+                }
+            }
+
+            // Save user
+            userRepository.save(user);
+
+            response.put("success", true);
+            response.put("message", "Profile updated successfully");
+            if (avatarUrl != null) {
+                response.put("avatarUrl", avatarUrl);
+            }
+
+            return ResponseEntity.ok(response);
+
+        } catch (Exception e) {
+            logger.error("Error updating profile: ", e);
+            response.put("success", false);
+            response.put("message", "Error updating profile: " + e.getMessage());
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
+        }
+    }
+
+    /**
+     * API endpoint to upload avatar for receptionist
+     */
+    @PostMapping("/api/upload-avatar")
+    @ResponseBody
+    public ResponseEntity<Map<String, Object>> uploadAvatar(
+            @RequestParam("avatarFile") MultipartFile avatarFile,
+            Authentication authentication) {
+
+        Map<String, Object> response = new HashMap<>();
+
+        try {
+            // Check authentication
+            if (authentication == null || !authentication.isAuthenticated()) {
+                response.put("success", false);
+                response.put("message", "User not authenticated");
+                return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(response);
+            }
+
+            // Validate file
+            if (avatarFile == null || avatarFile.isEmpty()) {
+                response.put("success", false);
+                response.put("message", "Vui lòng chọn file ảnh");
+                return ResponseEntity.badRequest().body(response);
+            }
+
+            // Check file type
+            String contentType = avatarFile.getContentType();
+            if (contentType == null || !contentType.startsWith("image/")) {
+                response.put("success", false);
+                response.put("message", "Chỉ chấp nhận file ảnh");
+                return ResponseEntity.badRequest().body(response);
+            }
+
+            // Get current user
+            CustomUserDetails userDetails = (CustomUserDetails) authentication.getPrincipal();
+            Integer userId = userDetails.getUserId();
+
+            Users user = userRepository.findById(userId)
+                    .orElseThrow(() -> new RuntimeException("User not found"));
+
+            // Verify user is receptionist
+            if (!user.getRole().getRoleName().equals("RECEPTIONIST")) {
+                response.put("success", false);
+                response.put("message", "Only receptionists can upload avatar");
+                return ResponseEntity.status(HttpStatus.FORBIDDEN).body(response);
+            }
+
+            try {
+                // Upload file using FileStorageService
+                String imageUrl = fileStorageService.storeFile(avatarFile, "receptionist-avatars");
+
+                // Find or create Receptionist record
+                Receptionist receptionist = receptionistService.findByUserId(userId);
+                if (receptionist == null) {
+                    receptionist = new Receptionist();
+                    receptionist.setUserId(userId);
+                }
+
+                // Delete old avatar if exists
+                if (receptionist.getImageUrl() != null) {
+                    try {
+                        fileStorageService.deleteFile(receptionist.getImageUrl());
+                    } catch (Exception e) {
+                        logger.warn("Could not delete old avatar: {}", e.getMessage());
+                    }
+                }
+
+                // Save new avatar URL
+                receptionist.setImageUrl(imageUrl);
+                receptionistService.save(receptionist);
+
+                response.put("success", true);
+                response.put("message", "Upload ảnh thành công!");
+                response.put("imageUrl", imageUrl);
+
+                logger.info("Avatar uploaded successfully for user {}: {}", userId, imageUrl);
+                return ResponseEntity.ok(response);
+
+            } catch (Exception e) {
+                logger.error("Error uploading avatar for user {}: ", userId, e);
+                response.put("success", false);
+                response.put("message", "Lỗi upload ảnh: " + e.getMessage());
+                return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
+            }
+
+        } catch (Exception e) {
+            logger.error("Error in upload avatar endpoint: ", e);
+            response.put("success", false);
+            response.put("message", "Lỗi hệ thống: " + e.getMessage());
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
+        }
+    }
+
+    /**
+     * API endpoint to get current avatar information for receptionist
+     */
+    @GetMapping("/api/avatar")
+    @ResponseBody
+    public ResponseEntity<Map<String, Object>> getCurrentAvatar(Authentication authentication) {
+        Map<String, Object> response = new HashMap<>();
+
+        try {
+            // Check authentication
+            if (authentication == null || !authentication.isAuthenticated()) {
+                response.put("success", false);
+                response.put("message", "User not authenticated");
+                return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(response);
+            }
+
+            // Get current user
+            CustomUserDetails userDetails = (CustomUserDetails) authentication.getPrincipal();
+            Integer userId = userDetails.getUserId();
+
+            Users user = userRepository.findById(userId)
+                    .orElseThrow(() -> new RuntimeException("User not found"));
+
+            // Verify user is receptionist
+            if (!user.getRole().getRoleName().equals("RECEPTIONIST")) {
+                response.put("success", false);
+                response.put("message", "Only receptionists can access avatar");
+                return ResponseEntity.status(HttpStatus.FORBIDDEN).body(response);
+            }
+
+            // Find Receptionist record
+            Receptionist receptionist = receptionistService.findByUserId(userId);
+
+            response.put("success", true);
+            response.put("hasAvatar", receptionist != null && receptionist.getImageUrl() != null);
+            response.put("imageUrl", receptionist != null ? receptionist.getImageUrl() : null);
+
+            return ResponseEntity.ok(response);
+
+        } catch (Exception e) {
+            logger.error("Error getting current avatar: ", e);
+            response.put("success", false);
+            response.put("message", "Lỗi hệ thống: " + e.getMessage());
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
         }
     }
 }
