@@ -642,4 +642,8 @@ public Appointment updateAppointment2(
         return doctorRepository.findAll();
     }
 
+    public Appointment getAppointmentById(Integer appointmentId) {
+        return appointmentRepository.findById(appointmentId)
+                .orElseThrow(() -> new RuntimeException("Appointment not found with ID: " + appointmentId));
+    }
 }

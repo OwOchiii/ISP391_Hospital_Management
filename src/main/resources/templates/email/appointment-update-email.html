@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Appointment Update Notification</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            line-height: 1.6;
+            color: #333333;
+            margin: 0;
+            padding: 0;
+        }
+        .container {
+            max-width: 600px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        .header {
+            background-color: #3498db;
+            color: white;
+            padding: 20px;
+            text-align: center;
+        }
+        .content {
+            padding: 20px;
+            background-color: #f9f9f9;
+        }
+        .footer {
+            background-color: #f1f1f1;
+            padding: 10px 20px;
+            text-align: center;
+            font-size: 12px;
+            color: #666666;
+        }
+        .button {
+            display: inline-block;
+            background-color: #3498db;
+            color: white;
+            padding: 10px 20px;
+            text-decoration: none;
+            border-radius: 4px;
+            margin-top: 15px;
+        }
+        .info-box {
+            background-color: #e8f4fc;
+            border-left: 4px solid #3498db;
+            padding: 15px;
+            margin: 15px 0;
+        }
+        .appointment-details {
+            margin: 20px 0;
+            padding: 15px;
+            background-color: #f2f9ff;
+            border: 1px solid #d0e5f5;
+            border-radius: 5px;
+        }
+        .appointment-detail-row {
+            display: flex;
+            margin-bottom: 10px;
+        }
+        .appointment-detail-label {
+            font-weight: bold;
+            width: 120px;
+        }
+        .appointment-detail-value {
+            flex: 1;
+        }
+        .alert {
+            background-color: #fff8e1;
+            border-left: 4px solid #ffc107;
+            padding: 15px;
+            margin: 15px 0;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>MediCare Plus</h1>
+            <p>Your Health, Our Priority</p>
+        </div>
+
+        <div class="content">
+            <h2>Appointment Update Notification</h2>
+
+            <p>Dear <strong th:text="${patient.user.fullName}">Patient</strong>,</p>
+
+            <div class="alert">
+                <p>We're writing to inform you that your upcoming appointment has been updated due to <span th:text="${updateReason}">scheduling conflicts with your doctor</span>.</p>
+            </div>
+
+            <div class="appointment-details">
+                <h3>Updated Appointment Details:</h3>
+
+                <div class="appointment-detail-row">
+                    <div class="appointment-detail-label">Date:</div>
+                    <div class="appointment-detail-value" th:text="${appointmentDate}">July 20, 2025</div>
+                </div>
+
+                <div class="appointment-detail-row">
+                    <div class="appointment-detail-label">Time:</div>
+                    <div class="appointment-detail-value" th:text="${appointmentTime}">10:30 AM</div>
+                </div>
+
+                <div class="appointment-detail-row">
+                    <div class="appointment-detail-label">Doctor:</div>
+                    <div class="appointment-detail-value" th:text="'Dr. ' + ${doctor.user.fullName}">Dr. John Smith</div>
+                </div>
+
+                <div class="appointment-detail-row">
+                    <div class="appointment-detail-label">Department:</div>
+                    <div class="appointment-detail-value" th:text="${doctor.specializations.isEmpty() ? 'General Medicine' : doctor.specializations[0].specName}">Cardiology</div>
+                </div>
+
+                <div class="appointment-detail-row">
+                    <div class="appointment-detail-label">Location:</div>
+                    <div class="appointment-detail-value" th:text="${appointment.room != null ? appointment.room.roomNumber + ' - ' + appointment.room.roomName : 'To be determined'}">Room 302 - Consultation Room</div>
+                </div>
+            </div>
+
+            <p>If this new appointment time doesn't work for you, please contact our reception desk as soon as possible to reschedule.</p>
+
+            <div class="info-box">
+                <p><strong>Reception Contact:</strong><br>
+                Phone: <span>(555) 123-4567</span><br>
+                Email: <span>support@medicareplus.com</span><br>
+                Hours: <span>Monday - Friday, 8:00 AM - 6:00 PM</span></p>
+            </div>
+
+            <p>You can view your updated appointment details by logging into your patient portal.</p>
+
+            <a th:href="${patientPortalUrl}" class="button">View Your Appointments</a>
+
+            <p>Thank you for your understanding and cooperation.</p>
+
+            <p>Best regards,<br>
+            The <span>MediCare Plus</span> Team</p>
+        </div>
+
+        <div class="footer">
+            <p><strong>MediCare Plus</strong></p>
+            <p th:text="${hospitalAddress}">123 Medical Center Drive, Healthcare City, HC 12345</p>
+            <p>This email contains confidential patient information. If you received this email in error, please delete it immediately and notify us.</p>
+        </div>
+    </div>
+</body>
+</html>
+

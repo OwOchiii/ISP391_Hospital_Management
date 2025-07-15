@@ -393,6 +393,7 @@ public class ReceptionistService {
                     doctorMap.put("name", doctor.getUser() != null ? doctor.getUser().getFullName() : "Unknown");
                     doctorMap.put("email", doctor.getUser() != null ? doctor.getUser().getEmail() : "");
                     doctorMap.put("phone", doctor.getUser() != null ? doctor.getUser().getPhoneNumber() : "");
+                    doctorMap.put("imageUrl", doctor.getImageUrl()); // Add the imageUrl field
 
                     // Get specialty information - show primary specialty or all specialties
                     String specialty = "General Practice"; // Default value

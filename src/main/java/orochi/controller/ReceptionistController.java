@@ -30,11 +30,8 @@ import orochi.dto.SpecializationDTO;
 import orochi.model.*;
 import orochi.repository.PatientRepository;
 import orochi.repository.UserRepository;
-import orochi.service.AppointmentService;
-import orochi.service.NotificationService;
-import orochi.service.SpecializationService;
+import orochi.service.*;
 import orochi.service.impl.ReceptionistService;
-import orochi.service.RoomService;
 
 @Controller
 @RequestMapping("/receptionist")
@@ -48,7 +45,7 @@ public class ReceptionistController {
     private final NotificationService notificationService;
     private final PatientRepository patientRepository;
     private final RoomService roomService; // Add RoomService injection
-
+    private final EmailService emailService;
     @Autowired
     private PasswordEncoder passwordEncoder;
 
@@ -57,7 +54,7 @@ public class ReceptionistController {
     @Autowired
     public ReceptionistController(ReceptionistService receptionistService, UserRepository userRepository,
                                   SpecializationService specializationService, AppointmentService appointmentService,
-                                  PatientRepository patientRepository, RoomService roomService, NotificationService notificationService) {
+                                  PatientRepository patientRepository, RoomService roomService, NotificationService notificationService, EmailService emailService) {
         this.receptionistService = receptionistService;
         this.userRepository = userRepository;
         this.specializationService = specializationService;
@@ -65,6 +62,7 @@ public class ReceptionistController {
         this.patientRepository = patientRepository;
         this.roomService = roomService; // Initialize RoomService
         this.notificationService = notificationService;
+        this.emailService = emailService;
     }
 
     @GetMapping("/dashboard")
@@ -757,6 +755,12 @@ public class ReceptionistController {
             String appointmentDateStr = (String) request.get("appointmentDate");
             String appointmentTimeStr = (String) request.get("appointmentTime");
             String reasonForVisit = (String) request.get("reasonForVisit");
+            String updateReason = (String) request.get("updateReason");
+
+            // Default reason if not provided
+            if (updateReason == null || updateReason.trim().isEmpty()) {
+                updateReason = "doctor schedule conflict";
+            }
 
             // Validate required fields
             if (appointmentId == null) {
@@ -790,6 +794,28 @@ public class ReceptionistController {
             boolean updated = appointmentService.updateAppointment(appointmentId, appointmentFormDTO);
 
             if (updated) {
+                // Get the updated appointment details to send email notification
+                try {
+                    // Fetch the updated appointment with all relationships loaded
+                    Appointment updatedAppointment = appointmentService.getAppointmentById(appointmentId);
+
+                    if (updatedAppointment != null && updatedAppointment.getPatient() != null &&
+                        updatedAppointment.getPatient().getUser() != null &&
+                        updatedAppointment.getPatient().getUser().getEmail() != null) {
+
+                        // Send email notification to patient
+                        String patientEmail = updatedAppointment.getPatient().getUser().getEmail();
+                        logger.info("Sending appointment update email to: {}", patientEmail);
+                        emailService.sendAppointmentUpdateEmail(patientEmail, updatedAppointment, updateReason);
+                        logger.info("Appointment update email sent successfully");
+                    } else {
+                        logger.warn("Could not send appointment update email: patient email not available");
+                    }
+                } catch (Exception e) {
+                    // Log but don't fail the appointment update if email sending fails
+                    logger.error("Failed to send appointment update email: {}", e.getMessage(), e);
+                }
+
                 return ResponseEntity.ok(Map.of(
                         "success", true,
                         "message", "Appointment updated successfully"
@@ -1017,6 +1043,16 @@ public class ReceptionistController {
 
             // Call service to register patient
             Users newPatient = receptionistService.registerNewPatient(registrationData);
+
+            // Send registration confirmation email
+            try {
+                logger.info("Sending registration confirmation email to: {}", email);
+                emailService.sendPatientRegistrationEmail(email, newPatient.getPatient(), passwordHash);
+                logger.info("Registration confirmation email sent successfully");
+            } catch (Exception e) {
+                logger.error("Failed to send registration confirmation email: {}", e.getMessage(), e);
+                // Continue with registration even if email fails
+            }
 
             return ResponseEntity.ok().body(Map.of(
                     "success", true,

@@ -619,7 +619,7 @@
                 col.innerHTML = `
                     <div class="doctor-card">
                         <div class="doctor-info">
-                            <img src="${doctor.avatar || 'https://img.freepik.com/free-vector/doctor-character-background_1270-84.jpg'}" alt="${doctor.name}" />
+                            <img src="${doctor.imageUrl || 'https://img.freepik.com/free-vector/doctor-character-background_1270-84.jpg'}" alt="${doctor.name}" />
                             <div>
                                 <h3>${doctor.name}</h3>
                                 <p>${doctor.specialty}</p>
@@ -688,4 +688,3 @@
 </script>
 </body>
 </html>
-

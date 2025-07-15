@@ -10,6 +10,7 @@ import orochi.model.PatientContact;
 import orochi.model.Users;
 import orochi.repository.UserRepository;
 import orochi.service.impl.DoctorServiceImpl;
+import orochi.service.impl.EmailServiceImpl;
 import orochi.service.impl.ReceptionistService;
 import orochi.service.impl.RoomServiceImpl;
 
@@ -28,15 +29,17 @@ public class ReceptionistApiController {
     private final DoctorServiceImpl doctorService;
     private final UserRepository userRepository;
     private final RoomServiceImpl roomService;
+    private final EmailServiceImpl emailService;
 
     public ReceptionistApiController(ReceptionistService receptionistService,
                                      DoctorServiceImpl doctorService,
                                      UserRepository userRepository,
-                                     RoomServiceImpl roomService) {
+                                     RoomServiceImpl roomService, EmailServiceImpl emailService) {
         this.receptionistService = receptionistService;
         this.doctorService = doctorService;
         this.userRepository = userRepository;
         this.roomService = roomService;
+        this.emailService = emailService;
     }
 
     @PostMapping("/appointments/confirm")
@@ -90,6 +93,7 @@ public class ReceptionistApiController {
                         Map<String, Object> doctorMap = new HashMap<>();
                         doctorMap.put("id", doctor.getDoctorId());
                         doctorMap.put("name", doctor.getUser().getFullName());
+                        doctorMap.put("imageUrl", doctor.getImageUrl());
                         return doctorMap;
                     })
                     .collect(Collectors.toList());
@@ -593,6 +597,17 @@ public class ReceptionistApiController {
 
             // Save contact changes
             PatientContact updatedContact = receptionistService.savePatientContact(contact);
+
+            // Send email notification about profile update
+            try {
+                if (updatedPatient.getUser() != null && updatedPatient.getUser().getEmail() != null) {
+                    String patientEmail = updatedPatient.getUser().getEmail();
+                    emailService.sendProfileUpdateEmail(patientEmail, updatedPatient);
+                }
+            } catch (Exception e) {
+                // Log the error but don't fail the update operation
+                System.err.println("Failed to send profile update email: " + e.getMessage());
+            }
 
             // Prepare response data
             Map<String, Object> responseData = new HashMap<>();
