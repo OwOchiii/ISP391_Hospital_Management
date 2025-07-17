@@ -2,14 +2,17 @@
 <html lang="en" xmlns:th="http://www.thymeleaf.org">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>Service Management - MediCare Plus</title>
-    <!-- Bootstrap CSS -->
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <!-- CSRF -->
+    <meta name="_csrf" th:content="${_csrf.token}"/>
+    <meta name="_csrf_header" th:content="${_csrf.headerName}"/>
+    <title>Feedback List - MediCare Plus</title>
+
+    <!-- Bootstrap CSS & Icons & Fonts -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-    <!-- Bootstrap Icons -->
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css">
-    <!-- Google Fonts -->
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+
     <style>
         :root {
             --admin-primary: #7c3aed;
@@ -26,6 +29,7 @@
             --warning-color: #d97706;
             --error-color: #dc2626;
             --info-color: #0284c7;
+            --border-color: #e5e7eb;
             --sidebar-width: 300px;
             --header-height: 70px;
         }
@@ -44,6 +48,7 @@
             overflow-x: hidden;
         }
 
+        /* Sidebar Styles */
         .admin-sidebar {
             position: fixed;
             top: 0;
@@ -151,6 +156,7 @@
             text-align: center;
         }
 
+        /* Main Content */
         .main-content {
             margin-left: var(--sidebar-width);
             min-height: 100vh;
@@ -161,6 +167,7 @@
             margin-left: 0;
         }
 
+        /* Top Header */
         .admin-header {
             background: var(--bg-white);
             height: var(--header-height);
@@ -285,97 +292,110 @@
             color: var(--text-muted);
         }
 
-        /* Content Area */
-        .content-area {
+        /* Page Content */
+        .page-content {
             padding: 2rem;
         }
 
-        /* Service Card Styles */
-        .service-card {
-            border: 1px solid #e0e0e0;
-            border-radius: 8px;
-            background-color: #fff;
-            transition: box-shadow 0.2s ease-in-out;
-            min-height: 150px;
-            display: flex;
-            flex-direction: column;
+        .page-header {
+            margin-bottom: 2rem;
         }
 
-        .service-card:hover {
-            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        .breadcrumb {
+            background: none;
+            padding: 0;
+            margin: 0;
         }
 
-        .service-card .card-body {
-            padding: 1.5rem;
-            display: flex;
-            flex-direction: column;
-            flex: 1;
+        .breadcrumb-item a {
+            color: var(--admin-primary);
+            text-decoration: none;
         }
 
-        .service-info {
-            font-size: 0.95rem;
-            color: #333;
+        .breadcrumb-item.active {
+            color: var(--text-muted);
+        }
+
+        /* Filter row */
+        .row.g-2 .form-control,
+        .row.g-2 .form-select {
+            height: 2.875rem;
+            padding: 0.5rem 0.75rem;
             line-height: 1.5;
+            border-radius: 0.375rem;
         }
 
-        .service-info p {
-            margin-bottom: 0.5rem;
+        /* Table */
+        .table-responsive {
+            margin-bottom: 2rem;
         }
 
-        .btn-action {
-            font-size: 0.9rem;
+        /* Empty State */
+        .empty-state {
+            text-align: center;
+            padding: 3rem 2rem;
+            background: var(--bg-white);
+            border-radius: 16px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        .empty-state i {
+            font-size: 3.5rem;
+            color: var(--text-muted);
+        }
+
+        .empty-state h3 {
+            color: var(--text-dark);
+        }
+
+        .empty-state p {
+            color: var(--text-light);
+            max-width: 400px;
+        }
+
+        /* Pagination */
+        .pagination {
+            display: flex;
+            justify-content: center;
+            margin-top: 2rem;
+        }
+
+        .pagination .page-item .page-link {
+            border: 2px solid var(--border-color);
+            color: var(--text-dark);
+            margin: 0 0.25rem;
+            border-radius: 8px;
+            transition: all 0.3s ease;
             padding: 0.5rem 1rem;
-            border-radius: 6px;
-            transition: background-color 0.2s ease-in-out;
         }
 
-        .btn-action:hover {
-            opacity: 0.9;
+        .pagination .page-item.active .page-link {
+            background: var(--admin-primary);
+            border-color: var(--admin-primary);
+            color: white;
         }
 
-        .btn-danger.btn-action {
-            background-color: #dc2626;
-            border-color: #dc2626;
+        .pagination .page-item .page-link:hover {
+            background: var(--admin-light);
+            border-color: var(--admin-primary);
+            color: var(--admin-primary);
         }
 
-        .button-container {
-            margin-top: 1rem;
-        }
-
-        .form-container {
-            display: none;
-            margin-top: 1rem;
-        }
-
-        .form-container.active {
-            display: block;
-        }
-
+        /* Responsive */
         @media (max-width: 768px) {
-            .admin-sidebar {
-                transform: translateX(-100%);
-            }
-
-            .main-content {
-                margin-left: 0;
-            }
-
-            .content-area {
-                padding: 1rem;
-            }
-
-            .admin-header {
-                padding: 0 1rem;
-            }
-
-            .admin-details {
-                display: none;
-            }
+            .admin-sidebar { transform: translateX(-100%); }
+            .main-content { margin-left: 0; }
+            .page-content { padding: 1rem; }
+            .admin-details { display: none; }
         }
     </style>
 </head>
 <body>
-<!-- Admin Sidebar -->
+<!-- Sidebar -->
 <div class="admin-sidebar" id="adminSidebar">
     <div class="sidebar-header">
         <a href="#" class="admin-brand">
@@ -522,273 +542,238 @@
 
 <!-- Main Content -->
 <div class="main-content" id="mainContent">
-    <!-- Admin Header -->
+    <!-- Header -->
     <div class="admin-header">
         <div class="header-left">
-            <button class="sidebar-toggle" onclick="toggleSidebar()">
-                <i class="bi bi-list"></i>
-            </button>
-            <h1 class="page-title">Service Management</h1>
+            <button class="sidebar-toggle" onclick="toggleSidebar()"><i class="bi bi-list"></i></button>
+            <h1 class="page-title">Feedback List</h1>
         </div>
         <div class="header-right">
             <div class="header-actions">
-                <button class="notification-btn">
-                    <i class="bi bi-bell"></i>
-                    <div class="notification-badge"></div>
-                </button>
-                <button class="notification-btn">
-                    <i class="bi bi-envelope"></i>
-                </button>
+                <button class="notification-btn"><i class="bi bi-bell"></i><div class="notification-badge"></div></button>
+                <button class="notification-btn"><i class="bi bi-envelope"></i></button>
             </div>
             <div class="admin-info">
                 <div class="admin-avatar">
-                    <span th:text="${adminName != null ? #strings.substring(adminName, 0, 2).toUpperCase() : 'AD'}">AD</span>
+                    <span th:text="${adminName!=null?#strings.substring(adminName,0,2).toUpperCase():'AD'}">AD</span>
                 </div>
                 <div class="admin-details">
-                    <div class="admin-name" th:text="${adminName != null ? adminName : 'Administrator'}">Administrator</div>
+                    <div class="admin-name" th:text="${adminName!=null?adminName:'Administrator'}">Administrator</div>
                     <div class="admin-role">System Admin</div>
                 </div>
             </div>
         </div>
     </div>
 
-    <!-- Content Area -->
-    <div class="content-area">
-        <!-- Service Management Content -->
-        <div class="d-flex justify-content-between align-items-center mb-3">
-            <div>
-                <button type="button" class="btn btn-success me-2" data-bs-toggle="modal" data-bs-target="#serviceModal" data-mode="add">
-                    <i class="bi bi-plus-lg"></i> Add Service
-                </button>
-                <a th:href="@{/admin/dashboard(adminId=${adminId})}" class="btn btn-outline-primary me-2">
-                    <i class="bi bi-house-door-fill"></i> Back to Dashboard
-                </a>
-                <a th:href="@{/admin/services(adminId=${adminId})}" class="btn btn-primary">
-                    <i class="bi bi-arrow-clockwise"></i> Refresh
-                </a>
-            </div>
+    <!-- Page Content -->
+    <div class="page-content">
+        <!-- Breadcrumb -->
+        <div class="page-header">
+            <nav>
+                <ol class="breadcrumb">
+                    <li class="breadcrumb-item"><a th:href="@{/admin/dashboard(adminId=${adminId})}">Dashboard</a></li>
+                    <li class="breadcrumb-item active">Feedback</li>
+                </ol>
+            </nav>
         </div>
 
-        <form th:action="@{/admin/services}" method="get" class="row g-2 mb-4">
+        <!-- Filter Form -->
+        <form th:action="@{/admin/feedbacks}" method="get" class="row g-2 align-items-end mb-4">
             <input type="hidden" name="adminId" th:value="${adminId}"/>
-            <div class="col-md-4">
-                <input type="text" name="search" th:value="${search}"
-                       class="form-control" placeholder="Search by name…"/>
+            <!-- Search box -->
+            <div class="col-auto">
+                <label class="form-label">Search</label>
+                <div class="input-group">
+                    <span class="input-group-text"><i class="bi bi-search"></i></span>
+                    <input type="text" name="keyword" class="form-control"
+                           placeholder="Keyword in title/description"
+                           th:value="${keyword}"/>
+                </div>
             </div>
-            <div class="col-md-4">
-                <select name="specFilter" class="form-select">
-                    <option value="" th:selected="${specFilter == null}">All Specialties</option>
-                    <option th:each="sp : ${specializations}"
-                            th:value="${sp.specId}"
-                            th:text="${sp.specName}"
-                            th:selected="${sp.specId == specFilter}">
+
+            <div class="col-auto">
+                <label class="form-label">User ID</label>
+                <input type="number" name="userId" class="form-control" th:value="${userId}" placeholder="Any"/>
+            </div>
+            <div class="col-auto">
+                <label class="form-label">Type</label>
+                <select name="feedbackType" class="form-select">
+                    <option value="" th:selected="${feedbackType==null}">All</option>
+                    <option th:each="t : ${feedbackTypes}"
+                            th:value="${t}"
+                            th:text="${t}"
+                            th:selected="${t == feedbackType}">
                     </option>
+
                 </select>
             </div>
             <div class="col-auto">
-                <button class="btn btn-success"><i class="bi bi-search"></i> Filter</button>
+                <label class="form-label">From</label>
+                <input type="datetime-local" name="start" class="form-control"
+                       th:value="${start!=null}? ${#temporals.format(start,'yyyy-MM-dd''T''HH:mm')}:''"/>
             </div>
             <div class="col-auto">
-                <a th:href="@{/admin/services(adminId=${adminId})}" class="btn btn-secondary">
-                    <i class="bi bi-x-circle"></i> Clear
+                <label class="form-label">To</label>
+                <input type="datetime-local" name="end" class="form-control"
+                       th:value="${end!=null}? ${#temporals.format(end,'yyyy-MM-dd''T''HH:mm')}:''"/>
+            </div>
+            <div class="col-auto">
+                <button class="btn btn-primary"><i class="bi bi-filter"></i> Filter</button>
+                <a th:href="@{/admin/feedbacks(adminId=${adminId})}"
+                   class="btn btn-outline-secondary">
+                    <i class="bi bi-arrow-counterclockwise"></i> Reset
                 </a>
+
             </div>
         </form>
-
-
-        <!-- Service Cards -->
-        <div class="row g-4">
-            <div th:if="${#lists.isEmpty(services)}" class="col-12">
-                <div class="alert alert-warning text-center">No services found.</div>
+        <!-- Stats Row -->
+        <div class="row mb-4 text-center">
+            <div class="col-md-3 mb-2">
+                <div class="card shadow-sm">
+                    <div class="card-body">
+                        <h6 class="card-subtitle mb-1 text-muted">Total Feedback</h6>
+                        <h3 class="card-title" th:text="${totalCount}">0</h3>
+                    </div>
+                </div>
             </div>
-            <div th:each="s : ${services}" class="col-12 col-sm-6 col-lg-4">
-                <div class="service-card h-100">
-                    <div class="card-body d-flex flex-column">
-                        <h5 class="card-title" th:text="${s.serviceName}">Service Name</h5>
-                        <p th:text="'Specialty: ' + ${s.specialization != null ? s.specialization.specName : 'N/A'}">Specialty</p>
-                        <p th:text="'Price: ' + ${#numbers.formatDecimal(s.price, 0, 'COMMA', 2, 'POINT')} + ' VND'">Price</p>
-                        <div class="mt-auto d-flex gap-2">
-                            <button class="btn btn-outline-secondary btn-sm"
-                                    data-bs-toggle="modal"
-                                    data-bs-target="#serviceModal"
-                                    data-mode="edit"
-                                    th:attr="data-id=${s.serviceId}, data-specId=${s.specId}, data-serviceName=${s.serviceName}, data-price=${s.price}">
-                                <i class="bi bi-pencil-square"></i> Edit
-                            </button>
-                            <a th:href="@{/admin/services/delete/{id}(id=${s.serviceId},adminId=${adminId})}"
-                               class="btn btn-danger btn-sm"
-                               onclick="return confirm('Are you sure?')">
-                                <i class="bi bi-trash"></i> Delete
-                            </a>
-                        </div>
+            <div class="col-md-3 mb-2">
+                <div class="card shadow-sm">
+                    <div class="card-body">
+                        <h6 class="card-subtitle mb-1 text-muted">Today</h6>
+                        <h3 class="card-title" th:text="${todayCount}">0</h3>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3 mb-2">
+                <div class="card shadow-sm">
+                    <div class="card-body">
+                        <h6 class="card-subtitle mb-1 text-muted">This Month</h6>
+                        <h3 class="card-title" th:text="${monthCount}">0</h3>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3 mb-2">
+                <div class="card shadow-sm">
+                    <div class="card-body">
+                        <h6 class="card-subtitle mb-1 text-muted">This Year</h6>
+                        <h3 class="card-title" th:text="${yearCount}">0</h3>
                     </div>
                 </div>
             </div>
         </div>
 
-        <div class="mt-4" th:if="${totalPages > 1}">
-            <nav aria-label="Page navigation">
-                <ul class="pagination justify-content-center">
-                    <li class="page-item" th:classappend="${currentPage == 0} ? 'disabled'">
-                        <a class="page-link" th:href="@{/admin/services(adminId=${adminId},page=${currentPage - 1},size=${pageSize},search=${search},specFilter=${specFilter})}" aria-label="Previous">
-                            <span aria-hidden="true">&laquo;</span>
-                        </a>
-                    </li>
-                    <li class="page-item"
-                        th:each="i : ${#numbers.sequence(0, totalPages - 1)}"
-                        th:classappend="${i == currentPage} ? 'active'">
-                        <a class="page-link"
-                           th:href="@{/admin/services(adminId=${adminId},page=${i},size=${pageSize},search=${search},specFilter=${specFilter})}"
-                           th:text="${i + 1}">1</a>
-                    </li>
-                    <li class="page-item" th:classappend="${currentPage == totalPages - 1} ? 'disabled'">
-                        <a class="page-link" th:href="@{/admin/services(adminId=${adminId},page=${currentPage+1},size=${pageSize},search=${search},specFilter=${specFilter})}" aria-label="Next">
-                            <span aria-hidden="true">&raquo;</span>
-                        </a>
-                    </li>
-                </ul>
-            </nav>
+        <!-- Feedback Table -->
+        <div class="table-responsive">
+            <table class="table table-striped align-middle">
+                <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>User ID</th>
+                    <th>Type</th>
+                    <th>Title</th>
+                    <th>Description</th>      <!-- mới -->
+                    <th>Created At</th>
+                </tr>
+                </thead>
+                <tbody>
+                <tr th:each="fb : ${feedbackPage.content}">
+                    <td th:text="${fb.feedbackId}">1</td>
+                    <td th:text="${fb.userId}">42</td>
+                    <td th:text="${fb.feedbackType}">Complaint</td>
+                    <td th:text="${fb.title}">Issue title</td>
+                    <td th:text="${fb.description}">Detailed description …</td> <!-- mới -->
+                    <td th:text="${#temporals.format(fb.createdAt,'yyyy-MM-dd HH:mm')}">
+                        2025-07-12 20:00
+                    </td>
+                </tr>
+                </tbody>
+            </table>
+        </div>
+
+
+        <!-- Pagination -->
+        <nav th:if="${feedbackPage.totalPages>1}" class="pagination">
+            <ul class="pagination justify-content-center">
+                <li class="page-item" th:classappend="${feedbackPage.first}?'disabled'">
+                    <a class="page-link"
+                       th:href="@{/admin/feedbacks(
+             adminId=${adminId},
+             keyword=${keyword},
+             userId=${userId},
+             feedbackType=${feedbackType},
+             start=${start},
+             end=${end},
+             page=${feedbackPage.number - 1},
+             size=${feedbackPage.size}
+           )}">
+                        Previous
+                    </a>
+                </li>
+                <li class="page-item"
+                    th:each="i : ${#numbers.sequence(0, feedbackPage.totalPages - 1)}"
+                    th:classappend="${i==feedbackPage.number}?' active'">
+                    <a class="page-link"
+                       th:href="@{/admin/feedbacks(
+             adminId=${adminId},
+             keyword=${keyword},
+             userId=${userId},
+             feedbackType=${feedbackType},
+             start=${start},
+             end=${end},
+             page=${i},
+             size=${feedbackPage.size}
+           )}"
+                       th:text="${i+1}">1</a>
+                </li>
+                <li class="page-item" th:classappend="${feedbackPage.last}?'disabled'">
+                    <a class="page-link"
+                       th:href="@{/admin/feedbacks(
+             adminId=${adminId},
+             keyword=${keyword},
+             userId=${userId},
+             feedbackType=${feedbackType},
+             start=${start},
+             end=${end},
+             page=${feedbackPage.number+1},
+             size=${feedbackPage.size}
+           )}">
+                        Next
+                    </a>
+                </li>
+            </ul>
+        </nav>
+
+
+        <!-- Empty State -->
+        <div class="empty-state mt-5" th:if="${feedbackPage.content.empty}">
+            <i class="bi bi-chat-left-text"></i>
+            <h3>No Feedback Found</h3>
+            <p>Try adjusting your filters to see results.</p>
+            <a th:href="@{/admin/dashboard(adminId=${adminId})}" class="btn btn-primary">
+                <i class="bi bi-speedometer2"></i> Back to Dashboard
+            </a>
         </div>
     </div>
-
-    <div class="modal fade" id="serviceModal" tabindex="-1" aria-hidden="true">
-        <div class="modal-dialog modal-lg modal-dialog-centered">
-            <div class="modal-content">
-                <form th:object="${service}"
-                      th:action="@{/admin/services/save(
-                 adminId=${adminId},
-                 page=${currentPage},
-                 size=${pageSize},
-                 search=${search},
-                 specFilter=${specFilter})}"
-                      method="post">
-                    <div class="modal-header">
-                        <h5 class="modal-title"
-                            th:text="${isAddMode} ? 'Add New Service' : 'Edit Service'">Title</h5>
-                        <button class="btn-close" data-bs-dismiss="modal"></button>
-                    </div>
-                    <div class="modal-body">
-                        <input id="serviceId" type="hidden" th:field="*{serviceId}"/>
-
-                        <!-- Spec -->
-                        <div class="mb-3">
-                            <label class="form-label">Specialty</label>
-                            <select id="specId" th:field="*{specId}" class="form-select">
-                                <option value="" disabled>Select Specialty</option>
-                                <option th:each="sp : ${specializations}"
-                                        th:value="${sp.specId}"
-                                        th:text="${sp.specName}"></option>
-                            </select>
-                            <div class="text-danger" th:errors="*{specId}"></div>
-                        </div>
-
-                        <!-- Name -->
-                        <div class="mb-3">
-                            <label class="form-label">Service Name</label>
-                            <input id="serviceName" th:field="*{serviceName}" type="text" class="form-control"/>
-                            <div class="text-danger" th:errors="*{serviceName}"></div>
-                        </div>
-
-                        <!-- Price -->
-                        <div class="mb-3">
-                            <label class="form-label">Price</label>
-                            <input id="price" th:field="*{price}" type="number" step="0.01" class="form-control"/>
-                            <div class="text-danger" th:errors="*{price}"></div>
-                        </div>
-                    </div>
-                    <div class="modal-footer">
-                        <button class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-                        <button class="btn btn-primary">Save</button>
-                    </div>
-                </form>
-            </div>
-        </div>
-    </div>
-
 </div>
 
 <!-- Bootstrap JS -->
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 <script th:inline="javascript">
-    /*<![CDATA[*/
-    function toggleSidebar() {
-        const sidebar = document.getElementById('adminSidebar');
-        const mainContent = document.getElementById('mainContent');
-        sidebar.classList.toggle('collapsed');
-        mainContent.classList.toggle('expanded');
+    // Sidebar toggle
+    function toggleSidebar(){
+        document.getElementById('adminSidebar').classList.toggle('collapsed');
+        document.getElementById('mainContent').classList.toggle('expanded');
     }
-
-    function checkScreenSize() {
-        const sidebar = document.getElementById('adminSidebar');
-        const mainContent = document.getElementById('mainContent');
-        if (window.innerWidth <= 768) {
-            sidebar.classList.add('collapsed');
-            mainContent.classList.add('expanded');
+    // Auto-hide on mobile
+    window.addEventListener('resize', () => {
+        if(window.innerWidth<=768){
+            document.getElementById('adminSidebar').classList.add('collapsed');
+            document.getElementById('mainContent').classList.add('expanded');
         } else {
-            sidebar.classList.remove('collapsed');
-            mainContent.classList.remove('expanded');
-        }
-    }
-
-    checkScreenSize();
-    window.addEventListener('load', checkScreenSize);
-    window.addEventListener('resize', checkScreenSize);
-
-    document.querySelectorAll('.nav-link').forEach(link => {
-        link.addEventListener('click', function(e) {
-            if (this.getAttribute('href') === '#') {
-                e.preventDefault();
-            }
-            document.querySelectorAll('.nav-link').forEach(l => l.classList.remove('active'));
-            this.classList.add('active');
-        });
-    });
-
-    var serviceModalEl = document.getElementById('serviceModal');
-    serviceModalEl.addEventListener('show.bs.modal', function (event) {
-        var button = event.relatedTarget;
-        var mode = button.getAttribute('data-mode');
-        var modalTitle = serviceModalEl.querySelector('.modal-title');
-        var form = serviceModalEl.querySelector('form');
-        var inputServiceId = form.querySelector('#serviceId');
-        var selectSpecId = form.querySelector('#specId');
-        var inputServiceName = form.querySelector('#serviceName');
-        var inputPrice = form.querySelector('#price');
-
-        if (mode === 'add') {
-            modalTitle.textContent = 'Add New Service';
-            inputServiceId.value = '';
-            selectSpecId.value = '';
-            inputServiceName.value = '';
-            inputPrice.value = '';
-        } else if (mode === 'edit') {
-            modalTitle.textContent = 'Edit Service';
-            inputServiceId.value = button.getAttribute('data-id') || '';
-            selectSpecId.value = button.getAttribute('data-specId') || '';
-            inputServiceName.value = button.getAttribute('data-serviceName') || '';
-            inputPrice.value = button.getAttribute('data-price') || '';
+            document.getElementById('adminSidebar').classList.remove('collapsed');
+            document.getElementById('mainContent').classList.remove('expanded');
         }
     });
-    /*]]>*/
-</script>
-
-<script>
-    function validateServiceForm() {
-        const serviceName = document.getElementById("serviceName").value;
-        const price = document.getElementById("price").value;
-
-        if (!serviceName) {
-            alert("Service name cannot be empty.");
-            return false;
-        }
-
-        if (!price || price <= 0) {
-            alert("Price must be a positive number.");
-            return false;
-        }
-
-        return true;
-    }
 </script>
 </body>
 </html>

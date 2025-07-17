@@ -21,7 +21,7 @@ public class Feedback {
     @Column(name = "Title", nullable = false)
     private String title;
 
-    @Column(name = "description", nullable = false, columnDefinition = "TEXT")
+    @Column(name = "description", nullable = false, columnDefinition = "NVARCHAR(MAX)")
     private String description;
 
     @Column(name = "created_at", nullable = false)

@@ -750,12 +750,18 @@
                     Specialties Management
                 </a>
             </div>
+            <div class="nav-item">
+                <a th:href="@{/admin/medical-results(adminId=${adminId})}" class="nav-link">
+                    <i class="bi bi-award"></i>
+                    Medical Results
+                </a>
+            </div>
         </div>
 
         <div class="nav-section">
             <div class="nav-section-title">Analytics & Content</div>
             <div class="nav-item">
-                <a th:href="@{/admin/statistics/revenue(adminId=${adminId})}" class="nav-link">
+                <a th:href="@{/admin/reports/revenue(adminId=${adminId})}" class="nav-link">
                     <i class="bi bi-graph-up"></i>
                     Revenue Statistics
                 </a>
@@ -770,6 +776,12 @@
                 <a th:href="@{/admin/notifications(adminId=${adminId})}" class="nav-link">
                     <i class="bi bi-bell"></i>
                     Notification Management
+                </a>
+            </div>
+            <div class="nav-item">
+                <a th:href="@{/admin/feedbacks(adminId=${adminId})}" class="nav-link">
+                    <i class="bi bi-chat-left-text"></i>
+                    Feedback List
                 </a>
             </div>
         </div>
