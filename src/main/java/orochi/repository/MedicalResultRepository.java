@@ -3,13 +3,15 @@ package orochi.repository;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import orochi.model.MedicalResult;
 
 import java.util.List;
+import java.util.Optional;
 
-public interface MedicalResultRepository extends JpaRepository<MedicalResult, Integer> {
+public interface MedicalResultRepository extends JpaRepository<MedicalResult, Integer>, JpaSpecificationExecutor<MedicalResult> {
 
     // Find results by appointment ID
     List<MedicalResult> findByAppointmentIdOrderByResultDateDesc(Integer appointmentId);
@@ -52,4 +54,32 @@ public interface MedicalResultRepository extends JpaRepository<MedicalResult, In
             @Param("departmentId") Integer departmentId,
             @Param("status") String status,
             Pageable pageable);
+
+    @Query("""
+      SELECT r
+        FROM MedicalResult r
+        JOIN FETCH r.appointment a
+        JOIN FETCH a.patient p
+        JOIN FETCH p.user pu
+        JOIN FETCH r.doctor d
+        JOIN FETCH d.user du
+       ORDER BY r.resultDate DESC
+    """)
+    List<MedicalResult> findAllWithDetails();
+
+    @Query("""
+      SELECT r
+        FROM MedicalResult r
+        JOIN FETCH r.appointment a
+        JOIN FETCH a.patient p
+        JOIN FETCH p.user pu
+        JOIN FETCH r.doctor d
+        JOIN FETCH d.user du
+        LEFT JOIN FETCH r.orders o
+        LEFT JOIN FETCH o.assignedToDepartment dept
+       WHERE r.resultId = :id
+    """)
+    Optional<MedicalResult> findByIdWithAllDetails(@Param("id") Integer id);
+
+
 }

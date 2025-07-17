@@ -588,7 +588,7 @@
 <!-- Admin Sidebar -->
 <div class="admin-sidebar" id="adminSidebar">
   <div class="sidebar-header">
-    <a th:href="@{/admin/dashboard(adminId=${adminId})}" class="admin-brand">
+    <a href="#" class="admin-brand">
       <i class="bi bi-shield-check"></i>
       <div>
         <div>MediCare Plus</div>
@@ -596,16 +596,18 @@
       </div>
     </a>
   </div>
+
   <nav class="sidebar-nav">
     <div class="nav-section">
       <div class="nav-section-title">Dashboard</div>
       <div class="nav-item">
-        <a th:href="@{/admin/dashboard(adminId=${adminId})}" class="nav-link">
+        <a th:href="@{/admin/dashboard(adminId=${adminId})}" class="nav-link active">
           <i class="bi bi-speedometer2"></i>
           Overview
         </a>
       </div>
     </div>
+
     <div class="nav-section">
       <div class="nav-section-title">User Management</div>
       <div class="nav-item">
@@ -626,7 +628,9 @@
           Receptionist Management
         </a>
       </div>
+
     </div>
+
     <div class="nav-section">
       <div class="nav-section-title">Operations</div>
       <div class="nav-item">
@@ -648,6 +652,7 @@
         </a>
       </div>
     </div>
+
     <div class="nav-section">
       <div class="nav-section-title">Medical Services</div>
       <div class="nav-item">
@@ -675,10 +680,11 @@
         </a>
       </div>
     </div>
+
     <div class="nav-section">
       <div class="nav-section-title">Analytics & Content</div>
       <div class="nav-item">
-        <a th:href="@{/admin/statistics/revenue(adminId=${adminId})}" class="nav-link active">
+        <a th:href="@{/admin/reports/revenue(adminId=${adminId})}" class="nav-link">
           <i class="bi bi-graph-up"></i>
           Revenue Statistics
         </a>
@@ -695,7 +701,14 @@
           Notification Management
         </a>
       </div>
+      <div class="nav-item">
+        <a th:href="@{/admin/feedbacks(adminId=${adminId})}" class="nav-link">
+          <i class="bi bi-chat-left-text"></i>
+          Feedback List
+        </a>
+      </div>
     </div>
+
     <div class="nav-section">
       <div class="nav-section-title">System</div>
       <div class="nav-item">
