@@ -125,4 +125,15 @@ public class FeedbackService {
             String type, LocalDateTime start, LocalDateTime end, Pageable pageable) {
         return feedbackRepository.findByFeedbackTypeAndCreatedAtBetween(type, start, end, pageable);
     }
+
+    @Transactional(readOnly = true)
+    public long countAllFeedback() {
+        return feedbackRepository.count();
+    }
+
+    /** Thống kê feedback giữa hai mốc thời gian */
+    @Transactional(readOnly = true)
+    public long countFeedbackBetween(LocalDateTime start, LocalDateTime end) {
+        return feedbackRepository.countByCreatedAtBetween(start, end);
+    }
 }

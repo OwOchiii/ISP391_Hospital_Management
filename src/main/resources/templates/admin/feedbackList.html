@@ -626,6 +626,41 @@
 
             </div>
         </form>
+        <!-- Stats Row -->
+        <div class="row mb-4 text-center">
+            <div class="col-md-3 mb-2">
+                <div class="card shadow-sm">
+                    <div class="card-body">
+                        <h6 class="card-subtitle mb-1 text-muted">Total Feedback</h6>
+                        <h3 class="card-title" th:text="${totalCount}">0</h3>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3 mb-2">
+                <div class="card shadow-sm">
+                    <div class="card-body">
+                        <h6 class="card-subtitle mb-1 text-muted">Today</h6>
+                        <h3 class="card-title" th:text="${todayCount}">0</h3>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3 mb-2">
+                <div class="card shadow-sm">
+                    <div class="card-body">
+                        <h6 class="card-subtitle mb-1 text-muted">This Month</h6>
+                        <h3 class="card-title" th:text="${monthCount}">0</h3>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3 mb-2">
+                <div class="card shadow-sm">
+                    <div class="card-body">
+                        <h6 class="card-subtitle mb-1 text-muted">This Year</h6>
+                        <h3 class="card-title" th:text="${yearCount}">0</h3>
+                    </div>
+                </div>
+            </div>
+        </div>
 
         <!-- Feedback Table -->
         <div class="table-responsive">

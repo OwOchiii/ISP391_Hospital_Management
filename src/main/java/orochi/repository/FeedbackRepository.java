@@ -27,4 +27,10 @@ public interface FeedbackRepository extends JpaRepository<Feedback, Integer> {
 
     Page<Feedback> findByFeedbackTypeAndCreatedAtBetween(
             String feedbackType, LocalDateTime start, LocalDateTime end, Pageable pageable);
+
+    // Đếm tất cả feedback
+    long count();
+
+    // Đếm feedback trong khoảng createdAt giữa start và end
+    long countByCreatedAtBetween(LocalDateTime start, LocalDateTime end);
 }

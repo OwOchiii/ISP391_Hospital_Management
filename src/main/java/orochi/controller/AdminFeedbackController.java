@@ -82,6 +82,26 @@ public class AdminFeedbackController {
             feedbackPage = feedbackService.getAllFeedback(pageable);
         }
 
+        LocalDateTime now        = LocalDateTime.now();
+        LocalDateTime todayStart = now.toLocalDate().atStartOfDay();
+        LocalDateTime todayEnd   = todayStart.plusDays(1).minusNanos(1);
+
+        LocalDateTime monthStart = now.withDayOfMonth(1).toLocalDate().atStartOfDay();
+        LocalDateTime monthEnd   = monthStart.plusMonths(1).minusNanos(1);
+
+        LocalDateTime yearStart  = now.withDayOfYear(1).toLocalDate().atStartOfDay();
+        LocalDateTime yearEnd    = yearStart.plusYears(1).minusNanos(1);
+
+        long totalCount = feedbackService.countAllFeedback();
+        long todayCount = feedbackService.countFeedbackBetween(todayStart, todayEnd);
+        long monthCount = feedbackService.countFeedbackBetween(monthStart, monthEnd);
+        long yearCount  = feedbackService.countFeedbackBetween(yearStart, yearEnd);
+
+        model.addAttribute("totalCount", totalCount);
+        model.addAttribute("todayCount", todayCount);
+        model.addAttribute("monthCount", monthCount);
+        model.addAttribute("yearCount", yearCount);
+
         model.addAttribute("adminId",       adminId);
         model.addAttribute("keyword",       keyword);
         model.addAttribute("userId",        userId);
