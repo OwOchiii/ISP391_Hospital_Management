@@ -257,9 +257,6 @@ public class AdminAppointmentController {
     }
 
 
-    /**
-     * Trả về một LinkedHashMap cùng key với source nhưng tất cả value = 0L
-     */
     private Map<String,Long> zeroMap(Map<String,Long> source) {
         return source.keySet().stream()
                 .collect(Collectors.toMap(

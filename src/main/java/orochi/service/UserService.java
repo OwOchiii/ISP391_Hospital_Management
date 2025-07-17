@@ -25,4 +25,6 @@ public interface UserService {
     Users save(Users user);
 
     List<Users> findAll();
+
+    List<Users> findByRole(String roleName);
 }
