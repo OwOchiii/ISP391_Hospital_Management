@@ -32,6 +32,7 @@ public class MedicalResultDetailDTO {
     // -----------------------
     private Integer patientId;
     private String patientName;
+    private String patientEmail;
     private String patientGender;
     private LocalDate patientDob;
 
@@ -40,6 +41,7 @@ public class MedicalResultDetailDTO {
     // -----------------------
     private Integer doctorId;
     private String doctorName;
+    private String doctorContact;
     private String doctorBio;
 
     // -----------------------

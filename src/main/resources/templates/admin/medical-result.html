@@ -777,14 +777,12 @@
                 <thead>
                 <tr>
                   <th>ID</th>
-                  <th>Result Date</th>
-                  <th>Status</th>
-                  <th>Appt Time</th>
-                  <th>Room</th>
-                  <th>Email</th>
-                  <th>Phone</th>
+                  <th>Result Received Date</th>
+                  <th>Appt Date</th>
                   <th>Patient</th>
+                  <th>Phone</th>
                   <th>Doctor</th>
+                  <th>Status</th>
                   <th>Action</th>
                 </tr>
                 </thead>
@@ -792,33 +790,38 @@
                 <tr th:each="r : ${results}">
                   <td th:text="${r.resultId}"></td>
                   <td th:text="${#temporals.format(r.resultDate,'yyyy-MM-dd HH:mm')}"></td>
-                  <td th:class="${r.status.toLowerCase() == 'pending' ? 'status-pending' : r.status.toLowerCase() == 'completed' ? 'status-completed' : 'status-cancel'}" th:text="${r.status}"></td>
                   <td th:text="${#temporals.format(r.appointmentDateTime,'yyyy-MM-dd HH:mm')}"></td>
-                  <td th:text="${r.appointmentRoom}"></td>
-                  <td th:text="${r.appointmentEmail}"></td>
-                  <td th:text="${r.appointmentPhone}"></td>
                   <td th:text="${r.patientName}"></td>
+                  <td th:text="${r.appointmentPhone}"></td>
                   <td th:text="${r.doctorName}"></td>
+                  <td
+                          th:text="${r.status}"
+                          th:classappend="${
+      r.status.toLowerCase() == 'pending'
+        ? ' status-pending'
+        : (r.status.toLowerCase() == 'completed'
+            ? ' status-completed'
+            : ' status-cancel') }">
+                  </td>
                   <td>
-                    <button
-                            type="button"
+                    <button type="button"
                             class="btn btn-sm btn-primary"
                             th:attr="data-id=${r.resultId}"
                             th:onclick="|loadDetail(this)|">
                       <i class="bi bi-eye"></i> Detail
                     </button>
-
                   </td>
-
                 </tr>
                 <tr th:if="${#lists.isEmpty(results)}">
-                  <td colspan="10" class="text-center py-4">
+                  <td colspan="8" class="text-center py-4">
                     <i class="bi bi-clipboard fa-2x mb-2 d-block text-muted"></i>
                     <p class="text-muted mb-0">No medical results found</p>
                   </td>
                 </tr>
                 </tbody>
               </table>
+
+
 
               <nav>
                 <ul class="pagination justify-content-center">
@@ -892,21 +895,39 @@
                 <dl class="row">
                   <dt class="col-sm-4">Result Date</dt>
                   <dd class="col-sm-8" id="m-resultDate"></dd>
+
                   <dt class="col-sm-4">Status</dt>
                   <dd class="col-sm-8" id="m-status"></dd>
+
                   <dt class="col-sm-4">Description</dt>
                   <dd class="col-sm-8" id="m-description"></dd>
+
                   <dt class="col-sm-4">File</dt>
-                  <dd class="col-sm-8"><a id="m-fileUrl" href="#" target="_blank">Download</a></dd>
+                  <dd class="col-sm-8">
+                    <a id="m-fileUrl" href="#" target="_blank">Download</a>
+                  </dd>
+
                   <dt class="col-sm-4">Appointment</dt>
                   <dd class="col-sm-8" id="m-appointmentInfo"></dd>
+
                   <dt class="col-sm-4">Patient</dt>
                   <dd class="col-sm-8" id="m-patientInfo"></dd>
+
+                  <dt class="col-sm-4">Patient Email</dt>
+                  <dd class="col-sm-8" id="m-patientEmail"></dd>
+
                   <dt class="col-sm-4">Doctor</dt>
                   <dd class="col-sm-8" id="m-doctorInfo"></dd>
+
+                  <dt class="col-sm-4">Doctor Contact</dt>
+                  <dd class="col-sm-8" id="m-doctorContact"></dd>
+
                   <dt class="col-sm-4">Orders</dt>
-                  <dd class="col-sm-8"><ul id="m-ordersList"></ul></dd>
+                  <dd class="col-sm-8">
+                    <ul id="m-ordersList"></ul>
+                  </dd>
                 </dl>
+
               </div>
               <div class="modal-footer">
                 <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
@@ -950,28 +971,31 @@
                       `ID: ${dto.appointmentId}, ${dto.appointmentDateTime}`;
               document.getElementById('m-patientInfo').textContent =
                       `${dto.patientName} (${dto.patientGender}, ${dto.patientDob})`;
+              // **new** email line:
+              document.getElementById('m-patientEmail').textContent = dto.patientEmail;
               document.getElementById('m-doctorInfo').textContent =
                       `${dto.doctorName} – ${dto.doctorBio}`;
+              // **new** doctor contact line:
+              document.getElementById('m-doctorContact').textContent = dto.doctorContact;
               // Orders
               document.getElementById('m-ordersList').innerHTML =
                       dto.orders.map(o =>
-                              `<li>${o.orderType} – ${o.orderDate} – ${o.orderStatus}`
-                              + (o.assignedDept ? ` (Dept: ${o.assignedDept})` : ``)
-                              + `</li>`
+                              `<li>${o.orderType} – ${o.orderDate} – ${o.orderStatus}` +
+                              (o.assignedDept ? ` (Dept: ${o.assignedDept})` : ``) +
+                              `</li>`
                       ).join('');
-              // show modal
               new bootstrap.Modal(document.getElementById('detailModal')).show();
             });
   }
 
-  // 2) Init sidebar & any filters/search
+
+  // 2) Init sidebar toggle
   document.addEventListener('DOMContentLoaded', () => {
     document.querySelector('.sidebar-toggle')
             .addEventListener('click', () => {
               document.getElementById('adminSidebar').classList.toggle('collapsed');
               document.getElementById('mainContent').classList.toggle('expanded');
             });
-    // nếu cần bạn có thể thêm code filter/search vào đây
   });
 </script>
 </body>

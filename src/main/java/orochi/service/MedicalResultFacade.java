@@ -81,11 +81,7 @@ public class MedicalResultFacade {
 
                     // --- map các trường mở rộng ---
                     if (r.getAppointment().getRoom() != null) {
-                        dto.setAppointmentRoom(
-                                r.getAppointment()
-                                        .getRoom()
-                                        .getRoomName()     // đúng getter trong Room
-                        );
+                        dto.setAppointmentRoom(r.getAppointment().getRoom().getRoomName());
                     }
                     dto.setAppointmentEmail(r.getAppointment().getEmail());
                     dto.setAppointmentPhone(r.getAppointment().getPhoneNumber());
@@ -118,11 +114,7 @@ public class MedicalResultFacade {
         dto.setAppointmentDescription(appt.getDescription());
         dto.setAppointmentEmail(appt.getEmail());
         dto.setAppointmentPhone(appt.getPhoneNumber());
-        dto.setRoomName(
-                appt.getRoom() != null
-                        ? appt.getRoom().getRoomName()
-                        : null
-        );
+        dto.setRoomName(appt.getRoom() != null ? appt.getRoom().getRoomName() : null);
 
         // --- map Patient ---
         var pat = appt.getPatient();
@@ -130,12 +122,16 @@ public class MedicalResultFacade {
         dto.setPatientName(pat.getFullName());
         dto.setPatientGender(pat.getGender());
         dto.setPatientDob(pat.getDateOfBirth());
+        // ← MỚI: email của bệnh nhân
+        dto.setPatientEmail(pat.getUser().getEmail());
 
         // --- map Doctor ---
         var doc = r.getDoctor();
         dto.setDoctorId(doc.getDoctorId());
         dto.setDoctorName(doc.getUser().getFullName());
         dto.setDoctorBio(doc.getBioDescription());
+        // ← MỚI: thông tin liên lạc bác sĩ (ví dụ email)
+        dto.setDoctorContact(doc.getUser().getEmail());
 
         // --- map Orders ---
         List<MedicalResultDetailDTO.OrderInfo> orders = r.getOrders().stream()
@@ -145,11 +141,9 @@ public class MedicalResultFacade {
                     oi.setOrderType(o.getOrderType());
                     oi.setOrderStatus(o.getStatus());
                     oi.setOrderDate(o.getOrderDate().toLocalDate());
-                    oi.setAssignedDept(
-                            o.getAssignedToDepartment() != null
-                                    ? o.getAssignedToDepartment().getDeptName()
-                                    : null
-                    );
+                    oi.setAssignedDept(o.getAssignedToDepartment() != null
+                            ? o.getAssignedToDepartment().getDeptName()
+                            : null);
                     return oi;
                 })
                 .toList();
