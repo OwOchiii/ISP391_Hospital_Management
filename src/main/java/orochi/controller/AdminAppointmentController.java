@@ -202,10 +202,35 @@ public class AdminAppointmentController {
         double rateDone = totalCount>0? doneCount*100.0/totalCount : 0;
         double rateCan  = totalCount>0? canCount*100.0/totalCount : 0;
 
-        // --- xuất PDF nếu cần (giống cũ) ---
+        // 5) Xuất PDF nếu cần
         if ("pdf".equalsIgnoreCase(export)) {
-            // ...
+            // thiết lập để browser download file
+            response.setContentType("application/pdf");
+            response.setHeader("Content-Disposition", "attachment; filename=\"appointment_statistics.pdf\"");
+
+            // gọi service sinh PDF, truyền null cho search vì bạn không có filter nào tương ứng
+            pdfService.generateAppointmentStatisticsPdf(
+                    fromDate,
+                    toDate,
+                    docFilter,
+                    specFilter,
+                    status,
+                    null,
+                    totalCount,
+                    doneCount,
+                    canCount,
+                    rateDone,
+                    rateCan,
+                    dispTotal,
+                    dispDone,
+                    dispCanc,
+                    response.getOutputStream()
+            );
+            return null;
         }
+
+
+
 
         // 5) Bind tất cả về view
         model.addAttribute("fromDate", fromDate);
