@@ -1108,19 +1108,11 @@
           Completed
           <span class="badge bg-success ms-2" th:text="${completedAppointments ?: '0'}">0</span>
         </a>
-        <a th:href="@{/patient/appointment-list(patientId=${patientId}, status='Cancelled', search=${search}, fromDate=${fromDate}, toDate=${toDate})}"
-           class="filter-tab" th:classappend="${status == 'Cancelled'} ? 'active' : ''">
+        <a th:href="@{/patient/appointment-list(patientId=${patientId}, status='Cancel', search=${search}, fromDate=${fromDate}, toDate=${toDate})}"
+           class="filter-tab" th:classappend="${status == 'Cancel'} ? 'active' : ''">
           <i class="bi bi-x-circle"></i>
           Cancelled
           <span class="badge bg-danger ms-2" th:text="${cancelledAppointments ?: '0'}">0</span>
-        </a>
-
-        <!-- Export Button -->
-        <a th:href="@{/patient/appointments/export}"
-           class="filter-tab"
-           style="background-color: var(--patient-primary); color: white; border-color: var(--patient-primary);">
-          <i class="bi bi-file-excel"></i>
-          Export to Excel
         </a>
       </div>
 
@@ -1143,6 +1135,12 @@
               <i class="bi bi-funnel"></i>
               Apply Filters
             </button>
+            <!-- Export Button -->
+            <a th:href="@{/patient/appointments/export}"
+               class="btn-primary-custom btn-sm">
+              <i class="bi bi-file-excel"></i>
+              Export to Excel
+            </a>
           </div>
         </form>
       </div>
@@ -1239,11 +1237,6 @@
           </div>
 
           <div th:if="${appointment.status == 'Scheduled'}">
-            <a th:href="@{/patient/appointment-list/{id}/reschedule(id=${appointment.appointmentId}, patientId=${patientId}, search=${search}, status=${status}, fromDate=${fromDate}, toDate=${toDate})}"
-               class="btn-warning-custom btn-sm">
-              <i class="bi bi-calendar-event"></i>
-              Reschedule
-            </a>
             <a th:href="@{/patient/appointment-list/{id}/cancel(id=${appointment.appointmentId}, patientId=${patientId}, search=${search}, status=${status}, fromDate=${fromDate}, toDate=${toDate})}"
                class="btn-danger-custom btn-sm">
               <i class="bi bi-x-circle"></i>
@@ -1424,4 +1417,3 @@
 </script>
 </body>
 </html>
-
