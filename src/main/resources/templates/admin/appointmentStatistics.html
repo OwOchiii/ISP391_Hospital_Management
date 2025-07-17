@@ -644,9 +644,31 @@
     },
     options: {
       responsive: true,
-      scales: { y: { beginAtZero: true } },
       plugins: {
-        title: { display: true, text: 'Appointment Status Comparison' }
+        title: {
+          display: true,
+          text: 'Status Comparison Over Time'
+        },
+        tooltip: {
+          callbacks: {
+            label: ctx => `${ctx.dataset.label}: ${ctx.parsed.y}`
+          }
+        }
+      },
+      scales: {
+        x: {
+          title: {
+            display: true,
+            text: 'Period'
+          }
+        },
+        y: {
+          beginAtZero: true,
+          title: {
+            display: true,
+            text: 'Count'
+          }
+        }
       }
     }
   });
