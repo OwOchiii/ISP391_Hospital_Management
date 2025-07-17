@@ -433,8 +433,20 @@
     <!-- Charts -->
     <div class="row gy-4">
       <div class="col-md-6">
-        <canvas id="barChart"></canvas>
+        <div class="card mb-4">
+          <div class="card-header">
+            <h5>Total Appointments by Status</h5>
+          </div>
+          <div class="card-body">
+            <canvas id="barChart"></canvas>
+            <p class="mt-3 text-muted">
+              Bar chart showing how many appointments are Scheduled, Completed or Cancelled
+              out of the total for the selected period.
+            </p>
+          </div>
+        </div>
       </div>
+
       <div class="col-md-6">
         <canvas id="pieChart"></canvas>
       </div>
