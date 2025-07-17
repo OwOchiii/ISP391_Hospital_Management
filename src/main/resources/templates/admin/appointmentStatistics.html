@@ -448,17 +448,47 @@
       </div>
 
       <div class="col-md-6">
-        <canvas id="pieChart"></canvas>
+        <div class="card mb-4">
+          <div class="card-header">
+            <h5>Attendance vs Cancellation Rate</h5>
+          </div>
+          <div class="card-body">
+            <canvas id="pieChart"></canvas>
+            <p class="mt-3 text-muted">
+              Percentage of appointments that were attended versus those cancelled.
+            </p>
+          </div>
+        </div>
       </div>
       <div class="col-12">
-        <canvas id="lineChart"></canvas>
+        <div class="card mb-4">
+          <div class="card-header">
+            <h5>Appointments Trend Over Time</h5>
+          </div>
+          <div class="card-body">
+            <canvas id="lineChart"></canvas>
+            <p class="mt-3 text-muted">
+              Monthly/Quarterly/Yearly trend of total appointments to highlight growth or decline over time.
+            </p>
+          </div>
+        </div>
       </div>
     </div>
 
     <!-- Charts: grouped bar comparison -->
     <div class="row gy-4">
       <div class="col-12">
-        <canvas id="comparisonChart"></canvas>
+        <div class="card mb-4">
+          <div class="card-header">
+            <h5>Status Comparison Over Time</h5>
+          </div>
+          <div class="card-body">
+            <canvas id="comparisonChart"></canvas>
+            <p class="mt-3 text-muted">
+              Side‑by‑side comparison of Scheduled, Completed and Cancelled counts for each period.
+            </p>
+          </div>
+        </div>
       </div>
     </div>
 
@@ -489,10 +519,34 @@
     },
     options: {
       responsive: true,
-      scales: { y: { beginAtZero: true } },
       plugins: {
-        title: { display: true, text: 'Appointments by Status' },
-        legend: { display: false }
+        title: {
+          display: true,
+          text: 'Total Appointments by Status'
+        },
+        legend: {
+          display: false
+        },
+        tooltip: {
+          callbacks: {
+            label: ctx => ` ${ctx.dataset.label}: ${ctx.parsed.y} appointments`
+          }
+        }
+      },
+      scales: {
+        x: {
+          title: {
+            display: true,
+            text: 'Appointment Status'
+          }
+        },
+        y: {
+          beginAtZero: true,
+          title: {
+            display: true,
+            text: 'Number of Appointments'
+          }
+        }
       }
     }
   });
@@ -510,7 +564,23 @@
       labels: ['Scheduled','Completed','Cancelled'],
       datasets: [{ data: [scheduledPct, donePct, canceledPct] }]
     },
-    options: { responsive: true }
+    options: {
+      responsive: true,
+      plugins: {
+        title: {
+          display: true,
+          text: 'Attendance vs Cancellation Rate'
+        },
+        legend: {
+          position: 'bottom'
+        },
+        tooltip: {
+          callbacks: {
+            label: ctx => `${ctx.label}: ${ctx.parsed}%`
+          }
+        }
+      }
+    }
   });
 
   // 4) Line chart – xu hướng qua các kỳ
@@ -529,7 +599,32 @@
     },
     options: {
       responsive: true,
-      scales: { y: { beginAtZero: true } }
+      plugins: {
+        title: {
+          display: true,
+          text: 'Appointments Trend Over Time'
+        },
+        tooltip: {
+          callbacks: {
+            label: ctx => `${ctx.dataset.label}: ${ctx.parsed.y}`
+          }
+        }
+      },
+      scales: {
+        x: {
+          title: {
+            display: true,
+            text: 'Period'
+          }
+        },
+        y: {
+          beginAtZero: true,
+          title: {
+            display: true,
+            text: 'Number of Appointments'
+          }
+        }
+      }
     }
   });
 
