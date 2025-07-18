@@ -159,52 +159,137 @@
       <i class="bi bi-shield-check"></i>
       <div>
         <div>MediCare Plus</div>
-        <small style="font-size:.75rem;opacity:.8;">Admin Panel</small>
+        <small style="font-size: 0.75rem; font-weight: 400; opacity: 0.8;">Admin Panel</small>
       </div>
     </a>
   </div>
+
   <nav class="sidebar-nav">
-    <!-- Dashboard -->
     <div class="nav-section">
       <div class="nav-section-title">Dashboard</div>
       <div class="nav-item">
-        <a th:href="@{/admin/dashboard(adminId=${adminId})}"
-           class="nav-link">
-          <i class="bi bi-speedometer2"></i> Overview
+        <a th:href="@{/admin/dashboard(adminId=${adminId})}" class="nav-link active">
+          <i class="bi bi-speedometer2"></i>
+          Overview
         </a>
       </div>
     </div>
-    <!-- Analytics & Content -->
+
+    <div class="nav-section">
+      <div class="nav-section-title">User Management</div>
+      <div class="nav-item">
+        <a th:href="@{/admin/patients(adminId=${adminId})}" class="nav-link">
+          <i class="bi bi-people"></i>
+          Patient Management
+        </a>
+      </div>
+      <div class="nav-item">
+        <a th:href="@{/admin/doctors(adminId=${adminId})}" class="nav-link">
+          <i class="bi bi-person-badge"></i>
+          Doctor Management
+        </a>
+      </div>
+      <div class="nav-item">
+        <a th:href="@{/admin/receptionists(adminId=${adminId})}" class="nav-link">
+          <i class="bi bi-person-badge"></i>
+          Receptionist Management
+        </a>
+      </div>
+
+    </div>
+
+    <div class="nav-section">
+      <div class="nav-section-title">Operations</div>
+      <div class="nav-item">
+        <a th:href="@{/admin/appointments(adminId=${adminId})}" class="nav-link">
+          <i class="bi bi-calendar-check"></i>
+          Appointment Management
+        </a>
+      </div>
+      <div class="nav-item">
+        <a th:href="@{/admin/rooms(adminId=${adminId})}" class="nav-link">
+          <i class="bi bi-door-open"></i>
+          Room Management
+        </a>
+      </div>
+      <div class="nav-item">
+        <a th:href="@{/admin/schedules(adminId=${adminId})}" class="nav-link">
+          <i class="bi bi-calendar3"></i>
+          Schedule Management
+        </a>
+      </div>
+    </div>
+
+    <div class="nav-section">
+      <div class="nav-section-title">Medical Services</div>
+      <div class="nav-item">
+        <a th:href="@{/admin/prescriptions(adminId=${adminId})}" class="nav-link">
+          <i class="bi bi-prescription2"></i>
+          Prescription Management
+        </a>
+      </div>
+      <div class="nav-item">
+        <a th:href="@{/admin/medical-orders(adminId=${adminId})}" class="nav-link">
+          <i class="bi bi-clipboard-pulse"></i>
+          Medical Order Management
+        </a>
+      </div>
+      <div class="nav-item">
+        <a th:href="@{/admin/services(adminId=${adminId})}" class="nav-link">
+          <i class="bi bi-heart-pulse"></i>
+          Service Management
+        </a>
+      </div>
+      <div class="nav-item">
+        <a th:href="@{/admin/specializations(adminId=${adminId})}" class="nav-link">
+          <i class="bi bi-award"></i>
+          Specialties Management
+        </a>
+      </div>
+    </div>
+
     <div class="nav-section">
       <div class="nav-section-title">Analytics & Content</div>
       <div class="nav-item">
-        <a th:href="@{/admin/statistics/revenue(adminId=${adminId})}"
-           class="nav-link">
-          <i class="bi bi-graph-up"></i> Revenue Statistics
+        <a th:href="@{/admin/reports/revenue(adminId=${adminId})}" class="nav-link">
+          <i class="bi bi-graph-up"></i>
+          Revenue Statistics
         </a>
       </div>
       <div class="nav-item">
-        <a th:href="@{/admin/appointments/statistics/appointments(adminId=${adminId})}"
-           class="nav-link active">
-          <i class="bi bi-bar-chart"></i> Appointment Statistics
+        <a th:href="@{/admin/appointments/statistics/appointments(adminId=${adminId})}" class="nav-link">
+          <i class="bi bi-bar-chart"></i>
+          Appointment Statistics
         </a>
       </div>
       <div class="nav-item">
-        <a th:href="@{/admin/news(adminId=${adminId})}"
-           class="nav-link">
-          <i class="bi bi-newspaper"></i> News Management
+        <a th:href="@{/admin/notifications(adminId=${adminId})}" class="nav-link">
+          <i class="bi bi-bell"></i>
+          Notification Management
+        </a>
+      </div>
+      <div class="nav-item">
+        <a th:href="@{/admin/feedbacks(adminId=${adminId})}" class="nav-link">
+          <i class="bi bi-chat-left-text"></i>
+          Feedback List
         </a>
       </div>
     </div>
-    <!-- System -->
+
     <div class="nav-section">
       <div class="nav-section-title">System</div>
       <div class="nav-item">
+        <a href="#" class="nav-link">
+          <i class="bi bi-gear"></i>
+          Settings
+        </a>
+      </div>
+      <div class="nav-item">
         <form th:action="@{/auth/logout}" method="post">
-          <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
-          <button type="submit"
-                  class="nav-link w-100 text-start border-0 bg-transparent">
-            <i class="bi bi-box-arrow-right"></i> Logout
+          <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}" />
+          <button type="submit" class="nav-link w-100 text-start border-0 bg-transparent">
+            <i class="bi bi-box-arrow-right"></i>
+            Logout
           </button>
         </form>
       </div>
@@ -348,20 +433,62 @@
     <!-- Charts -->
     <div class="row gy-4">
       <div class="col-md-6">
-        <canvas id="barChart"></canvas>
+        <div class="card mb-4">
+          <div class="card-header">
+            <h5>Total Appointments by Status</h5>
+          </div>
+          <div class="card-body">
+            <canvas id="barChart"></canvas>
+            <p class="mt-3 text-muted">
+              Bar chart showing how many appointments are Scheduled, Completed or Cancelled
+              out of the total for the selected period.
+            </p>
+          </div>
+        </div>
       </div>
+
       <div class="col-md-6">
-        <canvas id="pieChart"></canvas>
+        <div class="card mb-4">
+          <div class="card-header">
+            <h5>Attendance vs Cancellation Rate</h5>
+          </div>
+          <div class="card-body">
+            <canvas id="pieChart"></canvas>
+            <p class="mt-3 text-muted">
+              Percentage of appointments that were attended versus those cancelled.
+            </p>
+          </div>
+        </div>
       </div>
       <div class="col-12">
-        <canvas id="lineChart"></canvas>
+        <div class="card mb-4">
+          <div class="card-header">
+            <h5>Appointments Trend Over Time</h5>
+          </div>
+          <div class="card-body">
+            <canvas id="lineChart"></canvas>
+            <p class="mt-3 text-muted">
+              Monthly/Quarterly/Yearly trend of total appointments to highlight growth or decline over time.
+            </p>
+          </div>
+        </div>
       </div>
     </div>
 
     <!-- Charts: grouped bar comparison -->
     <div class="row gy-4">
       <div class="col-12">
-        <canvas id="comparisonChart"></canvas>
+        <div class="card mb-4">
+          <div class="card-header">
+            <h5>Status Comparison Over Time</h5>
+          </div>
+          <div class="card-body">
+            <canvas id="comparisonChart"></canvas>
+            <p class="mt-3 text-muted">
+              Side‑by‑side comparison of Scheduled, Completed and Cancelled counts for each period.
+            </p>
+          </div>
+        </div>
       </div>
     </div>
 
@@ -392,10 +519,34 @@
     },
     options: {
       responsive: true,
-      scales: { y: { beginAtZero: true } },
       plugins: {
-        title: { display: true, text: 'Appointments by Status' },
-        legend: { display: false }
+        title: {
+          display: true,
+          text: 'Total Appointments by Status'
+        },
+        legend: {
+          display: false
+        },
+        tooltip: {
+          callbacks: {
+            label: ctx => ` ${ctx.dataset.label}: ${ctx.parsed.y} appointments`
+          }
+        }
+      },
+      scales: {
+        x: {
+          title: {
+            display: true,
+            text: 'Appointment Status'
+          }
+        },
+        y: {
+          beginAtZero: true,
+          title: {
+            display: true,
+            text: 'Number of Appointments'
+          }
+        }
       }
     }
   });
@@ -413,7 +564,23 @@
       labels: ['Scheduled','Completed','Cancelled'],
       datasets: [{ data: [scheduledPct, donePct, canceledPct] }]
     },
-    options: { responsive: true }
+    options: {
+      responsive: true,
+      plugins: {
+        title: {
+          display: true,
+          text: 'Attendance vs Cancellation Rate'
+        },
+        legend: {
+          position: 'bottom'
+        },
+        tooltip: {
+          callbacks: {
+            label: ctx => `${ctx.label}: ${ctx.parsed}%`
+          }
+        }
+      }
+    }
   });
 
   // 4) Line chart – xu hướng qua các kỳ
@@ -432,7 +599,32 @@
     },
     options: {
       responsive: true,
-      scales: { y: { beginAtZero: true } }
+      plugins: {
+        title: {
+          display: true,
+          text: 'Appointments Trend Over Time'
+        },
+        tooltip: {
+          callbacks: {
+            label: ctx => `${ctx.dataset.label}: ${ctx.parsed.y}`
+          }
+        }
+      },
+      scales: {
+        x: {
+          title: {
+            display: true,
+            text: 'Period'
+          }
+        },
+        y: {
+          beginAtZero: true,
+          title: {
+            display: true,
+            text: 'Number of Appointments'
+          }
+        }
+      }
     }
   });
 
@@ -452,9 +644,31 @@
     },
     options: {
       responsive: true,
-      scales: { y: { beginAtZero: true } },
       plugins: {
-        title: { display: true, text: 'Appointment Status Comparison' }
+        title: {
+          display: true,
+          text: 'Status Comparison Over Time'
+        },
+        tooltip: {
+          callbacks: {
+            label: ctx => `${ctx.dataset.label}: ${ctx.parsed.y}`
+          }
+        }
+      },
+      scales: {
+        x: {
+          title: {
+            display: true,
+            text: 'Period'
+          }
+        },
+        y: {
+          beginAtZero: true,
+          title: {
+            display: true,
+            text: 'Count'
+          }
+        }
       }
     }
   });

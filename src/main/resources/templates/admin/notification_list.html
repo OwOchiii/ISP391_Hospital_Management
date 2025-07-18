@@ -740,7 +740,7 @@
     <div class="nav-section">
       <div class="nav-section-title">Dashboard</div>
       <div class="nav-item">
-        <a th:href="@{/admin/dashboard(adminId=${adminId})}" class="nav-link">
+        <a th:href="@{/admin/dashboard(adminId=${adminId})}" class="nav-link active">
           <i class="bi bi-speedometer2"></i>
           Overview
         </a>
@@ -767,6 +767,7 @@
           Receptionist Management
         </a>
       </div>
+
     </div>
 
     <div class="nav-section">
@@ -822,7 +823,7 @@
     <div class="nav-section">
       <div class="nav-section-title">Analytics & Content</div>
       <div class="nav-item">
-        <a th:href="@{/admin/statistics/revenue(adminId=${adminId})}" class="nav-link">
+        <a th:href="@{/admin/reports/revenue(adminId=${adminId})}" class="nav-link">
           <i class="bi bi-graph-up"></i>
           Revenue Statistics
         </a>
@@ -834,9 +835,15 @@
         </a>
       </div>
       <div class="nav-item">
-        <a th:href="@{/admin/notifications(adminId=${adminId})}" class="nav-link active">
+        <a th:href="@{/admin/notifications(adminId=${adminId})}" class="nav-link">
           <i class="bi bi-bell"></i>
           Notification Management
+        </a>
+      </div>
+      <div class="nav-item">
+        <a th:href="@{/admin/feedbacks(adminId=${adminId})}" class="nav-link">
+          <i class="bi bi-chat-left-text"></i>
+          Feedback List
         </a>
       </div>
     </div>
@@ -974,14 +981,20 @@
       <div class="notification-card" th:each="n : ${pageData.content}"
            th:attr="data-created-at=${#temporals.format(n.createdAt, 'yyyy-MM-dd HH:mm:ss')}, data-id=${n.notificationId}">
         <div class="notification-info">
+          <!-- Notification Id -->
           <div class="notification-detail">
-            <span class="label">ID:</span>
+            <span class="label">Notification Id:</span>
             <span class="value" th:text="${n.notificationId}">123</span>
           </div>
+
           <div class="notification-detail">
-            <span class="label">User ID:</span>
-            <span class="value" th:text="${n.userId}">42</span>
+            <span class="label">Recipient:</span>
+            <span class="value"
+                  th:text="|(${n.user.fullName}, Id: ${n.userId})|">
+    (Tên người dùng, Id: 123)
+  </span>
           </div>
+
           <div class="notification-detail">
             <span class="label">Type:</span>
             <span class="value" th:text="${n.type}">ALERT</span>
@@ -995,51 +1008,65 @@
             <span class="value" th:text="${n.message != null and !#strings.isEmpty(n.message) ? n.message : '-'}">...</span>
           </div>
         </div>
-        <div class="notification-actions">
-          <button th:attr="data-id=${n.notificationId}, data-user-id=${n.userId}, data-type=${n.type}, data-date=${n.createdAt != null ? #temporals.format(n.createdAt, 'yyyy-MM-dd HH:mm:ss') : ''}, data-message=${n.message != null ? n.message : ''}" class="btn-outline-custom" data-bs-toggle="modal" data-bs-target="#notificationModal" data-mode="edit">
-            <i class="bi bi-pencil"></i>
-            Edit
-          </button>
-        </div>
       </div>
     </div>
 
     <!-- Pagination -->
-    <nav th:if="${pageData.totalPages > 1}" class="pagination">
+    <nav th:if="${pageData.totalPages > 1}" class="pagination-container">
       <ul class="pagination">
+        <!-- Previous -->
         <li class="page-item" th:classappend="${pageData.first} ? 'disabled'">
           <a class="page-link"
-             th:href="@{/admin/notifications(page=${pageData.number-1},
-                                    search=${search},
-                                    type=${typeFilter},
-                                    fromDate=${#temporals.format(fromDate,'yyyy-MM-dd''T''HH:mm')},
-                                    toDate=${#temporals.format(toDate,'yyyy-MM-dd''T''HH:mm')})}">
+             th:href="@{/admin/notifications(
+           page=${pageData.number-1},
+           search=${search},
+           type=${typeFilter},
+           fromDate=${#temporals.format(fromDate,'yyyy-MM-dd''T''HH:mm')},
+           toDate=${#temporals.format(toDate,'yyyy-MM-dd''T''HH:mm')}
+         )}">
             Previous
           </a>
         </li>
+
+        <!-- Chỉ hiển thị các trang từ startPage đến endPage -->
         <li class="page-item"
-            th:each="i : ${#numbers.sequence(0, pageData.totalPages-1)}"
-            th:classappend="${i == pageData.number} ? ' active'">
+            th:each="i : ${#numbers.sequence(startPage, endPage)}"
+            th:classappend="${i == pageData.number} ? 'active'">
           <a class="page-link"
-             th:href="@{/admin/notifications(page=${i},
-                                    search=${search},
-                                    type=${typeFilter},
-                                    fromDate=${#temporals.format(fromDate,'yyyy-MM-dd''T''HH:mm')},
-                                    toDate=${#temporals.format(toDate,'yyyy-MM-dd''T''HH:mm')})}"
+             th:href="@{/admin/notifications(
+           page=${i},
+           search=${search},
+           type=${typeFilter},
+           fromDate=${#temporals.format(fromDate,'yyyy-MM-dd''T''HH:mm')},
+           toDate=${#temporals.format(toDate,'yyyy-MM-dd''T''HH:mm')}
+         )}"
              th:text="${i + 1}">1</a>
         </li>
+
+        <!-- Next -->
         <li class="page-item" th:classappend="${pageData.last} ? 'disabled'">
           <a class="page-link"
-             th:href="@{/admin/notifications(page=${pageData.number+1},
-                                    search=${search},
-                                    type=${typeFilter},
-                                    fromDate=${#temporals.format(fromDate,'yyyy-MM-dd''T''HH:mm')},
-                                    toDate=${#temporals.format(toDate,'yyyy-MM-dd''T''HH:mm')})}">
+             th:href="@{/admin/notifications(
+           page=${pageData.number+1},
+           search=${search},
+           type=${typeFilter},
+           fromDate=${#temporals.format(fromDate,'yyyy-MM-dd''T''HH:mm')},
+           toDate=${#temporals.format(toDate,'yyyy-MM-dd''T''HH:mm')}
+         )}">
             Next
           </a>
         </li>
       </ul>
+
+      <!-- dòng “Trang X / TổngTrang” -->
+      <div class="text-center mt-2">
+        Trang <strong th:text="${pageData.number + 1}">1</strong>
+        / <strong th:text="${pageData.totalPages}">10</strong>
+      </div>
     </nav>
+
+
+
 
     <!-- Empty State -->
     <div class="empty-state" id="emptyState" th:style="${pageData.content.empty} ? 'display: flex' : 'display: none'">
@@ -1064,10 +1091,45 @@
       </div>
       <div class="modal-body">
         <form id="notificationForm" method="post" onsubmit="return validateNotificationForm()">
+          <!-- ► START Send‑To selector -->
+          <div class="form-group mb-3">
+            <label class="form-label">Send To</label>
+            <div>
+              <div class="form-check form-check-inline">
+                <input class="form-check-input" type="radio" id="targetUser" name="target" value="USER" checked>
+
+                <label class="form-check-label" for="targetUser">Single User</label>
+              </div>
+              <div class="form-check form-check-inline">
+                <input class="form-check-input" type="radio" id="targetRole" name="target" value="ROLE">
+                <label class="form-check-label" for="targetRole">By Role</label>
+              </div>
+              <div class="form-check form-check-inline">
+                <input class="form-check-input" type="radio" id="targetAll"  name="target" value="ALL">
+                <label class="form-check-label" for="targetAll">All Users</label>
+              </div>
+            </div>
+          </div>
+          <!-- ► START Role selector (hidden until “By Role” is picked) -->
+          <div class="form-group mb-3" id="roleGroup" style="display:none">
+            <label class="form-label">Select Role</label>
+            <select id="roleSelect" name="role" class="form-select" required>
+              <option value="" disabled selected>-- Select Role --</option>
+              <option th:each="r : ${roles}"
+                      th:value="${r.roleName}"
+                      th:text="${r.roleName}"
+                      th:title="${r.description}">
+              </option>
+            </select>
+
+          </div>
+          <!-- ► END Role selector -->
+          <!-- ► END Send‑To selector -->
           <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
           <input type="hidden" id="notificationId" name="notificationId" />
 
-          <div class="form-group">
+          <!-- ► START User selector -->
+          <div class="form-group mb-3" id="userGroup" style="display:none">
             <label for="userId" class="form-label">User</label>
             <select id="userSelect" class="form-select" required>
               <option value="" disabled selected>-- Select user --</option>
@@ -1075,9 +1137,10 @@
                       th:value="${u.userId}"
                       th:text="${u.userId} + ' : ' + ${u.fullName}"></option>
             </select>
-            <!-- hidden-field luôn có mặt, sẽ được JS set value -->
             <input type="hidden" id="userIdHidden" name="userId"/>
           </div>
+          <!-- ► END User selector -->
+
 
 
 
@@ -1156,41 +1219,41 @@
       const button    = event.relatedTarget;
       const mode      = button.getAttribute('data-mode');
       const form      = this.querySelector('#notificationForm');
-      const select    = form.querySelector('#userSelect');
-      const hidden    = form.querySelector('#userIdHidden');
+      const userRadio = this.querySelector('#targetUser');
+      const roleRadio = this.querySelector('#targetRole');
+      const allRadio  = this.querySelector('#targetAll');
       const typeInput = form.querySelector('#type');
       const dateGroup = form.querySelector('#dateGroup');
       const dateInput = form.querySelector('#createdAt');
       const msgInput  = form.querySelector('#message');
 
-      // Ẩn nhóm Date và gỡ bỏ required
+      // always hide date
       dateGroup.style.display = 'none';
       dateInput.removeAttribute('required');
 
       if (mode === 'add') {
-        form.action = '/admin/notifications/create';
-        select.removeAttribute('disabled');
-        select.setAttribute('name','userId');
-        hidden.removeAttribute('name');
-        select.value = '';
-        hidden.value = '';
-        this.querySelector('.modal-title').textContent = 'Add New Notification';
+        form.action     = '/admin/notifications/create';
+        userRadio.checked = true;
       } else {
-        const id     = button.getAttribute('data-id');
-        const userId = button.getAttribute('data-user-id');
-        form.action = `/admin/notifications/edit/${id}`;
-        select.setAttribute('disabled','true');
-        select.removeAttribute('name');
-        hidden.setAttribute('name','userId');
-        select.value = userId;
-        hidden.value = userId;
-        this.querySelector('.modal-title').textContent = 'Edit Notification';
+        const id       = button.getAttribute('data-id');
+        form.action    = `/admin/notifications/edit/${id}`;
+        // if you know target for edit, you could read it from a data-attribute:
+        const target   = button.getAttribute('data-target'); // e.g. “ROLE” or “ALL”
+        if (target === 'ROLE') roleRadio.checked = true;
+        else if (target === 'ALL') allRadio.checked = true;
+        else /* USER */        userRadio.checked = true;
       }
 
-      // Set lại các trường Type và Message
-      typeInput.value = button.getAttribute('data-type') || '';
+      // now set the other fields
+      typeInput.value = button.getAttribute('data-type')    || '';
       msgInput.value  = button.getAttribute('data-message') || '';
+
+      // **always** fire the change handler so that name/disabled on your <select> toggles
+      this.querySelector('input[name="target"]:checked')
+              .dispatchEvent(new Event('change'));
     });
+
+
   });
 
   /* Cập nhật lại khi resize */
@@ -1198,18 +1261,98 @@
 
   /* Validate form trước khi submit */
   function validateNotificationForm() {
-    const hidden  = document.getElementById('userIdHidden');
+    const target = document.querySelector('input[name="target"]:checked').value;
     const type    = document.getElementById('type').value.trim();
     const message = document.getElementById('message').value.trim();
-    const userId  = hidden.value.trim();
 
-    if (!userId || !type || !message) {
-      alert("All fields except Date are required.");
+    // Nếu chọn Single User thì phải có userId
+    if (target === 'USER') {
+      const userId = document.getElementById('userIdHidden').value.trim();
+      if (!userId) {
+        alert("Please select a user.");
+        return false;
+      }
+    }
+
+    // Nếu chọn By Role thì phải chọn role
+    if (target === 'ROLE') {
+      const role = document.querySelector('select[name="role"]').value;
+      if (!role) {
+        alert("Please select a role.");
+        return false;
+      }
+    }
+
+    // All Users không cần check thêm
+    // Kiểm tra chung cho type & message
+    if (!type || !message) {
+      alert("Type and message are required.");
       return false;
     }
+
     return true;
   }
+
 </script>
+<script>
+  document.querySelectorAll('input[name="target"]').forEach(radio => {
+    radio.addEventListener('change', () => {
+      const roleGroup  = document.getElementById('roleGroup');
+      const userGroup  = document.getElementById('userGroup');
+      const userSelect = document.getElementById('userSelect');
+      const roleSelect = document.querySelector('select[name="role"]');
+
+      if (radio.value === 'USER') {
+        // === Single User ===
+        roleGroup.style.display = 'none';
+        userGroup.style.display = 'block';
+
+        userSelect.disabled = false;
+        userSelect.required = true;
+        userSelect.name     = 'userId';
+
+        roleSelect.disabled = true;
+        roleSelect.required = false;
+      }
+      else if (radio.value === 'ROLE') {
+        // === By Role ===
+        roleGroup.style.display = 'block';
+        userGroup.style.display = 'none';
+
+        userSelect.disabled = true;
+        userSelect.required = false;
+        userSelect.removeAttribute('name');
+
+        roleSelect.disabled = false;
+        roleSelect.required = true;
+      }
+      else {
+        // === All Users ===
+        roleGroup.style.display = 'none';
+        userGroup.style.display = 'none';
+
+        userSelect.disabled = true;
+        userSelect.required = false;
+        userSelect.removeAttribute('name');
+
+        roleSelect.disabled = true;
+        roleSelect.required = false;
+      }
+    });
+  });
+
+  // khởi tạo đúng lần đầu
+  document.addEventListener('DOMContentLoaded', () => {
+    document.querySelector('input[name="target"]:checked').dispatchEvent(new Event('change'));
+  });
+
+
+  // Khi mở modal lần đầu, trigger event để hiển thị đúng mặc định
+  document.addEventListener('DOMContentLoaded', () => {
+    document.querySelector('input[name="target"]:checked').dispatchEvent(new Event('change'));
+  });
+</script>
+
 
 </body>
 </html>
