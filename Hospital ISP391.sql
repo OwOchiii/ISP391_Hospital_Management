@@ -821,3 +821,6 @@ UPDATE n
 SET n.CreatedAt = GETDATE()
     FROM Notification n
   JOIN inserted i ON n.NotificationID = i.NotificationID;
+
+ALTER TABLE dbo.Feedback
+ALTER COLUMN description NVARCHAR(MAX) NOT NULL;

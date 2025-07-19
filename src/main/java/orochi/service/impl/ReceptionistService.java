@@ -119,15 +119,31 @@ public class ReceptionistService {
             // Save Users first to get UserID
             Users savedUser = userRepository.save(newUser);
 
-            // Create Patient entity
-            Patient newPatient = new Patient();
-            newPatient.setUserId(savedUser.getUserId());
-            newPatient.setDateOfBirth(dateOfBirth);
-            newPatient.setGender(gender);
-            newPatient.setDescription(description);
+            // Check if a Patient record already exists for this user
+            Optional<Patient> existingPatient = patientRepository.findByUserId(savedUser.getUserId());
+            Patient savedPatient;
 
-            // Save Patient
-            Patient savedPatient = patientRepository.save(newPatient);
+            if (existingPatient.isPresent()) {
+                // Update existing patient instead of creating new one
+                savedPatient = existingPatient.get();
+                savedPatient.setDateOfBirth(dateOfBirth);
+                savedPatient.setGender(gender);
+                savedPatient.setDescription(description);
+                // Save the updated patient
+                savedPatient = patientRepository.save(savedPatient);
+                logger.info("Updated existing patient record with ID: {}", savedPatient.getPatientId());
+            } else {
+                // Create new Patient entity
+                Patient newPatient = new Patient();
+                newPatient.setUserId(savedUser.getUserId());
+                newPatient.setDateOfBirth(dateOfBirth);
+                newPatient.setGender(gender);
+                newPatient.setDescription(description);
+
+                // Save Patient
+                savedPatient = patientRepository.save(newPatient);
+                logger.info("Created new patient record with ID: {} with userID", savedPatient.getPatientId(),savedPatient.getUser().getUserId());
+            }
 
             // QUAN TRỌNG: Thiết lập quan hệ bidirectional để email template có thể truy cập dữ liệu
             savedPatient.setUser(savedUser); // Set user relationship in patient

@@ -1553,51 +1553,96 @@
 
     // Add function to submit appointment
     async function submitAppointment() {
-        const formData = new FormData();
+        // Create a JSON object with the appointment data
+        const appointmentData = {
+            patientId: parseInt(document.getElementById('patientIdInput').value),
+            specialtyId: parseInt(document.getElementById('specialtyId').value),
+            doctorId: parseInt(document.getElementById('doctorId').value),
+            roomId: parseInt(document.getElementById('roomId').value),
 
-        // Collect all form data
-        formData.append('patientId', document.getElementById('patientIdInput').value);
-        formData.append('specialtyId', document.getElementById('specialtyId').value);
-        formData.append('doctorId', document.getElementById('doctorId').value);
-        formData.append('roomId', document.getElementById('roomId').value);
+            // Convert date format from MM/DD/YYYY to YYYY-MM-DD
+            appointmentDate: (() => {
+                const appointmentDate = document.getElementById('appointmentDate').value;
+                const dateParts = appointmentDate.split('/');
+                return `${dateParts[2]}-${dateParts[0].padStart(2, '0')}-${dateParts[1].padStart(2, '0')}`;
+            })(),
 
-        // Convert date format from MM/DD/YYYY to YYYY-MM-DD
-        const appointmentDate = document.getElementById('appointmentDate').value;
-        const dateParts = appointmentDate.split('/');
-        const formattedDate = `${dateParts[2]}-${dateParts[0].padStart(2, '0')}-${dateParts[1].padStart(2, '0')}`;
-        formData.append('appointmentDate', formattedDate);
-
-        formData.append('appointmentTime', document.getElementById('appointmentTime').value);
-        formData.append('email', document.getElementById('email').value);
-        formData.append('phoneNumber', document.getElementById('phoneNumber').value);
-        formData.append('description', document.getElementById('description').value);
+            appointmentTime: document.getElementById('appointmentTime').value,
+            email: document.getElementById('email').value,
+            phoneNumber: document.getElementById('phoneNumber').value,
+            description: document.getElementById('description').value
+        };
 
         // Add CSRF token
         const csrfToken = document.querySelector('input[name="_csrf"]').value;
-        formData.append('_csrf', csrfToken);
 
         try {
-            const response = await $.ajax({
-                url: '/receptionist/appointments/book',
+            // Show loading indicator
+            const mainContent = document.getElementById('mainContent');
+            mainContent.classList.add('loading');
+
+            // Use the correct path for the API endpoint with the context path prefix
+            const response = await fetch('/receptionist/api/appointments/book', {
                 method: 'POST',
-                data: Object.fromEntries(formData),
-                dataType: 'json'
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRF-TOKEN': csrfToken
+                },
+                body: JSON.stringify(appointmentData)
             });
 
-            if (response.success) {
+            if (!response.ok) {
+                throw new Error(`Server responded with status: ${response.status}`);
+            }
+
+            const result = await response.json();
+
+            // Remove loading indicator
+            mainContent.classList.remove('loading');
+
+            if (result.success) {
                 // Show success message
-                document.getElementById('successMessage').classList.remove('d-none');
+                const successMessage = document.getElementById('successMessage');
+                successMessage.classList.remove('d-none');
+                successMessage.innerHTML = `
+                    <i class="bi bi-check-circle-fill"></i>
+                    <span>Appointment booked successfully for ${appointmentData.appointmentDate} at
+                    ${formatTimeForDisplay(appointmentData.appointmentTime.substr(0, 5))}!</span>
+                `;
+
                 // Reset form
                 document.getElementById('appointmentForm').reset();
+
+                // Clear patient selection
+                document.getElementById('patientIdInput').value = '';
+
                 // Scroll to top
-                window.scrollTo(0, 0);
+                window.scrollTo({
+                    top: 0,
+                    behavior: 'smooth'
+                });
             } else {
-                alert('Error booking appointment: ' + (response.message || 'Unknown error'));
+                alert('Error booking appointment: ' + (result.message || 'Unknown error'));
             }
         } catch (error) {
             console.error('Error booking appointment:', error);
-            alert('Error booking appointment. Please try again.');
+            alert('Error booking appointment: ' + (error.message || 'Please try again.'));
+
+            // Remove loading indicator in case of error
+            const mainContent = document.getElementById('mainContent');
+            mainContent.classList.remove('loading');
         }
+    }
+
+    // Add function to format time for display (HH:MM to H:MM AM/PM)
+    function formatTimeForDisplay(time) {
+        if (!time) return '';
+
+        const [hours, minutes] = time.split(':').map(num => parseInt(num, 10));
+        const period = hours >= 12 ? 'PM' : 'AM';
+        const displayHour = hours % 12 || 12; // Convert 0 to 12 for 12 AM
+
+        return `${displayHour}:${minutes.toString().padStart(2, '0')} ${period}`;
     }
 
     // Add input sanitization functions

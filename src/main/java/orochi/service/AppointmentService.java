@@ -7,8 +7,17 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import orochi.dto.AppointmentDTO;
 import orochi.dto.AppointmentFormDTO;
-
+import orochi.model.Appointment;
+import orochi.model.Doctor;
+import orochi.model.Patient;
+import orochi.model.Specialization;
+import orochi.model.Transaction;
+import orochi.repository.AppointmentRepository;
+import orochi.repository.DoctorRepository;
+import orochi.repository.PatientRepository;
+import orochi.repository.SpecializationRepository;
 import orochi.repository.TransactionRepository;
+import orochi.repository.*;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;

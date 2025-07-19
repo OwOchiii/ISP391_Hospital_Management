@@ -1196,20 +1196,24 @@ public class ReceptionistController {
     }
 
     // API endpoint for booking appointments
-    @PostMapping("/appointments/book")
+    @PostMapping("/api/appointments/book")
     @ResponseBody
-    public ResponseEntity<Map<String, Object>> bookAppointment(@Valid @ModelAttribute AppointmentFormDTO appointmentDTO,
-                                                               BindingResult bindingResult) {
+    public ResponseEntity<Map<String, Object>> bookAppointment(@RequestBody AppointmentFormDTO appointmentDTO,
+                                                         BindingResult bindingResult) {
         Map<String, Object> response = new HashMap<>();
 
         try {
+            logger.info("Received appointment booking request: {}", appointmentDTO);
+
             if (bindingResult.hasErrors()) {
+                logger.error("Validation errors in appointment request: {}", bindingResult.getAllErrors());
                 response.put("success", false);
                 response.put("message", "Validation errors: " + bindingResult.getAllErrors().get(0).getDefaultMessage());
                 return ResponseEntity.badRequest().body(response);
             }
 
             Appointment appointment = appointmentService.bookAppointment(appointmentDTO);
+            logger.info("Appointment booked successfully with ID: {}", appointment.getAppointmentId());
 
             response.put("success", true);
             response.put("message", "Appointment booked successfully");
