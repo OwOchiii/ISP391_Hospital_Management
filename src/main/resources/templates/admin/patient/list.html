@@ -20,13 +20,24 @@
             --admin-secondary: #5b21b6;
             --admin-accent: #a855f7;
             --admin-light: #f3e8ff;
+            --admin-dark: #4c1d95;
             --text-dark: #1f2937;
             --text-light: #6b7280;
-            --bg-light: #f8fafc;
-            --success-color: #10b981;
-            --error-color: #ef4444;
-            --warning-color: #f59e0b;
-            --sidebar-width: 280px;
+            --text-muted: #9ca3af;
+            --bg-light: #fafbfc;
+            --bg-white: #ffffff;
+            --success-color: #059669;
+            --warning-color: #d97706;
+            --error-color: #dc2626;
+            --info-color: #0284c7;
+            --sidebar-width: 300px;
+            --header-height: 70px;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
         }
 
         body {
@@ -34,57 +45,68 @@
             line-height: 1.6;
             color: var(--text-dark);
             background: var(--bg-light);
+            overflow-x: hidden;
         }
 
-        .sidebar {
+        /* Sidebar Styles */
+        .admin-sidebar {
             position: fixed;
             top: 0;
             left: 0;
             height: 100vh;
             width: var(--sidebar-width);
-            background: linear-gradient(135deg, var(--admin-primary) 0%, var(--admin-secondary) 100%);
+            background: linear-gradient(180deg, var(--admin-primary) 0%, var(--admin-secondary) 100%);
             color: white;
             z-index: 1000;
             transition: transform 0.3s ease;
             overflow-y: auto;
-            scrollbar-width: none;
-            -ms-overflow-style: none;
+            box-shadow: 4px 0 20px rgba(124, 58, 237, 0.15);
         }
 
-        .sidebar::-webkit-scrollbar {
-            display: none;
-        }
-
-        .sidebar.collapsed {
+        .admin-sidebar.collapsed {
             transform: translateX(-100%);
         }
 
         .sidebar-header {
             padding: 1.5rem;
             border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            background: rgba(255, 255, 255, 0.05);
         }
 
-        .brand-logo {
+        .admin-brand {
             font-size: 1.5rem;
-            font-weight: 700;
+            font-weight: 800;
             display: flex;
             align-items: center;
-            gap: 0.5rem;
+            gap: 0.75rem;
             color: white;
             text-decoration: none;
+        }
+
+        .admin-brand i {
+            font-size: 2rem;
+            background: linear-gradient(45deg, #fbbf24, #f59e0b);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
         }
 
         .sidebar-nav {
             padding: 1.5rem 0;
         }
 
+        .nav-section {
+            margin-bottom: 2rem;
+        }
+
         .nav-section-title {
-            padding: 0.75rem 1.5rem;
             font-size: 0.75rem;
+            font-weight: 600;
             text-transform: uppercase;
             letter-spacing: 0.05em;
             color: rgba(255, 255, 255, 0.6);
-            font-weight: 600;
+            padding: 0 1.5rem;
+            margin-bottom: 0.75rem;
         }
 
         .nav-item {
@@ -93,21 +115,48 @@
 
         .nav-link {
             color: rgba(255, 255, 255, 0.8);
-            padding: 0.75rem 1rem;
-            border-radius: 10px;
+            padding: 0.875rem 1.25rem;
+            border-radius: 12px;
             display: flex;
             align-items: center;
-            gap: 0.75rem;
+            gap: 0.875rem;
             text-decoration: none;
+            font-weight: 500;
             transition: all 0.3s ease;
+            position: relative;
         }
 
-        .nav-link:hover,
-        .nav-link.active {
+        .nav-link:hover {
             background: rgba(255, 255, 255, 0.1);
             color: white;
+            transform: translateX(4px);
         }
 
+        .nav-link.active {
+            background: rgba(255, 255, 255, 0.15);
+            color: white;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+        }
+
+        .nav-link.active::before {
+            content: '';
+            position: absolute;
+            left: 0;
+            top: 50%;
+            transform: translateY(-50%);
+            width: 4px;
+            height: 24px;
+            background: #fbbf24;
+            border-radius: 0 4px 4px 0;
+        }
+
+        .nav-link i {
+            font-size: 1.125rem;
+            width: 20px;
+            text-align: center;
+        }
+
+        /* Main Content */
         .main-content {
             margin-left: var(--sidebar-width);
             min-height: 100vh;
@@ -118,10 +167,12 @@
             margin-left: 0;
         }
 
-        .top-header {
-            background: white;
-            padding: 1rem 2rem;
-            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+        /* Top Header */
+        .admin-header {
+            background: var(--bg-white);
+            height: var(--header-height);
+            padding: 0 2rem;
+            box-shadow: 0 2px 20px rgba(0, 0, 0, 0.08);
             display: flex;
             justify-content: space-between;
             align-items: center;
@@ -139,26 +190,77 @@
         .sidebar-toggle {
             background: none;
             border: none;
-            font-size: 1.2rem;
+            font-size: 1.25rem;
             color: var(--text-dark);
             cursor: pointer;
+            padding: 0.5rem;
+            border-radius: 8px;
             transition: all 0.3s ease;
         }
 
         .sidebar-toggle:hover {
+            background: var(--admin-light);
             color: var(--admin-primary);
+        }
+
+        .page-title {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: var(--text-dark);
+            margin: 0;
         }
 
         .header-right {
             display: flex;
             align-items: center;
+            gap: 1.5rem;
+        }
+
+        .header-actions {
+            display: flex;
+            align-items: center;
             gap: 1rem;
+        }
+
+        .notification-btn {
+            position: relative;
+            background: none;
+            border: none;
+            font-size: 1.25rem;
+            color: var(--text-light);
+            cursor: pointer;
+            padding: 0.5rem;
+            border-radius: 8px;
+            transition: all 0.3s ease;
+        }
+
+        .notification-btn:hover {
+            background: var(--admin-light);
+            color: var(--admin-primary);
+        }
+
+        .notification-badge {
+            position: absolute;
+            top: 0.25rem;
+            right: 0.25rem;
+            width: 8px;
+            height: 8px;
+            background: var(--error-color);
+            border-radius: 50%;
         }
 
         .admin-info {
             display: flex;
             align-items: center;
             gap: 0.75rem;
+            padding: 0.5rem;
+            border-radius: 12px;
+            transition: all 0.3s ease;
+            cursor: pointer;
+        }
+
+        .admin-info:hover {
+            background: var(--admin-light);
         }
 
         .admin-avatar {
@@ -170,15 +272,33 @@
             align-items: center;
             justify-content: center;
             color: white;
-            font-weight: 600;
+            font-weight: 700;
+            font-size: 0.875rem;
         }
 
+        .admin-details {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .admin-name {
+            font-weight: 600;
+            color: var(--text-dark);
+            font-size: 0.875rem;
+        }
+
+        .admin-role {
+            font-size: 0.75rem;
+            color: var(--text-muted);
+        }
+
+        /* Content Area */
         .content-area {
             padding: 2rem;
         }
 
         .page-header {
-            background: white;
+            background: var(--bg-white);
             padding: 2rem;
             border-radius: 15px;
             box-shadow: 0 5px 15px rgba(0, 0, 0, 0.08);
@@ -186,7 +306,7 @@
         }
 
         .search-filters {
-            background: white;
+            background: var(--bg-white);
             padding: 1.5rem;
             border-radius: 15px;
             box-shadow: 0 5px 15px rgba(0, 0, 0, 0.08);
@@ -194,7 +314,7 @@
         }
 
         .patients-container {
-            background: white;
+            background: var(--bg-white);
             border-radius: 15px;
             box-shadow: 0 5px 15px rgba(0, 0, 0, 0.08);
             overflow: hidden;
@@ -221,7 +341,7 @@
             margin: 1.5rem;
             border-radius: 10px;
             transition: all 0.3s ease;
-            background: white;
+            background: var(--bg-white);
         }
 
         .patient-card:hover {
@@ -302,7 +422,7 @@
             align-items: center;
         }
 
-        .btn-primary-custom {
+        .btn-admin-primary {
             background: linear-gradient(135deg, var(--admin-primary), var(--admin-secondary));
             border: none;
             padding: 0.5rem 1rem;
@@ -316,13 +436,13 @@
             transition: all 0.3s ease;
         }
 
-        .btn-primary-custom:hover {
+        .btn-admin-primary:hover {
             transform: translateY(-2px);
             box-shadow: 0 5px 15px rgba(124, 58, 237, 0.3);
             color: white;
         }
 
-        .btn-outline-custom {
+        .btn-admin-outline {
             border: 2px solid var(--admin-primary);
             color: var(--admin-primary);
             padding: 0.5rem 1rem;
@@ -336,7 +456,7 @@
             transition: all 0.3s ease;
         }
 
-        .btn-outline-custom:hover {
+        .btn-admin-outline:hover {
             background: var(--admin-primary);
             color: white;
         }
@@ -345,6 +465,10 @@
             background: var(--success-color);
             border: none;
             color: white;
+            padding: 0.5rem 1rem;
+            border-radius: 8px;
+            font-weight: 500;
+            transition: all 0.3s ease;
         }
 
         .btn-success-custom:hover {
@@ -357,6 +481,10 @@
             background: var(--warning-color);
             border: none;
             color: white;
+            padding: 0.5rem 1rem;
+            border-radius: 8px;
+            font-weight: 500;
+            transition: all 0.3s ease;
         }
 
         .btn-warning-custom:hover {
@@ -418,7 +546,7 @@
         }
 
         @media (max-width: 768px) {
-            .sidebar {
+            .admin-sidebar {
                 transform: translateX(-100%);
             }
 
@@ -441,11 +569,11 @@
                 align-items: stretch;
             }
 
-            .top-header {
-                padding: 1rem;
+            .admin-header {
+                padding: 0 1rem;
             }
 
-            .admin-info span {
+            .admin-details {
                 display: none;
             }
         }
@@ -460,9 +588,9 @@
 </head>
 <body>
 <!-- Admin Sidebar -->
-<div class="sidebar" id="sidebar">
+<div class="admin-sidebar" id="adminSidebar">
     <div class="sidebar-header">
-        <a href="#" class="brand-logo">
+        <a href="#" class="admin-brand">
             <i class="bi bi-shield-check"></i>
             <div>
                 <div>MediCare Plus</div>
@@ -518,22 +646,16 @@
                     Room Management
                 </a>
             </div>
+            <div class="nav-item">
+                <a th:href="@{/admin/schedules(adminId=${adminId})}" class="nav-link">
+                    <i class="bi bi-calendar3"></i>
+                    Schedule Management
+                </a>
+            </div>
         </div>
 
         <div class="nav-section">
             <div class="nav-section-title">Medical Services</div>
-            <div class="nav-item">
-                <a th:href="@{/admin/prescriptions(adminId=${adminId})}" class="nav-link">
-                    <i class="bi bi-prescription2"></i>
-                    Prescription Management
-                </a>
-            </div>
-            <div class="nav-item">
-                <a th:href="@{/admin/medical-orders(adminId=${adminId})}" class="nav-link">
-                    <i class="bi bi-clipboard-pulse"></i>
-                    Medical Order Management
-                </a>
-            </div>
             <div class="nav-item">
                 <a th:href="@{/admin/services(adminId=${adminId})}" class="nav-link">
                     <i class="bi bi-heart-pulse"></i>
@@ -541,9 +663,15 @@
                 </a>
             </div>
             <div class="nav-item">
-                <a th:href="@{/admin/specialties(adminId=${adminId})}" class="nav-link">
+                <a th:href="@{/admin/specializations(adminId=${adminId})}" class="nav-link">
                     <i class="bi bi-award"></i>
                     Specialties Management
+                </a>
+            </div>
+            <div class="nav-item">
+                <a th:href="@{/admin/medical-results(adminId=${adminId})}" class="nav-link">
+                    <i class="bi bi-clipboard-pulse"></i>
+                    Medical Results
                 </a>
             </div>
         </div>
@@ -551,21 +679,27 @@
         <div class="nav-section">
             <div class="nav-section-title">Analytics & Content</div>
             <div class="nav-item">
-                <a th:href="@{/admin/statistics/revenue(adminId=${adminId})}" class="nav-link">
+                <a th:href="@{/admin/reports/revenue(adminId=${adminId})}" class="nav-link">
                     <i class="bi bi-graph-up"></i>
                     Revenue Statistics
                 </a>
             </div>
             <div class="nav-item">
-                <a th:href="@{/admin/statistics/appointments(adminId=${adminId})}" class="nav-link">
+                <a th:href="@{/admin/appointments/statistics/appointments(adminId=${adminId})}" class="nav-link">
                     <i class="bi bi-bar-chart"></i>
                     Appointment Statistics
                 </a>
             </div>
             <div class="nav-item">
-                <a th:href="@{/admin/news(adminId=${adminId})}" class="nav-link">
-                    <i class="bi bi-newspaper"></i>
-                    News Management
+                <a th:href="@{/admin/notifications(adminId=${adminId})}" class="nav-link">
+                    <i class="bi bi-bell"></i>
+                    Notification Management
+                </a>
+            </div>
+            <div class="nav-item">
+                <a th:href="@{/admin/feedbacks(adminId=${adminId})}" class="nav-link">
+                    <i class="bi bi-chat-left-text"></i>
+                    Feedback List
                 </a>
             </div>
         </div>
@@ -593,23 +727,33 @@
 
 <!-- Main Content -->
 <div class="main-content" id="mainContent">
-    <!-- Top Header -->
-    <div class="top-header">
+    <!-- Admin Header -->
+    <div class="admin-header">
         <div class="header-left">
             <button class="sidebar-toggle" onclick="toggleSidebar()">
                 <i class="bi bi-list"></i>
             </button>
-            <h4 class="mb-0">Patient Management</h4>
+            <h1 class="page-title">Patient Management</h1>
         </div>
 
         <div class="header-right">
+            <div class="header-actions">
+                <button class="notification-btn">
+                    <i class="bi bi-bell"></i>
+                    <div class="notification-badge"></div>
+                </button>
+                <button class="notification-btn">
+                    <i class="bi bi-envelope"></i>
+                </button>
+            </div>
+
             <div class="admin-info">
                 <div class="admin-avatar">
                     <span th:text="${adminName != null ? #strings.substring(adminName, 0, 2).toUpperCase() : 'AD'}">AD</span>
                 </div>
-                <div>
-                    <div class="fw-semibold" th:text="${adminName != null ? adminName : 'Administrator'}">Administrator</div>
-                    <small class="text-muted">System Admin</small>
+                <div class="admin-details">
+                    <div class="admin-name" th:text="${adminName != null ? adminName : 'Administrator'}">Administrator</div>
+                    <div class="admin-role">System Admin</div>
                 </div>
             </div>
         </div>
@@ -634,10 +778,10 @@
                     <p class="text-muted mb-0">Manage and track all patient records</p>
                 </div>
                 <div class="col-md-6 text-md-end">
-                    <a th:href="@{/admin/dashboard(adminId=${adminId})}" class="btn-outline-custom me-2">
+                    <a th:href="@{/admin/dashboard(adminId=${adminId})}" class="btn-admin-outline me-2">
                         <i class="bi bi-house-door-fill"></i> Back to Dashboard
                     </a>
-                    <a th:href="@{/admin/patients(adminId=${adminId})}" class="btn-primary-custom">
+                    <a th:href="@{/admin/patients(adminId=${adminId})}" class="btn-admin-primary">
                         <i class="bi bi-arrow-clockwise"></i> Refresh
                     </a>
                 </div>
@@ -673,13 +817,9 @@
                         <option value="LOCKED" th:selected="${param.statusFilter=='LOCKED'}">Locked</option>
                     </select>
                 </div>
-<!--                <div class="col-md-3">-->
-<!--                    <label for="dateFrom" class="form-label">Date of Birth</label>-->
-<!--                    <input type="date" id="dateFrom" name="dateFrom" th:value="${param.dateFrom}" class="form-control"/>-->
-<!--                </div>-->
                 <div class="col-md-2">
                     <label class="form-label"> </label>
-                    <button type="submit" class="btn-primary-custom w-100">
+                    <button type="submit" class="btn-admin-primary w-100">
                         <i class="bi bi-search"></i> Search
                     </button>
                 </div>
@@ -691,7 +831,7 @@
             <div class="patients-header">
                 <h3 class="patients-title">All Patients</h3>
                 <div class="d-flex gap-2">
-                    <button class="btn-outline-custom btn-sm" onclick="refreshPatients()">
+                    <button class="btn-admin-outline btn-sm" onclick="refreshPatients()">
                         <i class="bi bi-arrow-clockwise"></i> Refresh
                     </button>
                 </div>
@@ -732,7 +872,7 @@
                         </div>
 
                         <div class="patient-actions">
-                            <button class="btn-outline-custom btn-sm" type="button" data-bs-toggle="collapse"
+                            <button class="btn-admin-outline btn-sm" type="button" data-bs-toggle="collapse"
                                     th:attr="data-bs-target='#details-' + ${p.patientId}" aria-expanded="false"
                                     th:attrappend="aria-controls='details-' + ${p.patientId}">
                                 <i class="bi bi-eye"></i> View Details
@@ -812,7 +952,6 @@
                     </ul>
                 </nav>
             </div>
-
         </div>
     </div>
 </div>
@@ -824,6 +963,32 @@
     /*<![CDATA[*/
     // Get admin ID from Thymeleaf
     const adminId = /*[[${adminId}]]*/ 0;
+
+    // Sidebar toggle functionality
+    function toggleSidebar() {
+        const sidebar = document.getElementById('adminSidebar');
+        const mainContent = document.getElementById('mainContent');
+        sidebar.classList.toggle('collapsed');
+        mainContent.classList.toggle('expanded');
+    }
+
+    // Auto-hide sidebar on mobile
+    function checkScreenSize() {
+        const sidebar = document.getElementById('adminSidebar');
+        const mainContent = document.getElementById('mainContent');
+        if (window.innerWidth <= 768) {
+            sidebar.classList.add('collapsed');
+            mainContent.classList.add('expanded');
+        } else {
+            sidebar.classList.remove('collapsed');
+            mainContent.classList.remove('expanded');
+        }
+    }
+
+    // Initialize
+    checkScreenSize();
+    window.addEventListener('load', checkScreenSize);
+    window.addEventListener('resize', checkScreenSize);
 
     document.addEventListener('DOMContentLoaded', function() {
         // Set patients tab as active
@@ -850,70 +1015,49 @@
                 const collapse = document.querySelector(target);
                 if (collapse) {
                     const bsCollapse = bootstrap.Collapse.getOrCreateInstance(collapse);
-                    bsCollapse.toggle(); // Toggle show/hide
+                    bsCollapse.toggle();
                 }
             });
         });
-    });
 
-    // Sidebar toggle functionality
-    function toggleSidebar() {
-        const sidebar = document.getElementById('sidebar');
-        const mainContent = document.getElementById('mainContent');
-        sidebar.classList.toggle('collapsed');
-        mainContent.classList.toggle('expanded');
-    }
-
-    // Auto-hide sidebar on mobile
-    function checkScreenSize() {
-        const sidebar = document.getElementById('sidebar');
-        const mainContent = document.getElementById('mainContent');
-        if (window.innerWidth <= 768) {
-            sidebar.classList.add('collapsed');
-            mainContent.classList.add('expanded');
-        } else {
-            sidebar.classList.remove('collapsed');
-            mainContent.classList.remove('expanded');
-        }
-    }
-
-    // Check screen size on load and resize
-    window.addEventListener('load', checkScreenSize);
-    window.addEventListener('resize', checkScreenSize);
-
-    // Refresh patients
-    function refreshPatients() {
-        window.location.reload();
-    }
-
-    // Show alert messages
-    function showAlert(type, message) {
-        hideAlerts();
-        const alertId = type === 'success' ? 'successAlert' : 'errorAlert';
-        const messageId = type === 'success' ? 'successMessage' : 'errorMessage';
-        document.getElementById(messageId).textContent = message;
-        document.getElementById(alertId).style.display = 'block';
-        setTimeout(hideAlerts, 5000);
-        window.scrollTo({ top: 0, behavior: 'smooth' });
-    }
-
-    // Hide all alerts
-    function hideAlerts() {
-        document.getElementById('successAlert').style.display = 'none';
-        document.getElementById('errorAlert').style.display = 'none';
-    }
-
-    // Navigation link handlers
-    document.querySelectorAll('.nav-link').forEach(link => {
-        link.addEventListener('click', function(e) {
-            if (this.getAttribute('href') === '#') {
-                e.preventDefault();
-            }
+        // Navigation link handlers
+        document.querySelectorAll('.nav-link').forEach(link => {
+            link.addEventListener('click', function(e) {
+                if (this.getAttribute('href') === '#') {
+                    e.preventDefault();
+                }
+                // Remove active class from all links
+                document.querySelectorAll('.nav-link').forEach(l => l.classList.remove('active'));
+                // Add active class to clicked link
+                this.classList.add('active');
+            });
         });
-    });
 
-    // Initialize
-    hideAlerts();
+        // Show alert messages
+        function showAlert(type, message) {
+            hideAlerts();
+            const alertId = type === 'success' ? 'successAlert' : 'errorAlert';
+            const messageId = type === 'success' ? 'successMessage' : 'errorMessage';
+            document.getElementById(messageId).textContent = message;
+            document.getElementById(alertId).style.display = 'block';
+            setTimeout(hideAlerts, 5000);
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+
+        // Hide all alerts
+        function hideAlerts() {
+            document.getElementById('successAlert').style.display = 'none';
+            document.getElementById('errorAlert').style.display = 'none';
+        }
+
+        // Refresh patients
+        function refreshPatients() {
+            window.location.reload();
+        }
+
+        // Initialize
+        hideAlerts();
+    });
     /*]]>*/
 </script>
 </body>
