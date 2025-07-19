@@ -1,0 +1,732 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Online Payment - MediCare Plus</title>
+
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Bootstrap Icons -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css">
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+
+    <style>
+        :root {
+            --primary-color: #059669;
+            --secondary-color: #047857;
+            --accent-color: #10b981;
+            --light-green: #ecfdf5;
+            --dark-green: #064e3b;
+            --text-dark: #1f2937;
+            --text-light: #6b7280;
+            --text-muted: #9ca3af;
+            --bg-light: #f8fafc;
+            --bg-white: #ffffff;
+            --success-color: #22c55e;
+            --warning-color: #f59e0b;
+            --error-color: #ef4444;
+            --border-color: #e5e7eb;
+            --vnpay-color: #0066cc;
+            --momo-color: #d82d8b;
+            --zalo-color: #0180c7;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            line-height: 1.6;
+            color: var(--text-dark);
+            background: linear-gradient(135deg, var(--light-green) 0%, #f0fdf4 100%);
+            min-height: 100vh;
+        }
+
+        .payment-container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        .payment-header {
+            background: var(--bg-white);
+            border-radius: 16px;
+            padding: 30px;
+            margin-bottom: 30px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+            border: 1px solid var(--border-color);
+        }
+
+        .payment-header h1 {
+            color: var(--primary-color);
+            font-weight: 700;
+            margin-bottom: 10px;
+        }
+
+        .breadcrumb-nav {
+            background: transparent;
+            padding: 0;
+            margin-bottom: 20px;
+        }
+
+        .breadcrumb-nav .breadcrumb-item a {
+            color: var(--primary-color);
+            text-decoration: none;
+        }
+
+        .payment-content {
+            display: grid;
+            grid-template-columns: 1fr 400px;
+            gap: 30px;
+        }
+
+        .payment-form {
+            background: var(--bg-white);
+            border-radius: 16px;
+            padding: 30px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+            border: 1px solid var(--border-color);
+        }
+
+        .payment-summary {
+            background: var(--bg-white);
+            border-radius: 16px;
+            padding: 30px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+            border: 1px solid var(--border-color);
+            height: fit-content;
+            position: sticky;
+            top: 20px;
+        }
+
+        .section-title {
+            font-size: 1.25rem;
+            font-weight: 600;
+            color: var(--text-dark);
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .payment-method-card {
+            border: 2px solid var(--border-color);
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 15px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            background: var(--bg-white);
+        }
+
+        .payment-method-card:hover {
+            border-color: var(--primary-color);
+            box-shadow: 0 4px 12px rgba(5, 150, 105, 0.15);
+        }
+
+        .payment-method-card.selected {
+            border-color: var(--primary-color);
+            background: var(--light-green);
+        }
+
+        .payment-method-card input[type="radio"] {
+            display: none;
+        }
+
+        .payment-method-content {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .payment-method-icon {
+            width: 60px;
+            height: 40px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 8px;
+            color: white;
+            font-weight: 600;
+        }
+
+        .vnpay-icon {
+            background: var(--vnpay-color);
+        }
+
+        .momo-icon {
+            background: var(--momo-color);
+        }
+
+        .zalo-icon {
+            background: var(--zalo-color);
+        }
+
+        .bank-icon {
+            background: var(--primary-color);
+        }
+
+        .payment-method-info h5 {
+            margin: 0;
+            font-weight: 600;
+            color: var(--text-dark);
+        }
+
+        .payment-method-info p {
+            margin: 0;
+            color: var(--text-light);
+            font-size: 0.9rem;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-label {
+            font-weight: 500;
+            color: var(--text-dark);
+            margin-bottom: 8px;
+        }
+
+        .form-control {
+            border: 2px solid var(--border-color);
+            border-radius: 8px;
+            padding: 12px 16px;
+            font-size: 1rem;
+            transition: all 0.3s ease;
+        }
+
+        .form-control:focus {
+            border-color: var(--primary-color);
+            box-shadow: 0 0 0 3px rgba(5, 150, 105, 0.1);
+        }
+
+        .summary-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 12px 0;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .summary-item:last-child {
+            border-bottom: none;
+            font-weight: 600;
+            font-size: 1.1rem;
+            color: var(--primary-color);
+            padding-top: 20px;
+            margin-top: 10px;
+            border-top: 2px solid var(--border-color);
+        }
+
+        .appointment-info {
+            background: var(--light-green);
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 20px;
+        }
+
+        .appointment-info h6 {
+            color: var(--primary-color);
+            font-weight: 600;
+            margin-bottom: 15px;
+        }
+
+        .info-row {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 8px;
+        }
+
+        .info-row:last-child {
+            margin-bottom: 0;
+        }
+
+        .btn-primary {
+            background: var(--primary-color);
+            border: none;
+            border-radius: 8px;
+            padding: 12px 30px;
+            font-weight: 600;
+            font-size: 1rem;
+            transition: all 0.3s ease;
+        }
+
+        .btn-primary:hover {
+            background: var(--secondary-color);
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(5, 150, 105, 0.3);
+        }
+
+        .btn-outline-secondary {
+            border: 2px solid var(--border-color);
+            color: var(--text-dark);
+            border-radius: 8px;
+            padding: 12px 30px;
+            font-weight: 600;
+            font-size: 1rem;
+            transition: all 0.3s ease;
+        }
+
+        .btn-outline-secondary:hover {
+            background: var(--border-color);
+            border-color: var(--border-color);
+            color: var(--text-dark);
+        }
+
+        .security-notice {
+            background: #f0f9ff;
+            border: 1px solid #0ea5e9;
+            border-radius: 8px;
+            padding: 15px;
+            margin-top: 20px;
+        }
+
+        .security-notice i {
+            color: #0ea5e9;
+        }
+
+        .loading-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(255, 255, 255, 0.9);
+            display: none;
+            justify-content: center;
+            align-items: center;
+            z-index: 9999;
+        }
+
+        .loading-spinner {
+            text-align: center;
+        }
+
+        .spinner-border {
+            color: var(--primary-color);
+        }
+
+        @media (max-width: 768px) {
+            .payment-content {
+                grid-template-columns: 1fr;
+                gap: 20px;
+            }
+
+            .payment-summary {
+                position: static;
+                order: -1;
+            }
+
+            .payment-container {
+                padding: 15px;
+            }
+
+            .payment-header,
+            .payment-form,
+            .payment-summary {
+                padding: 20px;
+            }
+        }
+
+        .payment-method-details {
+            display: none;
+            margin-top: 15px;
+            padding-top: 15px;
+            border-top: 1px solid var(--border-color);
+        }
+
+        .payment-method-card.selected .payment-method-details {
+            display: block;
+        }
+
+        .qr-code-container {
+            text-align: center;
+            padding: 20px;
+        }
+
+        .qr-code-placeholder {
+            width: 200px;
+            height: 200px;
+            background: #f3f4f6;
+            border: 2px dashed var(--border-color);
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 15px;
+            color: var(--text-muted);
+        }
+    </style>
+</head>
+<body>
+    <div class="loading-overlay" id="loadingOverlay">
+        <div class="loading-spinner">
+            <div class="spinner-border" role="status">
+                <span class="visually-hidden">Loading...</span>
+            </div>
+            <div class="mt-3">
+                <h5>Đang xử lý thanh toán...</h5>
+                <p class="text-muted">Vui lòng không đóng trang này</p>
+            </div>
+        </div>
+    </div>
+
+    <div class="payment-container">
+        <!-- Header -->
+        <div class="payment-header">
+            <nav class="breadcrumb-nav">
+                <ol class="breadcrumb">
+                    <li class="breadcrumb-item"><a href="/patient/dashboard">Dashboard</a></li>
+                    <li class="breadcrumb-item"><a href="/patient/appointments">Appointments</a></li>
+                    <li class="breadcrumb-item active">Payment</li>
+                </ol>
+            </nav>
+            <h1><i class="bi bi-credit-card-2-front me-2"></i>Online Payment</h1>
+            <p class="text-muted mb-0">Complete your appointment payment securely</p>
+        </div>
+
+        <div class="payment-content">
+            <!-- Payment Form -->
+            <div class="payment-form">
+                <h3 class="section-title">
+                    <i class="bi bi-wallet2"></i>
+                    Choose Payment Method
+                </h3>
+
+                <form id="paymentForm" th:action="@{/patient/process-payment}" method="POST">
+                    <input type="hidden" name="appointmentId" th:value="${appointmentId}">
+                    <input type="hidden" name="amount" th:value="${amount}">
+
+                    <!-- VNPay -->
+                    <div class="payment-method-card" onclick="selectPaymentMethod('vnpay')">
+                        <input type="radio" name="paymentMethod" value="vnpay" id="vnpay">
+                        <div class="payment-method-content">
+                            <div class="payment-method-icon vnpay-icon">
+                                VNP
+                            </div>
+                            <div class="payment-method-info">
+                                <h5>VNPay</h5>
+                                <p>Pay with VNPay wallet or linked bank cards</p>
+                            </div>
+                            <div class="ms-auto">
+                                <i class="bi bi-check-circle text-success" style="display: none;"></i>
+                            </div>
+                        </div>
+                        <div class="payment-method-details">
+                            <div class="alert alert-info">
+                                <i class="bi bi-info-circle me-2"></i>
+                                You will be redirected to VNPay gateway to complete the payment
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- MoMo -->
+                    <div class="payment-method-card" onclick="selectPaymentMethod('momo')">
+                        <input type="radio" name="paymentMethod" value="momo" id="momo">
+                        <div class="payment-method-content">
+                            <div class="payment-method-icon momo-icon">
+                                <i class="bi bi-phone"></i>
+                            </div>
+                            <div class="payment-method-info">
+                                <h5>MoMo E-Wallet</h5>
+                                <p>Pay instantly with MoMo mobile wallet</p>
+                            </div>
+                            <div class="ms-auto">
+                                <i class="bi bi-check-circle text-success" style="display: none;"></i>
+                            </div>
+                        </div>
+                        <div class="payment-method-details">
+                            <div class="qr-code-container">
+                                <div class="qr-code-placeholder">
+                                    <i class="bi bi-qr-code" style="font-size: 3rem;"></i>
+                                </div>
+                                <p class="text-muted">Scan QR code with MoMo app</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- ZaloPay -->
+                    <div class="payment-method-card" onclick="selectPaymentMethod('zalopay')">
+                        <input type="radio" name="paymentMethod" value="zalopay" id="zalopay">
+                        <div class="payment-method-content">
+                            <div class="payment-method-icon zalo-icon">
+                                ZP
+                            </div>
+                            <div class="payment-method-info">
+                                <h5>ZaloPay</h5>
+                                <p>Fast and secure payment with ZaloPay</p>
+                            </div>
+                            <div class="ms-auto">
+                                <i class="bi bi-check-circle text-success" style="display: none;"></i>
+                            </div>
+                        </div>
+                        <div class="payment-method-details">
+                            <div class="alert alert-info">
+                                <i class="bi bi-info-circle me-2"></i>
+                                You will be redirected to ZaloPay to complete the payment
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Bank Transfer -->
+                    <div class="payment-method-card" onclick="selectPaymentMethod('bank')">
+                        <input type="radio" name="paymentMethod" value="bank" id="bank">
+                        <div class="payment-method-content">
+                            <div class="payment-method-icon bank-icon">
+                                <i class="bi bi-bank"></i>
+                            </div>
+                            <div class="payment-method-info">
+                                <h5>Internet Banking</h5>
+                                <p>Direct bank transfer via online banking</p>
+                            </div>
+                            <div class="ms-auto">
+                                <i class="bi bi-check-circle text-success" style="display: none;"></i>
+                            </div>
+                        </div>
+                        <div class="payment-method-details">
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <div class="form-group">
+                                        <label class="form-label">Select Bank</label>
+                                        <select class="form-control" name="bankCode">
+                                            <option value="">Choose your bank</option>
+                                            <option value="VIETCOMBANK">Vietcombank</option>
+                                            <option value="TECHCOMBANK">Techcombank</option>
+                                            <option value="BIDV">BIDV</option>
+                                            <option value="VIETINBANK">VietinBank</option>
+                                            <option value="AGRIBANK">Agribank</option>
+                                            <option value="MBBANK">MB Bank</option>
+                                            <option value="SACOMBANK">Sacombank</option>
+                                            <option value="ACB">ACB</option>
+                                        </select>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Payment Details -->
+                    <div class="mt-4">
+                        <h5 class="section-title">
+                            <i class="bi bi-person-circle"></i>
+                            Payment Information
+                        </h5>
+
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label class="form-label">Full Name</label>
+                                    <input type="text" class="form-control" name="customerName"
+                                           th:value="${patient.fullName}" required>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label class="form-label">Phone Number</label>
+                                    <input type="tel" class="form-control" name="customerPhone"
+                                           th:value="${patient.user.phoneNumber}" required>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="form-group">
+                            <label class="form-label">Email Address</label>
+                            <input type="email" class="form-control" name="customerEmail"
+                                   th:value="${patient.user.email}" required>
+                        </div>
+
+                        <div class="form-group">
+                            <label class="form-label">Notes (Optional)</label>
+                            <textarea class="form-control" name="notes" rows="3"
+                                      placeholder="Any additional notes for this payment..."></textarea>
+                        </div>
+                    </div>
+
+                    <!-- Action Buttons -->
+                    <div class="d-flex gap-3 mt-4">
+                        <button type="button" class="btn btn-outline-secondary" onclick="history.back()">
+                            <i class="bi bi-arrow-left me-2"></i>Back
+                        </button>
+                        <button type="submit" class="btn btn-primary flex-fill" id="paymentButton" disabled>
+                            <i class="bi bi-shield-lock me-2"></i>Proceed to Payment
+                        </button>
+                    </div>
+
+                    <div class="security-notice">
+                        <div class="d-flex align-items-start gap-3">
+                            <i class="bi bi-shield-check fs-4"></i>
+                            <div>
+                                <h6 class="mb-1">Secure Payment</h6>
+                                <p class="mb-0 small">Your payment information is encrypted and secure. We do not store your payment details.</p>
+                            </div>
+                        </div>
+                    </div>
+                </form>
+            </div>
+
+            <!-- Payment Summary -->
+            <div class="payment-summary">
+                <h4 class="section-title">
+                    <i class="bi bi-receipt"></i>
+                    Payment Summary
+                </h4>
+
+                <div class="appointment-info">
+                    <h6><i class="bi bi-calendar-check me-2"></i>Appointment Details</h6>
+                    <div class="info-row">
+                        <span>Doctor:</span>
+                        <strong th:text="${appointment.doctor.user.fullName}">Dr. John Doe</strong>
+                    </div>
+                    <div class="info-row">
+                        <span>Specialty:</span>
+                        <span th:text="${appointment.doctor.specializations[0].specName}">Cardiology</span>
+                    </div>
+                    <div class="info-row">
+                        <span>Date:</span>
+                        <span th:text="${#temporals.format(appointment.dateTime, 'dd/MM/yyyy')}">25/12/2024</span>
+                    </div>
+                    <div class="info-row">
+                        <span>Time:</span>
+                        <span th:text="${#temporals.format(appointment.dateTime, 'HH:mm')}">10:00</span>
+                    </div>
+                    <div class="info-row">
+                        <span>Room:</span>
+                        <span th:text="${appointment.room?.roomNumber ?: 'TBA'}">R101</span>
+                    </div>
+                </div>
+
+                <div class="summary-item">
+                    <span>Consultation Fee:</span>
+                    <span th:text="${#numbers.formatCurrency(consultationFee)}">500,000 VND</span>
+                </div>
+                <div class="summary-item">
+                    <span>Service Fee:</span>
+                    <span th:text="${#numbers.formatCurrency(serviceFee)}">50,000 VND</span>
+                </div>
+                <div class="summary-item">
+                    <span>Discount:</span>
+                    <span class="text-success" th:text="${#numbers.formatCurrency(discount)}">-50,000 VND</span>
+                </div>
+                <div class="summary-item">
+                    <span>Total Amount:</span>
+                    <span th:text="${#numbers.formatCurrency(totalAmount)}">500,000 VND</span>
+                </div>
+
+                <div class="mt-3">
+                    <small class="text-muted">
+                        <i class="bi bi-info-circle me-1"></i>
+                        Payment confirmation will be sent to your email
+                    </small>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Bootstrap JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+
+    <script>
+        let selectedPaymentMethod = null;
+
+        function selectPaymentMethod(method) {
+            // Remove previous selection
+            document.querySelectorAll('.payment-method-card').forEach(card => {
+                card.classList.remove('selected');
+                card.querySelector('i.bi-check-circle').style.display = 'none';
+            });
+
+            // Add selection to current method
+            const selectedCard = document.querySelector(`#${method}`).closest('.payment-method-card');
+            selectedCard.classList.add('selected');
+            selectedCard.querySelector('i.bi-check-circle').style.display = 'inline';
+
+            // Update radio button
+            document.getElementById(method).checked = true;
+            selectedPaymentMethod = method;
+
+            // Enable payment button
+            document.getElementById('paymentButton').disabled = false;
+
+            // Update button text based on method
+            const paymentButton = document.getElementById('paymentButton');
+            switch(method) {
+                case 'vnpay':
+                    paymentButton.innerHTML = '<i class="bi bi-shield-lock me-2"></i>Pay with VNPay';
+                    break;
+                case 'momo':
+                    paymentButton.innerHTML = '<i class="bi bi-phone me-2"></i>Pay with MoMo';
+                    break;
+                case 'zalopay':
+                    paymentButton.innerHTML = '<i class="bi bi-zap me-2"></i>Pay with ZaloPay';
+                    break;
+                case 'bank':
+                    paymentButton.innerHTML = '<i class="bi bi-bank me-2"></i>Pay with Internet Banking';
+                    break;
+                default:
+                    paymentButton.innerHTML = '<i class="bi bi-shield-lock me-2"></i>Proceed to Payment';
+            }
+        }
+
+        // Form submission
+        document.getElementById('paymentForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+
+            if (!selectedPaymentMethod) {
+                alert('Please select a payment method');
+                return;
+            }
+
+            // Show loading overlay
+            document.getElementById('loadingOverlay').style.display = 'flex';
+
+            // Simulate processing time
+            setTimeout(() => {
+                // Submit the form
+                this.submit();
+            }, 1000);
+        });
+
+        // Auto-select VNPay as default
+        document.addEventListener('DOMContentLoaded', function() {
+            selectPaymentMethod('vnpay');
+        });
+
+        // Form validation
+        function validateForm() {
+            const form = document.getElementById('paymentForm');
+            const inputs = form.querySelectorAll('input[required], select[required]');
+            let isValid = true;
+
+            inputs.forEach(input => {
+                if (!input.value.trim()) {
+                    isValid = false;
+                    input.classList.add('is-invalid');
+                } else {
+                    input.classList.remove('is-invalid');
+                }
+            });
+
+            return isValid;
+        }
+
+        // Real-time validation
+        document.querySelectorAll('input[required], select[required]').forEach(input => {
+            input.addEventListener('blur', function() {
+                if (this.value.trim()) {
+                    this.classList.remove('is-invalid');
+                    this.classList.add('is-valid');
+                } else {
+                    this.classList.add('is-invalid');
+                    this.classList.remove('is-valid');
+                }
+            });
+        });
+    </script>
+</body>
+</html>

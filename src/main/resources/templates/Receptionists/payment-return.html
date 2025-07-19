@@ -1,0 +1,216 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Payment Result - MediCare Plus</title>
+
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Bootstrap Icons -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css">
+
+    <style>
+        :root {
+            --primary-color: #059669;
+            --success-color: #22c55e;
+            --error-color: #ef4444;
+            --light-green: #ecfdf5;
+            --text-dark: #1f2937;
+            --text-light: #6b7280;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background: linear-gradient(135deg, var(--light-green) 0%, #f0fdf4 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .result-card {
+            background: white;
+            border-radius: 16px;
+            padding: 40px;
+            text-align: center;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.1);
+            max-width: 600px;
+            width: 100%;
+        }
+
+        .success-icon {
+            width: 80px;
+            height: 80px;
+            background: var(--success-color);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 30px;
+            color: white;
+            font-size: 2rem;
+        }
+
+        .error-icon {
+            width: 80px;
+            height: 80px;
+            background: var(--error-color);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 30px;
+            color: white;
+            font-size: 2rem;
+        }
+
+        .result-title {
+            font-weight: 600;
+            margin-bottom: 20px;
+        }
+
+        .success-title {
+            color: var(--success-color);
+        }
+
+        .error-title {
+            color: var(--error-color);
+        }
+
+        .result-details {
+            background: #f8f9fa;
+            border-radius: 12px;
+            padding: 20px;
+            margin: 30px 0;
+            text-align: left;
+        }
+
+        .detail-row {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 10px;
+        }
+
+        .detail-row:last-child {
+            margin-bottom: 0;
+        }
+
+        .btn-primary {
+            background: var(--primary-color);
+            border: none;
+            border-radius: 8px;
+            padding: 12px 30px;
+            font-weight: 600;
+            margin: 0 10px;
+        }
+
+        .btn-outline-secondary {
+            border: 2px solid #e5e7eb;
+            color: var(--text-dark);
+            border-radius: 8px;
+            padding: 12px 30px;
+            font-weight: 600;
+            margin: 0 10px;
+        }
+    </style>
+</head>
+<body>
+    <div class="result-card">
+        <!-- Success Case -->
+        <div th:if="${transaction != null and transaction.status == 'SUCCESS'}">
+            <div class="success-icon">
+                <i class="bi bi-check-lg"></i>
+            </div>
+            <h2 class="result-title success-title">Payment Successful!</h2>
+            <p class="text-muted">Your payment has been processed successfully. Your appointment is now confirmed.</p>
+
+            <div class="result-details">
+                <div class="detail-row">
+                    <span><strong>Transaction ID:</strong></span>
+                    <span th:text="${transaction.transactionId}">TXN123456789</span>
+                </div>
+                <div class="detail-row">
+                    <span><strong>Amount Paid:</strong></span>
+                    <span th:text="${#numbers.formatCurrency(transaction.amount)}">500,000 VND</span>
+                </div>
+                <div class="detail-row">
+                    <span><strong>Payment Method:</strong></span>
+                    <span th:text="${transaction.paymentMethod}">VNPay</span>
+                </div>
+                <div class="detail-row">
+                    <span><strong>Date & Time:</strong></span>
+                    <span th:text="${#temporals.format(transaction.createdAt, 'dd/MM/yyyy HH:mm')}">25/12/2024 10:30</span>
+                </div>
+            </div>
+
+            <div class="alert alert-success" role="alert">
+                <i class="bi bi-info-circle me-2"></i>
+                A confirmation email has been sent to your registered email address.
+            </div>
+        </div>
+
+        <!-- Failed Case -->
+        <div th:if="${transaction != null and transaction.status == 'FAILED'}">
+            <div class="error-icon">
+                <i class="bi bi-x-lg"></i>
+            </div>
+            <h2 class="result-title error-title">Payment Failed</h2>
+            <p class="text-muted">Unfortunately, your payment could not be processed. Please try again or contact support.</p>
+
+            <div class="result-details">
+                <div class="detail-row">
+                    <span><strong>Transaction ID:</strong></span>
+                    <span th:text="${transaction.transactionId}">TXN123456789</span>
+                </div>
+                <div class="detail-row">
+                    <span><strong>Amount:</strong></span>
+                    <span th:text="${#numbers.formatCurrency(transaction.amount)}">500,000 VND</span>
+                </div>
+                <div class="detail-row">
+                    <span><strong>Payment Method:</strong></span>
+                    <span th:text="${transaction.paymentMethod}">VNPay</span>
+                </div>
+                <div class="detail-row">
+                    <span><strong>Failed At:</strong></span>
+                    <span th:text="${#temporals.format(transaction.updatedAt, 'dd/MM/yyyy HH:mm')}">25/12/2024 10:30</span>
+                </div>
+            </div>
+
+            <div class="alert alert-warning" role="alert">
+                <i class="bi bi-exclamation-triangle me-2"></i>
+                No charges have been made to your account. You can try again or use a different payment method.
+            </div>
+        </div>
+
+        <!-- Default Case (No Transaction) -->
+        <div th:if="${transaction == null}">
+            <div class="error-icon">
+                <i class="bi bi-question-lg"></i>
+            </div>
+            <h2 class="result-title">Payment Status Unknown</h2>
+            <p class="text-muted">We couldn't retrieve your payment information. Please check your transaction history or contact support.</p>
+        </div>
+
+        <!-- Action Buttons -->
+        <div class="mt-4">
+            <a href="/patient-legacy/dashboard" class="btn btn-primary">
+                <i class="bi bi-house me-2"></i>Back to Dashboard
+            </a>
+            <a href="/patient-legacy/appointment-list" class="btn btn-outline-secondary">
+                <i class="bi bi-calendar-check me-2"></i>View Appointments
+            </a>
+        </div>
+
+        <!-- Support Contact -->
+        <div class="mt-4">
+            <p class="small text-muted">
+                Need help? Contact our support team at
+                <a href="mailto:support@medicareplus.com" class="text-decoration-none">support@medicareplus.com</a>
+                or call <strong>1900-123-456</strong>
+            </p>
+        </div>
+    </div>
+</body>
+</html>
+
