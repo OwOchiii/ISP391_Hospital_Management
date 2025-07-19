@@ -242,14 +242,12 @@
             <div>
                 <div class="mb-4">
                     <label class="block text-sm font-semibold text-gray-700 mb-2">Payment Method</label>
-                    <select id="paymentMethod" class="input-focus block w-full border-gray-300 rounded-lg shadow-sm focus:ring-blue-500 focus:border-blue-500 text-sm py-3">
-                        <option value="">Select Method</option>
-                        <option value="Cash">Cash</option>
-                        <option value="Banking">Banking</option>
-                    </select>
-                    <p id="paymentMethodError" class="mt-2 text-sm text-red-600 hidden">Please select a payment method</p>
+                    <div class="block w-full border-gray-300 rounded-lg shadow-sm bg-gray-100 text-sm py-3 px-3">
+                        <span class="text-gray-700 font-medium">Cash</span>
+                    </div>
+                    <input type="hidden" id="paymentMethod" value="Cash">
                 </div>
-                <div id="amountReceivedContainer" class="hidden mb-4">
+                <div id="amountReceivedContainer" class="mb-4">
                     <label class="block text-sm font-semibold text-gray-700 mb-2">Amount Received ($)</label>
                     <input id="amountReceived" type="text" class="input-focus block w-full border-gray-300 rounded-lg shadow-sm focus:ring-blue-500 focus:border-blue-500 text-sm py-3" placeholder="Enter amount received">
                     <p id="changeReturned" class="mt-3 text-sm text-gray-600">Change Returned: 0 $</p>
@@ -325,7 +323,6 @@
             <h3 class="text-xl font-semibold text-gray-800 mb-4">Confirm Payment</h3>
             <p class="text-gray-600 mb-2">Are you sure you want to process this payment?</p>
             <div id="confirmPaymentDetails" class="bg-gray-50 p-4 rounded-lg mb-6 text-left">
-                <p class="text-sm"><span class="font-semibold">Full Name:</span> <span id="confirmPatientName"></span></p>
                 <p class="text-sm"><span class="font-semibold">Amount:</span> <span id="confirmAmount"></span> $</p>
                 <p class="text-sm"><span class="font-semibold">Method:</span> <span id="confirmMethod"></span></p>
                 <p class="text-sm" id="confirmCashDetails" style="display: none;">
@@ -481,47 +478,31 @@
     const userId = invoiceData.userId;
     const issuerId = invoiceData.issuerId;
 
-    paymentMethodSelect.addEventListener('change', () => {
-        amountReceivedContainer.classList.toggle('hidden', paymentMethodSelect.value !== 'Cash');
-        if (paymentMethodSelect.value === 'Cash') {
-            amountReceivedInput.value = '';
-            changeReturnedDisplay.textContent = 'Change Returned: 0 $';
-        }
-    });
-
-    // Real-time validation for Amount Received với hiển thị lỗi đỏ
+    // Remove old payment method change listeners since payment method is now fixed to Cash
+    // Real-time validation and change calculation for Amount Received
     amountReceivedInput.addEventListener('input', () => {
         const amountReceived = parseFloat(amountReceivedInput.value) || 0;
         const patientPayment = window.calculatedPatientPayment || 0;
         const errorElement = document.getElementById('amountReceivedError');
 
         // Clear error state first
-        errorElement.classList.add('hidden');
+        if (errorElement) {
+            errorElement.classList.add('hidden');
+        }
         amountReceivedInput.classList.remove('border-red-500');
 
+        // Validate amount received
         if (amountReceivedInput.value && amountReceived < patientPayment) {
-            errorElement.textContent = 'Amount must be at least equal to Patient Payment';
-            errorElement.classList.remove('hidden');
+            if (errorElement) {
+                errorElement.textContent = 'Amount must be at least equal to Patient Payment';
+                errorElement.classList.remove('hidden');
+            }
             amountReceivedInput.classList.add('border-red-500');
         }
 
-        // Calculate and display change
+        // Always calculate and display change (even if negative for visual feedback)
         const change = amountReceived - patientPayment;
         changeReturnedDisplay.textContent = `Change Returned: ${change >= 0 ? change.toLocaleString('en-US') : 0} $`;
-    });
-
-    // Clear validation errors when payment method changes
-    paymentMethodSelect.addEventListener('change', () => {
-        document.getElementById('paymentMethodError').classList.add('hidden');
-        paymentMethodSelect.classList.remove('border-red-500');
-
-        amountReceivedContainer.classList.toggle('hidden', paymentMethodSelect.value !== 'Cash');
-        if (paymentMethodSelect.value === 'Cash') {
-            amountReceivedInput.value = '';
-            changeReturnedDisplay.textContent = 'Change Returned: 0 $';
-            document.getElementById('amountReceivedError').classList.add('hidden');
-            amountReceivedInput.classList.remove('border-red-500');
-        }
     });
 
     function showSuccessPopup(callback) {
@@ -533,20 +514,17 @@
     }
 
     function updateInvoice(data) {
-        paymentMethodSelect.value = data.method || '';
         receiptNotesInput.value = data.notes || '';
         transactionStatusDisplay.textContent = data.status || 'Pending';
         transactionStatusDisplay.className = data.status === 'Paid' ? 'text-green-600' : 'status-pending';
-        // Chỉ hiển thị FullName, không có UserID
         processedByDisplay.textContent = data.processedByName || /*[[${staffInfo.fullName}]]*/ 'Staff Member';
         timeOfPaymentDisplay.textContent = data.timeOfPayment || new Date().toLocaleString('en-GB');
-        if (data.method === 'Cash') {
-            amountReceivedContainer.classList.remove('hidden');
-            amountReceivedInput.value = data.amountReceived || '';
-            const change = data.amountReceived ? (parseFloat(data.amountReceived.replace(/,/g, '')) - patientPayment) : 0;
-            changeReturnedDisplay.textContent = `Change Returned: ${change >= 0 ? change.toLocaleString('vi-VN') : 0} $`;
-        } else {
-            amountReceivedContainer.classList.add('hidden');
+
+        // Set amount received if provided (keep Amount Received always visible)
+        if (data.amountReceived) {
+            amountReceivedInput.value = data.amountReceived;
+            const change = parseFloat(data.amountReceived.replace(/,/g, '')) - (window.calculatedPatientPayment || 0);
+            changeReturnedDisplay.textContent = `Change Returned: ${change >= 0 ? change.toLocaleString('en-US') : 0} $`;
         }
     }
 
@@ -717,39 +695,35 @@
         }
     }
 
-    // Updated payment button click handler với validation đầy đủ
+    // Updated payment button click handler - Fixed for Cash-only payment
     paymentButton.addEventListener('click', async () => {
         let hasErrors = false;
 
-        // Reset all error states
-        document.getElementById('paymentMethodError').classList.add('hidden');
-        document.getElementById('amountReceivedError').classList.add('hidden');
-        paymentMethodSelect.classList.remove('border-red-500');
+        // Reset error states - Only check amountReceivedError since paymentMethodError doesn't exist anymore
+        const amountReceivedError = document.getElementById('amountReceivedError');
+        if (amountReceivedError) {
+            amountReceivedError.classList.add('hidden');
+        }
         amountReceivedInput.classList.remove('border-red-500');
 
-        // Validate Payment Method - hiển thị lỗi đỏ nếu không chọn
-        if (!paymentMethodSelect.value) {
-            document.getElementById('paymentMethodError').classList.remove('hidden');
-            paymentMethodSelect.classList.add('border-red-500');
-            hasErrors = true;
-        }
+        // Since payment method is always "Cash", only validate Amount Received
+        const amountReceived = parseFloat(amountReceivedInput.value) || 0;
+        const patientPayment = window.calculatedPatientPayment || 0;
 
-        // Validate Amount Received for Cash payment - hiển thị lỗi đỏ nếu không nhập và phải >= Patient Payment
-        if (paymentMethodSelect.value === 'Cash') {
-            const amountReceived = parseFloat(amountReceivedInput.value) || 0;
-            const patientPayment = window.calculatedPatientPayment || 0;
-
-            if (amountReceived === 0 || !amountReceivedInput.value) {
-                document.getElementById('amountReceivedError').textContent = 'Please enter amount received';
-                document.getElementById('amountReceivedError').classList.remove('hidden');
-                amountReceivedInput.classList.add('border-red-500');
-                hasErrors = true;
-            } else if (amountReceived < patientPayment) {
-                document.getElementById('amountReceivedError').textContent = 'Amount must be at least equal to Patient Payment';
-                document.getElementById('amountReceivedError').classList.remove('hidden');
-                amountReceivedInput.classList.add('border-red-500');
-                hasErrors = true;
+        if (amountReceived === 0 || !amountReceivedInput.value) {
+            if (amountReceivedError) {
+                amountReceivedError.textContent = 'Please enter amount received';
+                amountReceivedError.classList.remove('hidden');
             }
+            amountReceivedInput.classList.add('border-red-500');
+            hasErrors = true;
+        } else if (amountReceived < patientPayment) {
+            if (amountReceivedError) {
+                amountReceivedError.textContent = 'Amount must be at least equal to Patient Payment';
+                amountReceivedError.classList.remove('hidden');
+            }
+            amountReceivedInput.classList.add('border-red-500');
+            hasErrors = true;
         }
 
         // If there are validation errors, stop here
@@ -757,45 +731,20 @@
             return;
         }
 
-        // Proceed with payment if validation passes
-        if (paymentMethodSelect.value === 'Cash') {
-            const amountReceived = parseFloat(amountReceivedInput.value.replace(/[^\d.]/g, '')) || 0;
-            const patientPayment = window.calculatedPatientPayment || 0;
-            const change = amountReceived - patientPayment;
+        // Since payment method is always Cash, proceed with Cash payment
+        const change = amountReceived - patientPayment;
 
-            const paymentData = {
-                method: paymentMethodSelect.value,
-                amountReceived: amountReceived,
-                change: change,
-                receipt: {
-                    notes: receiptNotesInput.value || 'Medical consultation and services'
-                }
-            };
-
-            showPaymentConfirmation(paymentData);
-        } else {
-            // For banking payment
-            const paymentData = {
-                method: paymentMethodSelect.value,
-                receipt: {
-                    notes: receiptNotesInput.value || 'Medical consultation and services'
-                }
-            };
-
-            // Update QR modal with real data
-            const qrAmountText = document.querySelector('#qrModal .qr-placeholder + p');
-            const qrReceiptText = qrAmountText.nextElementSibling;
-
-            if (qrAmountText) {
-                qrAmountText.textContent = `Amount: ${(window.calculatedPatientPayment || 0).toLocaleString('en-US')} $`;
+        const paymentData = {
+            method: 'Cash',
+            amountReceived: amountReceived,
+            change: change,
+            receipt: {
+                notes: receiptNotesInput.value || 'Medical consultation and services'
             }
-            if (qrReceiptText) {
-                qrReceiptText.textContent = `Receipt: ${invoiceData.receiptNumber}`;
-            }
+        };
 
-            qrModal.style.display = 'flex';
-            window.pendingPaymentData = paymentData;
-        }
+        // Show confirmation modal
+        showPaymentConfirmation(paymentData);
     });
 
     // Confirmation button handler - Cập nhật Status từ Pending sang Paid và lưu vào database
