@@ -1,7 +1,12 @@
 package orochi.controller;
 
 import java.io.File;
+import java.math.BigDecimal;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
+import java.net.URLEncoder;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -9,6 +14,8 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
 import jakarta.transaction.Transactional;
 import jakarta.validation.Valid;
 import org.slf4j.Logger;
@@ -30,8 +37,10 @@ import orochi.dto.AppointmentDTO;
 import orochi.dto.AppointmentFormDTO;
 import orochi.dto.SpecializationDTO;
 import orochi.model.*;
+import orochi.repository.AppointmentRepository;
 import orochi.repository.PatientRepository;
 import orochi.repository.UserRepository;
+import orochi.repository.TransactionRepository;
 import orochi.service.*;
 import orochi.service.impl.ReceptionistService;
 import orochi.service.FileStorageService;
@@ -49,6 +58,8 @@ public class ReceptionistController {
     private final RoomService roomService;
     private final EmailService emailService;
     private final FileStorageService fileStorageService;
+    private final TransactionRepository transactionRepository;
+    private final AppointmentRepository appointmentRepository;
 
     @Autowired
     private PasswordEncoder passwordEncoder;
@@ -60,7 +71,8 @@ public class ReceptionistController {
                                   SpecializationService specializationService, AppointmentService appointmentService,
                                   PatientRepository patientRepository, RoomService roomService,
                                   NotificationService notificationService, EmailService emailService,
-                                  FileStorageService fileStorageService) {
+                                  FileStorageService fileStorageService, TransactionRepository transactionRepository,
+                                  AppointmentRepository appointmentRepository) {
         this.receptionistService = receptionistService;
         this.userRepository = userRepository;
         this.specializationService = specializationService;
@@ -70,6 +82,8 @@ public class ReceptionistController {
         this.notificationService = notificationService;
         this.emailService = emailService;
         this.fileStorageService = fileStorageService;
+        this.transactionRepository = transactionRepository;
+        this.appointmentRepository = appointmentRepository;
     }
 
     @GetMapping("/dashboard")
@@ -1744,6 +1758,637 @@ public class ReceptionistController {
             response.put("success", false);
             response.put("message", "Lỗi hệ thống: " + e.getMessage());
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
+        }
+    }
+
+    @GetMapping("/online-payment")
+    public String onlinePayment(@RequestParam Integer patientId,
+                               @RequestParam Integer appointmentId,
+                               Model model,
+                               Authentication authentication) {
+        try {
+            // Ensure authentication is not null
+            if (authentication == null || !authentication.isAuthenticated()) {
+                return "redirect:/login";
+            }
+
+            // Fetch invoice data for the patient
+            Map<String, Object> invoiceData = receptionistService.getInvoiceDataByPatientId(patientId);
+
+            if (invoiceData == null) {
+                model.addAttribute("errorMessage", "Patient not found");
+                return "redirect:/receptionist/payments";
+            }
+
+            // Get staff info for the "Processed By" field
+            Map<String, Object> staffInfo = receptionistService.getReceptionistStaffInfo();
+
+            // Calculate payment amounts (similar to PatientController)
+            BigDecimal consultationFee = new BigDecimal("500000"); // 500,000 VND
+            BigDecimal serviceFee = new BigDecimal("50000");       // 50,000 VND
+            BigDecimal discount = new BigDecimal("50000");         // 50,000 VND discount
+            BigDecimal totalAmount = consultationFee.add(serviceFee).subtract(discount);
+
+            // Add data to the model
+            model.addAttribute("invoiceData", invoiceData);
+            model.addAttribute("staffInfo", staffInfo);
+            model.addAttribute("patientId", patientId);
+            model.addAttribute("appointmentId", appointmentId);
+            // Add the missing totalAmount and amount attributes
+            model.addAttribute("totalAmount", totalAmount);
+            model.addAttribute("amount", totalAmount);
+            model.addAttribute("consultationFee", consultationFee);
+            model.addAttribute("serviceFee", serviceFee);
+            model.addAttribute("discount", discount);
+
+            // Return the online payment template
+            return "Receptionists/online-payment";
+        } catch (Exception e) {
+            logger.error("Error loading online payment page: {}", e.getMessage(), e);
+            model.addAttribute("errorMessage", "Error loading payment details: " + e.getMessage());
+            return "redirect:/receptionist/payments";
+        }
+    }
+
+    // VNPay Configuration - cập nhật để xử lý VND
+    public static String vnp_PayUrl = "https://sandbox.vnpayment.vn/paymentv2/vpcpay.html";
+    public static String vnp_ReturnUrl = "http://localhost:8089/receptionist/payment-return";
+    public static String vnp_TmnCode = "K65YFBNM";
+    public static String secretKey = "HSRAHZZPFEPACYMRDC023GI3WD3HRZSE";
+    public static String vnp_Version = "2.1.0";
+
+    // Tỷ giá USD to VND (có thể cập nhật từ API thực tế)
+    private static final double USD_TO_VND_RATE = 24000.0; // 1 USD = 24,000 VND
+
+    @PostMapping("/process-online-payment")
+    public String processOnlinePayment(@RequestParam Integer appointmentId,
+                                     @RequestParam Integer patientId,
+                                     @RequestParam BigDecimal amount,
+                                     @RequestParam String paymentMethod,
+                                     @RequestParam String customerName,
+                                     @RequestParam String customerPhone,
+                                     @RequestParam String customerEmail,
+                                     @RequestParam(required = false) String notes,
+                                     RedirectAttributes redirectAttributes,
+                                     HttpServletRequest request,
+                                     HttpServletResponse response) {
+        try {
+            logger.info("=== STARTING ONLINE PAYMENT PROCESSING ===");
+            logger.info("AppointmentId: {}, PatientId: {}, Amount (VND): {}, Method: {}",
+                       appointmentId, patientId, amount, paymentMethod);
+            logger.info("Customer: {}, Phone: {}, Email: {}", customerName, customerPhone, customerEmail);
+
+            // STEP 1: Validate appointment exists
+            Appointment appointment = appointmentService.getAppointmentById(appointmentId);
+            if (appointment == null) {
+                logger.error("Invalid appointment ID: {}", appointmentId);
+                redirectAttributes.addFlashAttribute("errorMessage", "Invalid appointment");
+                return "redirect:/receptionist/online-payment?patientId=" + patientId + "&appointmentId=" + appointmentId;
+            }
+
+            // STEP 2: Get patient information and validate
+            Optional<Patient> patientOpt = patientRepository.findById(patientId);
+            if (patientOpt.isEmpty()) {
+                logger.error("Patient not found: {}", patientId);
+                redirectAttributes.addFlashAttribute("errorMessage", "Patient not found");
+                return "redirect:/receptionist/online-payment?patientId=" + patientId + "&appointmentId=" + appointmentId;
+            }
+
+            // STEP 3: Calculate correct Patient Payment amount from services
+            Map<String, Object> invoiceData = receptionistService.getInvoiceDataByPatientId(patientId);
+            if (invoiceData == null) {
+                logger.error("Invoice data not found for patient: {}", patientId);
+                redirectAttributes.addFlashAttribute("errorMessage", "Invoice data not found");
+                return "redirect:/receptionist/online-payment?patientId=" + patientId + "&appointmentId=" + appointmentId;
+            }
+
+            // 🔥 CALCULATE PATIENT PAYMENT CORRECTLY 🔥
+            List<Map<String, Object>> servicesUsed = (List<Map<String, Object>>) invoiceData.get("servicesUsed");
+            BigDecimal correctPatientPaymentVND = calculateCorrectPatientPaymentInVND(servicesUsed);
+
+            logger.info("=== PAYMENT AMOUNT VALIDATION ===");
+            logger.info("Received Amount from Form (VND): {}", amount);
+            logger.info("Calculated Patient Payment (VND): {}", correctPatientPaymentVND);
+
+            // Validate that the amount matches the calculated Patient Payment
+            BigDecimal tolerance = new BigDecimal("1000"); // Allow 1,000 VND tolerance
+            if (amount.subtract(correctPatientPaymentVND).abs().compareTo(tolerance) > 0) {
+                logger.warn("Amount mismatch - Expected Patient Payment: {} VND, Received: {} VND",
+                           correctPatientPaymentVND, amount);
+
+                // Force use the correct Patient Payment amount
+                amount = correctPatientPaymentVND;
+                logger.info("✅ Updated amount to correct Patient Payment: {} VND", amount);
+            }
+
+            // STEP 4: 🔥 FIND EXISTING TRANSACTION - DO NOT CREATE NEW 🔥
+            Transaction transaction = null;
+
+            // Find existing transaction by AppointmentID and UserID
+            List<Transaction> existingTransactions = transactionRepository.findByAppointmentId(appointmentId);
+            if (!existingTransactions.isEmpty()) {
+                // Filter by UserID to ensure exact match
+                Optional<Transaction> matchingTransaction = existingTransactions.stream()
+                    .filter(t -> t.getUserId() != null && t.getUserId().equals(patientOpt.get().getUser().getUserId()))
+                    .findFirst();
+
+                if (matchingTransaction.isPresent()) {
+                    transaction = matchingTransaction.get();
+                    logger.info("✅ FOUND EXISTING Transaction {} for AppointmentID={} AND UserID={}",
+                               transaction.getTransactionId(), appointmentId, patientOpt.get().getUser().getUserId());
+                }
+            }
+
+            // If NO existing transaction found, CREATE ONLY ONE transaction
+            if (transaction == null) {
+                logger.info("No existing transaction found - creating new one for AppointmentID={} AND UserID={}",
+                           appointmentId, patientOpt.get().getUser().getUserId());
+
+                transaction = new Transaction();
+                transaction.setAppointmentId(appointmentId);
+                transaction.setUserId(patientOpt.get().getUser().getUserId());
+
+                // Map payment method to database-compatible values
+                String dbMethod = mapPaymentMethodToDbValue(paymentMethod);
+                transaction.setMethod(dbMethod);
+                transaction.setStatus("Pending");
+                transaction.setTimeOfPayment(LocalDateTime.now());
+
+                // Save ONLY if no existing transaction found
+                transaction = transactionRepository.save(transaction);
+                logger.info("✅ CREATED NEW Transaction {} for AppointmentID={} AND UserID={}",
+                           transaction.getTransactionId(), appointmentId, patientOpt.get().getUser().getUserId());
+            } else {
+                // Update existing transaction method and status if needed
+                if (!"Paid".equalsIgnoreCase(transaction.getStatus())) {
+                    String dbMethod = mapPaymentMethodToDbValue(paymentMethod);
+                    transaction.setMethod(dbMethod);
+                    transaction.setStatus("Pending");
+                    transaction.setTimeOfPayment(LocalDateTime.now());
+                    transaction = transactionRepository.save(transaction);
+                    logger.info("✅ UPDATED EXISTING Transaction {} - Method: {}, Status: Pending",
+                               transaction.getTransactionId(), dbMethod);
+                } else {
+                    logger.warn("⚠️ Transaction {} is already PAID - redirecting to success page", transaction.getTransactionId());
+                    redirectAttributes.addFlashAttribute("successMessage", "Payment already completed successfully!");
+                    return "redirect:/receptionist/payment-return?vnp_TxnRef=" + transaction.getTransactionId() + "&vnp_ResponseCode=00";
+                }
+            }
+
+            // STEP 5: Process payment URL based on method
+            String redirectUrl = null;
+            switch (paymentMethod.toLowerCase()) {
+                case "vnpay":
+                    logger.info("Processing VNPay payment with Patient Payment amount {} VND...", amount);
+                    redirectUrl = createVNPayPaymentUrl(transaction, request, amount);
+                    logger.info("VNPay URL result: {}", redirectUrl != null ? "SUCCESS" : "FAILED");
+                    break;
+                case "momo":
+                    redirectUrl = createMoMoPaymentUrl(transaction);
+                    break;
+                case "zalopay":
+                    redirectUrl = createZaloPayPaymentUrl(transaction);
+                    break;
+                default:
+                    logger.error("Invalid payment method: {}", paymentMethod);
+                    redirectAttributes.addFlashAttribute("errorMessage", "Invalid payment method: " + paymentMethod);
+                    return "redirect:/receptionist/online-payment?patientId=" + patientId + "&appointmentId=" + appointmentId;
+            }
+
+            if (redirectUrl == null || redirectUrl.isEmpty()) {
+                logger.error("FAILED to create payment URL for method: {}", paymentMethod);
+                redirectAttributes.addFlashAttribute("errorMessage", "Failed to initiate payment. Please try again.");
+                return "redirect:/receptionist/online-payment?patientId=" + patientId + "&appointmentId=" + appointmentId;
+            }
+
+            logger.info("=== PREPARING REDIRECT ===");
+            logger.info("Using Transaction ID: {}", transaction.getTransactionId());
+            logger.info("Method: {}", paymentMethod);
+            logger.info("Amount (VND): {}", amount);
+            logger.info("URL: {}", redirectUrl);
+
+            // Validate VNPay URL before redirect
+            if (paymentMethod.equalsIgnoreCase("vnpay")) {
+                if (!redirectUrl.startsWith("https://sandbox.vnpayment.vn")) {
+                    logger.error("Invalid VNPay URL format: {}", redirectUrl);
+                    redirectAttributes.addFlashAttribute("errorMessage", "Invalid payment gateway URL");
+                    return "redirect:/receptionist/online-payment?patientId=" + patientId + "&appointmentId=" + appointmentId;
+                }
+
+                try {
+                    java.net.URL testUrl = new java.net.URL(redirectUrl);
+                    logger.info("URL validation passed for: {}", testUrl.getHost());
+                } catch (java.net.MalformedURLException e) {
+                    logger.error("Malformed VNPay URL: {}", e.getMessage());
+                    redirectAttributes.addFlashAttribute("errorMessage", "Invalid payment URL format");
+                    return "redirect:/receptionist/online-payment?patientId=" + patientId + "&appointmentId=" + appointmentId;
+                }
+            }
+
+            logger.info("=== EXECUTING REDIRECT ===");
+            logger.info("Redirecting to: {}", redirectUrl);
+
+            // For VNPay, use direct redirect
+            if (paymentMethod.equalsIgnoreCase("vnpay")) {
+                logger.info("Using direct redirect to VNPay");
+                try {
+                    response.sendRedirect(redirectUrl);
+                    return null;
+                } catch (Exception redirectException) {
+                    logger.error("Direct redirect failed: {}", redirectException.getMessage());
+                    redirectAttributes.addFlashAttribute("errorMessage", "Failed to redirect to VNPay: " + redirectException.getMessage());
+                    return "redirect:/receptionist/online-payment?patientId=" + patientId + "&appointmentId=" + appointmentId;
+                }
+            }
+
+            return "redirect:" + redirectUrl;
+
+        } catch (Exception e) {
+            logger.error("EXCEPTION in processOnlinePayment", e);
+            redirectAttributes.addFlashAttribute("errorMessage", "An error occurred while processing the payment: " + e.getMessage());
+            return "redirect:/receptionist/online-payment?patientId=" + patientId + "&appointmentId=" + appointmentId;
+        }
+    }
+
+    /**
+     * Calculate CORRECT Patient Payment in VND from services used
+     * Patient Payment = SubTotal - Discount (where SubTotal = sum of all service totals)
+     */
+    private BigDecimal calculateCorrectPatientPaymentInVND(List<Map<String, Object>> servicesUsed) {
+        if (servicesUsed == null || servicesUsed.isEmpty()) {
+            return BigDecimal.ZERO;
+        }
+
+        logger.info("=== CALCULATING CORRECT PATIENT PAYMENT ===");
+
+        // Calculate SubTotal (sum of all service totals in USD)
+        BigDecimal subTotalUSD = BigDecimal.ZERO;
+        int totalQuantity = 0;
+
+        for (Map<String, Object> service : servicesUsed) {
+            Object totalObj = service.get("total");
+            Object quantityObj = service.get("quantity");
+
+            if (totalObj != null && quantityObj != null) {
+                BigDecimal serviceTotal;
+                int quantity;
+
+                try {
+                    if (totalObj instanceof Number) {
+                        serviceTotal = new BigDecimal(((Number) totalObj).doubleValue());
+                    } else {
+                        serviceTotal = new BigDecimal(totalObj.toString());
+                    }
+
+                    if (quantityObj instanceof Number) {
+                        quantity = ((Number) quantityObj).intValue();
+                    } else {
+                        quantity = Integer.parseInt(quantityObj.toString());
+                    }
+
+                    subTotalUSD = subTotalUSD.add(serviceTotal);
+                    totalQuantity += quantity;
+
+                    logger.info("Service - Total: {} USD, Quantity: {}", serviceTotal, quantity);
+                } catch (NumberFormatException e) {
+                    logger.warn("Invalid service total or quantity: {} / {}", totalObj, quantityObj);
+                }
+            }
+        }
+
+        // Calculate discount based on quantity rules
+        BigDecimal discountPercent = BigDecimal.ZERO;
+        if (totalQuantity >= 5) {
+            discountPercent = new BigDecimal("10"); // 10%
+        } else if (totalQuantity >= 3) {
+            discountPercent = new BigDecimal("5");  // 5%
+        } else if (totalQuantity == 1) {
+            discountPercent = new BigDecimal("3");  // 3%
+        }
+
+        // Calculate discount amount
+        BigDecimal discountAmountUSD = subTotalUSD.multiply(discountPercent).divide(new BigDecimal("100"), 2, BigDecimal.ROUND_HALF_UP);
+
+        // Calculate Patient Payment (SubTotal - Discount)
+        BigDecimal patientPaymentUSD = subTotalUSD.subtract(discountAmountUSD);
+
+        // Convert to VND
+        BigDecimal patientPaymentVND = patientPaymentUSD.multiply(new BigDecimal(USD_TO_VND_RATE));
+
+        logger.info("=== PATIENT PAYMENT CALCULATION RESULTS ===");
+        logger.info("SubTotal USD: {}", subTotalUSD);
+        logger.info("Total Quantity: {}", totalQuantity);
+        logger.info("Discount Percent: {}%", discountPercent);
+        logger.info("Discount Amount USD: {}", discountAmountUSD);
+        logger.info("Patient Payment USD: {}", patientPaymentUSD);
+        logger.info("Patient Payment VND: {}", patientPaymentVND);
+
+        return patientPaymentVND.setScale(0, BigDecimal.ROUND_HALF_UP);
+    }
+
+    private String createVNPayPaymentUrl(Transaction transaction, HttpServletRequest request, BigDecimal amount) {
+        try {
+            logger.info("=== Creating VNPay URL ===");
+            logger.info("Transaction ID: {}, Amount (VND): {}", transaction.getTransactionId(), amount);
+
+            // Validate input parameters
+            if (transaction == null || transaction.getTransactionId() == null) {
+                logger.error("Transaction or TransactionID is null");
+                return null;
+            }
+            if (amount == null || amount.compareTo(BigDecimal.ZERO) <= 0) {
+                logger.error("Amount is null or invalid: {}", amount);
+                return null;
+            }
+
+            Map<String, String> vnpParams = new HashMap<>();
+            vnpParams.put("vnp_Version", vnp_Version);
+            vnpParams.put("vnp_Command", "pay");
+            vnpParams.put("vnp_TmnCode", vnp_TmnCode);
+
+            // VNPay requires amount in smallest unit (xu) - multiply VND by 100
+            // Example: 5,808,000 VND -> 580,800,000 (xu)
+            long amountInXu = amount.multiply(new BigDecimal(100)).longValue();
+            vnpParams.put("vnp_Amount", String.valueOf(amountInXu));
+
+            logger.info("Amount conversion: {} VND -> {} xu", amount, amountInXu);
+
+            vnpParams.put("vnp_CurrCode", "VND");
+            vnpParams.put("vnp_TxnRef", String.valueOf(transaction.getTransactionId()));
+
+            String orderInfo = String.format("Thanh toan kham benh - Ma GD: %d - Ma hen: %d - So tien: %s VND",
+                                            transaction.getTransactionId(),
+                                            transaction.getAppointmentId(),
+                                            amount.toPlainString());
+            vnpParams.put("vnp_OrderInfo", orderInfo);
+            vnpParams.put("vnp_OrderType", "other");
+            vnpParams.put("vnp_Locale", "vn");
+            vnpParams.put("vnp_ReturnUrl", vnp_ReturnUrl);
+            vnpParams.put("vnp_IpAddr", getClientIpAddress(request));
+
+            String createDate = LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyyMMddHHmmss"));
+            vnpParams.put("vnp_CreateDate", createDate);
+
+            logger.info("=== VNPay Parameters ===");
+            logger.info("vnp_Version: {}", vnpParams.get("vnp_Version"));
+            logger.info("vnp_Command: {}", vnpParams.get("vnp_Command"));
+            logger.info("vnp_TmnCode: {}", vnpParams.get("vnp_TmnCode"));
+            logger.info("vnp_Amount (xu): {}", vnpParams.get("vnp_Amount"));
+            logger.info("vnp_CurrCode: {}", vnpParams.get("vnp_CurrCode"));
+            logger.info("vnp_TxnRef: {}", vnpParams.get("vnp_TxnRef"));
+            logger.info("vnp_OrderInfo: {}", vnpParams.get("vnp_OrderInfo"));
+            logger.info("vnp_ReturnUrl: {}", vnpParams.get("vnp_ReturnUrl"));
+            logger.info("vnp_CreateDate: {}", vnpParams.get("vnp_CreateDate"));
+
+            // Build query string and sort parameters alphabetically
+            StringBuilder query = new StringBuilder();
+            vnpParams.entrySet().stream()
+                    .filter(entry -> entry.getValue() != null && !entry.getValue().isEmpty())
+                    .sorted(Map.Entry.comparingByKey())
+                    .forEach(entry -> {
+                        if (query.length() > 0) query.append("&");
+                        try {
+                            query.append(entry.getKey())
+                                 .append("=")
+                                 .append(URLEncoder.encode(entry.getValue(), StandardCharsets.UTF_8));
+                        } catch (Exception e) {
+                            logger.error("Error encoding parameter: {} = {}", entry.getKey(), entry.getValue());
+                        }
+                    });
+
+            String queryString = query.toString();
+            logger.info("Query string before hash: {}", queryString);
+
+            // Generate secure hash using HMAC SHA512
+            String secureHash = hmacSHA512(secretKey, queryString);
+            if (secureHash == null || secureHash.isEmpty()) {
+                logger.error("Failed to generate secure hash");
+                return null;
+            }
+            logger.info("Generated secure hash: {}", secureHash);
+
+            String finalQuery = queryString + "&vnp_SecureHash=" + secureHash;
+            String finalUrl = vnp_PayUrl + "?" + finalQuery;
+
+            logger.info("=== Final VNPay URL ===");
+            logger.info("Base URL: {}", vnp_PayUrl);
+            logger.info("Full URL length: {} characters", finalUrl.length());
+            logger.info("Final URL: {}", finalUrl);
+
+            // Validate URL format
+            if (!finalUrl.startsWith("https://sandbox.vnpayment.vn")) {
+                logger.error("Invalid VNPay URL format: {}", finalUrl);
+                return null;
+            }
+
+            // Test URL construction
+            try {
+                java.net.URL testUrl = new java.net.URL(finalUrl);
+                logger.info("URL validation successful: {}", testUrl.getHost());
+            } catch (java.net.MalformedURLException e) {
+                logger.error("Malformed URL: {}", e.getMessage());
+                return null;
+            }
+
+            logger.info("VNPay URL created successfully, ready for redirect");
+            return finalUrl;
+
+        } catch (Exception e) {
+            logger.error("Error creating VNPay payment URL", e);
+            e.printStackTrace(); // Print full stack trace for debugging
+            return null;
+        }
+    }
+
+    private String createMoMoPaymentUrl(Transaction transaction) {
+        logger.info("MoMo payment initiated for transaction: {}", transaction.getTransactionId());
+        return "/receptionist/payment-processing?method=momo&transactionId=" + transaction.getTransactionId();
+    }
+
+    private String createZaloPayPaymentUrl(Transaction transaction) {
+        logger.info("ZaloPay payment initiated for transaction: {}", transaction.getTransactionId());
+        return "/receptionist/payment-processing?method=zalopay&transactionId=" + transaction.getTransactionId();
+    }
+
+    private String getClientIpAddress(HttpServletRequest request) {
+        String xfHeader = request.getHeader("X-Forwarded-For");
+        if (xfHeader == null) {
+            return request.getRemoteAddr();
+        }
+        return xfHeader.split(",")[0];
+    }
+
+    private String hmacSHA512(String key, String data) {
+        try {
+            javax.crypto.Mac mac = javax.crypto.Mac.getInstance("HmacSHA512");
+            javax.crypto.spec.SecretKeySpec secretKeySpec = new javax.crypto.spec.SecretKeySpec(key.getBytes(), "HmacSHA512");
+            mac.init(secretKeySpec);
+            byte[] hash = mac.doFinal(data.getBytes());
+            StringBuilder result = new StringBuilder();
+            for (byte b : hash) {
+                result.append(String.format("%02x", b));
+            }
+            return result.toString();
+        } catch (Exception e) {
+            logger.error("Error generating HMAC SHA512", e);
+            return null;
+        }
+    }
+
+    @GetMapping("/payment-return")
+    public String paymentReturn(@RequestParam Map<String, String> allRequestParams, Model model) {
+        try {
+            logger.info("=== VNPAY PAYMENT RETURN IN RECEPTIONIST CONTROLLER ===");
+            logger.info("VNPay payment return with params: {}", allRequestParams);
+
+            String transactionId = allRequestParams.get("vnp_TxnRef");
+            String paymentStatus = allRequestParams.get("vnp_ResponseCode");
+            String amountStr = allRequestParams.get("vnp_Amount");
+
+            logger.info("VNPay return parameters:");
+            logger.info("- Transaction ID: {}", transactionId);
+            logger.info("- Response Code: {}", paymentStatus);
+            logger.info("- Amount (xu): {}", amountStr);
+
+            // Convert amount string to proper number (VNPay returns amount in xu - smallest unit)
+            Long amountInXu = null;
+            Double amountInVND = null;
+            if (amountStr != null && !amountStr.trim().isEmpty()) {
+                try {
+                    amountInXu = Long.parseLong(amountStr);
+                    // Convert from xu to VND (divide by 100)
+                    amountInVND = amountInXu / 100.0;
+                    logger.info("Amount conversion: {} xu -> {} VND", amountInXu, amountInVND);
+                } catch (NumberFormatException e) {
+                    logger.error("Error parsing amount: {}", amountStr, e);
+                }
+            }
+
+            // Get current receptionist user ID for ProcessedByUserID
+            Integer currentReceptionistId = getCurrentUserId();
+            logger.info("Current receptionist processing payment: {}", currentReceptionistId);
+
+            if (transactionId != null && !transactionId.trim().isEmpty()) {
+                try {
+                    Optional<Transaction> transactionOpt = transactionRepository.findById(Integer.valueOf(transactionId));
+                    if (transactionOpt.isPresent()) {
+                        Transaction transaction = transactionOpt.get();
+
+                        String currentStatus = transaction.getStatus();
+                        logger.info("Current transaction status before update: {}", currentStatus);
+
+                        // Map VNPay response code to valid database Status values
+                        if ("00".equals(paymentStatus)) {
+                            // PAYMENT SUCCESSFUL - Update Transaction FIRST (ALWAYS update regardless of appointment check)
+                            transaction.setStatus("Paid");
+                            transaction.setProcessedByUserId(currentReceptionistId);
+                            transaction.setMethod("Banking"); // VNPay is Banking method
+
+                            // SAVE TRANSACTION IMMEDIATELY - This must happen regardless of appointment validation
+                            Transaction savedTransaction = transactionRepository.save(transaction);
+                            logger.info("✅ PAYMENT SUCCESSFUL - Transaction {} updated: Status='Paid', ProcessedBy={}, Method='Banking'",
+                                       transactionId, currentReceptionistId);
+                            logger.info("💾 Transaction {} saved to database with final status: {}, ProcessedBy: {}, Method: {}",
+                                       transactionId, savedTransaction.getStatus(), savedTransaction.getProcessedByUserId(), savedTransaction.getMethod());
+
+                            // Now try to update corresponding appointment status (SEPARATE from transaction update)
+                            boolean appointmentUpdated = false;
+                            if (transaction.getAppointmentId() != null && transaction.getUserId() != null) {
+                                Optional<Appointment> appointmentOpt = appointmentRepository.findById(transaction.getAppointmentId());
+                                if (appointmentOpt.isPresent()) {
+                                    Appointment appointment = appointmentOpt.get();
+                                    // STRICT SECURITY CHECK: Verify both AppointmentID and UserID match
+                                    if (appointment.getAppointmentId().equals(transaction.getAppointmentId()) &&
+                                        appointment.getPatientId().equals(transaction.getUserId())) {
+                                        String oldAppointmentStatus = appointment.getStatus();
+                                        appointment.setStatus("Completed");
+                                        appointmentRepository.save(appointment);
+                                        appointmentUpdated = true;
+                                        logger.info("✅ Updated Appointment {} status from '{}' to 'Completed' for UserID: {}",
+                                                   appointment.getAppointmentId(), oldAppointmentStatus, transaction.getUserId());
+                                    } else {
+                                        logger.error("❌ SECURITY VIOLATION - Appointment {} (PatientID: {}) does not match Transaction {} (AppointmentID: {}, UserID: {})",
+                                                   appointment.getAppointmentId(), appointment.getPatientId(),
+                                                   transactionId, transaction.getAppointmentId(), transaction.getUserId());
+                                    }
+                                } else {
+                                    logger.error("❌ Appointment with ID {} not found for successful payment", transaction.getAppointmentId());
+                                }
+                            } else {
+                                logger.error("❌ Transaction {} missing AppointmentID or UserID", transactionId);
+                            }
+
+                            // 🚫 REMOVED TRANSACTION DELETION - Keep transaction in database as per requirement
+                            // Transaction should remain in database with Status = "Paid", Method = "Banking"
+                            logger.info("💾 Transaction {} KEPT in database with Status='Paid', Method='Banking' as requested", transactionId);
+
+                            // Set success message based on appointment update result
+                            if (appointmentUpdated) {
+                                model.addAttribute("successMessage", "Payment completed successfully! Transaction saved and appointment completed.");
+                            } else {
+                                model.addAttribute("successMessage", "Payment completed successfully! Transaction saved but appointment requires manual review.");
+                            }
+
+                            // Add data to model for display (using saved transaction)
+                            model.addAttribute("transaction", savedTransaction);
+                            model.addAttribute("paymentStatus", paymentStatus);
+                            model.addAttribute("amount", amountInVND);
+                            model.addAttribute("amountInXu", amountInXu);
+
+                            logger.info("=== PAYMENT RETURN PROCESSING COMPLETED ===");
+                            return "Receptionists/payment-return";
+                        } else {
+                            // PAYMENT FAILED - Update ONLY transaction status, keep as Pending for retry
+                            if (!"Paid".equals(currentStatus)) {
+                                transaction.setStatus("Pending");
+                                logger.warn("❌ PAYMENT FAILED - Transaction {} status: {} -> Pending (Response Code: {})",
+                                           transactionId, currentStatus, paymentStatus);
+                            } else {
+                                logger.warn("⚠️ Payment failed but transaction {} is already Paid, not changing status", transactionId);
+                            }
+
+                            // Save transaction with updated status for failed payments
+                            Transaction savedTransaction = transactionRepository.save(transaction);
+                            logger.info("💾 Transaction {} saved with status: {} after failed payment", transactionId, savedTransaction.getStatus());
+
+                            model.addAttribute("transaction", savedTransaction);
+                            model.addAttribute("paymentStatus", paymentStatus);
+                            model.addAttribute("amount", amountInVND);
+                            model.addAttribute("amountInXu", amountInXu);
+                            model.addAttribute("errorMessage", "Payment failed. Please try again or contact support.");
+                        }
+                    } else {
+                        logger.error("❌ Transaction not found for ID: {}", transactionId);
+                        model.addAttribute("errorMessage", "Transaction not found with ID: " + transactionId);
+                    }
+                } catch (NumberFormatException e) {
+                    logger.error("❌ Invalid transaction ID format: {}", transactionId, e);
+                    model.addAttribute("errorMessage", "Invalid transaction ID format");
+                }
+            } else {
+                logger.error("❌ Transaction ID is missing from VNPay response");
+                model.addAttribute("errorMessage", "Transaction ID is missing from payment response");
+            }
+
+            logger.info("=== PAYMENT RETURN PROCESSING COMPLETED ===");
+            return "Receptionists/payment-return";
+        } catch (Exception e) {
+            logger.error("💥 ERROR handling payment return in ReceptionistController", e);
+            model.addAttribute("errorMessage", "An error occurred while processing the payment return: " + e.getMessage());
+            return "error";
+        }
+    }
+
+    private String mapPaymentMethodToDbValue(String paymentMethod) {
+        switch (paymentMethod.toLowerCase()) {
+            case "vnpay":
+            case "momo":
+            case "zalopay":
+                return "Banking"; // Tất cả payment method online đều là Banking
+            case "cash":
+                return "Cash"; // Chỉ Cash mới là Cash
+            default:
+                return "Banking"; // Default to Banking thay vì Cash
         }
     }
 }

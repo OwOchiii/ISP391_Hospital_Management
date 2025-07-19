@@ -1893,8 +1893,9 @@ public class ReceptionistService {
     }
 
     /**
-     * Process payment and update transaction status to "Paid"
-     * Updates Transaction status and Receipt information in database
+     * Process payment and update EXISTING transaction status to "Paid"
+     * ONLY UPDATES existing Transaction - does NOT create new records
+     * Updated logic to strictly find by AppointmentID and UserID
      */
     @Transactional
     public Map<String, Object> processPayment(
@@ -1908,7 +1909,7 @@ public class ReceptionistService {
             String notes) {
 
         try {
-            logger.info("=== Processing Payment ===");
+            logger.info("=== Processing Payment - UPDATE EXISTING TRANSACTION ONLY ===");
             logger.info("PatientId: {}, AppointmentId: {}, Method: {}, TotalAmount: {}",
                        patientId, appointmentId, method, totalAmount);
 
@@ -1917,68 +1918,69 @@ public class ReceptionistService {
                 throw new RuntimeException("Invalid AppointmentID or PatientID - not found in database");
             }
 
-            // STEP 2: Check for existing transaction by AppointmentID (more reliable than transactionIdStr)
+            // STEP 2: FIND EXISTING TRANSACTION BY BOTH AppointmentID AND UserID - STRICT MATCHING
             Transaction transaction = null;
-            List<Transaction> existingTransactions = transactionRepository.findByAppointmentId(appointmentId);
 
-            if (!existingTransactions.isEmpty()) {
-                // Found existing transaction for this appointment
-                transaction = existingTransactions.get(0); // Get the first (latest) transaction
-                logger.info("Found existing transaction {} for appointment {}",
-                           transaction.getTransactionId(), appointmentId);
+            // Primary search: Find by BOTH AppointmentID AND UserID for security
+            List<Transaction> candidateTransactions = transactionRepository.findByAppointmentId(appointmentId);
+            if (!candidateTransactions.isEmpty()) {
+                // Filter by UserID to ensure exact match
+                Optional<Transaction> matchingTransaction = candidateTransactions.stream()
+                    .filter(t -> t.getUserId() != null && t.getUserId().equals(patientId))
+                    .findFirst();
 
-                // Validate that the transaction belongs to the correct patient
-                if (!transaction.getUserId().equals(patientId)) {
-                    throw new RuntimeException("Transaction UserID mismatch - security violation");
+                if (matchingTransaction.isPresent()) {
+                    transaction = matchingTransaction.get();
+                    logger.info("Found existing transaction by AppointmentID={} AND UserID={}: TransactionID={}",
+                               appointmentId, patientId, transaction.getTransactionId());
+                } else {
+                    logger.error("No transaction found matching AppointmentID={} AND UserID={}", appointmentId, patientId);
+                    throw new RuntimeException("No transaction found for AppointmentID: " + appointmentId + " and UserID: " + patientId);
                 }
-
-                // Check if already paid to prevent double payment
-                if ("Paid".equalsIgnoreCase(transaction.getStatus())) {
-                    logger.warn("Transaction {} is already paid", transaction.getTransactionId());
-                    // Return existing transaction info instead of throwing error
-                    return buildPaymentResult(transaction, "Already Paid");
-                }
-
-                logger.info("Updating existing transaction {} from {} to Paid",
-                           transaction.getTransactionId(), transaction.getStatus());
             } else {
-                // No existing transaction found, create new one
-                transaction = new Transaction();
-                transaction.setAppointmentId(appointmentId);
-                transaction.setUserId(patientId);
-                logger.info("Creating new transaction for appointment: {}", appointmentId);
+                logger.error("No transactions found for AppointmentID: {}", appointmentId);
+                throw new RuntimeException("No existing transaction found for AppointmentID: " + appointmentId);
             }
 
-            // STEP 3: Update transaction details
+            // STEP 3: Validate transaction is not already paid to prevent duplicate processing
+            if ("Paid".equalsIgnoreCase(transaction.getStatus())) {
+                logger.warn("Transaction {} is already paid", transaction.getTransactionId());
+                return buildPaymentResult(transaction, "Already Paid");
+            }
+
+            logger.info("UPDATING existing transaction {} from {} to Paid",
+                       transaction.getTransactionId(), transaction.getStatus());
+
+            // STEP 4: UPDATE ONLY the required fields - NEVER change AppointmentId or UserId
+            String oldStatus = transaction.getStatus();
             transaction.setStatus("Paid");
             transaction.setMethod(method);
             transaction.setTimeOfPayment(java.time.LocalDateTime.now());
 
-            // Set ProcessedByUserID to a receptionist user (role = 3)
+            // Set ProcessedByUserID to current receptionist user
             Integer receptionistUserId = getReceptionistUserId();
             if (receptionistUserId != null) {
                 transaction.setProcessedByUserId(receptionistUserId);
                 logger.info("Set ProcessedByUserID to receptionist: {}", receptionistUserId);
-            } else {
-                logger.warn("No receptionist found, ProcessedByUserID will remain null");
             }
 
-            // Store payment details in notes/description
+            // Store payment details in RefundReason field
             String paymentDetails = buildPaymentDetails(method, amountReceived, notes);
             transaction.setRefundReason(paymentDetails);
 
-            // STEP 4: Save transaction to get TransactionID
+            // STEP 5: SAVE UPDATED transaction (UPDATE operation, not INSERT)
             Transaction savedTransaction = transactionRepository.save(transaction);
-            logger.info("Transaction saved with ID: {} and Status: {}",
-                       savedTransaction.getTransactionId(), savedTransaction.getStatus());
+            logger.info("✅ UPDATED Transaction {} - Status: {} -> {}, Method: {}, ProcessedBy: {}",
+                       savedTransaction.getTransactionId(), oldStatus, savedTransaction.getStatus(),
+                       savedTransaction.getMethod(), savedTransaction.getProcessedByUserId());
 
-            // STEP 5: Handle Receipt - find existing or create new
+            // STEP 6: Handle Receipt - find existing or create new
             Receipt receipt = findOrCreateReceipt(receiptIdStr, savedTransaction, patientId, totalAmount, notes);
 
-            // STEP 6: Update Appointment status if needed
+            // STEP 7: Update Appointment status if needed
             updateAppointmentStatusIfNeeded(appointmentId);
 
-            logger.info("Payment processing completed successfully - Transaction: {}, Receipt: {}",
+            logger.info("Payment processing completed - UPDATED Transaction: {}, Receipt: {}",
                        savedTransaction.getTransactionId(), receipt.getReceiptId());
 
             return buildPaymentResult(savedTransaction, "Paid");

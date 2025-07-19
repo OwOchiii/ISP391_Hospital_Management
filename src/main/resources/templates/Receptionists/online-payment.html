@@ -9,6 +9,8 @@
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <!-- Bootstrap Icons -->
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css">
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css">
     <!-- Google Fonts -->
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 
@@ -31,6 +33,8 @@
             --vnpay-color: #0066cc;
             --momo-color: #d82d8b;
             --zalo-color: #0180c7;
+            --blue-primary: #1E3A8A;
+            --blue-secondary: #3B82F6;
         }
 
         * {
@@ -48,7 +52,7 @@
         }
 
         .payment-container {
-            max-width: 1200px;
+            max-width: 1400px;
             margin: 0 auto;
             padding: 20px;
         }
@@ -63,7 +67,7 @@
         }
 
         .payment-header h1 {
-            color: var(--primary-color);
+            color: #007bff;
             font-weight: 700;
             margin-bottom: 10px;
         }
@@ -81,57 +85,43 @@
 
         .payment-content {
             display: grid;
-            grid-template-columns: 1fr 400px;
-            gap: 30px;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+            min-height: calc(100vh - 150px);
         }
 
         .payment-form {
             background: var(--bg-white);
             border-radius: 16px;
-            padding: 30px;
-            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
-            border: 1px solid var(--border-color);
-        }
-
-        .payment-summary {
-            background: var(--bg-white);
-            border-radius: 16px;
-            padding: 30px;
+            padding: 25px;
             box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
             border: 1px solid var(--border-color);
             height: fit-content;
-            position: sticky;
-            top: 20px;
         }
 
         .section-title {
-            font-size: 1.25rem;
-            font-weight: 600;
-            color: var(--text-dark);
-            margin-bottom: 20px;
+            font-size: 1.5rem;
+            font-weight: 700;
+            margin-bottom: 1.5rem;
+            color: #007bff;
             display: flex;
             align-items: center;
-            gap: 10px;
+            gap: 0.5rem;
         }
 
         .payment-method-card {
-            border: 2px solid var(--border-color);
+            background: var(--bg-light);
             border-radius: 12px;
-            padding: 20px;
-            margin-bottom: 15px;
+            border: 1px solid var(--border-color);
+            margin-bottom: 16px;
+            overflow: hidden;
             cursor: pointer;
             transition: all 0.3s ease;
-            background: var(--bg-white);
         }
 
         .payment-method-card:hover {
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
             border-color: var(--primary-color);
-            box-shadow: 0 4px 12px rgba(5, 150, 105, 0.15);
-        }
-
-        .payment-method-card.selected {
-            border-color: var(--primary-color);
-            background: var(--light-green);
         }
 
         .payment-method-card input[type="radio"] {
@@ -139,158 +129,326 @@
         }
 
         .payment-method-content {
+            padding: 16px;
+            display: flex;
+            align-items: center;
+            gap: 16px;
+        }
+
+        .payment-method-icon {
+            width: 50px;
+            height: 50px;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            color: white;
+            background-size: contain;
+            background-repeat: no-repeat;
+            background-position: center;
+        }
+
+        .vnpay-icon {
+            background-color: var(--vnpay-color);
+            background-image: url('https://stcd02206177151.cloud.edgevnpay.vn/assets/images/logo-icon/logo-primary.svg');
+        }
+
+        .momo-icon {
+            background-color: var(--momo-color);
+            background-image: url('https://developers.momo.vn/v3/assets/images/logo.png');
+        }
+
+        .zalo-icon {
+            background-color: var(--zalo-color);
+            background-image: url('https://stc-developers.zalopay.vn/images/logo-zalopay.svg');
+        }
+
+        .payment-method-info h5 {
+            margin-bottom: 4px;
+            font-weight: 600;
+            font-size: 1rem;
+        }
+
+        .payment-method-info p {
+            margin-bottom: 0;
+            font-size: 0.875rem;
+            color: var(--text-light);
+        }
+
+        .payment-method-details {
+            padding: 0;
+            height: 0;
+            overflow: hidden;
+            transition: all 0.3s ease;
+        }
+
+        .payment-method-card.selected .payment-method-details {
+            padding: 16px;
+            height: auto;
+            border-top: 1px solid var(--border-color);
+        }
+
+        .payment-method-card.selected {
+            border-color: var(--primary-color);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        }
+
+        .payment-method-card.selected .bi-check-circle {
+            display: inline-block !important;
+        }
+
+        .qr-code-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 16px 0;
+        }
+
+        .qr-code-placeholder {
+            width: 150px;
+            height: 150px;
+            background-color: var(--bg-light);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 8px;
+            margin-bottom: 12px;
+        }
+
+        .security-notice {
+            margin-top: 24px;
+            padding: 16px;
+            background-color: var(--light-green);
+            border-radius: 12px;
+            color: var(--dark-green);
+        }
+
+        /* Invoice Styles */
+        .invoice-container {
+            background: var(--bg-white);
+            border-radius: 16px;
+            padding: 25px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+            border: 1px solid var(--border-color);
+            height: 100%;
+            overflow-y: auto;
+            max-height: 90vh;
+        }
+
+        .invoice-header {
+            background: linear-gradient(to right, var(--blue-primary), var(--blue-secondary));
+            color: white;
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .hospital-info {
             display: flex;
             align-items: center;
             gap: 15px;
         }
 
-        .payment-method-icon {
+        .hospital-logo {
             width: 60px;
-            height: 40px;
+            height: 60px;
+            background: white;
+            border-radius: 50%;
             display: flex;
             align-items: center;
             justify-content: center;
+            color: var(--blue-secondary);
+            font-size: 24px;
+            font-weight: bold;
+        }
+
+        .barcode-placeholder {
+            font-family: 'Courier New', Courier, monospace;
+            letter-spacing: 4px;
+            padding: 8px 12px;
+            display: inline-block;
+            font-size: 14px;
+            background: rgba(255, 255, 255, 0.2);
+            border-radius: 4px;
+        }
+
+        .invoice-section {
+            margin-bottom: 24px;
+        }
+
+        .invoice-section-title {
+            background: linear-gradient(to right, var(--blue-primary), var(--blue-secondary));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            font-size: 1.5rem;
+            font-weight: 700;
+            margin-bottom: 15px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .invoice-section-title i {
+            color: var(--blue-secondary);
+            -webkit-text-fill-color: var(--blue-secondary);
+        }
+
+        .info-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+            background: var(--bg-light);
+            padding: 15px;
             border-radius: 8px;
-            color: white;
-            font-weight: 600;
         }
 
-        .vnpay-icon {
-            background: var(--vnpay-color);
-        }
-
-        .momo-icon {
-            background: var(--momo-color);
-        }
-
-        .zalo-icon {
-            background: var(--zalo-color);
-        }
-
-        .bank-icon {
-            background: var(--primary-color);
-        }
-
-        .payment-method-info h5 {
-            margin: 0;
-            font-weight: 600;
-            color: var(--text-dark);
-        }
-
-        .payment-method-info p {
-            margin: 0;
-            color: var(--text-light);
+        .info-item {
+            margin-bottom: 8px;
             font-size: 0.9rem;
         }
 
-        .form-group {
-            margin-bottom: 20px;
-        }
-
-        .form-label {
-            font-weight: 500;
-            color: var(--text-dark);
-            margin-bottom: 8px;
-        }
-
-        .form-control {
-            border: 2px solid var(--border-color);
-            border-radius: 8px;
-            padding: 12px 16px;
-            font-size: 1rem;
-            transition: all 0.3s ease;
-        }
-
-        .form-control:focus {
-            border-color: var(--primary-color);
-            box-shadow: 0 0 0 3px rgba(5, 150, 105, 0.1);
-        }
-
-        .summary-item {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding: 12px 0;
-            border-bottom: 1px solid var(--border-color);
-        }
-
-        .summary-item:last-child {
-            border-bottom: none;
+        .info-label {
             font-weight: 600;
-            font-size: 1.1rem;
-            color: var(--primary-color);
-            padding-top: 20px;
-            margin-top: 10px;
-            border-top: 2px solid var(--border-color);
+            color: var(--text-dark);
         }
 
-        .appointment-info {
-            background: var(--light-green);
-            border-radius: 12px;
+        .services-table {
+            width: 100%;
+            border-collapse: separate;
+            border-spacing: 0;
+            font-size: 0.9rem;
+        }
+
+        .services-table th, .services-table td {
+            border: 1px solid var(--border-color);
+            padding: 10px;
+        }
+
+        .services-table th {
+            background: #EFF6FF;
+            color: var(--blue-primary);
+            font-weight: 600;
+        }
+
+        .services-table tr:nth-child(even) {
+            background: #F9FAFB;
+        }
+
+        .payment-details {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+            background: var(--bg-light);
             padding: 20px;
-            margin-bottom: 20px;
+            border-radius: 8px;
         }
 
-        .appointment-info h6 {
-            color: var(--primary-color);
+        .payment-info p {
+            margin-bottom: 10px;
+            font-size: 0.9rem;
+        }
+
+        .payment-controls label {
+            display: block;
             font-weight: 600;
+            margin-bottom: 5px;
+            font-size: 0.9rem;
+        }
+
+        .payment-controls select,
+        .payment-controls input,
+        .payment-controls textarea {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
             margin-bottom: 15px;
+            font-size: 0.9rem;
         }
 
-        .info-row {
-            display: flex;
-            justify-content: space-between;
-            margin-bottom: 8px;
-        }
-
-        .info-row:last-child {
-            margin-bottom: 0;
-        }
-
-        .btn-primary {
-            background: var(--primary-color);
-            border: none;
-            border-radius: 8px;
-            padding: 12px 30px;
-            font-weight: 600;
-            font-size: 1rem;
-            transition: all 0.3s ease;
-        }
-
-        .btn-primary:hover {
-            background: var(--secondary-color);
-            transform: translateY(-2px);
-            box-shadow: 0 4px 12px rgba(5, 150, 105, 0.3);
-        }
-
-        .btn-outline-secondary {
-            border: 2px solid var(--border-color);
-            color: var(--text-dark);
-            border-radius: 8px;
-            padding: 12px 30px;
-            font-weight: 600;
-            font-size: 1rem;
-            transition: all 0.3s ease;
-        }
-
-        .btn-outline-secondary:hover {
-            background: var(--border-color);
-            border-color: var(--border-color);
-            color: var(--text-dark);
-        }
-
-        .security-notice {
-            background: #f0f9ff;
-            border: 1px solid #0ea5e9;
-            border-radius: 8px;
+        .terms {
+            background: var(--bg-light);
             padding: 15px;
+            border-radius: 8px;
+            font-size: 0.85rem;
+            color: var(--text-light);
+        }
+
+        .terms p {
+            margin-bottom: 6px;
+        }
+
+        .invoice-footer {
+            border-top: 2px solid var(--blue-secondary);
+            padding-top: 15px;
+            text-align: center;
+            font-size: 0.85rem;
+            color: var(--text-light);
             margin-top: 20px;
         }
 
-        .security-notice i {
-            color: #0ea5e9;
+        .action-buttons {
+            margin-top: 20px;
+            text-align: center;
         }
 
+        .payment-btn {
+            background: var(--success-color);
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 8px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .payment-btn:hover {
+            background: #16a34a;
+            transform: translateY(-2px);
+        }
+
+        .status-pending {
+            color: var(--warning-color);
+            font-weight: 600;
+        }
+
+        .status-paid {
+            color: var(--success-color);
+            font-weight: 600;
+        }
+
+        /* Modal Styles */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.5);
+            z-index: 1000;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .modal-content {
+            background: white;
+            padding: 24px;
+            border-radius: 16px;
+            max-width: 500px;
+            width: 90%;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
+        }
+
+        /* Loading Overlay */
         .loading-overlay {
             position: fixed;
             top: 0;
@@ -312,55 +470,25 @@
             color: var(--primary-color);
         }
 
-        @media (max-width: 768px) {
+        /* Responsive */
+        @media (max-width: 1200px) {
             .payment-content {
                 grid-template-columns: 1fr;
-                gap: 20px;
+                gap: 30px;
             }
 
-            .payment-summary {
-                position: static;
-                order: -1;
+            .invoice-container {
+                max-height: none;
+                height: auto;
             }
 
-            .payment-container {
-                padding: 15px;
+            .payment-details {
+                grid-template-columns: 1fr;
             }
 
-            .payment-header,
-            .payment-form,
-            .payment-summary {
-                padding: 20px;
+            .info-grid {
+                grid-template-columns: 1fr;
             }
-        }
-
-        .payment-method-details {
-            display: none;
-            margin-top: 15px;
-            padding-top: 15px;
-            border-top: 1px solid var(--border-color);
-        }
-
-        .payment-method-card.selected .payment-method-details {
-            display: block;
-        }
-
-        .qr-code-container {
-            text-align: center;
-            padding: 20px;
-        }
-
-        .qr-code-placeholder {
-            width: 200px;
-            height: 200px;
-            background: #f3f4f6;
-            border: 2px dashed var(--border-color);
-            border-radius: 12px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            margin: 0 auto 15px;
-            color: var(--text-muted);
         }
     </style>
 </head>
@@ -382,9 +510,9 @@
         <div class="payment-header">
             <nav class="breadcrumb-nav">
                 <ol class="breadcrumb">
-                    <li class="breadcrumb-item"><a href="/patient/dashboard">Dashboard</a></li>
-                    <li class="breadcrumb-item"><a href="/patient/appointments">Appointments</a></li>
-                    <li class="breadcrumb-item active">Payment</li>
+                    <li class="breadcrumb-item"><a href="/patient-legacy/dashboard">Dashboard</a></li>
+                    <li class="breadcrumb-item"><a href="/patient-legacy/payment">Payments</a></li>
+                    <li class="breadcrumb-item active">Online Payment</li>
                 </ol>
             </nav>
             <h1><i class="bi bi-credit-card-2-front me-2"></i>Online Payment</h1>
@@ -392,16 +520,21 @@
         </div>
 
         <div class="payment-content">
-            <!-- Payment Form -->
+            <!-- Payment Form (Left Side) -->
             <div class="payment-form">
                 <h3 class="section-title">
                     <i class="bi bi-wallet2"></i>
                     Choose Payment Method
                 </h3>
 
-                <form id="paymentForm" th:action="@{/patient/process-payment}" method="POST">
+                <form id="paymentForm" th:action="@{/receptionist/process-online-payment}" method="POST">
                     <input type="hidden" name="appointmentId" th:value="${appointmentId}">
-                    <input type="hidden" name="amount" th:value="${amount}">
+                    <input type="hidden" name="patientId" th:value="${patientId}">
+                    <input type="hidden" name="amount" th:value="${totalAmount}">
+                    <input type="hidden" name="customerName" th:value="${invoiceData.fullName}">
+                    <input type="hidden" name="customerPhone" th:value="${invoiceData.contact}">
+                    <input type="hidden" name="customerEmail" th:value="${invoiceData.email}">
+                    <input type="hidden" name="notes" id="hiddenNotes">
 
                     <!-- VNPay -->
                     <div class="payment-method-card" onclick="selectPaymentMethod('vnpay')">
@@ -442,11 +575,9 @@
                             </div>
                         </div>
                         <div class="payment-method-details">
-                            <div class="qr-code-container">
-                                <div class="qr-code-placeholder">
-                                    <i class="bi bi-qr-code" style="font-size: 3rem;"></i>
-                                </div>
-                                <p class="text-muted">Scan QR code with MoMo app</p>
+                            <div class="alert alert-info">
+                                <i class="bi bi-info-circle me-2"></i>
+                                You will be redirected to MoMo to complete the payment
                             </div>
                         </div>
                     </div>
@@ -474,80 +605,6 @@
                         </div>
                     </div>
 
-                    <!-- Bank Transfer -->
-                    <div class="payment-method-card" onclick="selectPaymentMethod('bank')">
-                        <input type="radio" name="paymentMethod" value="bank" id="bank">
-                        <div class="payment-method-content">
-                            <div class="payment-method-icon bank-icon">
-                                <i class="bi bi-bank"></i>
-                            </div>
-                            <div class="payment-method-info">
-                                <h5>Internet Banking</h5>
-                                <p>Direct bank transfer via online banking</p>
-                            </div>
-                            <div class="ms-auto">
-                                <i class="bi bi-check-circle text-success" style="display: none;"></i>
-                            </div>
-                        </div>
-                        <div class="payment-method-details">
-                            <div class="row">
-                                <div class="col-md-6">
-                                    <div class="form-group">
-                                        <label class="form-label">Select Bank</label>
-                                        <select class="form-control" name="bankCode">
-                                            <option value="">Choose your bank</option>
-                                            <option value="VIETCOMBANK">Vietcombank</option>
-                                            <option value="TECHCOMBANK">Techcombank</option>
-                                            <option value="BIDV">BIDV</option>
-                                            <option value="VIETINBANK">VietinBank</option>
-                                            <option value="AGRIBANK">Agribank</option>
-                                            <option value="MBBANK">MB Bank</option>
-                                            <option value="SACOMBANK">Sacombank</option>
-                                            <option value="ACB">ACB</option>
-                                        </select>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- Payment Details -->
-                    <div class="mt-4">
-                        <h5 class="section-title">
-                            <i class="bi bi-person-circle"></i>
-                            Payment Information
-                        </h5>
-
-                        <div class="row">
-                            <div class="col-md-6">
-                                <div class="form-group">
-                                    <label class="form-label">Full Name</label>
-                                    <input type="text" class="form-control" name="customerName"
-                                           th:value="${patient.fullName}" required>
-                                </div>
-                            </div>
-                            <div class="col-md-6">
-                                <div class="form-group">
-                                    <label class="form-label">Phone Number</label>
-                                    <input type="tel" class="form-control" name="customerPhone"
-                                           th:value="${patient.user.phoneNumber}" required>
-                                </div>
-                            </div>
-                        </div>
-
-                        <div class="form-group">
-                            <label class="form-label">Email Address</label>
-                            <input type="email" class="form-control" name="customerEmail"
-                                   th:value="${patient.user.email}" required>
-                        </div>
-
-                        <div class="form-group">
-                            <label class="form-label">Notes (Optional)</label>
-                            <textarea class="form-control" name="notes" rows="3"
-                                      placeholder="Any additional notes for this payment..."></textarea>
-                        </div>
-                    </div>
-
                     <!-- Action Buttons -->
                     <div class="d-flex gap-3 mt-4">
                         <button type="button" class="btn btn-outline-secondary" onclick="history.back()">
@@ -570,162 +627,574 @@
                 </form>
             </div>
 
-            <!-- Payment Summary -->
-            <div class="payment-summary">
-                <h4 class="section-title">
-                    <i class="bi bi-receipt"></i>
-                    Payment Summary
-                </h4>
-
-                <div class="appointment-info">
-                    <h6><i class="bi bi-calendar-check me-2"></i>Appointment Details</h6>
-                    <div class="info-row">
-                        <span>Doctor:</span>
-                        <strong th:text="${appointment.doctor.user.fullName}">Dr. John Doe</strong>
+            <!-- Payment Summary/Invoice (Right Side) -->
+            <div class="invoice-container">
+                <!-- Header -->
+                <div class="invoice-header">
+                    <div class="hospital-info">
+                        <div class="hospital-logo">
+                            <i class="fas fa-hospital"></i>
+                        </div>
+                        <div>
+                            <h2>MediCare Plus</h2>
+                            <p class="mb-0">Tax Code: 123456789-0</p>
+                            <p class="mb-0">123 Lang Street, Dong Da, Hanoi</p>
+                        </div>
                     </div>
-                    <div class="info-row">
-                        <span>Specialty:</span>
-                        <span th:text="${appointment.doctor.specializations[0].specName}">Cardiology</span>
-                    </div>
-                    <div class="info-row">
-                        <span>Date:</span>
-                        <span th:text="${#temporals.format(appointment.dateTime, 'dd/MM/yyyy')}">25/12/2024</span>
-                    </div>
-                    <div class="info-row">
-                        <span>Time:</span>
-                        <span th:text="${#temporals.format(appointment.dateTime, 'HH:mm')}">10:00</span>
-                    </div>
-                    <div class="info-row">
-                        <span>Room:</span>
-                        <span th:text="${appointment.room?.roomNumber ?: 'TBA'}">R101</span>
+                    <div class="text-end">
+                        <h3>INVOICE</h3>
+                        <p class="mb-0">Receipt: <span th:text="${invoiceData.receiptNumber}">REC20250529001</span></p>
+                        <p class="mb-0">Date: <span th:text="${#temporals.format(#temporals.createNow(), 'MMMM dd, yyyy', #locale.ENGLISH)}">July 15, 2025</span></p>
+                        <div class="barcode-placeholder mt-2" th:text="${invoiceData.receiptNumber}">REC20250529001</div>
                     </div>
                 </div>
 
-                <div class="summary-item">
-                    <span>Consultation Fee:</span>
-                    <span th:text="${#numbers.formatCurrency(consultationFee)}">500,000 VND</span>
-                </div>
-                <div class="summary-item">
-                    <span>Service Fee:</span>
-                    <span th:text="${#numbers.formatCurrency(serviceFee)}">50,000 VND</span>
-                </div>
-                <div class="summary-item">
-                    <span>Discount:</span>
-                    <span class="text-success" th:text="${#numbers.formatCurrency(discount)}">-50,000 VND</span>
-                </div>
-                <div class="summary-item">
-                    <span>Total Amount:</span>
-                    <span th:text="${#numbers.formatCurrency(totalAmount)}">500,000 VND</span>
+                <!-- Patient Information -->
+                <div class="invoice-section">
+                    <h3 class="invoice-section-title">
+                        <i class="fas fa-user"></i> Patient Information
+                    </h3>
+                    <div class="info-grid">
+                        <div>
+                            <p class="info-item"><span class="info-label">Patient ID:</span> <span th:text="${invoiceData.patientId}">PAT123456</span></p>
+                            <p class="info-item"><span class="info-label">Full Name:</span> <span th:text="${invoiceData.fullName}">John Doe</span></p>
+                            <p class="info-item"><span class="info-label">Date of Birth:</span> <span th:text="${invoiceData.dateOfBirth}">01/01/1990</span></p>
+                            <p class="info-item"><span class="info-label">Gender:</span> <span th:text="${invoiceData.gender}">Male</span></p>
+                        </div>
+                        <div>
+                            <p class="info-item"><span class="info-label">Appointment ID:</span> <span th:text="${invoiceData.appointmentId}">APP789012</span></p>
+                            <p class="info-item"><span class="info-label">Payer Name:</span> <span th:text="${invoiceData.payerName}">John Doe</span></p>
+                            <p class="info-item"><span class="info-label">Contact:</span> <span th:text="${invoiceData.contact}">(+84) 901 234 567</span></p>
+                        </div>
+                    </div>
                 </div>
 
-                <div class="mt-3">
-                    <small class="text-muted">
-                        <i class="bi bi-info-circle me-1"></i>
-                        Payment confirmation will be sent to your email
-                    </small>
+                <!-- Services Used -->
+                <div class="invoice-section">
+                    <h3 class="invoice-section-title">
+                        <i class="fas fa-list-ul"></i> Services Used
+                    </h3>
+                    <div class="table-responsive">
+                        <table class="services-table">
+                            <thead>
+                            <tr>
+                                <th>Service ID</th>
+                                <th>Service Name</th>
+                                <th>Symptom</th>
+                                <th>Qty</th>
+                                <th>Price ($)</th>
+                                <th>Tax (%)</th>
+                                <th>Total ($)</th>
+                                <th>Date</th>
+                            </tr>
+                            </thead>
+                            <tbody>
+                            <tr th:each="service : ${invoiceData.servicesUsed}">
+                                <td th:text="${service.serviceId}">SRV001</td>
+                                <td th:text="${service.serviceName}"></td>
+                                <td th:text="${service.symptom}">General Medicine</td>
+                                <td th:text="${service.quantity}">1</td>
+                                <td th:text="${#numbers.formatDecimal(service.price, 0, 0)}">300,000</td>
+                                <td th:text="${service.taxPercent}">10</td>
+                                <td th:text="${#numbers.formatDecimal(service.total, 0, 0)}">330,000</td>
+                                <td th:text="${service.date}">2025-07-15</td>
+                            </tr>
+                            <tr class="fw-bold" style="background-color: #EFF6FF;">
+                                <td colspan="6" class="text-end">SubTotal:</td>
+                                <td colspan="2" id="servicesSubTotal">0</td>
+                            </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- Payment Section -->
+                <div class="invoice-section">
+                    <h3 class="invoice-section-title">
+                        <i class="fas fa-wallet"></i> Payment & Receipt
+                    </h3>
+                    <div class="payment-details">
+                        <div class="payment-info">
+                            <p><span class="info-label">Transaction ID:</span> <span th:text="${invoiceData.transactionId}">TRX20250529001</span></p>
+                            <p><span class="info-label">Receipt Number:</span> <span th:text="${invoiceData.receiptNumber}">REC20250529001</span></p>
+                            <p><span class="info-label">Total Amount:</span> <span id="calculatedTotalAmount">0</span> $</p>
+                            <p><span class="info-label">Tax Amount:</span> <span id="calculatedTaxAmount">0</span> $</p>
+                            <p><span class="info-label">Discount:</span> <span id="calculatedDiscountAmount">0</span> $</p>
+                            <p><span class="info-label">Patient Payment:</span> <span id="calculatedPatientPayment">0</span> $</p>
+                            <p><span class="info-label">Status:</span> <span id="transactionStatus" class="status-pending">Pending</span></p>
+                        </div>
+                        <div class="payment-controls">
+                            <div class="mb-3">
+                                <label for="paymentMethod">Payment Method</label>
+                                <div class="form-control bg-light d-flex align-items-center">
+                                    <i class="bi bi-credit-card text-primary me-2"></i>
+                                    <span class="fw-semibold">Banking (Online Payment)</span>
+                                </div>
+                                <!-- Hidden input to maintain banking payment method -->
+                                <input type="hidden" id="paymentMethod" value="Banking">
+                                <div id="paymentMethodError" class="text-danger mt-1" style="display: none;">Please select a payment method</div>
+                            </div>
+                            <!-- Hide amount received container for online payments -->
+                            <div id="amountReceivedContainer" class="mb-3" style="display: none;">
+                                <label for="amountReceived">Amount Received ($)</label>
+                                <input id="amountReceived" type="text" class="form-control" placeholder="Enter amount received">
+                                <p id="changeReturned" class="text-muted mt-1">Change Returned: 0 $</p>
+                                <div id="amountReceivedError" class="text-danger mt-1" style="display: none;">Amount must be at least equal to Patient Payment</div>
+                            </div>
+                            <div class="mb-3">
+                                <label for="receiptNotes">Notes</label>
+                                <textarea id="receiptNotes" maxlength="100" class="form-control" placeholder="Enter any notes about the online payment (max 100 characters)" rows="3"></textarea>
+                                <div class="d-flex justify-content-between mt-1">
+                                    <small class="text-muted">Maximum 100 characters</small>
+                                    <small id="charCount" class="text-muted">0/100</small>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="mt-3 p-3" style="background-color: #e0f2fe; border-radius: 8px;">
+                        <p class="mb-2"><span class="info-label">Processed By:</span> <span id="processedBy" th:text="${staffInfo.fullName}">Staff Member</span></p>
+                        <p class="mb-0"><span class="info-label">Time of Payment:</span> <span id="timeOfPayment" th:text="${#temporals.format(#temporals.createNow(), 'yyyy-MM-dd HH:mm:ss')}">Not yet paid</span></p>
+                    </div>
+                </div>
+
+                <!-- Terms and Conditions -->
+                <div class="invoice-section">
+                    <h3 class="invoice-section-title">
+                        <i class="fas fa-file-alt"></i> Terms & Conditions
+                    </h3>
+                    <div class="terms">
+                        <p>1. Payment is due upon receipt of this invoice.</p>
+                        <p>2. All services are non-refundable once provided.</p>
+                        <p>3. For insurance claims, please contact your provider within 30 days.</p>
+                        <p>4. Disputes must be reported to MediCare Plus within 7 days.</p>
+                    </div>
+                </div>
+
+                <!-- Footer -->
+                <div class="invoice-footer">
+                    <p class="fw-semibold">Thank you for choosing MediCare Plus</p>
+                    <p>Contact us at (+84) 912 345 678 or contact@medicareplus.vn</p>
+                    <p>123 Lang Street, Dong Da, Hanoi, Vietnam</p>
+                </div>
+
+                <!-- Action Buttons -->
+
+            </div>
+        </div>
+    </div>
+
+    <!-- QR Modal -->
+    <div id="qrModal" class="modal">
+        <div class="modal-content">
+            <h3 class="mb-4">Scan to Pay via Banking</h3>
+            <div style="width: 180px; height: 180px; background: #f3f4f6; display: flex; align-items: center; justify-content: center; margin: 0 auto; border-radius: 8px; border: 2px dashed #6B7280;">
+                [Simulated QR Code]
+            </div>
+            <p class="mt-3">Amount: <span id="qrAmount">0</span> $</p>
+            <p>Receipt: <span id="qrReceipt" th:text="${invoiceData.receiptNumber}">REC20250529001</span></p>
+            <div class="mt-4">
+                <button id="simulatePayment" class="btn btn-primary">Simulate Payment</button>
+                <button id="closeQrModal" class="btn btn-secondary ms-2">Cancel</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Payment Confirmation Modal -->
+    <div id="paymentConfirmModal" class="modal">
+        <div class="modal-content">
+            <div class="text-center">
+                <div class="mb-4" style="width: 60px; height: 60px; background: #FEF3C7; border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto;">
+                    <i class="fas fa-exclamation-triangle text-warning fs-4"></i>
+                </div>
+                <h3 class="mb-3">Confirm Payment</h3>
+                <p class="text-muted mb-3">Are you sure you want to process this payment?</p>
+                <div class="bg-light p-3 rounded mb-4 text-start">
+                    <p class="mb-2"><span class="fw-bold">Full Name:</span> <span id="confirmPatientName"></span></p>
+                    <p class="mb-2"><span class="fw-bold">Amount:</span> <span id="confirmAmount"></span> $</p>
+                    <p class="mb-2"><span class="fw-bold">Method:</span> <span id="confirmMethod"></span></p>
+                    <div id="confirmCashDetails" style="display: none;">
+                        <p class="mb-1"><span class="fw-bold">Amount Received:</span> <span id="confirmAmountReceived"></span> $</p>
+                        <p class="mb-0"><span class="fw-bold">Change:</span> <span id="confirmChange"></span> $</p>
+                    </div>
+                </div>
+                <div class="d-flex justify-content-center gap-3">
+                    <button id="confirmPaymentBtn" class="btn btn-success">
+                        <i class="fas fa-check me-2"></i>Confirm Payment
+                    </button>
+                    <button id="cancelPaymentBtn" class="btn btn-secondary">
+                        <i class="fas fa-times me-2"></i>Cancel
+                    </button>
                 </div>
             </div>
         </div>
     </div>
 
+    <!-- Processing Modal -->
+    <div id="processingModal" class="modal">
+        <div class="modal-content">
+            <div class="text-center">
+                <div class="mb-4" style="width: 60px; height: 60px; background: #DBEAFE; border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto;">
+                    <i class="fas fa-spinner fa-spin text-primary fs-4"></i>
+                </div>
+                <h3 class="mb-3">Processing Payment...</h3>
+                <p class="text-muted">Please wait while we process your payment.</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Success Popup -->
+    <div id="successPopup" style="display: none; position: fixed; top: 20px; right: 20px; background: #10B981; color: white; padding: 16px; border-radius: 8px; box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15); z-index: 1001;">
+        <p class="mb-0">Payment Successful!</p>
+    </div>
+
     <!-- Bootstrap JS -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-
     <script>
-        let selectedPaymentMethod = null;
+        // Tỷ giá USD to VND (có thể lấy từ API thực tế)
+        const USD_TO_VND_RATE = 24000; // 1 USD = 24,000 VND (có thể cập nhật từ API)
 
-        function selectPaymentMethod(method) {
-            // Remove previous selection
-            document.querySelectorAll('.payment-method-card').forEach(card => {
-                card.classList.remove('selected');
-                card.querySelector('i.bi-check-circle').style.display = 'none';
-            });
-
-            // Add selection to current method
-            const selectedCard = document.querySelector(`#${method}`).closest('.payment-method-card');
-            selectedCard.classList.add('selected');
-            selectedCard.querySelector('i.bi-check-circle').style.display = 'inline';
-
-            // Update radio button
-            document.getElementById(method).checked = true;
-            selectedPaymentMethod = method;
-
-            // Enable payment button
-            document.getElementById('paymentButton').disabled = false;
-
-            // Update button text based on method
-            const paymentButton = document.getElementById('paymentButton');
-            switch(method) {
-                case 'vnpay':
-                    paymentButton.innerHTML = '<i class="bi bi-shield-lock me-2"></i>Pay with VNPay';
-                    break;
-                case 'momo':
-                    paymentButton.innerHTML = '<i class="bi bi-phone me-2"></i>Pay with MoMo';
-                    break;
-                case 'zalopay':
-                    paymentButton.innerHTML = '<i class="bi bi-zap me-2"></i>Pay with ZaloPay';
-                    break;
-                case 'bank':
-                    paymentButton.innerHTML = '<i class="bi bi-bank me-2"></i>Pay with Internet Banking';
-                    break;
-                default:
-                    paymentButton.innerHTML = '<i class="bi bi-shield-lock me-2"></i>Proceed to Payment';
-            }
+        // Function to convert USD to VND
+        function convertUSDToVND(usdAmount) {
+            return usdAmount * USD_TO_VND_RATE;
         }
 
-        // Form submission
+        // Function to format VND currency
+        function formatVND(amount) {
+            return new Intl.NumberFormat('vi-VN', {
+                style: 'currency',
+                currency: 'VND',
+                minimumFractionDigits: 0,
+                maximumFractionDigits: 0
+            }).format(amount);
+        }
+
+        // Function to format number with commas for VND
+        function formatVNDNumber(amount) {
+            return Math.round(amount).toLocaleString('vi-VN') + ' VND';
+        }
+
+        // Payment Method Selection
+        function selectPaymentMethod(method) {
+            document.querySelectorAll('.payment-method-card').forEach(card => {
+                card.classList.remove('selected');
+                card.querySelector('.bi-check-circle').style.display = 'none';
+            });
+
+            document.getElementById(method).checked = true;
+            document.getElementById(method).closest('.payment-method-card').classList.add('selected');
+            document.getElementById(method).closest('.payment-method-card').querySelector('.bi-check-circle').style.display = 'inline-block';
+
+            document.getElementById('paymentButton').disabled = false;
+        }
+
+        // Handle form submission
         document.getElementById('paymentForm').addEventListener('submit', function(e) {
             e.preventDefault();
 
-            if (!selectedPaymentMethod) {
+            const selectedMethod = document.querySelector('input[name="paymentMethod"]:checked');
+            if (!selectedMethod) {
                 alert('Please select a payment method');
                 return;
             }
 
-            // Show loading overlay
+            // Get notes from the receipt notes textarea
+            const notes = document.getElementById('receiptNotes').value;
+            document.getElementById('hiddenNotes').value = notes;
+
+            // 🔥 CẢI THIỆN LOGIC LẤY PATIENT PAYMENT - LUÔN SỬ DỤNG PATIENT PAYMENT 🔥
+            let finalAmountVND = 0;
+            let finalAmountUSD = 0;
+
+            console.log('=== PAYMENT AMOUNT CALCULATION DEBUG ===');
+
+            // METHOD 1: Lấy từ window.calculatedPatientPayment (ưu tiên cao nhất)
+            if (window.calculatedPatientPayment && window.calculatedPatientPayment > 0) {
+                finalAmountUSD = window.calculatedPatientPayment;
+                finalAmountVND = convertUSDToVND(finalAmountUSD);
+                console.log('✅ METHOD 1 - Using window.calculatedPatientPayment: $' + finalAmountUSD + ' -> ' + finalAmountVND + ' VND');
+            }
+            // METHOD 2: Lấy từ Patient Payment element trên UI (KHÔNG lấy Total Amount)
+            else {
+                const patientPaymentElement = document.getElementById('calculatedPatientPayment');
+                console.log('Patient Payment Element found:', patientPaymentElement ? 'YES' : 'NO');
+
+                if (patientPaymentElement && patientPaymentElement.textContent) {
+                    console.log('Patient Payment Element text content:', patientPaymentElement.textContent);
+
+                    // Parse text content carefully - loại bỏ $ và khoảng trắng
+                    const cleanText = patientPaymentElement.textContent.replace(/[\$\s,]/g, '');
+                    console.log('Cleaned text:', cleanText);
+
+                    finalAmountUSD = parseFloat(cleanText);
+                    console.log('Parsed USD amount:', finalAmountUSD);
+
+                    if (!isNaN(finalAmountUSD) && finalAmountUSD > 0) {
+                        finalAmountVND = convertUSDToVND(finalAmountUSD);
+                        console.log('✅ METHOD 2 - Using UI Patient Payment: $' + finalAmountUSD + ' -> ' + finalAmountVND + ' VND');
+                    } else {
+                        console.log('❌ METHOD 2 - Invalid parsed amount from UI');
+                        finalAmountUSD = 0;
+                    }
+                } else {
+                    console.log('❌ METHOD 2 - Patient Payment element not found or empty');
+                }
+            }
+
+            // METHOD 3: Fallback - Tính lại từ calculateAllAmounts() và lấy PATIENT PAYMENT
+            if (finalAmountVND === 0) {
+                console.log('⚠️ Using METHOD 3 - Recalculating Patient Payment...');
+                try {
+                    const recalculated = calculateAllAmounts();
+                    if (recalculated && recalculated.patientPayment > 0) {
+                        finalAmountUSD = recalculated.patientPayment; // SỬ DỤNG PATIENT PAYMENT
+                        finalAmountVND = convertUSDToVND(finalAmountUSD);
+                        console.log('✅ METHOD 3 - Recalculated Patient Payment: $' + finalAmountUSD + ' -> ' + finalAmountVND + ' VND');
+                    }
+                } catch (calcError) {
+                    console.error('Error in recalculation:', calcError);
+                }
+            }
+
+            // METHOD 4: Final fallback - 🚫 KHÔNG SỬ DỤNG ORIGINAL INPUT (có thể là Total Amount)
+            if (finalAmountVND === 0) {
+                console.log('⚠️ Using METHOD 4 - Emergency fallback with default Patient Payment...');
+
+                // Tính toán emergency fallback từ services
+                try {
+                    const serviceRows = document.querySelectorAll('tbody tr:not(:last-child)');
+                    let emergencySubTotal = 0;
+                    let emergencyQuantity = 0;
+
+                    serviceRows.forEach((row) => {
+                        const cells = row.querySelectorAll('td');
+                        if (cells.length >= 8) {
+                            const total = parseFloat(cells[6].textContent.replace(/[^\d.]/g, '')) || 0;
+                            const quantity = parseFloat(cells[3].textContent.trim()) || 0;
+                            emergencySubTotal += total;
+                            emergencyQuantity += quantity;
+                        }
+                    });
+
+                    // Apply discount rules
+                    let discountPercent = 0;
+                    if (emergencyQuantity >= 5) discountPercent = 10;
+                    else if (emergencyQuantity >= 3) discountPercent = 5;
+                    else if (emergencyQuantity === 1) discountPercent = 3;
+
+                    const discountAmount = emergencySubTotal * discountPercent / 100;
+                    finalAmountUSD = emergencySubTotal - discountAmount; // PATIENT PAYMENT
+                    finalAmountVND = convertUSDToVND(finalAmountUSD);
+
+                    console.log('✅ METHOD 4 - Emergency Patient Payment calculation: $' + finalAmountUSD + ' -> ' + finalAmountVND + ' VND');
+                } catch (e) {
+                    console.error('Emergency calculation failed:', e);
+                    finalAmountUSD = 160; // Hard fallback
+                    finalAmountVND = convertUSDToVND(finalAmountUSD);
+                    console.log('✅ METHOD 4 - Hard fallback Patient Payment: $' + finalAmountUSD + ' -> ' + finalAmountVND + ' VND');
+                }
+            }
+
+            // Validate final amount
+            if (finalAmountVND <= 0 || finalAmountUSD <= 0) {
+                console.error('❌ FINAL VALIDATION FAILED');
+                console.error('Final USD:', finalAmountUSD);
+                console.error('Final VND:', finalAmountVND);
+                alert('Invalid payment amount detected. Please refresh the page and try again.');
+                return;
+            }
+
+            // LOG FINAL RESULT
+            console.log('=== FINAL PAYMENT AMOUNT (PATIENT PAYMENT ONLY) ===');
+            console.log('Final USD Amount (Patient Payment):', finalAmountUSD);
+            console.log('Final VND Amount (Patient Payment):', finalAmountVND);
+            console.log('Method Selected:', selectedMethod.value);
+
+            // Cập nhật amount input với giá trị Patient Payment VND chính xác
+            document.querySelector('input[name="amount"]').value = Math.round(finalAmountVND);
+            console.log('Updated form input amount to Patient Payment:', Math.round(finalAmountVND), 'VND');
+
+            // Show loading overlay BEFORE form submission
             document.getElementById('loadingOverlay').style.display = 'flex';
 
-            // Simulate processing time
+            // Add delay to ensure loading overlay is visible
             setTimeout(() => {
-                // Submit the form
+                // Submit the form to the backend
                 this.submit();
-            }, 1000);
+            }, 100);
         });
 
-        // Auto-select VNPay as default
-        document.addEventListener('DOMContentLoaded', function() {
-            selectPaymentMethod('vnpay');
-        });
+        // Calculate amounts and convert to VND
+        // Tính toán SubTotal và Payment amounts - phiên bản đơn giản và chính xác
+        function calculateAllAmounts() {
+            console.log('=== Calculating All Amounts ===');
 
-        // Form validation
-        function validateForm() {
-            const form = document.getElementById('paymentForm');
-            const inputs = form.querySelectorAll('input[required], select[required]');
-            let isValid = true;
+            // Tìm tất cả các hàng service trong table
+            const serviceRows = document.querySelectorAll('tbody tr:not(:last-child)'); // Loại trừ hàng SubTotal
+            console.log('Found service rows:', serviceRows.length);
 
-            inputs.forEach(input => {
-                if (!input.value.trim()) {
-                    isValid = false;
-                    input.classList.add('is-invalid');
-                } else {
-                    input.classList.remove('is-invalid');
+            let subTotal = 0;
+            let totalTaxAmount = 0;
+            let totalQuantity = 0;
+
+            serviceRows.forEach((row, index) => {
+                const cells = row.querySelectorAll('td');
+                if (cells.length >= 8) {
+                    // Lấy dữ liệu từ các cột
+                    const quantityText = cells[3].textContent.trim();
+                    const priceText = cells[4].textContent.trim();
+                    const taxText = cells[5].textContent.trim();
+                    const totalText = cells[6].textContent.trim();
+
+                    // Parse numbers
+                    const quantity = parseFloat(quantityText) || 0;
+                    const price = parseFloat(priceText.replace(/[^\d.]/g, '')) || 0;
+                    const taxPercent = parseFloat(taxText) || 0;
+                    const total = parseFloat(totalText.replace(/[^\d.]/g, '')) || 0;
+
+                    console.log(`Service ${index + 1}:`, {
+                        quantity, price, taxPercent, total
+                    });
+
+                    if (quantity > 0 && price > 0 && total > 0) {
+                        // Cộng vào SubTotal
+                        subTotal += total;
+
+                        // Tính Tax Amount = Price * Quantity * Tax%
+                        totalTaxAmount += (price * quantity * taxPercent / 100);
+
+                        // Cộng quantity để tính discount
+                        totalQuantity += quantity;
+                    }
                 }
             });
 
-            return isValid;
+            // Tính discount theo rules
+            let discountPercent = 0;
+            if (totalQuantity >= 5) {
+                discountPercent = 10;
+            } else if (totalQuantity >= 3) {
+                discountPercent = 5;
+            } else if (totalQuantity === 1) {
+                discountPercent = 3;
+            }
+
+            const discountAmount = subTotal * discountPercent / 100;
+            const patientPayment = subTotal - discountAmount;
+
+            console.log('Calculation Results:', {
+                subTotal,
+                totalTaxAmount,
+                totalQuantity,
+                discountPercent,
+                discountAmount,
+                patientPayment
+            });
+
+            // Cập nhật hiển thị
+            updateDisplayValues(subTotal, totalTaxAmount, discountAmount, patientPayment);
+
+            // Lưu Patient Payment để dùng cho validation
+            window.calculatedPatientPayment = patientPayment;
+
+            return { subTotal, totalTaxAmount, discountAmount, patientPayment };
         }
 
-        // Real-time validation
-        document.querySelectorAll('input[required], select[required]').forEach(input => {
-            input.addEventListener('blur', function() {
-                if (this.value.trim()) {
-                    this.classList.remove('is-invalid');
-                    this.classList.add('is-valid');
-                } else {
-                    this.classList.add('is-invalid');
-                    this.classList.remove('is-valid');
+        // Function để cập nhật các giá trị hiển thị
+        function updateDisplayValues(subTotal, taxAmount, discountAmount, patientPayment) {
+            // SubTotal: hiển thị theo công thức tổng Total * giá USD hiện tại
+            const subTotalElement = document.getElementById('servicesSubTotal');
+            if (subTotalElement) {
+                subTotalElement.textContent = '$' + subTotal.toFixed(2);
+            }
+
+            // Total Amount (giống SubTotal)
+            const totalAmountElement = document.getElementById('calculatedTotalAmount');
+            if (totalAmountElement) {
+                totalAmountElement.textContent = '$' + subTotal.toFixed(2);
+            }
+
+            // Tax Amount - hiển thị USD
+            const taxAmountElement = document.getElementById('calculatedTaxAmount');
+            if (taxAmountElement) {
+                taxAmountElement.textContent = '$' + taxAmount.toFixed(2);
+            }
+
+            // Discount Amount - hiển thị USD
+            const discountAmountElement = document.getElementById('calculatedDiscountAmount');
+            if (discountAmountElement) {
+                discountAmountElement.textContent = '$' + discountAmount.toFixed(2);
+            }
+
+            // Patient Payment - hiển thị USD
+            const patientPaymentElement = document.getElementById('calculatedPatientPayment');
+            if (patientPaymentElement) {
+                patientPaymentElement.textContent = '$' + patientPayment.toFixed(2);
+            }
+
+            // Update the hidden amount input to VND for payment processing
+            const amountInput = document.querySelector('input[name="amount"]');
+            if (amountInput) {
+                const patientPaymentVND = convertUSDToVND(patientPayment);
+                amountInput.value = patientPaymentVND;
+            }
+        }
+
+        // Update service table headers and price cells to show VND
+        function updateServiceTableToVND() {
+            // Không cần update table headers nữa - giữ nguyên USD
+            // Price và Total sẽ hiển thị USD
+
+            // Không update price cells trong service table nữa
+            // Giữ nguyên giá USD trong bảng service
+        }
+
+        // Character count for notes
+        const receiptNotesInput = document.getElementById('receiptNotes');
+        const charCountDisplay = document.getElementById('charCount');
+
+        receiptNotesInput.addEventListener('input', function() {
+            const count = this.value.length;
+            charCountDisplay.textContent = count + '/100';
+        });
+
+        // Initialize calculations when page loads
+        document.addEventListener('DOMContentLoaded', function() {
+            // Update table headers and service prices to VND first
+            setTimeout(() => {
+                updateServiceTableToVND();
+                calculateAllAmounts();
+            }, 500);
+
+            // Monitor for changes in the table
+            const observer = new MutationObserver((mutations) => {
+                let hasRelevantChanges = false;
+                mutations.forEach((mutation) => {
+                    if (mutation.type === 'childList' || mutation.type === 'characterData') {
+                        hasRelevantChanges = true;
+                    }
+                });
+
+                if (hasRelevantChanges) {
+                    console.log('Table content changed, recalculating...');
+                    setTimeout(() => {
+                        updateServiceTableToVND();
+                        calculateAllAmounts();
+                    }, 100);
                 }
             });
+
+            // Start observing the table when available
+            setTimeout(() => {
+                const tableBody = document.querySelector('tbody');
+                if (tableBody) {
+                    observer.observe(tableBody, {
+                        childList: true,
+                        subtree: true,
+                        characterData: true
+                    });
+                    console.log('Started observing table changes');
+                }
+            }, 1000);
         });
     </script>
 </body>
