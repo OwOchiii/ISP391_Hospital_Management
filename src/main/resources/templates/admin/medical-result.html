@@ -7,27 +7,28 @@
   <meta name="_csrf_header" th:content="${_csrf.headerName}"/>
   <title>Medical Results Management - MediCare Plus</title>
   <!-- Bootstrap CSS -->
-  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
   <!-- Bootstrap Icons -->
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css">
   <!-- Google Fonts -->
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+
   <style>
     :root {
-      --primary: #667eea;
-      --secondary: #764ba2;
-      --accent: #a78bfa;
-      --light: #f8fafc;
-      --dark: #3c366b;
+      --admin-primary: #7c3aed;
+      --admin-secondary: #5b21b6;
+      --admin-accent: #a855f7;
+      --admin-light: #f3e8ff;
+      --admin-dark: #4c1d95;
       --text-dark: #1f2937;
       --text-light: #6b7280;
       --text-muted: #9ca3af;
       --bg-light: #fafbfc;
       --bg-white: #ffffff;
-      --success-color: #10b981;
-      --warning-color: #f59e0b;
-      --error-color: #ef4444;
-      --info-color: #3b82f6;
+      --success-color: #059669;
+      --warning-color: #d97706;
+      --error-color: #dc2626;
+      --info-color: #0284c7;
       --sidebar-width: 300px;
       --header-height: 70px;
     }
@@ -46,15 +47,6 @@
       overflow-x: hidden;
     }
 
-    .table td {
-      font-family: 'Inter', sans-serif;
-      font-weight: 400;
-      font-size: inherit;
-      color: var(--text-dark);
-      vertical-align: middle;
-      padding: 0.75rem;
-    }
-
     /* Sidebar Styles */
     .admin-sidebar {
       position: fixed;
@@ -62,12 +54,12 @@
       left: 0;
       height: 100vh;
       width: var(--sidebar-width);
-      background: linear-gradient(180deg, var(--primary) 0%, var(--secondary) 100%);
+      background: linear-gradient(180deg, var(--admin-primary) 0%, var(--admin-secondary) 100%);
       color: white;
       z-index: 1000;
       transition: transform 0.3s ease;
       overflow-y: auto;
-      box-shadow: 4px 0 20px rgba(102, 126, 234, 0.15);
+      box-shadow: 4px 0 20px rgba(124, 58, 237, 0.15);
     }
 
     .admin-sidebar.collapsed {
@@ -92,7 +84,7 @@
 
     .admin-brand i {
       font-size: 2rem;
-      background: linear-gradient(45deg, var(--accent), #7c3aed);
+      background: linear-gradient(45deg, #fbbf24, #f59e0b);
       -webkit-background-clip: text;
       -webkit-text-fill-color: transparent;
       background-clip: text;
@@ -153,7 +145,7 @@
       transform: translateY(-50%);
       width: 4px;
       height: 24px;
-      background: var(--accent);
+      background: #fbbf24;
       border-radius: 0 4px 4px 0;
     }
 
@@ -174,7 +166,7 @@
       margin-left: 0;
     }
 
-    /* Header Styles */
+    /* Top Header */
     .admin-header {
       background: var(--bg-white);
       height: var(--header-height);
@@ -206,8 +198,8 @@
     }
 
     .sidebar-toggle:hover {
-      background: var(--light);
-      color: var(--primary);
+      background: var(--admin-light);
+      color: var(--admin-primary);
     }
 
     .page-title {
@@ -242,8 +234,8 @@
     }
 
     .notification-btn:hover {
-      background: var(--light);
-      color: var(--primary);
+      background: var(--admin-light);
+      color: var(--admin-primary);
     }
 
     .notification-badge {
@@ -267,14 +259,14 @@
     }
 
     .admin-info:hover {
-      background: var(--light);
+      background: var(--admin-light);
     }
 
     .admin-avatar {
       width: 40px;
       height: 40px;
       border-radius: 50%;
-      background: linear-gradient(135deg, var(--primary), var(--accent));
+      background: linear-gradient(135deg, var(--admin-primary), var(--admin-accent));
       display: flex;
       align-items: center;
       justify-content: center;
@@ -308,7 +300,7 @@
       max-height: 450px;
       overflow-y: auto;
       background: var(--bg-white);
-      border: 1px solid rgba(102, 126, 234, 0.1);
+      border: 1px solid rgba(124, 58, 237, 0.1);
       border-radius: 16px;
       box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
       padding: 1.5rem;
@@ -325,12 +317,12 @@
 
     .notification-item {
       padding: 0.75rem;
-      border-bottom: 1px solid rgba(102, 126, 234, 0.1);
+      border-bottom: 1px solid rgba(124, 58, 237, 0.1);
       transition: background 0.2s ease;
     }
 
     .notification-item:hover {
-      background: var(--light);
+      background: var(--admin-light);
     }
 
     .notification-item:last-child {
@@ -351,8 +343,8 @@
     }
 
     .card-header {
-      background: linear-gradient(135deg, rgba(102, 126, 234, 0.05), rgba(167, 139, 250, 0.05));
-      border-bottom: 1px solid rgba(102, 126, 234, 0.2);
+      background: linear-gradient(135deg, rgba(124, 58, 237, 0.05), rgba(168, 85, 247, 0.05));
+      border-bottom: 1px solid rgba(124, 58, 237, 0.2);
       padding: 1.75rem;
     }
 
@@ -367,9 +359,9 @@
     }
 
     .input-group-text {
-      background: var(--light);
+      background: var(--admin-light);
       border: 2px solid #e5e7eb;
-      color: var(--primary);
+      color: var(--admin-primary);
     }
 
     .form-control, .form-select {
@@ -381,13 +373,13 @@
     }
 
     .form-control:focus, .form-select:focus {
-      border-color: var(--primary);
-      box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+      border-color: var(--admin-primary);
+      box-shadow: 0 0 0 3px rgba(124, 58, 237, 0.1);
       outline: none;
     }
 
     .table {
-      --bs-table-hover-bg: var(--light);
+      --bs-table-hover-bg: var(--admin-light);
     }
 
     .table th {
@@ -397,8 +389,17 @@
       text-transform: uppercase;
     }
 
+    .table td {
+      font-family: 'Inter', sans-serif;
+      font-weight: 400;
+      font-size: inherit;
+      color: var(--text-dark);
+      vertical-align: middle;
+      padding: 0.75rem;
+    }
+
     .btn-primary {
-      background: linear-gradient(135deg, var(--primary), var(--secondary));
+      background: linear-gradient(135deg, var(--admin-primary), var(--admin-secondary));
       border: none;
       color: white;
       padding: 0.75rem 1.5rem;
@@ -409,7 +410,7 @@
 
     .btn-primary:hover {
       transform: translateY(-2px);
-      box-shadow: 0 8px 25px rgba(102, 126, 234, 0.3);
+      box-shadow: 0 8px 25px rgba(124, 58, 237, 0.3);
     }
 
     /* Search and Filters */
@@ -422,7 +423,7 @@
     }
 
     .filter-toggle {
-      background: linear-gradient(135deg, var(--primary), var(--secondary));
+      background: linear-gradient(135deg, var(--admin-primary), var(--admin-secondary));
       border: none;
       color: white;
       padding: 0.75rem 1.5rem;
@@ -437,7 +438,7 @@
 
     .filter-toggle:hover {
       transform: translateY(-2px);
-      box-shadow: 0 8px 25px rgba(102, 126, 234, 0.3);
+      box-shadow: 0 8px 25px rgba(124, 58, 237, 0.3);
     }
 
     .filter-group {
@@ -472,31 +473,6 @@
     .status-cancel {
       color: var(--text-muted);
       font-weight: 500;
-    }
-
-    .admin-sidebar {
-      /* giữ nguyên position: fixed */
-      position: fixed;
-      top: 0; left: 0;
-      width: var(--sidebar-width);
-      /* … */
-      transition: transform .3s ease;
-    }
-
-    .main-content {
-      position: relative;
-      margin-left: var(--sidebar-width);
-      width: calc(100% - var(--sidebar-width));
-      transition: margin-left .3s ease, width .3s ease;
-    }
-
-    /* Khi đóng sidebar */
-    .admin-sidebar.collapsed {
-      transform: translateX(-100%);
-    }
-    .main-content.expanded {
-      margin-left: 0;
-      width: 100%;
     }
 
     /* Responsive Design */
@@ -559,9 +535,10 @@
   </style>
 </head>
 <body>
-<nav class="admin-sidebar" id="adminSidebar">
+<!-- Admin Sidebar -->
+<div class="admin-sidebar" id="adminSidebar">
   <div class="sidebar-header">
-    <a th:href="@{/admin/dashboard(adminId=${adminId})}" class="admin-brand">
+    <a href="#" class="admin-brand">
       <i class="bi bi-shield-check"></i>
       <div>
         <div>MediCare Plus</div>
@@ -569,377 +546,320 @@
       </div>
     </a>
   </div>
+
   <nav class="sidebar-nav">
     <div class="nav-section">
       <div class="nav-section-title">Dashboard</div>
       <div class="nav-item">
         <a th:href="@{/admin/dashboard(adminId=${adminId})}" class="nav-link">
-          <i class="bi bi-speedometer2"></i> Overview
+          <i class="bi bi-speedometer2"></i>
+          Overview
         </a>
       </div>
     </div>
+
     <div class="nav-section">
       <div class="nav-section-title">User Management</div>
       <div class="nav-item">
         <a th:href="@{/admin/patients(adminId=${adminId})}" class="nav-link">
-          <i class="bi bi-people"></i> Patient Management
+          <i class="bi bi-people"></i>
+          Patient Management
         </a>
       </div>
       <div class="nav-item">
         <a th:href="@{/admin/doctors(adminId=${adminId})}" class="nav-link">
-          <i class="bi bi-person-badge"></i> Doctor Management
+          <i class="bi bi-person-badge"></i>
+          Doctor Management
         </a>
       </div>
       <div class="nav-item">
         <a th:href="@{/admin/receptionists(adminId=${adminId})}" class="nav-link">
-          <i class="bi bi-person-badge"></i> Receptionist Management
+          <i class="bi bi-person-badge"></i>
+          Receptionist Management
         </a>
       </div>
     </div>
+
     <div class="nav-section">
       <div class="nav-section-title">Operations</div>
       <div class="nav-item">
         <a th:href="@{/admin/appointments(adminId=${adminId})}" class="nav-link">
-          <i class="bi bi-calendar-check"></i> Appointment Management
+          <i class="bi bi-calendar-check"></i>
+          Appointment Management
         </a>
       </div>
       <div class="nav-item">
         <a th:href="@{/admin/rooms(adminId=${adminId})}" class="nav-link">
-          <i class="bi bi-door-open"></i> Room Management
+          <i class="bi bi-door-open"></i>
+          Room Management
         </a>
       </div>
       <div class="nav-item">
         <a th:href="@{/admin/schedules(adminId=${adminId})}" class="nav-link">
-          <i class="bi bi-calendar3"></i> Schedule Management
+          <i class="bi bi-calendar3"></i>
+          Schedule Management
         </a>
       </div>
     </div>
+
     <div class="nav-section">
       <div class="nav-section-title">Medical Services</div>
       <div class="nav-item">
-        <a th:href="@{/admin/prescriptions(adminId=${adminId})}" class="nav-link">
-          <i class="bi bi-prescription2"></i> Prescription Management
-        </a>
-      </div>
-      <div class="nav-item">
-        <a th:href="@{/admin/medical-orders(adminId=${adminId})}" class="nav-link">
-          <i class="bi bi-clipboard-pulse"></i> Medical Order Management
-        </a>
-      </div>
-      <div class="nav-item">
         <a th:href="@{/admin/services(adminId=${adminId})}" class="nav-link">
-          <i class="bi bi-heart-pulse"></i> Service Management
+          <i class="bi bi-heart-pulse"></i>
+          Service Management
         </a>
       </div>
       <div class="nav-item">
         <a th:href="@{/admin/specializations(adminId=${adminId})}" class="nav-link">
-          <i class="bi bi-award"></i> Specialties Management
+          <i class="bi bi-award"></i>
+          Specialties Management
         </a>
       </div>
       <div class="nav-item">
         <a th:href="@{/admin/medical-results(adminId=${adminId})}" class="nav-link active">
-          <i class="bi bi-clipboard"></i> Medical Results
+          <i class="bi bi-clipboard-pulse"></i>
+          Medical Results
         </a>
       </div>
     </div>
+
     <div class="nav-section">
       <div class="nav-section-title">Analytics & Content</div>
       <div class="nav-item">
         <a th:href="@{/admin/reports/revenue(adminId=${adminId})}" class="nav-link">
-          <i class="bi bi-graph-up"></i> Revenue Statistics
+          <i class="bi bi-graph-up"></i>
+          Revenue Statistics
         </a>
       </div>
       <div class="nav-item">
         <a th:href="@{/admin/appointments/statistics/appointments(adminId=${adminId})}" class="nav-link">
-          <i class="bi bi-bar-chart"></i> Appointment Statistics
+          <i class="bi bi-bar-chart"></i>
+          Appointment Statistics
         </a>
       </div>
       <div class="nav-item">
         <a th:href="@{/admin/notifications(adminId=${adminId})}" class="nav-link">
-          <i class="bi bi-bell"></i> Notification Management
+          <i class="bi bi-bell"></i>
+          Notification Management
         </a>
       </div>
       <div class="nav-item">
         <a th:href="@{/admin/feedbacks(adminId=${adminId})}" class="nav-link">
-          <i class="bi bi-chat-left-text"></i> Feedback List
+          <i class="bi bi-chat-left-text"></i>
+          Feedback List
         </a>
       </div>
     </div>
+
     <div class="nav-section">
       <div class="nav-section-title">System</div>
       <div class="nav-item">
         <a href="#" class="nav-link">
-          <i class="bi bi-gear"></i> Settings
+          <i class="bi bi-gear"></i>
+          Settings
         </a>
       </div>
       <div class="nav-item">
         <form th:action="@{/auth/logout}" method="post">
-          <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
+          <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}" />
           <button type="submit" class="nav-link w-100 text-start border-0 bg-transparent">
-            <i class="bi bi-box-arrow-right"></i> Logout
+            <i class="bi bi-box-arrow-right"></i>
+            Logout
           </button>
         </form>
       </div>
     </div>
   </nav>
-</nav>
-<div class="container-fluid">
-  <div class="row">
-    <!-- Sidebar -->
+</div>
 
-    <!-- Main Content -->
-    <div class="main-content" id="mainContent">
-      <!-- Header -->
-      <div class="admin-header">
-        <div class="header-left">
-          <button class="sidebar-toggle" onclick="toggleSidebar()">
-            <i class="bi bi-list"></i>
-          </button>
-          <h1 class="page-title">Medical Results Management</h1>
+<!-- Main Content -->
+<div class="main-content" id="mainContent">
+  <!-- Admin Header -->
+  <div class="admin-header">
+    <div class="header-left">
+      <button class="sidebar-toggle" onclick="toggleSidebar()">
+        <i class="bi bi-list"></i>
+      </button>
+      <h1 class="page-title">Medical Results Management</h1>
+    </div>
+
+    <div class="header-right">
+      <div class="header-actions">
+        <button class="notification-btn" onclick="toggleNotificationModal()">
+          <i class="bi bi-bell"></i>
+          <div class="notification-badge"></div>
+        </button>
+        <button class="notification-btn">
+          <i class="bi bi-envelope"></i>
+        </button>
+      </div>
+
+      <div class="admin-info">
+        <div class="admin-avatar">
+          <span th:text="${adminName != null ? #strings.substring(adminName, 0, 2).toUpperCase() : 'AD'}">AD</span>
         </div>
-        <div class="header-right">
-          <div class="header-actions">
-            <button class="notification-btn" onclick="toggleNotificationModal()">
-              <i class="bi bi-bell"></i>
-              <div class="notification-badge"></div>
-            </button>
-            <button class="notification-btn">
-              <i class="bi bi-envelope"></i>
-            </button>
-          </div>
-          <div class="admin-info">
-            <div class="admin-avatar">
-              <span th:text="${adminName != null ? #strings.substring(adminName, 0, 2).toUpperCase() : 'AD'}">AD</span>
-            </div>
-            <div class="admin-details">
-              <div class="admin-name" th:text="${adminName != null ? adminName : 'Administrator'}">Administrator</div>
-              <div class="admin-role">System Admin</div>
-            </div>
-          </div>
+        <div class="admin-details">
+          <div class="admin-name" th:text="${adminName != null ? adminName : 'Administrator'}">Administrator</div>
+          <div class="admin-role">System Admin</div>
         </div>
       </div>
-      <!-- Content Area -->
-      <div class="content p-4">
-        <!-- Search Bar -->
-        <!-- Filter Form -->
-        <form th:action="@{/admin/medical-results}" method="get" class="row g-3 mb-4">
-          <input type="hidden" name="adminId" th:value="${adminId}"/>
+    </div>
+  </div>
 
-          <div class="col-md-2">
-            <label class="form-label">Appt ID</label>
-            <input name="appointmentId" type="number" class="form-control"
-                   th:value="${appointmentId}"/>
+  <!-- Content Area (giữ nguyên từ mã gốc) -->
+  <div class="content p-4">
+    <!-- Search Bar -->
+    <!-- Filter Form -->
+    <form th:action="@{/admin/medical-results}" method="get" class="row g-3 mb-4">
+      <input type="hidden" name="adminId" th:value="${adminId}"/>
+      <div class="col-md-2">
+        <label class="form-label">Appt ID</label>
+        <input name="appointmentId" type="number" class="form-control" th:value="${appointmentId}"/>
+      </div>
+      <div class="col-md-2">
+        <label class="form-label">Status</label>
+        <select name="status" class="form-select">
+          <option value="" th:selected="${status == null}">All</option>
+          <option th:value="Pending" th:selected="${status=='Pending'}">Pending</option>
+          <option th:value="Completed" th:selected="${status=='Completed'}">Completed</option>
+          <option th:value="Cancel" th:selected="${status=='Cancel'}">Canceled</option>
+        </select>
+      </div>
+      <div class="col-md-2">
+        <label class="form-label">Doctor</label>
+        <input name="doctorName" type="text" class="form-control" th:value="${doctorName}" placeholder="Dr. Name"/>
+      </div>
+      <div class="col-md-2">
+        <label class="form-label">Patient</label>
+        <input name="patientName" type="text" class="form-control" th:value="${patientName}" placeholder="Patient Name"/>
+      </div>
+      <div class="col-md-2">
+        <label class="form-label">From</label>
+        <input name="dateFrom" type="datetime-local" class="form-control" th:value="${dateFrom != null ? #dates.format(dateFrom,'yyyy-MM-dd''T''HH:mm') : ''}" />
+      </div>
+      <div class="col-md-2">
+        <label class="form-label">To</label>
+        <input name="dateTo" type="datetime-local" class="form-control" th:value="${dateTo != null ? #dates.format(dateTo, 'yyyy-MM-dd''T''HH:mm') : ''}" />
+      </div>
+      <div class="col-12 text-end">
+        <button type="submit" class="btn btn-primary">Apply Filters</button>
+        <a th:href="@{/admin/medical-results(adminId=${adminId})}" class="btn btn-secondary">Reset</a>
+      </div>
+    </form>
+    <!-- Results Table -->
+    <div class="card">
+      <div class="card-header">
+        <h5 class="card-title">Medical Results</h5>
+      </div>
+      <div class="card-body">
+        <div class="table-responsive">
+          <table class="table table-hover" id="resultsTable">
+            <thead>
+            <tr>
+              <th>ID</th>
+              <th>Result Received Date</th>
+              <th>Appt Date</th>
+              <th>Patient</th>
+              <th>Phone</th>
+              <th>Doctor</th>
+              <th>Status</th>
+              <th>Action</th>
+            </tr>
+            </thead>
+            <tbody id="resultsTableBody">
+            <tr th:each="r : ${results}">
+              <td th:text="${r.resultId}"></td>
+              <td th:text="${#temporals.format(r.resultDate,'yyyy-MM-dd HH:mm')}"></td>
+              <td th:text="${#temporals.format(r.appointmentDateTime,'yyyy-MM-dd HH:mm')}"></td>
+              <td th:text="${r.patientName}"></td>
+              <td th:text="${r.appointmentPhone}"></td>
+              <td th:text="${r.doctorName}"></td>
+              <td th:text="${r.status}" th:classappend="${
+                    r.status.toLowerCase() == 'pending' ? ' status-pending' :
+                    (r.status.toLowerCase() == 'completed' ? ' status-completed' : ' status-cancel') }">
+              </td>
+              <td>
+                <button type="button" class="btn btn-sm btn-primary" th:attr="data-id=${r.resultId}" th:onclick="|loadDetail(this)|">
+                  <i class="bi bi-eye"></i> Detail
+                </button>
+              </td>
+            </tr>
+            <tr th:if="${#lists.isEmpty(results)}">
+              <td colspan="8" class="text-center py-4">
+                <i class="bi bi-clipboard fa-2x mb-2 d-block text-muted"></i>
+                <p class="text-muted mb-0">No medical results found</p>
+              </td>
+            </tr>
+            </tbody>
+          </table>
+          <nav>
+            <ul class="pagination justify-content-center">
+              <li class="page-item" th:classappend="${!page.hasPrevious()} ? 'disabled'">
+                <a class="page-link" th:href="@{|/admin/medical-results?adminId=${adminId}&appointmentId=${appointmentId}&status=${status}&doctorName=${doctorName}&patientName=${patientName}${dateFrom != null ? '&dateFrom=' + #dates.format(dateFrom,'yyyy-MM-dd''T''HH:mm') : ''}${dateTo != null ? '&dateTo=' + #dates.format(dateTo, 'yyyy-MM-dd''T''HH:mm') : ''}&page=${page.number-1}&size=${page.size}|}">
+                  « Prev
+                </a>
+              </li>
+              <li class="page-item" th:each="i : ${#numbers.sequence(0, page.totalPages - 1)}" th:classappend="${i == page.number} ? 'active'">
+                <a class="page-link" th:text="${i + 1}" th:href="@{|/admin/medical-results?adminId=${adminId}&appointmentId=${appointmentId}&status=${status}&doctorName=${doctorName}&patientName=${patientName}${dateFrom != null ? '&dateFrom=' + #dates.format(dateFrom,'yyyy-MM-dd''T''HH:mm') : ''}${dateTo != null ? '&dateTo=' + #dates.format(dateTo, 'yyyy-MM-dd''T''HH:mm') : ''}&page=${i}&size=${page.size}|}"></a>
+              </li>
+              <li class="page-item" th:classappend="${!page.hasNext()} ? 'disabled'">
+                <a class="page-link" th:href="@{|/admin/medical-results?adminId=${adminId}&appointmentId=${appointmentId}&status=${status}&doctorName=${doctorName}&patientName=${patientName}${dateFrom != null ? '&dateFrom=' + #dates.format(dateFrom,'yyyy-MM-dd''T''HH:mm') : ''}${dateTo != null ? '&dateTo=' + #dates.format(dateTo, 'yyyy-MM-dd''T''HH:mm') : ''}&page=${page.number+1}&size=${page.size}|}">
+                  Next »
+                </a>
+              </li>
+            </ul>
+          </nav>
+        </div>
+      </div>
+    </div>
+    <!-- Modal Detail -->
+    <div class="modal fade" id="detailModal" tabindex="-1" aria-labelledby="detailModalLabel" aria-hidden="true">
+      <div class="modal-dialog modal-lg modal-dialog-centered">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h5 class="modal-title" id="detailModalLabel">
+              Details for Result #<span id="m-resultId"></span>
+            </h5>
+            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
           </div>
-          <div class="col-md-2">
-            <label class="form-label">Status</label>
-            <select name="status" class="form-select">
-              <option value="" th:selected="${status == null}">All</option>
-              <option th:value="Pending"   th:selected="${status=='Pending'}">Pending</option>
-              <option th:value="Completed" th:selected="${status=='Completed'}">Completed</option>
-              <option th:value="Cancel"    th:selected="${status=='Cancel'}">Canceled</option>
-            </select>
+          <div class="modal-body">
+            <dl class="row">
+              <dt class="col-sm-4">Result Date</dt>
+              <dd class="col-sm-8" id="m-resultDate"></dd>
+              <dt class="col-sm-4">Status</dt>
+              <dd class="col-sm-8" id="m-status"></dd>
+              <dt class="col-sm-4">Description</dt>
+              <dd class="col-sm-8" id="m-description"></dd>
+              <dt class="col-sm-4">File</dt>
+              <dd class="col-sm-8">
+                <a id="m-fileUrl" href="#" target="_blank">Download</a>
+              </dd>
+              <dt class="col-sm-4">Appointment</dt>
+              <dd class="col-sm-8" id="m-appointmentInfo"></dd>
+              <dt class="col-sm-4">Patient</dt>
+              <dd class="col-sm-8" id="m-patientInfo"></dd>
+              <dt class="col-sm-4">Patient Email</dt>
+              <dd class="col-sm-8" id="m-patientEmail"></dd>
+              <dt class="col-sm-4">Doctor</dt>
+              <dd class="col-sm-8" id="m-doctorInfo"></dd>
+              <dt class="col-sm-4">Doctor Contact</dt>
+              <dd class="col-sm-8" id="m-doctorContact"></dd>
+              <dt class="col-sm-4">Orders</dt>
+              <dd class="col-sm-8">
+                <ul id="m-ordersList"></ul>
+              </dd>
+            </dl>
           </div>
-          <div class="col-md-2">
-            <label class="form-label">Doctor</label>
-            <input name="doctorName" type="text" class="form-control"
-                   th:value="${doctorName}" placeholder="Dr. Name"/>
-          </div>
-          <div class="col-md-2">
-            <label class="form-label">Patient</label>
-            <input name="patientName" type="text" class="form-control"
-                   th:value="${patientName}" placeholder="Patient Name"/>
-          </div>
-          <div class="col-md-2">
-            <label class="form-label">From</label>
-            <input name="dateFrom" type="datetime-local" class="form-control"
-                   th:value="${dateFrom != null ? #dates.format(dateFrom,'yyyy-MM-dd''T''HH:mm') : ''}" />
-          </div>
-          <div class="col-md-2">
-            <label class="form-label">To</label>
-            <input name="dateTo" type="datetime-local" class="form-control"
-                   th:value="${dateTo   != null ? #dates.format(dateTo,  'yyyy-MM-dd''T''HH:mm') : ''}" />
-          </div>
-
-          <div class="col-12 text-end">
-            <button type="submit" class="btn btn-primary">Apply Filters</button>
-            <a th:href="@{/admin/medical-results(adminId=${adminId})}"
-               class="btn btn-secondary">Reset</a>
-          </div>
-        </form>
-        <!-- Results Table -->
-        <div class="card">
-          <div class="card-header">
-            <h5 class="card-title">Medical Results</h5>
-          </div>
-          <div class="card-body">
-            <div class="table-responsive">
-              <table class="table table-hover" id="resultsTable">
-                <thead>
-                <tr>
-                  <th>ID</th>
-                  <th>Result Received Date</th>
-                  <th>Appt Date</th>
-                  <th>Patient</th>
-                  <th>Phone</th>
-                  <th>Doctor</th>
-                  <th>Status</th>
-                  <th>Action</th>
-                </tr>
-                </thead>
-                <tbody id="resultsTableBody">
-                <tr th:each="r : ${results}">
-                  <td th:text="${r.resultId}"></td>
-                  <td th:text="${#temporals.format(r.resultDate,'yyyy-MM-dd HH:mm')}"></td>
-                  <td th:text="${#temporals.format(r.appointmentDateTime,'yyyy-MM-dd HH:mm')}"></td>
-                  <td th:text="${r.patientName}"></td>
-                  <td th:text="${r.appointmentPhone}"></td>
-                  <td th:text="${r.doctorName}"></td>
-                  <td
-                          th:text="${r.status}"
-                          th:classappend="${
-      r.status.toLowerCase() == 'pending'
-        ? ' status-pending'
-        : (r.status.toLowerCase() == 'completed'
-            ? ' status-completed'
-            : ' status-cancel') }">
-                  </td>
-                  <td>
-                    <button type="button"
-                            class="btn btn-sm btn-primary"
-                            th:attr="data-id=${r.resultId}"
-                            th:onclick="|loadDetail(this)|">
-                      <i class="bi bi-eye"></i> Detail
-                    </button>
-                  </td>
-                </tr>
-                <tr th:if="${#lists.isEmpty(results)}">
-                  <td colspan="8" class="text-center py-4">
-                    <i class="bi bi-clipboard fa-2x mb-2 d-block text-muted"></i>
-                    <p class="text-muted mb-0">No medical results found</p>
-                  </td>
-                </tr>
-                </tbody>
-              </table>
-
-
-
-              <nav>
-                <ul class="pagination justify-content-center">
-                  <!-- Prev -->
-                  <li class="page-item" th:classappend="${!page.hasPrevious()} ? 'disabled'">
-                    <a class="page-link"
-                       th:href="@{|/admin/medical-results?adminId=${adminId}
-                    &appointmentId=${appointmentId}
-                    &status=${status}
-                    &doctorName=${doctorName}
-                    &patientName=${patientName}
-                    ${dateFrom != null ? '&dateFrom=' + #dates.format(dateFrom,'yyyy-MM-dd''T''HH:mm') : ''}
-                    ${dateTo   != null ? '&dateTo='   + #dates.format(dateTo,  'yyyy-MM-dd''T''HH:mm') : ''}
-                    &page=${page.number-1}
-                    &size=${page.size}|}">
-                      « Prev
-                    </a>
-                  </li>
-
-                  <!-- Page numbers -->
-                  <li class="page-item"
-                      th:each="i : ${#numbers.sequence(0, page.totalPages - 1)}"
-                      th:classappend="${i == page.number} ? 'active'">
-                    <a class="page-link" th:text="${i + 1}"
-                       th:href="@{|/admin/medical-results?adminId=${adminId}
-                    &appointmentId=${appointmentId}
-                    &status=${status}
-                    &doctorName=${doctorName}
-                    &patientName=${patientName}
-                    ${dateFrom != null ? '&dateFrom=' + #dates.format(dateFrom,'yyyy-MM-dd''T''HH:mm') : ''}
-                    ${dateTo   != null ? '&dateTo='   + #dates.format(dateTo,  'yyyy-MM-dd''T''HH:mm') : ''}
-                    &page=${i}
-                    &size=${page.size}|}"></a>
-                  </li>
-
-                  <!-- Next -->
-                  <li class="page-item" th:classappend="${!page.hasNext()} ? 'disabled'">
-                    <a class="page-link"
-                       th:href="@{|/admin/medical-results?adminId=${adminId}
-                    &appointmentId=${appointmentId}
-                    &status=${status}
-                    &doctorName=${doctorName}
-                    &patientName=${patientName}
-                    ${dateFrom != null ? '&dateFrom=' + #dates.format(dateFrom,'yyyy-MM-dd''T''HH:mm') : ''}
-                    ${dateTo   != null ? '&dateTo='   + #dates.format(dateTo,  'yyyy-MM-dd''T''HH:mm') : ''}
-                    &page=${page.number+1}
-                    &size=${page.size}|}">
-                      Next »
-                    </a>
-                  </li>
-                </ul>
-              </nav>
-
-
-            </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
           </div>
         </div>
-        <!-- Detail Card -->
-        <!-- Modal Detail -->
-        <!-- Modal Detail -->
-        <div class="modal fade" id="detailModal" tabindex="-1" aria-labelledby="detailModalLabel" aria-hidden="true">
-          <div class="modal-dialog modal-lg modal-dialog-centered">
-            <div class="modal-content">
-              <div class="modal-header">
-                <h5 class="modal-title" id="detailModalLabel">
-                  Details for Result #<span id="m-resultId"></span>
-                </h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-              </div>
-              <div class="modal-body">
-                <dl class="row">
-                  <dt class="col-sm-4">Result Date</dt>
-                  <dd class="col-sm-8" id="m-resultDate"></dd>
-
-                  <dt class="col-sm-4">Status</dt>
-                  <dd class="col-sm-8" id="m-status"></dd>
-
-                  <dt class="col-sm-4">Description</dt>
-                  <dd class="col-sm-8" id="m-description"></dd>
-
-                  <dt class="col-sm-4">File</dt>
-                  <dd class="col-sm-8">
-                    <a id="m-fileUrl" href="#" target="_blank">Download</a>
-                  </dd>
-
-                  <dt class="col-sm-4">Appointment</dt>
-                  <dd class="col-sm-8" id="m-appointmentInfo"></dd>
-
-                  <dt class="col-sm-4">Patient</dt>
-                  <dd class="col-sm-8" id="m-patientInfo"></dd>
-
-                  <dt class="col-sm-4">Patient Email</dt>
-                  <dd class="col-sm-8" id="m-patientEmail"></dd>
-
-                  <dt class="col-sm-4">Doctor</dt>
-                  <dd class="col-sm-8" id="m-doctorInfo"></dd>
-
-                  <dt class="col-sm-4">Doctor Contact</dt>
-                  <dd class="col-sm-8" id="m-doctorContact"></dd>
-
-                  <dt class="col-sm-4">Orders</dt>
-                  <dd class="col-sm-8">
-                    <ul id="m-ordersList"></ul>
-                  </dd>
-                </dl>
-
-              </div>
-              <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
-              </div>
-            </div>
-          </div>
-        </div>
-
       </div>
     </div>
   </div>
 </div>
+
 <!-- Notification Modal -->
 <div class="notification-modal" id="notificationModal">
   <h5>Notifications</h5>
@@ -952,51 +872,90 @@
     <small>1 day ago</small>
   </div>
 </div>
+
 <!-- Bootstrap JS -->
-<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
-<script>
-  // 1) Ajax fetch detail và show modal
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+
+<script th:inline="javascript">
+  /*<![CDATA[*/
+  // Get admin ID from Thymeleaf
+  const adminId = /*[[${adminId}]]*/ 0;
+
+  // Sidebar toggle functionality
+  function toggleSidebar() {
+    const sidebar = document.getElementById('adminSidebar');
+    const mainContent = document.getElementById('mainContent');
+
+    sidebar.classList.toggle('collapsed');
+    mainContent.classList.toggle('expanded');
+  }
+
+  // Auto-hide sidebar on mobile
+  function checkScreenSize() {
+    const sidebar = document.getElementById('adminSidebar');
+    const mainContent = document.getElementById('mainContent');
+
+    if (window.innerWidth <= 768) {
+      sidebar.classList.add('collapsed');
+      mainContent.classList.add('expanded');
+    } else {
+      sidebar.classList.remove('collapsed');
+      mainContent.classList.remove('expanded');
+    }
+  }
+
+  // Event listeners
+  window.addEventListener('load', checkScreenSize);
+  window.addEventListener('resize', checkScreenSize);
+
+  // Navigation link handlers
+  document.querySelectorAll('.nav-link').forEach(link => {
+    link.addEventListener('click', function(e) {
+      if (this.getAttribute('href') === '#') {
+        e.preventDefault();
+      }
+
+      // Remove active class from all links
+      document.querySelectorAll('.nav-link').forEach(l => l.classList.remove('active'));
+
+      // Add active class to clicked link
+      this.classList.add('active');
+    });
+  });
+
+  // Toggle Notification Modal
+  function toggleNotificationModal() {
+    const modal = document.getElementById('notificationModal');
+    modal.style.display = modal.style.display === 'block' ? 'none' : 'block';
+  }
+
+  // Load detail for medical result
   function loadDetail(btn) {
     const id = btn.getAttribute('data-id');
     fetch(`/admin/medical-results/${id}/detail-json`)
             .then(res => res.json())
             .then(dto => {
-              document.getElementById('m-resultId').textContent    = dto.resultId;
-              document.getElementById('m-resultDate').textContent  = dto.resultDate;
-              document.getElementById('m-status').textContent      = dto.status;
+              document.getElementById('m-resultId').textContent = dto.resultId;
+              document.getElementById('m-resultDate').textContent = dto.resultDate;
+              document.getElementById('m-status').textContent = dto.status;
               document.getElementById('m-description').textContent = dto.description;
               const a = document.getElementById('m-fileUrl');
-              a.href = dto.fileUrl; a.textContent = 'Download';
-              document.getElementById('m-appointmentInfo').textContent =
-                      `ID: ${dto.appointmentId}, ${dto.appointmentDateTime}`;
-              document.getElementById('m-patientInfo').textContent =
-                      `${dto.patientName} (${dto.patientGender}, ${dto.patientDob})`;
-              // **new** email line:
+              a.href = dto.fileUrl;
+              a.textContent = 'Download';
+              document.getElementById('m-appointmentInfo').textContent = `ID: ${dto.appointmentId}, ${dto.appointmentDateTime}`;
+              document.getElementById('m-patientInfo').textContent = `${dto.patientName} (${dto.patientGender}, ${dto.patientDob})`;
               document.getElementById('m-patientEmail').textContent = dto.patientEmail;
-              document.getElementById('m-doctorInfo').textContent =
-                      `${dto.doctorName} – ${dto.doctorBio}`;
-              // **new** doctor contact line:
+              document.getElementById('m-doctorInfo').textContent = `${dto.doctorName} – ${dto.doctorBio}`;
               document.getElementById('m-doctorContact').textContent = dto.doctorContact;
-              // Orders
-              document.getElementById('m-ordersList').innerHTML =
-                      dto.orders.map(o =>
-                              `<li>${o.orderType} – ${o.orderDate} – ${o.orderStatus}` +
-                              (o.assignedDept ? ` (Dept: ${o.assignedDept})` : ``) +
-                              `</li>`
-                      ).join('');
+              document.getElementById('m-ordersList').innerHTML = dto.orders.map(o =>
+                      `<li>${o.orderType} – ${o.orderDate} – ${o.orderStatus}` +
+                      (o.assignedDept ? ` (Dept: ${o.assignedDept})` : ``) +
+                      `</li>`
+              ).join('');
               new bootstrap.Modal(document.getElementById('detailModal')).show();
             });
   }
-
-
-  // 2) Init sidebar toggle
-  document.addEventListener('DOMContentLoaded', () => {
-    document.querySelector('.sidebar-toggle')
-            .addEventListener('click', () => {
-              document.getElementById('adminSidebar').classList.toggle('collapsed');
-              document.getElementById('mainContent').classList.toggle('expanded');
-            });
-  });
+  /*]]>*/
 </script>
 </body>
 </html>
