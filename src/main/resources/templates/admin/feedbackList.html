@@ -411,7 +411,7 @@
         <div class="nav-section">
             <div class="nav-section-title">Dashboard</div>
             <div class="nav-item">
-                <a th:href="@{/admin/dashboard(adminId=${adminId})}" class="nav-link active">
+                <a th:href="@{/admin/dashboard(adminId=${adminId})}" class="nav-link">
                     <i class="bi bi-speedometer2"></i>
                     Overview
                 </a>
@@ -466,18 +466,6 @@
         <div class="nav-section">
             <div class="nav-section-title">Medical Services</div>
             <div class="nav-item">
-                <a th:href="@{/admin/prescriptions(adminId=${adminId})}" class="nav-link">
-                    <i class="bi bi-prescription2"></i>
-                    Prescription Management
-                </a>
-            </div>
-            <div class="nav-item">
-                <a th:href="@{/admin/medical-orders(adminId=${adminId})}" class="nav-link">
-                    <i class="bi bi-clipboard-pulse"></i>
-                    Medical Order Management
-                </a>
-            </div>
-            <div class="nav-item">
                 <a th:href="@{/admin/services(adminId=${adminId})}" class="nav-link">
                     <i class="bi bi-heart-pulse"></i>
                     Service Management
@@ -487,6 +475,12 @@
                 <a th:href="@{/admin/specializations(adminId=${adminId})}" class="nav-link">
                     <i class="bi bi-award"></i>
                     Specialties Management
+                </a>
+            </div>
+            <div class="nav-item">
+                <a th:href="@{/admin/medical-results(adminId=${adminId})}" class="nav-link">
+                    <i class="bi bi-clipboard-pulse"></i>
+                    Medical Results
                 </a>
             </div>
         </div>
@@ -512,7 +506,7 @@
                 </a>
             </div>
             <div class="nav-item">
-                <a th:href="@{/admin/feedbacks(adminId=${adminId})}" class="nav-link">
+                <a th:href="@{/admin/feedbacks(adminId=${adminId})}" class="nav-link active">
                     <i class="bi bi-chat-left-text"></i>
                     Feedback List
                 </a>
