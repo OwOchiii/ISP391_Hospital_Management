@@ -860,72 +860,75 @@
                 </div>
 
                 <!-- Doctors List -->
+                <!-- Doctors List -->
                 <div th:if="${doctors != null && !doctors.isEmpty()}">
-                    <div th:each="d : ${doctors}" class="doctor-card" th:data-doctor-id="${d.doctorId}">
+                    <div th:each="doctor : ${doctors}" class="doctor-card" th:data-doctor-id="${doctor.doctorId}">
                         <div class="doctor-header">
                             <div class="d-flex align-items-center gap-3">
-                                <div class="doctor-id" th:text="${d.doctorId}">1</div>
+                                <div class="doctor-id" th:text="${doctor.doctorId}">1</div>
                                 <div>
-                                    <h5 class="mb-1" th:text="${d.user.fullName}">Dr. Alice Smith</h5>
-                                    <small class="text-muted" th:text="${d.user.email}">alice@example.com</small>
+                                    <h5 class="mb-1" th:text="${doctor.user.fullName}">Dr. Alice Smith</h5>
+                                    <small class="text-muted" th:text="${doctor.user.email}">alice@example.com</small>
                                 </div>
                             </div>
-                            <div class="status-badge" th:classappend="${d.user.status=='LOCKED'} ? 'status-locked' : 'status-active'"
-                                 th:text="${d.user.status}">Active</div>
-                        </div>
-
-                        <div class="initial-info">
-                            <div class="info-item">
-                                <span class="info-label">Phone</span>
-                                <span class="info-value" th:text="${d.user.phoneNumber}">0123456789</span>
-                            </div>
+                            <div class="status-badge" th:classappend="${doctor.user.status == 'LOCKED'} ? 'status-locked' : 'status-active'"
+                                 th:text="${doctor.user.status}">Active</div>
                         </div>
 
                         <div class="doctor-actions">
-                            <button class="btn-outline-custom btn-sm" type="button" data-bs-toggle="modal" data-bs-target="#doctorModal" data-mode="edit"
-                                    th:attr="data-id=${d.doctorId}, data-fullname=${d.user.fullName}, data-email=${d.user.email}, data-phone=${d.user.phoneNumber}, data-bio=${d.bioDescription}, data-status=${d.user.status}">
-                                <i class="bi bi-pencil-square"></i> Edit
-                            </button>
-                            <button class="btn-outline-custom btn-sm" type="button" data-bs-toggle="collapse"
-                                    th:attr="data-bs-target='#details-' + ${d.doctorId}" aria-expanded="false"
-                                    th:attrappend="aria-controls='details-' + ${d.doctorId}">
+                            <button class="btn-outline-custom btn-sm"
+                                    type="button"
+                                    data-bs-toggle="collapse"
+                                    th:attr="data-bs-target='#details-' + ${doctor.doctorId}"
+                                    aria-expanded="false">
                                 <i class="bi bi-eye"></i> View Details
                             </button>
 
-                            <form th:action="@{/admin/doctors/{id}/changeRole(id=${d.doctorId})}"
-                                  method="post" class="d-inline">
-                                <input type="hidden" name="adminId" th:value="${adminId}" />
-                                <select name="newRoleId" class="form-select form-select-sm d-inline w-auto">
-                                    <option th:each="r : ${roles}"
-                                            th:value="${r.roleId}"
-                                            th:text="${r.roleName}"
-                                            th:selected="${r.roleId} == ${d.user.roleId}">Role</option>
-                                </select>
-                                <button class="btn btn-sm btn-outline-primary">Change</button>
-                            </form>
-
-                            <form th:action="@{/admin/doctors/{id}/toggleLock(id=${d.doctorId},adminId=${adminId})}" method="post" style="display:inline">
-                                <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
-                                <button type="submit" class="btn-sm"
-                                        th:classappend="${d.user.status=='LOCKED'} ? 'btn-success-custom' : 'btn-warning-custom'"
-                                        th:text="${d.user.status=='LOCKED'} ? 'Unlock' : 'Lock'"></button>
-                            </form>
                         </div>
 
-                        <div class="collapse" th:id="'details-' + ${d.doctorId}">
-                            <div class="doctor-info pt-3">
-                                <div class="info-item">
-                                    <span class="info-label">Bio</span>
-                                    <span class="info-value" th:text="${d.bioDescription}">Mô tả chuyên khoa…</span>
-                                </div>
-                                <div class="info-item">
-                                    <span class="info-label">Created At</span>
-                                    <span class="info-value" th:text="${#temporals.format(d.user.createdAt,'yyyy-MM-dd HH:mm')}">2025-06-12 15:45</span>
-                                </div>
+                        <div th:id="'details-' + ${doctor.doctorId}" class="collapse mt-3">
+                            <div class="card card-body">
+                                <!-- Basic info -->
+                                <p><strong>Phone:</strong> <span th:text="${doctor.user.phoneNumber}"/></p>
+                                <p><strong>Bio:</strong> <span th:text="${doctor.bioDescription}"/></p>
+
+                                <!-- Education & Certificates table -->
+                                <h6>Education & Certificates</h6>
+                                <table class="table table-sm">
+                                    <thead>
+                                    <tr>
+                                        <th>Degree</th>
+                                        <th>Institution</th>
+                                        <th>Graduation Year</th>
+                                        <th>Description</th>
+                                        <th>Certificate Image</th>
+                                    </tr>
+                                    </thead>
+                                    <tbody>
+                                    <tr th:each="edu : ${doctor.educations}">
+                                        <td th:text="${edu.degree}">–</td>
+                                        <td th:text="${edu.institution}">–</td>
+                                        <td th:text="${edu.graduation}">–</td>
+                                        <td th:text="${edu.description}">–</td>
+                                        <td>
+                                            <img th:if="${edu.certificateImageUrl != null and #strings.isNotEmpty(edu.certificateImageUrl)}"
+                                                 th:src="${edu.certificateImageUrl}"
+                                                 alt="certificate" style="max-height:60px;"/>
+                                            <span th:if="${edu.certificateImageUrl == null or #strings.isEmpty(edu.certificateImageUrl)}">–</span>
+                                        </td>
+
+                                    </tr>
+                                    <tr th:if="${doctor.educations.empty}">
+                                        <td colspan="5" class="text-center text-muted">No education records</td>
+                                    </tr>
+                                    </tbody>
+                                </table>
                             </div>
                         </div>
+
                     </div>
                 </div>
+
             </div>
         </div>
 
@@ -933,50 +936,25 @@
         <div class="pagination-container mt-4" th:if="${totalPages > 1}">
             <nav aria-label="Page navigation">
                 <ul class="pagination justify-content-center">
-                    <!-- Previous -->
                     <li class="page-item" th:classappend="${currentPage == 0} ? 'disabled'">
-                        <a class="page-link"
-                           th:href="@{/admin/doctors(
-                              adminId=${adminId},
-                              search=${search},
-                              statusFilter=${statusFilter},
-                              page=${currentPage - 1},
-                              size=${pageSize})}"
-                           aria-label="Previous">
+                        <a class="page-link" th:href="@{/admin/doctors(adminId=${adminId}, search=${search}, statusFilter=${statusFilter}, page=${currentPage - 1}, size=${pageSize})}" aria-label="Previous">
                             «
                         </a>
                     </li>
 
-                    <!-- Page Numbers -->
-                    <li class="page-item"
-                        th:each="i : ${#numbers.sequence(0, totalPages - 1)}"
-                        th:classappend="${i == currentPage} ? 'active'">
-                        <a class="page-link"
-                           th:href="@{/admin/doctors(
-                              adminId=${adminId},
-                              search=${search},
-                              statusFilter=${statusFilter},
-                              page=${i},
-                              size=${pageSize})}"
-                           th:text="${i + 1}">1</a>
+                    <li class="page-item" th:each="i : ${#numbers.sequence(0, totalPages - 1)}" th:classappend="${i == currentPage} ? 'active'">
+                        <a class="page-link" th:href="@{/admin/doctors(adminId=${adminId}, search=${search}, statusFilter=${statusFilter}, page=${i}, size=${pageSize})}" th:text="${i + 1}">1</a>
                     </li>
 
-                    <!-- Next -->
                     <li class="page-item" th:classappend="${currentPage == totalPages - 1} ? 'disabled'">
-                        <a class="page-link"
-                           th:href="@{/admin/doctors(
-                              adminId=${adminId},
-                              search=${search},
-                              statusFilter=${statusFilter},
-                              page=${currentPage + 1},
-                              size=${pageSize})}"
-                           aria-label="Next">
+                        <a class="page-link" th:href="@{/admin/doctors(adminId=${adminId}, search=${search}, statusFilter=${statusFilter}, page=${currentPage + 1}, size=${pageSize})}" aria-label="Next">
                             »
                         </a>
                     </li>
                 </ul>
             </nav>
         </div>
+
 
         <!-- Modal (Add/Edit Doctor) -->
         <div class="modal fade" id="doctorModal" tabindex="-1" aria-labelledby="doctorModalLabel" aria-hidden="true">

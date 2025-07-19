@@ -282,25 +282,20 @@ public class DoctorService {
         }
     }
 
-    public List<Doctor> searchDoctors(String search, String statusFilter) {
+    public Page<Doctor> searchDoctors(String search, String statusFilter, int page, int size) {
         String trimmed = (search != null && !search.isBlank()) ? search.trim() : null;
         String status = (statusFilter != null && !statusFilter.isBlank()) ? statusFilter.trim() : null;
+        Pageable pageable = PageRequest.of(page, size);
+
         try {
             logger.info("Searching doctors with keyword='{}' and status='{}'", trimmed, status);
-            return doctorRepository.searchDoctors(trimmed, status);
+            return doctorRepository.searchDoctors(trimmed, status, pageable);
         } catch (DataAccessException e) {
             logger.error("Error searching doctors with keyword='{}' and status='{}'", trimmed, status, e);
-            return Collections.emptyList();
+            return Page.empty();
         }
     }
 
-    public Page<Doctor> searchDoctors(String search, String statusFilter, int page, int size) {
-        String trimmed = (search != null && !search.isBlank()) ? search.trim() : null;
-        String status  = (statusFilter != null && !statusFilter.isBlank()) ? statusFilter.trim() : null;
-        Pageable pageable = PageRequest.of(page, size);
-
-        return doctorRepository.searchDoctors(trimmed, pageable);
-    }
 
 
     public DoctorForm loadForm(int doctorId) {
@@ -514,5 +509,15 @@ public class DoctorService {
             return Page.empty();
         }
     }
+
+    public Doctor getDoctorByIdWithEducation(int doctorId) {
+        Doctor doctor = doctorRepository.findById(doctorId)
+                .orElseThrow(() -> new IllegalArgumentException("Doctor not found for ID: " + doctorId));
+        List<DoctorEducation> educations = doctorEducationRepository.findByDoctorId(doctorId);
+        doctor.setEducations(educations);
+
+        return doctor;
+    }
+
 }
 
