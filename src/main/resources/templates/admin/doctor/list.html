@@ -13,6 +13,8 @@
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css">
     <!-- Google Fonts -->
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <!-- Cropper.js CSS -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.13/cropper.min.css" rel="stylesheet">
 
     <style>
         :root {
@@ -20,13 +22,24 @@
             --admin-secondary: #5b21b6;
             --admin-accent: #a855f7;
             --admin-light: #f3e8ff;
+            --admin-dark: #4c1d95;
             --text-dark: #1f2937;
             --text-light: #6b7280;
-            --bg-light: #f8fafc;
-            --success-color: #10b981;
-            --error-color: #ef4444;
-            --warning-color: #f59e0b;
-            --sidebar-width: 280px;
+            --text-muted: #9ca3af;
+            --bg-light: #fafbfc;
+            --bg-white: #ffffff;
+            --success-color: #059669;
+            --warning-color: #d97706;
+            --error-color: #dc2626;
+            --info-color: #0284c7;
+            --sidebar-width: 300px;
+            --header-height: 70px;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
         }
 
         body {
@@ -34,57 +47,74 @@
             line-height: 1.6;
             color: var(--text-dark);
             background: var(--bg-light);
+            overflow-x: hidden;
         }
 
-        .sidebar {
+        /* Sidebar Styles */
+        .admin-sidebar {
             position: fixed;
             top: 0;
             left: 0;
             height: 100vh;
             width: var(--sidebar-width);
-            background: linear-gradient(135deg, var(--admin-primary) 0%, var(--admin-secondary) 100%);
+            background: linear-gradient(180deg, var(--admin-primary) 0%, var(--admin-secondary) 100%);
             color: white;
             z-index: 1000;
             transition: transform 0.3s ease;
             overflow-y: auto;
+            box-shadow: 4px 0 20px rgba(124, 58, 237, 0.15);
             scrollbar-width: none;
             -ms-overflow-style: none;
         }
 
-        .sidebar::-webkit-scrollbar {
+        .admin-sidebar::-webkit-scrollbar {
             display: none;
         }
 
-        .sidebar.collapsed {
+        .admin-sidebar.collapsed {
             transform: translateX(-100%);
         }
 
         .sidebar-header {
             padding: 1.5rem;
             border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            background: rgba(255, 255, 255, 0.05);
         }
 
-        .brand-logo {
+        .admin-brand {
             font-size: 1.5rem;
-            font-weight: 700;
+            font-weight: 800;
             display: flex;
             align-items: center;
-            gap: 0.5rem;
+            gap: 0.75rem;
             color: white;
             text-decoration: none;
+        }
+
+        .admin-brand i {
+            font-size: 2rem;
+            background: linear-gradient(45deg, #fbbf24, #f59e0b);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
         }
 
         .sidebar-nav {
             padding: 1.5rem 0;
         }
 
+        .nav-section {
+            margin-bottom: 2rem;
+        }
+
         .nav-section-title {
-            padding: 0.75rem 1.5rem;
             font-size: 0.75rem;
+            font-weight: 600;
             text-transform: uppercase;
             letter-spacing: 0.05em;
             color: rgba(255, 255, 255, 0.6);
-            font-weight: 600;
+            padding: 0 1.5rem;
+            margin-bottom: 0.75rem;
         }
 
         .nav-item {
@@ -93,21 +123,48 @@
 
         .nav-link {
             color: rgba(255, 255, 255, 0.8);
-            padding: 0.75rem 1rem;
-            border-radius: 10px;
+            padding: 0.875rem 1.25rem;
+            border-radius: 12px;
             display: flex;
             align-items: center;
-            gap: 0.75rem;
+            gap: 0.875rem;
             text-decoration: none;
+            font-weight: 500;
             transition: all 0.3s ease;
+            position: relative;
         }
 
-        .nav-link:hover,
-        .nav-link.active {
+        .nav-link:hover {
             background: rgba(255, 255, 255, 0.1);
             color: white;
+            transform: translateX(4px);
         }
 
+        .nav-link.active {
+            background: rgba(255, 255, 255, 0.15);
+            color: white;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+        }
+
+        .nav-link.active::before {
+            content: '';
+            position: absolute;
+            left: 0;
+            top: 50%;
+            transform: translateY(-50%);
+            width: 4px;
+            height: 24px;
+            background: #fbbf24;
+            border-radius: 0 4px 4px 0;
+        }
+
+        .nav-link i {
+            font-size: 1.125rem;
+            width: 20px;
+            text-align: center;
+        }
+
+        /* Main Content */
         .main-content {
             margin-left: var(--sidebar-width);
             min-height: 100vh;
@@ -118,10 +175,12 @@
             margin-left: 0;
         }
 
-        .top-header {
-            background: white;
-            padding: 1rem 2rem;
-            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+        /* Top Header */
+        .admin-header {
+            background: var(--bg-white);
+            height: var(--header-height);
+            padding: 0 2rem;
+            box-shadow: 0 2px 20px rgba(0, 0, 0, 0.08);
             display: flex;
             justify-content: space-between;
             align-items: center;
@@ -139,21 +198,77 @@
         .sidebar-toggle {
             background: none;
             border: none;
-            font-size: 1.2rem;
+            font-size: 1.25rem;
             color: var(--text-dark);
             cursor: pointer;
+            padding: 0.5rem;
+            border-radius: 8px;
+            transition: all 0.3s ease;
+        }
+
+        .sidebar-toggle:hover {
+            background: var(--admin-light);
+            color: var(--admin-primary);
+        }
+
+        .page-title {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: var(--text-dark);
+            margin: 0;
         }
 
         .header-right {
             display: flex;
             align-items: center;
+            gap: 1.5rem;
+        }
+
+        .header-actions {
+            display: flex;
+            align-items: center;
             gap: 1rem;
+        }
+
+        .notification-btn {
+            position: relative;
+            background: none;
+            border: none;
+            font-size: 1.25rem;
+            color: var(--text-light);
+            cursor: pointer;
+            padding: 0.5rem;
+            border-radius: 8px;
+            transition: all 0.3s ease;
+        }
+
+        .notification-btn:hover {
+            background: var(--admin-light);
+            color: var(--admin-primary);
+        }
+
+        .notification-badge {
+            position: absolute;
+            top: 0.25rem;
+            right: 0.25rem;
+            width: 8px;
+            height: 8px;
+            background: var(--error-color);
+            border-radius: 50%;
         }
 
         .admin-info {
             display: flex;
             align-items: center;
             gap: 0.75rem;
+            padding: 0.5rem;
+            border-radius: 12px;
+            transition: all 0.3s ease;
+            cursor: pointer;
+        }
+
+        .admin-info:hover {
+            background: var(--admin-light);
         }
 
         .admin-avatar {
@@ -165,9 +280,27 @@
             align-items: center;
             justify-content: center;
             color: white;
-            font-weight: 600;
+            font-weight: 700;
+            font-size: 0.875rem;
         }
 
+        .admin-details {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .admin-name {
+            font-weight: 600;
+            color: var(--text-dark);
+            font-size: 0.875rem;
+        }
+
+        .admin-role {
+            font-size: 0.75rem;
+            color: var(--text-muted);
+        }
+
+        /* Content Area */
         .content-area {
             padding: 2rem;
         }
@@ -412,8 +545,14 @@
             transition: height 0.3s ease;
         }
 
+        @media (max-width: 1200px) {
+            .doctor-info {
+                grid-template-columns: 1fr 1fr;
+            }
+        }
+
         @media (max-width: 768px) {
-            .sidebar {
+            .admin-sidebar {
                 transform: translateX(-100%);
             }
 
@@ -436,11 +575,11 @@
                 align-items: stretch;
             }
 
-            .top-header {
-                padding: 1rem;
+            .admin-header {
+                padding: 0 1rem;
             }
 
-            .admin-info span {
+            .admin-details {
                 display: none;
             }
         }
@@ -455,9 +594,9 @@
 </head>
 <body>
 <!-- Admin Sidebar -->
-<div class="sidebar" id="sidebar">
+<div class="admin-sidebar" id="adminSidebar">
     <div class="sidebar-header">
-        <a href="#" class="brand-logo">
+        <a href="#" class="admin-brand">
             <i class="bi bi-shield-check"></i>
             <div>
                 <div>MediCare Plus</div>
@@ -594,23 +733,33 @@
 
 <!-- Main Content -->
 <div class="main-content" id="mainContent">
-    <!-- Top Header -->
-    <div class="top-header">
+    <!-- Admin Header -->
+    <div class="admin-header">
         <div class="header-left">
             <button class="sidebar-toggle" onclick="toggleSidebar()">
                 <i class="bi bi-list"></i>
             </button>
-            <h4 class="mb-0">Doctor Management</h4>
+            <h1 class="page-title">Doctor Management</h1>
         </div>
 
         <div class="header-right">
+            <div class="header-actions">
+                <button class="notification-btn">
+                    <i class="bi bi-bell"></i>
+                    <div class="notification-badge"></div>
+                </button>
+                <button class="notification-btn">
+                    <i class="bi bi-envelope"></i>
+                </button>
+            </div>
+
             <div class="admin-info">
                 <div class="admin-avatar">
                     <span th:text="${adminName != null ? #strings.substring(adminName, 0, 2).toUpperCase() : 'AD'}">AD</span>
                 </div>
-                <div>
-                    <div class="fw-semibold" th:text="${adminName != null ? adminName : 'Administrator'}">Administrator</div>
-                    <small class="text-muted">System Admin</small>
+                <div class="admin-details">
+                    <div class="admin-name" th:text="${adminName != null ? adminName : 'Administrator'}">Administrator</div>
+                    <div class="admin-role">System Admin</div>
                 </div>
             </div>
         </div>
@@ -652,7 +801,6 @@
             <span th:text="${errorMessage}"></span>
         </div>
 
-
         <!-- Alert Messages -->
         <div id="successAlert" class="alert-custom alert-success-custom" style="display: none;">
             <i class="bi bi-check-circle me-2"></i>
@@ -680,10 +828,6 @@
                         <option value="LOCKED" th:selected="${statusFilter == 'LOCKED'}">Locked</option>
                     </select>
                 </div>
-<!--                <div class="col-md-3">-->
-<!--                    <label for="dateFrom" class="form-label">Date of Birth</label>-->
-<!--                    <input type="date" id="dateFrom" name="dateFrom" th:value="${param.dateFrom}" class="form-control"/>-->
-<!--                </div>-->
                 <div class="col-md-2">
                     <label class="form-label"> </label>
                     <button type="submit" class="btn-primary-custom w-100">
@@ -760,7 +904,6 @@
                                 <button class="btn btn-sm btn-outline-primary">Change</button>
                             </form>
 
-
                             <form th:action="@{/admin/doctors/{id}/toggleLock(id=${d.doctorId},adminId=${adminId})}" method="post" style="display:inline">
                                 <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
                                 <button type="submit" class="btn-sm"
@@ -786,7 +929,7 @@
             </div>
         </div>
 
-        <!-- Phân trang -->
+        <!-- Pagination -->
         <div class="pagination-container mt-4" th:if="${totalPages > 1}">
             <nav aria-label="Page navigation">
                 <ul class="pagination justify-content-center">
@@ -794,27 +937,27 @@
                     <li class="page-item" th:classappend="${currentPage == 0} ? 'disabled'">
                         <a class="page-link"
                            th:href="@{/admin/doctors(
-              adminId=${adminId},
-              search=${search},
-              statusFilter=${statusFilter},
-              page=${currentPage - 1},
-              size=${pageSize})}"
+                              adminId=${adminId},
+                              search=${search},
+                              statusFilter=${statusFilter},
+                              page=${currentPage - 1},
+                              size=${pageSize})}"
                            aria-label="Previous">
                             «
                         </a>
                     </li>
 
-                    <!-- Các số trang -->
+                    <!-- Page Numbers -->
                     <li class="page-item"
                         th:each="i : ${#numbers.sequence(0, totalPages - 1)}"
                         th:classappend="${i == currentPage} ? 'active'">
                         <a class="page-link"
                            th:href="@{/admin/doctors(
-              adminId=${adminId},
-              search=${search},
-              statusFilter=${statusFilter},
-              page=${i},
-              size=${pageSize})}"
+                              adminId=${adminId},
+                              search=${search},
+                              statusFilter=${statusFilter},
+                              page=${i},
+                              size=${pageSize})}"
                            th:text="${i + 1}">1</a>
                     </li>
 
@@ -822,11 +965,11 @@
                     <li class="page-item" th:classappend="${currentPage == totalPages - 1} ? 'disabled'">
                         <a class="page-link"
                            th:href="@{/admin/doctors(
-              adminId=${adminId},
-              search=${search},
-              statusFilter=${statusFilter},
-              page=${currentPage + 1},
-              size=${pageSize})}"
+                              adminId=${adminId},
+                              search=${search},
+                              statusFilter=${statusFilter},
+                              page=${currentPage + 1},
+                              size=${pageSize})}"
                            aria-label="Next">
                             »
                         </a>
@@ -834,7 +977,6 @@
                 </ul>
             </nav>
         </div>
-
 
         <!-- Modal (Add/Edit Doctor) -->
         <div class="modal fade" id="doctorModal" tabindex="-1" aria-labelledby="doctorModalLabel" aria-hidden="true">
@@ -853,16 +995,13 @@
                               onsubmit="return validateDoctorForm()">
                             <input th:field="*{doctorId}" type="hidden"/>
                             <input th:field="*{userId}" type="hidden"/>
-                            <!-- Hidden field to store the cropped image data -->
                             <input type="hidden" id="croppedImageData" name="croppedImageData"/>
-                            <!-- Hidden field to preserve existing image URL -->
                             <input type="hidden" th:field="*{imageUrl}" id="currentImageUrl"/>
 
                             <!-- Profile Image Section -->
                             <div class="mb-3">
                                 <label class="form-label">Profile Image</label>
                                 <div class="profile-image-container">
-                                    <!-- Show current image if exists -->
                                     <img th:if="${doctorForm.imageUrl != null && !doctorForm.imageUrl.isEmpty()}"
                                          th:src="${doctorForm.imageUrl}"
                                          class="current-image mb-2" alt="Current profile image" style="max-width: 150px; border-radius: 5px;">
@@ -877,11 +1016,9 @@
                                     <div class="form-text">Supported formats: JPG, JPEG, PNG, GIF. Max size: 10MB</div>
                                 </div>
 
-                                <!-- Image Preview -->
                                 <img id="imagePreview" class="image-preview" alt="Image preview"
                                      style="max-width: 100%; max-height: 200px; margin-top: 10px; display: none;">
 
-                                <!-- Cropper Container -->
                                 <div id="cropperContainer" style="margin-top: 15px; margin-bottom: 15px; display: none;">
                                     <div id="cropperCanvas"></div>
                                     <div class="mt-2">
@@ -893,14 +1030,11 @@
 
                             <div class="mb-3">
                                 <label for="fullName" class="form-label">Full Name</label>
-                                <input th:field="*{fullName}"
-                                       class="form-control"
-                                       id="fullName" />
+                                <input th:field="*{fullName}" class="form-control" id="fullName"/>
                                 <div class="text-danger"
                                      th:if="${#fields.hasErrors('fullName')}"
                                      th:errors="*{fullName}"></div>
                             </div>
-
 
                             <div class="mb-3">
                                 <label for="email" class="form-label">Email</label>
@@ -926,7 +1060,6 @@
                                 </div>
                                 <div class="card-body">
                                     <div id="educationContainer">
-                                        <!-- Education items will be added here -->
                                         <div class="education-item mb-3">
                                             <div class="row g-2">
                                                 <div class="col-md-6">
@@ -974,349 +1107,327 @@
                 </div>
             </div>
         </div>
-
-        <!-- Bootstrap JS -->
-        <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-
-        <script th:inline="javascript">
-            /*<![CDATA[*/
-            // Get admin ID from Thymeleaf
-            const adminId = /*[[${adminId}]]*/ 0;
-
-            document.addEventListener('DOMContentLoaded', function() {
-                // Set doctors tab as active
-                const currentPath = window.location.pathname;
-                if (currentPath.includes('/doctors')) {
-                    document.querySelectorAll('.nav-link').forEach(link => {
-                        link.classList.remove('active');
-                    });
-                    document.querySelector('.nav-link[href*="doctors"]').classList.add('active');
-                }
-
-                // Initialize Bootstrap collapse
-                const collapseElements = document.querySelectorAll('.collapse');
-                collapseElements.forEach(collapse => {
-                    new bootstrap.Collapse(collapse, {
-                        toggle: false
-                    });
-                });
-
-                // Add click event to toggle collapse
-                document.querySelectorAll('[data-bs-toggle="collapse"]').forEach(button => {
-                    button.addEventListener('click', function (e) {
-                        const target = this.getAttribute('data-bs-target');
-                        const collapse = document.querySelector(target);
-                        if (collapse) {
-                            const bsCollapse = bootstrap.Collapse.getOrCreateInstance(collapse);
-                            bsCollapse.toggle();
-                        }
-                    });
-                });
-
-                // Doctor Modal Handler
-                var doctorModalEl = document.getElementById('doctorModal');
-                doctorModalEl.addEventListener('show.bs.modal', function (event) {
-                    var button = event.relatedTarget;
-                    var mode = button.getAttribute('data-mode');
-                    var modalTitle = doctorModalEl.querySelector('.modal-title');
-                    var form = doctorModalEl.querySelector('#doctorForm');
-                    var inputId = form.querySelector('#doctorId');
-                    var inputFullName = form.querySelector('#fullName');
-                    var inputEmail = form.querySelector('#email');
-                    var inputPhone = form.querySelector('#phoneNumber');
-                    var inputBio = form.querySelector('#bioDescription');
-                    var selectStatus = form.querySelector('#status');
-
-                    if (mode === 'add') {
-                        modalTitle.textContent = 'Add New Doctor';
-                        inputId.value = '';
-                        inputFullName.value = '';
-                        inputEmail.value = '';
-                        inputPhone.value = '';
-                        inputBio.value = '';
-                        selectStatus.value = 'ACTIVE';
-                    } else if (mode === 'edit') {
-                        modalTitle.textContent = 'Edit Doctor';
-                        inputId.value = button.getAttribute('data-id') || '';
-                        inputFullName.value = button.getAttribute('data-fullname') || '';
-                        inputEmail.value = button.getAttribute('data-email') || '';
-                        inputPhone.value = button.getAttribute('data-phone') || '';
-                        inputBio.value = button.getAttribute('data-bio') || '';
-                        selectStatus.value = button.getAttribute('data-status') || 'ACTIVE';
-                    }
-                });
-            });
-
-            // Sidebar toggle functionality
-            function toggleSidebar() {
-                const sidebar = document.getElementById('sidebar');
-                const mainContent = document.getElementById('mainContent');
-                sidebar.classList.toggle('collapsed');
-                mainContent.classList.toggle('expanded');
-            }
-
-            // Auto-hide sidebar on mobile
-            function checkScreenSize() {
-                const sidebar = document.getElementById('sidebar');
-                const mainContent = document.getElementById('mainContent');
-                if (window.innerWidth <= 768) {
-                    sidebar.classList.add('collapsed');
-                    mainContent.classList.add('expanded');
-                } else {
-                    sidebar.classList.remove('collapsed');
-                    mainContent.classList.remove('expanded');
-                }
-            }
-
-            // Check screen size on load and resize
-            window.addEventListener('load', checkScreenSize);
-            window.addEventListener('resize', checkScreenSize);
-
-            // Refresh doctors
-            function refreshDoctors() {
-                window.location.reload();
-            }
-
-            // Validate doctor form
-            function validateDoctorForm() {
-                const fullName = document.getElementById("fullName").value.trim();
-                const email = document.getElementById("email").value.trim();
-                const phone = document.getElementById("phoneNumber").value.trim();
-
-                if (fullName === "" || fullName.match(/^\s*$/)) {
-                    alert("Full Name cannot be empty or contain only spaces.");
-                    return false;
-                }
-
-                if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
-                    alert("Please enter a valid email address.");
-                    return false;
-                }
-
-                if (!/^\d{10,15}$/.test(phone)) {
-                    alert("Phone number must be between 10 to 15 digits and contain only numbers.");
-                    return false;
-                }
-
-                return true;
-            }
-
-            // Navigation link handlers
-            document.querySelectorAll('.nav-link').forEach(link => {
-                link.addEventListener('click', function(e) {
-                    if (this.getAttribute('href') === '#') {
-                        e.preventDefault();
-                    }
-                });
-            });
-
-            // Initialize
-            hideAlerts();
-            /*]]>*/
-        </script>
-
-        <!-- Add Cropper.js library -->
-        <link href="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.13/cropper.min.css" rel="stylesheet">
-        <script src="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.13/cropper.min.js"></script>
-
-        <script>
-            // Image cropping functionality
-            document.addEventListener('DOMContentLoaded', function() {
-                const profileImageInput = document.getElementById('profileImage');
-                const imagePreview = document.getElementById('imagePreview');
-                const cropperContainer = document.getElementById('cropperContainer');
-                const cropperCanvas = document.getElementById('cropperCanvas');
-                const cropImageBtn = document.getElementById('cropImageBtn');
-                const cancelCropBtn = document.getElementById('cancelCropBtn');
-                const croppedImageData = document.getElementById('croppedImageData');
-
-                let cropper = null;
-
-                // Handle file selection
-                if (profileImageInput) {
-                    profileImageInput.addEventListener('change', function(e) {
-                        const file = e.target.files[0];
-
-                        if (!file) return;
-
-                        // Validate file type
-                        const validTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/gif'];
-                        if (!validTypes.includes(file.type)) {
-                            alert('Please select a valid image file (JPG, JPEG, PNG, GIF)');
-                            profileImageInput.value = '';
-                            return;
-                        }
-
-                        // Validate file size (5MB max)
-                        if (file.size > 5 * 1024 * 1024) {
-                            alert('Image file size must be less than 5MB');
-                            profileImageInput.value = '';
-                            return;
-                        }
-
-                        // Read and display the selected image
-                        const reader = new FileReader();
-                        reader.onload = function(event) {
-                            // Create a new image element for the cropper
-                            const img = document.createElement('img');
-                            img.id = 'imageForCropper';
-                            img.src = event.target.result;
-                            img.style.maxWidth = '100%';
-
-                            // Clear the previous content and add the new image
-                            cropperCanvas.innerHTML = '';
-                            cropperCanvas.appendChild(img);
-
-                            // Show the cropper container and buttons
-                            cropperContainer.style.display = 'block';
-                            cropImageBtn.style.display = 'inline-block';
-                            cancelCropBtn.style.display = 'inline-block';
-
-                            // Initialize the cropper
-                            if (cropper) {
-                                cropper.destroy();
-                            }
-
-                            cropper = new Cropper(img, {
-                                aspectRatio: 1, // Square aspect ratio
-                                viewMode: 1,    // Restrict the crop box to not exceed the size of the canvas
-                                responsive: true,
-                                zoomable: true,
-                                scalable: true,
-                                movable: true
-                            });
-                        };
-
-                        reader.readAsDataURL(file);
-                    });
-                }
-
-                // Handle crop button click
-                if (cropImageBtn) {
-                    cropImageBtn.addEventListener('click', function() {
-                        if (!cropper) return;
-
-                        // Get the cropped canvas
-                        const canvas = cropper.getCroppedCanvas({
-                            width: 300,   // Output image width
-                            height: 300,  // Output image height
-                            minWidth: 100,
-                            minHeight: 100,
-                            maxWidth: 1000,
-                            maxHeight: 1000,
-                            fillColor: '#fff',
-                            imageSmoothingEnabled: true,
-                            imageSmoothingQuality: 'high'
-                        });
-
-                        // Convert canvas to data URL
-                        const croppedImageUrl = canvas.toDataURL('image/jpeg', 0.9); // JPEG format, 90% quality
-
-                        // Display the cropped image
-                        imagePreview.src = croppedImageUrl;
-                        imagePreview.style.display = 'block';
-
-                        // Store the cropped image data to be sent with the form
-                        croppedImageData.value = croppedImageUrl;
-
-                        // Hide the cropper and buttons
-                        cropperContainer.style.display = 'none';
-                        cropImageBtn.style.display = 'none';
-                        cancelCropBtn.style.display = 'none';
-                    });
-                }
-
-                // Handle cancel button click
-                if (cancelCropBtn) {
-                    cancelCropBtn.addEventListener('click', function() {
-                        if (cropper) {
-                            cropper.destroy();
-                            cropper = null;
-                        }
-
-                        // Reset the file input
-                        profileImageInput.value = '';
-
-                        // Hide the cropper and buttons
-                        cropperContainer.style.display = 'none';
-                        cropImageBtn.style.display = 'none';
-                        cancelCropBtn.style.display = 'none';
-                    });
-                }
-
-                // Doctor Education Management
-                const educationContainer = document.getElementById('educationContainer');
-                const addEducationBtn = document.getElementById('addEducationBtn');
-
-                if (addEducationBtn) {
-                    addEducationBtn.addEventListener('click', function() {
-                        const newEducation = document.createElement('div');
-                        newEducation.className = 'education-item mb-3 pt-3 border-top';
-                        newEducation.innerHTML = `
-                            <div class="d-flex justify-content-between mb-2">
-                                <h6>Additional Education</h6>
-                                <button type="button" class="btn btn-sm btn-outline-danger remove-education-btn">
-                                    <i class="bi bi-trash"></i> Remove
-                                </button>
-                            </div>
-                            <div class="row g-2">
-                                <div class="col-md-6">
-                                    <label class="form-label">Degree</label>
-                                    <input type="text" name="degrees[]" class="form-control" placeholder="e.g., MD, PhD" required>
-                                </div>
-                                <div class="col-md-6">
-                                    <label class="form-label">Institution</label>
-                                    <input type="text" name="institutions[]" class="form-control" placeholder="e.g., Harvard Medical School" required>
-                                </div>
-                                <div class="col-md-6">
-                                    <label class="form-label">Graduation Year</label>
-                                    <input type="number" name="graduations[]" class="form-control" placeholder="e.g., 2020" min="1950" max="2030">
-                                </div>
-                                <div class="col-md-6">
-                                    <label class="form-label">Certificate Image</label>
-                                    <input type="file" name="certificateImages[]" class="form-control" accept="image/png, image/jpeg, image/jpg, image/pdf">
-                                </div>
-                                <div class="col-12 mt-2">
-                                    <label class="form-label">Description</label>
-                                    <textarea name="educationDescriptions[]" class="form-control" rows="2" placeholder="Additional details about the education"></textarea>
-                                </div>
-                            </div>
-                        `;
-                        educationContainer.appendChild(newEducation);
-
-                        // Add event listener to remove button
-                        const removeBtn = newEducation.querySelector('.remove-education-btn');
-                        removeBtn.addEventListener('click', function() {
-                            educationContainer.removeChild(newEducation);
-                        });
-                    });
-                }
-
-                // Add event delegation for remove education buttons that may already exist
-                if (educationContainer) {
-                    educationContainer.addEventListener('click', function(e) {
-                        if (e.target.classList.contains('remove-education-btn') ||
-                            e.target.parentElement.classList.contains('remove-education-btn')) {
-                            const button = e.target.classList.contains('remove-education-btn') ?
-                                        e.target : e.target.parentElement;
-                            const educationItem = button.closest('.education-item');
-                            if (educationItem && educationContainer.children.length > 1) {
-                                educationContainer.removeChild(educationItem);
-                            } else {
-                                alert('You must have at least one education entry');
-                            }
-                        }
-                    });
-                }
-            });
-
-            // Hide alerts function
-            function hideAlerts() {
-                document.getElementById('successAlert').style.display = 'none';
-                document.getElementById('errorAlert').style.display = 'none';
-            }
-        </script>
     </div>
 </div>
+
+<!-- Bootstrap JS -->
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+<!-- Cropper.js -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.13/cropper.min.js"></script>
+
+<script th:inline="javascript">
+    /*<![CDATA[*/
+    // Get admin ID from Thymeleaf
+    const adminId = /*[[${adminId}]]*/ 0;
+
+    // Sidebar toggle functionality
+    function toggleSidebar() {
+        const sidebar = document.getElementById('adminSidebar');
+        const mainContent = document.getElementById('mainContent');
+        sidebar.classList.toggle('collapsed');
+        mainContent.classList.toggle('expanded');
+    }
+
+    // Auto-hide sidebar on mobile
+    function checkScreenSize() {
+        const sidebar = document.getElementById('adminSidebar');
+        const mainContent = document.getElementById('mainContent');
+        if (window.innerWidth <= 768) {
+            sidebar.classList.add('collapsed');
+            mainContent.classList.add('expanded');
+        } else {
+            sidebar.classList.remove('collapsed');
+            mainContent.classList.remove('expanded');
+        }
+    }
+
+    // Initialize
+    document.addEventListener('DOMContentLoaded', function() {
+        // Set doctors tab as active
+        const currentPath = window.location.pathname;
+        if (currentPath.includes('/doctors')) {
+            document.querySelectorAll('.nav-link').forEach(link => {
+                link.classList.remove('active');
+            });
+            document.querySelector('.nav-link[href*="doctors"]').classList.add('active');
+        }
+
+        // Initialize Bootstrap collapse
+        const collapseElements = document.querySelectorAll('.collapse');
+        collapseElements.forEach(collapse => {
+            new bootstrap.Collapse(collapse, {
+                toggle: false
+            });
+        });
+
+        // Add click event to toggle collapse
+        document.querySelectorAll('[data-bs-toggle="collapse"]').forEach(button => {
+            button.addEventListener('click', function (e) {
+                const target = this.getAttribute('data-bs-target');
+                const collapse = document.querySelector(target);
+                if (collapse) {
+                    const bsCollapse = bootstrap.Collapse.getOrCreateInstance(collapse);
+                    bsCollapse.toggle();
+                }
+            });
+        });
+
+        // Doctor Modal Handler
+        var doctorModalEl = document.getElementById('doctorModal');
+        doctorModalEl.addEventListener('show.bs.modal', function (event) {
+            var button = event.relatedTarget;
+            var mode = button.getAttribute('data-mode');
+            var modalTitle = doctorModalEl.querySelector('.modal-title');
+            var form = doctorModalEl.querySelector('#doctorForm');
+            var inputId = form.querySelector('#doctorId');
+            var inputFullName = form.querySelector('#fullName');
+            var inputEmail = form.querySelector('#email');
+            var inputPhone = form.querySelector('#phoneNumber');
+            var inputBio = form.querySelector('#bioDescription');
+            var selectStatus = form.querySelector('#status');
+
+            if (mode === 'add') {
+                modalTitle.textContent = 'Add New Doctor';
+                inputId.value = '';
+                inputFullName.value = '';
+                inputEmail.value = '';
+                inputPhone.value = '';
+                inputBio.value = '';
+                selectStatus.value = 'ACTIVE';
+            } else if (mode === 'edit') {
+                modalTitle.textContent = 'Edit Doctor';
+                inputId.value = button.getAttribute('data-id') || '';
+                inputFullName.value = button.getAttribute('data-fullname') || '';
+                inputEmail.value = button.getAttribute('data-email') || '';
+                inputPhone.value = button.getAttribute('data-phone') || '';
+                inputBio.value = button.getAttribute('data-bio') || '';
+                selectStatus.value = button.getAttribute('data-status') || 'ACTIVE';
+            }
+        });
+
+        // Check screen size on load and resize
+        window.addEventListener('load', checkScreenSize);
+        window.addEventListener('resize', checkScreenSize);
+
+        // Refresh doctors
+        function refreshDoctors() {
+            window.location.reload();
+        }
+
+        // Validate doctor form
+        function validateDoctorForm() {
+            const fullName = document.getElementById("fullName").value.trim();
+            const email = document.getElementById("email").value.trim();
+            const phone = document.getElementById("phoneNumber").value.trim();
+
+            if (fullName === "" || fullName.match(/^\s*$/)) {
+                alert("Full Name cannot be empty or contain only spaces.");
+                return false;
+            }
+
+            if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+                alert("Please enter a valid email address.");
+                return false;
+            }
+
+            if (!/^\d{10,15}$/.test(phone)) {
+                alert("Phone number must be between 10 to 15 digits and contain only numbers.");
+                return false;
+            }
+
+            return true;
+        }
+
+        // Navigation link handlers
+        document.querySelectorAll('.nav-link').forEach(link => {
+            link.addEventListener('click', function(e) {
+                if (this.getAttribute('href') === '#') {
+                    e.preventDefault();
+                }
+
+                // Remove active class from all links
+                document.querySelectorAll('.nav-link').forEach(l => l.classList.remove('active'));
+
+                // Add active class to clicked link
+                this.classList.add('active');
+            });
+        });
+
+        // Image cropping functionality
+        const profileImageInput = document.getElementById('profileImage');
+        const imagePreview = document.getElementById('imagePreview');
+        const cropperContainer = document.getElementById('cropperContainer');
+        const cropperCanvas = document.getElementById('cropperCanvas');
+        const cropImageBtn = document.getElementById('cropImageBtn');
+        const cancelCropBtn = document.getElementById('cancelCropBtn');
+        const croppedImageData = document.getElementById('croppedImageData');
+
+        let cropper = null;
+
+        if (profileImageInput) {
+            profileImageInput.addEventListener('change', function(e) {
+                const file = e.target.files[0];
+
+                if (!file) return;
+
+                const validTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/gif'];
+                if (!validTypes.includes(file.type)) {
+                    alert('Please select a valid image file (JPG, JPEG, PNG, GIF)');
+                    profileImageInput.value = '';
+                    return;
+                }
+
+                if (file.size > 5 * 1024 * 1024) {
+                    alert('Image file size must be less than 5MB');
+                    profileImageInput.value = '';
+                    return;
+                }
+
+                const reader = new FileReader();
+                reader.onload = function(event) {
+                    const img = document.createElement('img');
+                    img.id = 'imageForCropper';
+                    img.src = event.target.result;
+                    img.style.maxWidth = '100%';
+
+                    cropperCanvas.innerHTML = '';
+                    cropperCanvas.appendChild(img);
+
+                    cropperContainer.style.display = 'block';
+                    cropImageBtn.style.display = 'inline-block';
+                    cancelCropBtn.style.display = 'inline-block';
+
+                    if (cropper) {
+                        cropper.destroy();
+                    }
+
+                    cropper = new Cropper(img, {
+                        aspectRatio: 1,
+                        viewMode: 1,
+                        responsive: true,
+                        zoomable: true,
+                        scalable: true,
+                        movable: true
+                    });
+                };
+
+                reader.readAsDataURL(file);
+            });
+        }
+
+        if (cropImageBtn) {
+            cropImageBtn.addEventListener('click', function() {
+                if (!cropper) return;
+
+                const canvas = cropper.getCroppedCanvas({
+                    width: 300,
+                    height: 300,
+                    minWidth: 100,
+                    minHeight: 100,
+                    maxWidth: 1000,
+                    maxHeight: 1000,
+                    fillColor: '#fff',
+                    imageSmoothingEnabled: true,
+                    imageSmoothingQuality: 'high'
+                });
+
+                const croppedImageUrl = canvas.toDataURL('image/jpeg', 0.9);
+                imagePreview.src = croppedImageUrl;
+                imagePreview.style.display = 'block';
+                croppedImageData.value = croppedImageUrl;
+
+                cropperContainer.style.display = 'none';
+                cropImageBtn.style.display = 'none';
+                cancelCropBtn.style.display = 'none';
+            });
+        }
+
+        if (cancelCropBtn) {
+            cancelCropBtn.addEventListener('click', function() {
+                if (cropper) {
+                    cropper.destroy();
+                    cropper = null;
+                }
+
+                profileImageInput.value = '';
+                cropperContainer.style.display = 'none';
+                cropImageBtn.style.display = 'none';
+                cancelCropBtn.style.display = 'none';
+            });
+        }
+
+        // Doctor Education Management
+        const educationContainer = document.getElementById('educationContainer');
+        const addEducationBtn = document.getElementById('addEducationBtn');
+
+        if (addEducationBtn) {
+            addEducationBtn.addEventListener('click', function() {
+                const newEducation = document.createElement('div');
+                newEducation.className = 'education-item mb-3 pt-3 border-top';
+                newEducation.innerHTML = `
+                    <div class="d-flex justify-content-between mb-2">
+                        <h6>Additional Education</h6>
+                        <button type="button" class="btn btn-sm btn-outline-danger remove-education-btn">
+                            <i class="bi bi-trash"></i> Remove
+                        </button>
+                    </div>
+                    <div class="row g-2">
+                        <div class="col-md-6">
+                            <label class="form-label">Degree</label>
+                            <input type="text" name="degrees[]" class="form-control" placeholder="e.g., MD, PhD" required>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">Institution</label>
+                            <input type="text" name="institutions[]" class="form-control" placeholder="e.g., Harvard Medical School" required>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">Graduation Year</label>
+                            <input type="number" name="graduations[]" class="form-control" placeholder="e.g., 2020" min="1950" max="2030">
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">Certificate Image</label>
+                            <input type="file" name="certificateImages[]" class="form-control" accept="image/png, image/jpeg, image/jpg, image/pdf">
+                        </div>
+                        <div class="col-12 mt-2">
+                            <label class="form-label">Description</label>
+                            <textarea name="educationDescriptions[]" class="form-control" rows="2" placeholder="Additional details about the education"></textarea>
+                        </div>
+                    </div>
+                `;
+                educationContainer.appendChild(newEducation);
+
+                const removeBtn = newEducation.querySelector('.remove-education-btn');
+                removeBtn.addEventListener('click', function() {
+                    educationContainer.removeChild(newEducation);
+                });
+            });
+        }
+
+        if (educationContainer) {
+            educationContainer.addEventListener('click', function(e) {
+                if (e.target.classList.contains('remove-education-btn') ||
+                    e.target.parentElement.classList.contains('remove-education-btn')) {
+                    const button = e.target.classList.contains('remove-education-btn') ?
+                        e.target : e.target.parentElement;
+                    const educationItem = button.closest('.education-item');
+                    if (educationItem && educationContainer.children.length > 1) {
+                        educationContainer.removeChild(educationItem);
+                    } else {
+                        alert('You must have at least one education entry');
+                    }
+                }
+            });
+        }
+
+        // Hide alerts function
+        function hideAlerts() {
+            document.getElementById('successAlert').style.display = 'none';
+            document.getElementById('errorAlert').style.display = 'none';
+        }
+
+        hideAlerts();
+    });
+    /*]]>*/
+</script>
 </body>
 </html>
