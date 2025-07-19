@@ -49,13 +49,13 @@ public interface AppointmentRepository extends JpaRepository<Appointment, Intege
       SELECT a
         FROM Appointment a
        WHERE a.doctorId = :doctorId
-         AND a.dateTime BETWEEN :startOfDay AND :endOfDay
-       ORDER BY a.dateTime ASC
+       AND a.dateTime BETWEEN :startDateTime AND :endDateTime
+      ORDER BY a.dateTime ASC
     """)
-    List<Appointment> findTodayAppointmentsForDoctorWithTimeRange(
-            @Param("doctorId")   Integer doctorId,
-            @Param("startOfDay") LocalDateTime startOfDay,
-            @Param("endOfDay")   LocalDateTime endOfDay
+    List<Appointment> findTodayAppointmentsForDoctorWithTime(
+        @Param("doctorId") Integer doctorId,
+        @Param("startDateTime") LocalDateTime startDateTime,
+        @Param("endDateTime") LocalDateTime endDateTime
     );
 
     /** 4) Các cuộc hẹn sắp tới */
@@ -358,4 +358,14 @@ public interface AppointmentRepository extends JpaRepository<Appointment, Intege
 
     List<Appointment> findByDoctorIdAndDateTimeBetween(Integer doctorId, LocalDateTime startOfDay, LocalDateTime endOfDay);
 
+    /**
+     * Find appointments by patient ID ordered by date/time descending (latest first)
+     * Used for getting latest appointment for invoice data
+     */
+    @Query("""
+        SELECT a FROM Appointment a
+        WHERE a.patient.patientId = :patientId
+        ORDER BY a.dateTime DESC
+        """)
+    List<Appointment> findByPatientPatientIdOrderByDateTimeDesc(@Param("patientId") Integer patientId);
 }

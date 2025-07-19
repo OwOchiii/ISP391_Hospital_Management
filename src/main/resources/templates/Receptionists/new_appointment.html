@@ -979,6 +979,219 @@
         initializeDatePicker();
         setFieldsReadOnly();
 
+        // Handle URL parameters for automatic specialty and doctor selection
+        handleURLParameters();
+
+        // Add event listener to clear date error when user selects
+        const appointmentDate = document.getElementById('appointmentDate');
+        if (appointmentDate) {
+            appointmentDate.addEventListener('change', function() {
+                const dateError = document.getElementById('appointmentDateError');
+                if (dateError) {
+                    dateError.classList.add('d-none');
+                }
+                this.classList.remove('error');
+            });
+        }
+
+        // Add room selection change event
+        const roomSelect = document.getElementById('roomId');
+        if (roomSelect) {
+            roomSelect.addEventListener('change', function() {
+                const roomError = document.getElementById('roomIdError');
+                if (roomError) {
+                    roomError.classList.add('d-none');
+                }
+                this.classList.remove('error');
+                updateRoomInfo();
+            });
+        }
+    });
+
+    // Function to handle URL parameters from doctors page
+    function handleURLParameters() {
+        const urlParams = new URLSearchParams(window.location.search);
+        const doctorId = urlParams.get('doctorId');
+        const doctorName = urlParams.get('doctorName');
+        const doctorSpecialty = urlParams.get('doctorSpecialty');
+
+        console.log('URL Parameters:', { doctorId, doctorName, doctorSpecialty });
+
+        if (doctorId && doctorName && doctorSpecialty) {
+            // Show notification that doctor has been pre-selected
+            showDoctorPreselectionNotification(doctorName, doctorSpecialty);
+
+            // Wait a bit for the specializations to load, then auto-select
+            setTimeout(() => {
+                autoSelectSpecialtyAndDoctor(doctorSpecialty, doctorId);
+            }, 500);
+        }
+    }
+
+    // Function to show notification about doctor pre-selection
+    function showDoctorPreselectionNotification(doctorName, doctorSpecialty) {
+        // Create a notification element
+        const notification = document.createElement('div');
+        notification.className = 'alert alert-info alert-dismissible fade show mb-3';
+        notification.style.marginTop = '1rem';
+        notification.innerHTML = `
+            <i class="bi bi-info-circle me-2"></i>
+            <strong>Doctor Pre-selected:</strong> ${doctorName} (${doctorSpecialty}) has been automatically selected for this appointment.
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        `;
+
+        // Insert the notification at the top of the form section
+        const formSection = document.querySelector('.form-section');
+        if (formSection) {
+            formSection.insertBefore(notification, formSection.firstChild);
+        }
+
+        // Auto-dismiss after 5 seconds
+        setTimeout(() => {
+            if (notification.parentNode) {
+                notification.remove();
+            }
+        }, 5000);
+    }
+
+    // Function to automatically select specialty and doctor based on URL parameters
+    function autoSelectSpecialtyAndDoctor(doctorSpecialty, doctorId) {
+        const specialtySelect = document.getElementById('specialtyId');
+
+        if (!specialtySelect) {
+            console.error('Specialty select element not found');
+            return;
+        }
+
+        // Find the specialty option that matches the doctor's specialty
+        let matchedSpecialtyId = null;
+
+        for (let i = 0; i < specialtySelect.options.length; i++) {
+            const option = specialtySelect.options[i];
+            const optionText = option.text.toLowerCase();
+            const specialtyName = doctorSpecialty.toLowerCase();
+
+            // Check if the option text contains the specialty name
+            if (optionText.includes(specialtyName) || specialtyName.includes(optionText.split(' - ')[0])) {
+                matchedSpecialtyId = option.value;
+                break;
+            }
+        }
+
+        if (matchedSpecialtyId) {
+            console.log('Auto-selecting specialty:', matchedSpecialtyId, 'for doctor specialty:', doctorSpecialty);
+
+            // Select the specialty
+            specialtySelect.value = matchedSpecialtyId;
+            specialtySelect.dispatchEvent(new Event('change'));
+
+            // Wait for doctors to load, then select the specific doctor
+            setTimeout(() => {
+                autoSelectDoctor(doctorId);
+            }, 800);
+        } else {
+            console.warn('No matching specialty found for:', doctorSpecialty);
+
+            // If no exact match, try to select the first specialty and show a warning
+            if (specialtySelect.options.length > 1) {
+                showSpecialtyMismatchWarning(doctorSpecialty);
+            }
+        }
+    }
+
+    // Function to automatically select the specific doctor
+    function autoSelectDoctor(doctorId) {
+        const doctorSelect = document.getElementById('doctorId');
+
+        if (!doctorSelect) {
+            console.error('Doctor select element not found');
+            return;
+        }
+
+        // Wait a bit more for the doctor options to load
+        const attempts = 10;
+        let currentAttempt = 0;
+
+        const trySelectDoctor = () => {
+            currentAttempt++;
+
+            // Check if the doctor option exists
+            const doctorOption = doctorSelect.querySelector(`option[value="${doctorId}"]`);
+
+            if (doctorOption) {
+                console.log('Auto-selecting doctor:', doctorId);
+                doctorSelect.value = doctorId;
+                doctorSelect.dispatchEvent(new Event('change'));
+
+                // Trigger time slots update
+                setTimeout(() => {
+                    updateDoctorsAndTimeSlots();
+                }, 300);
+
+                return;
+            }
+
+            // If doctor not found and we haven't exceeded attempts, try again
+            if (currentAttempt < attempts) {
+                setTimeout(trySelectDoctor, 500);
+            } else {
+                console.warn('Doctor with ID', doctorId, 'not found in the dropdown after', attempts, 'attempts');
+                showDoctorNotFoundWarning();
+            }
+        };
+
+        trySelectDoctor();
+    }
+
+    // Function to show warning when specialty doesn't match exactly
+    function showSpecialtyMismatchWarning(doctorSpecialty) {
+        const warning = document.createElement('div');
+        warning.className = 'alert alert-warning alert-dismissible fade show mb-3';
+        warning.innerHTML = `
+            <i class="bi bi-exclamation-triangle me-2"></i>
+            <strong>Note:</strong> The specialty "${doctorSpecialty}" could not be automatically matched. Please select the appropriate Medical Specialty manually.
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        `;
+
+        const formSection = document.querySelector('.form-section');
+        if (formSection) {
+            formSection.insertBefore(warning, formSection.firstChild);
+        }
+
+        setTimeout(() => {
+            if (warning.parentNode) {
+                warning.remove();
+            }
+        }, 8000);
+    }
+
+    // Function to show warning when doctor is not found
+    function showDoctorNotFoundWarning() {
+        const warning = document.createElement('div');
+        warning.className = 'alert alert-warning alert-dismissible fade show mb-3';
+        warning.innerHTML = `
+            <i class="bi bi-exclamation-triangle me-2"></i>
+            <strong>Note:</strong> The selected doctor is not available for the chosen specialty. Please select an available doctor.
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        `;
+
+        const formSection = document.querySelector('.form-section');
+        if (formSection) {
+            formSection.insertBefore(warning, formSection.firstChild);
+        }
+
+        setTimeout(() => {
+            if (warning.parentNode) {
+                warning.remove();
+            }
+        }, 8000);
+    }
+
+    // Initialize date picker and set fields read-only on page load
+    document.addEventListener('DOMContentLoaded', function () {
+        initializeDatePicker();
+        setFieldsReadOnly();
+
         // Add event listener to clear date error when user selects
         const appointmentDate = document.getElementById('appointmentDate');
         if (appointmentDate) {
@@ -1340,51 +1553,96 @@
 
     // Add function to submit appointment
     async function submitAppointment() {
-        const formData = new FormData();
+        // Create a JSON object with the appointment data
+        const appointmentData = {
+            patientId: parseInt(document.getElementById('patientIdInput').value),
+            specialtyId: parseInt(document.getElementById('specialtyId').value),
+            doctorId: parseInt(document.getElementById('doctorId').value),
+            roomId: parseInt(document.getElementById('roomId').value),
 
-        // Collect all form data
-        formData.append('patientId', document.getElementById('patientIdInput').value);
-        formData.append('specialtyId', document.getElementById('specialtyId').value);
-        formData.append('doctorId', document.getElementById('doctorId').value);
-        formData.append('roomId', document.getElementById('roomId').value);
+            // Convert date format from MM/DD/YYYY to YYYY-MM-DD
+            appointmentDate: (() => {
+                const appointmentDate = document.getElementById('appointmentDate').value;
+                const dateParts = appointmentDate.split('/');
+                return `${dateParts[2]}-${dateParts[0].padStart(2, '0')}-${dateParts[1].padStart(2, '0')}`;
+            })(),
 
-        // Convert date format from MM/DD/YYYY to YYYY-MM-DD
-        const appointmentDate = document.getElementById('appointmentDate').value;
-        const dateParts = appointmentDate.split('/');
-        const formattedDate = `${dateParts[2]}-${dateParts[0].padStart(2, '0')}-${dateParts[1].padStart(2, '0')}`;
-        formData.append('appointmentDate', formattedDate);
-
-        formData.append('appointmentTime', document.getElementById('appointmentTime').value);
-        formData.append('email', document.getElementById('email').value);
-        formData.append('phoneNumber', document.getElementById('phoneNumber').value);
-        formData.append('description', document.getElementById('description').value);
+            appointmentTime: document.getElementById('appointmentTime').value,
+            email: document.getElementById('email').value,
+            phoneNumber: document.getElementById('phoneNumber').value,
+            description: document.getElementById('description').value
+        };
 
         // Add CSRF token
         const csrfToken = document.querySelector('input[name="_csrf"]').value;
-        formData.append('_csrf', csrfToken);
 
         try {
-            const response = await $.ajax({
-                url: '/receptionist/appointments/book',
+            // Show loading indicator
+            const mainContent = document.getElementById('mainContent');
+            mainContent.classList.add('loading');
+
+            // Use the correct path for the API endpoint with the context path prefix
+            const response = await fetch('/receptionist/api/appointments/book', {
                 method: 'POST',
-                data: Object.fromEntries(formData),
-                dataType: 'json'
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRF-TOKEN': csrfToken
+                },
+                body: JSON.stringify(appointmentData)
             });
 
-            if (response.success) {
+            if (!response.ok) {
+                throw new Error(`Server responded with status: ${response.status}`);
+            }
+
+            const result = await response.json();
+
+            // Remove loading indicator
+            mainContent.classList.remove('loading');
+
+            if (result.success) {
                 // Show success message
-                document.getElementById('successMessage').classList.remove('d-none');
+                const successMessage = document.getElementById('successMessage');
+                successMessage.classList.remove('d-none');
+                successMessage.innerHTML = `
+                    <i class="bi bi-check-circle-fill"></i>
+                    <span>Appointment booked successfully for ${appointmentData.appointmentDate} at
+                    ${formatTimeForDisplay(appointmentData.appointmentTime.substr(0, 5))}!</span>
+                `;
+
                 // Reset form
                 document.getElementById('appointmentForm').reset();
+
+                // Clear patient selection
+                document.getElementById('patientIdInput').value = '';
+
                 // Scroll to top
-                window.scrollTo(0, 0);
+                window.scrollTo({
+                    top: 0,
+                    behavior: 'smooth'
+                });
             } else {
-                alert('Error booking appointment: ' + (response.message || 'Unknown error'));
+                alert('Error booking appointment: ' + (result.message || 'Unknown error'));
             }
         } catch (error) {
             console.error('Error booking appointment:', error);
-            alert('Error booking appointment. Please try again.');
+            alert('Error booking appointment: ' + (error.message || 'Please try again.'));
+
+            // Remove loading indicator in case of error
+            const mainContent = document.getElementById('mainContent');
+            mainContent.classList.remove('loading');
         }
+    }
+
+    // Add function to format time for display (HH:MM to H:MM AM/PM)
+    function formatTimeForDisplay(time) {
+        if (!time) return '';
+
+        const [hours, minutes] = time.split(':').map(num => parseInt(num, 10));
+        const period = hours >= 12 ? 'PM' : 'AM';
+        const displayHour = hours % 12 || 12; // Convert 0 to 12 for 12 AM
+
+        return `${displayHour}:${minutes.toString().padStart(2, '0')} ${period}`;
     }
 
     // Add input sanitization functions

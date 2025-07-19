@@ -9,10 +9,14 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 import orochi.model.Users;
+import orochi.model.Receptionist;
 import orochi.service.UserService;
+import orochi.service.FileStorageService;
+import orochi.service.impl.ReceptionistService;
 
 @Controller
 @RequestMapping("/admin/receptionists")
@@ -23,6 +27,12 @@ public class AdminReceptionistController {
 
     @Autowired
     private PasswordEncoder passwordEncoder;
+
+    @Autowired
+    private FileStorageService fileStorageService;
+
+    @Autowired
+    private ReceptionistService receptionistService;
 
     @Value("${app.default.receptionist.password}")
     private String defaultPassword;
@@ -70,6 +80,7 @@ public class AdminReceptionistController {
     public String saveReceptionist(
             @ModelAttribute("receptionistForm") Users formUser,
             @RequestParam("adminId") Integer adminId,
+            @RequestParam(value = "avatarFile", required = false) MultipartFile avatarFile,
             RedirectAttributes redirectAttributes) {
 
         formUser.setRoleId(3);
@@ -83,7 +94,71 @@ public class AdminReceptionistController {
             redirectAttributes.addFlashAttribute("newReceptionistPassword", defaultPassword);
         }
 
-        userService.save(formUser);
+        // Lưu user trước
+        Users savedUser = userService.save(formUser);
+
+        // Xử lý upload ảnh avatar nếu có
+        if (avatarFile != null && !avatarFile.isEmpty()) {
+            try {
+                String imageUrl = fileStorageService.storeFile(avatarFile, "receptionist-avatars");
+
+                // Tìm hoặc tạo mới record Receptionist
+                Receptionist receptionist = receptionistService.findByUserId(savedUser.getUserId());
+                if (receptionist == null) {
+                    receptionist = new Receptionist();
+                    receptionist.setUserId(savedUser.getUserId());
+                }
+                receptionist.setImageUrl(imageUrl);
+                receptionistService.save(receptionist);
+
+                redirectAttributes.addFlashAttribute("message", "Lưu thông tin và ảnh đại diện thành công!");
+            } catch (Exception e) {
+                redirectAttributes.addFlashAttribute("error", "Lưu thông tin thành công nhưng không thể upload ảnh: " + e.getMessage());
+            }
+        }
+
         return "redirect:/admin/receptionists?adminId=" + adminId + "&page=0&size=5";
+    }
+
+    @PostMapping("/upload-avatar")
+    @ResponseBody
+    public String uploadAvatar(
+            @RequestParam("userId") Integer userId,
+            @RequestParam("avatarFile") MultipartFile avatarFile) {
+
+        try {
+            if (avatarFile.isEmpty()) {
+                return "{\"success\": false, \"message\": \"Vui lòng chọn file ảnh\"}";
+            }
+
+            // Kiểm tra định dạng file
+            String contentType = avatarFile.getContentType();
+            if (contentType == null || !contentType.startsWith("image/")) {
+                return "{\"success\": false, \"message\": \"Chỉ chấp nhận file ảnh\"}";
+            }
+
+            // Upload file
+            String imageUrl = fileStorageService.storeFile(avatarFile, "receptionist-avatars");
+
+            // Cập nhật thông tin receptionist
+            Receptionist receptionist = receptionistService.findByUserId(userId);
+            if (receptionist == null) {
+                receptionist = new Receptionist();
+                receptionist.setUserId(userId);
+            }
+
+            // Xóa ảnh cũ nếu có
+            if (receptionist.getImageUrl() != null) {
+                fileStorageService.deleteFile(receptionist.getImageUrl());
+            }
+
+            receptionist.setImageUrl(imageUrl);
+            receptionistService.save(receptionist);
+
+            return "{\"success\": true, \"imageUrl\": \"" + imageUrl + "\", \"message\": \"Upload ảnh thành công!\"}";
+
+        } catch (Exception e) {
+            return "{\"success\": false, \"message\": \"Lỗi upload ảnh: " + e.getMessage() + "\"}";
+        }
     }
 }

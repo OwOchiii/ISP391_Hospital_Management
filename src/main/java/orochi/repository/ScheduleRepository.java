@@ -27,7 +27,7 @@ public interface ScheduleRepository extends JpaRepository<Schedule, Integer>,Jpa
             Integer doctorId, LocalDate date);
 
     List<Schedule> findByPatientId(Integer patientId);
-
+    List<Schedule> findByDoctorIdAndScheduleDateAndEventType(Integer doctorId, LocalDate scheduleDate, String eventType);
     Optional<Schedule> findByAppointmentId(Integer appointmentId);
 
     @Query("SELECT COUNT(s) FROM Schedule s WHERE s.doctorId = :doctorId AND s.eventType = 'appointment' AND s.scheduleDate BETWEEN :startDate AND :endDate")
@@ -165,5 +165,5 @@ public interface ScheduleRepository extends JpaRepository<Schedule, Integer>,Jpa
     @Query("SELECT COUNT(s) FROM Schedule s WHERE s.endTime = :endTime AND s.scheduleDate BETWEEN :startDate AND :endDate")
     long countByEndTimeAndDateRange(@Param("endTime") LocalTime endTime, @Param("startDate") LocalDate startDate, @Param("endDate") LocalDate endDate);
 
-    List<Schedule> findByDoctorIdAndScheduleDateAndEventType(Integer doctorId, LocalDate scheduleDate, String eventType);
+
 }

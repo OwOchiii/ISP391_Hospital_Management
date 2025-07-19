@@ -426,7 +426,7 @@
 <body>
 <div class="container-fluid">
     <div class="row">
-        <nav class="sidebar col-lg-3 col-xl-2 d-none d-lg-block" id="sidebar">
+        <nav class="sidebar col-lg-3 col-xl-2 d-none d-lg-block" id="patientSidebar">
             <div class="logo">
                 <a href="#">
                     <i class="fas fa-user-md"></i>
@@ -594,16 +594,17 @@
     let filteredPatients = [];
     let sortColumn = '';
     let sortDirection = 'asc';
+    let totalPatients = 0;
 
     function toggleSidebar() {
-        const sidebar = document.getElementById('sidebar');
+        const sidebar = document.getElementById('patientSidebar');
         const mainContent = document.getElementById('mainContent');
         sidebar.classList.toggle('collapsed');
         mainContent.classList.toggle('expanded');
     }
 
     function checkScreenSize() {
-        const sidebar = document.getElementById('sidebar');
+        const sidebar = document.getElementById('patientSidebar');
         const mainContent = document.getElementById('mainContent');
         if (window.innerWidth <= 768) {
             sidebar.classList.add('collapsed');
@@ -614,36 +615,67 @@
         }
     }
 
-    // Fetch patients from the API
-    async function fetchPatients() {
+    // Fetch all patients function - lấy toàn bộ dữ liệu từ database
+    async function fetchAllPatients() {
         try {
-            const response = await fetch('/api/patients/detailed');
-            if (!response.ok) throw new Error('Failed to fetch patients');
+            console.log('Fetching all patients from database...');
+            showLoadingMessage();
+
+            // Gọi API với tham số để lấy toàn bộ dữ liệu (không phân trang)
+            const response = await fetch('/api/patients/detailed?fetchAll=true', {
+                method: 'GET',
+                headers: {
+                    'Content-Type': 'application/json'
+                }
+            });
+
+            if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`);
+            }
+
             const data = await response.json();
+            console.log(`Successfully fetched ${data.patients?.length || 0} patients from database`);
+            console.log('Total patients in database:', data.total);
+
             return data.patients || [];
         } catch (error) {
             console.error('Error fetching patients:', error);
+            showErrorMessage('Failed to load patient data. Please refresh the page.');
             return [];
         }
     }
 
-    // Fetch individual patient details - now returns detailed info from the main API
-    async function fetchPatientDetails(patientId) {
-        try {
-            // Find patient in the already loaded data
-            const patient = patients.find(p => p.PatientID === patientId);
-            if (patient) {
-                return patient;
-            }
+    // Show error message to user
+    function showErrorMessage(message) {
+        const table = document.getElementById('patientTable');
+        table.innerHTML = `<tr><td colspan="9" class="text-center text-danger">${message}</td></tr>`;
+        renderPagination();
+    }
 
-            // Fallback: fetch from API if not found
-            const response = await fetch(`/api/patients/detailed`);
-            if (!response.ok) throw new Error('Failed to fetch patient details');
-            const data = await response.json();
-            return data.patients.find(p => p.PatientID === patientId) || null;
+    // Show loading message
+    function showLoadingMessage() {
+        const table = document.getElementById('patientTable');
+        table.innerHTML = '<tr><td colspan="9" class="text-center text-muted">Loading patients...</td></tr>';
+    }
+
+    // Manual refresh function
+    async function refreshPatients() {
+        console.log('Refreshing patient data...');
+        showLoadingMessage();
+
+        try {
+            const newPatients = await fetchAllPatients();
+            patients = newPatients;
+            filteredPatients = [...patients];
+            totalPatients = patients.length;
+
+            // Reapply current filters
+            filterPatients();
+
+            console.log(`Refreshed with ${patients.length} patients`);
         } catch (error) {
-            console.error('Error fetching patient details:', error);
-            return null;
+            console.error('Error refreshing patients:', error);
+            showErrorMessage('Failed to refresh patient data.');
         }
     }
 
@@ -664,6 +696,7 @@
         document.getElementById('filterGender').value = '';
         document.getElementById('filterAge').value = '';
         document.getElementById('filterStatus').value = '';
+        currentPage = 1;
         filterPatients();
     }
 
@@ -700,19 +733,22 @@
         renderPatients();
     }
 
-    async function renderPatients() {
+    function renderPatients() {
         const table = document.getElementById('patientTable');
-        table.innerHTML = '';
 
         if (filteredPatients.length === 0) {
-            table.innerHTML = '<tr><td colspan="8" class="text-center text-muted">No patients found.</td></tr>';
+            table.innerHTML = '<tr><td colspan="9" class="text-center text-muted">No patients found.</td></tr>';
             renderPagination();
             return;
         }
 
+        // Phân trang - tối đa 12 người/trang
         const start = (currentPage - 1) * patientsPerPage;
         const end = start + patientsPerPage;
         const paginatedPatients = filteredPatients.slice(start, end);
+
+        // Clear table first
+        table.innerHTML = '';
 
         paginatedPatients.forEach((patient, index) => {
             const row = document.createElement('tr');
@@ -722,13 +758,17 @@
             if (patient.AppointmentDateTime && patient.AppointmentDateTime !== 'No Appointment') {
                 try {
                     const dateTime = new Date(patient.AppointmentDateTime);
-                    const dateStr = dateTime.toLocaleDateString('en-US');
-                    const timeStr = dateTime.toLocaleTimeString('en-US', {
-                        hour: '2-digit',
-                        minute: '2-digit',
-                        hour12: false
-                    });
-                    formattedAppointmentDateTime = `${dateStr} ${timeStr}`;
+                    if (!isNaN(dateTime.getTime())) {
+                        const dateStr = dateTime.toLocaleDateString('en-GB'); // DD/MM/YYYY format
+                        const timeStr = dateTime.toLocaleTimeString('en-US', {
+                            hour: '2-digit',
+                            minute: '2-digit',
+                            hour12: false
+                        });
+                        formattedAppointmentDateTime = `${dateStr} ${timeStr}`;
+                    } else {
+                        formattedAppointmentDateTime = patient.AppointmentDateTime.toString();
+                    }
                 } catch (e) {
                     formattedAppointmentDateTime = patient.AppointmentDateTime.toString();
                 }
@@ -751,7 +791,7 @@
             }
 
             row.innerHTML = `
-                <td style="text-align: center;">${(currentPage - 1) * patientsPerPage + index + 1}</td>
+                <td style="text-align: center;">${start + index + 1}</td>
                 <td>${patient.PatientID}</td>
                 <td>${patient.FullName || 'N/A'}</td>
                 <td>${patient.Age || 'N/A'}</td>
@@ -767,6 +807,7 @@
         });
 
         renderPagination();
+        updatePaginationInfo();
     }
 
     function renderPagination() {
@@ -785,15 +826,46 @@
             pagination.appendChild(prevItem);
         }
 
-        // Page numbers
+        // Page numbers - hiển thị tối đa 5 trang xung quanh trang hiện tại
         const startPage = Math.max(1, currentPage - 2);
         const endPage = Math.min(totalPages, currentPage + 2);
 
+        // First page
+        if (startPage > 1) {
+            const firstItem = document.createElement('li');
+            firstItem.className = 'page-item';
+            firstItem.innerHTML = `<a class="page-link" href="#" onclick="changePage(1)">1</a>`;
+            pagination.appendChild(firstItem);
+
+            if (startPage > 2) {
+                const ellipsisItem = document.createElement('li');
+                ellipsisItem.className = 'page-item disabled';
+                ellipsisItem.innerHTML = `<span class="page-link">...</span>`;
+                pagination.appendChild(ellipsisItem);
+            }
+        }
+
+        // Page numbers
         for (let i = startPage; i <= endPage; i++) {
             const pageItem = document.createElement('li');
             pageItem.className = `page-item ${i === currentPage ? 'active' : ''}`;
             pageItem.innerHTML = `<a class="page-link" href="#" onclick="changePage(${i})">${i}</a>`;
             pagination.appendChild(pageItem);
+        }
+
+        // Last page
+        if (endPage < totalPages) {
+            if (endPage < totalPages - 1) {
+                const ellipsisItem = document.createElement('li');
+                ellipsisItem.className = 'page-item disabled';
+                ellipsisItem.innerHTML = `<span class="page-link">...</span>`;
+                pagination.appendChild(ellipsisItem);
+            }
+
+            const lastItem = document.createElement('li');
+            lastItem.className = 'page-item';
+            lastItem.innerHTML = `<a class="page-link" href="#" onclick="changePage(${totalPages})">${totalPages}</a>`;
+            pagination.appendChild(lastItem);
         }
 
         // Next button
@@ -805,9 +877,32 @@
         }
     }
 
+    function updatePaginationInfo() {
+        const totalPages = Math.ceil(filteredPatients.length / patientsPerPage);
+        const start = (currentPage - 1) * patientsPerPage + 1;
+        const end = Math.min(currentPage * patientsPerPage, filteredPatients.length);
+
+        // Tạo hoặc cập nhật thông tin phân trang
+        let infoDiv = document.getElementById('paginationInfo');
+        if (!infoDiv) {
+            infoDiv = document.createElement('div');
+            infoDiv.id = 'paginationInfo';
+            infoDiv.className = 'text-muted mb-3';
+            const paginationContainer = document.querySelector('.pagination').parentNode;
+            paginationContainer.insertBefore(infoDiv, paginationContainer.firstChild);
+        }
+
+        infoDiv.innerHTML = `Showing ${start} to ${end} of ${filteredPatients.length} patients (Page ${currentPage} of ${totalPages})`;
+    }
+
     function changePage(page) {
-        currentPage = page;
-        renderPatients();
+        const totalPages = Math.ceil(filteredPatients.length / patientsPerPage);
+        if (page >= 1 && page <= totalPages) {
+            currentPage = page;
+            renderPatients();
+            // Scroll to top of table
+            document.getElementById('patientTable').scrollIntoView({ behavior: 'smooth' });
+        }
     }
 
     function sortTable(column) {
@@ -836,49 +931,61 @@
             if (aVal == null) aVal = '';
             if (bVal == null) bVal = '';
 
-            // Convert to string for comparison
-            aVal = aVal.toString().toLowerCase();
-            bVal = bVal.toString().toLowerCase();
+            // Special handling for dates
+            if (column === 'AppointmentDateTime') {
+                if (aVal === 'No Appointment') aVal = '';
+                if (bVal === 'No Appointment') bVal = '';
+                aVal = aVal ? new Date(aVal).getTime() : 0;
+                bVal = bVal ? new Date(bVal).getTime() : 0;
+            } else {
+                // Convert to string for comparison
+                aVal = aVal.toString().toLowerCase();
+                bVal = bVal.toString().toLowerCase();
+            }
 
             if (aVal < bVal) return sortDirection === 'asc' ? -1 : 1;
             if (aVal > bVal) return sortDirection === 'asc' ? 1 : -1;
             return 0;
         });
 
+        currentPage = 1; // Reset to first page after sorting
         renderPatients();
     }
 
-    async function viewPatientDetails(patientId) {
-        try {
-            const patient = await fetchPatientDetails(patientId);
-            if (!patient) {
-                alert('Failed to load patient details.');
-                return;
-            }
+    // Add manual refresh button functionality
+    function addRefreshButton() {
+        const header = document.querySelector('header .profile-info');
+        if (header && !document.getElementById('refreshBtn')) {
+            const refreshBtn = document.createElement('button');
+            refreshBtn.id = 'refreshBtn';
+            refreshBtn.className = 'btn btn-outline-primary btn-sm me-2';
+            refreshBtn.innerHTML = '<i class="fas fa-sync-alt"></i> Refresh';
+            refreshBtn.onclick = () => {
+                refreshBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Refreshing...';
+                refreshBtn.disabled = true;
 
-            // Redirect to patient details page
-            window.location.href = `patient_details.html?patientId=${patientId}`;
-        } catch (error) {
-            console.error('Error viewing patient details:', error);
-            alert('Error loading patient details.');
+                refreshPatients().finally(() => {
+                    refreshBtn.innerHTML = '<i class="fas fa-sync-alt"></i> Refresh';
+                    refreshBtn.disabled = false;
+                });
+            };
+
+            header.insertBefore(refreshBtn, header.firstChild);
         }
     }
 
-    function getStatusBadgeClass(status) {
-        switch(status) {
-            case 'Completed': return 'bg-success';
-            case 'Scheduled': return 'bg-info';
-            case 'Pending': return 'bg-warning';
-            case 'Cancelled': return 'bg-danger';
-            default: return 'bg-secondary';
-        }
-    }
     // Initialize the page
     async function initializePage() {
         try {
-            console.log('Loading patients...');
-            patients = await fetchPatients();
+            console.log('Initializing patients page...');
+            showLoadingMessage();
+
+            // Fetch all data from database
+            patients = await fetchAllPatients();
             filteredPatients = [...patients];
+            totalPatients = patients.length;
+
+            // Render initial view
             renderPatients();
 
             // Add event listeners
@@ -887,11 +994,16 @@
             document.getElementById('filterAge').addEventListener('change', filterPatients);
             document.getElementById('filterStatus').addEventListener('change', filterPatients);
 
-            console.log(`Loaded ${patients.length} patients`);
+            // Add refresh button
+            addRefreshButton();
+
+            console.log(`Successfully loaded ${patients.length} patients from database`);
         } catch (error) {
             console.error('Error initializing page:', error);
+            showErrorMessage('Failed to initialize patient page. Please refresh the browser.');
         }
     }
+
 
     // Run when page loads
     checkScreenSize();

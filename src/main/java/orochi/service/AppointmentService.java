@@ -7,7 +7,16 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import orochi.dto.AppointmentDTO;
 import orochi.dto.AppointmentFormDTO;
-import orochi.model.*;
+import orochi.model.Appointment;
+import orochi.model.Doctor;
+import orochi.model.Patient;
+import orochi.model.Specialization;
+import orochi.model.Transaction;
+import orochi.repository.AppointmentRepository;
+import orochi.repository.DoctorRepository;
+import orochi.repository.PatientRepository;
+import orochi.repository.SpecializationRepository;
+import orochi.repository.TransactionRepository;
 import orochi.repository.*;
 
 import java.time.LocalDate;
@@ -18,7 +27,8 @@ import java.time.temporal.ChronoUnit;
 import java.util.*;
 import java.util.function.Function;
 import java.util.stream.Collectors;
-
+import orochi.model.*;
+import orochi.repository.*;
 @Service
 public class AppointmentService {
 
@@ -32,19 +42,19 @@ public class AppointmentService {
     private PatientRepository patientRepository;
 
     @Autowired
-    private SpecializationRepository specializationRepository;
-
-    @Autowired
     private ScheduleRepository scheduleRepository;
-
-    @Autowired
-    private TransactionRepository transactionRepository;
 
     private static final List<String> ALL_TIME_SLOTS = Arrays.asList(
             "08:00:00", "08:30:00", "09:00:00", "09:30:00", "10:00:00", "10:30:00",
             "11:00:00", "11:30:00", "14:00:00", "14:30:00", "15:00:00", "15:30:00",
             "16:00:00", "16:30:00", "17:00:00", "17:30:00"
     );
+
+    @Autowired
+    private SpecializationRepository specializationRepository;
+
+    @Autowired
+    private TransactionRepository transactionRepository;
 
     // Standard appointment duration in minutes
     private static final int APPOINTMENT_DURATION = 30;
@@ -150,7 +160,6 @@ public class AppointmentService {
         LocalDateTime startOfDay = date.atStartOfDay();
         LocalDateTime endOfDay = date.atTime(23, 59, 59);
 
-        // Fetch booked appointments
         List<Appointment> bookedAppointments;
         if (excludeAppointmentId != null) {
             bookedAppointments = appointmentRepository.findByDoctorIdAndDateTimeBetweenAndAppointmentIdNotOrderByDateTime(
@@ -181,14 +190,16 @@ public class AppointmentService {
                 }
             }
         }
-
         // Calculate unavailable times due to proximity to booked appointments
         List<String> proximityUnavailableTimes = new ArrayList<>();
         for (Appointment appointment : bookedAppointments) {
             LocalTime appointmentTime = appointment.getDateTime().toLocalTime();
             for (String timeSlot : ALL_TIME_SLOTS) {
                 LocalTime slotTime = LocalTime.parse(timeSlot);
-                long minutesDifference = Math.abs(ChronoUnit.MINUTES.between(slotTime, appointmentTime));
+                int minutesDifference = Math.abs(
+                        (slotTime.getHour() * 60 + slotTime.getMinute()) -
+                                (appointmentTime.getHour() * 60 + appointmentTime.getMinute())
+                );
                 if (minutesDifference < APPOINTMENT_DURATION && !bookedTimes.contains(timeSlot)) {
                     proximityUnavailableTimes.add(timeSlot);
                 }
@@ -662,4 +673,8 @@ public Appointment updateAppointment2(
         return doctorRepository.findAll();
     }
 
+    public Appointment getAppointmentById(Integer appointmentId) {
+        return appointmentRepository.findById(appointmentId)
+                .orElseThrow(() -> new RuntimeException("Appointment not found with ID: " + appointmentId));
+    }
 }
