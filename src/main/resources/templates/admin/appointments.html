@@ -595,108 +595,130 @@
       <i class="bi bi-shield-check"></i>
       <div>
         <div>MediCare Plus</div>
-        <small style="font-size:0.75rem;font-weight:400;opacity:0.8;">Admin Panel</small>
+        <small style="font-size: 0.75rem; font-weight: 400; opacity: 0.8;">Admin Panel</small>
       </div>
     </a>
   </div>
+
   <nav class="sidebar-nav">
     <div class="nav-section">
       <div class="nav-section-title">Dashboard</div>
       <div class="nav-item">
-        <a th:href="@{/admin/dashboard(adminId=${adminId})}" class="nav-link">
-          <i class="bi bi-speedometer2"></i> Overview
+        <a th:href="@{/admin/dashboard(adminId=${adminId})}" class="nav-link active">
+          <i class="bi bi-speedometer2"></i>
+          Overview
         </a>
       </div>
     </div>
+
     <div class="nav-section">
       <div class="nav-section-title">User Management</div>
       <div class="nav-item">
         <a th:href="@{/admin/patients(adminId=${adminId})}" class="nav-link">
-          <i class="bi bi-people"></i> Patient Management
+          <i class="bi bi-people"></i>
+          Patient Management
         </a>
       </div>
       <div class="nav-item">
         <a th:href="@{/admin/doctors(adminId=${adminId})}" class="nav-link">
-          <i class="bi bi-person-badge"></i> Doctor Management
+          <i class="bi bi-person-badge"></i>
+          Doctor Management
         </a>
       </div>
       <div class="nav-item">
         <a th:href="@{/admin/receptionists(adminId=${adminId})}" class="nav-link">
-          <i class="bi bi-person-badge"></i> Receptionist Management
+          <i class="bi bi-person-badge"></i>
+          Receptionist Management
         </a>
       </div>
+
     </div>
+
     <div class="nav-section">
       <div class="nav-section-title">Operations</div>
       <div class="nav-item">
-        <a th:href="@{/admin/appointments(adminId=${adminId})}" class="nav-link active">
+        <a th:href="@{/admin/appointments/all(adminId=${adminId})}" class="nav-link">
           <i class="bi bi-calendar-check"></i> Appointment Management
         </a>
       </div>
       <div class="nav-item">
         <a th:href="@{/admin/rooms(adminId=${adminId})}" class="nav-link">
-          <i class="bi bi-door-open"></i> Room Management
+          <i class="bi bi-door-open"></i>
+          Room Management
         </a>
       </div>
       <div class="nav-item">
         <a th:href="@{/admin/schedules(adminId=${adminId})}" class="nav-link">
-          <i class="bi bi-calendar3"></i> Schedule Management
+          <i class="bi bi-calendar3"></i>
+          Schedule Management
         </a>
       </div>
     </div>
+
     <div class="nav-section">
       <div class="nav-section-title">Medical Services</div>
       <div class="nav-item">
-        <a th:href="@{/admin/prescriptions(adminId=${adminId})}" class="nav-link">
-          <i class="bi bi-prescription2"></i> Prescription Management
-        </a>
-      </div>
-      <div class="nav-item">
-        <a th:href="@{/admin/medical-orders(adminId=${adminId})}" class="nav-link">
-          <i class="bi bi-clipboard-pulse"></i> Medical Order Management
-        </a>
-      </div>
-      <div class="nav-item">
         <a th:href="@{/admin/services(adminId=${adminId})}" class="nav-link">
-          <i class="bi bi-heart-pulse"></i> Service Management
+          <i class="bi bi-heart-pulse"></i>
+          Service Management
         </a>
       </div>
       <div class="nav-item">
-        <a th:href="@{/admin/specialties(adminId=${adminId})}" class="nav-link">
-          <i class="bi bi-award"></i> Specialties Management
+        <a th:href="@{/admin/specializations(adminId=${adminId})}" class="nav-link">
+          <i class="bi bi-award"></i>
+          Specialties Management
+        </a>
+      </div>
+      <div class="nav-item">
+        <a th:href="@{/admin/medical-results(adminId=${adminId})}" class="nav-link">
+          <i class="bi bi-clipboard-pulse"></i>
+          Medical Results
         </a>
       </div>
     </div>
+
     <div class="nav-section">
       <div class="nav-section-title">Analytics & Content</div>
       <div class="nav-item">
-        <a th:href="@{/admin/statistics/revenue(adminId=${adminId})}" class="nav-link">
-          <i class="bi bi-graph-up"></i> Revenue Statistics
+        <a th:href="@{/admin/reports/revenue(adminId=${adminId})}" class="nav-link">
+          <i class="bi bi-graph-up"></i>
+          Revenue Statistics
         </a>
       </div>
       <div class="nav-item">
-        <a th:href="@{/admin/statistics/appointments(adminId=${adminId})}" class="nav-link">
-          <i class="bi bi-bar-chart"></i> Appointment Statistics
+        <a th:href="@{/admin/appointments/statistics/appointments(adminId=${adminId})}" class="nav-link">
+          <i class="bi bi-bar-chart"></i>
+          Appointment Statistics
         </a>
       </div>
       <div class="nav-item">
-        <a th:href="@{/admin/news(adminId=${adminId})}" class="nav-link">
-          <i class="bi bi-newspaper"></i> News Management
+        <a th:href="@{/admin/notifications(adminId=${adminId})}" class="nav-link">
+          <i class="bi bi-bell"></i>
+          Notification Management
+        </a>
+      </div>
+      <div class="nav-item">
+        <a th:href="@{/admin/feedbacks(adminId=${adminId})}" class="nav-link">
+          <i class="bi bi-chat-left-text"></i>
+          Feedback List
         </a>
       </div>
     </div>
+
     <div class="nav-section">
       <div class="nav-section-title">System</div>
       <div class="nav-item">
         <a href="#" class="nav-link">
-          <i class="bi bi-gear"></i> Settings
+          <i class="bi bi-gear"></i>
+          Settings
         </a>
       </div>
       <div class="nav-item">
         <form th:action="@{/auth/logout}" method="post">
-          <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
+          <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}" />
           <button type="submit" class="nav-link w-100 text-start border-0 bg-transparent">
-            <i class="bi bi-box-arrow-right"></i> Logout
+            <i class="bi bi-box-arrow-right"></i>
+            Logout
           </button>
         </form>
       </div>

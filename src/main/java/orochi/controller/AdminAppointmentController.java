@@ -275,6 +275,7 @@ public class AdminAppointmentController {
 
     @GetMapping("/all")
     public String showAllAppointments(
+            @RequestParam Integer adminId,
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "5") int size,
             @RequestParam(required = false) Integer appointmentId,
@@ -318,6 +319,8 @@ public class AdminAppointmentController {
         model.addAttribute("searchName",         searchName);
         model.addAttribute("selectedDoctorId",   doctorId);
         model.addAttribute("currentStatus",      status);
+        model.addAttribute("adminId", adminId);
+        model.addAttribute("adminName", userDetails.getUsername());
         model.addAttribute("doctorList",         appointmentService.getAllDoctors());
         model.addAttribute("totalAppointments",  appointmentMetricService.getTotalAppointments());
         model.addAttribute("inProgressCount",    appointmentMetricService.getTotalAppointments(STATUS_PENDING));
