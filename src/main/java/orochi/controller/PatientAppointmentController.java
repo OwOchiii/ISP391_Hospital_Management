@@ -126,35 +126,7 @@ public class PatientAppointmentController {
         return "patient/book-appointment";
     }
 
-    @GetMapping("/api/doctors-by-specialty")
-    @ResponseBody
-    public List<Map<String, Object>> getDoctorsBySpecialty(@RequestParam Integer specialtyId) {
-        List<Doctor> doctors = appointmentService.getDoctorsBySpecialization(specialtyId);
-        return doctors.stream().map(doctor -> {
-            Map<String, Object> result = new HashMap<>();
-            result.put("doctorId", doctor.getDoctorId());
-            result.put("fullName", doctor.getUser() != null ? doctor.getUser().getFullName() : "Unknown");
-            result.put("bioDescription", doctor.getBioDescription());
-            return result;
-        }).collect(Collectors.toList());
-    }
 
-    @GetMapping("/api/booked-times")
-    @ResponseBody
-    public List<String> getBookedTimes(
-            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate date,
-            @RequestParam Integer doctorId) {
-        return appointmentService.getBookedTimeSlots(date, doctorId);
-    }
-
-    @GetMapping("/api/doctor-availability")
-    @ResponseBody
-    public Map<String, List<String>> getDoctorAvailability(
-            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate date,
-            @RequestParam Integer doctorId,
-            @RequestParam(required = false) Integer appointmentId) {
-        return appointmentService.getDoctorAvailability(date, doctorId, appointmentId);
-    }
 
     @PostMapping("/book-appointment")
     public String bookAppointment(
@@ -461,75 +433,5 @@ public class PatientAppointmentController {
         return appointmentService.getDoctorAvailability(date, doctorId, appointmentId);
     }
 
-    @PostMapping("/book-appointment")
-    public String bookAppointment(
-            @Valid @ModelAttribute("appointmentForm") AppointmentFormDTO appointmentForm,
-            BindingResult bindingResult,
-            Model model,
-            RedirectAttributes redirectAttributes) {
 
-        if (bindingResult.hasErrors()) {
-            List<Specialization> specializations = appointmentService.getAllSpecializations();
-            Patient patient = patientRepository.findById(appointmentForm.getPatientId())
-                    .orElseThrow(() -> new RuntimeException("Patient not found with ID: " + appointmentForm.getPatientId()));
-            model.addAttribute("specialties", specializations);
-            model.addAttribute("patient", patient);
-            model.addAttribute("patientId", appointmentForm.getPatientId());
-            model.addAttribute("patientName", patient.getUser() != null ? patient.getUser().getFullName() : "Patient");
-            model.addAttribute("isUpdate", appointmentForm.getAppointmentId() != null);
-            return "patient/book-appointment";
-        }
-
-        try {
-            Appointment appointment;
-            if (appointmentForm.getAppointmentId() != null) {
-                appointment = appointmentService.updateAppointment(
-                        appointmentForm.getAppointmentId(),
-                        appointmentForm.getPatientId(),
-                        appointmentForm.getDoctorId(),
-                        appointmentForm.getAppointmentDate(),
-                        appointmentForm.getAppointmentTime(),
-                        appointmentForm.getEmail(),
-                        appointmentForm.getPhoneNumber(),
-                        appointmentForm.getDescription()
-                );
-                redirectAttributes.addFlashAttribute("successMessage", "Your appointment has been successfully updated.");
-            } else {
-                appointment = appointmentService.bookAppointment(
-                        appointmentForm.getPatientId(),
-                        appointmentForm.getDoctorId(),
-                        appointmentForm.getAppointmentDate(),
-                        appointmentForm.getAppointmentTime(),
-                        appointmentForm.getEmail(),
-                        appointmentForm.getPhoneNumber(),
-                        appointmentForm.getDescription()
-                );
-                redirectAttributes.addFlashAttribute("successMessage",
-                        "Your appointment has been successfully booked for " +
-                                appointmentForm.getAppointmentDate() + " at " +
-                                formatTimeForDisplay(appointmentForm.getAppointmentTime()));
-            }
-            return "redirect:/patient/appointment-list";
-        } catch (Exception e) {
-            model.addAttribute("errorMessage", e.getMessage());
-            List<Specialization> specializations = appointmentService.getAllSpecializations();
-            Patient patient = patientRepository.findById(appointmentForm.getPatientId())
-                    .orElseThrow(() -> new RuntimeException("Patient not found with ID: " + appointmentForm.getPatientId()));
-            model.addAttribute("specialties", specializations);
-            model.addAttribute("patient", patient);
-            model.addAttribute("patientId", appointmentForm.getPatientId());
-            model.addAttribute("patientName", patient.getUser() != null ? patient.getUser().getFullName() : "Patient");
-            model.addAttribute("isUpdate", appointmentForm.getAppointmentId() != null);
-            return "patient/book-appointment";
-        }
-    }
-
-    private String formatTimeForDisplay(String time) {
-        String[] parts = time.split(":");
-        int hour = Integer.parseInt(parts[0]);
-        int minute = Integer.parseInt(parts[1]);
-        String period = hour >= 12 ? "PM" : "AM";
-        int displayHour = hour > 12 ? hour - 12 : (hour == 0 ? 12 : hour);
-        return String.format("%d:%02d %s", displayHour, minute, period);
-    }
 }
