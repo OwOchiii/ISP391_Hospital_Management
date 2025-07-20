@@ -1,6 +1,7 @@
 package orochi.controller;
 
 import orochi.config.CustomUserDetails;
+import orochi.dto.AppointmentDTO;
 import orochi.model.Appointment;
 import orochi.service.AppointmentMetricService;
 import orochi.service.AppointmentService;
@@ -51,7 +52,8 @@ public class AdminAppointmentController {
     }
 
     @GetMapping
-    public String showAppointments(@RequestParam(defaultValue = "0") int page,
+    public String showAppointments(@RequestParam Integer adminId,
+            @RequestParam(defaultValue = "0") int page,
                                    @RequestParam(defaultValue = "10") int size,
                                    @RequestParam(defaultValue = "ALL") String status,
                                    @RequestParam(required = false) String search,
@@ -79,6 +81,10 @@ public class AdminAppointmentController {
 
         model.addAttribute("appointments", appointments);
         model.addAttribute("totalAppointments", appointmentMetricService.getTotalAppointments());
+        model.addAttribute("appointmentDTO", new AppointmentDTO());
+        model.addAttribute("adminId", adminId);
+        model.addAttribute("adminName", userDetails.getUsername());
+        model.addAttribute("doctorList", appointmentService.getAllDoctors());
         model.addAttribute("inProgressCount", appointmentMetricService.getTotalAppointments(STATUS_PENDING));
         model.addAttribute("completedCount", appointmentMetricService.getTotalAppointments(STATUS_COMPLETED));
         model.addAttribute("rejectedCount", appointmentMetricService.getTotalAppointments(STATUS_CANCELLED));
@@ -89,6 +95,8 @@ public class AdminAppointmentController {
 
         return "admin/appointments";
     }
+
+
 
     @PostMapping("/updateStatus")
     public String updateAppointmentStatus(@RequestParam Integer appointmentId,
@@ -126,6 +134,7 @@ public class AdminAppointmentController {
 
     @GetMapping("/statistics/appointments")
     public String showOrExportStatistics(
+            @RequestParam Integer adminId,
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate fromDate,
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate toDate,
             @RequestParam(defaultValue = "0") Integer doctorId,
@@ -202,10 +211,35 @@ public class AdminAppointmentController {
         double rateDone = totalCount>0? doneCount*100.0/totalCount : 0;
         double rateCan  = totalCount>0? canCount*100.0/totalCount : 0;
 
-        // --- xuất PDF nếu cần (giống cũ) ---
+        // 5) Xuất PDF nếu cần
         if ("pdf".equalsIgnoreCase(export)) {
-            // ...
+            // thiết lập để browser download file
+            response.setContentType("application/pdf");
+            response.setHeader("Content-Disposition", "attachment; filename=\"appointment_statistics.pdf\"");
+
+            // gọi service sinh PDF, truyền null cho search vì bạn không có filter nào tương ứng
+            pdfService.generateAppointmentStatisticsPdf(
+                    fromDate,
+                    toDate,
+                    docFilter,
+                    specFilter,
+                    status,
+                    null,
+                    totalCount,
+                    doneCount,
+                    canCount,
+                    rateDone,
+                    rateCan,
+                    dispTotal,
+                    dispDone,
+                    dispCanc,
+                    response.getOutputStream()
+            );
+            return null;
         }
+
+
+
 
         // 5) Bind tất cả về view
         model.addAttribute("fromDate", fromDate);
@@ -214,7 +248,7 @@ public class AdminAppointmentController {
         model.addAttribute("selectedDoctor", doctorId);
         model.addAttribute("selectedStatus", status);
         model.addAttribute("groupBy",        groupBy);
-
+        model.addAttribute("adminId", adminId);
         model.addAttribute("total",     totalCount);
         model.addAttribute("scheduled", schedCount);
         model.addAttribute("done",      doneCount);
@@ -232,9 +266,6 @@ public class AdminAppointmentController {
     }
 
 
-    /**
-     * Trả về một LinkedHashMap cùng key với source nhưng tất cả value = 0L
-     */
     private Map<String,Long> zeroMap(Map<String,Long> source) {
         return source.keySet().stream()
                 .collect(Collectors.toMap(
@@ -243,6 +274,65 @@ public class AdminAppointmentController {
                         (a,b)->a,
                         LinkedHashMap::new
                 ));
+    }
+
+
+    @GetMapping("/all")
+    public String showAllAppointments(
+            @RequestParam Integer adminId,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "5") int size,
+            @RequestParam(required = false) Integer appointmentId,
+            @RequestParam(required = false) String searchName,
+            @RequestParam(required = false) Integer doctorId,
+            @RequestParam(defaultValue = "ALL") String status,
+            @AuthenticationPrincipal CustomUserDetails userDetails,
+            Model model) {
+
+        Pageable pageable = PageRequest.of(page, size);
+        Page<Appointment> appointments;
+
+        // 1) Nếu truyền lên một appointmentId thì chỉ trả đúng 1 kết quả đó (với paging)
+        if (appointmentId != null) {
+            appointments = appointmentService.findByIdPaged(appointmentId, pageable);
+        }
+        // 2) Nếu chọn filter theo bác sĩ
+        else if (doctorId != null) {
+            appointments = appointmentService.findByDoctorIdAndStatusAndName(
+                    doctorId,
+                    status,
+                    searchName,
+                    pageable
+            );
+        }
+        // 3) Tìm theo tên bệnh nhân (searchName) kết hợp với trạng thái
+        else if (searchName != null && !searchName.isBlank()) {
+            appointments = appointmentService.searchAndFilter(searchName, status, pageable);
+        }
+        // 4) Chỉ filter theo trạng thái
+        else if (!"ALL".equalsIgnoreCase(status)) {
+            appointments = appointmentService.getAppointmentsByStatus(status, pageable);
+        }
+        // 5) Không có filter gì, lấy tất cả
+        else {
+            appointments = appointmentService.getAllAppointments(pageable);
+        }
+
+        model.addAttribute("appointments",       appointments);
+        model.addAttribute("appointmentId",      appointmentId);
+        model.addAttribute("searchName",         searchName);
+        model.addAttribute("selectedDoctorId",   doctorId);
+        model.addAttribute("currentStatus",      status);
+        model.addAttribute("adminId", adminId);
+        model.addAttribute("adminName", userDetails.getUsername());
+        model.addAttribute("doctorList",         appointmentService.getAllDoctors());
+        model.addAttribute("totalAppointments",  appointmentMetricService.getTotalAppointments());
+        model.addAttribute("inProgressCount",    appointmentMetricService.getTotalAppointments(STATUS_PENDING));
+        model.addAttribute("completedCount",     appointmentMetricService.getTotalAppointments(STATUS_COMPLETED));
+        model.addAttribute("rejectedCount",      appointmentMetricService.getTotalAppointments(STATUS_CANCELLED));
+        model.addAttribute("chartData",          getChartData());
+
+        return "admin/appointments";
     }
 
 }

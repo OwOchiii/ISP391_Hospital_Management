@@ -33,6 +33,9 @@ public class Users {
     @Column(name = "PhoneNumber", unique = true)
     private String phoneNumber;
 
+    @Column(name = "AvatarUrl")
+    private String avatarUrl;
+
     @Column(name = "RoleID", nullable = false)
     private Integer roleId;
 

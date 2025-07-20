@@ -1,9 +1,9 @@
 package orochi.repository;
 
 import org.springframework.data.jpa.repository.JpaRepository;
-import org.springframework.data.jpa.repository.Query;
-import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import orochi.model.Prescription;
 
 import java.time.LocalDateTime;
@@ -11,23 +11,54 @@ import java.util.List;
 
 @Repository
 public interface PrescriptionRepository extends JpaRepository<Prescription, Integer> {
-    List<Prescription> findByPatientIdAndPrescriptionDateAfter(Integer patientId, LocalDateTime date);
 
-    //List<Prescription> findByAppointmentId(Integer appointmentId);
+    /**
+     * Find prescriptions by appointment ID, ordered by prescription date (newest first)
+     *
+     * @param appointmentId The appointment ID
+     * @return List of prescriptions for the appointment
+     */
+    List<Prescription> findByAppointmentIdOrderByPrescriptionDateDesc(Integer appointmentId);
 
-    List<Prescription> findByPatientId(Integer patientId);
-
-    List<Prescription> findByDoctorId(Integer doctorId);
-
+    /**
+     * Find prescriptions by patient ID, ordered by prescription date (newest first)
+     *
+     * @param patientId The patient ID
+     * @return List of prescriptions for the patient
+     */
     List<Prescription> findByPatientIdOrderByPrescriptionDateDesc(Integer patientId);
 
-    @Query("SELECT p FROM Prescription p " +
-            "LEFT JOIN FETCH p.patient pat " +
-            "LEFT JOIN FETCH pat.user u " +
-            "LEFT JOIN FETCH p.doctor d " +
-            "LEFT JOIN FETCH d.user du " +
-            "LEFT JOIN FETCH p.medicines m " +
-            "LEFT JOIN FETCH m.inventory mi " +
-            "WHERE p.appointmentId = :appointmentId")
-    List<Prescription> findByAppointmentId(@Param("appointmentId") Integer appointmentId);
+    /**
+     * Find prescriptions by doctor ID, ordered by prescription date (newest first)
+     *
+     * @param doctorId The doctor ID
+     * @return List of prescriptions written by the doctor
+     */
+    List<Prescription> findByDoctorIdOrderByPrescriptionDateDesc(Integer doctorId);
+
+    /**
+     * Find all prescriptions for a specific appointment
+     *
+     * @param appointmentId The appointment ID
+     * @return List of prescriptions for the appointment
+     */
+    List<Prescription> findByAppointmentId(Integer appointmentId);
+
+    /**
+     * Find prescriptions for a patient created after a specific date
+     *
+     * @param patientId The patient ID
+     * @param date      The date after which to find prescriptions
+     * @return List of prescriptions for the patient after the given date
+     */
+    List<Prescription> findByPatientIdAndPrescriptionDateAfter(Integer patientId, LocalDateTime date);
+
+    /**
+     * Find paginated prescriptions by patient ID
+     *
+     * @param patientId The patient ID
+     * @param pageable   Pagination information
+     * @return Page of prescriptions for the patient
+     */
+    Page<Prescription> findByPatientId(Integer patientId, Pageable pageable);
 }

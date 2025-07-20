@@ -120,7 +120,7 @@ public class DoctorService {
             LocalDateTime startOfDay = LocalDateTime.now().toLocalDate().atStartOfDay();
             LocalDateTime endOfDay = startOfDay.plusDays(1).minusSeconds(1);
             logger.info("Fetching today's appointments for doctor ID: {} (from {} to {})", doctorId, startOfDay, endOfDay);
-            return appointmentRepository.findTodayAppointmentsForDoctorWithTimeRange(doctorId, startOfDay, endOfDay);
+            return appointmentRepository.findTodayAppointmentsForDoctorWithTime(doctorId, startOfDay, endOfDay);
         } catch (DataAccessException e) {
             logger.error("Failed to fetch today's appointments for doctor ID: {}", doctorId, e);
             return Collections.emptyList();
@@ -282,25 +282,20 @@ public class DoctorService {
         }
     }
 
-    public List<Doctor> searchDoctors(String search, String statusFilter) {
+    public Page<Doctor> searchDoctors(String search, String statusFilter, int page, int size) {
         String trimmed = (search != null && !search.isBlank()) ? search.trim() : null;
         String status = (statusFilter != null && !statusFilter.isBlank()) ? statusFilter.trim() : null;
+        Pageable pageable = PageRequest.of(page, size);
+
         try {
             logger.info("Searching doctors with keyword='{}' and status='{}'", trimmed, status);
-            return doctorRepository.searchDoctors(trimmed, status);
+            return doctorRepository.searchDoctors(trimmed, status, pageable);
         } catch (DataAccessException e) {
             logger.error("Error searching doctors with keyword='{}' and status='{}'", trimmed, status, e);
-            return Collections.emptyList();
+            return Page.empty();
         }
     }
 
-    public Page<Doctor> searchDoctors(String search, String statusFilter, int page, int size) {
-        String trimmed = (search != null && !search.isBlank()) ? search.trim() : null;
-        String status  = (statusFilter != null && !statusFilter.isBlank()) ? statusFilter.trim() : null;
-        Pageable pageable = PageRequest.of(page, size);
-
-        return doctorRepository.searchDoctors(trimmed, pageable);
-    }
 
 
     public DoctorForm loadForm(int doctorId) {
@@ -344,7 +339,7 @@ public class DoctorService {
         // … các field và constructor …
 
         /**
-         * Lưu hoặc cập nhật Doctor kèm Users, có kiểm tra trùng email trước khi persist.
+         * L��u hoặc cập nhật Doctor kèm Users, có kiểm tra trùng email trước khi persist.
          */
         public void saveFromForm(DoctorForm form) {
             Users u;
@@ -514,4 +509,14 @@ public class DoctorService {
             return Page.empty();
         }
     }
+
+    public Doctor getDoctorByIdWithEducation(int doctorId) {
+        Doctor doctor = doctorRepository.findById(doctorId)
+                .orElseThrow(() -> new IllegalArgumentException("Doctor not found for ID: " + doctorId));
+        List<DoctorEducation> educations = doctorEducationRepository.findByDoctorId(doctorId);
+        doctor.setEducations(educations);
+
+        return doctor;
+    }
+
 }

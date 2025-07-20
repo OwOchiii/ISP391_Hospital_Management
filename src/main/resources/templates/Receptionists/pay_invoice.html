@@ -146,15 +146,15 @@
                     <h1 class="text-3xl font-extrabold">MediCare Plus</h1>
                     <p class="text-sm mt-1">Tax Code: 123456789-0</p>
                     <p class="text-sm">123 Lang Street, Dong Da, Hanoi, Vietnam</p>
-                    <p class="text-sm">Phone: (+84) 912 345 678 | Email: contact@sunrisehospital.vn</p>
+                    <p class="text-sm">Phone: (+84) 912 345 678 | Email: MediCare Plus@gmail.com</p>
                 </div>
             </div>
             <div class="text-right">
                 <h2 class="text-xl font-semibold">INVOICE</h2>
-                <p class="text-sm mt-2"><span class="font-medium">Receipt Number:</span> REC20250529001</p>
-                <p class="text-sm"><span class="font-medium">Issued Date:</span> May 29, 2025</p>
-                <p class="text-sm"><span class="font-medium">Due Date:</span> May 29, 2025</p>
-                <div class="barcode-placeholder mt-4">REC20250529001</div>
+                <p class="text-sm mt-2"><span class="font-medium">Receipt Number:</span> <span th:text="${invoiceData.receiptNumber}">REC20250529001</span></p>
+                <p class="text-sm"><span class="font-medium">Issued Date:</span> <span th:text="${#temporals.format(#temporals.createNow(), 'MMMM dd, yyyy', #locale.ENGLISH)}">July 15, 2025</span></p>
+                <p class="text-sm"><span class="font-medium">Due Date:</span> <span th:text="${#temporals.format(#temporals.createNow(), 'MMMM dd, yyyy', #locale.ENGLISH)}">July 15, 2025</span></p>
+                <div class="barcode-placeholder mt-4" th:text="${invoiceData.receiptNumber}">REC20250529001</div>
             </div>
         </div>
     </div>
@@ -166,15 +166,15 @@
         </h3>
         <div class="grid grid-cols-2 gap-6 bg-gray-50 p-6 rounded-lg shadow-sm">
             <div>
-                <p><span class="font-semibold text-gray-700">Patient ID:</span> PAT123456</p>
-                <p><span class="font-semibold text-gray-700">Full Name:</span> John Doe</p>
-                <p><span class="font-semibold text-gray-700">Date of Birth:</span> 01/01/1990</p>
-                <p><span class="font-semibold text-gray-700">Gender:</span> Male</p>
+                <p><span class="font-semibold text-gray-700">Patient ID:</span> <span th:text="${invoiceData.patientId}">PAT123456</span></p>
+                <p><span class="font-semibold text-gray-700">Full Name:</span> <span th:text="${invoiceData.fullName}">John Doe</span></p>
+                <p><span class="font-semibold text-gray-700">Date of Birth:</span> <span th:text="${invoiceData.dateOfBirth}">01/01/1990</span></p>
+                <p><span class="font-semibold text-gray-700">Gender:</span> <span th:text="${invoiceData.gender}">Male</span></p>
             </div>
             <div>
-                <p><span class="font-semibold text-gray-700">Appointment ID:</span> APP789012</p>
-                <p><span class="font-semibold text-gray-700">Payer Name:</span> John Doe</p>
-                <p><span class="font-semibold text-gray-700">Contact:</span> (+84) 901 234 567</p>
+                <p><span class="font-semibold text-gray-700">Appointment ID:</span> <span th:text="${invoiceData.appointmentId}">APP789012</span></p>
+                <p><span class="font-semibold text-gray-700">Payer Name:</span> <span th:text="${invoiceData.payerName}">John Doe</span></p>
+                <p><span class="font-semibold text-gray-700">Contact:</span> <span th:text="${invoiceData.contact}">(+84) 901 234 567</span></p>
             </div>
         </div>
     </div>
@@ -189,50 +189,35 @@
                 <thead>
                 <tr>
                     <th class="py-3 px-4 text-left">Service ID</th>
-                    <th class="py-3 px-4 text-left">Specialization</th>
                     <th class="py-3 px-4 text-left">Service Name</th>
+                    <th class="py-3 px-4 text-left">Symptom</th>
                     <th class="py-3 px-4 text-left">Quantity</th>
-                    <th class="py-3 px-4 text-left">Price (VND)</th>
+                    <th class="py-3 px-4 text-left">Price ($)</th>
                     <th class="py-3 px-4 text-left">Tax (%)</th>
-                    <th class="py-3 px-4 text-left">Total (VND)</th>
+                    <th class="py-3 px-4 text-left">Total ($)</th>
                     <th class="py-3 px-4 text-left">Date</th>
                 </tr>
                 </thead>
                 <tbody>
-                <tr>
-                    <td class="py-3 px-4">SRV001</td>
-                    <td class="py-3 px-4">General Medicine</td>
-                    <td class="py-3 px-4">General Consultation</td>
-                    <td class="py-3 px-4">1</td>
-                    <td class="py-3 px-4">300,000</td>
-                    <td class="py-3 px-4">10</td>
-                    <td class="py-3 px-4 font-semibold">330,000</td>
-                    <td class="py-3 px-4">2025-05-29</td>
-                </tr>
-                <tr>
-                    <td class="py-3 px-4">SRV002</td>
-                    <td class="py-3 px-4">Pathology</td>
-                    <td class="py-3 px-4">Blood Test</td>
-                    <td class="py-3 px-4">1</td>
-                    <td class="py-3 px-4">500,000</td>
-                    <td class="py-3 px-4">10</td>
-                    <td class="py-3 px-4 font-semibold">550,000</td>
-                    <td class="py-3 px-4">2025-05-29</td>
-                </tr>
-                <tr>
-                    <td class="py-3 px-4">SRV003</td>
-                    <td class="py-3 px-4">Pharmacy</td>
-                    <td class="py-3 px-4">Medication</td>
-                    <td class="py-3 px-4">2</td>
-                    <td class="py-3 px-4">100,000</td>
-                    <td class="py-3 px-4">10</td>
-                    <td class="py-3 px-4 font-semibold">220,000</td>
-                    <td class="py-3 px-4">2025-05-29</td>
+                <tr th:each="service : ${invoiceData.servicesUsed}">
+                    <td class="py-3 px-4" th:text="${service.serviceId}">SRV001</td>
+                    <td class="py-3 px-4" th:text="${service.serviceName}"></td>
+                    <td class="py-3 px-4" th:text="${service.symptom}">General Medicine</td>
+                    <td class="py-3 px-4" th:text="${service.quantity}">1</td>
+                    <td class="py-3 px-4" th:text="${#numbers.formatDecimal(service.price, 0, 0)}">300,000</td>
+                    <td class="py-3 px-4" th:text="${service.taxPercent}">10</td>
+                    <td class="py-3 px-4 font-semibold" th:text="${#numbers.formatDecimal(service.total, 0, 0)}">330,000</td>
+                    <td class="py-3 px-4" th:text="${service.date}">2025-07-15</td>
                 </tr>
                 <tr class="font-semibold bg-blue-50">
-                    <td class="py-3 px-4" colspan="6">Subtotal</td>
-                    <td class="py-3 px-4">1,100,000</td>
                     <td class="py-3 px-4"></td>
+                    <td class="py-3 px-4"></td>
+                    <td class="py-3 px-4"></td>
+                    <td class="py-3 px-4"></td>
+                    <td class="py-3 px-4"></td>
+                    <td class="py-3 px-4"></td>
+                    <td class="py-3 px-4">SubTotal</td>
+                    <td class="py-3 px-4" id="servicesSubTotal">0</td>
                 </tr>
                 </tbody>
             </table>
@@ -246,13 +231,12 @@
         </h3>
         <div class="grid grid-cols-2 gap-10 bg-gray-50 p-8 rounded-lg shadow-sm">
             <div>
-                <p><span class="font-semibold text-gray-700">Transaction ID:</span> TRX20250529001</p>
-                <p><span class="font-semibold text-gray-700">Receipt Number:</span> REC20250529001</p>
-                <p><span class="font-semibold text-gray-700">Total Amount (incl. Tax):</span> 1,100,000 VND</p>
-                <p><span class="font-semibold text-gray-700">Tax Amount:</span> 100,000 VND</p>
-                <p><span class="font-semibold text-gray-700">Discount Amount:</span> 0 VND</p>
-                <p><span class="font-semibold text-gray-700">Insurance Payment:</span> 880,000 VND</p>
-                <p><span class="font-semibold text-gray-700">Patient Payment:</span> 220,000 VND</p>
+                <p><span class="font-semibold text-gray-700">Transaction ID:</span> <span th:text="${invoiceData.transactionId}">TRX20250529001</span></p>
+                <p><span class="font-semibold text-gray-700">Receipt Number:</span> <span th:text="${invoiceData.receiptNumber}">REC20250529001</span></p>
+                <p><span class="font-semibold text-gray-700">Total Amount (incl. Tax):</span> <span id="calculatedTotalAmount">0</span> $</p>
+                <p><span class="font-semibold text-gray-700">Tax Amount:</span> <span id="calculatedTaxAmount">0</span> $</p>
+                <p><span class="font-semibold text-gray-700">Discount Amount:</span> <span id="calculatedDiscountAmount">0</span> $</p>
+                <p><span class="font-semibold text-gray-700">Patient Payment:</span> <span id="calculatedPatientPayment">0</span> $</p>
                 <p><span class="font-semibold text-gray-700">Status:</span> <span id="transactionStatus" class="status-pending">Pending</span></p>
             </div>
             <div>
@@ -263,21 +247,27 @@
                         <option value="Cash">Cash</option>
                         <option value="Banking">Banking</option>
                     </select>
+                    <p id="paymentMethodError" class="mt-2 text-sm text-red-600 hidden">Please select a payment method</p>
                 </div>
                 <div id="amountReceivedContainer" class="hidden mb-4">
-                    <label class="block text-sm font-semibold text-gray-700 mb-2">Amount Received (VND)</label>
+                    <label class="block text-sm font-semibold text-gray-700 mb-2">Amount Received ($)</label>
                     <input id="amountReceived" type="text" class="input-focus block w-full border-gray-300 rounded-lg shadow-sm focus:ring-blue-500 focus:border-blue-500 text-sm py-3" placeholder="Enter amount received">
-                    <p id="changeReturned" class="mt-3 text-sm text-gray-600">Change Returned: 0 VND</p>
+                    <p id="changeReturned" class="mt-3 text-sm text-gray-600">Change Returned: 0 $</p>
+                    <p id="amountReceivedError" class="mt-2 text-sm text-red-600 hidden">Amount must be at least equal to Patient Payment</p>
                 </div>
                 <div>
                     <label class="block text-sm font-semibold text-gray-700 mb-2">Notes</label>
-                    <textarea id="receiptNotes" class="input-focus block w-full border-gray-300 rounded-lg shadow-sm focus:ring-blue-500 focus:border-blue-500 text-sm py-3" placeholder="Enter any notes" rows="4"></textarea>
+                    <textarea id="receiptNotes" maxlength="100" class="input-focus block w-full border-gray-300 rounded-lg shadow-sm focus:ring-blue-500 focus:border-blue-500 text-sm py-3" placeholder="Enter any notes (max 100 characters)" rows="4"></textarea>
+                    <div class="flex justify-between mt-1">
+                        <span class="text-xs text-gray-500">Maximum 100 characters</span>
+                        <span id="charCount" class="text-xs text-gray-500">0/100</span>
+                    </div>
                 </div>
             </div>
         </div>
         <div class="mt-8 p-8 bg-blue-50 rounded-lg text-sm shadow-sm">
-            <p class="mb-3"><span class="font-semibold text-gray-700">Processed By:</span> <span id="processedBy">Mr. A (ID: STAFF001)</span></p>
-            <p class="mb-3"><span class="font-semibold text-gray-700">Time of Payment:</span> <span id="timeOfPayment">Not yet paid</span></p>
+            <p class="mb-3"><span class="font-semibold text-gray-700">Processed By:</span> <span id="processedBy" th:text="${staffInfo.fullName}">Staff Member</span></p>
+            <p class="mb-3"><span class="font-semibold text-gray-700">Time of Payment:</span> <span id="timeOfPayment" th:text="${#temporals.format(#temporals.createNow(), 'yyyy-MM-dd HH:mm:ss')}">Not yet paid</span></p>
         </div>
     </div>
 
@@ -314,14 +304,57 @@
     <div class="modal-content">
         <h3 class="text-lg font-semibold text-gray-800 mb-4">Scan to Pay via Banking</h3>
         <div class="qr-placeholder">[Simulated QR Code]</div>
-        <p class="mt-4 text-sm text-gray-600">Amount: 220,000 VND</p>
-        <p class="text-sm text-gray-600">Receipt: REC20250529001</p>
+        <p class="mt-4 text-sm text-gray-600">Amount: <span th:text="${#numbers.formatDecimal(invoiceData.totalAmount * 0.2, 0, 0)}">220,000</span> $</p>
+        <p class="text-sm text-gray-600">Receipt: <span th:text="${invoiceData.receiptNumber}">REC20250529001</span></p>
         <button id="simulatePayment" class="mt-6 bg-blue-600 text-white px-6 py-2.5 rounded-lg hover:bg-blue-700 transition duration-300 text-sm font-semibold">
             Simulate Payment
         </button>
         <button id="closeModal" class="mt-3 bg-gray-300 text-gray-800 px-6 py-2.5 rounded-lg hover:bg-gray-400 transition duration-300 text-sm font-semibold">
             Cancel
         </button>
+    </div>
+</div>
+
+<!-- Payment Confirmation Modal -->
+<div id="paymentConfirmModal" class="modal">
+    <div class="modal-content">
+        <div class="text-center">
+            <div class="w-16 h-16 bg-yellow-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                <i class="fas fa-exclamation-triangle text-yellow-600 text-2xl"></i>
+            </div>
+            <h3 class="text-xl font-semibold text-gray-800 mb-4">Confirm Payment</h3>
+            <p class="text-gray-600 mb-2">Are you sure you want to process this payment?</p>
+            <div id="confirmPaymentDetails" class="bg-gray-50 p-4 rounded-lg mb-6 text-left">
+                <p class="text-sm"><span class="font-semibold">Full Name:</span> <span id="confirmPatientName"></span></p>
+                <p class="text-sm"><span class="font-semibold">Amount:</span> <span id="confirmAmount"></span> $</p>
+                <p class="text-sm"><span class="font-semibold">Method:</span> <span id="confirmMethod"></span></p>
+                <p class="text-sm" id="confirmCashDetails" style="display: none;">
+                    <span class="font-semibold">Amount Received:</span> <span id="confirmAmountReceived"></span> $<br>
+                    <span class="font-semibold">Change:</span> <span id="confirmChange"></span> $
+                </p>
+            </div>
+            <div class="flex gap-4 justify-center">
+                <button id="confirmPaymentBtn" class="bg-green-600 text-white px-6 py-2.5 rounded-lg hover:bg-green-700 transition duration-300 text-sm font-semibold">
+                    <i class="fas fa-check mr-2"></i>Confirm Payment
+                </button>
+                <button id="cancelPaymentBtn" class="bg-gray-300 text-gray-800 px-6 py-2.5 rounded-lg hover:bg-gray-400 transition duration-300 text-sm font-semibold">
+                    <i class="fas fa-times mr-2"></i>Cancel
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Processing Modal -->
+<div id="processingModal" class="modal">
+    <div class="modal-content">
+        <div class="text-center">
+            <div class="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                <i class="fas fa-spinner fa-spin text-blue-600 text-2xl"></i>
+            </div>
+            <h3 class="text-lg font-semibold text-gray-800 mb-2">Processing Payment...</h3>
+            <p class="text-gray-600">Please wait while we process your payment.</p>
+        </div>
     </div>
 </div>
 
@@ -344,26 +377,151 @@
     const simulatePaymentButton = document.getElementById('simulatePayment');
     const closeModalButton = document.getElementById('closeModal');
     const successPopup = document.getElementById('successPopup');
+    const paymentConfirmModal = document.getElementById('paymentConfirmModal');
+    const confirmPaymentBtn = document.getElementById('confirmPaymentBtn');
+    const cancelPaymentBtn = document.getElementById('cancelPaymentBtn');
+    const processingModal = document.getElementById('processingModal');
 
-    const patientPayment = 220000;
-    const transactionId = 'TRX20250529001';
-    const receiptId = 'REC20250529001';
-    const appointmentId = 'APP789012';
-    const userId = 'USER001';
-    const issuerId = 'STAFF001';
+    // Extract URL parameters as fallback for missing data
+    const urlParams = new URLSearchParams(window.location.search);
+    const urlPatientId = urlParams.get('patientId');
+    const urlReceiptId = urlParams.get('receiptId');
+    const urlAppointmentId = urlParams.get('appointmentId');
+
+    // Lấy dữ liệu thực từ Thymeleaf template thay vì hardcode
+    const invoiceData = {
+        patientPayment: /*[[${invoiceData.totalAmount != null ? invoiceData.totalAmount * 0.2 : 0}]]*/ 0,
+        transactionId: /*[[${invoiceData.transactionId != null ? invoiceData.transactionId : 'N/A'}]]*/ 'N/A',
+        receiptId: /*[[${invoiceData.receiptId != null ? invoiceData.receiptId : 'N/A'}]]*/ 'N/A',
+        appointmentId: /*[[${invoiceData.appointmentId != null ? invoiceData.appointmentId : 'N/A'}]]*/ 'N/A',
+        userId: /*[[${invoiceData.patientId != null ? invoiceData.patientId : 'N/A'}]]*/ 'N/A',
+        issuerId: 'STAFF001',
+        receiptNumber: /*[[${invoiceData.receiptNumber != null ? invoiceData.receiptNumber : 'PENDING'}]]*/ 'PENDING',
+        totalAmount: /*[[${invoiceData.totalAmount != null ? invoiceData.totalAmount : 0}]]*/ 0,
+        patientName: /*[[${invoiceData.fullName != null ? invoiceData.fullName : 'N/A'}]]*/ 'N/A',
+        doctorName: /*[[${invoiceData.doctorName != null ? invoiceData.doctorName : 'N/A'}]]*/ 'N/A',
+        appointmentDate: /*[[${invoiceData.appointmentDate != null ? invoiceData.appointmentDate : 'N/A'}]]*/ 'N/A',
+        appointmentTime: /*[[${invoiceData.appointmentTime != null ? invoiceData.appointmentTime : 'N/A'}]]*/ 'N/A',
+        description: /*[[${invoiceData.description != null ? invoiceData.description : 'General Consultation'}]]*/ 'General Consultation'
+    };
+
+    // Override with URL parameters if backend data is missing or invalid
+    if (invoiceData.userId === 'N/A' && urlPatientId) {
+        invoiceData.userId = urlPatientId;
+        console.log('Using URL patientId:', urlPatientId);
+    }
+    if (invoiceData.receiptId === 'N/A' && urlReceiptId) {
+        invoiceData.receiptId = urlReceiptId;
+        console.log('Using URL receiptId:', urlReceiptId);
+    }
+    if (invoiceData.appointmentId === 'N/A' && urlAppointmentId) {
+        invoiceData.appointmentId = urlAppointmentId;
+        console.log('Using URL appointmentId:', urlAppointmentId);
+    }
+
+    // Try to extract appointmentId from DOM if available
+    // AppointmentID trong database là số nguyên, không phải string với tiền tố
+    const appointmentIdFromDOM = document.querySelector('span[th\\:text*="invoiceData.appointmentId"]');
+    if (appointmentIdFromDOM && appointmentIdFromDOM.textContent) {
+        const extractedAppointmentId = appointmentIdFromDOM.textContent.trim();
+        // Kiểm tra xem có phải là số nguyên hợp lệ không (AppointmentID trong DB)
+        const appointmentIdNumber = parseInt(extractedAppointmentId);
+        if (!isNaN(appointmentIdNumber) && appointmentIdNumber > 0 && extractedAppointmentId !== 'N/A') {
+            invoiceData.appointmentId = appointmentIdNumber;
+            console.log('Using DOM appointmentId:', appointmentIdNumber);
+        }
+    }
+
+    // Additional check for all spans that might contain appointment ID
+    const allSpans = document.querySelectorAll('span');
+    allSpans.forEach((span, index) => {
+        if (span.parentElement && span.parentElement.textContent.includes('Appointment ID:')) {
+            const appointmentText = span.textContent.trim();
+            // Kiểm tra xem có phải là số nguyên hợp lệ không
+            const appointmentIdNumber = parseInt(appointmentText);
+            if (!isNaN(appointmentIdNumber) && appointmentIdNumber > 0 && appointmentText !== 'N/A') {
+                invoiceData.appointmentId = appointmentIdNumber;
+                console.log(`Found appointmentId in DOM span ${index}:`, appointmentIdNumber);
+            }
+        }
+    });
+
+    // Debug: Log the invoice data to see what's actually being passed
+    console.log('=== Invoice Data Debug ===');
+    console.log('Full invoiceData object:', invoiceData);
+    console.log('Patient Name from invoiceData:', invoiceData.patientName);
+    console.log('AppointmentID from invoiceData:', invoiceData.appointmentId, 'Type:', typeof invoiceData.appointmentId);
+
+    // Debug: Check what's in the Thymeleaf variables directly
+    console.log('=== Thymeleaf Variables Debug ===');
+    console.log('invoiceData.fullName from Thymeleaf:', /*[[${invoiceData.fullName}]]*/ 'undefined');
+    console.log('invoiceData.patientId from Thymeleaf:', /*[[${invoiceData.patientId}]]*/ 'undefined');
+    console.log('invoiceData object keys from Thymeleaf:', /*[[${invoiceData.keySet()}]]*/ 'undefined');
+
+    // Debug: Check what's in the DOM elements
+    const fullNameSpan = document.querySelector('span[th\\:text*="invoiceData.fullName"]');
+    if (fullNameSpan) {
+        console.log('Full Name DOM element found, text content:', fullNameSpan.textContent);
+    } else {
+        console.log('Full Name DOM element not found');
+    }
+
+    // Additional check for all spans with fullName
+    const allFullNameSpans = document.querySelectorAll('span');
+    allFullNameSpans.forEach((span, index) => {
+        if (span.parentElement && span.parentElement.textContent.includes('Full Name:')) {
+            console.log(`Full Name span ${index} content:`, span.textContent);
+        }
+    });
+
+    const patientPayment = invoiceData.patientPayment;
+    const transactionId = invoiceData.transactionId;
+    const receiptId = invoiceData.receiptId;
+    const appointmentId = invoiceData.appointmentId;
+    const userId = invoiceData.userId;
+    const issuerId = invoiceData.issuerId;
 
     paymentMethodSelect.addEventListener('change', () => {
         amountReceivedContainer.classList.toggle('hidden', paymentMethodSelect.value !== 'Cash');
         if (paymentMethodSelect.value === 'Cash') {
             amountReceivedInput.value = '';
-            changeReturnedDisplay.textContent = 'Change Returned: 0 VND';
+            changeReturnedDisplay.textContent = 'Change Returned: 0 $';
         }
     });
 
+    // Real-time validation for Amount Received với hiển thị lỗi đỏ
     amountReceivedInput.addEventListener('input', () => {
-        const amountReceived = parseFloat(amountReceivedInput.value.replace(/,/g, '')) || 0;
+        const amountReceived = parseFloat(amountReceivedInput.value) || 0;
+        const patientPayment = window.calculatedPatientPayment || 0;
+        const errorElement = document.getElementById('amountReceivedError');
+
+        // Clear error state first
+        errorElement.classList.add('hidden');
+        amountReceivedInput.classList.remove('border-red-500');
+
+        if (amountReceivedInput.value && amountReceived < patientPayment) {
+            errorElement.textContent = 'Amount must be at least equal to Patient Payment';
+            errorElement.classList.remove('hidden');
+            amountReceivedInput.classList.add('border-red-500');
+        }
+
+        // Calculate and display change
         const change = amountReceived - patientPayment;
-        changeReturnedDisplay.textContent = `Change Returned: ${change >= 0 ? change.toLocaleString('vi-VN') : 0} VND`;
+        changeReturnedDisplay.textContent = `Change Returned: ${change >= 0 ? change.toLocaleString('en-US') : 0} $`;
+    });
+
+    // Clear validation errors when payment method changes
+    paymentMethodSelect.addEventListener('change', () => {
+        document.getElementById('paymentMethodError').classList.add('hidden');
+        paymentMethodSelect.classList.remove('border-red-500');
+
+        amountReceivedContainer.classList.toggle('hidden', paymentMethodSelect.value !== 'Cash');
+        if (paymentMethodSelect.value === 'Cash') {
+            amountReceivedInput.value = '';
+            changeReturnedDisplay.textContent = 'Change Returned: 0 $';
+            document.getElementById('amountReceivedError').classList.add('hidden');
+            amountReceivedInput.classList.remove('border-red-500');
+        }
     });
 
     function showSuccessPopup(callback) {
@@ -379,33 +537,34 @@
         receiptNotesInput.value = data.notes || '';
         transactionStatusDisplay.textContent = data.status || 'Pending';
         transactionStatusDisplay.className = data.status === 'Paid' ? 'text-green-600' : 'status-pending';
-        processedByDisplay.textContent = `${data.processedByName || 'Mr. A'} (ID: ${data.processedById || 'STAFF001'})`;
-        timeOfPaymentDisplay.textContent = data.timeOfPayment || 'Not yet paid';
+        // Chỉ hiển thị FullName, không có UserID
+        processedByDisplay.textContent = data.processedByName || /*[[${staffInfo.fullName}]]*/ 'Staff Member';
+        timeOfPaymentDisplay.textContent = data.timeOfPayment || new Date().toLocaleString('en-GB');
         if (data.method === 'Cash') {
             amountReceivedContainer.classList.remove('hidden');
             amountReceivedInput.value = data.amountReceived || '';
             const change = data.amountReceived ? (parseFloat(data.amountReceived.replace(/,/g, '')) - patientPayment) : 0;
-            changeReturnedDisplay.textContent = `Change Returned: ${change >= 0 ? change.toLocaleString('vi-VN') : 0} VND`;
+            changeReturnedDisplay.textContent = `Change Returned: ${change >= 0 ? change.toLocaleString('vi-VN') : 0} $`;
         } else {
             amountReceivedContainer.classList.add('hidden');
         }
     }
 
-    // Initial invoice data
+    // Initial invoice data với dữ liệu thực từ database
     updateInvoice({
-        method: 'Cash',
-        processedByName: 'Mr. A',
-        processedById: 'STAFF001',
-        amountReceived: '300,000',
-        notes: 'Includes 10% VAT, non-refunded',
-        status: 'Pending',
+        method: /*[[${invoiceData.paymentMethod != null ? invoiceData.paymentMethod : ''}]]*/ '',
+        processedByName: /*[[${staffInfo.fullName != null ? staffInfo.fullName : 'Staff Member'}]]*/ 'Staff Member',
+        processedById: /*[[${staffInfo.userId != null ? staffInfo.userId : 'STAFF001'}]]*/ 'STAFF001',
+        amountReceived: '',
+        notes: 'Medical consultation and services',
+        status: /*[[${invoiceData.transactionStatus != null ? invoiceData.transactionStatus : 'Pending'}]]*/ 'Pending',
         timeOfPayment: 'Not yet paid'
     });
 
     function handlePaymentSuccess(paymentData) {
         updateInvoice({
             method: paymentData.method,
-            processedByName: 'Mr. A',
+            processedByName: /*[[${staffInfo.fullName != null ? staffInfo.fullName : 'Staff Member'}]]*/ 'Staff Member',
             processedById: paymentData.processedByUserId,
             amountReceived: paymentData.method === 'Cash' ? amountReceivedInput.value : undefined,
             notes: paymentData.receipt.notes,
@@ -432,103 +591,609 @@
         });
     }
 
-    paymentButton.addEventListener('click', async () => {
-        if (!paymentMethodSelect.value) {
-            paymentMethodSelect.classList.add('border-red-500');
-            alert('Please select a payment method.');
+    function showPaymentConfirmation(paymentData) {
+        // Ensure paymentData exists and has method
+        if (!paymentData || !paymentData.method) {
+            console.error('Invalid payment data:', paymentData);
+            alert('Payment data is invalid. Please try again.');
             return;
         }
-        paymentMethodSelect.classList.remove('border-red-500');
 
-        if (paymentMethodSelect.value === 'Cash') {
-            const amountReceived = parseFloat(amountReceivedInput.value.replace(/[^\d]/g, '')) || 0;
-            if (amountReceived < patientPayment) {
-                amountReceivedInput.classList.add('border-red-500');
-                alert('Amount received is less than the required patient payment.');
-                return;
-            }
-            amountReceivedInput.classList.remove('border-red-500');
+        // Update confirmation modal with payment details - with null checks
+        const confirmPatientNameElement = document.getElementById('confirmPatientName');
+        const confirmAmountElement = document.getElementById('confirmAmount');
+        const confirmMethodElement = document.getElementById('confirmMethod');
+        const confirmCashDetailsElement = document.getElementById('confirmCashDetails');
+        const confirmAmountReceivedElement = document.getElementById('confirmAmountReceived');
+        const confirmChangeElement = document.getElementById('confirmChange');
 
-            try {
-                const paymentData = {
-                    transactionId,
-                    appointmentId,
-                    userId,
-                    method: paymentMethodSelect.value,
-                    timeOfPayment: new Date().toISOString(),
-                    status: 'Paid',
-                    processedByUserId: issuerId,
-                    receipt: {
-                        receiptId,
-                        receiptNumber: receiptId,
-                        issuedDate: new Date().toISOString(),
-                        taxAmount: 100000,
-                        discountAmount: 0,
-                        totalAmount: patientPayment,
-                        notes: receiptNotesInput.value,
-                        issuerId
-                    }
-                };
-
-                // Simulated API call
-                // const response = await fetch('/api/transactions', {
-                //     method: 'POST',
-                //     headers: { 'Content-Type': 'application/json' },
-                //     body: JSON.stringify(paymentData)
-                // });
-                // if (!response.ok) throw new Error('Payment submission failed');
-
-                handlePaymentSuccess(paymentData);
-            } catch (error) {
-                console.error('Error submitting payment:', error);
-                alert('Failed to process payment. Please try again.');
-            }
-        } else {
-            qrModal.style.display = 'flex';
+        // Safe updates with null checks
+        if (confirmPatientNameElement) {
+            confirmPatientNameElement.textContent = invoiceData.patientName || 'N/A';
         }
-    });
 
-    simulatePaymentButton.addEventListener('click', async () => {
-        qrModal.style.display = 'none';
+        if (confirmAmountElement) {
+            confirmAmountElement.textContent = window.calculatedPatientPayment?.toLocaleString('en-US') || '0';
+        }
+
+        if (confirmMethodElement) {
+            confirmMethodElement.textContent = paymentData.method;
+        }
+
+        if (paymentData.method === 'Cash' && confirmCashDetailsElement) {
+            confirmCashDetailsElement.style.display = 'block';
+
+            if (confirmAmountReceivedElement) {
+                confirmAmountReceivedElement.textContent = paymentData.amountReceived?.toLocaleString('en-US') || '0';
+            }
+
+            if (confirmChangeElement) {
+                confirmChangeElement.textContent = paymentData.change?.toLocaleString('en-US') || '0';
+            }
+        } else if (confirmCashDetailsElement) {
+            confirmCashDetailsElement.style.display = 'none';
+        }
+
+        paymentConfirmModal.style.display = 'flex';
+
+        // Store payment data for confirmation with validation
+        window.pendingPaymentData = {
+            method: paymentData.method,
+            amountReceived: paymentData.amountReceived || null,
+            change: paymentData.change || 0,
+            receipt: paymentData.receipt || { notes: 'Medical consultation and services' }
+        };
+    }
+
+    function hidePaymentConfirmation() {
+        paymentConfirmModal.style.display = 'none';
+        window.pendingPaymentData = null;
+    }
+
+    function showProcessingModal() {
+        processingModal.style.display = 'flex';
+    }
+
+    function hideProcessingModal() {
+        processingModal.style.display = 'none';
+    }
+
+    async function processPaymentToDatabase(paymentData) {
         try {
-            const paymentData = {
-                transactionId,
-                appointmentId,
-                userId,
-                method: paymentMethodSelect.value,
-                timeOfPayment: new Date().toISOString(),
+            showProcessingModal();
+
+            const requestData = {
+                patientId: invoiceData.userId && invoiceData.userId !== 'N/A' ? parseInt(invoiceData.userId) : null,
+                appointmentId: invoiceData.appointmentId && invoiceData.appointmentId !== 'N/A' ? parseInt(invoiceData.appointmentId) : 1, // Backend requires non-null appointmentId
+                transactionId: invoiceData.transactionId !== 'N/A' ? invoiceData.transactionId : null,
+                receiptId: invoiceData.receiptId !== 'N/A' ? invoiceData.receiptId : null,
+                receiptNumber: invoiceData.receiptNumber !== 'PENDING' ? invoiceData.receiptNumber : null,
+                method: paymentData.method,
+                paymentMethod: paymentData.method, // Alternative field name
+                amountReceived: paymentData.amountReceived || null,
+                amountPaid: paymentData.amountReceived || window.calculatedPatientPayment || 0,
+                change: paymentData.change || 0,
+                notes: paymentData.receipt ? paymentData.receipt.notes : 'Medical consultation and services',
+                description: paymentData.receipt ? paymentData.receipt.notes : 'Medical consultation and services',
+                totalAmount: window.calculatedPatientPayment || 0,
+                patientPayment: window.calculatedPatientPayment || 0,
                 status: 'Paid',
-                processedByUserId: issuerId,
+                paymentStatus: 'Paid',
+                processedBy: invoiceData.issuerId,
+                staffId: invoiceData.issuerId,
+                timestamp: new Date().toISOString(),
+                paymentDate: new Date().toISOString().split('T')[0],
+                paymentTime: new Date().toLocaleTimeString('en-GB', { hour12: false })
+            };
+
+            console.log('Request Data to Backend:', requestData);
+            console.log('Request Data JSON:', JSON.stringify(requestData, null, 2));
+
+            const response = await fetch('/receptionist/api/process-payment', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-Requested-With': 'XMLHttpRequest'
+                },
+                body: JSON.stringify(requestData)
+            });
+
+            hideProcessingModal();
+
+            if (!response.ok) {
+                const errorText = await response.text();
+                throw new Error(`Payment failed: ${errorText}`);
+            }
+
+            const result = await response.json();
+            console.log('Payment successful:', result);
+
+            return result;
+
+        } catch (error) {
+            hideProcessingModal();
+            console.error('Error processing payment:', error);
+            throw error;
+        }
+    }
+
+    // Updated payment button click handler với validation đầy đủ
+    paymentButton.addEventListener('click', async () => {
+        let hasErrors = false;
+
+        // Reset all error states
+        document.getElementById('paymentMethodError').classList.add('hidden');
+        document.getElementById('amountReceivedError').classList.add('hidden');
+        paymentMethodSelect.classList.remove('border-red-500');
+        amountReceivedInput.classList.remove('border-red-500');
+
+        // Validate Payment Method - hiển thị lỗi đỏ nếu không chọn
+        if (!paymentMethodSelect.value) {
+            document.getElementById('paymentMethodError').classList.remove('hidden');
+            paymentMethodSelect.classList.add('border-red-500');
+            hasErrors = true;
+        }
+
+        // Validate Amount Received for Cash payment - hiển thị lỗi đỏ nếu không nhập và phải >= Patient Payment
+        if (paymentMethodSelect.value === 'Cash') {
+            const amountReceived = parseFloat(amountReceivedInput.value) || 0;
+            const patientPayment = window.calculatedPatientPayment || 0;
+
+            if (amountReceived === 0 || !amountReceivedInput.value) {
+                document.getElementById('amountReceivedError').textContent = 'Please enter amount received';
+                document.getElementById('amountReceivedError').classList.remove('hidden');
+                amountReceivedInput.classList.add('border-red-500');
+                hasErrors = true;
+            } else if (amountReceived < patientPayment) {
+                document.getElementById('amountReceivedError').textContent = 'Amount must be at least equal to Patient Payment';
+                document.getElementById('amountReceivedError').classList.remove('hidden');
+                amountReceivedInput.classList.add('border-red-500');
+                hasErrors = true;
+            }
+        }
+
+        // If there are validation errors, stop here
+        if (hasErrors) {
+            return;
+        }
+
+        // Proceed with payment if validation passes
+        if (paymentMethodSelect.value === 'Cash') {
+            const amountReceived = parseFloat(amountReceivedInput.value.replace(/[^\d.]/g, '')) || 0;
+            const patientPayment = window.calculatedPatientPayment || 0;
+            const change = amountReceived - patientPayment;
+
+            const paymentData = {
+                method: paymentMethodSelect.value,
+                amountReceived: amountReceived,
+                change: change,
                 receipt: {
-                    receiptId,
-                    receiptNumber: receiptId,
-                    issuedDate: new Date().toISOString(),
-                    taxAmount: 100000,
-                    discountAmount: 0,
-                    totalAmount: patientPayment,
-                    notes: receiptNotesInput.value,
-                    issuerId
+                    notes: receiptNotesInput.value || 'Medical consultation and services'
                 }
             };
 
-            // Simulated API call
-            // const response = await fetch('/api/transactions', {
-            //     method: 'POST',
-            //     headers: { 'Content-Type': 'application/json' },
-            //     body: JSON.stringify(paymentData)
-            // });
-            // if (!response.ok) throw new Error('Payment submission failed');
+            showPaymentConfirmation(paymentData);
+        } else {
+            // For banking payment
+            const paymentData = {
+                method: paymentMethodSelect.value,
+                receipt: {
+                    notes: receiptNotesInput.value || 'Medical consultation and services'
+                }
+            };
 
-            handlePaymentSuccess(paymentData);
-        } catch (error) {
-            console.error('Error submitting payment:', error);
-            alert('Failed to process payment. Please try again.');
+            // Update QR modal with real data
+            const qrAmountText = document.querySelector('#qrModal .qr-placeholder + p');
+            const qrReceiptText = qrAmountText.nextElementSibling;
+
+            if (qrAmountText) {
+                qrAmountText.textContent = `Amount: ${(window.calculatedPatientPayment || 0).toLocaleString('en-US')} $`;
+            }
+            if (qrReceiptText) {
+                qrReceiptText.textContent = `Receipt: ${invoiceData.receiptNumber}`;
+            }
+
+            qrModal.style.display = 'flex';
+            window.pendingPaymentData = paymentData;
         }
     });
 
-    closeModalButton.addEventListener('click', () => {
-        qrModal.style.display = 'none';
+    // Confirmation button handler - Cập nhật Status từ Pending sang Paid và lưu vào database
+    confirmPaymentBtn.addEventListener('click', async () => {
+        // Validate pending payment data exists
+        if (!window.pendingPaymentData) {
+            console.error('No pending payment data found');
+            alert('No pending payment data found. Please try again.');
+            return;
+        }
+
+        // Validate payment method exists
+        const paymentData = window.pendingPaymentData;
+        const selectedMethod = paymentData.method || paymentMethodSelect.value;
+
+        if (!selectedMethod || selectedMethod.trim() === '') {
+            console.error('Payment method is missing');
+            alert('Payment method is missing. Please select a payment method.');
+            return;
+        }
+
+        hidePaymentConfirmation();
+        showProcessingModal();
+
+        try {
+            console.log('=== Starting Payment Processing ===');
+            console.log('Payment Data:', paymentData);
+            console.log('Selected Method:', selectedMethod);
+
+            // Create request data for backend processing with proper null handling
+            // FIXED: Generate a temporary TransactionID to avoid null constraint
+            const tempTransactionId = `TXN_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+            const tempReceiptNumber = `REC_${Date.now()}_${Math.random().toString(36).substr(2, 6)}`;
+
+            const requestData = {
+                patientId: invoiceData.userId && invoiceData.userId !== 'N/A' ? parseInt(invoiceData.userId) : null,
+                appointmentId: invoiceData.appointmentId && invoiceData.appointmentId !== 'N/A' ? parseInt(invoiceData.appointmentId) : 1, // Backend requires non-null appointmentId
+                // Generate TransactionID instead of sending null
+                transactionId: tempTransactionId,
+                receiptId: invoiceData.receiptId !== 'N/A' ? invoiceData.receiptId : null,
+                receiptNumber: tempReceiptNumber, // Generate receipt number
+                method: selectedMethod,
+                paymentMethod: selectedMethod, // Alternative field name
+                amountReceived: paymentData.amountReceived || null,
+                amountPaid: paymentData.amountReceived || window.calculatedPatientPayment || 0,
+                change: paymentData.change || 0,
+                notes: paymentData.receipt ? paymentData.receipt.notes : 'Medical consultation and services',
+                description: paymentData.receipt ? paymentData.receipt.notes : 'Medical consultation and services',
+                totalAmount: window.calculatedPatientPayment || 0,
+                patientPayment: window.calculatedPatientPayment || 0,
+                status: 'Paid',
+                paymentStatus: 'Paid',
+                processedBy: invoiceData.issuerId,
+                staffId: invoiceData.issuerId,
+                timestamp: new Date().toISOString(),
+                paymentDate: new Date().toISOString().split('T')[0],
+                paymentTime: new Date().toLocaleTimeString('en-GB', { hour12: false }),
+                // Additional fields for proper transaction creation
+                issuerId: invoiceData.issuerId || 'STAFF001',
+                userId: invoiceData.userId && invoiceData.userId !== 'N/A' ? parseInt(invoiceData.userId) : null
+            };
+
+            console.log('Request Data to Backend (with TransactionID):', requestData);
+            console.log('Request Data JSON:', JSON.stringify(requestData, null, 2));
+
+            // Call API to process payment and update status to "Paid"
+            const response = await fetch('/receptionist/api/process-payment', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-Requested-With': 'XMLHttpRequest'
+                },
+                body: JSON.stringify(requestData)
+            });
+
+            console.log('API Response Status:', response.status);
+
+            if (!response.ok) {
+                const errorText = await response.text();
+                console.error('Payment API error:', errorText);
+                hideProcessingModal();
+                throw new Error(`Payment failed: ${errorText}`);
+            }
+
+            const result = await response.json();
+            console.log('Payment API Success Response:', result);
+
+            hideProcessingModal();
+
+            // === UPDATE UI TO REFLECT PAID STATUS ===
+            console.log('=== Updating UI to Paid Status ===');
+
+            // 1. Update transaction status display to "Paid"
+            transactionStatusDisplay.textContent = 'Paid';
+            transactionStatusDisplay.className = 'text-green-600 font-semibold';
+            console.log('Status updated to: Paid');
+
+            // 2. Update time of payment to current time
+            const currentTime = new Date().toLocaleString('en-GB');
+            timeOfPaymentDisplay.textContent = currentTime;
+            console.log('Time of payment updated to:', currentTime);
+
+            // 3. Update payment method and amount display
+            paymentMethodSelect.value = selectedMethod;
+            console.log('Payment method set to:', selectedMethod);
+
+            if (selectedMethod === 'Cash' && paymentData.amountReceived) {
+                amountReceivedContainer.classList.remove('hidden');
+                amountReceivedInput.value = paymentData.amountReceived;
+                const patientPayment = window.calculatedPatientPayment || 0;
+                const change = paymentData.amountReceived - patientPayment;
+                changeReturnedDisplay.textContent = `Change Returned: ${change >= 0 ? change.toLocaleString('en-US') : 0} $`;
+                console.log('Cash payment details updated - Amount received:', paymentData.amountReceived, 'Change:', change);
+            } else if (selectedMethod === 'Banking') {
+                amountReceivedContainer.classList.add('hidden');
+                console.log('Banking payment - amount received container hidden');
+            }
+
+            // 4. Update notes if provided
+            if (paymentData.receipt && paymentData.receipt.notes) {
+                receiptNotesInput.value = paymentData.receipt.notes;
+                console.log('Notes updated:', paymentData.receipt.notes);
+            }
+
+            // 5. Disable payment button to prevent double payment
+            paymentButton.disabled = true;
+            paymentButton.textContent = 'Payment Completed';
+            paymentButton.className = 'bg-gray-400 text-white px-8 py-3 rounded-lg cursor-not-allowed flex items-center gap-2 text-sm font-semibold';
+
+            console.log('=== Payment Processing Completed Successfully ===');
+
+            // Show success popup and handle redirect
+            showSuccessPopup(() => {
+                console.log('Showing success popup and preparing for print/redirect');
+
+                // Set up afterprint event listener to redirect after print dialog closes
+                const onAfterPrint = () => {
+                    window.removeEventListener('afterprint', onAfterPrint);
+                    console.log('Print dialog closed, redirecting to payments page');
+                    window.location.href = '/receptionist/payments';
+                };
+                window.addEventListener('afterprint', onAfterPrint);
+
+                // Trigger print dialog
+                console.log('Triggering print dialog');
+                window.print();
+
+                // Fallback for browsers that don't support afterprint
+                setTimeout(() => {
+                    window.removeEventListener('afterprint', onAfterPrint);
+                    console.log('Fallback redirect after 5 seconds');
+                    window.location.href = '/receptionist/payments';
+                }, 5000);
+            });
+
+        } catch (error) {
+            hideProcessingModal();
+            console.error('=== Payment Processing Error ===');
+            console.error('Error details:', error);
+            alert('Failed to process payment: ' + error.message + '. Please try again.');
+        }
     });
+
+    // Cancel payment button handler
+    cancelPaymentBtn.addEventListener('click', () => {
+        hidePaymentConfirmation();
+    });
+
+    // Updated simulate payment for banking
+    simulatePaymentButton.addEventListener('click', async () => {
+        if (!window.pendingPaymentData) {
+            alert('No pending payment data found.');
+            return;
+        }
+
+        qrModal.style.display = 'none';
+
+        // Đảm bảo paymentData có trường method
+        if (!window.pendingPaymentData.method) {
+            window.pendingPaymentData.method = paymentMethodSelect.value;
+        }
+
+        // Show confirmation for banking payment
+        showPaymentConfirmation(window.pendingPaymentData);
+    });
+
+    // Validation cho Cash payment với sử dụng calculatedPatientPayment
+    function validateCashPayment() {
+        const amountReceived = parseFloat(amountReceivedInput.value) || 0;
+        const patientPayment = window.calculatedPatientPayment || 0;
+        const errorElement = document.getElementById('amountReceivedError');
+
+        // Check if error element exists before using it
+        if (!errorElement) {
+            console.warn('amountReceivedError element not found');
+            return false;
+        }
+
+        if (amountReceived < patientPayment) {
+            errorElement.classList.remove('hidden');
+            amountReceivedInput.classList.add('border-red-500');
+            return false;
+        } else {
+            errorElement.classList.add('hidden');
+            amountReceivedInput.classList.remove('border-red-500');
+
+            // Tính change với Patient Payment thực tế
+            const change = amountReceived - patientPayment;
+            changeReturnedDisplay.textContent = `Change Returned: ${change >= 0 ? change.toLocaleString('en-US') : 0} $`;
+            return true;
+        }
+    }
+
+    // Character count cho Notes
+    function updateCharacterCount() {
+        const currentLength = receiptNotesInput.value.length;
+        const charCountElement = document.getElementById('charCount');
+        charCountElement.textContent = `${currentLength}/100`;
+
+        if (currentLength > 100) {
+            charCountElement.classList.add('text-red-500');
+            receiptNotesInput.value = receiptNotesInput.value.substring(0, 100);
+            charCountElement.textContent = '100/100';
+        } else {
+            charCountElement.classList.remove('text-red-500');
+        }
+    }
+
+    // Tính toán SubTotal và Payment amounts - phiên bản đơn giản và chính xác
+    function calculateAllAmounts() {
+        console.log('=== Calculating All Amounts ===');
+
+        // Tìm tất cả các hàng service trong table
+        const serviceRows = document.querySelectorAll('tbody tr:not(.bg-blue-50)'); // Loại trừ hàng SubTotal
+        console.log('Found service rows:', serviceRows.length);
+
+        let subTotal = 0;
+        let totalTaxAmount = 0;
+        let totalQuantity = 0;
+
+        serviceRows.forEach((row, index) => {
+            const cells = row.querySelectorAll('td');
+            if (cells.length >= 8) {
+                // Lấy dữ liệu từ các cột
+                const quantityText = cells[3].textContent.trim();
+                const priceText = cells[4].textContent.trim();
+                const taxText = cells[5].textContent.trim();
+                const totalText = cells[6].textContent.trim();
+
+                // Parse numbers
+                const quantity = parseFloat(quantityText) || 0;
+                const price = parseFloat(priceText.replace(/[^\d.]/g, '')) || 0;
+                const taxPercent = parseFloat(taxText) || 0;
+                const total = parseFloat(totalText.replace(/[^\d.]/g, '')) || 0;
+
+                console.log(`Service ${index + 1}:`, {
+                    quantity, price, taxPercent, total
+                });
+
+                if (quantity > 0 && price > 0 && total > 0) {
+                    // Cộng vào SubTotal
+                    subTotal += total;
+
+                    // Tính Tax Amount = Price * Quantity * Tax%
+                    totalTaxAmount += (price * quantity * taxPercent / 100);
+
+                    // Cộng quantity để tính discount
+                    totalQuantity += quantity;
+                }
+            }
+        });
+
+        // Tính discount theo rules
+        let discountPercent = 0;
+        if (totalQuantity >= 5) {
+            discountPercent = 10;
+        } else if (totalQuantity >= 3) {
+            discountPercent = 5;
+        } else if (totalQuantity === 1) {
+            discountPercent = 3;
+        }
+
+        const discountAmount = subTotal * discountPercent / 100;
+        const patientPayment = subTotal - discountAmount;
+
+        console.log('Calculation Results:', {
+            subTotal,
+            totalTaxAmount,
+            totalQuantity,
+            discountPercent,
+            discountAmount,
+            patientPayment
+        });
+
+        // Cập nhật hiển thị
+        updateDisplayValues(subTotal, totalTaxAmount, discountAmount, patientPayment);
+
+        // Lưu Patient Payment để dùng cho validation
+        window.calculatedPatientPayment = patientPayment;
+
+        return { subTotal, totalTaxAmount, discountAmount, patientPayment };
+    }
+
+    // Function để cập nhật các giá trị hiển thị
+    function updateDisplayValues(subTotal, taxAmount, discountAmount, patientPayment) {
+        // SubTotal
+        const subTotalElement = document.getElementById('servicesSubTotal');
+        if (subTotalElement) {
+            subTotalElement.textContent = subTotal.toLocaleString('en-US') + ' $';
+        }
+
+        // Total Amount (giống SubTotal)
+        const totalAmountElement = document.getElementById('calculatedTotalAmount');
+        if (totalAmountElement) {
+            totalAmountElement.textContent = subTotal.toLocaleString('en-US');
+        }
+
+        // Tax Amount
+        const taxAmountElement = document.getElementById('calculatedTaxAmount');
+        if (taxAmountElement) {
+            taxAmountElement.textContent = taxAmount.toLocaleString('en-US');
+        }
+
+        // Discount Amount
+        const discountAmountElement = document.getElementById('calculatedDiscountAmount');
+        if (discountAmountElement) {
+            discountAmountElement.textContent = discountAmount.toLocaleString('en-US');
+        }
+
+        // Patient Payment
+        const patientPaymentElement = document.getElementById('calculatedPatientPayment');
+        if (patientPaymentElement) {
+            patientPaymentElement.textContent = patientPayment.toLocaleString('en-US');
+        }
+    }
+
+    // Event listeners
+    amountReceivedInput.addEventListener('input', validateCashPayment);
+    receiptNotesInput.addEventListener('input', updateCharacterCount);
+
+    // Cập nhật payment method change handler với null checks
+    paymentMethodSelect.addEventListener('change', () => {
+        amountReceivedContainer.classList.toggle('hidden', paymentMethodSelect.value !== 'Cash');
+        if (paymentMethodSelect.value === 'Cash') {
+            amountReceivedInput.value = '';
+            changeReturnedDisplay.textContent = 'Change Returned: 0 $';
+            // Check if element exists before using it
+            const validationError = document.getElementById('paymentValidationError');
+            if (validationError) {
+                validationError.classList.add('hidden');
+            }
+        }
+    });
+
+    // Gọi hàm tính toán khi trang được tải
+    document.addEventListener('DOMContentLoaded', () => {
+        console.log('DOM Content Loaded - Starting calculations');
+        setTimeout(() => {
+            calculateAllAmounts();
+            updateCharacterCount();
+        }, 500); // Tăng delay để chắc chắn Thymeleaf render xong
+    });
+
+    window.addEventListener('load', () => {
+        console.log('Window Loaded - Recalculating');
+        setTimeout(() => {
+            calculateAllAmounts();
+            updateCharacterCount();
+        }, 200);
+    });
+
+    // Th��m observer để theo dõi thay đổi trong table
+    const observer = new MutationObserver((mutations) => {
+        let hasRelevantChanges = false;
+        mutations.forEach((mutation) => {
+            if (mutation.type === 'childList' || mutation.type === 'characterData') {
+                hasRelevantChanges = true;
+            }
+        });
+
+        if (hasRelevantChanges) {
+            console.log('Table content changed, recalculating...');
+            setTimeout(calculateAllAmounts, 100);
+        }
+    });
+
+    // Bắt đầu observe table khi có sẵn
+    setTimeout(() => {
+        const tableBody = document.querySelector('tbody');
+        if (tableBody) {
+            observer.observe(tableBody, {
+                childList: true,
+                subtree: true,
+                characterData: true
+            });
+            console.log('Started observing table changes');
+        }
+    }, 1000);
 </script>
 </body>
 </html>

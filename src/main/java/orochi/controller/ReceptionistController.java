@@ -1,5 +1,6 @@
 package orochi.controller;
 
+import java.io.File;
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -22,6 +23,7 @@ import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 import orochi.config.CustomUserDetails;
 import orochi.dto.AppointmentDTO;
@@ -30,11 +32,9 @@ import orochi.dto.SpecializationDTO;
 import orochi.model.*;
 import orochi.repository.PatientRepository;
 import orochi.repository.UserRepository;
-import orochi.service.AppointmentService;
-import orochi.service.NotificationService;
-import orochi.service.SpecializationService;
+import orochi.service.*;
 import orochi.service.impl.ReceptionistService;
-import orochi.service.RoomService;
+import orochi.service.FileStorageService;
 
 @Controller
 @RequestMapping("/receptionist")
@@ -44,10 +44,11 @@ public class ReceptionistController {
     private final UserRepository userRepository;
     private final SpecializationService specializationService;
     private final AppointmentService appointmentService;
-
     private final NotificationService notificationService;
     private final PatientRepository patientRepository;
-    private final RoomService roomService; // Add RoomService injection
+    private final RoomService roomService;
+    private final EmailService emailService;
+    private final FileStorageService fileStorageService;
 
     @Autowired
     private PasswordEncoder passwordEncoder;
@@ -56,15 +57,19 @@ public class ReceptionistController {
 
     @Autowired
     public ReceptionistController(ReceptionistService receptionistService, UserRepository userRepository,
-                                 SpecializationService specializationService, AppointmentService appointmentService,
-                                 PatientRepository patientRepository, RoomService roomService, NotificationService notificationService) {
+                                  SpecializationService specializationService, AppointmentService appointmentService,
+                                  PatientRepository patientRepository, RoomService roomService,
+                                  NotificationService notificationService, EmailService emailService,
+                                  FileStorageService fileStorageService) {
         this.receptionistService = receptionistService;
         this.userRepository = userRepository;
         this.specializationService = specializationService;
         this.appointmentService = appointmentService;
         this.patientRepository = patientRepository;
-        this.roomService = roomService; // Initialize RoomService
+        this.roomService = roomService;
         this.notificationService = notificationService;
+        this.emailService = emailService;
+        this.fileStorageService = fileStorageService;
     }
 
     @GetMapping("/dashboard")
@@ -117,7 +122,7 @@ public class ReceptionistController {
     }
 
     @GetMapping("/new_appointment")
-    public String newAppointment(Authentication authentication,Model model) {
+    public String newAppointment(Authentication authentication, Model model) {
         // Ensure authentication is not null
         if (authentication == null || !authentication.isAuthenticated()) {
             return "redirect:/login";
@@ -219,7 +224,6 @@ public class ReceptionistController {
     }
 
 
-
     @GetMapping("/doctors")
     public String doctors(Authentication authentication) {
         if (authentication == null || !authentication.isAuthenticated()) {
@@ -310,6 +314,7 @@ public class ReceptionistController {
 
         return "Receptionists/patients";
     }
+
     @GetMapping("/payments")
     public String payments(Authentication authentication) {
         if (authentication == null || !authentication.isAuthenticated()) {
@@ -495,10 +500,32 @@ public class ReceptionistController {
     }
 
     @GetMapping("/profile")
-    public String profile(Authentication authentication) {
+    public String profile(Authentication authentication, Model model) {
         if (authentication == null || !authentication.isAuthenticated()) {
             return "redirect:/login";
         }
+
+        // Extract CustomUserDetails from the principal
+        Object principal = authentication.getPrincipal();
+        if (!(principal instanceof CustomUserDetails)) {
+            return "redirect:/error";
+        }
+
+        // Extract userId from CustomUserDetails
+        CustomUserDetails userDetails = (CustomUserDetails) principal;
+        Integer userId = userDetails.getUserId();
+
+        // Fetch the Users entity from the database
+        Users user = userRepository.findById(userId)
+                .orElseThrow(() -> new RuntimeException("User not found with ID: " + userId));
+
+        // Verify the user is a Receptionist
+        if (!user.getRole().getRoleName().equals("RECEPTIONIST")) {
+            return "redirect:/error";
+        }
+
+        // Add user data to model for profile display
+        model.addAttribute("user", user);
 
         return "Receptionists/profile";
     }
@@ -511,7 +538,6 @@ public class ReceptionistController {
 
         return "Receptionists/settings";
     }
-
 
 
     @PostMapping("/register")
@@ -558,15 +584,104 @@ public class ReceptionistController {
         return "Receptionists/payment_history";
     }
 
-    @GetMapping("/view_payment_details")
-    public String viewPaymentDetails(Authentication authentication) {
-        // Ensure authentication is not null
-        if (authentication == null || !authentication.isAuthenticated()) {
-            return "redirect:/login";
-        }
+    @GetMapping("/api/payment_history")
+    @ResponseBody
+    public ResponseEntity<?> getPaymentHistoryData(Authentication authentication) {
+        try {
+            // Ensure authentication is not null
+            if (authentication == null || !authentication.isAuthenticated()) {
+                return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Authentication required");
+            }
 
-        // Fetch payment details based on payment ID from request parameter ...
-        return "Receptionists/view_payment_details";
+            // Get payment history data from database using new method
+            List<Map<String, Object>> paymentData = receptionistService.getPaymentHistoryData();
+
+            logger.info("Payment history API returned {} records", paymentData.size());
+            return ResponseEntity.ok(paymentData);
+
+        } catch (Exception e) {
+            logger.error("Error in payment history API: {}", e.getMessage(), e);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body("Error fetching payment history: " + e.getMessage());
+        }
+    }
+
+    @GetMapping("/api/payment_history/date-range")
+    @ResponseBody
+    public ResponseEntity<?> getPaymentHistoryDataByDateRange(
+            @RequestParam String fromDate,
+            @RequestParam String toDate,
+            Authentication authentication) {
+        try {
+            // Ensure authentication is not null
+            if (authentication == null || !authentication.isAuthenticated()) {
+                return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Authentication required");
+            }
+
+            // Parse dates
+            LocalDate from = LocalDate.parse(fromDate);
+            LocalDate to = LocalDate.parse(toDate);
+
+            // Get payment history data from database with date filter
+            List<Map<String, Object>> paymentData = receptionistService.getPaymentHistoryDataByDateRange(from, to);
+
+            logger.info("Payment history API returned {} records for date range {}-{}", paymentData.size(), fromDate, toDate);
+            return ResponseEntity.ok(paymentData);
+
+        } catch (Exception e) {
+            logger.error("Error in payment history date range API: {}", e.getMessage(), e);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body("Error fetching payment history by date range: " + e.getMessage());
+        }
+    }
+
+    @GetMapping("/view_payment_details")
+    public String viewPaymentDetails(@RequestParam(required = false) Integer patientId,
+                                   @RequestParam(required = false) Integer receiptId,
+                                   Authentication authentication,
+                                   Model model) {
+        try {
+            // Ensure authentication is not null
+            if (authentication == null || !authentication.isAuthenticated()) {
+                return "redirect:/login";
+            }
+
+            // Check if patientId is provided
+            if (patientId == null) {
+                model.addAttribute("errorMessage", "Patient ID is required to view payment details");
+                return "redirect:/receptionist/payments";
+            }
+
+            // Lấy thông tin bệnh nhân và cuộc hẹn giống như pay_invoice
+            Map<String, Object> invoiceData = receptionistService.getInvoiceDataByPatientId(patientId);
+
+            if (invoiceData == null) {
+                model.addAttribute("errorMessage", "Patient not found");
+                return "redirect:/receptionist/payments";
+            }
+
+            // Lấy thông tin staff để hiển thị trong "Processed By"
+            Map<String, Object> staffInfo = receptionistService.getReceptionistStaffInfo();
+            logger.info("=== Controller staffInfo debug ===");
+            logger.info("Controller received staffInfo: {}", staffInfo);
+            logger.info("staffInfo fullName: {}", staffInfo.get("fullName"));
+            logger.info("staffInfo userId: {}", staffInfo.get("userId"));
+
+            model.addAttribute("invoiceData", invoiceData);
+            model.addAttribute("staffInfo", staffInfo);
+            model.addAttribute("patientId", patientId);
+            model.addAttribute("receiptId", receiptId);
+
+            // Debug model attributes
+            logger.info("=== Model attributes debug ===");
+            logger.info("Model staffInfo: {}", model.getAttribute("staffInfo"));
+
+            return "Receptionists/view_payment_details";
+        } catch (Exception e) {
+            logger.error("Error loading view payment details page: {}", e.getMessage(), e);
+            model.addAttribute("errorMessage", "Error loading payment details: " + e.getMessage());
+            return "redirect:/receptionist/payments";
+        }
     }
 
     @GetMapping("/view_patient_details")
@@ -581,14 +696,45 @@ public class ReceptionistController {
     }
 
     @GetMapping("/pay_invoice")
-    public String payInvoice(Authentication authentication) {
-        // Ensure authentication is not null
-        if (authentication == null || !authentication.isAuthenticated()) {
-            return "redirect:/login";
-        }
+    public String payInvoice(@RequestParam Integer patientId,
+                            @RequestParam(required = false) Integer receiptId,
+                            Model model,
+                            Authentication authentication) {
+        try {
+            if (authentication == null || !authentication.isAuthenticated()) {
+                return "redirect:/login";
+            }
 
-        // Fetch invoice details based on invoice ID from request parameter ...
-        return "Receptionists/pay_invoice";
+            // Lấy thông tin bệnh nhân và cuộc hẹn
+            Map<String, Object> invoiceData = receptionistService.getInvoiceDataByPatientId(patientId);
+
+            if (invoiceData == null) {
+                model.addAttribute("errorMessage", "Patient not found");
+                return "redirect:/receptionist/payments";
+            }
+
+            // Lấy thông tin staff để hiển thị trong "Processed By"
+            Map<String, Object> staffInfo = receptionistService.getReceptionistStaffInfo();
+            logger.info("=== Controller staffInfo debug ===");
+            logger.info("Controller received staffInfo: {}", staffInfo);
+            logger.info("staffInfo fullName: {}", staffInfo.get("fullName"));
+            logger.info("staffInfo userId: {}", staffInfo.get("userId"));
+
+            model.addAttribute("invoiceData", invoiceData);
+            model.addAttribute("staffInfo", staffInfo);
+            model.addAttribute("patientId", patientId);
+            model.addAttribute("receiptId", receiptId);
+
+            // Debug model attributes
+            logger.info("=== Model attributes debug ===");
+            logger.info("Model staffInfo: {}", model.getAttribute("staffInfo"));
+
+            return "Receptionists/pay_invoice";
+        } catch (Exception e) {
+            logger.error("Error loading pay invoice page: {}", e.getMessage(), e);
+            model.addAttribute("errorMessage", "Error loading invoice data: " + e.getMessage());
+            return "redirect:/receptionist/payments";
+        }
     }
 
     @GetMapping("/patientStatus")
@@ -602,7 +748,7 @@ public class ReceptionistController {
     }
 
     @GetMapping("/appointmentRequest")
-    public ResponseEntity<?> getAppointmentTableData(){
+    public ResponseEntity<?> getAppointmentTableData() {
         try {
             // Sử dụng method mới để chỉ lấy appointments của ngày hiện tại
             String todayStr = LocalDate.now().toString();
@@ -616,7 +762,7 @@ public class ReceptionistController {
 
     // New endpoint for pending appointments only - also filter by today's date
     @GetMapping("/pendingAppointmentRequest")
-    public ResponseEntity<?> getPendingAppointmentTableData(){
+    public ResponseEntity<?> getPendingAppointmentTableData() {
         try {
             // Chỉ lấy pending appointments của ngày hiện tại
             String todayStr = LocalDate.now().toString();
@@ -630,7 +776,7 @@ public class ReceptionistController {
 
     // New endpoint for today's pending appointments
     @GetMapping("/pendingAppointmentRequest/today")
-    public ResponseEntity<?> getTodaysPendingAppointmentTableData(@RequestParam String date){
+    public ResponseEntity<?> getTodaysPendingAppointmentTableData(@RequestParam String date) {
         try {
             System.out.println("Fetching appointments for date: " + date);
             List<Map<String, Object>> todaysPendingAppointments = receptionistService.getTodaysPendingAppointmentTableData(date);
@@ -647,11 +793,11 @@ public class ReceptionistController {
     @PostMapping("/confirmAppointment")
     public ResponseEntity<?> updateAppointmentStatus(
             @RequestParam int id
-    ){
+    ) {
         try {
             // Update status to "Scheduled" (Approved)
             boolean isSuccess = receptionistService.updateAppointmentStatus(id, "Scheduled");
-            if(isSuccess) {
+            if (isSuccess) {
                 return ResponseEntity.ok("Appointment approved successfully");
             } else {
                 return ResponseEntity.badRequest().body("Failed to approve appointment");
@@ -660,6 +806,7 @@ public class ReceptionistController {
             return ResponseEntity.badRequest().body("Error approving appointment: " + e.getMessage());
         }
     }
+
     @PostMapping("/api/appointment/update")
     @ResponseBody
     public ResponseEntity<?> updateAppointmentDetails(@RequestBody Map<String, Object> request, Authentication authentication) {
@@ -675,6 +822,12 @@ public class ReceptionistController {
             String appointmentDateStr = (String) request.get("appointmentDate");
             String appointmentTimeStr = (String) request.get("appointmentTime");
             String reasonForVisit = (String) request.get("reasonForVisit");
+            String updateReason = (String) request.get("updateReason");
+
+            // Default reason if not provided
+            if (updateReason == null || updateReason.trim().isEmpty()) {
+                updateReason = "doctor schedule conflict";
+            }
 
             // Validate required fields
             if (appointmentId == null) {
@@ -708,6 +861,28 @@ public class ReceptionistController {
             boolean updated = appointmentService.updateAppointment(appointmentId, appointmentFormDTO);
 
             if (updated) {
+                // Get the updated appointment details to send email notification
+                try {
+                    // Fetch the updated appointment with all relationships loaded
+                    Appointment updatedAppointment = appointmentService.getAppointmentById(appointmentId);
+
+                    if (updatedAppointment != null && updatedAppointment.getPatient() != null &&
+                        updatedAppointment.getPatient().getUser() != null &&
+                        updatedAppointment.getPatient().getUser().getEmail() != null) {
+
+                        // Send email notification to patient
+                        String patientEmail = updatedAppointment.getPatient().getUser().getEmail();
+                        logger.info("Sending appointment update email to: {}", patientEmail);
+                        emailService.sendAppointmentUpdateEmail(patientEmail, updatedAppointment, updateReason);
+                        logger.info("Appointment update email sent successfully");
+                    } else {
+                        logger.warn("Could not send appointment update email: patient email not available");
+                    }
+                } catch (Exception e) {
+                    // Log but don't fail the appointment update if email sending fails
+                    logger.error("Failed to send appointment update email: {}", e.getMessage(), e);
+                }
+
                 return ResponseEntity.ok(Map.of(
                         "success", true,
                         "message", "Appointment updated successfully"
@@ -826,6 +1001,7 @@ public class ReceptionistController {
         }
 
     }
+
     private String formatTimeForDisplay(String time) {
         String[] parts = time.split(":");
         int hour = Integer.parseInt(parts[0]);
@@ -935,11 +1111,44 @@ public class ReceptionistController {
             // Call service to register patient
             Users newPatient = receptionistService.registerNewPatient(registrationData);
 
+            // Send registration confirmation email
+            try {
+                logger.info("Sending registration confirmation email to: {}", email);
+
+                // QUAN TRỌNG: Đảm bảo patient object có đầy đủ thông tin user
+                Patient patientForEmail = newPatient.getPatient();
+                if (patientForEmail != null) {
+                    // Đảm bảo user relationship được set
+                    if (patientForEmail.getUser() == null) {
+                        patientForEmail.setUser(newPatient);
+                    }
+
+                    logger.info("=== Email Patient Data Debug ===");
+                    logger.info("Patient ID: {}", patientForEmail.getPatientId());
+                    logger.info("Patient User: {}", patientForEmail.getUser() != null ? "SET" : "NULL");
+                    if (patientForEmail.getUser() != null) {
+                        logger.info("User FullName: {}", patientForEmail.getUser().getFullName());
+                        logger.info("User Email: {}", patientForEmail.getUser().getEmail());
+                        logger.info("User Phone: {}", patientForEmail.getUser().getPhoneNumber());
+                        logger.info("User ID: {}", patientForEmail.getUser().getUserId());
+                    }
+
+                    emailService.sendPatientRegistrationEmail(email, patientForEmail, passwordHash);
+                    logger.info("Registration confirmation email sent successfully");
+                } else {
+                    logger.error("Patient object is null after registration");
+                    throw new RuntimeException("Patient object not found after registration");
+                }
+            } catch (Exception e) {
+                logger.error("Failed to send registration confirmation email: {}", e.getMessage(), e);
+                // Continue with registration even if email fails
+            }
+
             return ResponseEntity.ok().body(Map.of(
-                "success", true,
-                "message", "Patient registered successfully",
-                "patientId", newPatient.getPatient().getPatientId(),
-                "userId", newPatient.getUserId()
+                    "success", true,
+                    "message", "Patient registered successfully",
+                    "patientId", newPatient.getPatient().getPatientId(),
+                    "userId", newPatient.getUserId()
             ));
 
         } catch (Exception e) {
@@ -973,20 +1182,24 @@ public class ReceptionistController {
     }
 
     // API endpoint for booking appointments
-    @PostMapping("/appointments/book")
+    @PostMapping("/api/appointments/book")
     @ResponseBody
-    public ResponseEntity<Map<String, Object>> bookAppointment(@Valid @ModelAttribute AppointmentFormDTO appointmentDTO,
-                                                               BindingResult bindingResult) {
+    public ResponseEntity<Map<String, Object>> bookAppointment(@RequestBody AppointmentFormDTO appointmentDTO,
+                                                         BindingResult bindingResult) {
         Map<String, Object> response = new HashMap<>();
 
         try {
+            logger.info("Received appointment booking request: {}", appointmentDTO);
+
             if (bindingResult.hasErrors()) {
+                logger.error("Validation errors in appointment request: {}", bindingResult.getAllErrors());
                 response.put("success", false);
                 response.put("message", "Validation errors: " + bindingResult.getAllErrors().get(0).getDefaultMessage());
                 return ResponseEntity.badRequest().body(response);
             }
 
             Appointment appointment = appointmentService.bookAppointment(appointmentDTO);
+            logger.info("Appointment booked successfully with ID: {}", appointment.getAppointmentId());
 
             response.put("success", true);
             response.put("message", "Appointment booked successfully");
@@ -1124,6 +1337,68 @@ public class ReceptionistController {
         }
     }
 
+
+    /**
+     * API endpoint to test payment history data retrieval
+     */
+    @GetMapping("/api/payment_history/test")
+    @ResponseBody
+    public ResponseEntity<?> testPaymentHistoryData(Authentication authentication) {
+        try {
+            // Ensure authentication is not null
+            if (authentication == null || !authentication.isAuthenticated()) {
+                return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Authentication required");
+            }
+
+            // Test direct repository call
+            List<Map<String, Object>> directData = receptionistService.getAllPaymentHistoryDataForTesting();
+
+            Map<String, Object> testResult = new HashMap<>();
+            testResult.put("directRepositoryData", directData);
+            testResult.put("dataCount", directData.size());
+
+            if (!directData.isEmpty()) {
+                testResult.put("sampleRecord", directData.get(0));
+            }
+
+            logger.info("Test payment history API returned {} records", directData.size());
+            return ResponseEntity.ok(testResult);
+
+        } catch (Exception e) {
+            logger.error("Error in test payment history API: {}", e.getMessage(), e);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body("Error testing payment history: " + e.getMessage());
+        }
+    }
+
+    /**
+     * API endpoint to get today's PENDING payment data only
+     * For Today's Payment List - only show transactions with Pending status for current date
+     */
+    @GetMapping("/api/payments/today/pending")
+    @ResponseBody
+    public ResponseEntity<List<Map<String, Object>>> getTodaysPendingPayments() {
+        try {
+            // Get today's payment data filtered by Pending status ONLY
+            List<Map<String, Object>> allTodaysPayments = receptionistService.getTodaysAppointmentPaymentData();
+
+            // Filter to STRICTLY include ONLY Pending transactions
+            List<Map<String, Object>> pendingPayments = allTodaysPayments.stream()
+                    .filter(payment -> {
+                        String status = (String) payment.get("status");
+                        // CHỈ LẤY STATUS "Pending" - KHÔNG LẤY CÁC STATUS KHÁC
+                        return status != null && "Pending".equalsIgnoreCase(status.trim());
+                    })
+                    .collect(Collectors.toList());
+
+            logger.info("Today's pending payments API returned {} PENDING records only", pendingPayments.size());
+            return ResponseEntity.ok(pendingPayments);
+        } catch (Exception e) {
+            logger.error("Error fetching today's pending payments: {}", e.getMessage(), e);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
+        }
+    }
+
     private Integer getCurrentUserId() {
         Authentication auth = SecurityContextHolder.getContext().getAuthentication();
         if (auth != null && auth.getPrincipal() instanceof CustomUserDetails) {
@@ -1162,4 +1437,317 @@ public class ReceptionistController {
         return markNotificationAsRead(id);
     }
 
+    /**
+     * API endpoint to process payment
+     */
+    @PostMapping("/api/process-payment")
+    @ResponseBody
+    public ResponseEntity<?> processPayment(@RequestBody Map<String, Object> paymentRequest, Authentication authentication) {
+        try {
+            if (authentication == null || !authentication.isAuthenticated()) {
+                return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Authentication required");
+            }
+
+            // Extract payment data from request
+            Integer patientId = (Integer) paymentRequest.get("patientId");
+            Integer appointmentId = (Integer) paymentRequest.get("appointmentId");
+            String transactionIdStr = (String) paymentRequest.get("transactionId");
+            String receiptIdStr = (String) paymentRequest.get("receiptId");
+            String method = (String) paymentRequest.get("method");
+            String notes = (String) paymentRequest.get("notes");
+            Object totalAmountObj = paymentRequest.get("totalAmount");
+            Object amountReceivedObj = paymentRequest.get("amountReceived");
+
+            logger.info("Processing payment request: {}", paymentRequest);
+
+            // Validate required fields
+            if (patientId == null || appointmentId == null || method == null) {
+                return ResponseEntity.badRequest().body("Missing required payment fields");
+            }
+
+            // Convert totalAmount to proper type
+            Double totalAmount = 0.0;
+            if (totalAmountObj != null) {
+                if (totalAmountObj instanceof Number) {
+                    totalAmount = ((Number) totalAmountObj).doubleValue();
+                } else {
+                    totalAmount = Double.parseDouble(totalAmountObj.toString());
+                }
+            }
+
+            // Convert amountReceived for Cash payments
+            Double amountReceived = null;
+            if ("Cash".equals(method) && amountReceivedObj != null) {
+                if (amountReceivedObj instanceof Number) {
+                    amountReceived = ((Number) amountReceivedObj).doubleValue();
+                } else {
+                    amountReceived = Double.parseDouble(amountReceivedObj.toString());
+                }
+            }
+
+            // Process payment through service - this will update status from Pending to Paid
+            Map<String, Object> result = receptionistService.processPayment(
+                patientId,
+                appointmentId,
+                transactionIdStr,
+                receiptIdStr,
+                method,
+                totalAmount,
+                amountReceived,
+                notes
+            );
+
+            logger.info("Payment processed successfully: {}", result);
+
+            return ResponseEntity.ok(Map.of(
+                "success", true,
+                "message", "Payment processed successfully",
+                "transactionId", result.get("transactionId"),
+                "receiptId", result.get("receiptId"),
+                "status", "Paid", // Status is now Paid
+                "timeOfPayment", java.time.LocalDateTime.now().toString()
+            ));
+
+        } catch (Exception e) {
+            logger.error("Error processing payment: {}", e.getMessage(), e);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body("Error processing payment: " + e.getMessage());
+        }
+    }
+
+    /**
+     * API endpoint to update receptionist profile
+     * Validates and updates Full Name, Email, and Phone Number
+     * ID field is read-only and cannot be modified
+     */
+    @PostMapping("/api/profile/update")
+    @ResponseBody
+    public ResponseEntity<Map<String, Object>> updateProfile(
+            @RequestParam("fullName") String fullName,
+            @RequestParam("email") String email,
+            @RequestParam("phoneNumber") String phoneNumber,
+            @RequestParam(value = "avatarFile", required = false) MultipartFile avatarFile,
+            Authentication authentication) {
+
+        Map<String, Object> response = new HashMap<>();
+
+        try {
+            // Get current user
+            if (authentication == null || !authentication.isAuthenticated()) {
+                response.put("success", false);
+                response.put("message", "User not authenticated");
+                return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(response);
+            }
+
+            CustomUserDetails userDetails = (CustomUserDetails) authentication.getPrincipal();
+            Integer userId = userDetails.getUserId();
+
+            Users user = userRepository.findById(userId)
+                    .orElseThrow(() -> new RuntimeException("User not found"));
+
+            // Update basic info
+            user.setFullName(fullName);
+            user.setEmail(email);
+            user.setPhoneNumber(phoneNumber);
+
+            String avatarUrl = null;
+
+            // Handle avatar upload
+            if (avatarFile != null && !avatarFile.isEmpty()) {
+                try {
+                    // Get the current working directory (project root)
+                    String projectRoot = System.getProperty("user.dir");
+                    String uploadDir = projectRoot + File.separator + "uploads" + File.separator + "receptionist-avatars" + File.separator;
+
+                    // Create uploads directory if it doesn't exist
+                    File uploadDirFile = new File(uploadDir);
+                    if (!uploadDirFile.exists()) {
+                        boolean created = uploadDirFile.mkdirs();
+                        logger.info("Created upload directory: {} - Success: {}", uploadDir, created);
+                    }
+
+                    // Generate unique filename
+                    String originalFilename = avatarFile.getOriginalFilename();
+                    String fileExtension = originalFilename.substring(originalFilename.lastIndexOf("."));
+                    String newFilename = "receptionist_" + userId + "_" +
+                                       java.time.LocalDateTime.now().format(java.time.format.DateTimeFormatter.ofPattern("yyyyMMdd_HHmmss")) +
+                                       fileExtension;
+
+                    // Save file
+                    File destinationFile = new File(uploadDir + newFilename);
+                    logger.info("Saving file to: {}", destinationFile.getAbsolutePath());
+                    avatarFile.transferTo(destinationFile);
+
+                    // Set avatar URL for web access
+                    avatarUrl = "/uploads/receptionist-avatars/" + newFilename;
+                    user.setAvatarUrl(avatarUrl);
+                    logger.info("Avatar saved successfully. URL: {}", avatarUrl);
+
+                } catch (Exception e) {
+                    logger.error("Error uploading avatar: ", e);
+                    response.put("success", false);
+                    response.put("message", "Error uploading avatar: " + e.getMessage());
+                    return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
+                }
+            }
+
+            // Save user
+            userRepository.save(user);
+
+            response.put("success", true);
+            response.put("message", "Profile updated successfully");
+            if (avatarUrl != null) {
+                response.put("avatarUrl", avatarUrl);
+            }
+
+            return ResponseEntity.ok(response);
+
+        } catch (Exception e) {
+            logger.error("Error updating profile: ", e);
+            response.put("success", false);
+            response.put("message", "Error updating profile: " + e.getMessage());
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
+        }
+    }
+
+    /**
+     * API endpoint to upload avatar for receptionist
+     */
+    @PostMapping("/api/upload-avatar")
+    @ResponseBody
+    public ResponseEntity<Map<String, Object>> uploadAvatar(
+            @RequestParam("avatarFile") MultipartFile avatarFile,
+            Authentication authentication) {
+
+        Map<String, Object> response = new HashMap<>();
+
+        try {
+            // Check authentication
+            if (authentication == null || !authentication.isAuthenticated()) {
+                response.put("success", false);
+                response.put("message", "User not authenticated");
+                return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(response);
+            }
+
+            // Validate file
+            if (avatarFile == null || avatarFile.isEmpty()) {
+                response.put("success", false);
+                response.put("message", "Vui lòng chọn file ảnh");
+                return ResponseEntity.badRequest().body(response);
+            }
+
+            // Check file type
+            String contentType = avatarFile.getContentType();
+            if (contentType == null || !contentType.startsWith("image/")) {
+                response.put("success", false);
+                response.put("message", "Chỉ chấp nhận file ảnh");
+                return ResponseEntity.badRequest().body(response);
+            }
+
+            // Get current user
+            CustomUserDetails userDetails = (CustomUserDetails) authentication.getPrincipal();
+            Integer userId = userDetails.getUserId();
+
+            Users user = userRepository.findById(userId)
+                    .orElseThrow(() -> new RuntimeException("User not found"));
+
+            // Verify user is receptionist
+            if (!user.getRole().getRoleName().equals("RECEPTIONIST")) {
+                response.put("success", false);
+                response.put("message", "Only receptionists can upload avatar");
+                return ResponseEntity.status(HttpStatus.FORBIDDEN).body(response);
+            }
+
+            try {
+                // Upload file using FileStorageService
+                String imageUrl = fileStorageService.storeFile(avatarFile, "receptionist-avatars");
+
+                // Find or create Receptionist record
+                Receptionist receptionist = receptionistService.findByUserId(userId);
+                if (receptionist == null) {
+                    receptionist = new Receptionist();
+                    receptionist.setUserId(userId);
+                }
+
+                // Delete old avatar if exists
+                if (receptionist.getImageUrl() != null) {
+                    try {
+                        fileStorageService.deleteFile(receptionist.getImageUrl());
+                    } catch (Exception e) {
+                        logger.warn("Could not delete old avatar: {}", e.getMessage());
+                    }
+                }
+
+                // Save new avatar URL
+                receptionist.setImageUrl(imageUrl);
+                receptionistService.save(receptionist);
+
+                response.put("success", true);
+                response.put("message", "Upload ảnh thành công!");
+                response.put("imageUrl", imageUrl);
+
+                logger.info("Avatar uploaded successfully for user {}: {}", userId, imageUrl);
+                return ResponseEntity.ok(response);
+
+            } catch (Exception e) {
+                logger.error("Error uploading avatar for user {}: ", userId, e);
+                response.put("success", false);
+                response.put("message", "Lỗi upload ảnh: " + e.getMessage());
+                return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
+            }
+
+        } catch (Exception e) {
+            logger.error("Error in upload avatar endpoint: ", e);
+            response.put("success", false);
+            response.put("message", "Lỗi hệ thống: " + e.getMessage());
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
+        }
+    }
+
+    /**
+     * API endpoint to get current avatar information for receptionist
+     */
+    @GetMapping("/api/avatar")
+    @ResponseBody
+    public ResponseEntity<Map<String, Object>> getCurrentAvatar(Authentication authentication) {
+        Map<String, Object> response = new HashMap<>();
+
+        try {
+            // Check authentication
+            if (authentication == null || !authentication.isAuthenticated()) {
+                response.put("success", false);
+                response.put("message", "User not authenticated");
+                return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(response);
+            }
+
+            // Get current user
+            CustomUserDetails userDetails = (CustomUserDetails) authentication.getPrincipal();
+            Integer userId = userDetails.getUserId();
+
+            Users user = userRepository.findById(userId)
+                    .orElseThrow(() -> new RuntimeException("User not found"));
+
+            // Verify user is receptionist
+            if (!user.getRole().getRoleName().equals("RECEPTIONIST")) {
+                response.put("success", false);
+                response.put("message", "Only receptionists can access avatar");
+                return ResponseEntity.status(HttpStatus.FORBIDDEN).body(response);
+            }
+
+            // Find Receptionist record
+            Receptionist receptionist = receptionistService.findByUserId(userId);
+
+            response.put("success", true);
+            response.put("hasAvatar", receptionist != null && receptionist.getImageUrl() != null);
+            response.put("imageUrl", receptionist != null ? receptionist.getImageUrl() : null);
+
+            return ResponseEntity.ok(response);
+
+        } catch (Exception e) {
+            logger.error("Error getting current avatar: ", e);
+            response.put("success", false);
+            response.put("message", "Lỗi hệ thống: " + e.getMessage());
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
+        }
+    }
 }

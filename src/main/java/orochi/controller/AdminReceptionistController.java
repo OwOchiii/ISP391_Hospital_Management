@@ -13,10 +13,13 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 import orochi.model.Users;
 import orochi.service.UserService;
+import orochi.service.impl.ReceptionistService;
 
 @Controller
 @RequestMapping("/admin/receptionists")
 public class AdminReceptionistController {
+    @Autowired
+    private ReceptionistService receptionistService;
 
     @Autowired
     private UserService userService;
@@ -36,11 +39,17 @@ public class AdminReceptionistController {
             @RequestParam(value = "size", defaultValue = "5") int size,
             Model model) {
 
-        // Tạo Pageable object cho phân trang
-        Pageable pageable = PageRequest.of(page, size);
+        if (search != null && search.trim().isEmpty()) {
+            search = null;
+        }
+        // Xử lý tương tự cho statusFilter
+        if (statusFilter != null && statusFilter.trim().isEmpty()) {
+            statusFilter = null;
+        }
 
-        // Lấy danh sách lễ tân theo phân trang và lọc
-        Page<Users> receptionistPage = userService.getAllReceptionists(search, statusFilter, pageable);
+        Pageable pageable = PageRequest.of(page, size);
+        Page<Users> receptionistPage =
+                receptionistService.getAllReceptionists(search, statusFilter, pageable);
 
         model.addAttribute("receptionists", receptionistPage.getContent());
         model.addAttribute("adminId", adminId);
@@ -51,6 +60,7 @@ public class AdminReceptionistController {
         model.addAttribute("pageSize", size);
         return "admin/receptionist/list";
     }
+
 
     @PostMapping("/{id}/toggleLock")
     public String toggleLockReceptionist(

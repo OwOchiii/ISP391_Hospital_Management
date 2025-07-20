@@ -90,4 +90,50 @@ public class FeedbackService {
             throw new RuntimeException("Failed to delete feedback: " + e.getMessage(), e);
         }
     }
+
+    @Transactional(readOnly = true)
+    public Page<Feedback> getAllFeedback(Pageable pageable) {
+        try {
+            return feedbackRepository.findAll(pageable);
+        } catch (Exception e) {
+            logger.error("Error retrieving all feedback", e);
+            throw new RuntimeException("Failed to retrieve feedback: " + e.getMessage(), e);
+        }
+    }
+
+    @Transactional(readOnly = true)
+    public Page<Feedback> searchFeedback(String keyword, Pageable pageable) {
+        return feedbackRepository
+                .findByTitleContainingIgnoreCaseOrDescriptionContainingIgnoreCase(keyword, keyword, pageable);
+    }
+
+    // Lọc theo type
+    @Transactional(readOnly = true)
+    public Page<Feedback> getFeedbackByType(String type, Pageable pageable) {
+        return feedbackRepository.findByFeedbackType(type, pageable);
+    }
+
+    // Lọc theo date-range
+    @Transactional(readOnly = true)
+    public Page<Feedback> getFeedbackByDateRange(LocalDateTime start, LocalDateTime end, Pageable pageable) {
+        return feedbackRepository.findByCreatedAtBetween(start, end, pageable);
+    }
+
+    // Lọc kết hợp type + date-range
+    @Transactional(readOnly = true)
+    public Page<Feedback> getFeedbackByTypeAndDateRange(
+            String type, LocalDateTime start, LocalDateTime end, Pageable pageable) {
+        return feedbackRepository.findByFeedbackTypeAndCreatedAtBetween(type, start, end, pageable);
+    }
+
+    @Transactional(readOnly = true)
+    public long countAllFeedback() {
+        return feedbackRepository.count();
+    }
+
+    /** Thống kê feedback giữa hai mốc thời gian */
+    @Transactional(readOnly = true)
+    public long countFeedbackBetween(LocalDateTime start, LocalDateTime end) {
+        return feedbackRepository.countByCreatedAtBetween(start, end);
+    }
 }

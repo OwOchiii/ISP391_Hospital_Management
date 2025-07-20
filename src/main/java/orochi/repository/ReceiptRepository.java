@@ -150,4 +150,93 @@ public interface ReceiptRepository extends JpaRepository<Receipt, Integer> {
         WHERE r.TransactionID = :transactionId
         """, nativeQuery = true)
     List<Map<String, Object>> getReceiptByTransactionId(@Param("transactionId") Integer transactionId);
+
+    /**
+     * Get payment history data with all required fields according to user requirements
+     * Patient ID from Patient table
+     * Patient Name from Users table with RoleID = 4
+     * Phone from Users.PhoneNumber
+     * Appointment ID and DateTime from Appointment table
+     * Status from Transaction table where Status = 'Paid' OR 'Refunded'
+     * Method from Transaction table
+     * Amount from Receipt.TotalAmount
+     */
+    @Query(value = """
+        SELECT 
+            p.PatientID as patientId,
+            u.FullName as patientName,
+            u.PhoneNumber as phone,
+            a.AppointmentID as appointmentId,
+            a.DateTime as dateTime,
+            t.Status as status,
+            t.Method as method,
+            r.TotalAmount as amount,
+            t.TransactionID as transactionId,
+            r.ReceiptID as receiptId,
+            t.TimeOfPayment as timeOfPayment
+        FROM Patient p
+        INNER JOIN Users u ON p.UserID = u.UserID AND u.RoleID = 4
+        INNER JOIN Appointment a ON p.PatientID = a.PatientID
+        INNER JOIN [Transaction] t ON a.AppointmentID = t.AppointmentID
+        INNER JOIN Receipt r ON t.TransactionID = r.TransactionID
+        WHERE t.Status IN ('Paid', 'Refunded')
+        ORDER BY a.DateTime DESC
+        """, nativeQuery = true)
+    List<Map<String, Object>> getPaymentHistoryData();
+
+    /**
+     * Get payment history data with date filter - Updated query to include Refunded
+     */
+    @Query(value = """
+        SELECT 
+            p.PatientID as patientId,
+            u.FullName as patientName,
+            u.PhoneNumber as phone,
+            a.AppointmentID as appointmentId,
+            a.DateTime as dateTime,
+            t.Status as status,
+            t.Method as method,
+            r.TotalAmount as amount,
+            t.TransactionID as transactionId,
+            r.ReceiptID as receiptId,
+            t.TimeOfPayment as timeOfPayment
+        FROM Patient p
+        INNER JOIN Users u ON p.UserID = u.UserID AND u.RoleID = 4
+        INNER JOIN Appointment a ON p.PatientID = a.PatientID
+        INNER JOIN [Transaction] t ON a.AppointmentID = t.AppointmentID
+        INNER JOIN Receipt r ON t.TransactionID = r.TransactionID
+        WHERE t.Status IN ('Paid', 'Refunded')
+        AND CAST(a.DateTime AS DATE) BETWEEN :fromDate AND :toDate
+        ORDER BY a.DateTime DESC
+        """, nativeQuery = true)
+    List<Map<String, Object>> getPaymentHistoryDataByDateRange(
+        @Param("fromDate") LocalDate fromDate,
+        @Param("toDate") LocalDate toDate
+    );
+
+    /**
+     * Test query to check data availability with Status = 'Paid' or 'Refunded' filter
+     */
+    @Query(value = """
+        SELECT 
+            p.PatientID as patientId,
+            u.FullName as patientName,
+            u.PhoneNumber as phone,
+            a.AppointmentID as appointmentId,
+            a.DateTime as dateTime,
+            t.Status as status,
+            t.Method as method,
+            r.TotalAmount as amount,
+            t.TransactionID as transactionId,
+            r.ReceiptID as receiptId,
+            t.TimeOfPayment as timeOfPayment
+        FROM Patient p
+        INNER JOIN Users u ON p.UserID = u.UserID AND u.RoleID = 4
+        INNER JOIN Appointment a ON p.PatientID = a.PatientID
+        INNER JOIN [Transaction] t ON a.AppointmentID = t.AppointmentID
+        INNER JOIN Receipt r ON t.TransactionID = r.TransactionID
+        WHERE t.Status IN ('Paid', 'Refunded')
+        ORDER BY a.DateTime DESC;
+        """, nativeQuery = true)
+    List<Map<String, Object>> getAllPaymentHistoryData();
 }
