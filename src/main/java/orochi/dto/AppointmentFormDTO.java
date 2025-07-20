@@ -22,7 +22,7 @@ public class AppointmentFormDTO {
     @NotNull(message = "Doctor selection is required")
     private Integer doctorId;
 
-    @NotNull(message = "Room is required")
+
     private Integer roomId;
 
     @NotNull(message = "Appointment date is required")

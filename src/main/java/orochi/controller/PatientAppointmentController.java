@@ -1,8 +1,13 @@
 package orochi.controller;
 
+import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.core.io.InputStreamResource;
 import org.springframework.format.annotation.DateTimeFormat;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Controller;
@@ -18,7 +23,11 @@ import orochi.repository.DoctorSpecializationRepository;
 import orochi.repository.PatientRepository;
 import orochi.service.AppointmentService;
 
+import java.io.ByteArrayInputStream;
+import java.io.IOException;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.List;
 import java.util.Map;
 import java.util.HashMap;
@@ -45,6 +54,9 @@ public class PatientAppointmentController {
 
     @Autowired
     private orochi.repository.PrescriptionRepository prescriptionRepository;
+
+    @Autowired
+    private orochi.service.ExcelExportService excelExportService;
 
     @GetMapping("/book-appointment")
     public String showBookAppointmentForm(
@@ -126,35 +138,7 @@ public class PatientAppointmentController {
         return "patient/book-appointment";
     }
 
-    @GetMapping("/api/doctors-by-specialty")
-    @ResponseBody
-    public List<Map<String, Object>> getDoctorsBySpecialty(@RequestParam Integer specialtyId) {
-        List<Doctor> doctors = appointmentService.getDoctorsBySpecialization(specialtyId);
-        return doctors.stream().map(doctor -> {
-            Map<String, Object> result = new HashMap<>();
-            result.put("doctorId", doctor.getDoctorId());
-            result.put("fullName", doctor.getUser() != null ? doctor.getUser().getFullName() : "Unknown");
-            result.put("bioDescription", doctor.getBioDescription());
-            return result;
-        }).collect(Collectors.toList());
-    }
 
-    @GetMapping("/api/booked-times")
-    @ResponseBody
-    public List<String> getBookedTimes(
-            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate date,
-            @RequestParam Integer doctorId) {
-        return appointmentService.getBookedTimeSlots(date, doctorId);
-    }
-
-    @GetMapping("/api/doctor-availability")
-    @ResponseBody
-    public Map<String, List<String>> getDoctorAvailability(
-            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate date,
-            @RequestParam Integer doctorId,
-            @RequestParam(required = false) Integer appointmentId) {
-        return appointmentService.getDoctorAvailability(date, doctorId, appointmentId);
-    }
 
     @PostMapping("/book-appointment")
     public String bookAppointment(
@@ -342,4 +326,77 @@ public class PatientAppointmentController {
         // Redirect to the file download controller to serve the PDF
         return "redirect:/download/report/" + latestReport.getReportId() + "?inline=true";
     }
+
+
+    @GetMapping("/api/doctors-by-specialty")
+    @ResponseBody
+    public List<Map<String, Object>> getDoctorsBySpecialty(@RequestParam Integer specialtyId) {
+        List<Doctor> doctors = appointmentService.getDoctorsBySpecialization(specialtyId);
+        return doctors.stream().map(doctor -> {
+            Map<String, Object> result = new HashMap<>();
+            result.put("doctorId", doctor.getDoctorId());
+            result.put("fullName", doctor.getUser() != null ? doctor.getUser().getFullName() : "Unknown");
+            result.put("bioDescription", doctor.getBioDescription());
+            return result;
+        }).collect(Collectors.toList());
+    }
+
+    @GetMapping("/api/booked-times")
+    @ResponseBody
+    public List<String> getBookedTimes(
+            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate date,
+            @RequestParam Integer doctorId) {
+        return appointmentService.getBookedTimeSlots(date, doctorId);
+    }
+
+    @GetMapping("/api/doctor-availability")
+    @ResponseBody
+    public Map<String, List<String>> getDoctorAvailability(
+            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate date,
+            @RequestParam Integer doctorId,
+            @RequestParam(required = false) Integer appointmentId) {
+        return appointmentService.getDoctorAvailability(date, doctorId, appointmentId);
+    }
+
+    @GetMapping("/appointments/export")
+    public ResponseEntity<InputStreamResource> exportAppointments(HttpServletResponse response) throws IOException, IOException {
+        // Get current authenticated patient
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        if (authentication == null || !(authentication.getPrincipal() instanceof CustomUserDetails)) {
+            return ResponseEntity.badRequest().build();
+        }
+
+        CustomUserDetails userDetails = (CustomUserDetails) authentication.getPrincipal();
+        Integer patientId = userDetails.getPatientId();
+        if (patientId == null) {
+            return ResponseEntity.badRequest().build();
+
+        }
+
+        // Get patient information
+        Patient patient = patientRepository.findById(patientId)
+                .orElseThrow(() -> new RuntimeException("Patient not found"));
+
+        // Get all appointments for this patient
+        List<Appointment> appointments = appointmentRepository.findByPatientIdOrderByDateTimeDesc(patientId);
+
+        // Generate Excel file
+        ByteArrayInputStream excelStream = excelExportService.exportAppointmentsToExcel(
+                appointments,
+                patient.getUser().getFullName()
+        );
+
+        // Set the filename with current date
+        String currentDateTime = LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyyMMdd_HHmmss"));
+        String filename = "appointments_" + currentDateTime + ".xlsx";
+
+        // Return the excel file as a downloadable resource
+        return ResponseEntity.ok()
+                .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=" + filename)
+                .contentType(MediaType.parseMediaType("application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"))
+                .body(new InputStreamResource(excelStream));
+
+
+    }
 }
+
