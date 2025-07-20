@@ -809,14 +809,23 @@ public class ReceptionistController {
             @RequestParam int id
     ) {
         try {
-            // Update status to "Scheduled" (Approved)
+            logger.info("=== CONFIRM APPOINTMENT REQUEST ===");
+            logger.info("Confirming appointment with ID: {}", id);
+
+            // Update status to "Scheduled" (Approved) - Điều này sẽ trigger tạo Transaction
             boolean isSuccess = receptionistService.updateAppointmentStatus(id, "Scheduled");
             if (isSuccess) {
-                return ResponseEntity.ok("Appointment approved successfully");
+                logger.info("✅ Appointment {} confirmed successfully - Transaction should be created automatically", id);
+                return ResponseEntity.ok(Map.of(
+                    "success", true,
+                    "message", "Appointment confirmed successfully and transaction created"
+                ));
             } else {
+                logger.error("❌ Failed to confirm appointment {}", id);
                 return ResponseEntity.badRequest().body("Failed to approve appointment");
             }
         } catch (Exception e) {
+            logger.error("❌ Error confirming appointment {}: {}", id, e.getMessage(), e);
             return ResponseEntity.badRequest().body("Error approving appointment: " + e.getMessage());
         }
     }
@@ -1129,7 +1138,7 @@ public class ReceptionistController {
             try {
                 logger.info("Sending registration confirmation email to: {}", email);
 
-                // QUAN TRỌNG: Đảm bảo patient object có đầy đủ thông tin user
+                // QUAN TRỌNG: Đảm bảo patient object có đ���y đủ thông tin user
                 Patient patientForEmail = newPatient.getPatient();
                 if (patientForEmail != null) {
                     // Đảm bảo user relationship được set
@@ -1499,6 +1508,10 @@ public class ReceptionistController {
                 }
             }
 
+            // Get current user ID as issuer
+            CustomUserDetails userDetails = (CustomUserDetails) authentication.getPrincipal();
+            Integer issuerId = userDetails.getUserId();
+
             // Process payment through service - this will update status from Pending to Paid
             Map<String, Object> result = receptionistService.processPayment(
                 patientId,
@@ -1508,7 +1521,8 @@ public class ReceptionistController {
                 method,
                 totalAmount,
                 amountReceived,
-                notes
+                notes,
+                issuerId  // Pass the issuer ID to fix the NULL constraint error
             );
 
             logger.info("Payment processed successfully: {}", result);
@@ -1882,7 +1896,7 @@ public class ReceptionistController {
 
                 // Force use the correct Patient Payment amount
                 amount = correctPatientPaymentVND;
-                logger.info("✅ Updated amount to correct Patient Payment: {} VND", amount);
+                logger.info("��� Updated amount to correct Patient Payment: {} VND", amount);
             }
 
             // STEP 4: 🔥 FIND EXISTING TRANSACTION - DO NOT CREATE NEW 🔥

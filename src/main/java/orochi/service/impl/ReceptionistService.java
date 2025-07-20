@@ -234,11 +234,123 @@ public class ReceptionistService {
             if (!isValidAppointmentStatus(status)) {
                 throw new IllegalArgumentException("Invalid appointment status: " + status);
             }
+
+            String oldStatus = appointment.getStatus();
             appointment.setStatus(status);
             appointmentRepository.save(appointment);
+
+            // 🔥 LOGIC T���O TRANSACTION KHI CONFIRM APPOINTMENT (Pending -> Scheduled)
+            if ("Scheduled".equals(status) && "Pending".equals(oldStatus)) {
+                logger.info("=== TRIGGERING TRANSACTION CREATION ===");
+                logger.info("Status changed from {} to {} for AppointmentID: {}", oldStatus, status, appointmentId);
+                createTransactionForConfirmedAppointment(appointment);
+            }
+
             return true;
         }
         return false;
+    }
+
+    /**
+     * Tạo Transaction record khi confirm appointment
+     * Logic theo yêu cầu:
+     * - [AppointmentID] từ bảng Appointment
+     * - [UserID] check theo [PatientID] ở bảng Patient
+     * - [TimeOfPayment] lấy theo thời gian thực
+     * - [Status] set mặc ������������������������������ định là Pending
+     */
+    @Transactional
+    protected void createTransactionForConfirmedAppointment(Appointment appointment) {
+        try {
+            logger.info("=== CREATING TRANSACTION FOR CONFIRMED APPOINTMENT ===");
+            logger.info("Processing AppointmentID: {}, PatientID: {}",
+                       appointment.getAppointmentId(), appointment.getPatientId());
+
+            // BƯỚC 1: Lấy UserID từ bảng Patient theo PatientID
+            Optional<Patient> patientOptional = patientRepository.findById(appointment.getPatientId());
+            if (patientOptional.isEmpty()) {
+                logger.error("❌ Patient not found for PatientID: {}", appointment.getPatientId());
+                return;
+            }
+
+            Patient patient = patientOptional.get();
+            if (patient.getUser() == null) {
+                logger.error("❌ User not found for PatientID: {}", appointment.getPatientId());
+                return;
+            }
+
+            Integer userId = patient.getUser().getUserId();
+            logger.info("✅ Found UserID: {} for PatientID: {}", userId, appointment.getPatientId());
+
+            // BƯỚC 2: Kiểm tra xem đã c�� Transaction cho appointment này chưa (tránh duplicate)
+            List<Transaction> existingTransactions = transactionRepository.findByAppointmentId(appointment.getAppointmentId());
+            if (!existingTransactions.isEmpty()) {
+                logger.info("⚠��� Transaction already exists for AppointmentID: {}, skipping creation",
+                           appointment.getAppointmentId());
+                return;
+            }
+
+            // BƯỚC 3: Tạo Transaction mới theo yêu cầu
+            Transaction transaction = new Transaction();
+
+            // [AppointmentID] từ bảng Appointment
+            transaction.setAppointmentId(appointment.getAppointmentId());
+
+            // [UserID] check theo [PatientID] ở bảng Patient
+            transaction.setUserId(userId);
+
+            // [TimeOfPayment] lấy theo thời gian thực
+            transaction.setTimeOfPayment(java.time.LocalDateTime.now());
+
+            // [Status] set mặc định là Pending
+            transaction.setStatus("Pending");
+
+            // 🔥 SỬA LỖI: Set Method với giá trị hợp lệ thay vì "Pending"
+            // Method phải là payment method thực tế, không phải status
+            transaction.setMethod("Cash"); // Default payment method cho transaction được tạo khi confirm
+
+            // BƯỚC 4: Đảm bảo tất cả field NOT NULL được set
+            // RefundReason có thể null nên không cần set
+            // ProcessedByUserID có thể null khi tạo mới (s��� set khi process payment)
+
+            // BƯỚC 5: Lưu Transaction vào database với proper error handling
+            logger.info("🔥 ATTEMPTING TO SAVE TRANSACTION TO DATABASE...");
+            logger.info("Transaction data before save:");
+            logger.info("   AppointmentID: {}", transaction.getAppointmentId());
+            logger.info("   UserID: {}", transaction.getUserId());
+            logger.info("   Method: {}", transaction.getMethod());
+            logger.info("   Status: {}", transaction.getStatus());
+            logger.info("   TimeOfPayment: {}", transaction.getTimeOfPayment());
+
+            Transaction savedTransaction = transactionRepository.save(transaction);
+
+            logger.info("✅ SUCCESSFULLY SAVED Transaction to database:");
+            logger.info("   TransactionID: {}", savedTransaction.getTransactionId());
+            logger.info("   AppointmentID: {}", savedTransaction.getAppointmentId());
+            logger.info("   UserID: {}", savedTransaction.getUserId());
+            logger.info("   Method: {}", savedTransaction.getMethod());
+            logger.info("   TimeOfPayment: {}", savedTransaction.getTimeOfPayment());
+            logger.info("   Status: {}", savedTransaction.getStatus());
+
+            // BƯỚC 6: Verify transaction was actually saved by querying back
+            List<Transaction> verifyTransactions = transactionRepository.findByAppointmentId(appointment.getAppointmentId());
+            logger.info("🔍 VERIFICATION: Found {} transactions for AppointmentID: {}",
+                       verifyTransactions.size(), appointment.getAppointmentId());
+
+            if (!verifyTransactions.isEmpty()) {
+                Transaction verifiedTransaction = verifyTransactions.get(0);
+                logger.info("✅ VERIFIED: Transaction {} exists in database with Status: {}",
+                           verifiedTransaction.getTransactionId(), verifiedTransaction.getStatus());
+            } else {
+                logger.error("❌ VERIFICATION FAILED: No transactions found after save operation");
+            }
+
+        } catch (Exception e) {
+            logger.error("❌ Error creating transaction for confirmed appointment: {}", e.getMessage(), e);
+            logger.error("❌ Full stack trace:", e);
+            // Không throw exception để không ảnh hưởng đến việc confirm appointment
+            // Nhưng log chi tiết để debug
+        }
     }
 
     private boolean isValidAppointmentStatus(String status) {
@@ -332,6 +444,20 @@ public class ReceptionistService {
                     appointmentData.put("description", appointment.getDescription());
                     appointmentData.put("appointmentDateTime", appointment.getDateTime().toString());
                     appointmentData.put("dateTime", appointment.getDateTime().toString());
+
+                    // Calculate age from dateOfBirth
+                    if (appointment.getPatient().getDateOfBirth() != null) {
+                        LocalDate today = LocalDate.now();
+                        LocalDate birthDate = appointment.getPatient().getDateOfBirth();
+                        int age = today.getYear() - birthDate.getYear();
+                        if (today.getDayOfYear() < birthDate.getDayOfYear()) {
+                            age--;
+                        }
+                        appointmentData.put("age", age);
+                    } else {
+                        appointmentData.put("age", "N/A");
+                    }
+
                     if (appointment.getDoctor() != null && appointment.getDoctor().getUser() != null) {
                         appointmentData.put("doctorName", appointment.getDoctor().getUser().getFullName());
                     } else {
@@ -383,6 +509,19 @@ public class ReceptionistService {
                         appointmentData.put("appointmentDateTime", appointment.getDateTime().toString());
                         appointmentData.put("dateTime", appointment.getDateTime().toString());
                         appointmentData.put("patientId", appointment.getPatient().getPatientId());
+
+                        // Calculate age from dateOfBirth
+                        if (appointment.getPatient().getDateOfBirth() != null) {
+                            LocalDate today = LocalDate.now();
+                            LocalDate birthDate = appointment.getPatient().getDateOfBirth();
+                            int age = today.getYear() - birthDate.getYear();
+                            if (today.getDayOfYear() < birthDate.getDayOfYear()) {
+                                age--;
+                            }
+                            appointmentData.put("age", age);
+                        } else {
+                            appointmentData.put("age", "N/A");
+                        }
 
                         if (appointment.getDoctor() != null && appointment.getDoctor().getUser() != null) {
                             appointmentData.put("doctorName", appointment.getDoctor().getUser().getFullName());
@@ -596,7 +735,7 @@ public class ReceptionistService {
                 processedPayment.put("patientName", payment.get("fullName")); // Full Name from Users table
                 processedPayment.put("visitDate", payment.get("phoneNumber")); // PhoneNumber from Users table (as per requirement)
 
-                // Amount từ Receipt.TotalAmount - hiển thị số nguyên
+                // Amount từ Receipt.TotalAmount - hiển thị số nguy��n
                 Object totalAmount = payment.get("totalAmount");
                 processedPayment.put("amount", Objects.requireNonNullElse(totalAmount, 0));
 
@@ -626,7 +765,7 @@ public class ReceptionistService {
      */
     public List<Map<String, Object>> getTestPaymentData() {
         try {
-            // Thử lấy dữ liệu thực từ Receipt và Transaction trước
+            // Th��� l��y dữ liệu thực từ Receipt và Transaction trước
             List<Map<String, Object>> rawData = receiptRepository.getAllReceiptsWithTransactionData();
 
             System.out.println("Real receipt data count: " + rawData.size());
@@ -1074,7 +1213,7 @@ public class ReceptionistService {
                         }
                     }
                 } catch (Exception e) {
-                    logger.error("Error calculating revenue for appointment {}: {}", appointment.getAppointmentId(), e.getMessage());
+                    logger.error("Error calculating revenue for appointment {}: {}", e.getMessage(), e);
                 }
             }
 
@@ -1137,94 +1276,136 @@ public class ReceptionistService {
 
     /**
      * Get rooms by specialty and doctor based on the SQL logic:
-     * SELECT DISTINCT s.SpecName AS SpecializationName, u.FullName AS DoctorName,
-     * r.RoomID, r.RoomNumber, d.DeptName AS DepartmentName
-     * FROM Specialization s
-     * INNER JOIN DoctorSpecialization ds ON s.SpecID = ds.SpecID
-     * INNER JOIN Doctor doc ON ds.DoctorID = doc.DoctorID
-     * INNER JOIN Users u ON doc.UserID = u.UserID
-     * LEFT JOIN Schedule sch ON doc.DoctorID = sch.DoctorID
-     * LEFT JOIN Room r ON sch.RoomID = r.RoomID
-     * LEFT JOIN Department d ON r.DepartmentID = d.DepartmentID
-     * ORDER BY u.FullName, s.SpecName, r.RoomNumber;
+     * Room được lấy từ RoomNumber trong bảng Room và check theo DepartmentID và HeadDoctorID và DoctorID, SpecID FROM DoctorSpecialization
      */
     public List<Map<String, Object>> getRoomsBySpecialtyAndDoctor(Integer specialtyId, Integer doctorId) {
         try {
+            logger.info("=== GETTING ROOMS BY SPECIALTY AND DOCTOR ===");
+            logger.info("SpecialtyID: {}, DoctorID: {}", specialtyId, doctorId);
+
+            // Validate input parameters
+            if (specialtyId == null || doctorId == null) {
+                logger.warn("SpecialtyID or DoctorID is null");
+                return new ArrayList<>();
+            }
+
             // First validate that the doctor has the required specialty
             if (!validateDoctorSpecialty(doctorId, specialtyId)) {
+                logger.warn("Doctor {} does not have specialty {}", doctorId, specialtyId);
                 return new ArrayList<>();
             }
 
-            // Get doctor by ID to access schedule information
-            Optional<orochi.model.Doctor> doctorOptional = DoctorRepository.findById(doctorId);
-            if (doctorOptional.isEmpty()) {
-                return new ArrayList<>();
-            }
-
-            orochi.model.Doctor doctor = doctorOptional.get();
-
-            // Get specialty name for validation
-            String specializationName = doctor.getSpecializations().stream()
-                    .filter(spec -> spec.getSpecId().equals(specialtyId))
-                    .map(Specialization::getSpecName)
-                    .findFirst()
-                    .orElse("Unknown");
-
-            // Get rooms from doctor's schedule that match the department
             List<Map<String, Object>> rooms = new ArrayList<>();
 
-            if (doctor.getSchedules() != null && !doctor.getSchedules().isEmpty()) {
-                // Get rooms from doctor's schedules
-                Set<Room> doctorRooms = doctor.getSchedules().stream()
-                        .map(Schedule::getRoom)
-                        .filter(Objects::nonNull)
-                        .collect(Collectors.toSet());
+            // Use the new repository method that queries based on DepartmentID, HeadDoctorID, DoctorID, and SpecID
+            List<Object[]> roomResults = roomRepository.findRoomsByDoctorSpecialtyAndDepartment(doctorId, specialtyId);
 
-                for (Room room : doctorRooms) {
-                    // Validate that the room's department matches the specialty
-                    if (room.getDepartment() != null) {
-                        String deptName = room.getDepartment().getDeptName();
+            logger.info("Found {} rooms from primary query", roomResults.size());
 
-                        // Check if department name matches or contains the specialization
-                        // This is a simple matching logic - you can refine this based on your data
-                        if (deptName.toLowerCase().contains(specializationName.toLowerCase()) ||
-                                specializationName.toLowerCase().contains(deptName.toLowerCase())) {
+            // Process results from the primary query
+            for (Object[] result : roomResults) {
+                Map<String, Object> roomData = new HashMap<>();
 
-                            Map<String, Object> roomData = new HashMap<>();
-                            roomData.put("roomId", room.getRoomId());
-                            roomData.put("roomNumber", room.getRoomNumber());
-                            roomData.put("roomName", room.getRoomName());
-                            roomData.put("departmentName", deptName);
-                            roomData.put("specializationName", specializationName);
-                            roomData.put("doctorName", doctor.getUser().getFullName());
-                            roomData.put("capacity", room.getCapacity());
-                            roomData.put("status", room.getStatus());
+                // Extract data from Object[] result
+                // Query returns: RoomID, RoomNumber, RoomName, Type, Capacity, Status, DepartmentName, DepartmentID, DoctorID, DoctorName, SpecializationName, SpecID
+                roomData.put("roomId", result[0]);
+                roomData.put("roomNumber", result[1]);
+                roomData.put("roomName", result[2]);
+                roomData.put("type", result[3]);
+                roomData.put("capacity", result[4]);
+                roomData.put("status", result[5]);
+                roomData.put("departmentName", result[6]);
+                roomData.put("departmentId", result[7]);
+                roomData.put("doctorId", result[8]);
+                roomData.put("doctorName", result[9]);
+                roomData.put("specializationName", result[10]);
+                roomData.put("specId", result[11]);
 
-                            rooms.add(roomData);
-                        }
-                    }
+                rooms.add(roomData);
+
+                logger.info("Added room: {} - {} (Dept: {}, Doctor: {})",
+                    result[1], result[2], result[6], result[9]);
+            }
+
+            // If no rooms found from primary query, try alternative method
+            if (rooms.isEmpty()) {
+                logger.info("No rooms found from primary query, trying alternative method...");
+
+                List<Object[]> alternativeResults = roomRepository.findRoomsByDoctorAndSpecialtyWithDepartment(doctorId, specialtyId);
+                logger.info("Found {} rooms from alternative query", alternativeResults.size());
+
+                for (Object[] result : alternativeResults) {
+                    Map<String, Object> roomData = new HashMap<>();
+
+                    // Same structure as above
+                    roomData.put("roomId", result[0]);
+                    roomData.put("roomNumber", result[1]);
+                    roomData.put("roomName", result[2]);
+                    roomData.put("type", result[3]);
+                    roomData.put("capacity", result[4]);
+                    roomData.put("status", result[5]);
+                    roomData.put("departmentName", result[6]);
+                    roomData.put("departmentId", result[7]);
+                    roomData.put("doctorId", result[8]);
+                    roomData.put("doctorName", result[9]);
+                    roomData.put("specializationName", result[10]);
+                    roomData.put("specId", result[11]);
+
+                    rooms.add(roomData);
+
+                    logger.info("Added room (alternative): {} - {} (Dept: {}, Doctor: {})",
+                        result[1], result[2], result[6], result[9]);
                 }
             }
 
-            // If no rooms found from schedule, get available rooms from the same department
+            // If still no rooms found, fall back to available rooms in departments matching the specialty
             if (rooms.isEmpty()) {
-                // Find specialty and get its associated department
-                // For now, we'll get all available rooms and let the frontend handle selection
-                List<Room> availableRooms = roomRepository.findAllAvailableRooms();
+                logger.info("No rooms found from queries, using fallback method...");
 
-                for (Room room : availableRooms) {
-                    if (room.getDepartment() != null) {
-                        Map<String, Object> roomData = new HashMap<>();
-                        roomData.put("roomId", room.getRoomId());
-                        roomData.put("roomNumber", room.getRoomNumber());
-                        roomData.put("roomName", room.getRoomName());
-                        roomData.put("departmentName", room.getDepartment().getDeptName());
-                        roomData.put("specializationName", specializationName);
-                        roomData.put("doctorName", doctor.getUser().getFullName());
-                        roomData.put("capacity", room.getCapacity());
-                        roomData.put("status", room.getStatus());
+                // Get doctor information for fallback
+                Optional<orochi.model.Doctor> doctorOptional = DoctorRepository.findById(doctorId);
+                if (doctorOptional.isPresent()) {
+                    orochi.model.Doctor doctor = doctorOptional.get();
 
-                        rooms.add(roomData);
+                    // Get specialty name for matching
+                    String specializationName = doctor.getSpecializations().stream()
+                            .filter(spec -> spec.getSpecId().equals(specialtyId))
+                            .map(Specialization::getSpecName)
+                            .findFirst()
+                            .orElse("Unknown");
+
+                    // Get all available rooms and filter by department matching specialty
+                    List<Room> availableRooms = roomRepository.findAllAvailableRooms();
+                    logger.info("Found {} available rooms for fallback", availableRooms.size());
+
+                    for (Room room : availableRooms) {
+                        if (room.getDepartment() != null) {
+                            String deptName = room.getDepartment().getDeptName();
+
+                            // Check if department name matches or contains the specialization
+                            if (deptName.toLowerCase().contains(specializationName.toLowerCase()) ||
+                                    specializationName.toLowerCase().contains(deptName.toLowerCase())) {
+
+                                Map<String, Object> roomData = new HashMap<>();
+                                roomData.put("roomId", room.getRoomId());
+                                roomData.put("roomNumber", room.getRoomNumber());
+                                roomData.put("roomName", room.getRoomName());
+                                roomData.put("type", room.getType());
+                                roomData.put("capacity", room.getCapacity());
+                                roomData.put("status", room.getStatus());
+                                roomData.put("departmentName", deptName);
+                                roomData.put("departmentId", room.getDepartment().getDepartmentId());
+                                roomData.put("doctorId", doctorId);
+                                roomData.put("doctorName", doctor.getUser().getFullName());
+                                roomData.put("specializationName", specializationName);
+                                roomData.put("specId", specialtyId);
+
+                                rooms.add(roomData);
+
+                                logger.info("Added room (fallback): {} - {} (Dept: {})",
+                                    room.getRoomNumber(), room.getRoomName(), deptName);
+                            }
+                        }
                     }
                 }
             }
@@ -1235,6 +1416,9 @@ public class ReceptionistService {
                 String room2 = (String) r2.get("roomNumber");
                 return room1.compareTo(room2);
             });
+
+            logger.info("=== FINAL RESULTS ===");
+            logger.info("Returning {} rooms for SpecialtyID: {}, DoctorID: {}", rooms.size(), specialtyId, doctorId);
 
             return rooms;
 
@@ -1272,7 +1456,7 @@ public class ReceptionistService {
                 // Appointment ID từ Appointment table
                 processedPayment.put("appointmentId", payment.get("appointmentId"));
 
-                // DateTime từ Appointment table - format để hiển thị
+                // DateTime từ Appointment table - format đ��� hiển thị
                 Object dateTime = payment.get("dateTime");
                 if (dateTime != null) {
                     processedPayment.put("dateTime", dateTime.toString());
@@ -1283,7 +1467,7 @@ public class ReceptionistService {
                 // Status từ Transaction table (chỉ Status = 'Paid')
                 processedPayment.put("status", payment.get("status"));
 
-                // Method từ Transaction table
+                // Method t��� Transaction table
                 Object method = payment.get("method");
                 processedPayment.put("method", method != null ? method : "Unknown");
 
@@ -1430,12 +1614,12 @@ public class ReceptionistService {
     /**
      * Get invoice data by patient ID including patient info and appointment details
      * Patient ID: lấy theo Patient ID trong bảng Patient
-     * Full Name: lấy theo FullName trong bảng User
+     * Full Name: lấy theo FullName trong b��ng User
      * Date of Birth: lấy theo dateOfBirth trong bảng Patient
      * Gender: lấy theo Gender trong bảng Patient
      * Appointment ID: lấy theo Patient ID trong b��ng Patient
      * Payer Name: lấy theo AppointmentID trong bảng Appointment
-     * Contact: lấy theo PhoneNumber trong bảng User
+     * Contact: l��y theo PhoneNumber trong bảng User
      */
     public Map<String, Object> getInvoiceDataByPatientId(Integer patientId) {
         try {
@@ -1469,10 +1653,10 @@ public class ReceptionistService {
                 logger.info("Latest appointment ID: {}", latestAppointment.getAppointmentId());
             }
 
-            // T��o dữ liệu invoice
+            // T���o dữ liệu invoice
             Map<String, Object> invoiceData = new HashMap<>();
 
-            // Patient Information - Đảm bảo lấy đúng FullName từ Users table
+            // Patient Information - Đảm bảo lấy ��úng FullName t��� Users table
             invoiceData.put("patientId", patient.getPatientId());
             invoiceData.put("fullName", user.getFullName() != null ? user.getFullName() : "Unknown Patient");
             invoiceData.put("dateOfBirth", patient.getDateOfBirth() != null ?
@@ -1515,13 +1699,13 @@ public class ReceptionistService {
                 invoiceData.put("roomNumber", "N/A");
             }
 
-            // Service Information - Lấy dữ liệu từ bảng Service
+            // Service Information - Lấy dữ liệu từ b����ng Service
             List<Map<String, Object>> servicesUsed = getServicesUsedByPatient(patientId, latestAppointment);
             invoiceData.put("servicesUsed", servicesUsed);
 
             // Payment/Transaction Information
-            try {
-                if (latestAppointment != null) {
+            if (latestAppointment != null) {
+                try {
                     List<Transaction> transactions = transactionRepository.findByAppointmentId(latestAppointment.getAppointmentId());
                     if (!transactions.isEmpty()) {
                         Transaction latestTransaction = transactions.get(0);
@@ -1637,11 +1821,12 @@ public class ReceptionistService {
                         // Add default payment fields
                         invoiceData.put("amountReceived", 0.0);
                         invoiceData.put("changeReturned", 0.0);
-                        invoiceData.put("notes", "Payment pending");
+                        invoiceData.put("notes", "No appointment found");
                         invoiceData.put("timeOfPayment", "");
                     }
-                } else {
-                    // Calculate total from services
+                } catch (Exception e) {
+                    logger.error("Error fetching transaction data for patient {}: {}", patientId, e.getMessage());
+                    // Calculate total from services for fallback
                     double calculatedTotal = calculateTotalFromServices(servicesUsed);
                     invoiceData.put("transactionId", "N/A");
                     invoiceData.put("transactionStatus", "Pending");
@@ -1655,12 +1840,11 @@ public class ReceptionistService {
                     // Add default payment fields
                     invoiceData.put("amountReceived", 0.0);
                     invoiceData.put("changeReturned", 0.0);
-                    invoiceData.put("notes", "No appointment found");
+                    invoiceData.put("notes", "Error retrieving payment details");
                     invoiceData.put("timeOfPayment", "");
                 }
-            } catch (Exception e) {
-                logger.error("Error fetching transaction data for patient {}: {}", patientId, e.getMessage());
-                // Calculate total from services for fallback
+            } else {
+                // Calculate total from services
                 double calculatedTotal = calculateTotalFromServices(servicesUsed);
                 invoiceData.put("transactionId", "N/A");
                 invoiceData.put("transactionStatus", "Pending");
@@ -1674,244 +1858,128 @@ public class ReceptionistService {
                 // Add default payment fields
                 invoiceData.put("amountReceived", 0.0);
                 invoiceData.put("changeReturned", 0.0);
-                invoiceData.put("notes", "Error retrieving payment details");
+                invoiceData.put("notes", "No appointment found");
                 invoiceData.put("timeOfPayment", "");
             }
 
             logger.info("=== Final Invoice Data ===");
             logger.info("Full Name in invoice: {}", invoiceData.get("fullName"));
-            logger.info("Payer Name in invoice: {}", invoiceData.get("payerName"));
-            logger.info("Amount Received: {}", invoiceData.get("amountReceived"));
-            logger.info("Change Returned: {}", invoiceData.get("changeReturned"));
-            logger.info("Notes: {}", invoiceData.get("notes"));
-            logger.info("Time of Payment: {}", invoiceData.get("timeOfPayment"));
-            logger.info("Invoice data prepared for patient ID {}: {}", patientId, invoiceData);
+
             return invoiceData;
 
         } catch (Exception e) {
-            logger.error("Error getting invoice data for patient ID {}: {}", patientId, e.getMessage(), e);
+            logger.error("Error fetching invoice data for patient {}: {}", patientId, e.getMessage(), e);
             return null;
         }
     }
 
     /**
-     * Get services used by patient based on appointment and patient history
-     * Service ID: lấy theo ServiceID trong bảng Service
-     * Specialization -> Symptom: lấy theo ServiceName trong bảng Service
-     * Service Name: lấy theo ServiceName trong bảng Service
-     * Quantity: count (tổng số lần sử dụng 1 Service)
-     * Price: lấy theo Price trong bảng Service
-     * Tax (%): 10%
-     * Total (VND): Quantity * Price + Tax (10%)
-     * Date: l���y theo ngày hiện tại
-     */
-    private List<Map<String, Object>> getServicesUsedByPatient(Integer patientId, Appointment appointment) {
-        List<Map<String, Object>> servicesUsed = new ArrayList<>();
-
-        try {
-            // Lấy dữ liệu từ bảng Service thông qua specialization của appointment
-            if (appointment != null && appointment.getDoctor() != null &&
-                    appointment.getDoctor().getSpecializations() != null &&
-                    !appointment.getDoctor().getSpecializations().isEmpty()) {
-
-                // Lấy specialization đầu tiên của doctor
-                Specialization specialization = appointment.getDoctor().getSpecializations().iterator().next();
-
-                // Kiểm tra null để tránh NullPointerException
-                if (specialization != null) {
-                    Map<String, Object> service = new HashMap<>();
-                    service.put("serviceId", "SRV" + String.format("%03d", specialization.getSpecId() != null ? specialization.getSpecId() : 1));
-                    service.put("symptom", specialization.getSymptom() != null ? specialization.getSymptom() :
-                               (specialization.getSpecName() != null ? specialization.getSpecName() : "General Medicine"));
-                    service.put("serviceName", "General Consultation - " + (specialization.getSpecName() != null ? specialization.getSpecName() : "General"));
-                    service.put("quantity", 1); // Mặc định 1 lần sử dụng
-
-                    // Lấy price từ specialization price hoặc giá mặc định với null check
-                    double price = 300000.0; // Giá mặc định
-                    if (specialization.getPrice() != null) {
-                        price = specialization.getPrice().doubleValue();
-                    }
-                    service.put("price", price);
-                    service.put("taxPercent", 10); // 10% tax
-
-                    // Tính total: Quantity * Price + Tax
-                    double baseAmount = 1 * price; // quantity * price
-                    double taxAmount = baseAmount * 0.1; // 10% tax
-                    double total = baseAmount + taxAmount;
-                    service.put("total", total);
-                    service.put("date", LocalDate.now().toString());
-
-                    servicesUsed.add(service);
-
-                    // Thêm các dịch vụ bổ sung nếu cần với null check
-                    String specName = specialization.getSpecName();
-                    if (specName != null && (specName.toLowerCase().contains("internal") ||
-                            specName.toLowerCase().contains("general"))) {
-                        addAdditionalServices(servicesUsed, patientId);
-                    }
-                } else {
-                    // Nếu specialization null, tạo dịch vụ mặc định
-                    addDefaultServices(servicesUsed, patientId);
-                }
-            } else {
-                // Nếu không có appointment hoặc specialization, tạo dịch vụ mặc định
-                addDefaultServices(servicesUsed, patientId);
-            }
-
-        } catch (Exception e) {
-            logger.error("Error getting services for patient {}: {}", patientId, e.getMessage(), e);
-            // Fallback: tạo dịch vụ mặc định
-            addDefaultServices(servicesUsed, patientId);
-        }
-
-        return servicesUsed;
-    }
-
-    /**
-     * Add additional services based on patient history or common medical procedures
-     */
-    private void addAdditionalServices(List<Map<String, Object>> servicesUsed, Integer patientId) {
-        // Blood Test
-        Map<String, Object> bloodTest = new HashMap<>();
-        bloodTest.put("serviceId", "SRV002");
-        bloodTest.put("symptom", "Health Screening");
-        bloodTest.put("serviceName", "Blood Test");
-        bloodTest.put("quantity", 1);
-        bloodTest.put("price", 500000.0);
-        bloodTest.put("taxPercent", 10);
-        double bloodTestTotal = 500000.0 * 1.1; // price + 10% tax
-        bloodTest.put("total", bloodTestTotal);
-        bloodTest.put("date", LocalDate.now().toString());
-        servicesUsed.add(bloodTest);
-
-        // Medication
-        Map<String, Object> medication = new HashMap<>();
-        medication.put("serviceId", "SRV003");
-        medication.put("symptom", "Treatment");
-        medication.put("serviceName", "Medication");
-        medication.put("quantity", 2);
-        medication.put("price", 100000.0);
-        medication.put("taxPercent", 10);
-        double medicationTotal = 100000.0 * 2 * 1.1; // quantity * price + 10% tax
-        medication.put("total", medicationTotal);
-        medication.put("date", LocalDate.now().toString());
-        servicesUsed.add(medication);
-    }
-
-    /**
-     * Add default services when no specific data is available
-     */
-    private void addDefaultServices(List<Map<String, Object>> servicesUsed, Integer patientId) {
-        // General Consultation
-        Map<String, Object> consultation = new HashMap<>();
-        consultation.put("serviceId", "SRV001");
-        consultation.put("symptom", "General Medicine");
-        consultation.put("serviceName", "General Consultation");
-        consultation.put("quantity", 1);
-        consultation.put("price", 300000.0);
-        consultation.put("taxPercent", 10);
-        double consultationTotal = 300000.0 * 1.1; // price + 10% tax
-        consultation.put("total", consultationTotal);
-        consultation.put("date", LocalDate.now().toString());
-        servicesUsed.add(consultation);
-    }
-
-    /**
-     * Calculate total amount from services with proper null and type checking
-     */
-    private double calculateTotalFromServices(List<Map<String, Object>> servicesUsed) {
-        if (servicesUsed == null || servicesUsed.isEmpty()) {
-            return 0.0;
-        }
-
-        return servicesUsed.stream()
-                .mapToDouble(service -> {
-                    Object total = service.get("total");
-                    if (total == null) {
-                        return 0.0;
-                    }
-                    if (total instanceof Number) {
-                        return ((Number) total).doubleValue();
-                    }
-                    try {
-                        return Double.parseDouble(total.toString());
-                    } catch (NumberFormatException e) {
-                        logger.warn("Invalid total value in service: {}", total);
-                        return 0.0;
-                    }
-                })
-                .sum();
-    }
-
-    /**
-     * Get staff member with roleID = 3 (Receptionist) for "Processed By" field
+     * Get receptionist staff information for current user
+     * Used for displaying "Processed By" information in payment details
      */
     public Map<String, Object> getReceptionistStaffInfo() {
         try {
-            logger.info("=== Starting getReceptionistStaffInfo ===");
-            // Find a receptionist user with roleID = 3
-            List<Users> receptionists = userRepository.findByRoleId(3);
-            logger.info("Found {} users with roleID = 3", receptionists.size());
+            // For now, return default staff info
+            // In a real implementation, this would get the current logged-in user's information
+            Map<String, Object> staffInfo = new HashMap<>();
+            staffInfo.put("fullName", "Receptionist Staff");
+            staffInfo.put("userId", 1);
+            staffInfo.put("staffId", "REC001");
+            staffInfo.put("department", "Reception");
+            staffInfo.put("position", "Receptionist");
 
-            if (!receptionists.isEmpty()) {
-                Users receptionist = receptionists.get(0); // Get first receptionist
-                logger.info("Selected receptionist - UserID: {}, FullName: {}, Email: {}",
-                    receptionist.getUserId(), receptionist.getFullName(), receptionist.getEmail());
-
-                Map<String, Object> staffInfo = new HashMap<>();
-                staffInfo.put("userId", receptionist.getUserId());
-                staffInfo.put("fullName", receptionist.getFullName());
-                staffInfo.put("email", receptionist.getEmail());
-
-                logger.info("Returning staffInfo: {}", staffInfo);
-                return staffInfo;
-            }
-
-            // Fallback if no receptionist found
-            logger.warn("No receptionist found with roleID = 3, using default staff info");
-            Map<String, Object> defaultStaff = new HashMap<>();
-            defaultStaff.put("userId", "STAFF001");
-            defaultStaff.put("fullName", "Staff Member");
-            defaultStaff.put("email", "staff@medicareplus.com");
-            return defaultStaff;
-
+            logger.info("Generated staff info: {}", staffInfo);
+            return staffInfo;
         } catch (Exception e) {
             logger.error("Error getting receptionist staff info: {}", e.getMessage(), e);
-            // Return default staff info
-            Map<String, Object> defaultStaff = new HashMap<>();
-            defaultStaff.put("userId", "STAFF001");
-            defaultStaff.put("fullName", "Staff Member");
-            defaultStaff.put("email", "staff@medicareplus.com");
-            return defaultStaff;
+            // Return default values if error occurs
+            Map<String, Object> defaultStaffInfo = new HashMap<>();
+            defaultStaffInfo.put("fullName", "Unknown Staff");
+            defaultStaffInfo.put("userId", 0);
+            defaultStaffInfo.put("staffId", "N/A");
+            defaultStaffInfo.put("department", "Reception");
+            defaultStaffInfo.put("position", "Receptionist");
+            return defaultStaffInfo;
         }
     }
 
     /**
-     * Get a receptionist user (role = 3) to process the transaction
+     * Find receptionist by user ID
      */
-    private Integer getReceptionistUserId() {
-        try {
-            List<Users> receptionists = userRepository.findByRoleId(3);
-            if (receptionists.isEmpty()) {
-                logger.warn("No receptionist found with role = 3");
-                return null;
-            }
-
-            // Get the first active receptionist
-            Users receptionist = receptionists.get(0);
-            logger.info("Selected receptionist {} for processing transaction", receptionist.getUserId());
-            return receptionist.getUserId();
-
-        } catch (Exception e) {
-            logger.error("Error getting receptionist user: {}", e.getMessage(), e);
-            return null;
-        }
+    public Receptionist findByUserId(Integer userId) {
+        return receptionistEntityRepository.findByUserId(userId).orElse(null);
     }
 
     /**
-     * Process payment and update EXISTING transaction status to "Paid"
-     * ONLY UPDATES existing Transaction - does NOT create new records
-     * Updated logic to strictly find by AppointmentID and UserID
+     * Save receptionist entity
+     */
+    public Receptionist save(Receptionist receptionist) {
+        return receptionistEntityRepository.save(receptionist);
+    }
+
+    /**
+     * Get services used by a patient for a specific appointment
+     */
+    private List<Map<String, Object>> getServicesUsedByPatient(Integer patientId, Appointment appointment) {
+        List<Map<String, Object>> services = new ArrayList<>();
+
+        try {
+            // For now, return a default service list with all required properties
+            // In a real implementation, this would query the Service table based on appointment
+            Map<String, Object> defaultService = new HashMap<>();
+
+            // All properties that the template expects
+            defaultService.put("serviceId", "SRV001");
+            defaultService.put("serviceName", "General Consultation");
+            defaultService.put("symptom", "General Medicine");
+            defaultService.put("quantity", 1);
+            defaultService.put("price", 100.0);
+            defaultService.put("taxPercent", 10);
+            defaultService.put("total", 110.0); // price + tax
+            defaultService.put("date", java.time.LocalDate.now().toString());
+
+            // Legacy properties for backward compatibility
+            defaultService.put("servicePrice", 100.0);
+
+            services.add(defaultService);
+
+            logger.info("Retrieved {} services for patient {}", services.size(), patientId);
+        } catch (Exception e) {
+            logger.error("Error fetching services for patient {}: {}", patientId, e.getMessage());
+        }
+
+        return services;
+    }
+
+    /**
+     * Calculate total amount from services list
+     */
+    private double calculateTotalFromServices(List<Map<String, Object>> services) {
+        double total = 0.0;
+
+        try {
+            for (Map<String, Object> service : services) {
+                Object totalObj = service.get("total");
+                if (totalObj != null) {
+                    if (totalObj instanceof Number) {
+                        total += ((Number) totalObj).doubleValue();
+                    } else {
+                        total += Double.parseDouble(totalObj.toString());
+                    }
+                }
+            }
+        } catch (Exception e) {
+            logger.error("Error calculating total from services: {}", e.getMessage());
+            // Return default amount if calculation fails
+            total = 100.0;
+        }
+
+        return total;
+    }
+
+    /**
+     * Process payment for an appointment
+     * Updates existing transaction record instead of creating new one to avoid duplicates
      */
     @Transactional
     public Map<String, Object> processPayment(
@@ -1922,309 +1990,127 @@ public class ReceptionistService {
             String method,
             Double totalAmount,
             Double amountReceived,
-            String notes) {
+            String notes,
+            Integer issuerId) {
 
         try {
-            logger.info("=== Processing Payment - UPDATE EXISTING TRANSACTION ONLY ===");
-            logger.info("PatientId: {}, AppointmentId: {}, Method: {}, TotalAmount: {}",
-                       patientId, appointmentId, method, totalAmount);
+            logger.info("Processing payment for appointment {} with method {}", appointmentId, method);
 
-            // STEP 1: Validate AppointmentID and UserID exist in database
-            if (!validateAppointmentAndPatient(appointmentId, patientId)) {
-                throw new RuntimeException("Invalid AppointmentID or PatientID - not found in database");
+            // Validate appointment exists
+            Optional<Appointment> appointmentOpt = appointmentRepository.findById(appointmentId);
+            if (!appointmentOpt.isPresent()) {
+                throw new RuntimeException("Appointment not found with ID: " + appointmentId);
             }
 
-            // STEP 2: FIND EXISTING TRANSACTION BY BOTH AppointmentID AND UserID - STRICT MATCHING
-            Transaction transaction = null;
+            Appointment appointment = appointmentOpt.get();
 
-            // Primary search: Find by BOTH AppointmentID AND UserID for security
-            List<Transaction> candidateTransactions = transactionRepository.findByAppointmentId(appointmentId);
-            if (!candidateTransactions.isEmpty()) {
-                // Filter by UserID to ensure exact match
-                Optional<Transaction> matchingTransaction = candidateTransactions.stream()
-                    .filter(t -> t.getUserId() != null && t.getUserId().equals(patientId))
-                    .findFirst();
-
-                if (matchingTransaction.isPresent()) {
-                    transaction = matchingTransaction.get();
-                    logger.info("Found existing transaction by AppointmentID={} AND UserID={}: TransactionID={}",
-                               appointmentId, patientId, transaction.getTransactionId());
+            // Find a receptionist user (RoleID = 3) to set as ProcessedByUserID
+            Integer processedByUserId = null;
+            try {
+                // Get the first active user with RoleID = 3 (Receptionist)
+                List<Users> receptionistUsers = userRepository.findByRoleIdAndStatus(3, "Active");
+                if (!receptionistUsers.isEmpty()) {
+                    processedByUserId = receptionistUsers.get(0).getUserId();
+                    logger.info("Found receptionist user for ProcessedByUserID: {}", processedByUserId);
                 } else {
-                    logger.error("No transaction found matching AppointmentID={} AND UserID={}", appointmentId, patientId);
-                    throw new RuntimeException("No transaction found for AppointmentID: " + appointmentId + " and UserID: " + patientId);
+                    logger.warn("No active receptionist users found, ProcessedByUserID will be null");
                 }
+            } catch (Exception e) {
+                logger.error("Error finding receptionist user: {}", e.getMessage());
+            }
+
+            // FIRST: Try to find existing transaction for this appointment
+            Transaction transaction = null;
+            List<Transaction> existingTransactions = transactionRepository.findByAppointmentId(appointmentId);
+
+            if (!existingTransactions.isEmpty()) {
+                // Use existing transaction (update it)
+                transaction = existingTransactions.get(0);
+                logger.info("Found existing transaction with ID: {} for appointment {}",
+                           transaction.getTransactionId(), appointmentId);
             } else {
-                logger.error("No transactions found for AppointmentID: {}", appointmentId);
-                throw new RuntimeException("No existing transaction found for AppointmentID: " + appointmentId);
+                // Only create new transaction if none exists
+                logger.info("No existing transaction found, creating new one for appointment {}", appointmentId);
+                transaction = new Transaction();
+                transaction.setAppointmentId(appointmentId);
+                transaction.setUserId(patientId);
             }
 
-            // STEP 3: Validate transaction is not already paid to prevent duplicate processing
-            if ("Paid".equalsIgnoreCase(transaction.getStatus())) {
-                logger.warn("Transaction {} is already paid", transaction.getTransactionId());
-                return buildPaymentResult(transaction, "Already Paid");
-            }
-
-            logger.info("UPDATING existing transaction {} from {} to Paid",
-                       transaction.getTransactionId(), transaction.getStatus());
-
-            // STEP 4: UPDATE ONLY the required fields - NEVER change AppointmentId or UserId
-            String oldStatus = transaction.getStatus();
-            transaction.setStatus("Paid");
+            // Update transaction details (whether existing or new)
             transaction.setMethod(method);
             transaction.setTimeOfPayment(java.time.LocalDateTime.now());
+            transaction.setStatus("Paid");
 
-            // Set ProcessedByUserID to current receptionist user
-            Integer receptionistUserId = getReceptionistUserId();
-            if (receptionistUserId != null) {
-                transaction.setProcessedByUserId(receptionistUserId);
-                logger.info("Set ProcessedByUserID to receptionist: {}", receptionistUserId);
+            // Set ProcessedByUserID to receptionist user (RoleID = 3)
+            if (processedByUserId != null) {
+                transaction.setProcessedByUserId(processedByUserId);
+                logger.info("Set ProcessedByUserID to receptionist: {}", processedByUserId);
             }
 
-            // Store payment details in RefundReason field
-            String paymentDetails = buildPaymentDetails(method, amountReceived, notes);
-            transaction.setRefundReason(paymentDetails);
+            // Store payment details in refundReason field for later retrieval
+            if (amountReceived != null && notes != null) {
+                String paymentDetails = String.format("Amount Received: $%.2f | Notes: %s", amountReceived, notes);
+                transaction.setRefundReason(paymentDetails);
+            }
 
-            // STEP 5: SAVE UPDATED transaction (UPDATE operation, not INSERT)
-            Transaction savedTransaction = transactionRepository.save(transaction);
-            logger.info("✅ UPDATED Transaction {} - Status: {} -> {}, Method: {}, ProcessedBy: {}",
-                       savedTransaction.getTransactionId(), oldStatus, savedTransaction.getStatus(),
-                       savedTransaction.getMethod(), savedTransaction.getProcessedByUserId());
+            // Save transaction (update existing or create new)
+            transaction = transactionRepository.save(transaction);
+            logger.info("Saved/Updated transaction with ID: {} and ProcessedByUserID: {}",
+                       transaction.getTransactionId(), transaction.getProcessedByUserId());
 
-            // STEP 6: Handle Receipt - find existing or create new
-            Receipt receipt = findOrCreateReceipt(receiptIdStr, savedTransaction, patientId, totalAmount, notes);
+            // Handle receipt - check if receipt already exists for this transaction
+            Receipt receipt = null;
+            if (transaction.getReceipt() != null) {
+                // Update existing receipt
+                receipt = transaction.getReceipt();
+                logger.info("Found existing receipt with ID: {} for transaction {}",
+                           receipt.getReceiptId(), transaction.getTransactionId());
+            } else {
+                // Create new receipt only if none exists
+                logger.info("No existing receipt found, creating new one for transaction {}",
+                           transaction.getTransactionId());
+                receipt = new Receipt();
+                receipt.setTransactionId(transaction.getTransactionId());
+                receipt.setReceiptNumber("RCP-" + System.currentTimeMillis());
+                receipt.setIssuedDate(java.time.LocalDate.now());
+                receipt.setFormat("Digital");
+            }
 
-            // STEP 7: Update Appointment status if needed
-            updateAppointmentStatusIfNeeded(appointmentId);
+            // Update receipt details
+            receipt.setTotalAmount(java.math.BigDecimal.valueOf(totalAmount));
+            receipt.setNotes(notes);
+            receipt.setTaxAmount(java.math.BigDecimal.ZERO); // Default to zero, can be calculated if needed
+            receipt.setDiscountAmount(java.math.BigDecimal.ZERO); // Default to zero
+            receipt.setIssuerId(issuerId);
 
-            logger.info("Payment processing completed - UPDATED Transaction: {}, Receipt: {}",
-                       savedTransaction.getTransactionId(), receipt.getReceiptId());
+            // Save receipt (update existing or create new)
+            receipt = receiptRepository.save(receipt);
+            logger.info("Saved/Updated receipt with ID: {} and issuer ID: {}", receipt.getReceiptId(), issuerId);
 
-            return buildPaymentResult(savedTransaction, "Paid");
+            // Update appointment status to Completed (valid status per database constraint)
+            appointment.setStatus("Completed");
+            appointmentRepository.save(appointment);
+            logger.info("Updated appointment {} status to Completed", appointmentId);
+
+            logger.info("Payment processed successfully. Transaction ID: {}, Receipt ID: {}, ProcessedBy: {}",
+                       transaction.getTransactionId(), receipt.getReceiptId(), processedByUserId);
+
+            // Return result map
+            Map<String, Object> result = new HashMap<>();
+            result.put("transactionId", transaction.getTransactionId());
+            result.put("receiptId", receipt.getReceiptId());
+            result.put("status", "Paid");
+            result.put("timeOfPayment", transaction.getTimeOfPayment());
+            result.put("receiptNumber", receipt.getReceiptNumber());
+            result.put("processedByUserId", processedByUserId);
+            result.put("success", true);
+            result.put("message", "Payment processed successfully");
+
+            return result;
 
         } catch (Exception e) {
             logger.error("Error processing payment: {}", e.getMessage(), e);
             throw new RuntimeException("Failed to process payment: " + e.getMessage());
         }
-    }
-
-    /**
-     * Validate that AppointmentID exists and belongs to the specified PatientID
-     */
-    private boolean validateAppointmentAndPatient(Integer appointmentId, Integer patientId) {
-        try {
-            logger.info("Validating appointmentId: {} and patientId: {}", appointmentId, patientId);
-
-            if (appointmentId == null || patientId == null) {
-                logger.error("AppointmentID or PatientID is null");
-                return false;
-            }
-
-            Optional<Appointment> appointmentOpt = appointmentRepository.findById(appointmentId);
-            if (appointmentOpt.isEmpty()) {
-                logger.error("Appointment {} not found in database", appointmentId);
-                return false;
-            }
-
-            Appointment appointment = appointmentOpt.get();
-
-            // Check if patient exists and is not null
-            if (appointment.getPatient() == null) {
-                logger.error("Appointment {} has no associated patient", appointmentId);
-                return false;
-            }
-
-            // Check if patient ID matches
-            if (appointment.getPatient().getPatientId() == null) {
-                logger.error("Appointment {} patient has null PatientID", appointmentId);
-                return false;
-            }
-
-            if (!appointment.getPatient().getPatientId().equals(patientId)) {
-                logger.error("Appointment {} does not belong to patient {}. Found patient: {}",
-                           appointmentId, patientId, appointment.getPatient().getPatientId());
-                return false;
-            }
-
-            logger.info("Validation passed - Appointment {} belongs to patient {}", appointmentId, patientId);
-            return true;
-
-        } catch (Exception e) {
-            logger.error("Error validating appointment and patient: {}", e.getMessage(), e);
-            return false;
-        }
-    }
-
-    /**
-     * Build payment details string for storage - CẢI THIỆN ĐỂ LƯU CHÍNH XÁC
-     */
-    private String buildPaymentDetails(String method, Double amountReceived, String notes) {
-        StringBuilder details = new StringBuilder();
-
-        try {
-            // Luôn lưu amount received cho tất cả payment methods, không chỉ Cash
-            if (amountReceived != null && amountReceived > 0) {
-                details.append(String.format("Amount Received: $%.2f", amountReceived));
-                logger.info("Storing amount received: ${}", amountReceived);
-            }
-
-            // Luôn lưu notes nếu có
-            if (notes != null && !notes.trim().isEmpty()) {
-                if (details.length() > 0) {
-                    details.append(" | ");
-                }
-                details.append("Notes: ").append(notes.trim());
-                logger.info("Storing notes: {}", notes.trim());
-            }
-
-            String finalDetails = details.toString();
-            logger.info("Final payment details string: {}", finalDetails);
-            return finalDetails;
-
-        } catch (Exception e) {
-            logger.warn("Error building payment details: {}", e.getMessage());
-            return notes != null ? notes : "";
-        }
-    }
-
-    /**
-     * Find existing receipt or create new one with proper TransactionID
-     */
-    private Receipt findOrCreateReceipt(String receiptIdStr, Transaction savedTransaction,
-                                      Integer patientId, Double totalAmount, String notes) {
-        Receipt receipt = null;
-
-        try {
-            // Try to find existing receipt first
-            if (receiptIdStr != null && !receiptIdStr.equals("N/A") && !receiptIdStr.equals("null")) {
-                try {
-                    Integer receiptId = Integer.parseInt(receiptIdStr);
-                    Optional<Receipt> existingReceipt = receiptRepository.findById(receiptId);
-                    if (existingReceipt.isPresent()) {
-                        receipt = existingReceipt.get();
-                        logger.info("Found existing receipt: {}", receiptId);
-                    }
-                } catch (NumberFormatException e) {
-                    logger.warn("Invalid receipt ID format: {}", receiptIdStr);
-                }
-            }
-
-            // Create new receipt if not found
-            if (receipt == null) {
-                receipt = new Receipt();
-                receipt.setIssuerId(patientId != null ? patientId : 1); // Default to 1 if null
-                receipt.setIssuedDate(java.time.LocalDate.now());
-                receipt.setReceiptNumber("REC" + System.currentTimeMillis());
-                logger.info("Creating new receipt for patient: {}", patientId);
-            }
-
-            // Validate savedTransaction is not null
-            if (savedTransaction == null || savedTransaction.getTransactionId() == null) {
-                throw new RuntimeException("SavedTransaction or TransactionID is null");
-            }
-
-            // Set TransactionID and update receipt details
-            receipt.setTransactionId(savedTransaction.getTransactionId());
-            receipt.setTotalAmount(java.math.BigDecimal.valueOf(totalAmount != null ? totalAmount : 0.0));
-            receipt.setTaxAmount(java.math.BigDecimal.valueOf((totalAmount != null ? totalAmount : 0.0) * 0.1));
-            receipt.setDiscountAmount(java.math.BigDecimal.valueOf(0));
-            receipt.setNotes(notes != null ? notes : "");
-            receipt.setFormat("Digital");
-
-            // Save receipt
-            Receipt savedReceipt = receiptRepository.save(receipt);
-            logger.info("Receipt saved with ID: {} and TransactionID: {}",
-                       savedReceipt.getReceiptId(), savedReceipt.getTransactionId());
-
-            return savedReceipt;
-
-        } catch (Exception e) {
-            logger.error("Error finding or creating receipt: {}", e.getMessage(), e);
-            throw new RuntimeException("Failed to create receipt: " + e.getMessage());
-        }
-    }
-
-    /**
-     * Update appointment status to Completed if payment is successful
-     */
-    private void updateAppointmentStatusIfNeeded(Integer appointmentId) {
-        try {
-            if (appointmentId == null) {
-                logger.warn("AppointmentID is null, cannot update status");
-                return;
-            }
-
-            Optional<Appointment> appointmentOpt = appointmentRepository.findById(appointmentId);
-            if (appointmentOpt.isPresent()) {
-                Appointment appointment = appointmentOpt.get();
-                String currentStatus = appointment.getStatus();
-
-                if ("Scheduled".equals(currentStatus) || "Pending".equals(currentStatus)) {
-                    appointment.setStatus("Completed");
-                    appointmentRepository.save(appointment);
-                    logger.info("Updated appointment {} status from {} to Completed", appointmentId, currentStatus);
-                } else {
-                    logger.info("Appointment {} status is already {}, no update needed", appointmentId, currentStatus);
-                }
-            } else {
-                logger.warn("Appointment {} not found for status update", appointmentId);
-            }
-        } catch (Exception e) {
-            logger.warn("Could not update appointment status for {}: {}", appointmentId, e.getMessage());
-        }
-    }
-
-    /**
-     * Build standardized payment result
-     */
-    private Map<String, Object> buildPaymentResult(Transaction transaction, String status) {
-        Map<String, Object> result = new HashMap<>();
-
-        try {
-            if (transaction == null) {
-                throw new RuntimeException("Transaction is null");
-            }
-
-            result.put("transactionId", transaction.getTransactionId());
-            result.put("status", status != null ? status : "Unknown");
-            result.put("method", transaction.getMethod() != null ? transaction.getMethod() : "Unknown");
-            result.put("timeOfPayment", transaction.getTimeOfPayment() != null ?
-                      transaction.getTimeOfPayment().toString() : java.time.LocalDateTime.now().toString());
-            result.put("appointmentId", transaction.getAppointmentId());
-            result.put("userId", transaction.getUserId());
-
-            // Add receipt info if available
-            if (transaction.getReceipt() != null) {
-                result.put("receiptId", transaction.getReceipt().getReceiptId());
-                if (transaction.getReceipt().getTotalAmount() != null) {
-                    result.put("totalAmount", transaction.getReceipt().getTotalAmount());
-                }
-            }
-
-            return result;
-
-        } catch (Exception e) {
-            logger.error("Error building payment result: {}", e.getMessage(), e);
-            // Return minimal result if error occurs
-            Map<String, Object> errorResult = new HashMap<>();
-            errorResult.put("transactionId", transaction != null ? transaction.getTransactionId() : null);
-            errorResult.put("status", "Error");
-            errorResult.put("error", e.getMessage());
-            return errorResult;
-        }
-    }
-
-    // Phương thức để tìm Receptionist theo UserId
-    public Receptionist findByUserId(Integer userId) {
-        return receptionistEntityRepository.findByUserId(userId).orElse(null);
-    }
-
-    // Phương thức để lưu Receptionist
-    public Receptionist save(Receptionist receptionist) {
-        return receptionistEntityRepository.save(receptionist);
-    }
-
-    // Phương thức để tìm Receptionist theo ID
-    public Optional<Receptionist> findById(Integer receptionistId) {
-        return receptionistEntityRepository.findById(receptionistId);
     }
 }
