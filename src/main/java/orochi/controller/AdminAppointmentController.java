@@ -134,6 +134,7 @@ public class AdminAppointmentController {
 
     @GetMapping("/statistics/appointments")
     public String showOrExportStatistics(
+            @RequestParam Integer adminId,
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate fromDate,
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate toDate,
             @RequestParam(defaultValue = "0") Integer doctorId,
@@ -247,7 +248,7 @@ public class AdminAppointmentController {
         model.addAttribute("selectedDoctor", doctorId);
         model.addAttribute("selectedStatus", status);
         model.addAttribute("groupBy",        groupBy);
-
+        model.addAttribute("adminId", adminId);
         model.addAttribute("total",     totalCount);
         model.addAttribute("scheduled", schedCount);
         model.addAttribute("done",      doneCount);
