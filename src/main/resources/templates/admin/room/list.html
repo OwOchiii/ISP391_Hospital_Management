@@ -11,7 +11,6 @@
     <!-- Google Fonts -->
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
     <style>
-        /* Dashboard CSS */
         :root {
             --admin-primary: #7c3aed;
             --admin-secondary: #5b21b6;
@@ -104,6 +103,7 @@
             color: rgba(255, 255, 255, 0.6);
             padding: 0 1.5rem;
             margin-bottom: 0.75rem;
+            suite
         }
 
         .nav-item {
@@ -252,7 +252,7 @@
             gap: 0.75rem;
             padding: 0.5rem;
             border-radius: 12px;
-            transition: all 0.3s ease; /* Sửa: Giá trị hợp lệ */
+            transition: all 0.3s ease;
             cursor: pointer;
         }
 
@@ -269,8 +269,8 @@
             align-items: center;
             justify-content: center;
             color: white;
-            font-weight: bold;
-            font-size: 15px;
+            font-weight: 700;
+            font-size: 0.875rem;
         }
 
         .admin-details {
@@ -294,19 +294,63 @@
             padding: 2rem;
         }
 
+        /* Button Styles (from Dashboard) */
+        .btn-admin-primary {
+            background: linear-gradient(135deg, var(--admin-primary), var(--admin-secondary));
+            border: none;
+            padding: 0.75rem 1.5rem;
+            border-radius: 10px;
+            color: white;
+            font-weight: 600;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            transition: all 0.3s ease;
+            font-size: 0.875rem;
+        }
+
+        .btn-admin-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(124, 58, 237, 0.3);
+            color: white;
+        }
+
+        .btn-admin-outline {
+            border: 2px solid var(--admin-primary);
+            color: var(--admin-primary);
+            padding: 0.75rem 1.5rem;
+            border-radius: 10px;
+            background: transparent;
+            font-weight: 600;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            transition: all 0.3s ease;
+            font-size: 0.875rem;
+        }
+
+        .btn-admin-outline:hover {
+            background: var(--admin-primary);
+            color: white;
+        }
+
         /* Room Card Styles */
         .room-card {
-            border: 1px solid #e0e0e0;
-            border-radius: 12px;
-            background-color: #fff;
-            transition: box-shadow 0.2s ease-in-out;
+            background: var(--bg-white);
+            border: 1px solid rgba(124, 58, 237, 0.1);
+            border-radius: 16px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+            transition: all 0.3s ease;
             min-height: 200px;
             display: flex;
             flex-direction: column;
         }
 
         .room-card:hover {
-            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+            transform: translateY(-4px);
+            box-shadow: 0 8px 30px rgba(124, 58, 237, 0.15);
         }
 
         .room-content {
@@ -322,7 +366,7 @@
 
         .room-info {
             font-size: 0.95rem;
-            color: #333;
+            color: var(--text-dark);
             line-height: 1.5;
         }
 
@@ -337,32 +381,13 @@
             white-space: nowrap;
         }
 
-        .btn-action {
-            font-size: 0.9rem;
-            padding: 0.5rem 1rem;
-            border-radius: 6px;
-            transition: background-color 0.2s ease-in-out;
-        }
-
-        .btn-action:hover {
-            opacity: 0.9;
-        }
-
-        .btn-warning.btn-action {
-            background-color: #ffc107;
-            border-color: #ffc107;
-        }
-
-        .btn-success.btn-action {
-            background-color: #28a745;
-            border-color: #28a745;
-        }
-
-        .button-container {
-            margin-top: 0;
-        }
-
         /* Responsive Design */
+        @media (max-width: 1200px) {
+            .row-cols-lg-3 {
+                grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            }
+        }
+
         @media (max-width: 768px) {
             .admin-sidebar {
                 transform: translateX(-100%);
@@ -384,6 +409,12 @@
                 display: none;
             }
         }
+
+        @media (max-width: 576px) {
+            .row-cols-sm-2 {
+                grid-template-columns: 1fr;
+            }
+        }
     </style>
 </head>
 <body>
@@ -403,7 +434,7 @@
         <div class="nav-section">
             <div class="nav-section-title">Dashboard</div>
             <div class="nav-item">
-                <a th:href="@{/admin/dashboard(adminId=${adminId})}" class="nav-link active">
+                <a th:href="@{/admin/dashboard(adminId=${adminId})}" class="nav-link">
                     <i class="bi bi-speedometer2"></i>
                     Overview
                 </a>
@@ -424,25 +455,23 @@
                     Doctor Management
                 </a>
             </div>
-            <div class="nav-item">
+            <div class="navIan-item">
                 <a th:href="@{/admin/receptionists(adminId=${adminId})}" class="nav-link">
                     <i class="bi bi-person-badge"></i>
                     Receptionist Management
                 </a>
             </div>
-
         </div>
 
         <div class="nav-section">
             <div class="nav-section-title">Operations</div>
             <div class="nav-item">
-                <a th:href="@{/admin/appointments(adminId=${adminId})}" class="nav-link">
-                    <i class="bi bi-calendar-check"></i>
-                    Appointment Management
+                <a th:href="@{/admin/appointments/all(adminId=${adminId})}" class="nav-link">
+                    <i class="bi bi-calendar-check"></i> Appointment Management
                 </a>
             </div>
             <div class="nav-item">
-                <a th:href="@{/admin/rooms(adminId=${adminId})}" class="nav-link">
+                <a th:href="@{/admin/rooms(adminId=${adminId})}" class="nav-link active">
                     <i class="bi bi-door-open"></i>
                     Room Management
                 </a>
@@ -458,18 +487,6 @@
         <div class="nav-section">
             <div class="nav-section-title">Medical Services</div>
             <div class="nav-item">
-                <a th:href="@{/admin/prescriptions(adminId=${adminId})}" class="nav-link">
-                    <i class="bi bi-prescription2"></i>
-                    Prescription Management
-                </a>
-            </div>
-            <div class="nav-item">
-                <a th:href="@{/admin/medical-orders(adminId=${adminId})}" class="nav-link">
-                    <i class="bi bi-clipboard-pulse"></i>
-                    Medical Order Management
-                </a>
-            </div>
-            <div class="nav-item">
                 <a th:href="@{/admin/services(adminId=${adminId})}" class="nav-link">
                     <i class="bi bi-heart-pulse"></i>
                     Service Management
@@ -479,6 +496,12 @@
                 <a th:href="@{/admin/specializations(adminId=${adminId})}" class="nav-link">
                     <i class="bi bi-award"></i>
                     Specialties Management
+                </a>
+            </div>
+            <div class="nav-item">
+                <a th:href="@{/admin/medical-results(adminId=${adminId})}" class="nav-link">
+                    <i class="bi bi-clipboard-pulse"></i>
+                    Medical Results
                 </a>
             </div>
         </div>
@@ -569,20 +592,20 @@
         <!-- Room Management Content -->
         <div class="d-flex justify-content-between align-items-center mb-3">
             <div>
-                <button type="button" class="btn btn-success me-2" data-bs-toggle="modal" data-bs-target="#roomModal" data-mode="add">
+                <button type="button" class="btn-admin-primary" data-bs-toggle="modal" data-bs-target="#roomModal" data-mode="add">
                     <i class="bi bi-plus-lg"></i> Add Room
                 </button>
-                <a th:href="@{/admin/dashboard(adminId=${adminId})}" class="btn btn-outline-primary me-2">
+                <a th:href="@{/admin/dashboard(adminId=${adminId})}" class="btn-admin-outline me-2">
                     <i class="bi bi-house-door-fill"></i> Back to Dashboard
                 </a>
-                <a th:href="@{/admin/rooms(adminId=${adminId})}" class="btn btn-primary">
+                <a th:href="@{/admin/rooms(adminId=${adminId})}" class="btn-admin-primary">
                     <i class="bi bi-arrow-clockwise"></i> Refresh
                 </a>
             </div>
         </div>
 
         <!-- Search & Filter -->
-        <div class="card mb-3">
+        <div class="card mb-3" style="border-radius: 16px; box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08); border: 1px solid rgba(124, 58, 237, 0.1);">
             <div class="card-body">
                 <form th:action="@{/admin/rooms}" method="get" class="row g-2 align-items-end">
                     <input type="hidden" name="adminId" th:value="${adminId}"/>
@@ -598,27 +621,20 @@
                             <option value="Occupied" th:selected="${statusFilter == 'Occupied'}">Occupied</option>
                         </select>
                     </div>
-
                     <div class="col-md-3">
                         <label for="deptFilter" class="form-label">Department</label>
                         <select id="deptFilter" name="deptFilter" class="form-select">
                             <option value="" th:selected="${deptFilter == null}">All</option>
-                            <option th:each="d : ${departments}"
-                                    th:value="${d.departmentId}"
-                                    th:text="${d.deptName}"
-                                    th:selected="${d.departmentId==deptFilter}">
-                            </option>
+                            <option th:each="d : ${departments}" th:value="${d.departmentId}" th:text="${d.deptName}" th:selected="${d.departmentId==deptFilter}"></option>
                         </select>
                     </div>
-
-
                     <div class="col-auto">
-                        <button type="submit" class="btn btn-success">
+                        <button type="submit" class="btn-admin-primary">
                             <i class="bi bi-search"></i> Search
                         </button>
                     </div>
                     <div class="col-auto">
-                        <a th:href="@{/admin/rooms(adminId=${adminId})}" class="btn btn-secondary">
+                        <a th:href="@{/admin/rooms(adminId=${adminId})}" class="btn-admin-outline">
                             <i class="bi bi-x-circle"></i> Clear
                         </a>
                     </div>
@@ -657,10 +673,10 @@
                         <div class="button-container mt-auto d-flex">
                             <form th:action="@{/admin/rooms/{id}/toggleStatus(id=${r.roomId},adminId=${adminId})}" method="post" style="flex: 1; margin-right: 0.5rem;" onmousedown="event.stopPropagation()" onclick="event.stopPropagation()">
                                 <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
-                                <button type="submit" class="btn w-100 btn-warning btn-action btn-sm" th:if="${r.status == 'Available'}" onmousedown="event.stopPropagation()" onclick="event.stopPropagation()">Occupy</button>
-                                <button type="submit" class="btn w-100 btn-success btn-action btn-sm" th:if="${r.status == 'Occupied'}" onmousedown="event.stopPropagation()" onclick="event.stopPropagation()">Make Available</button>
+                                <button type="submit" class="btn-admin-primary w-100 btn-sm" th:if="${r.status == 'Available'}" onmousedown="event.stopPropagation()" onclick="event.stopPropagation()">Occupy</button>
+                                <button type="submit" class="btn-admin-primary w-100 btn-sm" th:if="${r.status == 'Occupied'}" onmousedown="event.stopPropagation()" onclick="event.stopPropagation()">Make Available</button>
                             </form>
-                            <button type="button" class="btn btn-outline-secondary btn-action btn-sm" data-bs-toggle="modal" data-bs-target="#roomModal" data-mode="edit" th:attr="data-id=${r.roomId},data-number=${r.roomNumber},data-name=${r.roomName},data-capacity=${r.capacity},data-status=${r.status},data-dept=${r.departmentId},data-notes=${r.notes}" onmousedown="event.stopPropagation()" onclick="event.stopPropagation()">
+                            <button type="button" class="btn-admin-outline btn-sm" data-bs-toggle="modal" data-bs-target="#roomModal" data-mode="edit" th:attr="data-id=${r.roomId},data-number=${r.roomNumber},data-name=${r.roomName},data-capacity=${r.capacity},data-status=${r.status},data-dept=${r.departmentId},data-notes=${r.notes}" onmousedown="event.stopPropagation()" onclick="event.stopPropagation()">
                                 <i class="bi bi-pencil-square"></i> Edit
                             </button>
                         </div>
@@ -669,155 +685,88 @@
             </div>
         </div>
 
-        <!-- Phân trang -->
+        <!-- Pagination -->
         <div class="pagination-container mt-4" th:if="${totalPages > 1}">
             <nav aria-label="Page navigation">
                 <ul class="pagination justify-content-center">
-                    <!-- Previous -->
                     <li class="page-item" th:classappend="${currentPage == 0} ? 'disabled'">
-                        <a class="page-link"
-                           th:href="@{/admin/rooms(adminId=${adminId}, page=${currentPage - 1}, size=${pageSize}, search=${search}, statusFilter=${statusFilter})}"
-                           aria-label="Previous">
-                            «
-                        </a>
+                        <a class="page-link" th:href="@{/admin/rooms(adminId=${adminId}, page=${currentPage - 1}, size=${pageSize}, search=${search}, statusFilter=${statusFilter}, deptFilter=${deptFilter})}" aria-label="Previous">«</a>
                     </li>
-                    <!-- Số trang -->
-                    <li class="page-item"
-                        th:each="i : ${#numbers.sequence(0, totalPages - 1)}"
-                        th:classappend="${i == currentPage} ? 'active'">
-                        <a class="page-link"
-                           th:href="@{/admin/rooms(adminId=${adminId}, page=${i}, size=${pageSize}, search=${search}, statusFilter=${statusFilter})}"
-                           th:text="${i + 1}">1</a>
+                    <li class="page-item" th:each="i : ${#numbers.sequence(0, totalPages - 1)}" th:classappend="${i == currentPage} ? 'active'">
+                        <a class="page-link" th:href="@{/admin/rooms(adminId=${adminId}, page=${i}, size=${pageSize}, search=${search}, statusFilter=${statusFilter}, deptFilter=${deptFilter})}" th:text="${i + 1}">1</a>
                     </li>
-                    <!-- Next -->
                     <li class="page-item" th:classappend="${currentPage == totalPages - 1} ? 'disabled'">
-                        <a class="page-link"
-                           th:href="@{/admin/rooms(adminId=${adminId}, page=${currentPage+1}, size=${pageSize}, search=${search}, statusFilter=${statusFilter})}"
-                           aria-label="Next">
-                            »
-                        </a>
+                        <a class="page-link" th:href="@{/admin/rooms(adminId=${adminId}, page=${currentPage + 1}, size=${pageSize}, search=${search}, statusFilter=${statusFilter}, deptFilter=${deptFilter})}" aria-label="Next">»</a>
                     </li>
                 </ul>
             </nav>
         </div>
 
-
-        <!-- Modal (Add/Edit Room) -->
         <!-- Modal Add/Edit Room -->
         <div class="modal fade" id="roomModal" tabindex="-1" aria-labelledby="roomModalLabel" aria-hidden="true">
             <div class="modal-dialog modal-lg modal-dialog-centered">
                 <div class="modal-content">
-                    <!-- Header -->
                     <div class="modal-header">
-                        <h5 class="modal-title" id="roomModalLabel"
-                            th:text="${room.roomId} != null ? 'Edit Room' : 'Add New Room'">
-                            Add/Edit Room
-                        </h5>
+                        <h5 class="modal-title" id="roomModalLabel" th:text="${room.roomId} != null ? 'Edit Room' : 'Add New Room'">Add/Edit Room</h5>
                         <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                     </div>
-
-                    <!-- Body -->
                     <div class="modal-body">
-                        <form id="roomForm" th:object="${room}"
-                              th:action="@{/admin/rooms/save(adminId=${adminId})}"
-                              method="post">
+                        <form id="roomForm" th:object="${room}" th:action="@{/admin/rooms/save(adminId=${adminId})}" method="post" onsubmit="return validateRoomForm()">
                             <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}" />
-
-                            <!-- Hidden ID for edit -->
                             <input type="hidden" id="roomId" th:field="*{roomId}" />
-
-
-                            <!-- Room Number -->
                             <div class="mb-3">
                                 <label for="roomNumber" class="form-label">Room Number *</label>
-                                <input th:field="*{roomNumber}" type="text"
-                                       class="form-control" id="roomNumber"
-                                       maxlength="20" placeholder="Enter room number" />
-                                <div class="text-danger" th:if="${#fields.hasErrors('roomNumber')}"
-                                     th:errors="*{roomNumber}"></div>
+                                <input th:field="*{roomNumber}" type="text" class="form-control" id="roomNumber" maxlength="20" placeholder="Enter room number" />
+                                <div class="text-danger" th:if="${#fields.hasErrors('roomNumber')}" th:errors="*{roomNumber}"></div>
                             </div>
-
-                            <!-- Room Name -->
                             <div class="mb-3">
                                 <label for="roomName" class="form-label">Room Name *</label>
-                                <input th:field="*{roomName}" type="text"
-                                       class="form-control" id="roomName"
-                                       maxlength="50" placeholder="Enter room name" />
-                                <div class="text-danger" th:if="${#fields.hasErrors('roomName')}"
-                                     th:errors="*{roomName}"></div>
+                                <input th:field="*{roomName}" type="text" class="form-control" id="roomName" maxlength="50" placeholder="Enter room name" />
+                                <div class="text-danger" th:if="${#fields.hasErrors('roomName')}" th:errors="*{roomName}"></div>
                             </div>
-
-                            <!-- Capacity -->
                             <div class="mb-3">
                                 <label for="capacity" class="form-label">Capacity *</label>
-                                <input th:field="*{capacity}"
-                                       type="number"
-                                       class="form-control"
-                                       id="capacity"
-                                       min="1"
-                                       max="50"
-                                       placeholder="Enter capacity" />
-
-                                <div class="text-danger" th:if="${#fields.hasErrors('capacity')}"
-                                     th:errors="*{capacity}"></div>
+                                <input th:field="*{capacity}" type="number" class="form-control" id="capacity" min="1" max="50" placeholder="Enter capacity" />
+                                <div class="text-danger" th:if="${#fields.hasErrors('capacity')}" th:errors="*{capacity}"></div>
                             </div>
-
-                            <!-- Status -->
                             <div class="mb-3">
                                 <label for="status" class="form-label">Status *</label>
                                 <select th:field="*{status}" class="form-select" id="status">
                                     <option value="Available">Available</option>
                                     <option value="Occupied">Occupied</option>
                                 </select>
-                                <div class="text-danger" th:if="${#fields.hasErrors('status')}"
-                                     th:errors="*{status}"></div>
+                                <div class="text-danger" th:if="${#fields.hasErrors('status')}" th:errors="*{status}"></div>
                             </div>
-
-                            <!-- Department -->
                             <div class="mb-3">
                                 <label for="departmentId" class="form-label">Department *</label>
                                 <select th:field="*{departmentId}" class="form-select" id="departmentId">
                                     <option value="" disabled>Select Department</option>
-                                    <option th:each="d : ${departments}"
-                                            th:value="${d.departmentId}"
-                                            th:text="${d.deptName}">
-                                    </option>
+                                    <option th:each="d : ${departments}" th:value="${d.departmentId}" th:text="${d.deptName}"></option>
                                 </select>
-                                <div class="text-danger" th:if="${#fields.hasErrors('departmentId')}"
-                                     th:errors="*{departmentId}"></div>
+                                <div class="text-danger" th:if="${#fields.hasErrors('departmentId')}" th:errors="*{departmentId}"></div>
                             </div>
-
-                            <!-- Notes -->
                             <div class="mb-3">
                                 <label for="notes" class="form-label">Notes</label>
-                                <textarea th:field="*{notes}" class="form-control" id="notes"
-                                          maxlength="500" rows="2"></textarea>
-                                <div class="text-danger" th:if="${#fields.hasErrors('notes')}"
-                                     th:errors="*{notes}"></div>
+                                <textarea th:field="*{notes}" class="form-control" id="notes" maxlength="500" rows="2"></textarea>
+                                <div class="text-danger" th:if="${#fields.hasErrors('notes')}" th:errors="*{notes}"></div>
                             </div>
-
-                            <!-- Buttons -->
                             <div class="text-end">
-                                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
-                                    Cancel
-                                </button>
-                                <button type="submit" class="btn btn-primary">Save</button>
+                                <button type="button" class="btn-admin-outline" data-bs-dismiss="modal">Cancel</button>
+                                <button type="submit" class="btn-admin-primary">Save</button>
                             </div>
                         </form>
                     </div>
-
                 </div>
             </div>
         </div>
 
-
-        <!-- Modal (Room Detail) -->
+        <!-- Modal Room Detail -->
         <div class="modal fade" id="roomDetailModal" tabindex="-1" aria-labelledby="roomDetailModalLabel" aria-hidden="true">
             <div class="modal-dialog modal-lg modal-dialog-centered">
                 <div class="modal-content">
                     <div class="modal-header">
                         <h5 class="modal-title" id="roomDetailModalLabel">Room Detail</h5>
-                        <button type="button" class="btn-close" aria-label="Close" data-bs-dismiss="modal"></button>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                     </div>
                     <div class="modal-body">
                         <form id="roomDetailForm">
@@ -856,7 +805,7 @@
                         </form>
                     </div>
                     <div class="modal-footer">
-                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                        <button type="button" class="btn-admin-outline" data-bs-dismiss="modal">Close</button>
                     </div>
                 </div>
             </div>

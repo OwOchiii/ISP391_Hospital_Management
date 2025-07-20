@@ -606,7 +606,7 @@
     <div class="nav-section">
       <div class="nav-section-title">Dashboard</div>
       <div class="nav-item">
-        <a th:href="@{/admin/dashboard(adminId=${adminId})}" class="nav-link active">
+        <a th:href="@{/admin/dashboard(adminId=${adminId})}" class="nav-link">
           <i class="bi bi-speedometer2"></i>
           Overview
         </a>
@@ -639,9 +639,8 @@
     <div class="nav-section">
       <div class="nav-section-title">Operations</div>
       <div class="nav-item">
-        <a th:href="@{/admin/appointments(adminId=${adminId})}" class="nav-link">
-          <i class="bi bi-calendar-check"></i>
-          Appointment Management
+        <a th:href="@{/admin/appointments/all(adminId=${adminId})}" class="nav-link">
+          <i class="bi bi-calendar-check"></i> Appointment Management
         </a>
       </div>
       <div class="nav-item">
@@ -661,18 +660,6 @@
     <div class="nav-section">
       <div class="nav-section-title">Medical Services</div>
       <div class="nav-item">
-        <a th:href="@{/admin/prescriptions(adminId=${adminId})}" class="nav-link">
-          <i class="bi bi-prescription2"></i>
-          Prescription Management
-        </a>
-      </div>
-      <div class="nav-item">
-        <a th:href="@{/admin/medical-orders(adminId=${adminId})}" class="nav-link">
-          <i class="bi bi-clipboard-pulse"></i>
-          Medical Order Management
-        </a>
-      </div>
-      <div class="nav-item">
         <a th:href="@{/admin/services(adminId=${adminId})}" class="nav-link">
           <i class="bi bi-heart-pulse"></i>
           Service Management
@@ -684,12 +671,18 @@
           Specialties Management
         </a>
       </div>
+      <div class="nav-item">
+        <a th:href="@{/admin/medical-results(adminId=${adminId})}" class="nav-link">
+          <i class="bi bi-clipboard-pulse"></i>
+          Medical Results
+        </a>
+      </div>
     </div>
 
     <div class="nav-section">
       <div class="nav-section-title">Analytics & Content</div>
       <div class="nav-item">
-        <a th:href="@{/admin/reports/revenue(adminId=${adminId})}" class="nav-link">
+        <a th:href="@{/admin/reports/revenue(adminId=${adminId})}" class="nav-link active">
           <i class="bi bi-graph-up"></i>
           Revenue Statistics
         </a>

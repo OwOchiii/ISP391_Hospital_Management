@@ -36,6 +36,7 @@ public class AdminNotificationController {
     /** 1. List với pagination, filter như trước */
     @GetMapping
     public String list(
+            @RequestParam Integer adminId,
             @RequestParam(value = "search",   required = false) String search,
             @RequestParam(value = "type",     required = false) NotificationType type,
             @RequestParam(value = "isRead",   required = false) Boolean isRead,
@@ -62,6 +63,7 @@ public class AdminNotificationController {
         model.addAttribute("typeFilter",   type);
         model.addAttribute("isReadFilter", isRead);
         model.addAttribute("fromDate",     fromDate);
+        model.addAttribute("adminId", adminId);
         model.addAttribute("toDate",       toDate);
         model.addAttribute("users",        userService.findAll());
         model.addAttribute("types",        NotificationType.values());

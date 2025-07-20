@@ -44,6 +44,7 @@
             overflow-x: hidden;
         }
 
+        /* Sidebar Styles */
         .admin-sidebar {
             position: fixed;
             top: 0;
@@ -151,6 +152,7 @@
             text-align: center;
         }
 
+        /* Main Content */
         .main-content {
             margin-left: var(--sidebar-width);
             min-height: 100vh;
@@ -161,6 +163,7 @@
             margin-left: 0;
         }
 
+        /* Top Header */
         .admin-header {
             background: var(--bg-white);
             height: var(--header-height);
@@ -391,7 +394,7 @@
         <div class="nav-section">
             <div class="nav-section-title">Dashboard</div>
             <div class="nav-item">
-                <a th:href="@{/admin/dashboard(adminId=${adminId})}" class="nav-link active">
+                <a th:href="@{/admin/dashboard(adminId=${adminId})}" class="nav-link">
                     <i class="bi bi-speedometer2"></i>
                     Overview
                 </a>
@@ -418,15 +421,13 @@
                     Receptionist Management
                 </a>
             </div>
-
         </div>
 
         <div class="nav-section">
             <div class="nav-section-title">Operations</div>
             <div class="nav-item">
-                <a th:href="@{/admin/appointments(adminId=${adminId})}" class="nav-link">
-                    <i class="bi bi-calendar-check"></i>
-                    Appointment Management
+                <a th:href="@{/admin/appointments/all(adminId=${adminId})}" class="nav-link">
+                    <i class="bi bi-calendar-check"></i> Appointment Management
                 </a>
             </div>
             <div class="nav-item">
@@ -446,19 +447,7 @@
         <div class="nav-section">
             <div class="nav-section-title">Medical Services</div>
             <div class="nav-item">
-                <a th:href="@{/admin/prescriptions(adminId=${adminId})}" class="nav-link">
-                    <i class="bi bi-prescription2"></i>
-                    Prescription Management
-                </a>
-            </div>
-            <div class="nav-item">
-                <a th:href="@{/admin/medical-orders(adminId=${adminId})}" class="nav-link">
-                    <i class="bi bi-clipboard-pulse"></i>
-                    Medical Order Management
-                </a>
-            </div>
-            <div class="nav-item">
-                <a th:href="@{/admin/services(adminId=${adminId})}" class="nav-link">
+                <a th:href="@{/admin/services(adminId=${adminId})}" class="nav-link active">
                     <i class="bi bi-heart-pulse"></i>
                     Service Management
                 </a>
@@ -467,6 +456,12 @@
                 <a th:href="@{/admin/specializations(adminId=${adminId})}" class="nav-link">
                     <i class="bi bi-award"></i>
                     Specialties Management
+                </a>
+            </div>
+            <div class="nav-item">
+                <a th:href="@{/admin/medical-results(adminId=${adminId})}" class="nav-link">
+                    <i class="bi bi-clipboard-pulse"></i>
+                    Medical Results
                 </a>
             </div>
         </div>
@@ -595,7 +590,6 @@
             </div>
         </form>
 
-
         <!-- Service Cards -->
         <div class="row g-4">
             <div th:if="${#lists.isEmpty(services)}" class="col-12">
@@ -631,7 +625,7 @@
                 <ul class="pagination justify-content-center">
                     <li class="page-item" th:classappend="${currentPage == 0} ? 'disabled'">
                         <a class="page-link" th:href="@{/admin/services(adminId=${adminId},page=${currentPage - 1},size=${pageSize},search=${search},specFilter=${specFilter})}" aria-label="Previous">
-                            <span aria-hidden="true">&laquo;</span>
+                            <span aria-hidden="true">«</span>
                         </a>
                     </li>
                     <li class="page-item"
@@ -643,7 +637,7 @@
                     </li>
                     <li class="page-item" th:classappend="${currentPage == totalPages - 1} ? 'disabled'">
                         <a class="page-link" th:href="@{/admin/services(adminId=${adminId},page=${currentPage+1},size=${pageSize},search=${search},specFilter=${specFilter})}" aria-label="Next">
-                            <span aria-hidden="true">&raquo;</span>
+                            <span aria-hidden="true">»</span>
                         </a>
                     </li>
                 </ul>
@@ -669,8 +663,6 @@
                     </div>
                     <div class="modal-body">
                         <input id="serviceId" type="hidden" th:field="*{serviceId}"/>
-
-                        <!-- Spec -->
                         <div class="mb-3">
                             <label class="form-label">Specialty</label>
                             <select id="specId" th:field="*{specId}" class="form-select">
@@ -681,15 +673,11 @@
                             </select>
                             <div class="text-danger" th:errors="*{specId}"></div>
                         </div>
-
-                        <!-- Name -->
                         <div class="mb-3">
                             <label class="form-label">Service Name</label>
                             <input id="serviceName" th:field="*{serviceName}" type="text" class="form-control"/>
                             <div class="text-danger" th:errors="*{serviceName}"></div>
                         </div>
-
-                        <!-- Price -->
                         <div class="mb-3">
                             <label class="form-label">Price</label>
                             <input id="price" th:field="*{price}" type="number" step="0.01" class="form-control"/>
@@ -704,13 +692,16 @@
             </div>
         </div>
     </div>
-
 </div>
 
 <!-- Bootstrap JS -->
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 <script th:inline="javascript">
     /*<![CDATA[*/
+    // Get admin ID from Thymeleaf
+    const adminId = /*[[${adminId}]]*/ 0;
+
+    // Sidebar toggle functionality
     function toggleSidebar() {
         const sidebar = document.getElementById('adminSidebar');
         const mainContent = document.getElementById('mainContent');
@@ -718,6 +709,7 @@
         mainContent.classList.toggle('expanded');
     }
 
+    // Auto-hide sidebar on mobile
     function checkScreenSize() {
         const sidebar = document.getElementById('adminSidebar');
         const mainContent = document.getElementById('mainContent');
@@ -730,10 +722,12 @@
         }
     }
 
+    // Initialize
     checkScreenSize();
     window.addEventListener('load', checkScreenSize);
     window.addEventListener('resize', checkScreenSize);
 
+    // Navigation link handlers
     document.querySelectorAll('.nav-link').forEach(link => {
         link.addEventListener('click', function(e) {
             if (this.getAttribute('href') === '#') {
@@ -744,6 +738,7 @@
         });
     });
 
+    // Modal handling
     var serviceModalEl = document.getElementById('serviceModal');
     serviceModalEl.addEventListener('show.bs.modal', function (event) {
         var button = event.relatedTarget;
