@@ -545,6 +545,27 @@
             transition: height 0.3s ease;
         }
 
+        .doctor-avatar {
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            object-fit: cover;
+            flex-shrink: 0;
+        }
+
+        .doctor-avatar-placeholder {
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            background: #e5e7eb;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #9ca3af;
+            font-size: 1.5rem;
+            flex-shrink: 0;
+        }
+
         @media (max-width: 1200px) {
             .doctor-info {
                 grid-template-columns: 1fr 1fr;
@@ -865,14 +886,30 @@
                     <div th:each="doctor : ${doctors}" class="doctor-card" th:data-doctor-id="${doctor.doctorId}">
                         <div class="doctor-header">
                             <div class="d-flex align-items-center gap-3">
+                                <!-- PROFILE AVATAR -->
+                                <div>
+                                    <img th:if="${doctor.imageUrl != null}"
+                                         th:src="${doctor.imageUrl}"
+                                         alt="Profile"
+                                         class="doctor-avatar"/>
+                                    <div th:if="${doctor.imageUrl == null}"
+                                         class="doctor-avatar-placeholder">
+                                        <i class="bi bi-person-circle"></i>
+                                    </div>
+                                </div>
+                                <!-- DOCTOR ID -->
                                 <div class="doctor-id" th:text="${doctor.doctorId}">1</div>
+                                <!-- NAME & EMAIL -->
                                 <div>
                                     <h5 class="mb-1" th:text="${doctor.user.fullName}">Dr. Alice Smith</h5>
                                     <small class="text-muted" th:text="${doctor.user.email}">alice@example.com</small>
                                 </div>
                             </div>
-                            <div class="status-badge" th:classappend="${doctor.user.status == 'LOCKED'} ? 'status-locked' : 'status-active'"
-                                 th:text="${doctor.user.status}">Active</div>
+                            <!-- STATUS BADGE -->
+                            <div class="status-badge"
+                                 th:classappend="${doctor.user.status == 'LOCKED'} ? 'status-locked' : 'status-active'"
+                                 th:text="${doctor.user.status}">
+                            </div>
                         </div>
 
                         <div class="doctor-actions">
