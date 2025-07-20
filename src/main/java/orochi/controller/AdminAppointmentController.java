@@ -52,7 +52,8 @@ public class AdminAppointmentController {
     }
 
     @GetMapping
-    public String showAppointments(@RequestParam(defaultValue = "0") int page,
+    public String showAppointments(@RequestParam Integer adminId,
+            @RequestParam(defaultValue = "0") int page,
                                    @RequestParam(defaultValue = "10") int size,
                                    @RequestParam(defaultValue = "ALL") String status,
                                    @RequestParam(required = false) String search,
@@ -81,6 +82,8 @@ public class AdminAppointmentController {
         model.addAttribute("appointments", appointments);
         model.addAttribute("totalAppointments", appointmentMetricService.getTotalAppointments());
         model.addAttribute("appointmentDTO", new AppointmentDTO());
+        model.addAttribute("adminId", adminId);
+        model.addAttribute("adminName", userDetails.getUsername());
         model.addAttribute("doctorList", appointmentService.getAllDoctors());
         model.addAttribute("inProgressCount", appointmentMetricService.getTotalAppointments(STATUS_PENDING));
         model.addAttribute("completedCount", appointmentMetricService.getTotalAppointments(STATUS_COMPLETED));
