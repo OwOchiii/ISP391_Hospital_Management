@@ -2,6 +2,8 @@ package orochi.service;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -640,6 +642,42 @@ public Appointment updateAppointment2(
 
     public List<Doctor> getAllDoctors() {
         return doctorRepository.findAll();
+    }
+
+
+    public Page<Appointment> searchAndFilter(String search, String status, Pageable pg) {
+        // gọi repo.findWithFilters (thư viện filter động) mà bạn đã có
+        // giả sử repo.findWithFilters nhận: (null,null,status,search,start,end,pg)
+        LocalDateTime start = LocalDate.now().minusYears(100).atStartOfDay();
+        LocalDateTime end   = LocalDate.now().plusYears(100).atTime(23,59);
+        return appointmentRepository.findWithFilters(
+                null, null,
+                status,
+                search,
+                start, end,
+                pg
+        );
+    }
+
+    public Page<Appointment> findByIdPaged(Integer id, Pageable pg) {
+        Optional<Appointment> opt = appointmentRepository.findById(id);
+        List<Appointment> list = opt.map(List::of).orElse(List.of());
+        Pageable firstPage = PageRequest.of(0, pg.getPageSize());
+        return new PageImpl<>(list, firstPage, list.size());
+    }
+
+
+    public Page<Appointment> findByDoctorIdAndStatusAndName(
+            Integer doctorId, String status, String name, Pageable pg) {
+        return appointmentRepository.findWithFilters(
+                doctorId,
+                null,
+                status,
+                name,
+                LocalDateTime.now().minusYears(100),
+                LocalDateTime.now().plusYears(100),
+                pg
+        );
     }
 
 }

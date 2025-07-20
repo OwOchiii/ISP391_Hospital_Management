@@ -1,6 +1,7 @@
 package orochi.controller;
 
 import orochi.config.CustomUserDetails;
+import orochi.dto.AppointmentDTO;
 import orochi.model.Appointment;
 import orochi.service.AppointmentMetricService;
 import orochi.service.AppointmentService;
@@ -79,6 +80,8 @@ public class AdminAppointmentController {
 
         model.addAttribute("appointments", appointments);
         model.addAttribute("totalAppointments", appointmentMetricService.getTotalAppointments());
+        model.addAttribute("appointmentDTO", new AppointmentDTO());
+        model.addAttribute("doctorList", appointmentService.getAllDoctors());
         model.addAttribute("inProgressCount", appointmentMetricService.getTotalAppointments(STATUS_PENDING));
         model.addAttribute("completedCount", appointmentMetricService.getTotalAppointments(STATUS_COMPLETED));
         model.addAttribute("rejectedCount", appointmentMetricService.getTotalAppointments(STATUS_CANCELLED));
@@ -89,6 +92,8 @@ public class AdminAppointmentController {
 
         return "admin/appointments";
     }
+
+
 
     @PostMapping("/updateStatus")
     public String updateAppointmentStatus(@RequestParam Integer appointmentId,
@@ -265,6 +270,62 @@ public class AdminAppointmentController {
                         (a,b)->a,
                         LinkedHashMap::new
                 ));
+    }
+
+
+    @GetMapping("/all")
+    public String showAllAppointments(
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "5") int size,
+            @RequestParam(required = false) Integer appointmentId,
+            @RequestParam(required = false) String searchName,
+            @RequestParam(required = false) Integer doctorId,
+            @RequestParam(defaultValue = "ALL") String status,
+            @AuthenticationPrincipal CustomUserDetails userDetails,
+            Model model) {
+
+        Pageable pageable = PageRequest.of(page, size);
+        Page<Appointment> appointments;
+
+        // 1) Nếu truyền lên một appointmentId thì chỉ trả đúng 1 kết quả đó (với paging)
+        if (appointmentId != null) {
+            appointments = appointmentService.findByIdPaged(appointmentId, pageable);
+        }
+        // 2) Nếu chọn filter theo bác sĩ
+        else if (doctorId != null) {
+            appointments = appointmentService.findByDoctorIdAndStatusAndName(
+                    doctorId,
+                    status,
+                    searchName,
+                    pageable
+            );
+        }
+        // 3) Tìm theo tên bệnh nhân (searchName) kết hợp với trạng thái
+        else if (searchName != null && !searchName.isBlank()) {
+            appointments = appointmentService.searchAndFilter(searchName, status, pageable);
+        }
+        // 4) Chỉ filter theo trạng thái
+        else if (!"ALL".equalsIgnoreCase(status)) {
+            appointments = appointmentService.getAppointmentsByStatus(status, pageable);
+        }
+        // 5) Không có filter gì, lấy tất cả
+        else {
+            appointments = appointmentService.getAllAppointments(pageable);
+        }
+
+        model.addAttribute("appointments",       appointments);
+        model.addAttribute("appointmentId",      appointmentId);
+        model.addAttribute("searchName",         searchName);
+        model.addAttribute("selectedDoctorId",   doctorId);
+        model.addAttribute("currentStatus",      status);
+        model.addAttribute("doctorList",         appointmentService.getAllDoctors());
+        model.addAttribute("totalAppointments",  appointmentMetricService.getTotalAppointments());
+        model.addAttribute("inProgressCount",    appointmentMetricService.getTotalAppointments(STATUS_PENDING));
+        model.addAttribute("completedCount",     appointmentMetricService.getTotalAppointments(STATUS_COMPLETED));
+        model.addAttribute("rejectedCount",      appointmentMetricService.getTotalAppointments(STATUS_CANCELLED));
+        model.addAttribute("chartData",          getChartData());
+
+        return "admin/appointments";
     }
 
 }
