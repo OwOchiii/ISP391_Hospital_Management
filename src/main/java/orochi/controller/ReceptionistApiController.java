@@ -10,6 +10,7 @@ import orochi.model.PatientContact;
 import orochi.model.Users;
 import orochi.repository.UserRepository;
 import orochi.service.impl.DoctorServiceImpl;
+import orochi.service.impl.EmailServiceImpl;
 import orochi.service.impl.ReceptionistService;
 import orochi.service.impl.RoomServiceImpl;
 
@@ -28,15 +29,17 @@ public class ReceptionistApiController {
     private final DoctorServiceImpl doctorService;
     private final UserRepository userRepository;
     private final RoomServiceImpl roomService;
+    private final EmailServiceImpl emailService;
 
     public ReceptionistApiController(ReceptionistService receptionistService,
                                      DoctorServiceImpl doctorService,
                                      UserRepository userRepository,
-                                     RoomServiceImpl roomService) {
+                                     RoomServiceImpl roomService, EmailServiceImpl emailService) {
         this.receptionistService = receptionistService;
         this.doctorService = doctorService;
         this.userRepository = userRepository;
         this.roomService = roomService;
+        this.emailService = emailService;
     }
 
     @PostMapping("/appointments/confirm")
@@ -90,6 +93,7 @@ public class ReceptionistApiController {
                         Map<String, Object> doctorMap = new HashMap<>();
                         doctorMap.put("id", doctor.getDoctorId());
                         doctorMap.put("name", doctor.getUser().getFullName());
+                        doctorMap.put("imageUrl", doctor.getImageUrl());
                         return doctorMap;
                     })
                     .collect(Collectors.toList());
@@ -185,11 +189,7 @@ public class ReceptionistApiController {
             @RequestParam(value = "page", required = false) Integer page,
             @RequestParam(defaultValue = "") String search) {
         try {
-            // Default page to 1 if null or invalid
-            int pageNumber = (page == null || page < 1) ? 1 : page;
-            int itemsPerPage = 12;
-
-            // Lấy tất cả patients có RoleID = 4 (Patient role)
+            // Lấy tất cả patients có RoleID = 4 (Patient role) - KHÔNG PHÂN TRANG
             List<Patient> allPatients = receptionistService.getAllPatients().stream()
                     .filter(patient -> patient.getUser() != null && patient.getUser().getRoleId() == 4)
                     .collect(Collectors.toList());
@@ -205,12 +205,11 @@ public class ReceptionistApiController {
                         .collect(Collectors.toList());
             }
 
-            // Calculate pagination
+            // KHÔNG PHÂN TRANG - Trả về toàn bộ dữ liệu
             int total = allPatients.size();
-            int start = (pageNumber - 1) * itemsPerPage;
-            int end = Math.min(start + itemsPerPage, total);
 
-            List<Map<String, Object>> paginatedPatients = allPatients.subList(start, end).stream()
+            // Map toàn bộ patients (không slice)
+            List<Map<String, Object>> allPatientsData = allPatients.stream()
                     .map(patient -> {
                         Map<String, Object> patientMap = new HashMap<>();
 
@@ -286,11 +285,14 @@ public class ReceptionistApiController {
                     .collect(Collectors.toList());
 
             Map<String, Object> response = new HashMap<>();
-            response.put("patients", paginatedPatients);
+            response.put("patients", allPatientsData);
             response.put("total", total);
 
+            System.out.println("API Response: Found " + total + " patients in database");
             return ResponseEntity.ok(response);
         } catch (Exception e) {
+            System.err.println("Error in getPatientsDetailed: " + e.getMessage());
+            e.printStackTrace();
             return ResponseEntity.badRequest().body("Error fetching patients: " + e.getMessage());
         }
     }
@@ -593,6 +595,17 @@ public class ReceptionistApiController {
 
             // Save contact changes
             PatientContact updatedContact = receptionistService.savePatientContact(contact);
+
+            // Send email notification about profile update
+            try {
+                if (updatedPatient.getUser() != null && updatedPatient.getUser().getEmail() != null) {
+                    String patientEmail = updatedPatient.getUser().getEmail();
+                    emailService.sendProfileUpdateEmail(patientEmail, updatedPatient);
+                }
+            } catch (Exception e) {
+                // Log the error but don't fail the update operation
+                System.err.println("Failed to send profile update email: " + e.getMessage());
+            }
 
             // Prepare response data
             Map<String, Object> responseData = new HashMap<>();

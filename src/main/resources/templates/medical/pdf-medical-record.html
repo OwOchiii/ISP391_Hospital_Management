@@ -1,0 +1,343 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Medical Record - MediCare Plus</title>
+
+  <style>
+    /* PDF-optimized styles with basic layout */
+    @page {
+      size: A4;
+      margin: 20mm;
+    }
+
+    body {
+      font-family: Arial, sans-serif;
+      font-size: 12pt;
+      line-height: 1.4;
+      color: #333;
+      margin: 0;
+      padding: 0;
+    }
+
+    .container {
+      width: 100%;
+      margin: 0 auto;
+    }
+
+    /* Header */
+    .header {
+      text-align: center;
+      margin-bottom: 20px;
+      border-bottom: 2px solid #2563eb;
+      padding-bottom: 15px;
+    }
+
+    .hospital-name {
+      font-size: 24pt;
+      font-weight: bold;
+      color: #2563eb;
+      margin-bottom: 5px;
+    }
+
+    .hospital-info {
+      font-size: 10pt;
+      color: #666;
+      margin-bottom: 10px;
+    }
+
+    .report-title {
+      font-size: 18pt;
+      font-weight: bold;
+      margin-bottom: 5px;
+    }
+
+    .report-meta {
+      font-size: 10pt;
+      color: #666;
+    }
+
+    /* Section styles */
+    .section {
+      margin-bottom: 20px;
+      border: 1px solid #ccc;
+      border-radius: 5px;
+    }
+
+    .section-header {
+      background-color: #2563eb;
+      color: white;
+      padding: 8px 10px;
+      font-weight: bold;
+      border-radius: 5px 5px 0 0;
+    }
+
+    .section-content {
+      padding: 10px;
+    }
+
+    /* Table styles */
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 10px;
+    }
+
+    table, th, td {
+      border: 1px solid #ddd;
+    }
+
+    th, td {
+      padding: 8px;
+      text-align: left;
+    }
+
+    th {
+      background-color: #f2f2f2;
+      font-weight: bold;
+    }
+
+    tr:nth-child(even) {
+      background-color: #f9f9f9;
+    }
+
+    /* Patient info */
+    .patient-info {
+      margin-bottom: 20px;
+      background-color: #f8fafc;
+      border: 1px solid #e2e8f0;
+      padding: 15px;
+      border-radius: 5px;
+    }
+
+    .patient-name {
+      font-size: 16pt;
+      font-weight: bold;
+      margin-bottom: 5px;
+    }
+
+    .patient-details {
+      font-size: 11pt;
+      margin-bottom: 10px;
+    }
+
+    .info-grid {
+      width: 100%;
+      border-collapse: collapse;
+    }
+
+    .info-grid td {
+      padding: 5px;
+      border: none;
+    }
+
+    .info-label {
+      font-weight: bold;
+      width: 150px;
+    }
+
+    /* Footer */
+    .footer {
+      margin-top: 30px;
+      border-top: 1px solid #ccc;
+      padding-top: 15px;
+      font-size: 10pt;
+    }
+
+    .signature-area {
+      margin-top: 20px;
+      display: table;
+      width: 100%;
+    }
+
+    .signature-box {
+      display: table-cell;
+      width: 50%;
+      padding: 10px;
+      text-align: center;
+    }
+
+    .signature-line {
+      border-bottom: 1px solid black;
+      margin: 0 auto;
+      height: 40px;
+      width: 80%;
+    }
+
+    .signature-name {
+      margin-top: 5px;
+      font-size: 10pt;
+    }
+
+    /* Disclaimer */
+    .disclaimer {
+      margin-top: 20px;
+      font-size: 9pt;
+      text-align: center;
+      color: #666;
+      border-top: 1px solid #eee;
+      padding-top: 10px;
+    }
+  </style>
+</head>
+<body>
+<div class="container">
+  <!-- Header -->
+  <div class="header">
+    <div class="hospital-name">MediCare Plus</div>
+    <div class="hospital-info">
+      123 Medical Center Drive, Healthcare City, HC 12345<br>
+      Phone: (555) 123-4567 | Email: info@medicareplus.com
+    </div>
+    <div class="report-title">MEDICAL RECORD</div>
+    <div class="report-meta">
+      Record ID: <span th:text="${medicalRecord.recordId}">MR-001234</span> |
+      Generated: <span th:text="${#temporals.format(#temporals.createNow(), 'MMM dd, yyyy HH:mm')}">Dec 30, 2024 14:30</span>
+    </div>
+  </div>
+
+  <!-- Patient Information -->
+  <div class="patient-info">
+    <div class="patient-name" th:text="${patient.user?.fullName ?: 'Patient Name'}">John Doe</div>
+    <div class="patient-details">
+      Patient ID: <span th:text="${patient.patientId}">P001234</span> |
+      DOB: <span th:text="${patient.dateOfBirth != null ? #temporals.format(patient.dateOfBirth, 'MMM dd, yyyy') : 'Not provided'}">Jan 15, 1990</span> |
+      Age: <span th:text="${patientAge ?: 'N/A'}">34</span> |
+      Gender: <span th:text="${patient.gender ?: 'Not specified'}">Male</span>
+    </div>
+
+    <table class="info-grid">
+      <tr>
+        <td class="info-label">Phone Number:</td>
+        <td th:text="${patient.user?.phoneNumber ?: 'Not provided'}">+1 (555) 123-4567</td>
+        <td class="info-label">Email:</td>
+        <td th:text="${patient.user?.email ?: 'Not provided'}">john.doe@email.com</td>
+      </tr>
+      <tr>
+        <td class="info-label">Blood Type:</td>
+        <td th:text="${medicalRecord.bloodType ?: 'Not specified'}">O+</td>
+        <td class="info-label">Health Status:</td>
+        <td th:text="${medicalRecord.healthStatus ?: 'Good'}">Good</td>
+      </tr>
+      <tr>
+        <td class="info-label">Record Date:</td>
+        <td th:text="${medicalRecord.recordDate != null ? #temporals.format(medicalRecord.recordDate, 'MMM dd, yyyy') : 'Today'}">Dec 30, 2024</td>
+        <td class="info-label">Last Updated:</td>
+        <td th:text="${medicalRecord.lastUpdated != null ? #temporals.format(medicalRecord.lastUpdated, 'MMM dd, yyyy HH:mm') : 'Now'}">Dec 30, 2024 14:30</td>
+      </tr>
+    </table>
+  </div>
+
+  <!-- Medical Conditions -->
+  <div class="section" th:if="${medicalRecord.medicalConditions != null and !#strings.isEmpty(medicalRecord.medicalConditions)}">
+    <div class="section-header">MEDICAL CONDITIONS</div>
+    <div class="section-content">
+      <p th:text="${medicalRecord.medicalConditions}">
+        Patient presents with hypertension and type 2 diabetes mellitus. Blood pressure is well controlled with current medication regimen.
+      </p>
+    </div>
+  </div>
+
+  <!-- Medical History -->
+  <div class="section" th:if="${medicalRecord.medicalHistory != null and !#strings.isEmpty(medicalRecord.medicalHistory)}">
+    <div class="section-header">MEDICAL HISTORY</div>
+    <div class="section-content">
+      <p th:text="${medicalRecord.medicalHistory}">
+        Past medical history significant for appendectomy in 2010. Family history positive for cardiovascular disease (father) and diabetes (mother).
+      </p>
+    </div>
+  </div>
+
+  <!-- Allergies -->
+  <div class="section" th:if="${medicalRecord.allergies != null and !#strings.isEmpty(medicalRecord.allergies)}">
+    <div class="section-header">ALLERGIES</div>
+    <div class="section-content">
+      <p th:text="${medicalRecord.allergies}">
+        • Penicillin - Rash and hives
+        • Shellfish - Anaphylaxis
+        • Latex - Contact dermatitis
+      </p>
+    </div>
+  </div>
+
+  <!-- Current Medications -->
+  <div class="section">
+    <div class="section-header">CURRENT MEDICATIONS</div>
+    <div class="section-content">
+      <div th:if="${!#lists.isEmpty(medications)}">
+        <p>Patient is currently on the following medication regimen as prescribed:</p>
+        <table>
+          <thead>
+            <tr>
+              <th>Medication Name</th>
+              <th>Dosage</th>
+              <th>Frequency</th>
+              <th>Start Date</th>
+              <th>End Date</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr th:each="medication : ${medications}">
+              <td th:text="${medication.name}">Lisinopril</td>
+              <td th:text="${medication.dosage}">10mg</td>
+              <td th:text="${medication.frequency}">Once daily</td>
+              <td th:text="${medication.startDate != null ? #temporals.format(medication.startDate, 'MMM dd, yyyy') : 'N/A'}">Jan 15, 2024</td>
+              <td th:text="${medication.endDate != null ? #temporals.format(medication.endDate, 'MMM dd, yyyy') : 'Ongoing'}">Ongoing</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+      <p th:if="${#lists.isEmpty(medications)}">No active medications are currently prescribed for this patient.</p>
+    </div>
+  </div>
+
+  <!-- Doctor Information -->
+  <div class="section">
+    <div class="section-header">ATTENDING PHYSICIAN</div>
+    <div class="section-content">
+      <table class="info-grid">
+        <tr>
+          <td class="info-label">Doctor Name:</td>
+          <td th:text="${doctor.user?.fullName ?: 'Dr. Smith'}">Dr. Sarah Smith</td>
+          <td class="info-label">Doctor ID:</td>
+          <td th:text="${doctor.doctorId ?: 'D001'}">D001</td>
+        </tr>
+        <tr>
+          <td class="info-label">Contact:</td>
+          <td th:text="${doctor.user?.phoneNumber ?: '(555) 123-4567'}">(555) 123-4567</td>
+          <td class="info-label">Email:</td>
+          <td th:text="${doctor.user?.email ?: 'dr.smith@medicareplus.com'}">dr.smith@medicareplus.com</td>
+        </tr>
+      </table>
+    </div>
+  </div>
+
+  <!-- Signatures -->
+  <div class="signature-area">
+    <div class="signature-box">
+      <div class="signature-line"></div>
+      <div class="signature-name">
+        Doctor Signature<br>
+        Dr. <span th:text="${doctor.user?.fullName ?: 'Sarah Smith'}">Sarah Smith</span><br>
+        Date: <span th:text="${#temporals.format(#temporals.createNow(), 'MMM dd, yyyy')}">Dec 30, 2024</span>
+      </div>
+    </div>
+    <div class="signature-box">
+      <div class="signature-line"></div>
+      <div class="signature-name">
+        Patient Signature<br>
+        <span th:text="${patient.user?.fullName ?: 'John Doe'}">John Doe</span><br>
+        Date: _______________
+      </div>
+    </div>
+  </div>
+
+  <!-- Disclaimer -->
+  <div class="disclaimer">
+    This medical record is confidential and protected under HIPAA regulations.
+    Unauthorized disclosure is prohibited by law.
+  </div>
+</div>
+</body>
+</html>

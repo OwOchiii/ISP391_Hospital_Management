@@ -10,6 +10,8 @@
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     <!-- Google Fonts -->
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <!-- Cropper.js CSS -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.12/cropper.min.css" rel="stylesheet">
     <style>
         :root {
             --primary: #667eea;
@@ -253,7 +255,7 @@
             width: 40px;
             height: 40px;
             border-radius: 50%;
-            background: linear-gradient(135deg, var(--primary), var(--accent));
+            background: linear-gradient(135deg, #667eea, #a78bfa);
             object-fit: cover;
         }
 
@@ -479,6 +481,69 @@
             background: var(--error-color);
         }
 
+        /* Image Crop Modal Styles */
+        .crop-modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.8);
+            z-index: 3000;
+            display: none;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .crop-container {
+            background: var(--bg-white);
+            border-radius: 16px;
+            padding: 2rem;
+            max-width: 600px;
+            max-height: 80vh;
+            overflow-y: auto;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+        }
+
+        .crop-image {
+            max-width: 100%;
+            max-height: 400px;
+        }
+
+        .crop-buttons {
+            display: flex;
+            gap: 1rem;
+            justify-content: center;
+            margin-top: 1.5rem;
+        }
+
+        .crop-btn {
+            padding: 0.75rem 1.5rem;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.3s ease;
+        }
+
+        .crop-btn.confirm {
+            background: var(--success-color);
+            color: white;
+        }
+
+        .crop-btn.confirm:hover {
+            background: #059669;
+        }
+
+        .crop-btn.cancel {
+            background: var(--text-light);
+            color: white;
+        }
+
+        .crop-btn.cancel:hover {
+            background: #475569;
+        }
+
         /* Responsive Design */
         @media (max-width: 768px) {
             .sidebar {
@@ -630,7 +695,9 @@
                         <i class="fas fa-bell fs-5"></i>
                         <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger" id="notificationCount">0</span>
                     </div>
-                    <img src="images/profile.jpg" alt="Profile" class="rounded-circle" id="headerAvatar" onerror="this.src='https://via.placeholder.com/40';">
+                    <img id="headerAvatar" class="rounded-circle" alt="Profile" onerror="this.style.display='none';"
+                         style="width: 40px; height: 40px; background: linear-gradient(135deg, #667eea, #a78bfa); display: flex; align-items: center; justify-content: center; color: white; font-weight: bold;"
+                         data-fallback="👤">
                 </div>
             </header>
 
@@ -651,69 +718,33 @@
                     <div class="avatar-container">
                         <img id="avatar" class="avatar hidden" alt="Profile Avatar">
                         <div id="avatarPlaceholder" class="avatar-placeholder">No Avatar</div>
-                        <input id="avatarInput" type="file" accept="image/*" class="avatar-input hidden">
+                        <input id="avatarInput" type="file" accept=".jpg,.jpeg,.png" class="avatar-input hidden">
                     </div>
 
                     <div class="profile-grid">
                         <div class="form-group">
                             <label for="fullName">Full Name *</label>
-                            <p id="fullName"></p>
-                            <input id="fullNameInput" type="text" class="hidden" required>
+                            <p id="fullName" th:text="${user?.fullName ?: 'Not provided'}"></p>
+                            <input id="fullNameInput" type="text" class="hidden" required th:value="${user?.fullName ?: ''}">
                             <p id="fullNameError" class="error-message">Full Name is required.</p>
                         </div>
                         <div class="form-group">
                             <label for="email">Email</label>
-                            <p id="email"></p>
-                            <input id="emailInput" type="email" pattern=".*@gmail\.com" class="hidden">
-                            <p id="emailError" class="error-message">Email must end with @gmail.com (e.g., example@gmail.com).</p>
+                            <p id="email" th:text="${user?.email ?: 'Not provided'}"></p>
+                            <input id="emailInput" type="email" class="hidden" th:value="${user?.email ?: ''}">
+                            <p id="emailError" class="error-message">Please enter a valid email address.</p>
                         </div>
                         <div class="form-group">
                             <label for="phone">Contact Phone Number *</label>
-                            <p id="phone"></p>
-                            <input id="phoneInput" type="tel" pattern="\d{10}" class="hidden" required>
+                            <p id="phone" th:text="${user?.phoneNumber ?: 'Not provided'}"></p>
+                            <input id="phoneInput" type="tel" pattern="\d{10}" class="hidden" required th:value="${user?.phoneNumber ?: ''}">
                             <p id="phoneError" class="error-message">Phone Number must be exactly 10 digits.</p>
                         </div>
                         <div class="form-group">
-                            <label for="role">Role</label>
-                            <p id="role"></p>
-                            <select id="roleInput" class="hidden">
-                                <option value="Receptionist">Receptionist</option>
-                                <option value="Admin">Admin</option>
-                                <option value="Manager">Manager</option>
-                            </select>
-                            <p id="roleError" class="error-message">Role is required.</p>
-                        </div>
-                        <div class="form-group">
-                            <label for="dob">Date of Birth *</label>
-                            <p id="dob"></p>
-                            <input id="dobInput" type="date" max="2025-06-05" class="hidden" required>
-                            <p id="dobError" class="error-message">Date of Birth cannot be in the future.</p>
-                        </div>
-                        <div class="form-group">
-                            <label for="gender">Gender *</label>
-                            <p id="gender"></p>
-                            <select id="genderInput" class="hidden" required>
-                                <option value="">Select Gender</option>
-                                <option value="Male">Male</option>
-                                <option value="Female">Female</option>
-                                <option value="Other">Other</option>
-                            </select>
-                            <p id="genderError" class="error-message">Gender is required.</p>
-                        </div>
-                        <div class="form-group">
-                            <label for="address">Address</label>
-                            <p id="address"></p>
-                            <input id="addressInput" type="text" class="hidden" placeholder="Enter address">
-                            <p id="addressError" class="error-message">Address is required.</p>
-                        </div>
-                        <div class="form-group">
-                            <label for="language">Preferred Language</label>
-                            <p id="language"></p>
-                            <select id="languageInput" class="hidden">
-                                <option value="en">English</option>
-                                <option value="vi">Vietnamese</option>
-                            </select>
-                            <p id="languageError" class="error-message">Preferred Language is required.</p>
+                            <label for="roleId">ID</label>
+                            <p id="roleId" th:text="${user?.roleId ?: 'Not provided'}"></p>
+                            <input id="roleIdInput" type="text" class="hidden" readonly th:value="${user?.roleId ?: ''}">
+                            <p id="roleIdError" class="error-message">ID is required.</p>
                         </div>
                     </div>
                     <div id="profileActions" class="hidden mt-4">
@@ -727,12 +758,32 @@
             <div id="statusNotification" class="notification-toast success">
                 Profile updated successfully
             </div>
+
+            <!-- Image Crop Modal -->
+            <div id="cropModal" class="crop-modal">
+                <div class="crop-container">
+                    <h5 class="text-center mb-3">Adjust Your Profile Picture</h5>
+                    <div class="crop-image-container">
+                        <img id="cropImage" class="crop-image" alt="Crop Image">
+                    </div>
+                    <div class="crop-buttons">
+                        <button id="confirmCrop" class="crop-btn confirm">
+                            <i class="fas fa-check me-2"></i>Confirm
+                        </button>
+                        <button id="cancelCrop" class="crop-btn cancel">
+                            <i class="fas fa-times me-2"></i>Cancel
+                        </button>
+                    </div>
+                </div>
+            </div>
         </main>
     </div>
 </div>
 
 <!-- Bootstrap JS -->
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+<!-- Cropper.js -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.12/cropper.min.js"></script>
 <script>
     // Sidebar toggle functionality
     function toggleSidebar() {
@@ -783,14 +834,24 @@
         const input = document.getElementById('fullNameInput');
         const error = document.getElementById('fullNameError');
         const value = input.value.trim();
-        const isValid = value !== '';
+
+        // Full name is required and must be at least 2 characters
+        const isValid = value.length >= 2 && /^[a-zA-ZÀ-ỹ\s]+$/.test(value);
 
         if (isValid) {
             input.classList.remove('is-invalid');
             error.style.display = 'none';
+            error.textContent = 'Full Name is required.';
         } else {
             input.classList.add('is-invalid');
             error.style.display = 'block';
+            if (value.length === 0) {
+                error.textContent = 'Full Name is required.';
+            } else if (value.length < 2) {
+                error.textContent = 'Full Name must be at least 2 characters.';
+            } else {
+                error.textContent = 'Full Name can only contain letters and spaces.';
+            }
         }
         return isValid;
     }
@@ -799,7 +860,9 @@
         const input = document.getElementById('emailInput');
         const error = document.getElementById('emailError');
         const value = input.value.trim();
-        const isValid = value === '' || /^[^\s@]+@gmail\.com$/.test(value);
+
+        // Email is optional but if provided must be valid format
+        const isValid = value === '' || /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value);
 
         if (isValid) {
             input.classList.remove('is-invalid');
@@ -807,6 +870,7 @@
         } else {
             input.classList.add('is-invalid');
             error.style.display = 'block';
+            error.textContent = 'Please enter a valid email address.';
         }
         return isValid;
     }
@@ -815,7 +879,9 @@
         const input = document.getElementById('phoneInput');
         const error = document.getElementById('phoneError');
         const value = input.value.trim();
-        const isValid = /^\d{10}$/.test(value);
+
+        // Phone number is required and must be exactly 10 digits (Vietnamese format)
+        const isValid = /^(0[3|5|7|8|9])+([0-9]{8})$/.test(value);
 
         if (isValid) {
             input.classList.remove('is-invalid');
@@ -823,88 +889,11 @@
         } else {
             input.classList.add('is-invalid');
             error.style.display = 'block';
-        }
-        return isValid;
-    }
-
-    function validateDob() {
-        const input = document.getElementById('dobInput');
-        const error = document.getElementById('dobError');
-        const value = input.value;
-        const dob = new Date(value);
-        const today = new Date('2025-06-05');
-        const isValid = value !== '' && dob <= today;
-
-        if (isValid) {
-            input.classList.remove('is-invalid');
-            error.style.display = 'none';
-        } else {
-            input.classList.add('is-invalid');
-            error.style.display = 'block';
-        }
-        return isValid;
-    }
-
-    function validateGender() {
-        const input = document.getElementById('genderInput');
-        const error = document.getElementById('genderError');
-        const value = input.value;
-        const isValid = value !== '';
-
-        if (isValid) {
-            input.classList.remove('is-invalid');
-            error.style.display = 'none';
-        } else {
-            input.classList.add('is-invalid');
-            error.style.display = 'block';
-        }
-        return isValid;
-    }
-
-    function validateRole() {
-        const input = document.getElementById('roleInput');
-        const error = document.getElementById('roleError');
-        const value = input.value;
-        const isValid = value !== '';
-
-        if (isValid) {
-            input.classList.remove('is-invalid');
-            error.style.display = 'none';
-        } else {
-            input.classList.add('is-invalid');
-            error.style.display = 'block';
-        }
-        return isValid;
-    }
-
-    function validateAddress() {
-        const input = document.getElementById('addressInput');
-        const error = document.getElementById('addressError');
-        const value = input.value.trim();
-        const isValid = value !== '';
-
-        if (isValid) {
-            input.classList.remove('is-invalid');
-            error.style.display = 'none';
-        } else {
-            input.classList.add('is-invalid');
-            error.style.display = 'block';
-        }
-        return isValid;
-    }
-
-    function validateLanguage() {
-        const input = document.getElementById('languageInput');
-        const error = document.getElementById('languageError');
-        const value = input.value;
-        const isValid = value !== '';
-
-        if (isValid) {
-            input.classList.remove('is-invalid');
-            error.style.display = 'none';
-        } else {
-            input.classList.add('is-invalid');
-            error.style.display = 'block';
+            if (value.length === 0) {
+                error.textContent = 'Phone Number is required.';
+            } else {
+                error.textContent = 'Please enter a valid Vietnamese phone number (10 digits starting with 03, 05, 07, 08, or 09).';
+            }
         }
         return isValid;
     }
@@ -927,7 +916,7 @@
                 document.getElementById('fullNameInput').value = profile.fullName || '';
                 document.getElementById('emailInput').value = profile.email || '';
                 document.getElementById('phoneInput').value = profile.phone || '';
-                document.getElementById('roleInput').value = profile.role || 'Receptionist';
+                document.getElementById('roleIdInput').value = profile.role || 'Receptionist';
                 document.getElementById('dobInput').value = profile.dob || '';
                 document.getElementById('genderInput').value = profile.gender || '';
                 document.getElementById('addressInput').value = profile.address || '';
@@ -992,19 +981,15 @@
         }, 3000);
     }
 
+    let cropper = null;
+    let currentImageFile = null;
+
     // Event Listeners
     document.addEventListener('DOMContentLoaded', () => {
-        loadProfile();
-
         // Real-time validation
         document.getElementById('fullNameInput').addEventListener('input', validateFullName);
         document.getElementById('emailInput').addEventListener('input', validateEmail);
         document.getElementById('phoneInput').addEventListener('input', validatePhone);
-        document.getElementById('dobInput').addEventListener('input', validateDob);
-        document.getElementById('genderInput').addEventListener('change', validateGender);
-        document.getElementById('roleInput').addEventListener('change', validateRole);
-        document.getElementById('addressInput').addEventListener('input', validateAddress);
-        document.getElementById('languageInput').addEventListener('change', validateLanguage);
 
         // Toggle Edit Mode
         document.querySelector('.edit-button').addEventListener('click', () => {
@@ -1016,19 +1001,43 @@
             document.getElementById('fullNameInput').focus();
         });
 
-        // Handle Avatar Upload Preview
+        // Handle Avatar Upload with Cropping
         document.getElementById('avatarInput').addEventListener('change', (event) => {
             const file = event.target.files[0];
             if (file) {
+                // Validate file type
+                const validTypes = ['image/jpeg', 'image/jpg', 'image/png'];
+                if (!validTypes.includes(file.type)) {
+                    showNotification('Please select a JPG or PNG image file.', 'error');
+                    event.target.value = ''; // Clear the input
+                    return;
+                }
+
+                // Validate file size (max 5MB)
+                if (file.size > 5 * 1024 * 1024) {
+                    showNotification('Image file size should be less than 5MB.', 'error');
+                    event.target.value = ''; // Clear the input
+                    return;
+                }
+
+                currentImageFile = file;
+
                 const reader = new FileReader();
                 reader.onload = (e) => {
-                    const avatar = document.getElementById('avatar');
-                    const avatarPlaceholder = document.getElementById('avatarPlaceholder');
-                    avatar.src = e.target.result;
-                    avatar.classList.remove('hidden');
-                    avatarPlaceholder.classList.add('hidden');
+                    showCropModal(e.target.result);
                 };
                 reader.readAsDataURL(file);
+            }
+        });
+
+        // Crop modal event listeners
+        document.getElementById('confirmCrop').addEventListener('click', confirmCrop);
+        document.getElementById('cancelCrop').addEventListener('click', cancelCrop);
+
+        // Close crop modal when clicking outside
+        document.getElementById('cropModal').addEventListener('click', (e) => {
+            if (e.target.id === 'cropModal') {
+                cancelCrop();
             }
         });
 
@@ -1036,63 +1045,111 @@
         document.querySelector('.save-button').addEventListener('click', async () => {
             let isValid = true;
 
+            // Validate all required fields
             if (!validateFullName()) isValid = false;
             if (!validateEmail()) isValid = false;
             if (!validatePhone()) isValid = false;
-            if (!validateDob()) isValid = false;
-            if (!validateGender()) isValid = false;
-            if (!validateRole()) isValid = false;
-            if (!validateAddress()) isValid = false;
-            if (!validateLanguage()) isValid = false;
 
             if (!isValid) {
                 showNotification('Please correct the errors in the form.', 'error');
                 return;
             }
 
-            const profileData = {
-                fullName: document.getElementById('fullNameInput').value.trim(),
-                email: document.getElementById('emailInput').value.trim(),
-                phone: document.getElementById('phoneInput').value.trim(),
-                role: document.getElementById('roleInput').value,
-                dob: document.getElementById('dobInput').value,
-                gender: document.getElementById('genderInput').value,
-                address: document.getElementById('addressInput').value.trim(),
-                language: document.getElementById('languageInput').value,
-                avatar: document.getElementById('avatar').src || null
-            };
+            try {
+                // Show loading state
+                const saveButton = document.querySelector('.save-button');
+                const originalText = saveButton.textContent;
+                saveButton.textContent = 'Saving...';
+                saveButton.disabled = true;
 
-            await saveProfile(profileData);
+                // Prepare FormData for multipart/form-data (includes file upload)
+                const formData = new FormData();
+                formData.append('fullName', document.getElementById('fullNameInput').value.trim());
+                formData.append('email', document.getElementById('emailInput').value.trim());
+                formData.append('phoneNumber', document.getElementById('phoneInput').value.trim());
 
-            // Update display
-            document.getElementById('fullName').textContent = profileData.fullName;
-            document.getElementById('email').textContent = profileData.email;
-            document.getElementById('phone').textContent = profileData.phone;
-            document.getElementById('role').textContent = profileData.role;
-            document.getElementById('dob').textContent = profileData.dob ? new Date(profileData.dob).toLocaleDateString('en-GB') : '';
-            document.getElementById('gender').textContent = profileData.gender;
-            document.getElementById('address').textContent = profileData.address;
-            document.getElementById('language').textContent = profileData.language === 'en' ? 'English' : 'Vietnamese';
+                // Add avatar file if exists
+                const avatarInput = document.getElementById('avatarInput');
+                if (avatarInput.files[0]) {
+                    formData.append('avatarFile', avatarInput.files[0]);
+                }
 
-            // Exit edit mode
-            document.querySelectorAll('.form-group p').forEach(p => p.classList.remove('hidden'));
-            document.querySelectorAll('.form-group input, .form-group select').forEach(input => input.classList.add('hidden'));
-            document.getElementById('avatarInput').classList.add('hidden');
-            document.getElementById('profileActions').classList.add('hidden');
-            document.querySelector('.edit-button').classList.remove('hidden');
+                // Send update request to server
+                const response = await fetch('/receptionist/api/profile/update', {
+                    method: 'POST',
+                    headers: {
+                        'X-Requested-With': 'XMLHttpRequest'
+                    },
+                    body: formData // Use FormData instead of JSON for file upload
+                });
+
+                if (response.ok) {
+                    const result = await response.json();
+                    showNotification('Profile updated successfully!', 'success');
+
+                    // Update display with new data
+                    document.getElementById('fullName').textContent = formData.get('fullName');
+                    document.getElementById('email').textContent = formData.get('email');
+                    document.getElementById('phone').textContent = formData.get('phoneNumber');
+
+                    // Update avatar URLs if new avatar was uploaded
+                    if (result.avatarUrl) {
+                        const avatar = document.getElementById('avatar');
+                        const headerAvatar = document.getElementById('headerAvatar');
+                        const avatarPlaceholder = document.getElementById('avatarPlaceholder');
+
+                        avatar.src = result.avatarUrl;
+                        headerAvatar.src = result.avatarUrl;
+                        avatar.classList.remove('hidden');
+                        avatarPlaceholder.classList.add('hidden');
+
+                        // Clear the file input since image is now saved
+                        avatarInput.value = '';
+                    }
+
+                    // Exit edit mode
+                    document.querySelectorAll('.form-group p').forEach(p => p.classList.remove('hidden'));
+                    document.querySelectorAll('.form-group input, .form-group select').forEach(input => input.classList.add('hidden'));
+                    document.getElementById('avatarInput').classList.add('hidden');
+                    document.getElementById('profileActions').classList.add('hidden');
+                    document.querySelector('.edit-button').classList.remove('hidden');
+
+                } else {
+                    const error = await response.text();
+                    showNotification(`Error updating profile: ${error}`, 'error');
+                }
+
+                // Restore button state
+                saveButton.textContent = originalText;
+                saveButton.disabled = false;
+
+            } catch (error) {
+                console.error('Error saving profile:', error);
+                showNotification('Error saving profile data. Please try again.', 'error');
+
+                // Restore button state
+                const saveButton = document.querySelector('.save-button');
+                saveButton.textContent = 'Save Changes';
+                saveButton.disabled = false;
+            }
         });
 
         // Cancel Edit
         document.querySelector('.cancel-button').addEventListener('click', () => {
-            loadProfile();
-
             // Reset validation styles
             document.querySelectorAll('.form-group input, .form-group select').forEach(input => {
                 input.classList.remove('is-invalid');
             });
+
+            // Hide error messages
             document.querySelectorAll('.error-message').forEach(error => {
                 error.style.display = 'none';
             });
+
+            // Reset form values to original
+            document.getElementById('fullNameInput').value = document.getElementById('fullName').textContent;
+            document.getElementById('emailInput').value = document.getElementById('email').textContent;
+            document.getElementById('phoneInput').value = document.getElementById('phone').textContent;
 
             // Exit edit mode
             document.querySelectorAll('.form-group p').forEach(p => p.classList.remove('hidden'));
@@ -1102,6 +1159,158 @@
             document.querySelector('.edit-button').classList.remove('hidden');
         });
     });
+
+    // Enhanced validation functions
+    function validateFullName() {
+        const input = document.getElementById('fullNameInput');
+        const error = document.getElementById('fullNameError');
+        const value = input.value.trim();
+
+        // Full name is required and must be at least 2 characters
+        const isValid = value.length >= 2 && /^[a-zA-ZÀ-ỹ\s]+$/.test(value);
+
+        if (isValid) {
+            input.classList.remove('is-invalid');
+            error.style.display = 'none';
+            error.textContent = 'Full Name is required.';
+        } else {
+            input.classList.add('is-invalid');
+            error.style.display = 'block';
+            if (value.length === 0) {
+                error.textContent = 'Full Name is required.';
+            } else if (value.length < 2) {
+                error.textContent = 'Full Name must be at least 2 characters.';
+            } else {
+                error.textContent = 'Full Name can only contain letters and spaces.';
+            }
+        }
+        return isValid;
+    }
+
+    function validateEmail() {
+        const input = document.getElementById('emailInput');
+        const error = document.getElementById('emailError');
+        const value = input.value.trim();
+
+        // Email is optional but if provided must be valid format
+        const isValid = value === '' || /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value);
+
+        if (isValid) {
+            input.classList.remove('is-invalid');
+            error.style.display = 'none';
+        } else {
+            input.classList.add('is-invalid');
+            error.style.display = 'block';
+            error.textContent = 'Please enter a valid email address.';
+        }
+        return isValid;
+    }
+
+    function validatePhone() {
+        const input = document.getElementById('phoneInput');
+        const error = document.getElementById('phoneError');
+        const value = input.value.trim();
+
+        // Phone number is required and must be exactly 10 digits (Vietnamese format)
+        const isValid = /^(0[3|5|7|8|9])+([0-9]{8})$/.test(value);
+
+        if (isValid) {
+            input.classList.remove('is-invalid');
+            error.style.display = 'none';
+        } else {
+            input.classList.add('is-invalid');
+            error.style.display = 'block';
+            if (value.length === 0) {
+                error.textContent = 'Phone Number is required.';
+            } else {
+                error.textContent = 'Please enter a valid Vietnamese phone number (10 digits starting with 03, 05, 07, 08, or 09).';
+            }
+        }
+        return isValid;
+    }
+
+    // Image cropping functions
+    function showCropModal(imageSrc) {
+        const modal = document.getElementById('cropModal');
+        const cropImage = document.getElementById('cropImage');
+
+        cropImage.src = imageSrc;
+        modal.style.display = 'flex';
+
+        // Initialize cropper
+        if (cropper) {
+            cropper.destroy();
+        }
+
+        cropper = new Cropper(cropImage, {
+            aspectRatio: 1,
+            viewMode: 1,
+            autoCropArea: 0.8,
+            responsive: true,
+            background: false,
+            guides: true,
+            center: true,
+            highlight: false,
+            cropBoxMovable: true,
+            cropBoxResizable: true,
+            toggleDragModeOnDblclick: false,
+        });
+    }
+
+    function confirmCrop() {
+        if (cropper) {
+            const canvas = cropper.getCroppedCanvas({
+                width: 300,
+                height: 300,
+                imageSmoothingEnabled: true,
+                imageSmoothingQuality: 'high',
+            });
+
+            // Convert to blob and update avatar
+            canvas.toBlob((blob) => {
+                const url = URL.createObjectURL(blob);
+                const avatar = document.getElementById('avatar');
+                const avatarPlaceholder = document.getElementById('avatarPlaceholder');
+                const headerAvatar = document.getElementById('headerAvatar');
+
+                // First hide placeholder, then show avatar
+                avatarPlaceholder.style.display = 'none';
+                avatarPlaceholder.classList.add('hidden');
+
+                // Set avatar source and show it
+                avatar.src = url;
+                avatar.style.display = 'block';
+                avatar.classList.remove('hidden');
+
+                // Update header avatar as well
+                headerAvatar.src = url;
+
+                // Store the cropped image for upload
+                const file = new File([blob], 'avatar.jpg', { type: 'image/jpeg' });
+                const dataTransfer = new DataTransfer();
+                dataTransfer.items.add(file);
+                document.getElementById('avatarInput').files = dataTransfer.files;
+
+                closeCropModal();
+            }, 'image/jpeg', 0.9);
+        }
+    }
+
+    function cancelCrop() {
+        closeCropModal();
+        // Clear the file input
+        document.getElementById('avatarInput').value = '';
+    }
+
+    function closeCropModal() {
+        const modal = document.getElementById('cropModal');
+        modal.style.display = 'none';
+
+        if (cropper) {
+            cropper.destroy();
+            cropper = null;
+        }
+    }
 </script>
 </body>
 </html>
