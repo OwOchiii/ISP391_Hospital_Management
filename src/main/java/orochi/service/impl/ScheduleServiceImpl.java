@@ -405,4 +405,16 @@ public class ScheduleServiceImpl implements ScheduleService {
     public List<Patient> getAllPatients() {
         return patientRepository.findAll();
     }
+
+    @Override
+    public List<Doctor> findDoctorsByRoom(Integer roomId) {
+        List<Integer> usedIds = scheduleRepository
+                .findDistinctDoctorIdsByRoomId(roomId);
+        if (usedIds.isEmpty()) {
+            return doctorRepository.findAll();
+        } else {
+            return doctorRepository.findAllById(usedIds);
+        }
+    }
+
 }
