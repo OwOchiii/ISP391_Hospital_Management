@@ -164,4 +164,70 @@ public interface ScheduleRepository extends JpaRepository<Schedule, Integer>,Jpa
 
     @Query("SELECT COUNT(s) FROM Schedule s WHERE s.endTime = :endTime AND s.scheduleDate BETWEEN :startDate AND :endDate")
     long countByEndTimeAndDateRange(@Param("endTime") LocalTime endTime, @Param("startDate") LocalDate startDate, @Param("endDate") LocalDate endDate);
+
+    // thêm vào ScheduleRepository
+    @Query(value =
+            "SELECT * " +
+                    "FROM Schedule " +
+                    "WHERE RoomID        = :roomId " +
+                    "  AND EventType     = :eventType " +
+                    "  AND ScheduleDate  = :scheduleDate " +
+                    "  AND CONVERT(time, startTime) = :startTime",
+            nativeQuery = true
+    )
+    List<Schedule> findByRoomIdAndEventTypeAndScheduleDateAndStartTime(
+            @Param("roomId")        Integer   roomId,
+            @Param("eventType")     String    eventType,
+            @Param("scheduleDate")  LocalDate scheduleDate,
+            @Param("startTime")     LocalTime startTime
+    );
+
+
+    @Query("SELECT DISTINCT s.doctorId FROM Schedule s WHERE s.roomId = :roomId")
+    List<Integer> findDistinctDoctorIdsByRoomId(@Param("roomId") Integer roomId);
+
+    List<Schedule> findByRoomIdAndScheduleDateAndStartTime(
+            Integer roomId,
+            LocalDate scheduleDate,
+            LocalTime startTime
+    );
+
+    List<Schedule> findByRoomIdAndScheduleDate(Integer roomId, LocalDate scheduleDate);
+
+    List<Schedule> findByRoomIdAndEventTypeAndScheduleDate(
+            Integer roomId,
+            String eventType,
+            LocalDate scheduleDate
+    );
+
+    @Query(
+            value = "SELECT * "
+                    + "FROM Schedule "
+                    + "WHERE RoomID    = :roomId "
+                    + "  AND EventType = :eventType "
+                    + "  AND CONVERT(time, startTime) = :startTime",
+            nativeQuery = true
+    )
+    List<Schedule> findByRoomIdAndEventTypeAndStartTime(
+            @Param("roomId")    Integer   roomId,
+            @Param("eventType") String    eventType,
+            @Param("startTime") LocalTime startTime
+    );
+
+    List<Schedule> findByRoomIdAndEventType(Integer roomId, String eventType);
+
+    @Query(
+            value = "SELECT * "
+                    + "FROM Schedule "
+                    + "WHERE RoomID = :roomId "
+                    + "  AND CONVERT(time, startTime) = :shiftStart "
+                    + "ORDER BY ScheduleDate",
+            nativeQuery = true
+    )
+    List<Schedule> findHistoryByRoomAndShift(
+            @Param("roomId")     Integer   roomId,
+            @Param("shiftStart") String    shiftStart
+    );
+
+    List<Schedule> findByScheduleDate(LocalDate scheduleDate);
 }

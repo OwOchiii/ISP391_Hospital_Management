@@ -154,7 +154,7 @@ public interface ScheduleService {
         public void setCompletedSchedules(Integer completedSchedules) {
             this.completedSchedules = completedSchedules;
         }
-
-
     }
+
+    List<Doctor> findDoctorsByRoom(Integer roomId);
 }
