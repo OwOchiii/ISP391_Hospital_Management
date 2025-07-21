@@ -1,5 +1,6 @@
 package orochi.service.impl;
 
+import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -41,6 +42,9 @@ public class ReceptionistService {
 
     @Autowired
     private TransactionRepository transactionRepository;
+
+    @Autowired
+    private MedicalServiceRepository medicalServiceRepository;
 
     public ReceptionistService(
             UserRepository userRepository,
@@ -1919,197 +1923,305 @@ public class ReceptionistService {
 
     /**
      * Get services used by a patient for a specific appointment
+     * Fetches REAL data from Service and Specialization tables according to user requirements:
+     * - Service ID: lấy theo [ServiceID] trong bảng Service
+     * - Service Name: lấy theo [ServiceName] trong bảng Service
+     * - Symptom: lấy theo Symptom trong bảng Specialization
+     * - Quantity: lấy theo count Service Name trong bảng Service
+     * - Price: lấy theo [Price] trong bảng Service
      */
     private List<Map<String, Object>> getServicesUsedByPatient(Integer patientId, Appointment appointment) {
         List<Map<String, Object>> services = new ArrayList<>();
 
         try {
-            // For now, return a default service list with all required properties
-            // In a real implementation, this would query the Service table based on appointment
-            Map<String, Object> defaultService = new HashMap<>();
+            logger.info("=== GETTING REAL SERVICES DATA FROM DATABASE ===");
+            logger.info("PatientID: {}, AppointmentID: {}", patientId,
+                       appointment != null ? appointment.getAppointmentId() : "NULL");
 
-            // All properties that the template expects
-            defaultService.put("serviceId", "SRV001");
-            defaultService.put("serviceName", "General Consultation");
-            defaultService.put("symptom", "General Medicine");
-            defaultService.put("quantity", 1);
-            defaultService.put("price", 100.0);
-            defaultService.put("taxPercent", 10);
-            defaultService.put("total", 110.0); // price + tax
-            defaultService.put("date", java.time.LocalDate.now().toString());
+            List<Map<String, Object>> rawServiceData = null;
 
-            // Legacy properties for backward compatibility
-            defaultService.put("servicePrice", 100.0);
+            if (appointment != null && appointment.getDoctor() != null &&
+                !appointment.getDoctor().getSpecializations().isEmpty()) {
 
-            services.add(defaultService);
+                // Get the first specialization of the doctor
+                Specialization specialization = appointment.getDoctor().getSpecializations().get(0);
+                Integer specId = specialization.getSpecId();
 
-            logger.info("Retrieved {} services for patient {}", services.size(), patientId);
+                logger.info("Doctor has specialization: {} (SpecID: {})",
+                           specialization.getSpecName(), specId);
+
+                // Get services with specialization data from database
+                rawServiceData = medicalServiceRepository.getServicesWithSpecializationBySpecId(specId);
+                logger.info("Found {} services for SpecID: {}", rawServiceData.size(), specId);
+
+            } else {
+                logger.info("No doctor/specialization found, getting default services");
+                // Get default general consultation service
+                rawServiceData = medicalServiceRepository.getDefaultGeneralConsultationService();
+
+                if (rawServiceData.isEmpty()) {
+                    // Fallback to all services if no default found
+                    rawServiceData = medicalServiceRepository.getAllServicesWithSpecialization();
+                    logger.info("No default service found, got {} services from all services", rawServiceData.size());
+                }
+            }
+
+            // Process the raw service data according to user requirements
+            if (!rawServiceData.isEmpty()) {
+                for (Map<String, Object> rawService : rawServiceData) {
+                    Map<String, Object> serviceData = new HashMap<>();
+
+                    // Service ID: lấy theo [ServiceID] trong bảng Service
+                    Object serviceId = rawService.get("serviceId");
+                    serviceData.put("serviceId", serviceId != null ? serviceId.toString() : "SRV001");
+
+                    // Service Name: lấy theo [ServiceName] trong bảng Service
+                    String serviceName = (String) rawService.get("serviceName");
+                    serviceData.put("serviceName", serviceName != null ? serviceName : "General Consultation");
+
+                    // Symptom: lấy theo Symptom trong bảng Specialization
+                    String symptom = (String) rawService.get("symptom");
+                    serviceData.put("symptom", symptom != null ? symptom : "General Medicine");
+
+                    // Quantity: lấy theo count Service Name trong bảng Service
+                    // For now, default to 1, but we can implement actual count logic
+                    Long serviceCount = medicalServiceRepository.countByServiceName(serviceName);
+                    serviceData.put("quantity", serviceCount != null && serviceCount > 0 ? serviceCount.intValue() : 1);
+
+                    // Price: lấy theo [Price] trong bảng Service
+                    Object priceObj = rawService.get("price");
+                    Double servicePrice = 100.0; // Default price
+                    if (priceObj != null) {
+                        if (priceObj instanceof Number) {
+                            servicePrice = ((Number) priceObj).doubleValue();
+                        } else {
+                            try {
+                                servicePrice = Double.parseDouble(priceObj.toString());
+                            } catch (NumberFormatException e) {
+                                logger.warn("Could not parse price: {}, using default", priceObj);
+                            }
+                        }
+                    }
+                    serviceData.put("price", servicePrice);
+
+                    // Tax percentage (standard 10%)
+                    serviceData.put("taxPercent", 10);
+
+                    // Total = price * quantity * (1 + tax%)
+                    Integer quantity = (Integer) serviceData.get("quantity");
+                    Double total = servicePrice * quantity * 1.1; // Include 10% tax
+                    serviceData.put("total", total);
+
+                    // Date - appointment date or current date
+                    String serviceDate = appointment != null ?
+                        appointment.getDateTime().toLocalDate().toString() :
+                        java.time.LocalDate.now().toString();
+                    serviceData.put("date", serviceDate);
+
+                    services.add(serviceData);
+
+                    logger.info("✅ Processed service: ID={}, Name={}, Symptom={}, Price={}, Quantity={}, Total={}",
+                               serviceId, serviceName, symptom, servicePrice, quantity, total);
+                }
+            }
+
+            // If no services found from database, add a fallback default service
+            if (services.isEmpty()) {
+                logger.warn("No services found in database, adding fallback default service");
+                Map<String, Object> defaultService = createDefaultService(appointment);
+                services.add(defaultService);
+            }
+
+            logger.info("=== FINAL SERVICES DATA ===");
+            logger.info("Total services returned: {}", services.size());
+
         } catch (Exception e) {
-            logger.error("Error fetching services for patient {}: {}", patientId, e.getMessage());
+            logger.error("Error fetching services from database for patient {}: {}", patientId, e.getMessage(), e);
+
+            // Fallback to default service on error
+            logger.info("Adding fallback service due to error");
+            Map<String, Object> defaultService = createDefaultService(appointment);
+            services.add(defaultService);
         }
 
         return services;
     }
 
     /**
-     * Calculate total amount from services list
+     * Create a default service when no services are found in database
      */
-    private double calculateTotalFromServices(List<Map<String, Object>> services) {
-        double total = 0.0;
+    private Map<String, Object> createDefaultService(Appointment appointment) {
+        Map<String, Object> defaultService = new HashMap<>();
 
+        // Default values according to user requirements
+        defaultService.put("serviceId", "SRV001");
+        defaultService.put("serviceName", "General Consultation");
+        defaultService.put("symptom", "General Medicine");
+        defaultService.put("quantity", 1);
+        defaultService.put("price", 100.0);
+        defaultService.put("taxPercent", 10);
+        defaultService.put("total", 110.0); // 100 + 10% tax
+
+        String serviceDate = appointment != null ?
+            appointment.getDateTime().toLocalDate().toString() :
+            java.time.LocalDate.now().toString();
+        defaultService.put("date", serviceDate);
+
+        logger.info("Created default service with total: {}", defaultService.get("total"));
+        return defaultService;
+    }
+
+    /**
+     * Helper method to get services by specialization - now uses real database data
+     */
+    private List<MedicalService> getServicesBySpecialization(Integer specId) {
         try {
-            for (Map<String, Object> service : services) {
-                Object totalObj = service.get("total");
-                if (totalObj != null) {
+            if (specId != null) {
+                List<MedicalService> services = medicalServiceRepository.findBySpecId(specId);
+                logger.info("Found {} MedicalService entities for SpecID: {}", services.size(), specId);
+                return services;
+            }
+        } catch (Exception e) {
+            logger.error("Error fetching MedicalService by SpecID {}: {}", specId, e.getMessage());
+        }
+        return new ArrayList<>();
+    }
+
+    /**
+     * Calculate total from services for financial calculations
+     */
+    private double calculateTotalFromServices(List<Map<String, Object>> servicesUsed) {
+        if (servicesUsed == null || servicesUsed.isEmpty()) {
+            return 0.0;
+        }
+
+        double total = 0.0;
+        for (Map<String, Object> service : servicesUsed) {
+            Object totalObj = service.get("total");
+            if (totalObj != null) {
+                try {
                     if (totalObj instanceof Number) {
                         total += ((Number) totalObj).doubleValue();
                     } else {
                         total += Double.parseDouble(totalObj.toString());
                     }
+                } catch (NumberFormatException e) {
+                    logger.warn("Could not parse service total: {}", totalObj);
                 }
             }
-        } catch (Exception e) {
-            logger.error("Error calculating total from services: {}", e.getMessage());
-            // Return default amount if calculation fails
-            total = 100.0;
         }
-
         return total;
     }
 
     /**
-     * Process payment for an appointment
-     * Updates existing transaction record instead of creating new one to avoid duplicates
+     * Process payment for cash transactions
+     * Updates transaction status from Pending to Paid and creates/updates receipt
      */
     @Transactional
-    public Map<String, Object> processPayment(
-            Integer patientId,
-            Integer appointmentId,
-            String transactionIdStr,
-            String receiptIdStr,
-            String method,
-            Double totalAmount,
-            Double amountReceived,
-            String notes,
-            Integer issuerId) {
-
+    public Map<String, Object> processPayment(Integer patientId, Integer appointmentId, String transactionIdStr,
+                                            String receiptIdStr, String method, Double totalAmount,
+                                            Double amountReceived, String notes, Integer issuerId) {
         try {
-            logger.info("Processing payment for appointment {} with method {}", appointmentId, method);
+            logger.info("=== PROCESSING PAYMENT ===");
+            logger.info("PatientId: {}, AppointmentId: {}, Method: {}, Amount: {}",
+                       patientId, appointmentId, method, totalAmount);
 
-            // Validate appointment exists
-            Optional<Appointment> appointmentOpt = appointmentRepository.findById(appointmentId);
-            if (!appointmentOpt.isPresent()) {
-                throw new RuntimeException("Appointment not found with ID: " + appointmentId);
-            }
-
-            Appointment appointment = appointmentOpt.get();
-
-            // Find a receptionist user (RoleID = 3) to set as ProcessedByUserID
-            Integer processedByUserId = null;
-            try {
-                // Get the first active user with RoleID = 3 (Receptionist)
-                List<Users> receptionistUsers = userRepository.findByRoleIdAndStatus(3, "Active");
-                if (!receptionistUsers.isEmpty()) {
-                    processedByUserId = receptionistUsers.get(0).getUserId();
-                    logger.info("Found receptionist user for ProcessedByUserID: {}", processedByUserId);
-                } else {
-                    logger.warn("No active receptionist users found, ProcessedByUserID will be null");
-                }
-            } catch (Exception e) {
-                logger.error("Error finding receptionist user: {}", e.getMessage());
-            }
-
-            // FIRST: Try to find existing transaction for this appointment
+            // Find the transaction by appointmentId and userId (more reliable than transactionId string)
+            List<Transaction> transactions = transactionRepository.findByAppointmentId(appointmentId);
             Transaction transaction = null;
-            List<Transaction> existingTransactions = transactionRepository.findByAppointmentId(appointmentId);
 
-            if (!existingTransactions.isEmpty()) {
-                // Use existing transaction (update it)
-                transaction = existingTransactions.get(0);
-                logger.info("Found existing transaction with ID: {} for appointment {}",
-                           transaction.getTransactionId(), appointmentId);
-            } else {
-                // Only create new transaction if none exists
-                logger.info("No existing transaction found, creating new one for appointment {}", appointmentId);
-                transaction = new Transaction();
-                transaction.setAppointmentId(appointmentId);
-                transaction.setUserId(patientId);
+            // Get patient to verify userId
+            Optional<Patient> patientOptional = patientRepository.findById(patientId);
+            if (patientOptional.isEmpty()) {
+                throw new RuntimeException("Patient not found with ID: " + patientId);
+            }
+            Patient patient = patientOptional.get();
+            Integer userId = patient.getUser().getUserId();
+
+            // Find transaction matching both appointmentId and userId
+            for (Transaction t : transactions) {
+                if (t.getUserId().equals(userId)) {
+                    transaction = t;
+                    break;
+                }
             }
 
-            // Update transaction details (whether existing or new)
-            transaction.setMethod(method);
-            transaction.setTimeOfPayment(java.time.LocalDateTime.now());
+            if (transaction == null) {
+                throw new RuntimeException("Transaction not found for appointment: " + appointmentId + " and user: " + userId);
+            }
+
+            logger.info("Found transaction: {} with current status: {}", transaction.getTransactionId(), transaction.getStatus());
+
+            // Update transaction status and details
             transaction.setStatus("Paid");
+            transaction.setMethod(method);
+            transaction.setProcessedByUserId(issuerId);
+            transaction.setTimeOfPayment(java.time.LocalDateTime.now());
 
-            // Set ProcessedByUserID to receptionist user (RoleID = 3)
-            if (processedByUserId != null) {
-                transaction.setProcessedByUserId(processedByUserId);
-                logger.info("Set ProcessedByUserID to receptionist: {}", processedByUserId);
-            }
-
-            // Store payment details in refundReason field for later retrieval
-            if (amountReceived != null && notes != null) {
-                String paymentDetails = String.format("Amount Received: $%.2f | Notes: %s", amountReceived, notes);
+            // Store payment details in refundReason field for cash payments
+            if ("Cash".equals(method) && amountReceived != null) {
+                String paymentDetails = String.format("Amount Received: $%.2f | Notes: %s",
+                                                     amountReceived, notes != null ? notes : "Payment completed successfully");
                 transaction.setRefundReason(paymentDetails);
-            }
-
-            // Save transaction (update existing or create new)
-            transaction = transactionRepository.save(transaction);
-            logger.info("Saved/Updated transaction with ID: {} and ProcessedByUserID: {}",
-                       transaction.getTransactionId(), transaction.getProcessedByUserId());
-
-            // Handle receipt - check if receipt already exists for this transaction
-            Receipt receipt = null;
-            if (transaction.getReceipt() != null) {
-                // Update existing receipt
-                receipt = transaction.getReceipt();
-                logger.info("Found existing receipt with ID: {} for transaction {}",
-                           receipt.getReceiptId(), transaction.getTransactionId());
             } else {
-                // Create new receipt only if none exists
-                logger.info("No existing receipt found, creating new one for transaction {}",
-                           transaction.getTransactionId());
-                receipt = new Receipt();
-                receipt.setTransactionId(transaction.getTransactionId());
-                receipt.setReceiptNumber("RCP-" + System.currentTimeMillis());
-                receipt.setIssuedDate(java.time.LocalDate.now());
-                receipt.setFormat("Digital");
+                transaction.setRefundReason(notes != null ? notes : "Payment completed successfully");
             }
 
-            // Update receipt details
+            // Save transaction
+            Transaction savedTransaction = transactionRepository.save(transaction);
+            logger.info("✅ Transaction {} updated to Paid status", savedTransaction.getTransactionId());
+
+            // Create or update receipt
+            Receipt receipt = transaction.getReceipt();
+            if (receipt == null) {
+                receipt = new Receipt();
+                receipt.setTransactionId(savedTransaction.getTransactionId());
+                receipt.setIssuedDate(java.time.LocalDate.now());
+                receipt.setIssuerId(issuerId);
+
+                // Set required fields that cannot be NULL
+                receipt.setReceiptNumber("REC" + savedTransaction.getTransactionId() + "_" + System.currentTimeMillis());
+
+                // 🔥 FIX: Use "Digital" instead of "PDF" to match CHECK constraint
+                receipt.setFormat("Digital"); // Valid values: 'Digital', 'Print', 'Both'
+
+                receipt.setPdfPath(""); // Empty string instead of NULL
+
+                // Calculate tax amount (10% of total amount)
+                BigDecimal taxAmount = BigDecimal.valueOf(totalAmount * 0.1);
+                receipt.setTaxAmount(taxAmount);
+
+                // Set discount amount (default 0.0 for cash payments)
+                receipt.setDiscountAmount(BigDecimal.ZERO);
+            }
+
+            // Update receipt amount and details
             receipt.setTotalAmount(java.math.BigDecimal.valueOf(totalAmount));
-            receipt.setNotes(notes);
-            receipt.setTaxAmount(java.math.BigDecimal.ZERO); // Default to zero, can be calculated if needed
-            receipt.setDiscountAmount(java.math.BigDecimal.ZERO); // Default to zero
-            receipt.setIssuerId(issuerId);
+            receipt.setNotes(notes != null ? notes : "Payment completed successfully");
 
-            // Save receipt (update existing or create new)
-            receipt = receiptRepository.save(receipt);
-            logger.info("Saved/Updated receipt with ID: {} and issuer ID: {}", receipt.getReceiptId(), issuerId);
+            // Save receipt
+            Receipt savedReceipt = receiptRepository.save(receipt);
+            logger.info("✅ Receipt {} created/updated with amount: {}", savedReceipt.getReceiptId(), savedReceipt.getTotalAmount());
 
-            // Update appointment status to Completed (valid status per database constraint)
-            appointment.setStatus("Completed");
-            appointmentRepository.save(appointment);
-            logger.info("Updated appointment {} status to Completed", appointmentId);
+            // Update transaction with receipt reference
+            savedTransaction.setReceipt(savedReceipt);
+            transactionRepository.save(savedTransaction);
 
-            logger.info("Payment processed successfully. Transaction ID: {}, Receipt ID: {}, ProcessedBy: {}",
-                       transaction.getTransactionId(), receipt.getReceiptId(), processedByUserId);
+            // Prepare response
+            Map<String, Object> response = new HashMap<>();
+            response.put("success", true);
+            response.put("transactionId", savedTransaction.getTransactionId());
+            response.put("receiptId", savedReceipt.getReceiptId());
+            response.put("status", "Paid");
+            response.put("method", method);
+            response.put("timeOfPayment", savedTransaction.getTimeOfPayment().toString());
+            response.put("processedBy", issuerId);
 
-            // Return result map
-            Map<String, Object> result = new HashMap<>();
-            result.put("transactionId", transaction.getTransactionId());
-            result.put("receiptId", receipt.getReceiptId());
-            result.put("status", "Paid");
-            result.put("timeOfPayment", transaction.getTimeOfPayment());
-            result.put("receiptNumber", receipt.getReceiptNumber());
-            result.put("processedByUserId", processedByUserId);
-            result.put("success", true);
-            result.put("message", "Payment processed successfully");
-
-            return result;
+            logger.info("✅ Payment processing completed successfully");
+            return response;
 
         } catch (Exception e) {
-            logger.error("Error processing payment: {}", e.getMessage(), e);
+            logger.error("❌ Error processing payment: {}", e.getMessage(), e);
             throw new RuntimeException("Failed to process payment: " + e.getMessage());
         }
     }

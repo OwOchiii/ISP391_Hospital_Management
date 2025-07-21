@@ -199,14 +199,23 @@
                 </tr>
                 </thead>
                 <tbody>
+                <!-- Data will be populated from Service and Specialization tables -->
                 <tr th:each="service : ${invoiceData.servicesUsed}">
+                    <!-- Service ID from Service table [ServiceID] -->
                     <td class="py-3 px-4" th:text="${service.serviceId}">SRV001</td>
-                    <td class="py-3 px-4" th:text="${service.serviceName}"></td>
+                    <!-- Service Name from Service table [ServiceName] -->
+                    <td class="py-3 px-4" th:text="${service.serviceName}">General Consultation</td>
+                    <!-- Symptom from Specialization table [Symptom] based on SpecID -->
                     <td class="py-3 px-4" th:text="${service.symptom}">General Medicine</td>
+                    <!-- Quantity: count of Service Name occurrences -->
                     <td class="py-3 px-4" th:text="${service.quantity}">1</td>
+                    <!-- Price from Service table [Price] -->
                     <td class="py-3 px-4" th:text="${#numbers.formatDecimal(service.price, 0, 0)}">300,000</td>
+                    <!-- Tax percentage (10% standard) -->
                     <td class="py-3 px-4" th:text="${service.taxPercent}">10</td>
+                    <!-- Total = Price * Quantity * (1 + Tax%) -->
                     <td class="py-3 px-4 font-semibold" th:text="${#numbers.formatDecimal(service.total, 0, 0)}">330,000</td>
+                    <!-- Service date -->
                     <td class="py-3 px-4" th:text="${service.date}">2025-07-15</td>
                 </tr>
                 <tr class="font-semibold bg-blue-50">
@@ -569,58 +578,295 @@
         });
     }
 
+    // Updated payment button click handler - Streamlined validation and confirmation flow
+    paymentButton.addEventListener('click', async () => {
+        console.log('=== PAYMENT FLOW INITIATED ===');
+
+        // Reset all error states
+        resetValidationErrors();
+
+        // Get payment amount and validate
+        const amountReceived = parseFloat(amountReceivedInput.value) || 0;
+        const patientPayment = window.calculatedPatientPayment || 0;
+
+        console.log('Payment validation:', {
+            amountReceived,
+            patientPayment,
+            isValid: amountReceived >= patientPayment
+        });
+
+        // Comprehensive validation
+        if (!validatePaymentInput(amountReceived, patientPayment)) {
+            console.log('Payment validation failed - stopping process');
+            return;
+        }
+
+        // Prepare comprehensive payment data
+        const paymentData = {
+            method: 'Cash',
+            amountReceived: amountReceived,
+            change: Math.max(0, amountReceived - patientPayment),
+            patientPayment: patientPayment,
+            receipt: {
+                notes: receiptNotesInput.value.trim() || 'Medical consultation and services'
+            },
+            timestamp: new Date().toISOString()
+        };
+
+        console.log('Payment data prepared:', paymentData);
+
+        // Show confirmation modal
+        showPaymentConfirmation(paymentData);
+    });
+
+    // Payment Flow Step 2: Confirmation Dialog
     function showPaymentConfirmation(paymentData) {
-        // Ensure paymentData exists and has method
+        console.log('=== SHOWING PAYMENT CONFIRMATION ===');
+
         if (!paymentData || !paymentData.method) {
-            console.error('Invalid payment data:', paymentData);
+            console.error('Invalid payment data provided');
             alert('Payment data is invalid. Please try again.');
             return;
         }
 
-        // Update confirmation modal with payment details - with null checks
-        const confirmPatientNameElement = document.getElementById('confirmPatientName');
+        try {
+            // Update confirmation modal with payment details
+            updateConfirmationModal(paymentData);
+
+            // Store payment data for processing
+            window.pendingPaymentData = paymentData;
+
+            // Display confirmation modal
+            paymentConfirmModal.style.display = 'flex';
+            console.log('Payment confirmation modal displayed successfully');
+
+        } catch (error) {
+            console.error('Error showing payment confirmation:', error);
+            alert('Failed to show payment confirmation. Please try again.');
+        }
+    }
+
+    // Payment Flow Step 3: Process Payment after confirmation
+    confirmPaymentBtn.addEventListener('click', async () => {
+        console.log('=== PAYMENT CONFIRMATION ACCEPTED ===');
+
+        // Validate pending payment data
+        if (!window.pendingPaymentData) {
+            console.error('No pending payment data found');
+            alert('No pending payment data found. Please try again.');
+            return;
+        }
+
+        const paymentData = window.pendingPaymentData;
+        console.log('Processing payment with data:', paymentData);
+
+        // Hide confirmation and show processing
+        hidePaymentConfirmation();
+        showProcessingModal();
+
+        try {
+            // Prepare comprehensive API request
+            const requestData = buildPaymentRequest(paymentData);
+            console.log('API request prepared:', requestData);
+
+            // Execute payment processing
+            const result = await processPaymentAPI(requestData);
+            console.log('Payment API success:', result);
+
+            // Handle successful payment
+            await handlePaymentSuccess(result, paymentData);
+
+        } catch (error) {
+            console.error('Payment processing failed:', error);
+            alert(`Payment processing failed: ${error.message}. Please try again.`);
+        } finally {
+            hideProcessingModal();
+        }
+    });
+
+    // Payment Flow Step 4: Success Handling
+    async function handlePaymentSuccess(apiResult, paymentData) {
+        console.log('=== HANDLING PAYMENT SUCCESS ===');
+
+        try {
+            // Update UI to reflect successful payment
+            updateUIAfterPayment(paymentData);
+
+            // Show success popup and handle print/redirect
+            showSuccessPopup(() => {
+                handlePrintAndRedirect();
+            });
+
+        } catch (error) {
+            console.error('Error handling payment success:', error);
+            alert('Payment was processed but there was an error updating the display.');
+        }
+    }
+
+    // === HELPER FUNCTIONS ===
+
+    function resetValidationErrors() {
+        const errorElement = document.getElementById('amountReceivedError');
+        if (errorElement) {
+            errorElement.classList.add('hidden');
+        }
+        amountReceivedInput.classList.remove('border-red-500');
+    }
+
+    function validatePaymentInput(amountReceived, patientPayment) {
+        const errorElement = document.getElementById('amountReceivedError');
+
+        // Check if amount is entered
+        if (amountReceived === 0 || !amountReceivedInput.value.trim()) {
+            showValidationError('Please enter amount received', errorElement);
+            return false;
+        }
+
+        // Check if amount is sufficient
+        if (amountReceived < patientPayment) {
+            showValidationError('Amount must be at least equal to Patient Payment', errorElement);
+            return false;
+        }
+
+        return true;
+    }
+
+    function showValidationError(message, errorElement) {
+        if (errorElement) {
+            errorElement.textContent = message;
+            errorElement.classList.remove('hidden');
+        }
+        amountReceivedInput.classList.add('border-red-500');
+        amountReceivedInput.focus();
+    }
+
+    function updateConfirmationModal(paymentData) {
+        // Update amount
         const confirmAmountElement = document.getElementById('confirmAmount');
-        const confirmMethodElement = document.getElementById('confirmMethod');
-        const confirmCashDetailsElement = document.getElementById('confirmCashDetails');
-        const confirmAmountReceivedElement = document.getElementById('confirmAmountReceived');
-        const confirmChangeElement = document.getElementById('confirmChange');
-
-        // Safe updates with null checks
-        if (confirmPatientNameElement) {
-            confirmPatientNameElement.textContent = invoiceData.patientName || 'N/A';
-        }
-
         if (confirmAmountElement) {
-            confirmAmountElement.textContent = window.calculatedPatientPayment?.toLocaleString('en-US') || '0';
+            confirmAmountElement.textContent = paymentData.patientPayment.toLocaleString('en-US');
         }
 
+        // Update payment method
+        const confirmMethodElement = document.getElementById('confirmMethod');
         if (confirmMethodElement) {
             confirmMethodElement.textContent = paymentData.method;
         }
 
+        // Show cash-specific details
+        const confirmCashDetailsElement = document.getElementById('confirmCashDetails');
         if (paymentData.method === 'Cash' && confirmCashDetailsElement) {
             confirmCashDetailsElement.style.display = 'block';
 
+            const confirmAmountReceivedElement = document.getElementById('confirmAmountReceived');
             if (confirmAmountReceivedElement) {
-                confirmAmountReceivedElement.textContent = paymentData.amountReceived?.toLocaleString('en-US') || '0';
+                confirmAmountReceivedElement.textContent = paymentData.amountReceived.toLocaleString('en-US');
             }
 
+            const confirmChangeElement = document.getElementById('confirmChange');
             if (confirmChangeElement) {
-                confirmChangeElement.textContent = paymentData.change?.toLocaleString('en-US') || '0';
+                confirmChangeElement.textContent = paymentData.change.toLocaleString('en-US');
             }
         } else if (confirmCashDetailsElement) {
             confirmCashDetailsElement.style.display = 'none';
         }
+    }
 
-        paymentConfirmModal.style.display = 'flex';
+    function buildPaymentRequest(paymentData) {
+        return {
+            // Core identifiers
+            patientId: getValidId(invoiceData.userId),
+            appointmentId: getValidId(invoiceData.appointmentId),
 
-        // Store payment data for confirmation with validation
-        window.pendingPaymentData = {
+            // Payment details
             method: paymentData.method,
-            amountReceived: paymentData.amountReceived || null,
-            change: paymentData.change || 0,
-            receipt: paymentData.receipt || { notes: 'Medical consultation and services' }
+            paymentMethod: paymentData.method,
+            amountReceived: paymentData.amountReceived,
+            totalAmount: paymentData.patientPayment,
+            notes: paymentData.receipt.notes,
+
+            // Transaction status
+            status: 'Paid',
+            paymentStatus: 'Paid',
+
+            // Additional data
+            change: paymentData.change,
+            timestamp: paymentData.timestamp,
+            processedBy: invoiceData.issuerId || 'STAFF001',
+            issuerId: invoiceData.issuerId || 'STAFF001'
         };
+    }
+
+    function getValidId(value) {
+        if (!value || value === 'N/A') return null;
+        const numValue = parseInt(value);
+        return isNaN(numValue) ? null : numValue;
+    }
+
+    async function processPaymentAPI(requestData) {
+        const response = await fetch('/receptionist/api/process-payment', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-Requested-With': 'XMLHttpRequest'
+            },
+            body: JSON.stringify(requestData)
+        });
+
+        if (!response.ok) {
+            const errorText = await response.text();
+            throw new Error(`API Error ${response.status}: ${errorText}`);
+        }
+
+        return await response.json();
+    }
+
+    function updateUIAfterPayment(paymentData) {
+        // Update transaction status
+        if (transactionStatusDisplay) {
+            transactionStatusDisplay.textContent = 'Paid';
+            transactionStatusDisplay.className = 'text-green-600 font-semibold';
+        }
+
+        // Update time of payment
+        if (timeOfPaymentDisplay) {
+            timeOfPaymentDisplay.textContent = new Date().toLocaleString('en-GB');
+        }
+
+        // Update amount received and change
+        if (paymentData.method === 'Cash') {
+            amountReceivedInput.value = paymentData.amountReceived;
+            changeReturnedDisplay.textContent = `Change Returned: ${paymentData.change.toLocaleString('en-US')} $`;
+        }
+
+        // Update notes
+        receiptNotesInput.value = paymentData.receipt.notes;
+
+        // Disable payment button
+        paymentButton.disabled = true;
+        paymentButton.textContent = 'Payment Completed';
+        paymentButton.className = 'bg-gray-400 text-white px-8 py-3 rounded-lg cursor-not-allowed flex items-center gap-2 text-sm font-semibold';
+    }
+
+    function handlePrintAndRedirect() {
+        console.log('Handling print and redirect');
+
+        // Set up print event handling
+        const onAfterPrint = () => {
+            window.removeEventListener('afterprint', onAfterPrint);
+            console.log('Print completed, redirecting');
+            window.location.href = '/receptionist/payments';
+        };
+        window.addEventListener('afterprint', onAfterPrint);
+
+        // Trigger print
+        window.print();
+
+        // Fallback redirect
+        setTimeout(() => {
+            window.removeEventListener('afterprint', onAfterPrint);
+            window.location.href = '/receptionist/payments';
+        }, 5000);
     }
 
     function hidePaymentConfirmation() {
@@ -636,281 +882,16 @@
         processingModal.style.display = 'none';
     }
 
-    async function processPaymentToDatabase(paymentData) {
-        try {
-            showProcessingModal();
-
-            const requestData = {
-                patientId: invoiceData.userId && invoiceData.userId !== 'N/A' ? parseInt(invoiceData.userId) : null,
-                appointmentId: invoiceData.appointmentId && invoiceData.appointmentId !== 'N/A' ? parseInt(invoiceData.appointmentId) : 1, // Backend requires non-null appointmentId
-                transactionId: invoiceData.transactionId !== 'N/A' ? invoiceData.transactionId : null,
-                receiptId: invoiceData.receiptId !== 'N/A' ? invoiceData.receiptId : null,
-                receiptNumber: invoiceData.receiptNumber !== 'PENDING' ? invoiceData.receiptNumber : null,
-                method: paymentData.method,
-                paymentMethod: paymentData.method, // Alternative field name
-                amountReceived: paymentData.amountReceived || null,
-                amountPaid: paymentData.amountReceived || window.calculatedPatientPayment || 0,
-                change: paymentData.change || 0,
-                notes: paymentData.receipt ? paymentData.receipt.notes : 'Medical consultation and services',
-                description: paymentData.receipt ? paymentData.receipt.notes : 'Medical consultation and services',
-                totalAmount: window.calculatedPatientPayment || 0,
-                patientPayment: window.calculatedPatientPayment || 0,
-                status: 'Paid',
-                paymentStatus: 'Paid',
-                processedBy: invoiceData.issuerId,
-                staffId: invoiceData.issuerId,
-                timestamp: new Date().toISOString(),
-                paymentDate: new Date().toISOString().split('T')[0],
-                paymentTime: new Date().toLocaleTimeString('en-GB', { hour12: false })
-            };
-
-            console.log('Request Data to Backend:', requestData);
-            console.log('Request Data JSON:', JSON.stringify(requestData, null, 2));
-
-            const response = await fetch('/receptionist/api/process-payment', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'X-Requested-With': 'XMLHttpRequest'
-                },
-                body: JSON.stringify(requestData)
-            });
-
-            hideProcessingModal();
-
-            if (!response.ok) {
-                const errorText = await response.text();
-                throw new Error(`Payment failed: ${errorText}`);
-            }
-
-            const result = await response.json();
-            console.log('Payment successful:', result);
-
-            return result;
-
-        } catch (error) {
-            hideProcessingModal();
-            console.error('Error processing payment:', error);
-            throw error;
-        }
-    }
-
-    // Updated payment button click handler - Fixed for Cash-only payment
-    paymentButton.addEventListener('click', async () => {
-        let hasErrors = false;
-
-        // Reset error states - Only check amountReceivedError since paymentMethodError doesn't exist anymore
-        const amountReceivedError = document.getElementById('amountReceivedError');
-        if (amountReceivedError) {
-            amountReceivedError.classList.add('hidden');
-        }
-        amountReceivedInput.classList.remove('border-red-500');
-
-        // Since payment method is always "Cash", only validate Amount Received
-        const amountReceived = parseFloat(amountReceivedInput.value) || 0;
-        const patientPayment = window.calculatedPatientPayment || 0;
-
-        if (amountReceived === 0 || !amountReceivedInput.value) {
-            if (amountReceivedError) {
-                amountReceivedError.textContent = 'Please enter amount received';
-                amountReceivedError.classList.remove('hidden');
-            }
-            amountReceivedInput.classList.add('border-red-500');
-            hasErrors = true;
-        } else if (amountReceived < patientPayment) {
-            if (amountReceivedError) {
-                amountReceivedError.textContent = 'Amount must be at least equal to Patient Payment';
-                amountReceivedError.classList.remove('hidden');
-            }
-            amountReceivedInput.classList.add('border-red-500');
-            hasErrors = true;
-        }
-
-        // If there are validation errors, stop here
-        if (hasErrors) {
-            return;
-        }
-
-        // Since payment method is always Cash, proceed with Cash payment
-        const change = amountReceived - patientPayment;
-
-        const paymentData = {
-            method: 'Cash',
-            amountReceived: amountReceived,
-            change: change,
-            receipt: {
-                notes: receiptNotesInput.value || 'Medical consultation and services'
-            }
-        };
-
-        // Show confirmation modal
-        showPaymentConfirmation(paymentData);
-    });
-
-    // Confirmation button handler - Cập nhật Status từ Pending sang Paid và lưu vào database
-    confirmPaymentBtn.addEventListener('click', async () => {
-        // Validate pending payment data exists
-        if (!window.pendingPaymentData) {
-            console.error('No pending payment data found');
-            alert('No pending payment data found. Please try again.');
-            return;
-        }
-
-        // Validate payment method exists
-        const paymentData = window.pendingPaymentData;
-        const selectedMethod = paymentData.method || paymentMethodSelect.value;
-
-        if (!selectedMethod || selectedMethod.trim() === '') {
-            console.error('Payment method is missing');
-            alert('Payment method is missing. Please select a payment method.');
-            return;
-        }
-
-        hidePaymentConfirmation();
-        showProcessingModal();
-
-        try {
-            console.log('=== Starting Payment Processing ===');
-            console.log('Payment Data:', paymentData);
-            console.log('Selected Method:', selectedMethod);
-
-            // Create request data for backend processing with proper null handling
-            // FIXED: Generate a temporary TransactionID to avoid null constraint
-            const tempTransactionId = `TXN_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
-            const tempReceiptNumber = `REC_${Date.now()}_${Math.random().toString(36).substr(2, 6)}`;
-
-            const requestData = {
-                patientId: invoiceData.userId && invoiceData.userId !== 'N/A' ? parseInt(invoiceData.userId) : null,
-                appointmentId: invoiceData.appointmentId && invoiceData.appointmentId !== 'N/A' ? parseInt(invoiceData.appointmentId) : 1, // Backend requires non-null appointmentId
-                // Generate TransactionID instead of sending null
-                transactionId: tempTransactionId,
-                receiptId: invoiceData.receiptId !== 'N/A' ? invoiceData.receiptId : null,
-                receiptNumber: tempReceiptNumber, // Generate receipt number
-                method: selectedMethod,
-                paymentMethod: selectedMethod, // Alternative field name
-                amountReceived: paymentData.amountReceived || null,
-                amountPaid: paymentData.amountReceived || window.calculatedPatientPayment || 0,
-                change: paymentData.change || 0,
-                notes: paymentData.receipt ? paymentData.receipt.notes : 'Medical consultation and services',
-                description: paymentData.receipt ? paymentData.receipt.notes : 'Medical consultation and services',
-                totalAmount: window.calculatedPatientPayment || 0,
-                patientPayment: window.calculatedPatientPayment || 0,
-                status: 'Paid',
-                paymentStatus: 'Paid',
-                processedBy: invoiceData.issuerId,
-                staffId: invoiceData.issuerId,
-                timestamp: new Date().toISOString(),
-                paymentDate: new Date().toISOString().split('T')[0],
-                paymentTime: new Date().toLocaleTimeString('en-GB', { hour12: false }),
-                // Additional fields for proper transaction creation
-                issuerId: invoiceData.issuerId || 'STAFF001',
-                userId: invoiceData.userId && invoiceData.userId !== 'N/A' ? parseInt(invoiceData.userId) : null
-            };
-
-            console.log('Request Data to Backend (with TransactionID):', requestData);
-            console.log('Request Data JSON:', JSON.stringify(requestData, null, 2));
-
-            // Call API to process payment and update status to "Paid"
-            const response = await fetch('/receptionist/api/process-payment', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'X-Requested-With': 'XMLHttpRequest'
-                },
-                body: JSON.stringify(requestData)
-            });
-
-            console.log('API Response Status:', response.status);
-
-            if (!response.ok) {
-                const errorText = await response.text();
-                console.error('Payment API error:', errorText);
-                hideProcessingModal();
-                throw new Error(`Payment failed: ${errorText}`);
-            }
-
-            const result = await response.json();
-            console.log('Payment API Success Response:', result);
-
-            hideProcessingModal();
-
-            // === UPDATE UI TO REFLECT PAID STATUS ===
-            console.log('=== Updating UI to Paid Status ===');
-
-            // 1. Update transaction status display to "Paid"
-            transactionStatusDisplay.textContent = 'Paid';
-            transactionStatusDisplay.className = 'text-green-600 font-semibold';
-            console.log('Status updated to: Paid');
-
-            // 2. Update time of payment to current time
-            const currentTime = new Date().toLocaleString('en-GB');
-            timeOfPaymentDisplay.textContent = currentTime;
-            console.log('Time of payment updated to:', currentTime);
-
-            // 3. Update payment method and amount display
-            paymentMethodSelect.value = selectedMethod;
-            console.log('Payment method set to:', selectedMethod);
-
-            if (selectedMethod === 'Cash' && paymentData.amountReceived) {
-                amountReceivedContainer.classList.remove('hidden');
-                amountReceivedInput.value = paymentData.amountReceived;
-                const patientPayment = window.calculatedPatientPayment || 0;
-                const change = paymentData.amountReceived - patientPayment;
-                changeReturnedDisplay.textContent = `Change Returned: ${change >= 0 ? change.toLocaleString('en-US') : 0} $`;
-                console.log('Cash payment details updated - Amount received:', paymentData.amountReceived, 'Change:', change);
-            } else if (selectedMethod === 'Banking') {
-                amountReceivedContainer.classList.add('hidden');
-                console.log('Banking payment - amount received container hidden');
-            }
-
-            // 4. Update notes if provided
-            if (paymentData.receipt && paymentData.receipt.notes) {
-                receiptNotesInput.value = paymentData.receipt.notes;
-                console.log('Notes updated:', paymentData.receipt.notes);
-            }
-
-            // 5. Disable payment button to prevent double payment
-            paymentButton.disabled = true;
-            paymentButton.textContent = 'Payment Completed';
-            paymentButton.className = 'bg-gray-400 text-white px-8 py-3 rounded-lg cursor-not-allowed flex items-center gap-2 text-sm font-semibold';
-
-            console.log('=== Payment Processing Completed Successfully ===');
-
-            // Show success popup and handle redirect
-            showSuccessPopup(() => {
-                console.log('Showing success popup and preparing for print/redirect');
-
-                // Set up afterprint event listener to redirect after print dialog closes
-                const onAfterPrint = () => {
-                    window.removeEventListener('afterprint', onAfterPrint);
-                    console.log('Print dialog closed, redirecting to payments page');
-                    window.location.href = '/receptionist/payments';
-                };
-                window.addEventListener('afterprint', onAfterPrint);
-
-                // Trigger print dialog
-                console.log('Triggering print dialog');
-                window.print();
-
-                // Fallback for browsers that don't support afterprint
-                setTimeout(() => {
-                    window.removeEventListener('afterprint', onAfterPrint);
-                    console.log('Fallback redirect after 5 seconds');
-                    window.location.href = '/receptionist/payments';
-                }, 5000);
-            });
-
-        } catch (error) {
-            hideProcessingModal();
-            console.error('=== Payment Processing Error ===');
-            console.error('Error details:', error);
-            alert('Failed to process payment: ' + error.message + '. Please try again.');
-        }
-    });
-
-    // Cancel payment button handler
+    // Cancel payment confirmation
     cancelPaymentBtn.addEventListener('click', () => {
+        console.log('Payment confirmation cancelled');
         hidePaymentConfirmation();
+    });
+
+    // Close modal button handler
+    closeModalButton.addEventListener('click', () => {
+        console.log('QR modal closed');
+        qrModal.style.display = 'none';
     });
 
     // Updated simulate payment for banking
