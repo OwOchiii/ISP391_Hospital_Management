@@ -48,7 +48,4 @@ public class Notification {
     @JoinColumn(name = "UserID", insertable = false, updatable = false)
     private Users user;
 
-    public boolean isRead() {
-        return isRead;
-    }
 }

@@ -1116,26 +1116,34 @@
         </a>
       </div>
 
-      <!-- Search and Controls -->
-      <form id="filter-form" th:action="@{/patient/appointment-list}" method="get" class="d-flex justify-content-between align-items-center flex-wrap gap-3">
-        <input type="hidden" name="patientId" th:value="${patientId}">
-        <div class="d-flex gap-3 align-items-center flex-wrap">
-          <div class="search-container">
-            <i class="bi bi-search search-icon"></i>
-            <input type="text" name="search" class="search-input" maxlength="50" th:value="${search}" placeholder="Search by doctor or description">
+      <!-- Search Form -->
+      <div class="d-flex flex-wrap gap-3 align-items-center">
+        <form id="filter-form" th:action="@{/patient/appointment-list}" method="get" class="d-flex justify-content-between align-items-center flex-wrap gap-3">
+          <input type="hidden" name="patientId" th:value="${patientId}">
+          <div class="d-flex gap-3 align-items-center flex-wrap">
+            <div class="search-container">
+              <i class="bi bi-search search-icon"></i>
+              <input type="text" name="search" class="search-input" maxlength="50" th:value="${search}" placeholder="Search by doctor or description">
+            </div>
+            <div class="date-range-container">
+              <input type="date" name="fromDate" class="date-input" id="fromDate" th:value="${fromDate}">
+              <i class="bi bi-calendar date-icon"></i>
+              <input type="date" name="toDate" class="date-input" id="toDate" th:value="${toDate}">
+              <i class="bi bi-calendar date-icon"></i>
+            </div>
+            <button type="submit" class="btn-primary-custom btn-sm">
+              <i class="bi bi-funnel"></i>
+              Apply Filters
+            </button>
+            <!-- Export Button -->
+            <a th:href="@{/patient/appointments/export}"
+               class="btn-primary-custom btn-sm">
+              <i class="bi bi-file-excel"></i>
+              Export to Excel
+            </a>
           </div>
-          <div class="date-range-container">
-            <input type="date" name="fromDate" class="date-input" id="fromDate" th:value="${fromDate}">
-            <i class="bi bi-calendar date-icon"></i>
-            <input type="date" name="toDate" class="date-input" id="toDate" th:value="${toDate}">
-            <i class="bi bi-calendar date-icon"></i>
-          </div>
-          <button type="submit" class="btn-primary-custom btn-sm">
-            <i class="bi bi-funnel"></i>
-            Apply Filters
-          </button>
-        </div>
-      </form>
+        </form>
+      </div>
     </div>
 
     <!-- Appointments List -->
@@ -1229,11 +1237,6 @@
           </div>
 
           <div th:if="${appointment.status == 'Scheduled'}">
-            <a th:href="@{/patient/appointment-list/{id}/reschedule(id=${appointment.appointmentId}, patientId=${patientId}, search=${search}, status=${status}, fromDate=${fromDate}, toDate=${toDate})}"
-               class="btn-warning-custom btn-sm">
-              <i class="bi bi-calendar-event"></i>
-              Reschedule
-            </a>
             <a th:href="@{/patient/appointment-list/{id}/cancel(id=${appointment.appointmentId}, patientId=${patientId}, search=${search}, status=${status}, fromDate=${fromDate}, toDate=${toDate})}"
                class="btn-danger-custom btn-sm">
               <i class="bi bi-x-circle"></i>

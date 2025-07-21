@@ -1,8 +1,13 @@
 package orochi.controller;
 
+import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.core.io.InputStreamResource;
 import org.springframework.format.annotation.DateTimeFormat;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Controller;
@@ -18,7 +23,11 @@ import orochi.repository.DoctorSpecializationRepository;
 import orochi.repository.PatientRepository;
 import orochi.service.AppointmentService;
 
+import java.io.ByteArrayInputStream;
+import java.io.IOException;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.List;
 import java.util.Map;
 import java.util.HashMap;
@@ -43,12 +52,16 @@ public class PatientAppointmentController {
     @Autowired
     private orochi.repository.MedicalReportRepository medicalReportRepository;
 
+    @Autowired
+    private orochi.repository.PrescriptionRepository prescriptionRepository;
+
+    @Autowired
+    private orochi.service.ExcelExportService excelExportService;
+
     @GetMapping("/book-appointment")
     public String showBookAppointmentForm(
             @RequestParam(required = false) Integer patientId,
             @RequestParam(required = false) Integer appointmentId,
-            @RequestParam(required = false) Integer doctorId,
-            @RequestParam(required = false) Integer specialtyId,
             Model model,
             RedirectAttributes redirectAttributes) {
         if (patientId == null) {
@@ -109,12 +122,6 @@ public class PatientAppointmentController {
                 appointmentForm.setEmail(patient.getUser().getEmail());
                 appointmentForm.setPhoneNumber(patient.getUser().getPhoneNumber());
             }
-            if (specialtyId != null) {
-                appointmentForm.setSpecialtyId(specialtyId);
-            }
-            if (doctorId != null) {
-                appointmentForm.setDoctorId(doctorId);
-            }
         }
 
         if (!model.containsAttribute("appointmentForm")) {
@@ -131,35 +138,7 @@ public class PatientAppointmentController {
         return "patient/book-appointment";
     }
 
-    @GetMapping("/api/doctors-by-specialty")
-    @ResponseBody
-    public List<Map<String, Object>> getDoctorsBySpecialty(@RequestParam Integer specialtyId) {
-        List<Doctor> doctors = appointmentService.getDoctorsBySpecialization(specialtyId);
-        return doctors.stream().map(doctor -> {
-            Map<String, Object> result = new HashMap<>();
-            result.put("doctorId", doctor.getDoctorId());
-            result.put("fullName", doctor.getUser() != null ? doctor.getUser().getFullName() : "Unknown");
-            result.put("bioDescription", doctor.getBioDescription());
-            return result;
-        }).collect(Collectors.toList());
-    }
 
-    @GetMapping("/api/booked-times")
-    @ResponseBody
-    public List<String> getBookedTimes(
-            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate date,
-            @RequestParam Integer doctorId) {
-        return appointmentService.getBookedTimeSlots(date, doctorId);
-    }
-
-    @GetMapping("/api/doctor-availability")
-    @ResponseBody
-    public Map<String, List<String>> getDoctorAvailability(
-            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate date,
-            @RequestParam Integer doctorId,
-            @RequestParam(required = false) Integer appointmentId) {
-        return appointmentService.getDoctorAvailability(date, doctorId, appointmentId);
-    }
 
     @PostMapping("/book-appointment")
     public String bookAppointment(
@@ -224,13 +203,29 @@ public class PatientAppointmentController {
         }
     }
 
-    @GetMapping("/appointment-list-legacy/{id}/report")
+    private String formatTimeForDisplay(String time) {
+        String[] parts = time.split(":");
+        int hour = Integer.parseInt(parts[0]);
+        int minute = Integer.parseInt(parts[1]);
+        String period = hour >= 12 ? "PM" : "AM";
+        int displayHour = hour > 12 ? hour - 12 : (hour == 0 ? 12 : hour);
+        return String.format("%d:%02d %s", displayHour, minute, period);
+    }
+
+    /**
+     * View latest medical report for an appointment
+     * @param id The appointment ID
+     * @param patientId The patient ID for authorization
+     * @return The medical report PDF or an error page
+     */
+    @GetMapping("/appointment-list/{id}/medical-report")
     public String viewLatestMedicalReport(
             @PathVariable Integer id,
             @RequestParam(required = false) Integer patientId,
             Model model,
             RedirectAttributes redirectAttributes) {
 
+        // Validate patient authorization
         if (patientId == null) {
             Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
             if (authentication != null && authentication.getPrincipal() instanceof CustomUserDetails) {
@@ -244,6 +239,7 @@ public class PatientAppointmentController {
             return "redirect:/patient/appointment-list";
         }
 
+        // Check if appointment exists and belongs to the patient
         Appointment appointment = appointmentRepository.findById(id).orElse(null);
         if (appointment == null) {
             redirectAttributes.addFlashAttribute("errorMessage", "Appointment not found");
@@ -255,6 +251,66 @@ public class PatientAppointmentController {
             return "redirect:/patient/appointment-list";
         }
 
+        // Get the latest medical report for this appointment
+        List<MedicalReport> reports = medicalReportRepository.findByAppointmentIdOrderByReportDateDesc(id);
+        MedicalReport latestReport = reports.isEmpty() ? null : reports.get(0);
+
+        // Get the latest prescription for this appointment
+        List<Prescription> prescriptions = prescriptionRepository.findByAppointmentIdOrderByPrescriptionDateDesc(id);
+        Prescription latestPrescription = prescriptions.isEmpty() ? null : prescriptions.get(0);
+
+        // Prepare the model for the report template
+        Patient patient = patientRepository.findById(patientId).orElse(null);
+        String patientName = patient != null && patient.getUser() != null ? patient.getUser().getFullName() : "Patient";
+
+        model.addAttribute("appointment", appointment);
+        model.addAttribute("medicalReport", latestReport);
+        model.addAttribute("prescription", latestPrescription);
+        model.addAttribute("patientId", patientId);
+        model.addAttribute("patientName", patientName);
+
+        return "patient/medical-report";
+    }
+
+    /**
+     * Download medical report PDF for an appointment
+     * @param id The appointment ID
+     * @param patientId The patient ID for authorization
+     * @return The medical report PDF or an error page
+     */
+    @GetMapping("/appointment-list/{id}/download-report")
+    public String downloadMedicalReportPdf(
+            @PathVariable Integer id,
+            @RequestParam(required = false) Integer patientId,
+            RedirectAttributes redirectAttributes) {
+
+        // Validate patient authorization
+        if (patientId == null) {
+            Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+            if (authentication != null && authentication.getPrincipal() instanceof CustomUserDetails) {
+                CustomUserDetails userDetails = (CustomUserDetails) authentication.getPrincipal();
+                patientId = userDetails.getPatientId();
+            }
+        }
+
+        if (patientId == null) {
+            redirectAttributes.addFlashAttribute("errorMessage", "Patient authentication required");
+            return "redirect:/patient/appointment-list";
+        }
+
+        // Check if appointment exists and belongs to the patient
+        Appointment appointment = appointmentRepository.findById(id).orElse(null);
+        if (appointment == null) {
+            redirectAttributes.addFlashAttribute("errorMessage", "Appointment not found");
+            return "redirect:/patient/appointment-list";
+        }
+
+        if (!appointment.getPatientId().equals(patientId)) {
+            redirectAttributes.addFlashAttribute("errorMessage", "Unauthorized access to this appointment");
+            return "redirect:/patient/appointment-list";
+        }
+
+        // Get the latest medical report for this appointment
         List<MedicalReport> reports = medicalReportRepository.findByAppointmentIdOrderByReportDateDesc(id);
         if (reports.isEmpty()) {
             redirectAttributes.addFlashAttribute("errorMessage", "No medical report available for this appointment");
@@ -267,15 +323,80 @@ public class PatientAppointmentController {
             return "redirect:/patient/appointment-list";
         }
 
+        // Redirect to the file download controller to serve the PDF
         return "redirect:/download/report/" + latestReport.getReportId() + "?inline=true";
     }
 
-    private String formatTimeForDisplay(String time) {
-        String[] parts = time.split(":");
-        int hour = Integer.parseInt(parts[0]);
-        int minute = Integer.parseInt(parts[1]);
-        String period = hour >= 12 ? "PM" : "AM";
-        int displayHour = hour > 12 ? hour - 12 : (hour == 0 ? 12 : hour);
-        return String.format("%d:%02d %s", displayHour, minute, period);
+
+    @GetMapping("/api/doctors-by-specialty")
+    @ResponseBody
+    public List<Map<String, Object>> getDoctorsBySpecialty(@RequestParam Integer specialtyId) {
+        List<Doctor> doctors = appointmentService.getDoctorsBySpecialization(specialtyId);
+        return doctors.stream().map(doctor -> {
+            Map<String, Object> result = new HashMap<>();
+            result.put("doctorId", doctor.getDoctorId());
+            result.put("fullName", doctor.getUser() != null ? doctor.getUser().getFullName() : "Unknown");
+            result.put("bioDescription", doctor.getBioDescription());
+            return result;
+        }).collect(Collectors.toList());
+    }
+
+    @GetMapping("/api/booked-times")
+    @ResponseBody
+    public List<String> getBookedTimes(
+            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate date,
+            @RequestParam Integer doctorId) {
+        return appointmentService.getBookedTimeSlots(date, doctorId);
+    }
+
+    @GetMapping("/api/doctor-availability")
+    @ResponseBody
+    public Map<String, List<String>> getDoctorAvailability(
+            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate date,
+            @RequestParam Integer doctorId,
+            @RequestParam(required = false) Integer appointmentId) {
+        return appointmentService.getDoctorAvailability(date, doctorId, appointmentId);
+    }
+
+    @GetMapping("/appointments/export")
+    public ResponseEntity<InputStreamResource> exportAppointments(HttpServletResponse response) throws IOException, IOException {
+        // Get current authenticated patient
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        if (authentication == null || !(authentication.getPrincipal() instanceof CustomUserDetails)) {
+            return ResponseEntity.badRequest().build();
+        }
+
+        CustomUserDetails userDetails = (CustomUserDetails) authentication.getPrincipal();
+        Integer patientId = userDetails.getPatientId();
+        if (patientId == null) {
+            return ResponseEntity.badRequest().build();
+
+        }
+
+        // Get patient information
+        Patient patient = patientRepository.findById(patientId)
+                .orElseThrow(() -> new RuntimeException("Patient not found"));
+
+        // Get all appointments for this patient
+        List<Appointment> appointments = appointmentRepository.findByPatientIdOrderByDateTimeDesc(patientId);
+
+        // Generate Excel file
+        ByteArrayInputStream excelStream = excelExportService.exportAppointmentsToExcel(
+                appointments,
+                patient.getUser().getFullName()
+        );
+
+        // Set the filename with current date
+        String currentDateTime = LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyyMMdd_HHmmss"));
+        String filename = "appointments_" + currentDateTime + ".xlsx";
+
+        // Return the excel file as a downloadable resource
+        return ResponseEntity.ok()
+                .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=" + filename)
+                .contentType(MediaType.parseMediaType("application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"))
+                .body(new InputStreamResource(excelStream));
+
+
     }
 }
+

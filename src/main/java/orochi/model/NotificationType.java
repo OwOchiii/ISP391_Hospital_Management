@@ -22,5 +22,12 @@ public enum NotificationType {
     /**
      * Cảnh báo bảo mật (đổi mật khẩu, truy cập bất thường…)
      */
-    SecurityAlert
+    SecurityAlert,
+
+    /**
+     * Testing notification type (used for development/testing purposes)
+     */
+    Test,
+
+    testing
 }

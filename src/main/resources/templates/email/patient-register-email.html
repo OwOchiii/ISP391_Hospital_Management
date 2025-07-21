@@ -1,0 +1,568 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <title>Registration Confirmation - MediCare Plus</title>
+
+    <!--[if mso]>
+    <noscript>
+        <xml>
+            <o:OfficeDocumentSettings>
+                <o:PixelsPerInch>96</o:PixelsPerInch>
+            </o:OfficeDocumentSettings>
+        </xml>
+    </noscript>
+    <![endif]-->
+
+    <style>
+        /* Reset styles for email clients - Gmail Compatible */
+        body, table, td, p, a, li, blockquote {
+            -webkit-text-size-adjust: 100%;
+            -ms-text-size-adjust: 100%;
+            margin: 0;
+            padding: 0;
+        }
+
+        table, td {
+            mso-table-lspace: 0pt;
+            mso-table-rspace: 0pt;
+            border-collapse: collapse;
+        }
+
+        img {
+            -ms-interpolation-mode: bicubic;
+            border: 0;
+            height: auto;
+            line-height: 100%;
+            outline: none;
+            text-decoration: none;
+            display: block;
+        }
+
+        /* Gmail-specific styles */
+        body {
+            height: 100% !important;
+            margin: 0 !important;
+            padding: 0 !important;
+            width: 100% !important;
+            font-family: Arial, sans-serif;
+            background-color: #f8f9fa;
+            color: #333333;
+        }
+
+        /* Prevent auto-linking in Gmail */
+        .appleNoLinks a {
+            color: inherit !important;
+            text-decoration: none !important;
+        }
+
+        /* Main container - Gmail optimized */
+        .email-container {
+            max-width: 600px;
+            margin: 20px auto;
+            background-color: #ffffff;
+            border-radius: 8px;
+            overflow: hidden;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+        }
+
+        /* Header - Simplified for Gmail */
+        .header {
+            background: linear-gradient(135deg, #2563eb 0%, #1e40af 100%);
+            padding: 30px 20px;
+            text-align: center;
+        }
+
+        .logo {
+            color: #ffffff;
+            font-size: 28px;
+            font-weight: bold;
+            margin-bottom: 8px;
+            text-decoration: none;
+        }
+
+        .hospital-tagline {
+            color: rgba(255, 255, 255, 0.9);
+            font-size: 14px;
+            margin: 0;
+            font-weight: 300;
+        }
+
+        /* Content styles */
+        .content {
+            padding: 30px 25px;
+        }
+
+        .welcome-section {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+
+        /* Enhanced Success Icon - Gmail Compatible */
+        .m_-5102434287653975299success-icon {
+            width: 100px;
+            height: 100px;
+            margin: 0 auto 20px;
+            position: relative;
+            display: inline-block;
+        }
+
+        .success-icon-container {
+            width: 100px;
+            height: 100px;
+            background: #10b981;
+            border-radius: 50%;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+            box-shadow: 0 4px 15px rgba(16, 185, 129, 0.3);
+        }
+
+        .checkmark {
+            font-size: 40px;
+            color: white;
+            font-weight: bold;
+            line-height: 1;
+        }
+
+        .welcome-title {
+            font-size: 24px;
+            font-weight: bold;
+            color: #1f2937;
+            margin-bottom: 12px;
+            line-height: 1.3;
+        }
+
+        .welcome-message {
+            font-size: 16px;
+            color: #6b7280;
+            line-height: 1.6;
+            margin-bottom: 0;
+        }
+
+        /* Patient info section - Gmail optimized */
+        .patient-info-section {
+            background: #f8fafc;
+            border-radius: 8px;
+            padding: 25px;
+            margin-bottom: 25px;
+            border-left: 4px solid #2563eb;
+        }
+
+        .section-title {
+            font-size: 18px;
+            font-weight: bold;
+            color: #1f2937;
+            margin-bottom: 20px;
+            display: block;
+        }
+
+        .section-icon {
+            margin-right: 8px;
+            font-size: 18px;
+            color: #2563eb;
+        }
+
+        /* Info grid - Table-based for Gmail compatibility */
+        .info-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 10px;
+        }
+
+        .info-table tr {
+            border-bottom: 1px solid #e5e7eb;
+        }
+
+        .info-table tr:last-child {
+            border-bottom: none;
+        }
+
+        .info-label {
+            padding: 10px 15px 10px 0;
+            font-weight: 600;
+            color: #374151;
+            font-size: 14px;
+            vertical-align: top;
+            width: 35%;
+        }
+
+        .info-value {
+            padding: 10px 0;
+            color: #1f2937;
+            font-size: 14px;
+            vertical-align: top;
+            font-weight: 500;
+        }
+
+        /* Highlight important values */
+        .highlight-value {
+            background: #fef3c7;
+            padding: 6px 10px;
+            border-radius: 4px;
+            font-weight: 600;
+            color: #92400e;
+            display: inline-block;
+        }
+
+        /* Status badge */
+        .status-active {
+            background: #d1fae5;
+            color: #047857;
+            padding: 4px 10px;
+            border-radius: 12px;
+            font-weight: 600;
+            font-size: 12px;
+            display: inline-block;
+        }
+
+        /* Description section */
+        .description-section {
+            background: #fef3c7;
+            border-radius: 8px;
+            padding: 20px;
+            margin-bottom: 25px;
+            border-left: 4px solid #f59e0b;
+        }
+
+        .description-title {
+            font-size: 16px;
+            font-weight: bold;
+            color: #92400e;
+            margin-bottom: 10px;
+        }
+
+        .description-text {
+            font-size: 14px;
+            color: #78350f;
+            line-height: 1.6;
+            margin: 0;
+        }
+
+        /* Next steps section */
+        .next-steps {
+            background: #e0f2fe;
+            border-radius: 8px;
+            padding: 20px;
+            margin-bottom: 25px;
+            border-left: 4px solid #0891b2;
+        }
+
+        .steps-list {
+            margin: 10px 0 0 0;
+            padding-left: 20px;
+        }
+
+        .steps-list li {
+            font-size: 14px;
+            color: #0c4a6e;
+            margin-bottom: 8px;
+            line-height: 1.5;
+        }
+
+        /* Contact section */
+        .contact-section {
+            background: #f3f4f6;
+            border-radius: 8px;
+            padding: 20px;
+            text-align: center;
+            margin-bottom: 25px;
+        }
+
+        .contact-title {
+            font-size: 16px;
+            font-weight: bold;
+            color: #1f2937;
+            margin-bottom: 15px;
+        }
+
+        .contact-info {
+            font-size: 14px;
+            color: #4b5563;
+            margin-bottom: 8px;
+            line-height: 1.4;
+        }
+
+        .contact-info:last-child {
+            margin-bottom: 0;
+        }
+
+        /* Button styles - Gmail compatible */
+        .button-container {
+            text-align: center;
+            margin: 25px 0;
+        }
+
+        .primary-button {
+            display: inline-block;
+            background: #2563eb;
+            color: #ffffff;
+            text-decoration: none;
+            padding: 12px 30px;
+            border-radius: 6px;
+            font-weight: bold;
+            font-size: 14px;
+            line-height: 1.4;
+        }
+
+        .primary-button:hover {
+            background: #1d4ed8;
+            text-decoration: none;
+            color: #ffffff;
+        }
+
+        /* Footer styles */
+        .footer {
+            background: #1f2937;
+            color: #d1d5db;
+            padding: 25px 20px;
+            text-align: center;
+        }
+
+        .footer-content {
+            font-size: 12px;
+            line-height: 1.6;
+            margin-bottom: 15px;
+        }
+
+        .footer-links {
+            margin-bottom: 15px;
+        }
+
+        .footer-link {
+            color: #60a5fa;
+            text-decoration: none;
+            margin: 0 8px;
+            font-size: 12px;
+        }
+
+        .footer-link:hover {
+            text-decoration: underline;
+        }
+
+        .footer-disclaimer {
+            font-size: 11px;
+            color: #9ca3af;
+            margin-top: 15px;
+            padding-top: 15px;
+            border-top: 1px solid #374151;
+            line-height: 1.4;
+        }
+
+        /* Mobile responsive - Gmail mobile app */
+        @media only screen and (max-width: 600px) {
+            .email-container {
+                width: 100% !important;
+                margin: 10px auto !important;
+                border-radius: 0 !important;
+            }
+
+            .content {
+                padding: 20px 15px !important;
+            }
+
+            .patient-info-section {
+                padding: 20px 15px !important;
+            }
+
+            .info-label {
+                width: 100% !important;
+                display: block !important;
+                padding-bottom: 5px !important;
+                font-weight: bold !important;
+            }
+
+            .info-value {
+                display: block !important;
+                padding-bottom: 15px !important;
+                padding-left: 0 !important;
+            }
+
+            .welcome-title {
+                font-size: 20px !important;
+            }
+
+            .primary-button {
+                padding: 10px 25px !important;
+                font-size: 14px !important;
+            }
+
+            .m_-5102434287653975299success-icon {
+                width: 80px !important;
+                height: 80px !important;
+            }
+
+            .success-icon-container {
+                width: 80px !important;
+                height: 80px !important;
+            }
+
+            .checkmark {
+                font-size: 32px !important;
+            }
+        }
+
+        /* Dark mode support for Gmail Dark Theme */
+        @media (prefers-color-scheme: dark) {
+            .email-container {
+                background-color: #1f2937 !important;
+            }
+
+            .content {
+                color: #f9fafb !important;
+            }
+
+            .welcome-title {
+                color: #f9fafb !important;
+            }
+
+            .section-title {
+                color: #f9fafb !important;
+            }
+
+            .patient-info-section {
+                background: #374151 !important;
+            }
+        }
+    </style>
+</head>
+<body>
+<div class="email-container">
+    <!-- Header -->
+    <div class="header">
+        <div class="logo">🏥 MediCare Plus</div>
+        <p class="hospital-tagline">Your Health, Our Priority</p>
+    </div>
+
+    <!-- Main Content -->
+    <div class="content">
+        <!-- Welcome Section -->
+        <div class="welcome-section">
+            <!-- Enhanced Success Icon -->
+            <div class="m_-5102434287653975299success-icon">
+                <div class="success-icon-container">
+                    <div class="checkmark">✓</div>
+                </div>
+            </div>
+
+            <h1 class="welcome-title">Registration Successful!</h1>
+            <p class="welcome-message">
+                Welcome to MediCare Plus! Your patient registration has been successfully completed.
+                We're excited to have you as part of our healthcare family.
+            </p>
+        </div>
+
+        <!-- Patient Information -->
+        <div class="patient-info-section">
+            <h2 class="section-title">
+                <span class="section-icon">👤</span>
+                Your Registration Details
+            </h2>
+
+            <table class="info-table">
+                <tr>
+                    <td class="info-label">Full Name:</td>
+                    <td class="info-value" th:text="${patient.user?.fullName ?: 'Not Provided'}"></td>
+                </tr>
+                <tr>
+                    <td class="info-label">Email Address:</td>
+                    <td class="info-value" th:text="${patient.user?.email ?: 'Not Provided'}"></td>
+                </tr>
+                <tr>
+                    <td class="info-label">Phone Number:</td>
+                    <td class="info-value" th:text="${patient.user?.phoneNumber ?: 'Not Provided'}"></td>
+                </tr>
+                <tr>
+                    <td class="info-label">Date of Birth:</td>
+                    <td class="info-value" th:text="${patient.dateOfBirth != null ? #temporals.format(patient.dateOfBirth, 'MMMM dd, yyyy') : 'Not Provided'}"></td>
+                </tr>
+                <tr>
+                    <td class="info-label">Gender:</td>
+                    <td class="info-value" th:text="${patient.gender ?: 'Not Provided'}"></td>
+                </tr>
+                <tr>
+                    <td class="info-label">Generated Password:</td>
+                    <td class="info-value">
+                        <span class="highlight-value" th:text="${unhashedPassword ?: 'N/A'}"></span>
+                    </td>
+                </tr>
+                <tr>
+                    <td class="info-label">User ID:</td>
+                    <td class="info-value" th:text="${patient.user?.userId ?: 'Not Assigned'}"></td>
+                </tr>
+                <tr>
+                    <td class="info-label">Registration Date:</td>
+                    <td class="info-value" th:text="${patient.user?.createdAt != null ? #temporals.format(patient.user.createdAt, 'MMMM dd, yyyy HH:mm') : 'Today'}"></td>
+                </tr>
+                <tr>
+                    <td class="info-label">Account Status:</td>
+                    <td class="info-value">
+                        <span class="status-active" th:text="${patient.user?.status ?: 'Active'}"></span>
+                    </td>
+                </tr>
+            </table>
+        </div>
+
+        <!-- Description Section (if provided) -->
+        <div class="description-section" th:if="${patient.description != null and !#strings.isEmpty(patient.description)}">
+            <h3 class="description-title">📝 Additional Information</h3>
+            <p class="description-text" th:text="${patient.description}"></p>
+        </div>
+
+        <!-- Next Steps -->
+        <div class="next-steps">
+            <h2 class="section-title">
+                <span class="section-icon">📋</span>
+                What's Next?
+            </h2>
+            <ul class="steps-list">
+                <li>You can now book appointments online or by calling our office</li>
+                <li>Complete your medical history form before your first appointment</li>
+                <li>You can receive history of appointments as well as medical reports</li>
+                <li>Keep your User ID and password safe for future logins</li>
+            </ul>
+        </div>
+
+        <!-- Action Button -->
+        <div class="button-container">
+            <a href="http://localhost:8089/" class="primary-button">
+                🌐 Visit Our Website
+            </a>
+        </div>
+
+        <!-- Contact Information -->
+        <div class="contact-section">
+            <h3 class="contact-title">Need Help?</h3>
+            <div class="contact-info">📞 Phone: (555) 123-4567</div>
+            <div class="contact-info">✉️ Email: support@medicareplus.com</div>
+            <div class="contact-info">🕒 Hours: Monday - Friday, 8:00 AM - 6:00 PM</div>
+            <div class="contact-info">🏥 Address: 123 Medical Center Drive, Healthcare City, HC 12345</div>
+        </div>
+    </div>
+
+    <!-- Footer -->
+    <div class="footer">
+        <div class="footer-content">
+            <strong>MediCare Plus Hospital</strong><br>
+            123 Medical Center Drive, Healthcare City, HC 12345<br>
+            Phone: (555) 123-4567 | Email: info@medicareplus.com
+        </div>
+
+        <div class="footer-links">
+            <a href="#" class="footer-link">Privacy Policy</a>
+            <a href="#" class="footer-link">Terms of Service</a>
+            <a href="#" class="footer-link">Contact Us</a>
+            <a href="#" class="footer-link">Unsubscribe</a>
+        </div>
+
+        <div class="footer-disclaimer">
+            This email contains confidential patient information. If you received this email in error,
+            please delete it immediately and notify us at privacy@medicareplus.com.
+            This communication is protected under HIPAA regulations.
+        </div>
+    </div>
+</div>
+</body>
+</html>

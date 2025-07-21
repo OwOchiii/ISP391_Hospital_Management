@@ -1000,25 +1000,57 @@
                     mainContent.classList.remove('loading');
                 }
 
-                if (response.ok) {
+                // Check if response is JSON or HTML
+                const contentType = response.headers.get('content-type');
+
+                if (response.ok && contentType && contentType.includes('application/json')) {
                     return response.json();
                 } else {
+                    // If not JSON or not ok, get text and handle error
                     return response.text().then(text => {
-                        throw new Error(text);
+                        console.error('Server response:', text);
+
+                        // Try to parse as JSON first (for error responses)
+                        try {
+                            const jsonData = JSON.parse(text);
+                            if (!response.ok) {
+                                throw new Error(jsonData.message || `Server error: ${response.status}`);
+                            }
+                            return jsonData;
+                        } catch (parseError) {
+                            // If not JSON, it's likely HTML error page
+                            if (text.includes('<!DOCTYPE') || text.includes('<html>')) {
+                                throw new Error(`Server error (${response.status}): Please check server logs for details`);
+                            } else {
+                                throw new Error(text || `Server error: ${response.status}`);
+                            }
+                        }
                     });
                 }
             })
             .then(data => {
-                if (data.success) {
+                if (data && data.success) {
                     showSuccessMessage(data.message);
                     resetForm();
                 } else {
-                    alert('Error: ' + (data.message || 'Unknown error occurred'));
+                    alert('Error: ' + (data.message || 'Registration failed'));
                 }
             })
             .catch(error => {
                 console.error('Error:', error);
-                alert('Error registering patient: ' + error.message);
+
+                // More user-friendly error messages
+                let errorMessage = error.message;
+                if (errorMessage.includes('Server error (500)')) {
+                    errorMessage = 'Server error occurred. Please check if all required fields are filled correctly and try again.';
+                } else if (errorMessage.includes('Server error (401)')) {
+                    errorMessage = 'Authentication required. Please refresh the page and login again.';
+                } else if (errorMessage.includes('Server error (403)')) {
+                    errorMessage = 'Access denied. You do not have permission to register patients.';
+                }
+
+                alert('Error registering patient: ' + errorMessage);
+
                 if (mainContent) {
                     mainContent.classList.remove('loading');
                 }

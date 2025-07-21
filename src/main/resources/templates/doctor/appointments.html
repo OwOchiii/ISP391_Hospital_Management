@@ -731,7 +731,6 @@
                         <label class="form-label">Status</label>
                         <select class="form-control" name="status">
                             <option value="">All Status</option>
-                            <option value="Pending" th:selected="${status == 'Pending'}">Pending</option>
                             <option value="Scheduled" th:selected="${status == 'Scheduled'}">Scheduled</option>
                             <option value="Completed" th:selected="${status == 'Completed'}">Completed</option>
                             <option value="Cancel" th:selected="${status == 'Cancel'}">Cancelled</option>
@@ -832,7 +831,6 @@
                                         th:data-appointment-id="${appointment.appointmentId}"
                                         th:data-original-value="${appointment.status}"
                                         onchange="updateAppointmentStatus(this)">
-                                    <option value="Pending" th:selected="${appointment.status == 'Pending'}">Pending</option>
                                     <option value="Scheduled" th:selected="${appointment.status == 'Scheduled'}">Scheduled</option>
                                     <option value="Completed" th:selected="${appointment.status == 'Completed'}">Completed</option>
                                     <option value="Cancel" th:selected="${appointment.status == 'Cancel'}">Cancelled</option>
@@ -853,23 +851,48 @@
         </div>
 
         <!-- Pagination -->
-        <div th:if="${totalPages != null && totalPages > 1}" class="d-flex justify-content-center mt-4">
-            <nav>
-                <ul class="pagination">
+        <div th:if="${totalPages > 1}" class="d-flex justify-content-between align-items-center mt-4">
+            <div class="pagination-info">
+                Showing <span th:text="${appointments.size()}">5</span> of
+                <span th:text="${totalItems}">100</span> appointments
+                (Page <span th:text="${currentPage + 1}">1</span> of <span th:text="${totalPages}">10</span>)
+            </div>
+            <nav aria-label="Appointments pagination">
+                <ul class="pagination mb-0">
+                    <!-- First Page Button -->
                     <li class="page-item" th:classappend="${currentPage == 0} ? 'disabled' : ''">
-                        <a class="page-link" th:href="@{/doctor/appointments(doctorId=${doctorId}, filter=${currentFilter}, page=${currentPage - 1})}">
-                            Previous
+                        <a class="page-link" th:href="@{/doctor/appointments(doctorId=${doctorId}, filter=${currentFilter}, search=${searchTerm}, status=${status}, dateFrom=${dateFrom}, page=0)}" aria-label="First">
+                            <span aria-hidden="true">&laquo;&laquo;</span>
                         </a>
                     </li>
-                    <li th:each="i : ${#numbers.sequence(0, totalPages - 1)}"
-                        class="page-item"
-                        th:classappend="${i == currentPage} ? 'active' : ''">
-                        <a class="page-link" th:href="@{/doctor/appointments(doctorId=${doctorId}, filter=${currentFilter}, page=${i})}"
-                           th:text="${i + 1}">1</a>
+                    <!-- Previous Button -->
+                    <li class="page-item" th:classappend="${currentPage == 0} ? 'disabled' : ''">
+                        <a class="page-link" th:href="@{/doctor/appointments(doctorId=${doctorId}, filter=${currentFilter}, search=${searchTerm}, status=${status}, dateFrom=${dateFrom}, page=${currentPage - 1})}" aria-label="Previous">
+                            <span aria-hidden="true">&laquo;</span>
+                        </a>
                     </li>
+
+                    <!-- Page Numbers - Using a simple approach without T(Math) -->
+                    <li th:if="${currentPage > 0}" class="page-item">
+                        <a class="page-link" th:href="@{/doctor/appointments(doctorId=${doctorId}, filter=${currentFilter}, search=${searchTerm}, status=${status}, dateFrom=${dateFrom}, page=${currentPage - 1})}" th:text="${currentPage}">1</a>
+                    </li>
+                    <li class="page-item active">
+                        <a class="page-link" th:href="@{/doctor/appointments(doctorId=${doctorId}, filter=${currentFilter}, search=${searchTerm}, status=${status}, dateFrom=${dateFrom}, page=${currentPage})}" th:text="${currentPage + 1}">2</a>
+                    </li>
+                    <li th:if="${currentPage < totalPages - 1}" class="page-item">
+                        <a class="page-link" th:href="@{/doctor/appointments(doctorId=${doctorId}, filter=${currentFilter}, search=${searchTerm}, status=${status}, dateFrom=${dateFrom}, page=${currentPage + 1})}" th:text="${currentPage + 2}">3</a>
+                    </li>
+
+                    <!-- Next Button -->
                     <li class="page-item" th:classappend="${currentPage == totalPages - 1} ? 'disabled' : ''">
-                        <a class="page-link" th:href="@{/doctor/appointments(doctorId=${doctorId}, filter=${currentFilter}, page=${currentPage + 1})}">
-                            Next
+                        <a class="page-link" th:href="@{/doctor/appointments(doctorId=${doctorId}, filter=${currentFilter}, search=${searchTerm}, status=${status}, dateFrom=${dateFrom}, page=${currentPage + 1})}" aria-label="Next">
+                            <span aria-hidden="true">&raquo;</span>
+                        </a>
+                    </li>
+                    <!-- Last Page Button -->
+                    <li class="page-item" th:classappend="${currentPage == totalPages - 1} ? 'disabled' : ''">
+                        <a class="page-link" th:href="@{/doctor/appointments(doctorId=${doctorId}, filter=${currentFilter}, search=${searchTerm}, status=${status}, dateFrom=${dateFrom}, page=${totalPages - 1})}" aria-label="Last">
+                            <span aria-hidden="true">&raquo;&raquo;</span>
                         </a>
                     </li>
                 </ul>
@@ -1117,3 +1140,4 @@
 </script>
 </body>
 </html>
+

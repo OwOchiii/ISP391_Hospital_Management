@@ -620,8 +620,8 @@
         <div class="header-content">
             <div>
                 <!-- Return to Dashboard Link -->
-                <a href="/doctor/dashboard" class="return-to-dashboard">
-                    <i class="bi bi-arrow-left"></i> Return to Dashboard
+                <a th:href="@{/doctor/appointments(doctorId=${doctorId})}" class="return-to-dashboard">
+                    <i class="bi bi-arrow-left"></i> Return to Appointment List
                 </a>
 
                 <h1 class="page-title">
@@ -1316,6 +1316,9 @@
                                 Medicine Name (Generic Name)
                             </option>
                         </select>
+                        <div class="alert alert-info mt-2">
+                            <i class="bi bi-info-circle me-2"></i> <strong>Note:</strong> Medications are referenced from the hospital database. If you need to add a new medication to the system, please submit a request to the administrator.
+                        </div>
                     </div>
 
                     <div class="form-group mb-3">

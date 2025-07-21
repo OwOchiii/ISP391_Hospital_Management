@@ -19,15 +19,18 @@ import orochi.repository.DoctorRepository;
 import orochi.repository.PatientRepository;
 import orochi.repository.SpecializationRepository;
 import orochi.repository.TransactionRepository;
+import orochi.repository.*;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.time.format.DateTimeFormatter;
+import java.time.temporal.ChronoUnit;
 import java.util.*;
 import java.util.function.Function;
 import java.util.stream.Collectors;
-
+import orochi.model.*;
+import orochi.repository.*;
 @Service
 public class AppointmentService {
 
@@ -39,6 +42,15 @@ public class AppointmentService {
 
     @Autowired
     private PatientRepository patientRepository;
+
+    @Autowired
+    private ScheduleRepository scheduleRepository;
+
+    private static final List<String> ALL_TIME_SLOTS = Arrays.asList(
+            "08:00:00", "08:30:00", "09:00:00", "09:30:00", "10:00:00", "10:30:00",
+            "11:00:00", "11:30:00", "14:00:00", "14:30:00", "15:00:00", "15:30:00",
+            "16:00:00", "16:30:00", "17:00:00", "17:30:00"
+    );
 
     @Autowired
     private SpecializationRepository specializationRepository;
@@ -163,28 +175,47 @@ public class AppointmentService {
                 .map(appointment -> appointment.getDateTime().toLocalTime().format(DateTimeFormatter.ofPattern("HH:mm:ss")))
                 .collect(Collectors.toList());
 
-        List<String> unavailableTimes = new ArrayList<>();
-        Set<String> allTimeSlots = new HashSet<>(Arrays.asList(
-                "08:00:00", "08:30:00", "09:00:00", "09:30:00", "10:00:00", "10:30:00",
-                "11:00:00", "11:30:00", "14:00:00", "14:30:00", "15:00:00", "15:30:00",
-                "16:00:00", "16:30:00", "17:00:00", "17:30:00"
-        ));
+        // Fetch on-call schedules
+        List<Schedule> onCallSchedules = scheduleRepository.findByDoctorIdAndScheduleDateAndEventType(doctorId, date, "oncall");
 
+        // Calculate unavailable times due to on-call periods
+        Set<String> onCallUnavailableTimes = new HashSet<>();
+        for (String timeSlot : ALL_TIME_SLOTS) {
+            LocalTime slotTime = LocalTime.parse(timeSlot);
+            LocalTime slotEnd = slotTime.plusMinutes(30);
+            for (Schedule onCall : onCallSchedules) {
+                LocalTime onCallStart = onCall.getStartTime();
+                LocalTime onCallEnd = onCall.getEndTime();
+                if (slotTime.isBefore(onCallEnd) && slotEnd.isAfter(onCallStart)) {
+                    onCallUnavailableTimes.add(timeSlot);
+                    break;
+                }
+            }
+        }
+        // Calculate unavailable times due to proximity to booked appointments
+        List<String> proximityUnavailableTimes = new ArrayList<>();
         for (Appointment appointment : bookedAppointments) {
             LocalTime appointmentTime = appointment.getDateTime().toLocalTime();
-            for (String timeSlot : allTimeSlots) {
+            for (String timeSlot : ALL_TIME_SLOTS) {
                 LocalTime slotTime = LocalTime.parse(timeSlot);
                 int minutesDifference = Math.abs(
                         (slotTime.getHour() * 60 + slotTime.getMinute()) -
                                 (appointmentTime.getHour() * 60 + appointmentTime.getMinute())
                 );
                 if (minutesDifference < APPOINTMENT_DURATION && !bookedTimes.contains(timeSlot)) {
-                    unavailableTimes.add(timeSlot);
+                    proximityUnavailableTimes.add(timeSlot);
                 }
             }
         }
 
-        unavailableTimes = unavailableTimes.stream().distinct().collect(Collectors.toList());
+        // Combine all unavailable times, excluding booked times
+        Set<String> allUnavailableTimes = new HashSet<>(onCallUnavailableTimes);
+        allUnavailableTimes.addAll(proximityUnavailableTimes);
+        List<String> unavailableTimes = allUnavailableTimes.stream()
+                .filter(time -> !bookedTimes.contains(time))
+                .distinct()
+                .collect(Collectors.toList());
+
         Map<String, List<String>> result = new HashMap<>();
         result.put("bookedTimes", bookedTimes);
         result.put("unavailableTimes", unavailableTimes);
@@ -644,7 +675,6 @@ public Appointment updateAppointment2(
         return doctorRepository.findAll();
     }
 
-
     public Page<Appointment> searchAndFilter(String search, String status, Pageable pg) {
         // gọi repo.findWithFilters (thư viện filter động) mà bạn đã có
         // giả sử repo.findWithFilters nhận: (null,null,status,search,start,end,pg)
@@ -680,4 +710,8 @@ public Appointment updateAppointment2(
         );
     }
 
+    public Appointment getAppointmentById(Integer appointmentId) {
+        return appointmentRepository.findById(appointmentId)
+                .orElseThrow(() -> new RuntimeException("Appointment not found with ID: " + appointmentId));
+    }
 }
