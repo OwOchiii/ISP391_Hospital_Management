@@ -2146,11 +2146,23 @@ public class ReceptionistService {
                 }
             }
 
+            // If no transaction found, create a new one instead of throwing an error
             if (transaction == null) {
-                throw new RuntimeException("Transaction not found for appointment: " + appointmentId + " and user: " + userId);
+                logger.info("⚠️ No transaction found for appointment: {} and user: {} - Creating new transaction", appointmentId, userId);
+
+                transaction = new Transaction();
+                transaction.setAppointmentId(appointmentId);
+                transaction.setUserId(userId);
+                transaction.setTimeOfPayment(java.time.LocalDateTime.now());
+                transaction.setStatus("Pending");
+                transaction.setMethod("Cash"); // Default to Cash, will be updated below
+
+                // Save the new transaction first to get an ID
+                transaction = transactionRepository.save(transaction);
+                logger.info("✅ Created new transaction with ID: {}", transaction.getTransactionId());
             }
 
-            logger.info("Found transaction: {} with current status: {}", transaction.getTransactionId(), transaction.getStatus());
+            logger.info("Found/created transaction: {} with current status: {}", transaction.getTransactionId(), transaction.getStatus());
 
             // Update transaction status and details
             transaction.setStatus("Paid");

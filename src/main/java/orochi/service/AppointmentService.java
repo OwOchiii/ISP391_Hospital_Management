@@ -105,7 +105,7 @@ public class AppointmentService {
         }
 
         // Set appointment specific information
-        appointmentDTO.setRoom(appointment.getRoom().getRoomNumber());
+        appointmentDTO.setRoom(appointment.getRoom() != null ? appointment.getRoom().getRoomNumber() : "NA");
         appointmentDTO.setDoctor(appointment.getDoctor());
         appointmentDTO.setSpecialtyId(String.valueOf(appointment.getDoctor().getSpecializations().get(0).getSpecId()));
         appointmentDTO.setSpecialtyName(appointment.getDoctor().getSpecializations().get(0).getSpecName());
@@ -715,3 +715,4 @@ public Appointment updateAppointment2(
                 .orElseThrow(() -> new RuntimeException("Appointment not found with ID: " + appointmentId));
     }
 }
+
