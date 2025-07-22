@@ -195,8 +195,21 @@ public class ReceptionistService {
             patientContact.setPatientId(savedPatient.getPatientId());
             patientContact.setAddressType(addressType != null && !addressType.trim().isEmpty() ? addressType : "Home");
             patientContact.setStreetAddress(streetAddress != null ? streetAddress : "");
-            patientContact.setCity(city != null ? city : "");
-            patientContact.setCountry(country != null ? country : "");
+
+            // 🔥 NORMALIZE VIETNAMESE ADDRESS DATA BEFORE SAVING TO DATABASE
+            logger.info("=== NORMALIZING VIETNAMESE ADDRESS DATA ===");
+            logger.info("Original city: {}", city);
+            logger.info("Original country: {}", country);
+
+            // Normalize Vietnamese province/city names with proper diacritics
+            String normalizedCity = normalizeVietnameseCity(city);
+            String normalizedCountry = normalizeVietnameseCountry(country);
+
+            logger.info("Normalized city: {}", normalizedCity);
+            logger.info("Normalized country: {}", normalizedCountry);
+
+            patientContact.setCity(normalizedCity);
+            patientContact.setCountry(normalizedCountry);
             // Set default values for missing fields if needed
             patientContact.setState(""); // Default empty state
             patientContact.setPostalCode(""); // Default empty postal code
@@ -787,7 +800,7 @@ public class ReceptionistService {
      */
     public List<Map<String, Object>> getTodaysPaymentData() {
         try {
-            // Sử dụng getAllReceiptsWithTransactionData() để lấy dữ liệu th���c
+            // Sử d��ng getAllReceiptsWithTransactionData() để lấy dữ liệu th���c
             List<Map<String, Object>> rawData = receiptRepository.getAllReceiptsWithTransactionData();
 
             // Log để debug
@@ -2454,5 +2467,251 @@ public class ReceptionistService {
                 logger.info("Using original Transaction.Method: '{}'", normalized);
                 return normalized;
         }
+    }
+
+    /**
+     * Normalize Vietnamese address data to ensure proper Vietnamese province/city names with diacritics
+     * are stored in the database correctly
+     */
+    private String normalizeVietnameseProvince(String province) {
+        if (province == null || province.trim().isEmpty()) {
+            return "";
+        }
+
+        String normalized = province.trim();
+
+        // Map of common Vietnamese provinces with proper diacritics
+        Map<String, String> provinceMap = new HashMap<>();
+
+        // Major cities
+        provinceMap.put("ha noi", "Hà Nội");
+        provinceMap.put("hanoi", "Hà Nội");
+        provinceMap.put("ho chi minh", "Hồ Chí Minh");
+        provinceMap.put("hcm", "Hồ Chí Minh");
+        provinceMap.put("sai gon", "Hồ Chí Minh");
+        provinceMap.put("saigon", "Hồ Chí Minh");
+        provinceMap.put("da nang", "Đà Nẵng");
+        provinceMap.put("danang", "Đà Nẵng");
+
+        // Northern provinces
+        provinceMap.put("hai phong", "Hải Phòng");
+        provinceMap.put("haiphong", "Hải Phòng");
+        provinceMap.put("quang ninh", "Quảng Ninh");
+        provinceMap.put("ha long", "Quảng Ninh");
+        provinceMap.put("halong", "Quảng Ninh");
+        provinceMap.put("nam dinh", "Nam Định");
+        provinceMap.put("namdinh", "Nam Định");
+        provinceMap.put("thai binh", "Thái Bình");
+        provinceMap.put("thaibinh", "Thái Bình");
+        provinceMap.put("ninh binh", "Ninh Bình");
+        provinceMap.put("ninhbinh", "Ninh Bình");
+        provinceMap.put("thanh hoa", "Thanh Hóa");
+        provinceMap.put("thanhhoa", "Thanh Hóa");
+        provinceMap.put("nghe an", "Nghệ An");
+        provinceMap.put("nghean", "Nghệ An");
+        provinceMap.put("ha tinh", "Hà Tĩnh");
+        provinceMap.put("hatinh", "Hà Tĩnh");
+
+        // Central provinces
+        provinceMap.put("quang binh", "Quảng Bình");
+        provinceMap.put("quangbinh", "Quảng Bình");
+        provinceMap.put("quang tri", "Quảng Trị");
+        provinceMap.put("quangtri", "Quảng Trị");
+        provinceMap.put("hue", "Thừa Thiên Huế");
+        provinceMap.put("thua thien hue", "Thừa Thiên Huế");
+        provinceMap.put("quang nam", "Quảng Nam");
+        provinceMap.put("quangnam", "Quảng Nam");
+        provinceMap.put("quang ngai", "Quảng Ngãi");
+        provinceMap.put("quangngai", "Quảng Ngãi");
+        provinceMap.put("binh dinh", "Bình Định");
+        provinceMap.put("binhdinh", "Bình Định");
+        provinceMap.put("phu yen", "Phú Yên");
+        provinceMap.put("phuyen", "Phú Yên");
+        provinceMap.put("khanh hoa", "Khánh Hòa");
+        provinceMap.put("khanhhoa", "Khánh Hòa");
+        provinceMap.put("nha trang", "Khánh Hòa");
+        provinceMap.put("nhatrang", "Khánh Hòa");
+
+        // Southern provinces
+        provinceMap.put("ninh thuan", "Ninh Thuận");
+        provinceMap.put("ninhthuan", "Ninh Thuận");
+        provinceMap.put("binh thuan", "Bình Thuận");
+        provinceMap.put("binhthuan", "Bình Thuận");
+        provinceMap.put("kon tum", "Kon Tum");
+        provinceMap.put("kontum", "Kon Tum");
+        provinceMap.put("gia lai", "Gia Lai");
+        provinceMap.put("gialai", "Gia Lai");
+        provinceMap.put("dak lak", "Đắk Lắk");
+        provinceMap.put("daklak", "Đắk Lắk");
+        provinceMap.put("dak nong", "Đắk Nông");
+        provinceMap.put("daknong", "Đắk Nông");
+        provinceMap.put("lam dong", "Lâm Đồng");
+        provinceMap.put("lamdong", "Lâm Đồng");
+        provinceMap.put("da lat", "Lâm Đồng");
+        provinceMap.put("dalat", "Lâm Đồng");
+
+        // Mekong Delta provinces
+        provinceMap.put("dong nai", "Đồng Nai");
+        provinceMap.put("dongnai", "Đồng Nai");
+        provinceMap.put("binh duong", "Bình Dương");
+        provinceMap.put("binhduong", "Bình Dương");
+        provinceMap.put("tay ninh", "Tây Ninh");
+        provinceMap.put("tayninh", "Tây Ninh");
+        provinceMap.put("long an", "Long An");
+        provinceMap.put("longan", "Long An");
+        provinceMap.put("tien giang", "Tiền Giang");
+        provinceMap.put("tiengiang", "Tiền Giang");
+        provinceMap.put("ben tre", "Bến Tre");
+        provinceMap.put("bentre", "Bến Tre");
+        provinceMap.put("tra vinh", "Trà Vinh");
+        provinceMap.put("travinh", "Trà Vinh");
+        provinceMap.put("vinh long", "Vĩnh Long");
+        provinceMap.put("vinhlong", "Vĩnh Long");
+        provinceMap.put("dong thap", "Đồng Tháp");
+        provinceMap.put("dongthap", "Đồng Tháp");
+        provinceMap.put("an giang", "An Giang");
+        provinceMap.put("angiang", "An Giang");
+        provinceMap.put("kien giang", "Kiên Giang");
+        provinceMap.put("kiengiang", "Kiên Giang");
+        provinceMap.put("can tho", "Cần Thơ");
+        provinceMap.put("cantho", "Cần Thơ");
+        provinceMap.put("hau giang", "Hậu Giang");
+        provinceMap.put("haugiang", "Hậu Giang");
+        provinceMap.put("soc trang", "Sóc Trăng");
+        provinceMap.put("soctrang", "Sóc Trăng");
+        provinceMap.put("bac lieu", "Bạc Liêu");
+        provinceMap.put("baclieu", "Bạc Liêu");
+        provinceMap.put("ca mau", "Cà Mau");
+        provinceMap.put("camau", "Cà Mau");
+
+        // Additional northern provinces
+        provinceMap.put("lang son", "Lạng Sơn");
+        provinceMap.put("langson", "Lạng Sơn");
+        provinceMap.put("cao bang", "Cao Bằng");
+        provinceMap.put("caobang", "Cao Bằng");
+        provinceMap.put("ha giang", "Hà Giang");
+        provinceMap.put("hagiang", "Hà Giang");
+        provinceMap.put("lai chau", "Lai Châu");
+        provinceMap.put("laichau", "Lai Châu");
+        provinceMap.put("son la", "Sơn La");
+        provinceMap.put("sonla", "Sơn La");
+        provinceMap.put("dien bien", "Điện Biên");
+        provinceMap.put("dienbien", "Điện Biên");
+        provinceMap.put("lao cai", "Lào Cai");
+        provinceMap.put("laocai", "Lào Cai");
+        provinceMap.put("yen bai", "Yên Bái");
+        provinceMap.put("yenbai", "Yên Bái");
+        provinceMap.put("tuyen quang", "Tuyên Quang");
+        provinceMap.put("tuyenquang", "Tuyên Quang");
+        provinceMap.put("ha nam", "Hà Nam");
+        provinceMap.put("hanam", "Hà Nam");
+        provinceMap.put("hung yen", "Hưng Yên");
+        provinceMap.put("hungyen", "Hưng Yên");
+        provinceMap.put("bac giang", "Bắc Giang");
+        provinceMap.put("bacgiang", "Bắc Giang");
+        provinceMap.put("bac kan", "Bắc Kạn");
+        provinceMap.put("backan", "Bắc Kạn");
+        provinceMap.put("bac ninh", "Bắc Ninh");
+        provinceMap.put("bacninh", "Bắc Ninh");
+        provinceMap.put("thai nguyen", "Thái Nguyên");
+        provinceMap.put("thainguyen", "Thái Nguyên");
+        provinceMap.put("phu tho", "Phú Thọ");
+        provinceMap.put("phutho", "Phú Thọ");
+        provinceMap.put("vinh phuc", "Vĩnh Phúc");
+        provinceMap.put("vinhphuc", "Vĩnh Phúc");
+
+        // Check for exact match first (case insensitive)
+        String normalizedKey = normalized.toLowerCase();
+        if (provinceMap.containsKey(normalizedKey)) {
+            return provinceMap.get(normalizedKey);
+        }
+
+        // If no exact match, return the original input (might already be correct Vietnamese)
+        return normalized;
+    }
+
+    /**
+     * Normalize Vietnamese city/district names - PUBLIC method for controller access
+     */
+    public String normalizeVietnameseCity(String city) {
+        if (city == null || city.trim().isEmpty()) {
+            return "";
+        }
+
+        String normalized = city.trim();
+
+        // Map of common Vietnamese cities/districts with proper diacritics
+        Map<String, String> cityMap = new HashMap<>();
+
+        // Ho Chi Minh City districts
+        cityMap.put("quan 1", "Quận 1");
+        cityMap.put("quan 2", "Quận 2");
+        cityMap.put("quan 3", "Quận 3");
+        cityMap.put("quan 4", "Quận 4");
+        cityMap.put("quan 5", "Quận 5");
+        cityMap.put("quan 6", "Quận 6");
+        cityMap.put("quan 7", "Quận 7");
+        cityMap.put("quan 8", "Quận 8");
+        cityMap.put("quan 9", "Quận 9");
+        cityMap.put("quan 10", "Quận 10");
+        cityMap.put("quan 11", "Quận 11");
+        cityMap.put("quan 12", "Quận 12");
+        cityMap.put("binh thanh", "Bình Thạnh");
+        cityMap.put("binhthanh", "Bình Thạnh");
+        cityMap.put("tan binh", "Tân Bình");
+        cityMap.put("tanbinh", "Tân Bình");
+        cityMap.put("phu nhuan", "Phú Nhuận");
+        cityMap.put("phunhuan", "Phú Nhuận");
+        cityMap.put("go vap", "Gò Vấp");
+        cityMap.put("govap", "Gò Vấp");
+        cityMap.put("thu duc", "Thủ Đức");
+        cityMap.put("thuduc", "Thủ Đức");
+
+        // Hanoi districts
+        cityMap.put("ba dinh", "Ba Đình");
+        cityMap.put("badinh", "Ba Đình");
+        cityMap.put("hoan kiem", "Hoàn Kiếm");
+        cityMap.put("hoankiem", "Hoàn Kiếm");
+        cityMap.put("hai ba trung", "Hai Bà Trưng");
+        cityMap.put("haibatrung", "Hai Bà Trưng");
+        cityMap.put("dong da", "Đống Đa");
+        cityMap.put("dongda", "Đống Đa");
+        cityMap.put("tay ho", "Tây Hồ");
+        cityMap.put("tayho", "Tây Hồ");
+        cityMap.put("cau giay", "Cầu Giấy");
+        cityMap.put("caugiay", "Cầu Giấy");
+        cityMap.put("thanh xuan", "Thanh Xuân");
+        cityMap.put("thanhxuan", "Thanh Xuân");
+        cityMap.put("hoang mai", "Hoàng Mai");
+        cityMap.put("hoangmai", "Hoàng Mai");
+        cityMap.put("long bien", "Long Biên");
+        cityMap.put("longbien", "Long Biên");
+
+        // Check for exact match first (case insensitive)
+        String normalizedKey = normalized.toLowerCase();
+        if (cityMap.containsKey(normalizedKey)) {
+            return cityMap.get(normalizedKey);
+        }
+
+        // If no exact match, return the original input (might already be correct Vietnamese)
+        return normalized;
+    }
+
+    /**
+     * Normalize Vietnamese country names - PUBLIC method for controller access
+     */
+    public String normalizeVietnameseCountry(String country) {
+        if (country == null || country.trim().isEmpty()) {
+            return "Việt Nam";
+        }
+
+        String normalized = country.trim().toLowerCase();
+
+        if (normalized.equals("vietnam") || normalized.equals("viet nam") ||
+            normalized.equals("vietname") || normalized.equals("vn")) {
+            return "Việt Nam";
+        }
+
+        return country.trim();
     }
 }

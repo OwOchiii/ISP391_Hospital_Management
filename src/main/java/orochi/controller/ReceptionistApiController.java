@@ -562,7 +562,7 @@ public class ReceptionistApiController {
                 contact = contacts.get(0);
             }
 
-            // Update contact fields
+            // Update contact fields with Vietnamese address normalization
             if (updateData.containsKey("AddressType")) {
                 String addressType = (String) updateData.get("AddressType");
                 contact.setAddressType(addressType != null ? addressType.trim() : "");
@@ -573,9 +573,11 @@ public class ReceptionistApiController {
                 contact.setStreetAddress(streetAddress != null ? streetAddress.trim() : "");
             }
 
+            // 🔥 NORMALIZE VIETNAMESE ADDRESS DATA BEFORE UPDATING DATABASE
             if (updateData.containsKey("City")) {
                 String city = (String) updateData.get("City");
-                contact.setCity(city != null ? city.trim() : "");
+                String normalizedCity = receptionistService.normalizeVietnameseCity(city);
+                contact.setCity(normalizedCity);
             }
 
             if (updateData.containsKey("State")) {
@@ -590,7 +592,8 @@ public class ReceptionistApiController {
 
             if (updateData.containsKey("Country")) {
                 String country = (String) updateData.get("Country");
-                contact.setCountry(country != null ? country.trim() : "");
+                String normalizedCountry = receptionistService.normalizeVietnameseCountry(country);
+                contact.setCountry(normalizedCountry);
             }
 
             // Save contact changes

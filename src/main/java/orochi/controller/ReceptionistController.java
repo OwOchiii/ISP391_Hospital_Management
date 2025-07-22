@@ -2529,4 +2529,100 @@ public class ReceptionistController {
 
         return pdfFilePath;
     }
+
+    /**
+     * API endpoint to check if email already exists in database
+     */
+    @GetMapping("/api/check-email")
+    @ResponseBody
+    public ResponseEntity<Map<String, Object>> checkEmailExists(@RequestParam String email) {
+        Map<String, Object> response = new HashMap<>();
+
+        try {
+            // Validate email format first
+            if (email == null || email.trim().isEmpty()) {
+                response.put("exists", false);
+                response.put("message", "Email is required");
+                response.put("valid", false);
+                return ResponseEntity.ok(response);
+            }
+
+            if (!email.matches("^[\\w-\\.]+@([\\w-]+\\.)+[\\w-]{2,4}$")) {
+                response.put("exists", false);
+                response.put("message", "Invalid email format");
+                response.put("valid", false);
+                return ResponseEntity.ok(response);
+            }
+
+            // Check if email exists in database
+            Optional<Users> existingUser = userRepository.findByEmail(email.trim().toLowerCase());
+
+            if (existingUser.isPresent()) {
+                response.put("exists", true);
+                response.put("message", "This email address is already registered");
+                response.put("valid", false);
+            } else {
+                response.put("exists", false);
+                response.put("message", "Email is available");
+                response.put("valid", true);
+            }
+
+            return ResponseEntity.ok(response);
+
+        } catch (Exception e) {
+            logger.error("Error checking email existence: {}", e.getMessage());
+            response.put("exists", false);
+            response.put("message", "Error checking email availability");
+            response.put("valid", false);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
+        }
+    }
+
+    /**
+     * API endpoint to check if phone number already exists in database
+     */
+    @GetMapping("/api/check-phone")
+    @ResponseBody
+    public ResponseEntity<Map<String, Object>> checkPhoneExists(@RequestParam String phoneNumber) {
+        Map<String, Object> response = new HashMap<>();
+
+        try {
+            // Validate phone format first
+            if (phoneNumber == null || phoneNumber.trim().isEmpty()) {
+                response.put("exists", false);
+                response.put("message", "Phone number is required");
+                response.put("valid", false);
+                return ResponseEntity.ok(response);
+            }
+
+            if (!phoneNumber.matches("^(0[3|5|7|8|9])+([0-9]{8})$")) {
+                response.put("exists", false);
+                response.put("message", "Invalid phone number format (must be 10 digits starting with 03, 05, 07, 08, 09)");
+                response.put("valid", false);
+                return ResponseEntity.ok(response);
+            }
+
+            // Check if phone number exists in database
+            Optional<Users> existingUser = userRepository.findByPhoneNumber(phoneNumber.trim());
+
+            if (existingUser.isPresent()) {
+                response.put("exists", true);
+                response.put("message", "This phone number is already registered");
+                response.put("valid", false);
+            } else {
+                response.put("exists", false);
+                response.put("message", "Phone number is available");
+                response.put("valid", true);
+            }
+
+            return ResponseEntity.ok(response);
+
+        } catch (Exception e) {
+            logger.error("Error checking phone existence: {}", e.getMessage());
+            response.put("exists", false);
+            response.put("message", "Error checking phone availability");
+            response.put("valid", false);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
+        }
+    }
 }

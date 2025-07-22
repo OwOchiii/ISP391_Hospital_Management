@@ -208,8 +208,8 @@
             </div>
         </div>
         <div class="mt-8 p-8 bg-blue-50 rounded-lg text-sm shadow-sm">
-            <p class="mb-3"><span class="font-semibold text-gray-700">Processed By:</span> <span id="processedBy" th:text="${staffInfo.fullName}">Staff Member</span></p>
-            <p class="mb-3"><span class="font-semibold text-gray-700">Time of Payment:</span> <span id="timeOfPayment" th:text="${#temporals.format(#temporals.createNow(), 'yyyy-MM-dd HH:mm:ss')}">Payment completed</span></p>
+            <p class="mb-3"><span class="font-semibold text-gray-700">Processed By:</span> <span id="processedBy">Staff Member</span></p>
+            <p class="mb-3"><span class="font-semibold text-gray-700">Time of Payment:</span> <span id="timeOfPayment">Payment completed</span></p>
         </div>
     </div>
 
@@ -242,7 +242,7 @@
 </div>
 
 <script>
-    // Lấy dữ liệu thực từ Thymeleaf template - giống hệt pay_invoice.html
+    // Lấy dữ liệu thực từ Thymeleaf template - sử dụng các field có sẵn từ backend
     const invoiceData = {
         patientPayment: /*[[${invoiceData.totalAmount != null ? invoiceData.totalAmount * 0.2 : 0}]]*/ 0,
         transactionId: /*[[${invoiceData.transactionId != null ? invoiceData.transactionId : 'N/A'}]]*/ 'N/A',
@@ -253,29 +253,144 @@
         totalAmount: /*[[${invoiceData.totalAmount != null ? invoiceData.totalAmount : 0}]]*/ 0,
         patientName: /*[[${invoiceData.fullName != null ? invoiceData.fullName : 'N/A'}]]*/ 'N/A',
         servicesUsed: /*[[${invoiceData.servicesUsed}]]*/ [],
-        // Thêm các trường payment data từ backend
-        transactionStatus: /*[[${invoiceData.transactionStatus != null ? invoiceData.transactionStatus : 'Pending'}]]*/ 'Pending',
-        paymentMethod: /*[[${invoiceData.paymentMethod != null ? invoiceData.paymentMethod : 'Cash'}]]*/ 'Cash',
+
+        // Dữ liệu payment từ database - sử dụng các field thực tế có sẵn
+        transactionStatus: /*[[${invoiceData.transactionStatus != null ? invoiceData.transactionStatus : 'Paid'}]]*/ 'Paid',
+        paymentMethod: /*[[${invoiceData.paymentMethod != null ? invoiceData.paymentMethod : 'Cash'}]]*/ 'Cash', // Từ Transaction.Method
         taxAmount: /*[[${invoiceData.taxAmount != null ? invoiceData.taxAmount : 0}]]*/ 0,
         discountAmount: /*[[${invoiceData.discountAmount != null ? invoiceData.discountAmount : 0}]]*/ 0,
-        amountReceived: /*[[${invoiceData.amountReceived != null ? invoiceData.amountReceived : 0}]]*/ 0,
+
+        // ✅ Lấy RefundReason trực tiếp từ Transaction table để extract Amount Received
+        refundReasonRaw: /*[[${invoiceData.refundReasonRaw != null ? invoiceData.refundReasonRaw : ''}]]*/ '',
+
         changeReturned: /*[[${invoiceData.changeReturned != null ? invoiceData.changeReturned : 0}]]*/ 0,
         notes: /*[[${invoiceData.notes != null ? invoiceData.notes : 'Payment completed successfully'}]]*/ 'Payment completed successfully',
-        timeOfPayment: /*[[${invoiceData.timeOfPayment != null ? invoiceData.timeOfPayment : ''}]]*/ ''
+        timeOfPayment: /*[[${invoiceData.timeOfPayment != null ? invoiceData.timeOfPayment : ''}]]*/ '',
+
+        // Processed By - lấy từ backend thay vì staffInfo
+        processedByName: /*[[${invoiceData.processedByName != null ? invoiceData.processedByName : 'Staff Member'}]]*/ 'Staff Member'
     };
 
-    // Global variables để store calculated values - giống pay_invoice.html
+    // Global variables để store calculated values
     window.calculatedTotalAmount = 0;
     window.calculatedTaxAmount = 0;
     window.calculatedDiscountAmount = 0;
     window.calculatedPatientPayment = 0;
 
-    // Tính toán SubTotal và Payment amounts - phiên bản đơn giản và chính xác
+    // ✅ ENHANCED: Function để extract chính xác Amount Received từ RefundReason với FULL pattern support
+    function extractAmountReceivedFromRefundReason(refundReasonText) {
+        console.log('=== ENHANCED Amount Received Extraction (Frontend) ===');
+        console.log('Raw RefundReason text:', refundReasonText);
+
+        if (!refundReasonText || refundReasonText.trim() === '') {
+            console.log('No RefundReason text found');
+            return 0;
+        }
+
+        console.log('Attempting to extract amount from RefundReason...');
+
+        // ✅ Pattern 1: "Amount Received: $XXX.XX" hoặc "Amount Received: XXX.XX" (case insensitive)
+        const pattern1 = /Amount\s+Received:\s*\$?([\d,]+(?:\.\d{1,2})?)/i;
+        const match1 = refundReasonText.match(pattern1);
+
+        if (match1 && match1[1]) {
+            const extractedAmount = parseFloat(match1[1].replace(/,/g, ''));
+            console.log('✅ Pattern 1 SUCCESS - Extracted Amount:', extractedAmount, 'from', match1[0]);
+            return extractedAmount;
+        }
+
+        // ✅ Pattern 2: "Received: $XXX.XX" hoặc "Received: XXX.XX"
+        const pattern2 = /Received:\s*\$?([\d,]+(?:\.\d{1,2})?)/i;
+        const match2 = refundReasonText.match(pattern2);
+
+        if (match2 && match2[1]) {
+            const extractedAmount = parseFloat(match2[1].replace(/,/g, ''));
+            console.log('✅ Pattern 2 SUCCESS - Extracted Amount:', extractedAmount, 'from', match2[0]);
+            return extractedAmount;
+        }
+
+        // ✅ Pattern 3: Tìm số tiền với $ ở đầu
+        const pattern3 = /\$\s*([\d,]+(?:\.\d{1,2})?)/;
+        const match3 = refundReasonText.match(pattern3);
+
+        if (match3 && match3[1]) {
+            const extractedAmount = parseFloat(match3[1].replace(/,/g, ''));
+            console.log('✅ Pattern 3 SUCCESS - Extracted amount with $:', extractedAmount, 'from', match3[0]);
+            return extractedAmount;
+        }
+
+        // ✅ Pattern 4: Tìm bất kỳ số thập phân nào
+        const pattern4 = /([\d,]+\.\d{1,2})/;
+        const match4 = refundReasonText.match(pattern4);
+
+        if (match4 && match4[1]) {
+            const extractedAmount = parseFloat(match4[1].replace(/,/g, ''));
+            console.log('✅ Pattern 4 SUCCESS - Extracted decimal:', extractedAmount, 'from', match4[0]);
+            return extractedAmount;
+        }
+
+        // ✅ Pattern 5: Tìm bất kỳ số nguyên nào > 10 (tránh ID hoặc số nhỏ)
+        const pattern5 = /([\d,]+)/g;
+        let match5;
+        while ((match5 = pattern5.exec(refundReasonText)) !== null) {
+            try {
+                const amountStr = match5[1].replace(/,/g, '');
+                const foundAmount = parseFloat(amountStr);
+                // Chỉ lấy số > 10 để tránh lấy ID hoặc số nhỏ khác
+                if (foundAmount > 10) {
+                    console.log('✅ Pattern 5 SUCCESS - Extracted integer:', foundAmount, 'from', match5[0]);
+                    return foundAmount;
+                }
+            } catch (e) {
+                console.warn('Pattern 5 - Could not parse:', match5[1]);
+            }
+        }
+
+        console.log('❌ No amount pattern found in RefundReason:', refundReasonText);
+        return 0;
+    }
+
+    // ✅ Function để extract Notes từ RefundReason text với cải tiến
+    function extractNotesFromRefundReason(refundReasonText) {
+        if (!refundReasonText || refundReasonText.trim() === '') {
+            return 'Payment completed successfully';
+        }
+
+        console.log('Extracting notes from RefundReason:', refundReasonText);
+
+        // Tìm pattern "Notes: XXXX" (case insensitive)
+        const notesPattern = /Notes:\s*(.+?)(?:\s*\||\s*PDF\s*Path:|$)/i;
+        const match = refundReasonText.match(notesPattern);
+
+        if (match && match[1]) {
+            const extractedNotes = match[1].trim();
+            console.log('✅ Extracted notes from "Notes:" pattern:', extractedNotes);
+            return extractedNotes;
+        }
+
+        // Nếu không có "Notes:" prefix, loại bỏ Amount Received và PDF Path, lấy phần còn lại
+        const cleanedNotes = refundReasonText
+            .replace(/Amount\s+Received:\s*\$?[\d,]+(?:\.\d{1,2})?/i, '') // Remove amount received
+            .replace(/\s*\|\s*PDF\s*Path:.*$/i, '') // Remove PDF path
+            .replace(/^\s*\|\s*/, '') // Remove leading |
+            .replace(/\s*\|\s*$/, '') // Remove trailing |
+            .trim();
+
+        if (cleanedNotes && cleanedNotes !== '|') {
+            console.log('✅ Extracted notes from cleaned RefundReason:', cleanedNotes);
+            return cleanedNotes;
+        }
+
+        console.log('No meaningful notes found, using default');
+        return 'Payment completed successfully';
+    }
+
+    // Tính toán SubTotal và Payment amounts
     function calculateAllAmounts() {
         console.log('=== Calculating All Amounts ===');
 
         // Tìm tất cả các hàng service trong table
-        const serviceRows = document.querySelectorAll('tbody tr:not(.bg-blue-50)'); // Loại trừ hàng SubTotal
+        const serviceRows = document.querySelectorAll('tbody tr:not(.bg-blue-50)');
         console.log('Found service rows:', serviceRows.length);
 
         let subTotal = 0;
@@ -285,13 +400,11 @@
         serviceRows.forEach((row, index) => {
             const cells = row.querySelectorAll('td');
             if (cells.length >= 8) {
-                // Lấy dữ liệu từ các cột
                 const quantityText = cells[3].textContent.trim();
                 const priceText = cells[4].textContent.trim();
                 const taxText = cells[5].textContent.trim();
                 const totalText = cells[6].textContent.trim();
 
-                // Parse numbers
                 const quantity = parseFloat(quantityText) || 0;
                 const price = parseFloat(priceText.replace(/[^\d.]/g, '')) || 0;
                 const taxPercent = parseFloat(taxText) || 0;
@@ -302,13 +415,8 @@
                 });
 
                 if (quantity > 0 && price > 0 && total > 0) {
-                    // Cộng vào SubTotal
                     subTotal += total;
-
-                    // Tính Tax Amount = Price * Quantity * Tax%
                     totalTaxAmount += (price * quantity * taxPercent / 100);
-
-                    // Cộng quantity để tính discount
                     totalQuantity += quantity;
                 }
             }
@@ -336,10 +444,8 @@
             patientPayment
         });
 
-        // Cập nhật hiển thị
         updateDisplayValues(subTotal, totalTaxAmount, discountAmount, patientPayment);
 
-        // Lưu Patient Payment để dùng cho validation
         window.calculatedPatientPayment = patientPayment;
 
         return { subTotal, totalTaxAmount, discountAmount, patientPayment };
@@ -353,7 +459,7 @@
             subTotalElement.textContent = subTotal.toLocaleString('en-US') + ' $';
         }
 
-        // Total Amount (giống SubTotal)
+        // Total Amount
         const totalAmountElement = document.getElementById('calculatedTotalAmount');
         if (totalAmountElement) {
             totalAmountElement.textContent = subTotal.toLocaleString('en-US');
@@ -378,90 +484,100 @@
         }
     }
 
-    // Function to calculate amounts and display payment details - sử dụng logic mới
+    // Function để hiển thị payment details với dữ liệu đúng từ database
     function calculateAndDisplayPaymentDetails() {
         console.log('=== Starting calculateAndDisplayPaymentDetails ===');
         console.log('invoiceData:', invoiceData);
 
-        // Đợi một chút để đảm bảo table đã được render
         setTimeout(() => {
-            // Sử dụng logic tính toán mới từ bảng hiển thị
             const calculationResults = calculateAllAmounts();
 
-            // Update payment method display - từ backend data
+            // ✅ Payment Method - hiển thị đúng từ Transaction.Method database
             const paymentMethodDisplay = document.getElementById('paymentMethodDisplay');
             if (paymentMethodDisplay) {
-                paymentMethodDisplay.textContent = invoiceData.paymentMethod || 'Cash';
+                // Sử dụng trực tiếp paymentMethod từ backend (đã được xử lý đúng)
+                let displayMethod = invoiceData.paymentMethod;
+
+                console.log('=== Payment Method Debug ===');
+                console.log('Raw paymentMethod from backend:', displayMethod);
+
+                // Đảm bảo hiển thị đúng tất cả payment methods từ database
+                if (displayMethod && displayMethod !== 'N/A') {
+                    // Hiển thị trực tiếp method từ Transaction.Method database
+                    paymentMethodDisplay.textContent = displayMethod;
+                    console.log('✅ Payment method set to database value:', displayMethod);
+                } else {
+                    // Chỉ fallback khi thực sự không có data
+                    paymentMethodDisplay.textContent = 'Cash';
+                    console.log('⚠️ Payment method fallback to Cash (no database value)');
+                }
             }
 
-            // Update amount received display - ưu tiên dữ liệu từ backend
+            // ✅ Amount Received - Extract trực tiếp từ RefundReason field
             const amountReceivedDisplay = document.getElementById('amountReceivedDisplay');
             if (amountReceivedDisplay) {
-                const amountReceived = parseFloat(invoiceData.amountReceived || 0);
-                console.log('Amount Received from backend:', amountReceived);
+                const extractedAmount = extractAmountReceivedFromRefundReason(invoiceData.refundReasonRaw);
 
-                // Luôn hiển thị dữ liệu từ backend, ngay cả khi = 0
-                // Chỉ fallback khi thực sự không có dữ liệu (undefined/null)
-                if (invoiceData.amountReceived !== undefined && invoiceData.amountReceived !== null) {
-                    amountReceivedDisplay.textContent = amountReceived.toLocaleString('en-US');
-                    console.log('Using backend amountReceived:', amountReceived);
+                if (extractedAmount > 0) {
+                    // Hiển thị số tiền đã extract từ RefundReason
+                    amountReceivedDisplay.textContent = extractedAmount.toLocaleString('en-US');
+                    console.log('✅ Amount Received set to extracted value from RefundReason:', extractedAmount);
                 } else {
-                    // Chỉ khi thực sự không có dữ liệu mới dùng calculated
+                    // Fallback to calculated patient payment
                     amountReceivedDisplay.textContent = calculationResults.patientPayment.toLocaleString('en-US');
-                    console.log('Using calculated patientPayment:', calculationResults.patientPayment);
+                    console.log('⚠️ Amount Received fallback to calculated patient payment:', calculationResults.patientPayment);
                 }
             }
 
-            // Update change returned display - tính toán chính xác
+            // Change Returned calculation - dựa trên số tiền thực từ RefundReason
             const changeReturnedDisplay = document.getElementById('changeReturnedDisplay');
             if (changeReturnedDisplay) {
-                const changeReturned = parseFloat(invoiceData.changeReturned || 0);
-                const amountReceived = parseFloat(invoiceData.amountReceived || 0);
+                const extractedAmount = extractAmountReceivedFromRefundReason(invoiceData.refundReasonRaw);
+                const amountReceived = extractedAmount > 0 ? extractedAmount : calculationResults.patientPayment;
 
-                console.log('Change calculation - changeReturned:', changeReturned, 'amountReceived:', amountReceived, 'patientPayment:', calculationResults.patientPayment);
-
-                // Ưu tiên change từ backend nếu có
-                if (invoiceData.changeReturned !== undefined && invoiceData.changeReturned !== null && changeReturned > 0) {
-                    changeReturnedDisplay.textContent = changeReturned.toLocaleString('en-US');
-                    console.log('Using backend changeReturned:', changeReturned);
+                if (amountReceived > calculationResults.patientPayment) {
+                    const calculatedChange = amountReceived - calculationResults.patientPayment;
+                    changeReturnedDisplay.textContent = calculatedChange.toLocaleString('en-US');
+                    console.log('Change calculated:', calculatedChange);
                 } else {
-                    // Tính change từ amount received và patient payment
-                    if (amountReceived > calculationResults.patientPayment) {
-                        const calculatedChange = amountReceived - calculationResults.patientPayment;
-                        changeReturnedDisplay.textContent = calculatedChange.toLocaleString('en-US');
-                        console.log('Calculated change:', calculatedChange);
-                    } else {
-                        changeReturnedDisplay.textContent = '0';
-                        console.log('No change - amount received <= patient payment');
-                    }
+                    changeReturnedDisplay.textContent = '0';
+                    console.log('No change needed');
                 }
             }
 
-            // Update notes display - ưu tiên notes từ backend
+            // ✅ Notes - Extract từ RefundReason hoặc sử dụng field có sẵn
             const notesDisplay = document.getElementById('notesDisplay');
             if (notesDisplay) {
-                console.log('Notes from backend:', invoiceData.notes);
+                let displayNotes = invoiceData.notes;
 
-                // Hiển thị notes từ backend, fallback chỉ khi thực sự không có
-                if (invoiceData.notes && invoiceData.notes.trim() !== '') {
-                    notesDisplay.textContent = invoiceData.notes;
-                    console.log('Using backend notes:', invoiceData.notes);
-                } else {
-                    notesDisplay.textContent = 'Payment completed successfully';
-                    console.log('Using default notes');
+                // Nếu có RefundReason, extract notes từ đó
+                if (invoiceData.refundReasonRaw && invoiceData.refundReasonRaw.trim() !== '') {
+                    const extractedNotes = extractNotesFromRefundReason(invoiceData.refundReasonRaw);
+                    if (extractedNotes && extractedNotes !== 'Payment completed successfully') {
+                        displayNotes = extractedNotes;
+                    }
                 }
+
+                notesDisplay.textContent = displayNotes;
+                console.log('Notes set to:', displayNotes);
             }
 
-            // Update transaction status display - FORCE TO "Paid" với styling
+            // Status - luôn hiển thị "Paid" với styling xanh
             const transactionStatus = document.getElementById('transactionStatus');
             if (transactionStatus) {
-                // Luôn hiển thị "Paid" cho trang view payment details
                 transactionStatus.textContent = 'Paid';
-                transactionStatus.className = 'status-paid'; // Apply green bold styling
+                transactionStatus.className = 'status-paid';
                 console.log('Status set to Paid with green styling');
             }
 
-            // Update time of payment display - từ backend data hoặc current time
+            // ✅ Processed By - hiển thị tên thật của receptionist
+            const processedBy = document.getElementById('processedBy');
+            if (processedBy) {
+                processedBy.textContent = invoiceData.processedByName;
+                console.log('Processed By set to:', invoiceData.processedByName);
+            }
+
+            // Time of payment
             const timeOfPayment = document.getElementById('timeOfPayment');
             if (timeOfPayment) {
                 if (invoiceData.timeOfPayment && invoiceData.timeOfPayment !== '') {
@@ -471,13 +587,13 @@
                 }
             }
 
-            console.log('=== Display update completed ===');
-        }, 100); // Đợi 100ms để table render xong
+            console.log('=== Display update completed with RefundReason extraction ===');
+        }, 100);
     }
 
-    // Initialize the page - giống pay_invoice.html
+    // Initialize the page
     document.addEventListener('DOMContentLoaded', function() {
-        console.log('DOM Content Loaded - Initializing view payment details');
+        console.log('DOM Content Loaded - Initializing view payment details with RefundReason extraction');
         calculateAndDisplayPaymentDetails();
     });
 </script>
