@@ -62,18 +62,31 @@ public class AdminDoctorController {
             @RequestParam(value = "size", defaultValue = "5") int size,
             Model model
     ) {
+        // Lấy trang dữ liệu từ service
         Page<Doctor> pageData = doctorService.searchDoctors(search, statusFilter, page, size);
-        model.addAttribute("doctors",      pageData.getContent());
-        model.addAttribute("currentPage",  page);
-        model.addAttribute("totalPages",   pageData.getTotalPages());
-        model.addAttribute("pageSize",     size);
-        model.addAttribute("adminId",      adminId);
-        model.addAttribute("search",       search);
-        model.addAttribute("statusFilter", statusFilter);
-        model.addAttribute("roles", roleService.getAllRoles());
+
+        List<Doctor> doctorsWithEdu = pageData.getContent().stream()
+                .map(d -> doctorService.getDoctorByIdWithEducation(d.getDoctorId()))
+                .toList();
+        // Cập nhật các thuộc tính trong model
+        model.addAttribute("doctors", doctorsWithEdu);
+        model.addAttribute("currentPage", page);
+        model.addAttribute("totalPages", pageData.getTotalPages());
+        model.addAttribute("pageSize", size);
+        model.addAttribute("adminId", adminId);
         model.addAttribute("doctorForm", new DoctorForm());
+        model.addAttribute("search", search);
+        model.addAttribute("statusFilter", statusFilter);
 
         return "admin/doctor/list";
+    }
+
+
+    @GetMapping("/{id}/details")
+    public String doctorDetails(@PathVariable int id, Model model) {
+        Doctor doctor = doctorService.getDoctorByIdWithEducation(id);
+        model.addAttribute("doctor", doctor);
+        return "admin/doctor/detail";  // Trang chi tiết bác sĩ
     }
 
 
@@ -101,29 +114,6 @@ public class AdminDoctorController {
         doctorService.saveDoctor(form);
         return "redirect:/admin/doctors?adminId=" + adminId;
     }
-
-    @PostMapping("/{id}/changeRole")
-    public String changeDoctorRole(
-            @PathVariable("id") int doctorId,
-            @RequestParam("newRoleId") int newRoleId,
-            @RequestParam("adminId")  int adminId,
-            RedirectAttributes flash
-    ) {
-        Doctor d = doctorService.getDoctorById(doctorId);
-        Users u = d.getUser();
-        u.setRoleId(newRoleId);
-        try {
-            userService.save(u);
-            flash.addFlashAttribute("successMessage", "Đổi quyền thành công!");
-        } catch (DataAccessException ex) {
-            // Bắt exception SQLServerException chuyển thành message người dùng
-            flash.addFlashAttribute("errorMessage",
-                    "Không thể đổi quyền: người dùng này đang có bản ghi bác sĩ. "
-                            + "Bạn phải xóa/hủy liên kết bác sĩ trước khi đổi role.");
-        }
-        return "redirect:/admin/doctors?adminId=" + adminId;
-    }
-
 
 
     @PostMapping("/save")
