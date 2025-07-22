@@ -6,11 +6,15 @@
     <title>View Payment Details - MediCare Plus</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css">
+    <!-- jsPDF Library for PDF Export -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.31/jspdf.plugin.autotable.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
     <style>
         @media print {
             .no-print { display: none; }
             body { margin: 0; font-size: 10pt; }
-            .invoice-container { box-shadow: none; border: none; padding: 8mm; }
+            .invoice-container { box-shadow: none; border: none, padding: 8mm; }
             .page-break { page-break-before: always; }
         }
         .barcode-placeholder {
@@ -233,10 +237,13 @@
         <p>123 Lang Street, Dong Da, Hanoi, Vietnam</p>
     </div>
 
-    <!-- Action Buttons (Print only) -->
+    <!-- Action Buttons (Print and PDF Export) -->
     <div class="no-print text-center mt-10 flex justify-center gap-6">
         <button onclick="window.print()" class="bg-blue-600 text-white px-8 py-3 rounded-lg hover:bg-blue-700 flex items-center gap-2 transition duration-300 text-sm font-semibold">
             <i class="fas fa-print"></i> Print Receipt
+        </button>
+        <button onclick="exportToPDF()" class="bg-green-600 text-white px-8 py-3 rounded-lg hover:bg-green-700 flex items-center gap-2 transition duration-300 text-sm font-semibold">
+            <i class="fas fa-file-pdf"></i> Export PDF
         </button>
     </div>
 </div>
@@ -589,6 +596,229 @@
 
             console.log('=== Display update completed with RefundReason extraction ===');
         }, 100);
+    }
+
+    // Function xuất PDF theo dạng chụp ảnh màn hình với kích thước chính xác
+    function exportToPDF() {
+        const { jsPDF } = window.jspdf;
+
+        // Kiểm tra thư viện có sẵn không
+        if (!jsPDF) {
+            alert('Thư viện PDF chưa được tải. Vui lòng tải lại trang và thử lại.');
+            return;
+        }
+
+        if (!window.html2canvas) {
+            alert('Thư viện html2canvas chưa được tải. Vui lòng tải lại trang và thử lại.');
+            return;
+        }
+
+        try {
+            // Hiển thị loading indicator
+            const loadingDiv = document.createElement('div');
+            loadingDiv.id = 'pdfLoadingIndicator';
+            loadingDiv.innerHTML = `
+                <div style="position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+                           background: rgba(0,0,0,0.7); z-index: 10000; display: flex;
+                           justify-content: center; align-items: center;">
+                    <div style="background: white; padding: 30px; border-radius: 12px;
+                               text-align: center; box-shadow: 0 8px 32px rgba(0,0,0,0.3);
+                               min-width: 300px;">
+                        <div style="width: 40px; height: 40px; border: 4px solid #f3f3f3;
+                                   border-top: 4px solid #667eea; border-radius: 50%;
+                                   animation: spin 1s linear infinite; margin: 0 auto 20px;"></div>
+                        <div style="color: #333; font-weight: 600; font-size: 16px; margin-bottom: 8px;">
+                            Đang tạo PDF...
+                        </div>
+                        <div style="color: #666; font-size: 14px;">
+                            Vui lòng chờ trong giây lát
+                        </div>
+                    </div>
+                </div>
+                <style>
+                    @keyframes spin {
+                        0% { transform: rotate(0deg); }
+                        100% { transform: rotate(360deg); }
+                    }
+                </style>
+            `;
+            document.body.appendChild(loadingDiv);
+
+            // Lấy container chứa nội dung cần xuất
+            const invoiceContainer = document.querySelector('.invoice-container');
+
+            if (!invoiceContainer) {
+                throw new Error('Không tìm thấy container hóa đơn');
+            }
+
+            // Ẩn tạm thời các elements không cần xuất PDF
+            const elementsToHide = document.querySelectorAll('.no-print');
+            elementsToHide.forEach(el => {
+                el.style.display = 'none';
+            });
+
+            // Lưu style gốc và áp dụng style cho PDF
+            const originalStyle = invoiceContainer.style.cssText;
+            invoiceContainer.style.background = '#ffffff';
+            invoiceContainer.style.boxShadow = 'none';
+            invoiceContainer.style.border = 'none';
+            invoiceContainer.style.borderRadius = '0';
+            invoiceContainer.style.margin = '0';
+            invoiceContainer.style.padding = '20px';
+            invoiceContainer.style.width = '210mm';  // A4 width
+            invoiceContainer.style.minHeight = 'auto';
+
+            // Cấu hình html2canvas để chụp ảnh chất lượng cao
+            const canvasOptions = {
+                scale: 3,  // Độ phân giải cao
+                useCORS: true,
+                allowTaint: true,
+                backgroundColor: '#ffffff',
+                width: 794,   // A4 width in pixels at 96 DPI (210mm)
+                height: invoiceContainer.scrollHeight,
+                scrollX: 0,
+                scrollY: 0,
+                windowWidth: 1200,
+                windowHeight: 1600
+            };
+
+            // Chụp ảnh màn hình content
+            html2canvas(invoiceContainer, canvasOptions).then(function(canvas) {
+                try {
+                    // Tạo PDF document với kích thước A4
+                    const doc = new jsPDF({
+                        orientation: 'portrait',
+                        unit: 'mm',
+                        format: 'a4'
+                    });
+
+                    // Kích thước trang A4
+                    const pageWidth = 210;  // mm
+                    const pageHeight = 297; // mm
+                    const margin = 10;      // mm
+                    const contentWidth = pageWidth - (margin * 2);
+                    const contentHeight = pageHeight - (margin * 2);
+
+                    // Tính toán kích thước ảnh để fit vào trang A4
+                    const canvasWidth = canvas.width;
+                    const canvasHeight = canvas.height;
+
+                    // Tính tỷ lệ để ảnh fit vào trang
+                    const widthRatio = contentWidth / (canvasWidth * 0.264583);  // Convert px to mm
+                    const heightRatio = contentHeight / (canvasHeight * 0.264583);
+                    const ratio = Math.min(widthRatio, heightRatio);
+
+                    const imageWidth = canvasWidth * 0.264583 * ratio;
+                    const imageHeight = canvasHeight * 0.264583 * ratio;
+
+                    // Căn giữa ảnh trên trang
+                    const xPosition = (pageWidth - imageWidth) / 2;
+                    const yPosition = margin;
+
+                    // Chuyển canvas thành data URL
+                    const imageData = canvas.toDataURL('image/png', 1.0);
+
+                    // Kiểm tra xem có cần nhiều trang không
+                    if (imageHeight <= contentHeight) {
+                        // Một trang đủ
+                        doc.addImage(imageData, 'PNG', xPosition, yPosition, imageWidth, imageHeight);
+                    } else {
+                        // Cần nhiều trang
+                        const totalPages = Math.ceil(imageHeight / contentHeight);
+
+                        for (let page = 0; page < totalPages; page++) {
+                            if (page > 0) {
+                                doc.addPage();
+                            }
+
+                            // Tính toán phần nội dung cho trang này
+                            const sourceY = page * contentHeight * (canvasHeight / imageHeight);
+                            const sourceHeight = Math.min(
+                                contentHeight * (canvasHeight / imageHeight),
+                                canvasHeight - sourceY
+                            );
+
+                            // Tạo canvas tạm cho phần này
+                            const tempCanvas = document.createElement('canvas');
+                            const tempCtx = tempCanvas.getContext('2d');
+                            tempCanvas.width = canvasWidth;
+                            tempCanvas.height = sourceHeight;
+
+                            tempCtx.drawImage(
+                                canvas,
+                                0, sourceY, canvasWidth, sourceHeight,
+                                0, 0, canvasWidth, sourceHeight
+                            );
+
+                            const pageImageData = tempCanvas.toDataURL('image/png', 1.0);
+                            const pageImageHeight = sourceHeight * 0.264583 * ratio;
+
+                            doc.addImage(
+                                pageImageData, 'PNG',
+                                xPosition, yPosition,
+                                imageWidth, pageImageHeight
+                            );
+                        }
+                    }
+
+                    // Tạo tên file với timestamp
+                    const now = new Date();
+                    const timestamp = now.getFullYear() +
+                                    String(now.getMonth() + 1).padStart(2, '0') +
+                                    String(now.getDate()).padStart(2, '0') + '_' +
+                                    String(now.getHours()).padStart(2, '0') +
+                                    String(now.getMinutes()).padStart(2, '0') +
+                                    String(now.getSeconds()).padStart(2, '0');
+
+                    const fileName = `MediCare_Plus_Receipt_${invoiceData.receiptNumber}_${timestamp}.pdf`;
+
+                    // Lưu file PDF
+                    doc.save(fileName);
+
+                    console.log('PDF được xuất thành công:', fileName);
+
+
+                } catch (pdfError) {
+                    console.error('Lỗi tạo PDF:', pdfError);
+                    alert('❌ Lỗi tạo PDF. Vui lòng thử lại.');
+                } finally {
+                    restoreOriginalView();
+                }
+            }).catch(function(canvasError) {
+                console.error('Lỗi chụp ảnh màn hình:', canvasError);
+                alert('❌ Lỗi chụp ảnh nội dung. Vui lòng thử lại.');
+                restoreOriginalView();
+            });
+
+            // Function khôi phục giao diện ban đầu
+            function restoreOriginalView() {
+                // Xóa loading indicator
+                const loadingIndicator = document.getElementById('pdfLoadingIndicator');
+                if (loadingIndicator) {
+                    loadingIndicator.remove();
+                }
+
+                // Khôi phục style gốc
+                if (invoiceContainer) {
+                    invoiceContainer.style.cssText = originalStyle;
+                }
+
+                // Hiển thị lại các elements đã ẩn
+                elementsToHide.forEach(el => {
+                    el.style.display = '';
+                });
+            }
+
+        } catch (error) {
+            console.error('Lỗi trong quá trình xuất PDF:', error);
+            alert('❌ Lỗi xuất PDF. Vui lòng thử lại hoặc liên hệ hỗ trợ.');
+
+            // Xóa loading indicator nếu có lỗi
+            const loadingIndicator = document.getElementById('pdfLoadingIndicator');
+            if (loadingIndicator) {
+                loadingIndicator.remove();
+            }
+        }
     }
 
     // Initialize the page
