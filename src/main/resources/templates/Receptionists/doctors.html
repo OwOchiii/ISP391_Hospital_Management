@@ -265,11 +265,75 @@
             padding: 1.5rem;
             text-align: left;
             transition: all 0.3s ease;
+            position: relative; /* Add for positioning badge */
         }
 
         .doctor-card:hover {
             transform: translateY(-4px);
             box-shadow: 0 8px 30px rgba(102, 126, 234, 0.15);
+        }
+
+        /* Patient Count Badge Styles */
+        .patient-count-badge {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+            border-radius: 50%;
+            width: 45px;
+            height: 45px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.75rem;
+            font-weight: 600;
+            box-shadow: 0 2px 8px rgba(102, 126, 234, 0.3);
+            animation: pulse 2s infinite;
+        }
+
+        .patient-count-badge .count-number {
+            font-size: 1rem;
+            font-weight: 700;
+            line-height: 1;
+        }
+
+        .patient-count-badge .count-label {
+            font-size: 0.6rem;
+            font-weight: 400;
+            opacity: 0.9;
+            line-height: 1;
+        }
+
+        @keyframes pulse {
+            0% {
+                box-shadow: 0 2px 8px rgba(102, 126, 234, 0.3);
+            }
+            50% {
+                box-shadow: 0 4px 16px rgba(102, 126, 234, 0.5);
+            }
+            100% {
+                box-shadow: 0 2px 8px rgba(102, 126, 234, 0.3);
+            }
+        }
+
+        /* Responsive adjustments for badge */
+        @media (max-width: 576px) {
+            .patient-count-badge {
+                width: 35px;
+                height: 35px;
+                top: 8px;
+                right: 8px;
+            }
+
+            .patient-count-badge .count-number {
+                font-size: 0.85rem;
+            }
+
+            .patient-count-badge .count-label {
+                font-size: 0.5rem;
+            }
         }
 
         .doctor-card .doctor-info {
@@ -842,6 +906,15 @@
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
             <div class="modal-body">
+                <!-- Avatar field -->
+                <div class="detail-item">
+                    <span class="detail-label">Avatar</span>
+                    <div class="detail-value">
+                        <img id="modalAvatar" src="" alt="Doctor Avatar"
+                             style="width: 80px; height: 80px; border-radius: 50%; object-fit: cover; border: 2px solid #ddd;"
+                             onerror="this.onerror=null; this.src='data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iODAiIGhlaWdodD0iODAiIHZpZXdCb3g9IjAgMCA4MCA4MCIgZmlsbD0ibm9uZSIgeG1zbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPGNpcmNsZSBjeD0iNDAiIGN5PSI0MCIgcj0iNDAiIGZpbGw9IiNmM2Y0ZjYiLz4KPHN2ZyB4PSIyMCIgeT0iMTUiIHdpZHRoPSI0MCIgaGVpZ2h0PSI1MCIgdmlld0JveD0iMCAwIDI0IDI0IiBmaWxsPSIjOWNhM2FmIj4KPHA/dGggZD0iTTEyIDEyYzIuMjEgMCA0LTEuNzkgNC00cy0xLjc5LTQtNC00LTQgMS43OS00IDQgMS43OSA0IDQgNHptMCAyYy0yLjY3IDAtOCAxLjM0LTggNHY0aDE2di00YzAtMi42Ni01LjMzLTQtOC00eiIvPgo8L3N2Zz4KPC9zdmc+'; this.style.backgroundColor='#f3f4f6';">
+                    </div>
+                </div>
                 <div class="detail-item">
                     <span class="detail-label">Full Name</span>
                     <span class="detail-value" id="modalFullName"></span>
@@ -878,6 +951,19 @@
                     <span class="detail-label">Room</span>
                     <span class="detail-value" id="modalRoom"></span>
                 </div>
+            </div>
+            <!-- Modal footer with action buttons -->
+            <div class="modal-footer">
+                <button type="button" class="btn btn-success me-2" id="bookAppointmentBtn">
+                    <i class="fas fa-calendar-plus"></i> Book Appointment
+                </button>
+                <button type="button" class="btn btn-info me-2" id="viewScheduleBtn">
+                    <i class="fas fa-calendar-alt"></i> View Schedule & Available Times
+                </button>
+                <button type="button" class="btn btn-warning me-2" id="viewAppointmentsBtn">
+                    <i class="fas fa-list-alt"></i> View Appointments
+                </button>
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
             </div>
         </div>
     </div>
@@ -963,9 +1049,6 @@
     function renderDoctorCards(doctors) {
         const grid = document.getElementById('doctorsGrid');
 
-        // ONLY reset currentPage to 1 when it's a new search/filter, NOT when navigating pages
-        // Remove the automatic reset here
-
         // Calculate pagination
         const totalDoctors = doctors.length;
         const totalPages = Math.ceil(totalDoctors / pageSize);
@@ -1007,9 +1090,19 @@
                             <button class="btn-view" onclick="openDoctorModal(${doctor.id})">View</button>
                             <button class="btn-book" onclick="bookAppointmentWithDoctor(${doctor.id}, '${encodeURIComponent(doctor.name)}', '${encodeURIComponent(doctor.specialty)}')">Book</button>
                         </div>
+                        <!-- Patient count badge -->
+                        <div class="patient-count-badge" title="Number of Patients">
+                            <div class="count-number" id="patientCount_${doctor.id}">
+                                <i class="fas fa-spinner fa-spin" style="font-size: 0.8rem;"></i>
+                            </div>
+                            <div class="count-label">Patients</div>
+                        </div>
                     </div>
                 `;
                 grid.appendChild(col);
+
+                // Fetch patient count for this doctor
+                fetchAndDisplayPatientCount(doctor.id);
             });
 
             // Show pagination and render controls
@@ -1286,207 +1379,826 @@
         document.getElementById('modalSpecialty').textContent = doctor.specialty || 'N/A';
         document.getElementById('modalRoom').textContent = doctor.room || 'N/A';
 
-        const doctorModal = new bootstrap.Modal(document.getElementById('doctorModal'));
-        doctorModal.show();
-    }
+        // Update avatar image
+        const avatarImg = document.getElementById('modalAvatar');
+        avatarImg.src = doctor.imageUrl || 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iODAiIGhlaWdodD0iODAiIHZpZXdCb3g9IjAgMCA4MCA4MCIgZmlsbD0ibm9uZSIgeG1zbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPGNpcmNsZSBjeD0iNDAiIGN5PSI0MCIgcj0iNDAiIGZpbGw9IiNmM2Y0ZjYiLz4KPHN2ZyB4PSIyMCIgeT0iMTUiIHdpZHRoPSI0MCIgaGVpZ2h0PSI1MCIgdmlld0JveD0iMCAwIDI0IDI0IiBmaWxsPSIjOWNhM2FmIj4KPHA/dGggZD0iTTEyIDEyYzIuMjEgMCA0LTEuNzkgNC00cy0xLjc5LTQtNC00LTQgMS43OS00IDQgMS43OSA0IDQgNHptMCAyYy0yLjY3IDAtOCAxLjM0LTggNHY0aDE2di00YzAtMi42Ni01LjMzLTQtOC00eiIvPgo8L3N2Zz4KPC9zdmc+';
 
-    function toggleNotificationModal() {
-        const modal = document.getElementById('notificationModal');
-        modal.style.display = modal.style.display === 'block' ? 'none' : 'block';
-    }
+        // Remove the problematic onerror handler that causes infinite loop
+        avatarImg.onerror = function() {
+            this.onerror = null; // Prevent infinite loop
+            this.src = 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iODAiIGhlaWdodD0iODAiIHZpZXdCb3g9IjAgMCA4MCA4MCIgZmlsbD0ibm9uZSIgeG1zbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPGNpcmNsZSBjeD0iNDAiIGN5PSI0MCIgcj0iNDAiIGZpbGw9IiNmM2Y0ZjYiLz4KPHN2ZyB4PSIyMCIgeT0iMTUiIHdpZHRoPSI0MCIgaGVpZ2h0PSI1MCIgdmlld0JveD0iMCAwIDI0IDI0IiBmaWxsPSIjOWNhM2FmIj4KPHA/dGggZD0iTTEyIDEyYzIuMjEgMCA0LTEuNzkgNC00cy0xLjc5LTQtNC00LTQgMS43OS00IDQgMS43OSA0IDQgNHptMCAyYy0yLjY3IDAtOCAxLjM0LTggNHY0aDE2di00YzAtMi42Ni01LjMzLTQtOC00eiIvPgo8L3N2Zz4KPC9zdmc+';
+            this.style.backgroundColor = '#f3f4f6';
+        };
 
-    // Initialize
-    checkScreenSize();
-    window.addEventListener('resize', checkScreenSize);
-    document.addEventListener('DOMContentLoaded', () => {
-        if (!isDataLoaded) {
-            renderDoctors();
-        }
-    }, { once: true }); // Ensure event listener runs only once
+        // Setup button event listeners
+        setupModalButtonEvents(doctor);
 
-    function exportToExcel() {
-        // Prepare data with all fields including Bio Description, Degree, Institution, Room
-        const exportData = filteredDoctors.map(doctor => ({
-            'Full Name': doctor.name || 'N/A',
-            'Email': doctor.email || 'N/A',
-            'Phone Number': doctor.phone || 'N/A',
-            'Bio Description': doctor.bioDescription || doctor.bio || 'N/A',
-            'Description': doctor.description || 'N/A',
-            'Degree': doctor.degree || 'N/A',
-            'Institution': doctor.institution || 'N/A',
-            'Specialty': doctor.specialty || 'N/A',
-            'Room': doctor.room || 'N/A'
-        }));
+        // Show the modal
+        try {
+            const doctorModal = new bootstrap.Modal(document.getElementById('doctorModal'));
+            doctorModal.show();
+        } catch (error) {
+            console.error('Error showing modal:', error);
+            // Fallback: try to show modal using jQuery if available
+            if (typeof $ !== 'undefined') {
+                $('#doctorModal').modal('show');
+            } else {
+                // Last resort: manually show modal
+                const modalElement = document.getElementById('doctorModal');
+                modalElement.style.display = 'block';
+                modalElement.classList.add('show');
+                document.body.classList.add('modal-open');
 
-        // Create worksheet
-        const ws = XLSX.utils.json_to_sheet(exportData);
-
-        // Set column widths for better readability
-        const colWidths = [
-            { wch: 20 }, // Full Name
-            { wch: 25 }, // Email
-            { wch: 15 }, // Phone Number
-            { wch: 35 }, // Bio Description - increased width
-            { wch: 30 }, // Description
-            { wch: 20 }, // Degree - increased width
-            { wch: 30 }, // Institution - increased width
-            { wch: 20 }, // Specialty
-            { wch: 15 }  // Room - increased width
-        ];
-        ws['!cols'] = colWidths;
-
-        // Create workbook and add worksheet
-        const wb = XLSX.utils.book_new();
-        XLSX.utils.book_append_sheet(wb, ws, 'Doctors List');
-
-        // Generate filename with current date
-        const currentDate = new Date().toISOString().split('T')[0];
-        const filename = `doctors_list_${currentDate}.xlsx`;
-
-        // Save file
-        XLSX.writeFile(wb, filename);
-    }
-
-    function exportToPDF() {
-        const { jsPDF } = window.jspdf;
-
-        // Create PDF in landscape orientation for better table display
-        const doc = new jsPDF('landscape', 'mm', 'a4');
-
-        // Colors
-        const primaryColor = [102, 126, 234]; // Primary blue
-        const headerColor = [67, 56, 202]; // Darker blue
-        const alternateRowColor = [248, 250, 252]; // Light gray
-        const textColor = [31, 41, 55]; // Dark gray
-
-        // Header section
-        doc.setFillColor(...primaryColor);
-        doc.rect(0, 0, 297, 25, 'F'); // Full width header background
-
-        // Logo/Icon area (simulated)
-        doc.setFillColor(255, 255, 255);
-        doc.circle(20, 12.5, 8, 'F');
-        doc.setTextColor(...primaryColor);
-        doc.setFontSize(16);
-        doc.text('✚', 17, 16);
-
-        // Title
-        doc.setTextColor(255, 255, 255);
-        doc.setFontSize(20);
-        doc.setFont('helvetica', 'bold');
-        doc.text('MediCare Plus - Doctors List', 35, 16);
-
-        // Subtitle with current date and count
-        doc.setFontSize(12);
-        doc.setFont('helvetica', 'normal');
-        const currentDate = new Date().toLocaleDateString('en-US', {
-            year: 'numeric',
-            month: 'long',
-            day: 'numeric'
-        });
-        doc.text(`Generated on ${currentDate} | Total Doctors: ${filteredDoctors.length}`, 35, 21);
-
-        // Prepare table data with all required fields
-        const tableHeaders = [
-            'Full Name',
-            'Email',
-            'Phone',
-            'Bio Description',
-            'Description',
-            'Degree',
-            'Institution',
-            'Specialty',
-            'Room'
-        ];
-
-        const tableData = filteredDoctors.map(doctor => [
-            doctor.name || 'N/A',
-            doctor.email || 'N/A',
-            doctor.phone || 'N/A',
-            // Truncate long bio descriptions for better PDF layout
-            (doctor.bioDescription || doctor.bio || 'N/A').length > 50 ?
-                (doctor.bioDescription || doctor.bio || 'N/A').substring(0, 50) + '...' :
-                (doctor.bioDescription || doctor.bio || 'N/A'),
-            // Truncate long descriptions for better PDF layout
-            (doctor.description || 'N/A').length > 40 ?
-                (doctor.description || 'N/A').substring(0, 40) + '...' :
-                (doctor.description || 'N/A'),
-            doctor.degree || 'N/A',
-            doctor.institution || 'N/A',
-            doctor.specialty || 'N/A',
-            doctor.room || 'N/A'
-        ]);
-
-        // Create table with enhanced styling
-        doc.autoTable({
-            head: [tableHeaders],
-            body: tableData,
-            startY: 35,
-            theme: 'striped',
-            headStyles: {
-                fillColor: headerColor,
-                textColor: [255, 255, 255],
-                fontSize: 9, // Reduced font size for more columns
-                fontStyle: 'bold',
-                halign: 'center',
-                cellPadding: { top: 3, right: 2, bottom: 3, left: 2 }
-            },
-            bodyStyles: {
-                fontSize: 7, // Reduced font size for better fit
-                textColor: textColor,
-                cellPadding: { top: 2, right: 1, bottom: 2, left: 1 }
-            },
-            alternateRowStyles: {
-                fillColor: alternateRowColor
-            },
-            columnStyles: {
-                0: { cellWidth: 25, fontStyle: 'bold' }, // Full Name
-                1: { cellWidth: 30 }, // Email
-                2: { cellWidth: 18 }, // Phone
-                3: { cellWidth: 35 }, // Bio Description
-                4: { cellWidth: 30 }, // Description
-                5: { cellWidth: 20 }, // Degree
-                6: { cellWidth: 30 }, // Institution
-                7: { cellWidth: 25 }, // Specialty
-                8: { cellWidth: 15 }  // Room
-            },
-            styles: {
-                overflow: 'linebreak',
-                cellPadding: 1.5,
-                fontSize: 7,
-                lineColor: [200, 200, 200],
-                lineWidth: 0.1
-            },
-            margin: { left: 8, right: 8 },
-            didDrawPage: function(data) {
-                // Footer
-                const pageCount = doc.internal.getNumberOfPages();
-                const currentPage = doc.internal.getCurrentPageInfo().pageNumber;
-
-                // Footer background
-                doc.setFillColor(...alternateRowColor);
-                doc.rect(0, 195, 297, 15, 'F');
-
-                // Footer text
-                doc.setTextColor(...textColor);
-                doc.setFontSize(8);
-                doc.setFont('helvetica', 'normal');
-                doc.text(`Page ${currentPage} of ${pageCount}`, 20, 205);
-                doc.text('Generated by MediCare Plus Hospital Management System', 150, 205);
-
-                // Footer line
-                doc.setDrawColor(...primaryColor);
-                doc.setLineWidth(1);
-                doc.line(8, 195, 289, 195);
+                // Add backdrop
+                const backdrop = document.createElement('div');
+                backdrop.className = 'modal-backdrop fade show';
+                document.body.appendChild(backdrop);
             }
+        }
+    }
+
+    // Function to fetch patient count for a doctor
+    async function fetchPatientCount(doctorId) {
+        try {
+            const response = await fetch(`/receptionist/api/doctors/${doctorId}/patient-count`);
+            if (response.ok) {
+                const data = await response.json();
+                return data.count || 0;
+            }
+        } catch (error) {
+            console.error('Error fetching patient count:', error);
+        }
+        return null;
+    }
+
+    // Setup event listeners for modal buttons
+    // Function to fetch and display patient count for a specific doctor
+    async function fetchAndDisplayPatientCount(doctorId) {
+        try {
+            const response = await fetch(`/receptionist/api/doctors/${doctorId}/patient-count`);
+            const countElement = document.getElementById(`patientCount_${doctorId}`);
+
+            if (!countElement) {
+                console.warn(`Patient count element not found for doctor ${doctorId}`);
+                return;
+            }
+
+            if (response.ok) {
+                const data = await response.json();
+                const count = data.count || 0;
+
+                // Update the count display with smooth transition
+                countElement.innerHTML = count;
+
+                // Add animation class for visual feedback
+                countElement.parentElement.style.transform = 'scale(1.1)';
+                setTimeout(() => {
+                    countElement.parentElement.style.transform = 'scale(1)';
+                }, 200);
+
+            } else {
+                console.error(`Failed to fetch patient count for doctor ${doctorId}:`, response.statusText);
+                countElement.innerHTML = '?';
+                countElement.parentElement.title = 'Unable to load patient count';
+            }
+        } catch (error) {
+            console.error(`Error fetching patient count for doctor ${doctorId}:`, error);
+            const countElement = document.getElementById(`patientCount_${doctorId}`);
+            if (countElement) {
+                countElement.innerHTML = '!';
+                countElement.parentElement.title = 'Error loading patient count';
+            }
+        }
+    }
+
+    function setupModalButtonEvents(doctor) {
+        // Book Appointment Button
+        const bookBtn = document.getElementById('bookAppointmentBtn');
+        bookBtn.onclick = () => {
+            const params = new URLSearchParams({
+                doctorId: doctor.id,
+                doctorName: doctor.name,
+                doctorSpecialty: doctor.specialty
+            });
+            window.location.href = `/receptionist/new_appointment?${params.toString()}`;
+        };
+
+        // View Schedule Button
+        const scheduleBtn = document.getElementById('viewScheduleBtn');
+        scheduleBtn.onclick = () => {
+            viewDoctorSchedule(doctor.id, doctor.name);
+        };
+
+        // View Appointments Button
+        const viewAppointmentsBtn = document.getElementById('viewAppointmentsBtn');
+        viewAppointmentsBtn.onclick = () => {
+            viewDoctorAppointments(doctor.id, doctor.name);
+        };
+    }
+
+    // Function to view doctor schedule and available times
+    function viewDoctorSchedule(doctorId, doctorName) {
+        // Create and show schedule modal positioned next to the main modal
+        const scheduleModal = document.createElement('div');
+        scheduleModal.className = 'modal fade';
+        scheduleModal.id = 'scheduleModal';
+        scheduleModal.innerHTML = `
+            <div class="modal-dialog modal-xl" style="margin-left: 60%; margin-top: 3rem; max-width: 35%; transform: translateX(0);">
+                <div class="modal-content" style="border: 2px solid var(--primary); box-shadow: 0 8px 32px rgba(102, 126, 234, 0.25);">
+                    <div class="modal-header" style="background: linear-gradient(135deg, var(--primary), var(--secondary)); color: white;">
+                        <h5 class="modal-title">
+                            <i class="fas fa-calendar-alt"></i>
+                            Schedule & Times - Dr. ${doctorName}
+                        </h5>
+                        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                    </div>
+                    <div class="modal-body" style="max-height: 70vh; overflow-y: auto;">
+                        <!-- Date Selection Section -->
+                        <div class="mb-4">
+                            <h6 class="text-primary mb-3">
+                                <i class="fas fa-calendar"></i> Select Date
+                            </h6>
+                            <div class="date-selection">
+                                <input type="text" id="scheduleDate" class="form-control"
+                                       placeholder="MM/DD/YYYY" style="border-radius: 8px; padding: 0.75rem;">
+                                <small class="text-muted">Select a date to view available time slots</small>
+                            </div>
+                        </div>
+
+                        <div class="mb-4">
+                            <h6 class="text-primary mb-3">
+                                <i class="fas fa-clock"></i> Working Hours
+                            </h6>
+                            <div class="schedule-info">
+                                <div class="schedule-item mb-2 p-2 bg-light rounded">
+                                    <strong>Monday - Friday:</strong> 8:00 AM - 6:00 PM
+                                </div>
+                                <div class="schedule-item mb-2 p-2 bg-light rounded">
+                                    <strong>Saturday:</strong> Closed
+                                </div>
+                                <div class="schedule-item mb-2 p-2 bg-light rounded">
+                                    <strong>Sunday:</strong> Closed
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="mb-4">
+                            <h6 class="text-success mb-3">
+                                <i class="fas fa-calendar-check"></i> Available Time Slots
+                            </h6>
+                            <div class="date-info mb-2" id="selectedDateInfo" style="display: none;">
+                                <small class="text-muted">Showing slots for: <span id="selectedDateText"></span></small>
+                            </div>
+                            <div class="available-slots" id="availableSlots">
+                                <div class="text-center p-3 text-muted">
+                                    <i class="fas fa-calendar"></i><br>
+                                    Please select a date above to view available time slots.
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="mb-4">
+                            <h6 class="text-info mb-3">
+                                <i class="fas fa-calendar"></i> Weekly Schedule
+                            </h6>
+                            <div class="table-responsive">
+                                <table class="table table-bordered table-sm">
+                                    <thead class="table-primary">
+                                        <tr>
+                                            <th style="font-size: 0.8rem;">Day</th>
+                                            <th style="font-size: 0.8rem;">Morning</th>
+                                            <th style="font-size: 0.8rem;">Afternoon</th>
+                                            <th style="font-size: 0.8rem;">Status</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="weeklySchedule" style="font-size: 0.8rem;">
+                                        <!-- Schedule data will be populated here -->
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-success btn-sm" onclick="bookQuickAppointment(${doctorId}, '${doctorName}')">
+                            <i class="fas fa-plus"></i> Book Appointment
+                        </button>
+                        <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Close</button>
+                    </div>
+                </div>
+            </div>
+        `;
+
+        // Append modal to body
+        document.body.appendChild(scheduleModal);
+
+        // Show modal with custom positioning
+        const modal = new bootstrap.Modal(scheduleModal, {
+            backdrop: false, // Disable backdrop so both modals can be visible
+            keyboard: true
+        });
+        modal.show();
+
+        // Initialize date picker for the schedule modal
+        initializeScheduleDatePicker();
+
+        // Load initial weekly schedule
+        loadWeeklySchedule(doctorId, document.getElementById('weeklySchedule'));
+
+        // Clean up modal when hidden
+        scheduleModal.addEventListener('hidden.bs.modal', () => {
+            document.body.removeChild(scheduleModal);
         });
 
-        // Generate filename with current date
-        const currentDateTime = new Date().toISOString().replace(/[:.]/g, '-').split('T')[0];
-        const filename = `doctors_list_${currentDateTime}.pdf`;
+        // Add some custom styling for better positioning
+        const modalElement = scheduleModal.querySelector('.modal-dialog');
+        modalElement.style.position = 'fixed';
+        modalElement.style.right = '2rem';
+        modalElement.style.top = '3rem';
+        modalElement.style.zIndex = '1060';
 
-        // Save the PDF
-        doc.save(filename);
+        // Store doctor ID for later use
+        scheduleModal.setAttribute('data-doctor-id', doctorId);
+    }
+
+    // Function to initialize date picker for schedule modal
+    function initializeScheduleDatePicker() {
+        const dateInput = document.getElementById('scheduleDate');
+        if (!dateInput) return;
+
+        // Set minimum date to today
+        const today = new Date();
+        const maxDate = new Date(today);
+        maxDate.setDate(today.getDate() + 30); // Allow booking up to 30 days ahead
+
+        // Initialize jQuery UI datepicker if available
+        if (typeof $ !== 'undefined' && $.fn.datepicker) {
+            $(dateInput).datepicker({
+                dateFormat: 'mm/dd/yy',
+                minDate: today,
+                maxDate: maxDate,
+                beforeShowDay: function(date) {
+                    const day = date.getDay();
+                    // Disable weekends (Saturday = 6, Sunday = 0)
+                    const isWeekend = (day === 0 || day === 6);
+                    return [!isWeekend, !isWeekend ? '' : 'ui-state-disabled',
+                           isWeekend ? 'Weekend - Closed' : 'Available'];
+                },
+                onSelect: function(dateText) {
+                    loadAvailableSlotsForDate(dateText);
+                }
+            });
+        } else {
+            // Fallback: use native date input
+            dateInput.type = 'date';
+            dateInput.min = formatDateForInput(today);
+            dateInput.max = formatDateForInput(maxDate);
+
+            dateInput.addEventListener('change', function() {
+                const selectedDate = this.value;
+                if (selectedDate) {
+                    // Convert YYYY-MM-DD to MM/DD/YYYY
+                    const formattedDate = formatDateFromInput(selectedDate);
+                    loadAvailableSlotsForDate(formattedDate);
+                }
+            });
+        }
+    }
+
+    // Helper function to format date for HTML date input (YYYY-MM-DD)
+    function formatDateForInput(date) {
+        const year = date.getFullYear();
+        const month = String(date.getMonth() + 1).padStart(2, '0');
+        const day = String(date.getDate()).padStart(2, '0');
+        return `${year}-${month}-${day}`;
+    }
+
+    // Helper function to convert YYYY-MM-DD to MM/DD/YYYY
+    function formatDateFromInput(dateString) {
+        const parts = dateString.split('-');
+        if (parts.length === 3) {
+            return `${parts[1]}/${parts[2]}/${parts[0]}`;
+        }
+        return dateString;
+    }
+
+    // Function to load available slots for selected date
+    async function loadAvailableSlotsForDate(dateText) {
+        const availableSlotsContainer = document.getElementById('availableSlots');
+        const selectedDateInfo = document.getElementById('selectedDateInfo');
+        const selectedDateText = document.getElementById('selectedDateText');
+        const scheduleModal = document.getElementById('scheduleModal');
+        const doctorId = scheduleModal.getAttribute('data-doctor-id');
+
+        if (!availableSlotsContainer || !doctorId) return;
+
+        // Show selected date info
+        if (selectedDateInfo && selectedDateText) {
+            selectedDateText.textContent = dateText;
+            selectedDateInfo.style.display = 'block';
+        }
+
+        // Show loading state
+        availableSlotsContainer.innerHTML = `
+            <div class="loading-slots text-center p-3">
+                <i class="fas fa-spinner fa-spin"></i> Loading available slots for ${dateText}...
+            </div>
+        `;
+
+        try {
+            // Validate the selected date
+            const validationResult = validateSelectedDate(dateText);
+            if (!validationResult.isValid) {
+                availableSlotsContainer.innerHTML = `
+                    <div class="text-center p-3 text-warning">
+                        <i class="fas fa-exclamation-triangle"></i><br>
+                        ${validationResult.message}
+                    </div>
+                `;
+                return;
+            }
+
+            // Convert date to API format (YYYY-MM-DD)
+            const dateForAPI = convertDateToAPIFormat(dateText);
+
+            // Fetch available time slots from backend
+            const response = await fetch(`/api/doctors/${doctorId}/available-slots?date=${dateForAPI}`);
+
+            if (response.ok) {
+                const data = await response.json();
+                displayAvailableSlots(data.availableSlots || [], availableSlotsContainer);
+            } else {
+                console.warn('Failed to fetch available slots, using default schedule');
+                const defaultSlots = generateDefaultTimeSlotsForDate(dateText);
+                displayAvailableSlots(defaultSlots, availableSlotsContainer);
+            }
+        } catch (error) {
+            console.error('Error fetching available slots:', error);
+            availableSlotsContainer.innerHTML = `
+                <div class="text-center p-3 text-danger">
+                    <i class="fas fa-exclamation-triangle"></i><br>
+                    Error loading schedule. Please try again.
+                </div>
+            `;
+        }
+    }
+
+    // Function to validate selected date
+    function validateSelectedDate(dateText) {
+        if (!dateText) {
+            return { isValid: false, message: 'Please select a date.' };
+        }
+
+        // Parse the date (MM/DD/YYYY format)
+        const parts = dateText.split('/');
+        if (parts.length !== 3) {
+            return { isValid: false, message: 'Invalid date format.' };
+        }
+
+        const month = parseInt(parts[0]) - 1; // JavaScript months are 0-based
+        const day = parseInt(parts[1]);
+        const year = parseInt(parts[2]);
+
+        const selectedDate = new Date(year, month, day);
+        const today = new Date();
+        today.setHours(0, 0, 0, 0); // Reset time to start of day
+
+        // Check if date is in the past
+        if (selectedDate < today) {
+            return { isValid: false, message: 'Cannot select past dates. Please choose today or a future date.' };
+        }
+
+        // Check if it's a weekend
+        const dayOfWeek = selectedDate.getDay();
+        if (dayOfWeek === 0 || dayOfWeek === 6) {
+            return { isValid: false, message: 'Appointments are not available on weekends. Please select a weekday.' };
+        }
+
+        // Check if date is too far in the future (max 30 days)
+        const maxDate = new Date();
+        maxDate.setDate(today.getDate() + 30);
+        if (selectedDate > maxDate) {
+            return { isValid: false, message: 'Cannot book appointments more than 30 days in advance.' };
+        }
+
+        return { isValid: true, message: 'Valid date' };
+    }
+
+    // Function to convert MM/DD/YYYY to YYYY-MM-DD
+    function convertDateToAPIFormat(dateText) {
+        const parts = dateText.split('/');
+        if (parts.length === 3) {
+            const month = parts[0].padStart(2, '0');
+            const day = parts[1].padStart(2, '0');
+            const year = parts[2];
+            return `${year}-${month}-${day}`;
+        }
+        return dateText;
+    }
+
+    // Function to display available slots
+    function displayAvailableSlots(slots, container) {
+        if (!slots || slots.length === 0) {
+            container.innerHTML = `
+                <div class="text-center p-3 text-muted">
+                    <i class="fas fa-calendar-times"></i><br>
+                    No available slots today.<br>
+                    <small>Doctor may be off duty or fully booked.</small>
+                </div>
+            `;
+            return;
+        }
+
+        container.innerHTML = '';
+
+        // Group slots by time period
+        const morningSlots = slots.filter(slot => {
+            const hour = parseInt(slot.time.split(':')[0]);
+            return hour < 12;
+        });
+
+        const afternoonSlots = slots.filter(slot => {
+            const hour = parseInt(slot.time.split(':')[0]);
+            return hour >= 12;
+        });
+
+        // Create morning section
+        if (morningSlots.length > 0) {
+            const morningSection = document.createElement('div');
+            morningSection.className = 'mb-3';
+            morningSection.innerHTML = `
+                <h6 class="text-primary mb-2">
+                    <i class="fas fa-sun"></i> Morning Slots
+                </h6>
+                <div class="slots-grid"></div>
+            `;
+
+            const morningGrid = morningSection.querySelector('.slots-grid');
+            morningGrid.style.display = 'grid';
+            morningGrid.style.gridTemplateColumns = 'repeat(auto-fit, minmax(100px, 1fr))';
+            morningGrid.style.gap = '0.5rem';
+
+            morningSlots.forEach(slot => {
+                const slotElement = createSlotElementStandard(slot);
+                morningGrid.appendChild(slotElement);
+            });
+
+            container.appendChild(morningSection);
+        }
+
+        // Create afternoon section
+        if (afternoonSlots.length > 0) {
+            const afternoonSection = document.createElement('div');
+            afternoonSection.className = 'mb-3';
+            afternoonSection.innerHTML = `
+                <h6 class="text-warning mb-2">
+                    <i class="fas fa-cloud-sun"></i> Afternoon Slots
+                </h6>
+                <div class="slots-grid"></div>
+            `;
+
+            const afternoonGrid = afternoonSection.querySelector('.slots-grid');
+            afternoonGrid.style.display = 'grid';
+            afternoonGrid.style.gridTemplateColumns = 'repeat(auto-fit, minmax(100px, 1fr))';
+            afternoonGrid.style.gap = '0.5rem';
+
+            afternoonSlots.forEach(slot => {
+                const slotElement = createSlotElementStandard(slot);
+                afternoonGrid.appendChild(slotElement);
+            });
+
+            container.appendChild(afternoonSection);
+        }
+    }
+
+    // Function to create individual slot element following standard format
+    function createSlotElementStandard(slot) {
+        const button = document.createElement('button');
+        button.type = 'button';
+        button.className = `time-slot btn btn-sm me-1 mb-1 ${slot.available ? 'btn-outline-success' : 'btn-outline-secondary disabled'}`;
+        button.setAttribute('data-time', slot.time);
+        button.setAttribute('onclick', `selectTimeSlot(this, '${slot.time}')`);
+
+        // Use display text if available, otherwise format the time
+        const displayTime = slot.display || formatTimeToStandard(slot.time);
+        button.textContent = displayTime;
+
+        if (slot.available) {
+            button.onclick = () => selectTimeSlot(button, slot.time);
+            button.style.cursor = 'pointer';
+        } else {
+            button.disabled = true;
+            button.style.cursor = 'not-allowed';
+            button.title = 'Time slot is not available';
+        }
+
+        return button;
+    }
+
+    // Function to generate default time slots for working hours (following standard format)
+    function generateDefaultTimeSlots() {
+        const slots = [];
+        const today = new Date();
+        const dayOfWeek = today.getDay(); // 0 = Sunday, 6 = Saturday
+
+        // Only show slots for weekdays
+        if (dayOfWeek >= 1 && dayOfWeek <= 5) { // Monday to Friday
+            // Standard morning time slots: 8:00 AM - 11:30 AM
+            const morningTimes = [
+                { time: '08:00:00', display: '08:00 AM' },
+                { time: '08:30:00', display: '08:30 AM' },
+                { time: '09:00:00', display: '09:00 AM' },
+                { time: '09:30:00', display: '09:30 AM' },
+                { time: '10:00:00', display: '10:00 AM' },
+                { time: '10:30:00', display: '10:30 AM' },
+                { time: '11:00:00', display: '11:00 AM' },
+                { time: '11:30:00', display: '11:30 AM' }
+            ];
+
+            morningTimes.forEach(timeSlot => {
+                slots.push({
+                    time: timeSlot.time,
+                    display: timeSlot.display,
+                    available: true
+                });
+            });
+
+            // Standard afternoon time slots: 2:00 PM - 5:30 PM
+            const afternoonTimes = [
+                { time: '14:00:00', display: '02:00 PM' },
+                { time: '14:30:00', display: '02:30 PM' },
+                { time: '15:00:00', display: '03:00 PM' },
+                { time: '15:30:00', display: '03:30 PM' },
+                { time: '16:00:00', display: '04:00 PM' },
+                { time: '16:30:00', display: '04:30 PM' },
+                { time: '17:00:00', display: '05:00 PM' },
+                { time: '17:30:00', display: '05:30 PM' }
+            ];
+
+            afternoonTimes.forEach(timeSlot => {
+                slots.push({
+                    time: timeSlot.time,
+                    display: timeSlot.display,
+                    available: true
+                });
+            });
+        }
+
+        return slots;
+    }
+
+    // Function to generate default time slots for a specific date following standard format
+    function generateDefaultTimeSlotsForDate(dateText) {
+        const slots = [];
+
+        // Validate date first
+        const validationResult = validateSelectedDate(dateText);
+        if (!validationResult.isValid) {
+            return [];
+        }
+
+        // Standard morning time slots: 8:00 AM - 11:30 AM
+        const morningTimes = [
+            { time: '08:00:00', display: '08:00 AM' },
+            { time: '08:30:00', display: '08:30 AM' },
+            { time: '09:00:00', display: '09:00 AM' },
+            { time: '09:30:00', display: '09:30 AM' },
+            { time: '10:00:00', display: '10:00 AM' },
+            { time: '10:30:00', display: '10:30 AM' },
+            { time: '11:00:00', display: '11:00 AM' },
+            { time: '11:30:00', display: '11:30 AM' }
+        ];
+
+        morningTimes.forEach(timeSlot => {
+            slots.push({
+                time: timeSlot.time,
+                display: timeSlot.display,
+                available: true
+            });
+        });
+
+        // Standard afternoon time slots: 2:00 PM - 5:30 PM
+        const afternoonTimes = [
+            { time: '14:00:00', display: '02:00 PM' },
+            { time: '14:30:00', display: '02:30 PM' },
+            { time: '15:00:00', display: '03:00 PM' },
+            { time: '15:30:00', display: '03:30 PM' },
+            { time: '16:00:00', display: '04:00 PM' },
+            { time: '16:30:00', display: '04:30 PM' },
+            { time: '17:00:00', display: '05:00 PM' },
+            { time: '17:30:00', display: '05:30 PM' }
+        ];
+
+        afternoonTimes.forEach(timeSlot => {
+            slots.push({
+                time: timeSlot.time,
+                display: timeSlot.display,
+                available: true
+            });
+        });
+
+        return slots;
+    }
+
+    // Enhanced function to select a time slot following standard format
+    function selectTimeSlot(element, timeValue) {
+        // Remove previous selections
+        document.querySelectorAll('.time-slot').forEach(item => {
+            item.classList.remove('btn-success', 'selected');
+            item.classList.add('btn-outline-success');
+        });
+
+        // Highlight selected slot
+        element.classList.remove('btn-outline-success');
+        element.classList.add('btn-success', 'selected');
+
+        // Store selected time
+        element.dataset.selected = 'true';
+
+        // Visual feedback
+        element.style.transform = 'scale(1.05)';
+        setTimeout(() => {
+            element.style.transform = 'scale(1)';
+        }, 150);
+    }
+
+    // Function to view doctor appointments
+    async function viewDoctorAppointments(doctorId, doctorName) {
+        try {
+            // Fetch appointments for this doctor
+            const response = await fetch(`/api/appointments/doctor/${doctorId}`);
+
+            if (!response.ok) {
+                throw new Error('Failed to fetch appointments');
+            }
+
+            const data = await response.json();
+            const appointments = data.appointments || [];
+
+            // Create appointments modal
+            const appointmentsModal = document.createElement('div');
+            appointmentsModal.className = 'modal fade';
+            appointmentsModal.id = 'appointmentsModal';
+            appointmentsModal.innerHTML = `
+                <div class="modal-dialog modal-xl" style="margin-left: 50%; margin-top: 2rem; max-width: 45%; transform: translateX(0);">
+                    <div class="modal-content" style="border: 2px solid var(--warning-color); box-shadow: 0 8px 32px rgba(245, 158, 11, 0.25);">
+                        <div class="modal-header" style="background: linear-gradient(135deg, var(--warning-color), #f97316); color: white;">
+                            <h5 class="modal-title">
+                                <i class="fas fa-list-alt"></i>
+                                Appointments - Dr. ${doctorName}
+                            </h5>
+                            <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                        </div>
+                        <div class="modal-body" style="max-height: 70vh; overflow-y: auto; padding: 1.5rem;">
+                            <div class="appointments-summary mb-4">
+                                <div class="row">
+                                    <div class="col-md-6">
+                                        <div class="stat-card" style="background: linear-gradient(135deg, #667eea, #764ba2); color: white; padding: 1rem; border-radius: 8px; text-align: center;">
+                                            <h6 style="margin-bottom: 0.5rem; opacity: 0.9;">Total Appointments</h6>
+                                            <h3 style="margin: 0; font-weight: bold;">${appointments.length}</h3>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <div class="stat-card" style="background: linear-gradient(135deg, #10b981, #059669); color: white; padding: 1rem; border-radius: 8px; text-align: center;">
+                                            <h6 style="margin-bottom: 0.5rem; opacity: 0.9;">Doctor ID</h6>
+                                            <h3 style="margin: 0; font-weight: bold;">#${doctorId}</h3>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="appointments-list" id="appointmentsList">
+                                ${appointments.length === 0 ?
+                                    '<div class="text-center p-4 text-muted"><i class="fas fa-calendar-times fa-3x mb-3"></i><br><h5>No Appointments Found</h5><p>This doctor currently has no scheduled appointments.</p></div>' :
+                                    generateAppointmentsTable(appointments)
+                                }
+                            </div>
+                        </div>
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-success btn-sm" onclick="bookAppointmentWithDoctor(${doctorId}, '${encodeURIComponent(doctorName)}', '')">
+                                <i class="fas fa-plus"></i> Book New Appointment
+                            </button>
+                            <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Close</button>
+                        </div>
+                    </div>
+                </div>
+            `;
+
+            // Append modal to body
+            document.body.appendChild(appointmentsModal);
+
+            // Show modal with custom positioning
+            const modal = new bootstrap.Modal(appointmentsModal, {
+                backdrop: false, // Disable backdrop so both modals can be visible
+                keyboard: true
+            });
+            modal.show();
+
+            // Clean up modal when hidden
+            appointmentsModal.addEventListener('hidden.bs.modal', () => {
+                document.body.removeChild(appointmentsModal);
+            });
+
+            // Add custom styling for better positioning
+            const modalElement = appointmentsModal.querySelector('.modal-dialog');
+            modalElement.style.position = 'fixed';
+            modalElement.style.right = '2rem';
+            modalElement.style.top = '2rem';
+            modalElement.style.zIndex = '1060';
+
+        } catch (error) {
+            console.error('Error fetching appointments:', error);
+            alert('Failed to load appointments. Please try again.');
+        }
+    }
+
+    // Function to generate appointments table HTML
+    function generateAppointmentsTable(appointments) {
+        const tableHTML = `
+            <div class="table-responsive">
+                <table class="table table-hover">
+                    <thead class="table-warning">
+                        <tr>
+                            <th style="font-size: 0.85rem;">ID</th>
+                            <th style="font-size: 0.85rem;">Patient Name</th>
+                            <th style="font-size: 0.85rem;">Date & Time</th>
+                            <th style="font-size: 0.85rem;">Status</th>
+                            <th style="font-size: 0.85rem;">Description</th>
+                            <th style="font-size: 0.85rem;">Contact</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        ${appointments.map(appointment => `
+                            <tr style="font-size: 0.85rem;">
+                                <td>
+                                    <span class="badge bg-primary">${appointment.AppointmentID}</span>
+                                </td>
+                                <td>
+                                    <strong>${appointment.PatientName || 'Unknown Patient'}</strong>
+                                    <br><small class="text-muted">Patient ID: ${appointment.PatientID}</small>
+                                </td>
+                                <td>
+                                    <div>
+                                        <i class="fas fa-calendar-alt text-primary"></i>
+                                        ${formatDateTime(appointment.DateTime)}
+                                    </div>
+                                </td>
+                                <td>
+                                    <span class="badge ${getStatusBadgeClass(appointment.Status)}">
+                                        ${appointment.Status}
+                                    </span>
+                                </td>
+                                <td>
+                                    <div style="max-width: 200px; overflow: hidden; text-overflow: ellipsis;">
+                                        ${appointment.Description || 'No description'}
+                                    </div>
+                                </td>
+                                <td>
+                                    <div style="font-size: 0.8rem;">
+                                        ${appointment.Email ? `<div><i class="fas fa-envelope text-info"></i> ${appointment.Email}</div>` : ''}
+                                        ${appointment.PhoneNumber ? `<div><i class="fas fa-phone text-success"></i> ${appointment.PhoneNumber}</div>` : ''}
+                                    </div>
+                                </td>
+                            </tr>
+                        `).join('')}
+                    </tbody>
+                </table>
+            </div>
+        `;
+        return tableHTML;
+    }
+
+    // Helper function to format date and time
+    function formatDateTime(dateTimeString) {
+        try {
+            const date = new Date(dateTimeString);
+            const options = {
+                year: 'numeric',
+                month: 'short',
+                day: 'numeric',
+                hour: '2-digit',
+                minute: '2-digit',
+                hour12: true
+            };
+            return date.toLocaleDateString('en-US', options);
+        } catch (error) {
+            return dateTimeString;
+        }
+    }
+
+    // Helper function to get status badge class
+    function getStatusBadgeClass(status) {
+        switch (status?.toLowerCase()) {
+            case 'scheduled':
+                return 'bg-success';
+            case 'pending':
+                return 'bg-warning text-dark';
+            case 'completed':
+                return 'bg-info';
+            case 'cancelled':
+                return 'bg-danger';
+            default:
+                return 'bg-secondary';
+        }
     }
 </script>
 </body>

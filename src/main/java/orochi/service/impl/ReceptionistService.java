@@ -47,6 +47,9 @@ public class ReceptionistService {
     @Autowired
     private MedicalServiceRepository medicalServiceRepository;
 
+    @Autowired
+    private ScheduleRepository scheduleRepository;
+
     public ReceptionistService(
             UserRepository userRepository,
             AppointmentRepository appointmentRepository,
@@ -2558,9 +2561,33 @@ public class ReceptionistService {
     }
 
     /**
-     * Normalize payment method từ database để đảm bảo hiển thị chính xác
-     * Xử lý tất cả các payment methods có thể có trong database
+     * Get doctor patient count from Schedule table
+     * Counts distinct PatientID for a specific DoctorID in Schedule table
      */
+    public Integer getDoctorPatientCountFromSchedule(Integer doctorId) {
+        try {
+            logger.info("=== GETTING DOCTOR PATIENT COUNT FROM SCHEDULE ===");
+            logger.info("DoctorID: {}", doctorId);
+
+            if (doctorId == null) {
+                logger.warn("DoctorID is null, returning 0");
+                return 0;
+            }
+
+            // Use the repository method to count distinct patients by doctor ID
+            Integer count = scheduleRepository.countDistinctPatientsByDoctorId(doctorId);
+
+            logger.info("Found {} distinct patients for DoctorID: {}", count != null ? count : 0, doctorId);
+            return count != null ? count : 0;
+
+        } catch (Exception e) {
+            logger.error("Error counting patients for doctor {}: {}", doctorId, e.getMessage(), e);
+            return 0;
+        }
+    }
+
+    // Normalize payment method từ database để đảm bảo hiển thị chính xác
+    // Xử lý tất cả các payment methods có thể có trong database
     private String normalizePaymentMethod(String transactionMethod) {
         if (transactionMethod == null || transactionMethod.trim().isEmpty()) {
             logger.warn("Transaction.Method is null/empty, using fallback: Cash");

@@ -2413,7 +2413,7 @@ public class ReceptionistController {
                                         }
                                     } catch (Exception emailEx) {
                                         logger.error("❌ Failed to send online payment receipt email: {}", emailEx.getMessage(), emailEx);
-                                        // Continue processing - don't fail payment processing if email fails
+                                        // Continue processing - don't fail the payment processing if email fails
                                     }
                                 } else {
                                     // Update existing receipt
@@ -2452,7 +2452,7 @@ public class ReceptionistController {
                                         }
                                     } catch (Exception emailEx) {
                                         logger.error("❌ Failed to send updated online payment receipt email: {}", emailEx.getMessage(), emailEx);
-                                        // Continue processing - don't fail payment processing if email fails
+                                        // Continue processing - don't fail the payment processing if email fails
                                     }
                                 }
                             } catch (Exception receiptError) {
@@ -2674,6 +2674,29 @@ public class ReceptionistController {
         }
 
         return pdfFilePath;
+    }
+
+    // API endpoint to get doctor patient count from Schedule table
+    @GetMapping("/api/doctors/{doctorId}/patient-count")
+    @ResponseBody
+    public ResponseEntity<Map<String, Object>> getDoctorPatientCount(@PathVariable Integer doctorId) {
+        try {
+            // Get patient count from Schedule table by DoctorID
+            Integer patientCount = receptionistService.getDoctorPatientCountFromSchedule(doctorId);
+
+            Map<String, Object> response = new HashMap<>();
+            response.put("count", patientCount != null ? patientCount : 0);
+            response.put("doctorId", doctorId);
+
+            return ResponseEntity.ok(response);
+        } catch (Exception e) {
+            logger.error("Error fetching patient count for doctor {}: {}", doctorId, e.getMessage());
+            Map<String, Object> errorResponse = new HashMap<>();
+            errorResponse.put("count", 0);
+            errorResponse.put("doctorId", doctorId);
+            errorResponse.put("error", "Failed to fetch patient count");
+            return ResponseEntity.ok(errorResponse);
+        }
     }
 
     /**

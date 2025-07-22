@@ -4,17 +4,20 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 import orochi.config.CustomUserDetails;
+import orochi.dto.ScheduleDTO;
 import orochi.model.Appointment;
 import orochi.model.Patient;
 import orochi.model.PatientContact;
 import orochi.model.Users;
 import orochi.repository.UserRepository;
+import orochi.service.ScheduleService;
 import orochi.service.impl.DoctorServiceImpl;
 import orochi.service.impl.EmailServiceImpl;
 import orochi.service.impl.ReceptionistService;
 import orochi.service.impl.RoomServiceImpl;
 
 import java.time.LocalDate;
+import java.time.format.DateTimeFormatter;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -30,16 +33,20 @@ public class ReceptionistApiController {
     private final UserRepository userRepository;
     private final RoomServiceImpl roomService;
     private final EmailServiceImpl emailService;
+    private final ScheduleService scheduleService;
 
     public ReceptionistApiController(ReceptionistService receptionistService,
                                      DoctorServiceImpl doctorService,
                                      UserRepository userRepository,
-                                     RoomServiceImpl roomService, EmailServiceImpl emailService) {
+                                     RoomServiceImpl roomService,
+                                     EmailServiceImpl emailService,
+                                     ScheduleService scheduleService) {
         this.receptionistService = receptionistService;
         this.doctorService = doctorService;
         this.userRepository = userRepository;
         this.roomService = roomService;
         this.emailService = emailService;
+        this.scheduleService = scheduleService;
     }
 
     @PostMapping("/appointments/confirm")
@@ -765,5 +772,53 @@ public class ReceptionistApiController {
                 .collect(Collectors.toList());
     }
 
+    @GetMapping("/appointments/doctor/{doctorId}")
+    public ResponseEntity<?> getAppointmentsByDoctor(@PathVariable Integer doctorId) {
+        try {
+            List<Appointment> appointments = receptionistService.getAllAppointments().stream()
+                    .filter(apt -> apt.getDoctorId().equals(doctorId))
+                    .sorted((a1, a2) -> a2.getDateTime().compareTo(a1.getDateTime()))
+                    .collect(Collectors.toList());
 
+            List<Map<String, Object>> appointmentData = appointments.stream()
+                    .map(appointment -> {
+                        Map<String, Object> aptMap = new HashMap<>();
+                        aptMap.put("AppointmentID", appointment.getAppointmentId());
+                        aptMap.put("DoctorID", appointment.getDoctorId());
+                        aptMap.put("PatientID", appointment.getPatientId());
+                        aptMap.put("RoomID", appointment.getRoomId());
+                        aptMap.put("Description", appointment.getDescription());
+                        aptMap.put("DateTime", appointment.getDateTime().toString());
+                        aptMap.put("Status", appointment.getStatus());
+                        aptMap.put("Email", appointment.getEmail());
+                        aptMap.put("PhoneNumber", appointment.getPhoneNumber());
+
+                        // Get patient full name by PatientID -> UserID
+                        try {
+                            Optional<Patient> patient = receptionistService.getAllPatients().stream()
+                                    .filter(p -> p.getPatientId().equals(appointment.getPatientId()))
+                                    .findFirst();
+                            if (patient.isPresent() && patient.get().getUser() != null) {
+                                aptMap.put("PatientName", patient.get().getUser().getFullName());
+                            } else {
+                                aptMap.put("PatientName", "Unknown Patient");
+                            }
+                        } catch (Exception e) {
+                            aptMap.put("PatientName", "Unknown Patient");
+                        }
+
+                        return aptMap;
+                    })
+                    .collect(Collectors.toList());
+
+            Map<String, Object> response = new HashMap<>();
+            response.put("appointments", appointmentData);
+            response.put("total", appointmentData.size());
+            response.put("doctorId", doctorId);
+
+            return ResponseEntity.ok(response);
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body("Error fetching appointments: " + e.getMessage());
+        }
+    }
 }

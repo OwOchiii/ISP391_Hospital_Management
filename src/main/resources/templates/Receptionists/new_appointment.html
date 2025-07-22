@@ -573,6 +573,181 @@
             border-color: var(--error-color) !important;
             box-shadow: 0 0 0 0.2rem rgba(239, 68, 68, 0.25) !important;
         }
+
+        /* Schedule Table Styles */
+        .schedule-section {
+            background: var(--bg-white);
+            border-radius: 16px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+            padding: 2rem;
+            margin-bottom: 2rem;
+            display: none;
+        }
+
+        .schedule-section.show {
+            display: block;
+        }
+
+        .schedule-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 1rem;
+            background: var(--bg-white);
+            border-radius: 12px;
+            overflow: hidden;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+        }
+
+        .schedule-table th {
+            background: linear-gradient(135deg, var(--success-color), #0056b3);
+            color: white;
+            padding: 1rem 0.75rem;
+            text-align: left;
+            font-weight: 600;
+            font-size: 0.9rem;
+            border-bottom: none;
+        }
+
+        .schedule-table td {
+            padding: 0.875rem 0.75rem;
+            border-bottom: 1px solid var(--border-color);
+            vertical-align: middle;
+            font-size: 0.875rem;
+        }
+
+        .schedule-table tbody tr:hover {
+            background: var(--patient-light);
+            transition: background 0.3s ease;
+        }
+
+        .schedule-table tbody tr:last-child td {
+            border-bottom: none;
+        }
+
+        .status-badge {
+            padding: 0.25rem 0.75rem;
+            border-radius: 20px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .status-available {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+
+        .status-booked {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+
+        .status-pending {
+            background: #fff3cd;
+            color: #856404;
+            border: 1px solid #ffeaa7;
+        }
+
+        .btn-schedule-toggle {
+            background: linear-gradient(135deg, #17a2b8, #138496);
+            border: none;
+            padding: 0.75rem 1.5rem;
+            border-radius: 12px;
+            color: white;
+            font-weight: 600;
+            font-size: 1rem;
+            text-decoration: none;
+            transition: all 0.3s ease;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            cursor: pointer;
+            margin-bottom: 1rem;
+        }
+
+        .btn-schedule-toggle:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(23, 162, 184, 0.3);
+            color: white;
+            background: linear-gradient(135deg, #138496, #117a8b);
+        }
+
+        .schedule-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1rem;
+            flex-wrap: wrap;
+            gap: 1rem;
+        }
+
+        .schedule-info {
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+
+        .schedule-info .info-item {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            font-size: 0.9rem;
+            color: var(--text-light);
+        }
+
+        .schedule-info .info-item i {
+            color: var(--success-color);
+            width: 16px;
+            text-align: center;
+        }
+
+        .schedule-loading {
+            text-align: center;
+            padding: 2rem;
+            color: var(--text-muted);
+        }
+
+        .schedule-error {
+            text-align: center;
+            padding: 2rem;
+            color: var(--error-color);
+            background: #ffeaea;
+            border-radius: 8px;
+            margin: 1rem 0;
+        }
+
+        .schedule-empty {
+            text-align: center;
+            padding: 2rem;
+            color: var(--text-muted);
+            background: var(--bg-light);
+            border-radius: 8px;
+            margin: 1rem 0;
+        }
+
+        @media (max-width: 768px) {
+            .schedule-header {
+                flex-direction: column;
+                align-items: flex-start;
+            }
+
+            .schedule-table {
+                font-size: 0.8rem;
+            }
+
+            .schedule-table th,
+            .schedule-table td {
+                padding: 0.5rem 0.25rem;
+            }
+
+            .btn-schedule-toggle {
+                width: 100%;
+                justify-content: center;
+            }
+        }
     </style>
 </head>
 <body>
@@ -955,6 +1130,57 @@
                     </button>
                 </div>
             </form>
+        </div>
+
+        <!-- Schedule Section - Initially hidden -->
+        <div class="schedule-section" id="scheduleSection">
+            <div class="schedule-header">
+                <h2 class="section-title">
+                    <i class="bi bi-calendar-event"></i>
+                    Doctor's Schedule
+                </h2>
+                <div class="schedule-info">
+                    <div class="info-item">
+                        <i class="bi bi-clock"></i>
+                        <span id="scheduleDateLabel">Date: <strong>MM/DD/YYYY</strong></span>
+                    </div>
+                    <div class="info-item">
+                        <i class="bi bi-person"></i>
+                        <span id="doctorNameLabel">Doctor: <strong>Dr. John Doe</strong></span>
+                    </div>
+                </div>
+                <button class="btn-schedule-toggle" id="toggleScheduleBtn">
+                    <i class="bi bi-chevron-down"></i>
+                    View Schedule & Available Times
+                </button>
+            </div>
+
+            <div class="schedule-loading" id="scheduleLoading">
+                <i class="bi bi-hourglass-split"></i>
+                Loading schedule, please wait...
+            </div>
+
+            <div class="schedule-error d-none" id="scheduleError">
+                <i class="bi bi-exclamation-triangle"></i>
+                <span id="scheduleErrorMessage">Error loading schedule. Please try again.</span>
+            </div>
+
+            <div class="schedule-empty d-none" id="scheduleEmpty">
+                <i class="bi bi-calendar-x"></i>
+                <span>No available times for the selected date. Please choose another date.</span>
+            </div>
+
+            <table class="schedule-table d-none" id="scheduleTable">
+                <thead>
+                <tr>
+                    <th>Time Slot</th>
+                    <th>Status</th>
+                    <th>Patient Name</th>
+                    <th>Phone</th>
+                </tr>
+                </thead>
+                <tbody id="scheduleTableBody"></tbody>
+            </table>
         </div>
     </div>
 </div>
@@ -2356,190 +2582,6 @@
         }
     }
 
-    // Add event listeners for automatic conflict checking when doctor or date changes
-    document.addEventListener('DOMContentLoaded', function() {
-        // ...existing code...
-
-        // Auto-check conflicts when doctor changes
-        const doctorSelect = document.getElementById('doctorId');
-        if (doctorSelect) {
-            doctorSelect.addEventListener('change', function() {
-                const appointmentDate = document.getElementById('appointmentDate').value;
-                if (appointmentDate) {
-                    console.log('Doctor changed, checking time slot conflicts...');
-                    updateTimeSlots();
-                }
-            });
-        }
-
-        // Auto-check conflicts when date changes
-        const dateInput = document.getElementById('appointmentDate');
-        if (dateInput) {
-            dateInput.addEventListener('change', function() {
-                const doctorId = document.getElementById('doctorId').value;
-                if (doctorId) {
-                    console.log('Date changed, checking time slot conflicts...');
-                    updateTimeSlots();
-                }
-            });
-        }
-
-        // BỎ PHẦN MANUAL REFRESH BUTTON - KHÔNG CẦN THIẾT
-    });
-
-    // Comprehensive form reset function after successful booking
-    function resetAppointmentForm() {
-        console.log('🔄 Resetting appointment form...');
-
-        // Reset the main form
-        const appointmentForm = document.getElementById('appointmentForm');
-        if (appointmentForm) {
-            appointmentForm.reset();
-        }
-
-        // Clear patient selection and search
-        document.getElementById('patientIdInput').value = '';
-        document.getElementById('searchQuery').value = '';
-
-        // Hide search results
-        const searchResults = document.getElementById('searchResults');
-        if (searchResults) {
-            searchResults.classList.add('d-none');
-        }
-
-        // Reset all form selects to their default state
-        const selects = ['specialtyId', 'doctorId', 'roomId'];
-        selects.forEach(selectId => {
-            const select = document.getElementById(selectId);
-            if (select) {
-                if (selectId === 'specialtyId') {
-                    // For specialty, only reset the selected value, keep all options
-                    select.value = '';
-                } else {
-                    // For doctor and room, clear all options and add default
-                    select.value = '';
-                    select.innerHTML = '';
-
-                    const defaultOption = document.createElement('option');
-                    defaultOption.value = '';
-
-                    if (selectId === 'doctorId') {
-                        defaultOption.text = 'Choose a Doctor';
-                    } else if (selectId === 'roomId') {
-                        defaultOption.text = 'Choose a Room';
-                    }
-
-                    select.appendChild(defaultOption);
-                }
-            }
-        });
-
-        // Clear appointment date using jQuery datepicker
-        const appointmentDate = document.getElementById('appointmentDate');
-        if (appointmentDate && $(appointmentDate).datepicker) {
-            $(appointmentDate).datepicker('setDate', null);
-        }
-        appointmentDate.value = '';
-
-        // Reset time slots
-        document.getElementById('appointmentTime').value = '';
-        document.querySelectorAll('.time-slot').forEach(slot => {
-            slot.classList.remove('selected', 'disabled', 'conflict');
-            slot.disabled = false;
-            slot.style.display = 'inline-block';
-            slot.style.opacity = '1';
-        });
-
-        // Reset patient information fields to read-only state
-        const patientFields = ['fullName', 'phoneNumber', 'email', 'dateOfBirth', 'gender',
-                              'country', 'province', 'district', 'streetAddress', 'postalCode', 'addressType'];
-        patientFields.forEach(fieldId => {
-            const field = document.getElementById(fieldId);
-            if (field) {
-                field.value = '';
-                field.readOnly = true;
-                field.classList.add('readonly');
-                field.classList.remove('error');
-            }
-        });
-
-        // Reset and disable description textarea
-        const description = document.getElementById('description');
-        if (description) {
-            description.value = '';
-            description.disabled = true;
-            description.classList.add('readonly');
-            description.classList.remove('error');
-        }
-
-        // Hide doctor and room info displays
-        const doctorInfo = document.getElementById('doctorInfoDisplay');
-        if (doctorInfo) {
-            doctorInfo.classList.remove('show');
-        }
-
-        const roomInfo = document.getElementById('roomInfoDisplay');
-        if (roomInfo) {
-            roomInfo.classList.add('d-none');
-        }
-
-        // Clear all error messages
-        clearAllErrors();
-        clearSearchError();
-        hideTimeSlotError();
-
-        // Clear time grid loading state
-        const timeGrid = document.getElementById('timeGrid');
-        if (timeGrid) {
-            timeGrid.classList.remove('loading', 'error');
-        }
-
-        // Hide success message after a delay
-        setTimeout(() => {
-            const successMessage = document.getElementById('successMessage');
-            if (successMessage) {
-                successMessage.classList.add('d-none');
-            }
-        }, 5000);
-
-        console.log('✅ Form reset completed');
-    }
-
-    // Helper function to restore specialty options after reset
-    function restoreSpecialtyOptions(selectElement) {
-        // This function restores the specialty options from the original server data
-        // Since the data is rendered server-side, we need to preserve the original options
-
-        // If there were original options stored, restore them
-        if (window.originalSpecialtyOptions) {
-            window.originalSpecialtyOptions.forEach(option => {
-                selectElement.appendChild(option.cloneNode(true));
-            });
-        } else {
-            // If no stored options, make an AJAX call to get fresh specialty data
-            fetch('/receptionist/api/specialties')
-                .then(response => response.json())
-                .then(specialties => {
-                    specialties.forEach(spec => {
-                        const option = document.createElement('option');
-                        option.value = spec.specId;
-                        option.text = `${spec.specName} - $${spec.price}`;
-                        option.setAttribute('data-price', spec.price);
-                        selectElement.appendChild(option);
-                    });
-                })
-                .catch(error => {
-                    console.error('Error loading specialties:', error);
-                    // Fallback: add a generic option
-                    const fallbackOption = document.createElement('option');
-                    fallbackOption.value = '';
-                    fallbackOption.text = 'Please reload the page to see specialties';
-                    fallbackOption.disabled = true;
-                    selectElement.appendChild(fallbackOption);
-                });
-        }
-    }
-
     // Store original specialty options on page load for reset functionality
     document.addEventListener('DOMContentLoaded', function() {
         // Store original specialty options for reset
@@ -2548,7 +2590,209 @@
             window.originalSpecialtyOptions = Array.from(specialtySelect.options).slice(1); // Skip the first "Select" option
         }
 
+        // Initialize schedule toggle button
+        const toggleScheduleBtn = document.getElementById('toggleScheduleBtn');
+        if (toggleScheduleBtn) {
+            toggleScheduleBtn.addEventListener('click', toggleScheduleView);
+        }
+
         // ...existing DOMContentLoaded code...
+    });
+
+    // Function to toggle schedule view
+    function toggleScheduleView() {
+        const scheduleSection = document.getElementById('scheduleSection');
+        const toggleBtn = document.getElementById('toggleScheduleBtn');
+        const doctorId = document.getElementById('doctorId').value;
+        const appointmentDate = document.getElementById('appointmentDate').value;
+
+        if (!doctorId) {
+            showScheduleError('Please select a doctor first to view schedule.');
+            return;
+        }
+
+        if (!appointmentDate) {
+            showScheduleError('Please select an appointment date first to view schedule.');
+            return;
+        }
+
+        // Toggle schedule section visibility
+        if (scheduleSection.classList.contains('show')) {
+            // Hide schedule
+            scheduleSection.classList.remove('show');
+            toggleBtn.innerHTML = '<i class="bi bi-chevron-down"></i> View Schedule & Available Times';
+        } else {
+            // Show schedule and load data
+            scheduleSection.classList.add('show');
+            toggleBtn.innerHTML = '<i class="bi bi-chevron-up"></i> Hide Schedule';
+
+            // Update schedule info labels
+            updateScheduleLabels();
+
+            // Load schedule data
+            loadDoctorSchedule(doctorId, appointmentDate);
+        }
+    }
+
+    // Function to update schedule labels
+    function updateScheduleLabels() {
+        const doctorSelect = document.getElementById('doctorId');
+        const appointmentDate = document.getElementById('appointmentDate').value;
+
+        // Update doctor name label
+        const doctorNameLabel = document.getElementById('doctorNameLabel');
+        if (doctorSelect.value && doctorSelect.selectedIndex > 0) {
+            const doctorName = doctorSelect.options[doctorSelect.selectedIndex].text;
+            doctorNameLabel.innerHTML = `Doctor: <strong>${doctorName}</strong>`;
+        }
+
+        // Update date label
+        const scheduleDateLabel = document.getElementById('scheduleDateLabel');
+        if (appointmentDate) {
+            scheduleDateLabel.innerHTML = `Date: <strong>${appointmentDate}</strong>`;
+        }
+    }
+
+    // Function to load doctor schedule for the selected date
+    async function loadDoctorSchedule(doctorId, appointmentDate) {
+        const scheduleLoading = document.getElementById('scheduleLoading');
+        const scheduleError = document.getElementById('scheduleError');
+        const scheduleEmpty = document.getElementById('scheduleEmpty');
+        const scheduleTable = document.getElementById('scheduleTable');
+
+        // Show loading, hide others
+        scheduleLoading.style.display = 'block';
+        scheduleError.classList.add('d-none');
+        scheduleEmpty.classList.add('d-none');
+        scheduleTable.classList.add('d-none');
+
+        try {
+            // Convert date format from MM/DD/YYYY to YYYY-MM-DD for API
+            const dateParts = appointmentDate.split('/');
+            if (dateParts.length !== 3) {
+                throw new Error('Invalid date format');
+            }
+            const apiDate = `${dateParts[2]}-${dateParts[0].padStart(2, '0')}-${dateParts[1].padStart(2, '0')}`;
+
+            console.log('Loading schedule for Doctor:', doctorId, 'Date:', apiDate);
+
+            // Call API to get doctor's schedule
+            const response = await fetch(`/receptionist/api/schedule/doctor/${doctorId}/date/${apiDate}`, {
+                method: 'GET',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRF-TOKEN': document.querySelector('input[name="_csrf"]')?.value || ''
+                }
+            });
+
+            if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`);
+            }
+
+            const scheduleData = await response.json();
+            console.log('Schedule data received:', scheduleData);
+
+            // Hide loading
+            scheduleLoading.style.display = 'none';
+
+            if (!scheduleData || scheduleData.length === 0) {
+                // Show empty state
+                scheduleEmpty.classList.remove('d-none');
+            } else {
+                // Populate schedule table
+                populateScheduleTable(scheduleData);
+                scheduleTable.classList.remove('d-none');
+            }
+
+        } catch (error) {
+            console.error('Error loading schedule:', error);
+            scheduleLoading.style.display = 'none';
+            showScheduleError(`Error loading schedule: ${error.message}`);
+        }
+    }
+
+    // Function to populate schedule table with data
+    function populateScheduleTable(scheduleData) {
+        const tableBody = document.getElementById('scheduleTableBody');
+        tableBody.innerHTML = '';
+
+        scheduleData.forEach(schedule => {
+            const row = document.createElement('tr');
+
+            // Format time for display
+            const startTime = formatTimeForDisplay(schedule.startTime);
+            const endTime = formatTimeForDisplay(schedule.endTime);
+            const timeSlot = `${startTime} - ${endTime}`;
+
+            // Determine status
+            let status = 'Available';
+            let statusClass = 'status-available';
+            let patientName = '-';
+            let patientPhone = '-';
+
+            if (schedule.patientID && schedule.patientID > 0) {
+                status = 'Booked';
+                statusClass = 'status-booked';
+                patientName = schedule.patientName || 'N/A';
+                patientPhone = schedule.patientPhone || 'N/A';
+            } else if (schedule.description && schedule.description.toLowerCase().includes('pending')) {
+                status = 'Pending';
+                statusClass = 'status-pending';
+            }
+
+            row.innerHTML = `
+                <td>${timeSlot}</td>
+                <td><span class="status-badge ${statusClass}">${status}</span></td>
+                <td>${patientName}</td>
+                <td>${patientPhone}</td>
+            `;
+
+            tableBody.appendChild(row);
+        });
+    }
+
+    // Function to show schedule error
+    function showScheduleError(message) {
+        const scheduleError = document.getElementById('scheduleError');
+        const scheduleErrorMessage = document.getElementById('scheduleErrorMessage');
+
+        if (scheduleErrorMessage) {
+            scheduleErrorMessage.textContent = message;
+        }
+
+        if (scheduleError) {
+            scheduleError.classList.remove('d-none');
+        }
+
+        // Hide other schedule elements
+        document.getElementById('scheduleLoading').style.display = 'none';
+        document.getElementById('scheduleEmpty').classList.add('d-none');
+        document.getElementById('scheduleTable').classList.add('d-none');
+    }
+
+    // Function to hide schedule section when form data changes
+    function hideScheduleOnChange() {
+        const scheduleSection = document.getElementById('scheduleSection');
+        const toggleBtn = document.getElementById('toggleScheduleBtn');
+
+        if (scheduleSection.classList.contains('show')) {
+            scheduleSection.classList.remove('show');
+            toggleBtn.innerHTML = '<i class="bi bi-chevron-down"></i> View Schedule & Available Times';
+        }
+    }
+
+    // Add event listeners to hide schedule when relevant form data changes
+    document.addEventListener('DOMContentLoaded', function() {
+        const doctorSelect = document.getElementById('doctorId');
+        const dateInput = document.getElementById('appointmentDate');
+
+        if (doctorSelect) {
+            doctorSelect.addEventListener('change', hideScheduleOnChange);
+        }
+
+        if (dateInput) {
+            dateInput.addEventListener('change', hideScheduleOnChange);
+        }
     });
 </script>
 </body>
