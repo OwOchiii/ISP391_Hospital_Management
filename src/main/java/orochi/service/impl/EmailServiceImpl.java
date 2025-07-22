@@ -14,6 +14,8 @@ import org.springframework.mail.javamail.MimeMessageHelper;
 import orochi.model.Patient;
 import orochi.model.PatientContact;
 import orochi.model.Appointment;
+import orochi.model.Receipt;
+import orochi.model.Transaction;
 
 import java.time.Year;
 import java.util.HashMap;
@@ -252,6 +254,62 @@ public class EmailServiceImpl implements EmailService {
         } catch (Exception e) {
             logger.error("Failed to send appointment update email to {}: {}", to, e.getMessage(), e);
             // Don't throw exception to prevent update process from failing if email fails
+        }
+    }
+
+    /**
+     * Sends a receipt email to a patient after payment processing
+     */
+    @Override
+    public void sendReceiptEmail(String to, Receipt receipt, Patient patient, Transaction transaction) {
+        try {
+            String subject = "Payment Receipt - MediCare Plus";
+
+            Context context = new Context();
+
+            // Set receipt, patient, and transaction data in the context
+            context.setVariable("receipt", receipt);
+            context.setVariable("patient", patient);
+            context.setVariable("transaction", transaction);
+
+            // Set hospital information variables
+            Map<String, String> hospitalInfo = getHospitalInfo();
+            for (Map.Entry<String, String> entry : hospitalInfo.entrySet()) {
+                context.setVariable(entry.getKey(), entry.getValue());
+            }
+
+            // Add current date for the email if receipt date is missing
+            if (receipt.getIssuedDate() == null) {
+                context.setVariable("issuedDate", java.time.LocalDate.now());
+            } else {
+                context.setVariable("issuedDate", receipt.getIssuedDate());
+            }
+
+            // Process the template
+            String htmlContent = templateEngine.process("email/receipt-email", context);
+
+            // If template processing fails, send a simple plain text email
+            if (htmlContent == null || htmlContent.trim().isEmpty()) {
+                String plainTextContent = "Dear " + patient.getUser().getFullName() + ",\n\n" +
+                        "Thank you for your payment. Here is your receipt:\n\n" +
+                        "Receipt Number: " + receipt.getReceiptNumber() + "\n" +
+                        "Date: " + receipt.getIssuedDate() + "\n" +
+                        "Amount: " + receipt.getTotalAmount() + " VND\n" +
+                        "Transaction ID: " + receipt.getTransactionId() + "\n\n" +
+                        "Thank you for choosing MediCare Plus for your healthcare needs.\n\n" +
+                        "Best Regards,\n" +
+                        "MediCare Plus Team";
+                sendSimpleMessage(to, subject, plainTextContent);
+                logger.info("Plain text receipt email sent successfully to: {}", to);
+                return;
+            }
+
+            // Send the email
+            sendHtmlMessage(to, subject, htmlContent);
+            logger.info("Receipt email sent successfully to: {}", to);
+        } catch (Exception e) {
+            logger.error("Failed to send receipt email to {}: {}", to, e.getMessage(), e);
+            // Don't throw exception to prevent receipt process from failing if email fails
         }
     }
 

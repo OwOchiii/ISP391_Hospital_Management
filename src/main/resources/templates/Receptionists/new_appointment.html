@@ -1563,8 +1563,24 @@
             // Convert date format from MM/DD/YYYY to YYYY-MM-DD
             appointmentDate: (() => {
                 const appointmentDate = document.getElementById('appointmentDate').value;
+                if (!appointmentDate || appointmentDate.trim() === '') {
+                    return ''; // Return empty string if date is empty
+                }
                 const dateParts = appointmentDate.split('/');
-                return `${dateParts[2]}-${dateParts[0].padStart(2, '0')}-${dateParts[1].padStart(2, '0')}`;
+                // Check if we have all three parts of the date
+                if (dateParts.length !== 3) {
+                    return ''; // Return empty if date format is invalid
+                }
+                // Ensure all parts exist before using padStart
+                const year = dateParts[2] || '';
+                const month = dateParts[0] || '';
+                const day = dateParts[1] || '';
+
+                if (!year || !month || !day) {
+                    return ''; // Return empty if any part is missing
+                }
+
+                return `${year}-${month.padStart(2, '0')}-${day.padStart(2, '0')}`;
             })(),
 
             appointmentTime: document.getElementById('appointmentTime').value,

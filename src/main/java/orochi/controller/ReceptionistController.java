@@ -43,10 +43,7 @@ import orochi.dto.AppointmentDTO;
 import orochi.dto.AppointmentFormDTO;
 import orochi.dto.SpecializationDTO;
 import orochi.model.*;
-import orochi.repository.AppointmentRepository;
-import orochi.repository.PatientRepository;
-import orochi.repository.UserRepository;
-import orochi.repository.TransactionRepository;
+import orochi.repository.*;
 import orochi.service.*;
 import orochi.service.impl.ReceptionistService;
 import orochi.service.FileStorageService;
@@ -66,7 +63,7 @@ public class ReceptionistController {
     private final FileStorageService fileStorageService;
     private final TransactionRepository transactionRepository;
     private final AppointmentRepository appointmentRepository;
-
+    private final ReceiptRepository receiptRepository;
     @Autowired
     private PasswordEncoder passwordEncoder;
 
@@ -78,7 +75,7 @@ public class ReceptionistController {
                                   PatientRepository patientRepository, RoomService roomService,
                                   NotificationService notificationService, EmailService emailService,
                                   FileStorageService fileStorageService, TransactionRepository transactionRepository,
-                                  AppointmentRepository appointmentRepository) {
+                                  AppointmentRepository appointmentRepository, ReceiptRepository receiptRepository) {
         this.receptionistService = receptionistService;
         this.userRepository = userRepository;
         this.specializationService = specializationService;
@@ -90,6 +87,7 @@ public class ReceptionistController {
         this.fileStorageService = fileStorageService;
         this.transactionRepository = transactionRepository;
         this.appointmentRepository = appointmentRepository;
+        this.receiptRepository = receiptRepository;
     }
 
     @GetMapping("/dashboard")
@@ -1533,6 +1531,37 @@ public class ReceptionistController {
 
             logger.info("Payment processed successfully: {}", result);
 
+            // Send receipt email to patient after successful payment
+            try {
+                // Get patient information
+                Patient patient = patientRepository.findById(patientId)
+                    .orElseThrow(() -> new RuntimeException("Patient not found"));
+
+                // Get receipt and transaction from result
+                Integer receiptId = (Integer) result.get("receiptId");
+                Integer transactionId = (Integer) result.get("transactionId");
+
+                if (receiptId != null && transactionId != null) {
+                    Receipt receipt = receiptRepository.findById(receiptId).orElse(null);
+                    Transaction transaction = transactionRepository.findById(transactionId).orElse(null);
+
+                    // Send email if receipt and transaction exist and patient has email
+                    if (receipt != null && transaction != null && patient.getUser() != null &&
+                        patient.getUser().getEmail() != null && !patient.getUser().getEmail().isEmpty()) {
+
+                        String patientEmail = patient.getUser().getEmail();
+                        logger.info("Sending receipt email to patient: {}", patientEmail);
+                        emailService.sendReceiptEmail(patientEmail, receipt, patient, transaction);
+                        logger.info("Receipt email sent successfully to: {}", patientEmail);
+                    } else {
+                        logger.warn("Cannot send receipt email: missing receipt, transaction, or patient email");
+                    }
+                }
+            } catch (Exception emailEx) {
+                logger.error("Failed to send receipt email: {}", emailEx.getMessage(), emailEx);
+                // Continue with success response even if email fails
+            }
+
             return ResponseEntity.ok(Map.of(
                 "success", true,
                 "message", "Payment processed successfully",
@@ -2314,6 +2343,123 @@ public class ReceptionistController {
                                        transactionId, currentReceptionistId);
                             logger.info("💾 Transaction {} saved to database with final status: {}, ProcessedBy: {}, Method: {}",
                                        transactionId, savedTransaction.getStatus(), savedTransaction.getProcessedByUserId(), savedTransaction.getMethod());
+
+                            // 🔥 ADD RECEIPT CREATION LOGIC HERE 🔥
+                            try {
+                                // Check if receipt already exists
+                                Receipt receipt = savedTransaction.getReceipt();
+                                if (receipt == null) {
+                                    // Create new receipt
+                                    receipt = new Receipt();
+                                    receipt.setTransactionId(savedTransaction.getTransactionId());
+                                    receipt.setIssuedDate(java.time.LocalDate.now());
+                                    receipt.setIssuerId(currentReceptionistId);
+                                    receipt.setReceiptNumber("REC" + savedTransaction.getTransactionId() + "_" + System.currentTimeMillis());
+                                    receipt.setFormat("Digital"); // Valid values: 'Digital', 'Print', 'Both'
+                                    receipt.setPdfPath(""); // Empty string instead of NULL
+
+                                    // Use the actual amount from VNPay if available
+                                    if (amountInVND != null) {
+                                        BigDecimal totalAmount = new BigDecimal(amountInVND);
+                                        receipt.setTotalAmount(totalAmount);
+                                        // Calculate tax amount (10% of total amount)
+                                        BigDecimal taxAmount = totalAmount.multiply(new BigDecimal("0.1"));
+                                        receipt.setTaxAmount(taxAmount);
+                                    } else {
+                                        // Default amount and tax if VNPay amount is not available
+                                        receipt.setTotalAmount(new BigDecimal("500000"));
+                                        receipt.setTaxAmount(new BigDecimal("50000"));
+                                    }
+
+                                    // Set discount amount (0 for online payments)
+                                    receipt.setDiscountAmount(BigDecimal.ZERO);
+                                    receipt.setNotes("Online payment via VNPay - Transaction ID: " + transactionId);
+
+                                    // Save receipt
+                                    Receipt savedReceipt = receiptRepository.save(receipt);
+
+                                    // Link receipt to transaction
+                                    savedTransaction.setReceipt(savedReceipt);
+                                    transactionRepository.save(savedTransaction);
+
+                                    logger.info("✅ Created new receipt {} for transaction {}",
+                                               savedReceipt.getReceiptId(), savedTransaction.getTransactionId());
+
+                                    // Send receipt email after successful online payment
+                                    try {
+                                        // Get patient information for the receipt email
+                                        if (transaction.getUserId() != null) {
+                                            Optional<Patient> patientOpt = patientRepository.findById(transaction.getUserId());
+                                            if (patientOpt.isPresent()) {
+                                                Patient patient = patientOpt.get();
+
+                                                // Send email if patient has valid email
+                                                if (patient.getUser() != null &&
+                                                    patient.getUser().getEmail() != null &&
+                                                    !patient.getUser().getEmail().isEmpty()) {
+
+                                                    String patientEmail = patient.getUser().getEmail();
+                                                    logger.info("✉️ Sending online payment receipt email to patient: {}", patientEmail);
+                                                    emailService.sendReceiptEmail(patientEmail, savedReceipt, patient, savedTransaction);
+                                                    logger.info("✅ Online payment receipt email sent successfully to: {}", patientEmail);
+                                                } else {
+                                                    logger.warn("⚠️ Cannot send online payment receipt email: Patient has no email address");
+                                                }
+                                            } else {
+                                                logger.warn("⚠️ Cannot send online payment receipt email: Patient not found with ID: {}", transaction.getUserId());
+                                            }
+                                        } else {
+                                            logger.warn("⚠️ Cannot send online payment receipt email: Transaction has no UserID");
+                                        }
+                                    } catch (Exception emailEx) {
+                                        logger.error("❌ Failed to send online payment receipt email: {}", emailEx.getMessage(), emailEx);
+                                        // Continue processing - don't fail payment processing if email fails
+                                    }
+                                } else {
+                                    // Update existing receipt
+                                    if (amountInVND != null) {
+                                        receipt.setTotalAmount(new BigDecimal(amountInVND));
+                                        // Recalculate tax
+                                        receipt.setTaxAmount(receipt.getTotalAmount().multiply(new BigDecimal("0.1")));
+                                    }
+                                    receipt.setIssuedDate(java.time.LocalDate.now());
+                                    receipt.setIssuerId(currentReceptionistId);
+                                    receipt.setNotes("Online payment via VNPay - Transaction ID: " + transactionId);
+
+                                    Receipt savedReceipt = receiptRepository.save(receipt);
+                                    logger.info("✅ Updated existing receipt {} for transaction {}",
+                                               savedReceipt.getReceiptId(), savedTransaction.getTransactionId());
+
+                                    // Send receipt email for updated receipt
+                                    try {
+                                        // Get patient information for the receipt email
+                                        if (transaction.getUserId() != null) {
+                                            Optional<Patient> patientOpt = patientRepository.findById(transaction.getUserId());
+                                            if (patientOpt.isPresent()) {
+                                                Patient patient = patientOpt.get();
+
+                                                // Send email if patient has valid email
+                                                if (patient.getUser() != null &&
+                                                    patient.getUser().getEmail() != null &&
+                                                    !patient.getUser().getEmail().isEmpty()) {
+
+                                                    String patientEmail = patient.getUser().getEmail();
+                                                    logger.info("✉️ Sending updated online payment receipt email to patient: {}", patientEmail);
+                                                    emailService.sendReceiptEmail(patientEmail, savedReceipt, patient, savedTransaction);
+                                                    logger.info("✅ Updated online payment receipt email sent successfully to: {}", patientEmail);
+                                                }
+                                            }
+                                        }
+                                    } catch (Exception emailEx) {
+                                        logger.error("❌ Failed to send updated online payment receipt email: {}", emailEx.getMessage(), emailEx);
+                                        // Continue processing - don't fail payment processing if email fails
+                                    }
+                                }
+                            } catch (Exception receiptError) {
+                                logger.error("❌ Error creating/updating receipt for transaction {}: {}",
+                                           savedTransaction.getTransactionId(), receiptError.getMessage(), receiptError);
+                                // Continue processing - don't fail the entire payment return
+                            }
 
                             // Now try to update corresponding appointment status (SEPARATE from transaction update)
                             boolean appointmentUpdated = false;
