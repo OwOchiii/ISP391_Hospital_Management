@@ -6,6 +6,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Set;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
@@ -643,6 +644,70 @@ public class ReceptionistService {
                     doctorMap.put("phone", doctor.getUser() != null ? doctor.getUser().getPhoneNumber() : "");
                     doctorMap.put("imageUrl", doctor.getImageUrl()); // Add the imageUrl field
 
+                    // ✅ Bio Description - Lấy từ Doctor.BioDescription
+                    String bioDescription = "Not specified";
+                    if (doctor.getBioDescription() != null && !doctor.getBioDescription().trim().isEmpty()) {
+                        bioDescription = doctor.getBioDescription();
+                    }
+                    doctorMap.put("bio", bioDescription);
+                    doctorMap.put("bioDescription", bioDescription); // Alias for consistency
+
+                    // ✅ Education Information - Lấy Degree v�� Institution từ Education table
+                    String degree = "Not specified";
+                    String institution = "Not specified";
+                    String description = "Not specified";
+
+                    if (doctor.getEducations() != null && !doctor.getEducations().isEmpty()) {
+                        // Get the first education record (you can modify this logic as needed)
+                        var education = doctor.getEducations().get(0);
+                        degree = education.getDegree() != null ? education.getDegree() : "Not specified";
+                        institution = education.getInstitution() != null ? education.getInstitution() : "Not specified";
+                        description = education.getDescription() != null ? education.getDescription() : "Not specified";
+                    }
+                    doctorMap.put("degree", degree);
+                    doctorMap.put("institution", institution);
+                    doctorMap.put("description", description);
+
+                    // ✅ Room Information - Lấy từ Schedule hoặc Department
+                    String roomInfo = "Not assigned";
+                    try {
+                        // Method 1: Get room from doctor's schedules
+                        if (doctor.getSchedules() != null && !doctor.getSchedules().isEmpty()) {
+                            Set<String> rooms = doctor.getSchedules().stream()
+                                .filter(schedule -> schedule.getRoom() != null)
+                                .map(schedule -> schedule.getRoom().getRoomNumber())
+                                .collect(Collectors.toSet());
+
+                            if (!rooms.isEmpty()) {
+                                roomInfo = String.join(", ", rooms);
+                            }
+                        }
+
+                        // Method 2: If no room from schedule, get rooms by specialty
+                        if ("Not assigned".equals(roomInfo) && doctor.getSpecializations() != null && !doctor.getSpecializations().isEmpty()) {
+                            Integer specialtyId = doctor.getSpecializations().get(0).getSpecId();
+                            Integer currentDoctorId = doctor.getDoctorId();
+
+                            List<Map<String, Object>> rooms = getRoomsBySpecialtyAndDoctor(specialtyId, currentDoctorId);
+                            if (!rooms.isEmpty()) {
+                                Set<String> roomNumbers = rooms.stream()
+                                    .map(room -> (String) room.get("roomNumber"))
+                                    .filter(Objects::nonNull)
+                                    .limit(2) // Limit to first 2 rooms
+                                    .collect(Collectors.toSet());
+
+                                if (!roomNumbers.isEmpty()) {
+                                    roomInfo = String.join(", ", roomNumbers);
+                                }
+                            }
+                        }
+                    } catch (Exception e) {
+                        logger.warn("Error getting room info for doctor {}: {}", doctor.getDoctorId(), e.getMessage());
+                        roomInfo = "Not assigned";
+                    }
+
+                    doctorMap.put("room", roomInfo);
+
                     // Get specialty information - show primary specialty or all specialties
                     String specialty = "General Practice"; // Default value
                     if (doctor.getSpecializations() != null && !doctor.getSpecializations().isEmpty()) {
@@ -653,6 +718,11 @@ public class ReceptionistService {
                                 .collect(Collectors.joining(", "));
                     }
                     doctorMap.put("specialty", specialty);
+
+                    // ✅ Add additional fields for export functionality
+                    doctorMap.put("fullName", doctor.getUser() != null ? doctor.getUser().getFullName() : "Unknown");
+                    doctorMap.put("emailAddress", doctor.getUser() != null ? doctor.getUser().getEmail() : "");
+                    doctorMap.put("phoneNumber", doctor.getUser() != null ? doctor.getUser().getPhoneNumber() : "");
 
                     return doctorMap;
                 }).collect(Collectors.toList());
@@ -669,10 +739,16 @@ public class ReceptionistService {
             doctorDetails.put("name", doctor.getUser() != null ? doctor.getUser().getFullName() : "Unknown");
             doctorDetails.put("email", doctor.getUser() != null ? doctor.getUser().getEmail() : "");
             doctorDetails.put("phone", doctor.getUser() != null ? doctor.getUser().getPhoneNumber() : "");
-            doctorDetails.put("bio", doctor.getBioDescription());
-            //doctorDetails.put("avatar", doctor.getUser() != null ? doctor.getUser().getAvatar() : null);
 
-            // Get education details
+            // ✅ Bio Description - Lấy từ Doctor.BioDescription
+            String bioDescription = "Not specified";
+            if (doctor.getBioDescription() != null && !doctor.getBioDescription().trim().isEmpty()) {
+                bioDescription = doctor.getBioDescription();
+            }
+            doctorDetails.put("bio", bioDescription);
+            doctorDetails.put("bioDescription", bioDescription); // Alias for consistency
+
+            // ✅ Education Information - Lấy Degree và Institution từ Education table
             String degree = "Not specified";
             String institution = "Not specified";
             String description = "Not specified";
@@ -688,6 +764,46 @@ public class ReceptionistService {
             doctorDetails.put("degree", degree);
             doctorDetails.put("institution", institution);
             doctorDetails.put("description", description);
+
+            // ✅ Room Information - Lấy từ Schedule hoặc Department (tương tự getAllDoctorsWithDetails)
+            String roomInfo = "Not assigned";
+            try {
+                // Method 1: Get room from doctor's schedules
+                if (doctor.getSchedules() != null && !doctor.getSchedules().isEmpty()) {
+                    Set<String> rooms = doctor.getSchedules().stream()
+                        .filter(schedule -> schedule.getRoom() != null)
+                        .map(schedule -> schedule.getRoom().getRoomNumber())
+                        .collect(Collectors.toSet());
+
+                    if (!rooms.isEmpty()) {
+                        roomInfo = String.join(", ", rooms);
+                    }
+                }
+
+                // Method 2: If no room from schedule, get rooms by specialty
+                if ("Not assigned".equals(roomInfo) && doctor.getSpecializations() != null && !doctor.getSpecializations().isEmpty()) {
+                    Integer specialtyId = doctor.getSpecializations().get(0).getSpecId();
+                    Integer currentDoctorId = doctor.getDoctorId();
+
+                    List<Map<String, Object>> rooms = getRoomsBySpecialtyAndDoctor(specialtyId, currentDoctorId);
+                    if (!rooms.isEmpty()) {
+                        Set<String> roomNumbers = rooms.stream()
+                            .map(room -> (String) room.get("roomNumber"))
+                            .filter(Objects::nonNull)
+                            .limit(2) // Limit to first 2 rooms
+                            .collect(Collectors.toSet());
+
+                        if (!roomNumbers.isEmpty()) {
+                            roomInfo = String.join(", ", roomNumbers);
+                        }
+                    }
+                }
+            } catch (Exception e) {
+                logger.warn("Error getting room info for doctor {}: {}", doctor.getDoctorId(), e.getMessage());
+                roomInfo = "Not assigned";
+            }
+
+            doctorDetails.put("room", roomInfo);
 
             // Get specialty information
             String specialty = "General Practice";
@@ -1294,7 +1410,7 @@ public class ReceptionistService {
                         }
                     }
                 } catch (Exception e) {
-                    logger.error("Error calculating revenue for appointment {}: {}", e.getMessage(), e);
+                    logger.error("Error calculating revenue for appointment {}: {}", appointment.getAppointmentId(), e.getMessage());
                 }
             }
 
@@ -1695,10 +1811,10 @@ public class ReceptionistService {
     /**
      * Get invoice data by patient ID including patient info and appointment details
      * Patient ID: lấy theo Patient ID trong bảng Patient
-     * Full Name: lấy theo FullName trong b��ng User
+     * Full Name: lấy theo FullName trong bảng User
      * Date of Birth: lấy theo dateOfBirth trong bảng Patient
      * Gender: lấy theo Gender trong bảng Patient
-     * Appointment ID: lấy theo Patient ID trong b��ng Patient
+     * Appointment ID: lấy theo Patient ID trong bảng Patient
      * Payer Name: lấy theo AppointmentID trong bảng Appointment
      * Contact: l��y theo PhoneNumber trong bảng User
      */
@@ -2572,7 +2688,7 @@ public class ReceptionistService {
         provinceMap.put("long an", "Long An");
         provinceMap.put("longan", "Long An");
         provinceMap.put("tien giang", "Tiền Giang");
-        provinceMap.put("tiengiang", "Tiền Giang");
+        provinceMap.put("tiengiang", "Ti���n Giang");
         provinceMap.put("ben tre", "Bến Tre");
         provinceMap.put("bentre", "Bến Tre");
         provinceMap.put("tra vinh", "Trà Vinh");
@@ -2661,7 +2777,7 @@ public class ReceptionistService {
         cityMap.put("quan 3", "Quận 3");
         cityMap.put("quan 4", "Quận 4");
         cityMap.put("quan 5", "Quận 5");
-        cityMap.put("quan 6", "Quận 6");
+        cityMap.put("quan 6", "Qu��n 6");
         cityMap.put("quan 7", "Quận 7");
         cityMap.put("quan 8", "Quận 8");
         cityMap.put("quan 9", "Quận 9");
