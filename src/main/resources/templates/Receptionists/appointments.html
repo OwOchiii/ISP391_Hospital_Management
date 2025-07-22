@@ -28,6 +28,7 @@
             --info-color: #3b82f6;
             --sidebar-width: 280px;
             --header-height: 70px;
+            --border-color: rgba(102, 126, 234, 0.2);
         }
 
         * {
@@ -37,8 +38,10 @@
         }
 
         body {
-            font-family: 'Inter', sans-serif; /* Tên bệnh nhân inherit từ body */
-            line-height: 1.6; /* Khoảng cách dòng 1.6 */
+            font-family: 'Inter', sans-serif;
+            font-weight: 400; /* Regular weight for body text */
+            font-size: 1rem; /* 16px default body text */
+            line-height: 1.6; /* Optimal for readability */
             color: var(--text-dark);
             background: var(--bg-light);
             overflow-x: hidden;
@@ -88,17 +91,20 @@
         }
 
         .logo h2 {
-            font-size: 1.25rem;
+            font-family: 'Inter', sans-serif;
+            font-size: 1.25rem; /* 20px for logo text */
             font-weight: 600;
             margin: 0;
-            line-height: 1.2;
+            line-height: 1.2; /* Compact for logo */
         }
 
         .logo small {
-            font-size: 0.75rem;
+            font-family: 'Inter', sans-serif;
+            font-size: 0.75rem; /* 12px for small logo text */
             font-weight: 400;
             opacity: 0.8;
             display: block;
+            line-height: 1.2;
         }
 
         .nav-section-title {
@@ -116,6 +122,9 @@
         }
 
         .nav-link {
+            font-family: 'Inter', sans-serif;
+            font-weight: 500; /* Medium weight for navigation links */
+            line-height: 1.6;
             color: rgba(255, 255, 255, 0.8);
             padding: 0.875rem 1.25rem;
             border-radius: 12px;
@@ -123,7 +132,6 @@
             align-items: center;
             gap: 0.875rem;
             text-decoration: none;
-            font-weight: 500;
             transition: all 0.3s ease;
             position: relative;
         }
@@ -219,8 +227,10 @@
         }
 
         .h3 {
-            font-size: 1.5rem;
-            font-weight: 700;
+            font-family: 'Inter', sans-serif;
+            font-size: 1.5rem; /* 24px for main headers */
+            font-weight: 700; /* Bold for main headers */
+            line-height: 1.6;
             color: var(--text-dark);
             margin: 0;
         }
@@ -244,7 +254,10 @@
         }
 
         .badge {
-            font-size: 0.625rem;
+            font-family: 'Inter', sans-serif;
+            font-size: 0.625rem; /* 10px for badges */
+            font-weight: 500;
+            line-height: 1.2;
             padding: 0.25em 0.5em;
             background: var(--error-color);
         }
@@ -276,8 +289,10 @@
         }
 
         .card-title {
-            font-size: 1.25rem;
-            font-weight: 600;
+            font-family: 'Inter', sans-serif;
+            font-size: 1.25rem; /* 20px for card titles */
+            font-weight: 600; /* Semi-bold for titles */
+            line-height: 1.6;
             color: var(--text-dark);
             margin: 0;
         }
@@ -287,15 +302,22 @@
         }
 
         .input-group-text {
+            font-family: 'Inter', sans-serif;
+            font-size: 0.875rem;
+            font-weight: 400;
+            line-height: 1.6;
             background: var(--light);
             border: 1px solid rgba(102, 126, 234, 0.2);
             color: var(--primary);
         }
 
         .form-control {
+            font-family: 'Inter', sans-serif;
+            font-size: 0.875rem; /* 14px for form controls */
+            font-weight: 400;
+            line-height: 1.6;
             border: 1px solid rgba(102, 126, 234, 0.2);
             border-radius: 8px;
-            font-size: 0.875rem;
         }
 
         .table {
@@ -303,16 +325,18 @@
         }
 
         .table th {
-            font-size: 0.875rem;
+            font-family: 'Inter', sans-serif;
+            font-size: 0.875rem; /* 14px for table headers */
+            font-weight: 500; /* Medium weight for table headers */
+            line-height: 1.6;
             color: var(--text-muted);
-            font-weight: 500;
         }
 
         .table td {
-            /* Tên bệnh nhân hiển thị trong table cells */
-            font-family: 'Inter', sans-serif; /* inherit từ body */
-            font-weight: 400; /* Regular weight */
-            font-size: inherit; /* ~16px mặc định */
+            font-family: 'Inter', sans-serif;
+            font-weight: 400; /* Regular weight for table data */
+            font-size: 1rem; /* 16px for body text default */
+            line-height: 1.6;
             color: var(--text-dark);
             vertical-align: middle;
             padding: 1rem;
@@ -365,164 +389,308 @@
             background: #bae6fd;
         }
 
-        .pagination {
+        /* Enhanced Pagination Styles - Matching doctors.html exactly */
+        .pagination-section {
+            background: var(--bg-white);
+            border-radius: 12px;
+            padding: 1.5rem;
+            margin-top: 2rem;
             display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+        }
+
+        .pagination-info {
+            font-size: 0.875rem;
+            color: var(--text-muted);
+            font-weight: 500;
+        }
+
+        .pagination-controls {
+            display: flex;
+            align-items: center;
             gap: 0.5rem;
-            margin-top: 1rem;
+        }
+
+        .pagination-btn {
+            background: var(--bg-white);
+            border: 2px solid var(--border-color);
+            color: var(--text-dark);
+            padding: 0.5rem 1rem;
+            border-radius: 8px;
+            font-size: 0.875rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            min-width: 40px;
+            height: 40px;
+            display: flex;
+            align-items: center;
             justify-content: center;
         }
 
-        .pagination button {
-            padding: 0.5rem 1rem;
-            border: 1px solid rgba(102, 126, 234, 0.2);
-            border-radius: 8px;
-            background: var(--bg-white);
-            cursor: pointer;
-            font-size: 0.875rem;
-            transition: all 0.3s ease;
-        }
-
-        .pagination button:hover {
-            background: var(--light);
-        }
-
-        .pagination button:disabled {
-            cursor: not-allowed;
-            opacity: 0.5;
-        }
-
-        /* Modal */
-        .modal-content {
-            border-radius: 16px;
-            border: 1px solid rgba(102, 126, 234, 0.1);
-            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
-        }
-
-        .modal-header {
-            border-bottom: 1px solid rgba(102, 126, 234, 0.1);
-            padding: 1.5rem;
-        }
-
-        .modal-title {
-            font-size: 1.25rem;
-            font-weight: 600;
-            color: var(--text-dark);
-        }
-
-        .modal-body {
-            padding: 1.5rem;
-        }
-
-        /* Scrollable Table in Modal */
-        .table-responsive {
-            max-height: 500px;
-            overflow-y: auto;
-        }
-
-        .table-responsive::-webkit-scrollbar {
-            width: 8px;
-        }
-
-        .table-responsive::-webkit-scrollbar-track {
-            background: var(--light);
-            border-radius: 4px;
-        }
-
-        .table-responsive::-webkit-scrollbar-thumb {
+        .pagination-btn:hover:not(:disabled) {
             background: var(--primary);
-            border-radius: 4px;
+            border-color: var(--primary);
+            color: white;
+            transform: translateY(-1px);
         }
 
-        .table-responsive::-webkit-scrollbar-thumb:hover {
+        .pagination-btn.active {
+            background: var(--primary);
+            border-color: var(--primary);
+            color: white;
+            box-shadow: 0 2px 8px rgba(102, 126, 234, 0.3);
+        }
+
+        .pagination-btn:disabled {
+            background: var(--bg-light);
+            border-color: #e0e0e0;
+            color: var(--text-muted);
+            cursor: not-allowed;
+            opacity: 0.6;
+        }
+
+        .pagination-prev,
+        .pagination-next {
+            background: var(--primary);
+            border-color: var(--primary);
+            color: white;
+            font-weight: 600;
+        }
+
+        .pagination-prev:hover:not(:disabled),
+        .pagination-next:hover:not(:disabled) {
             background: var(--secondary);
+            border-color: var(--secondary);
+            transform: translateY(-1px);
         }
 
-        /* Filter Styles */
+        .pagination-prev:disabled,
+        .pagination-next:disabled {
+            background: var(--bg-light);
+            border-color: #e0e0e0;
+            color: var(--text-muted);
+        }
+
+        .page-size-selector {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            font-size: 0.875rem;
+            color: var(--text-muted);
+        }
+
+        .page-size-selector select {
+            padding: 0.25rem 0.5rem;
+            border: 1px solid var(--border-color);
+            border-radius: 6px;
+            font-size: 0.875rem;
+            background: var(--bg-white);
+        }
+
+        /* Filter Group Styling - Always visible */
         .filter-group {
             display: flex;
             gap: 1rem;
-            flex-wrap: wrap;
-            margin-bottom: 1rem;
             align-items: center;
+            flex-wrap: nowrap;
+            background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
+            padding: 1.5rem;
+            border-radius: 16px;
+            border: 2px solid var(--border-color);
+            margin-bottom: 1.5rem;
+            box-shadow: 0 4px 15px rgba(102, 126, 234, 0.1);
+            justify-content: space-between;
+            position: relative;
+            overflow: visible;
         }
 
-        .filter-group .form-control {
-            flex: 1;
-            min-width: 150px;
+        .filter-group::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 4px;
+            background: linear-gradient(90deg, var(--primary), var(--accent));
+            border-radius: 16px 16px 0 0;
         }
 
-        .filter-group .btn-reset {
-            padding: 0.5rem 1rem;
-            border-radius: 8px;
-            font-size: 0.875rem;
+        .filter-group .input-group {
+            flex: 2 1 300px;
+            min-width: 250px;
+            max-width: 400px;
+            position: relative;
+        }
+
+        .filter-group .input-group .input-group-text {
+            background: var(--primary);
+            border-color: var(--primary);
+            color: white;
+            border-radius: 12px 0 0 12px;
+            font-weight: 500;
+        }
+
+        .filter-group .input-group .form-control {
+            border-left: none;
+            border-radius: 0 12px 12px 0;
+            padding: 0.75rem 1rem;
+            font-size: 0.9rem;
+            border-color: var(--primary);
+            box-shadow: 0 2px 8px rgba(102, 126, 234, 0.15);
+        }
+
+        .filter-group .input-group .form-control:focus {
+            border-color: var(--primary);
+            box-shadow: 0 4px 12px rgba(102, 126, 234, 0.25);
+            border-left: none;
+        }
+
+        .filter-group select.form-control {
+            flex: 1 1 150px;
+            min-width: 140px;
+            max-width: 180px;
+            background: white;
+            border: 2px solid var(--border-color);
+            border-radius: 12px;
+            padding: 0.75rem 1rem;
+            font-size: 0.9rem;
+            font-weight: 500;
+            transition: all 0.3s ease;
+            box-shadow: 0 2px 8px rgba(102, 126, 234, 0.1);
+            cursor: pointer;
+        }
+
+        .filter-group select.form-control:hover {
+            border-color: var(--primary);
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(102, 126, 234, 0.2);
+        }
+
+        .filter-group select.form-control:focus {
+            border-color: var(--primary);
+            box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
+            outline: none;
+        }
+
+        .btn-reset {
+            background: linear-gradient(135deg, var(--error-color) 0%, #f87171 100%);
+            border: none;
+            color: white;
+            padding: 0.75rem 1.5rem;
+            border-radius: 12px;
+            font-size: 0.9rem;
+            font-weight: 600;
             cursor: pointer;
             transition: all 0.3s ease;
-            background: var(--light);
-            color: var(--text-dark);
-            border: 1px solid rgba(102, 126, 234, 0.2);
+            white-space: nowrap;
+            flex-shrink: 0;
+            min-width: 100px;
+            box-shadow: 0 3px 10px rgba(239, 68, 68, 0.3);
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
         }
 
-        .filter-group .btn-reset:hover {
-            background: var(--bg-white);
+        .btn-reset:hover {
+            background: linear-gradient(135deg, #dc2626 0%, #ef4444 100%);
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(239, 68, 68, 0.4);
         }
 
-        /* Responsive Design */
+        .btn-reset i {
+            font-size: 0.8rem;
+        }
+
+        /* Filter Labels */
+        .filter-label {
+            position: absolute;
+            top: -10px;
+            left: 15px;
+            background: white;
+            padding: 0 8px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            color: var(--primary);
+            border-radius: 6px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+
+        /* Mobile filter adjustments */
         @media (max-width: 768px) {
-            .sidebar {
-                transform: translateX(-100%);
-            }
-
-            .main-content {
-                margin-left: 0;
-            }
-
-            header {
-                padding: 0 1rem;
-            }
-
-            .card {
-                padding: 1rem;
-            }
-
             .filter-group {
-                flex-direction: column;
-            }
-
-            .filter-group .form-control,
-            .filter-group .btn-reset {
-                min-width: 100%;
-            }
-        }
-
-        @media (max-width: 576px) {
-            .card-body {
+                gap: 0.75rem;
                 padding: 1rem;
+                flex-wrap: nowrap;
+                overflow-x: auto;
+                scrollbar-width: thin;
+                scrollbar-color: var(--primary) transparent;
             }
 
-            .table td, .table th {
-                font-size: 0.75rem;
+            .filter-group::-webkit-scrollbar {
+                height: 6px;
             }
 
-            .btn-confirm, .btn-reject, .btn-view {
-                width: 28px;
-                height: 28px;
-                font-size: 0.75rem;
+            .filter-group::-webkit-scrollbar-track {
+                background: transparent;
+            }
+
+            .filter-group::-webkit-scrollbar-thumb {
+                background: var(--primary);
+                border-radius: 3px;
+            }
+
+            .filter-group .input-group {
+                flex: 1 1 200px;
+                min-width: 180px;
+                max-width: 250px;
+            }
+
+            .filter-group .input-group .form-control {
+                padding: 0.6rem 0.8rem;
+                font-size: 0.85rem;
+            }
+
+            .filter-group select.form-control {
+                flex: 1 1 130px;
+                min-width: 120px;
+                max-width: 150px;
+                font-size: 0.85rem;
+                padding: 0.6rem 0.8rem;
+            }
+
+            .btn-reset {
+                flex-shrink: 0;
+                min-width: 80px;
+                padding: 0.6rem 1rem;
+                font-size: 0.85rem;
             }
         }
 
-        /* Animation */
-        .main-content {
-            animation: fadeInUp 0.6s ease-out;
-        }
-
-        @keyframes fadeInUp {
-            from {
-                opacity: 0;
-                transform: translateY(30px);
+        /* Tablet adjustments */
+        @media (max-width: 1024px) and (min-width: 769px) {
+            .filter-group {
+                gap: 0.85rem;
+                flex-wrap: nowrap;
+                padding: 1.25rem;
             }
-            to {
-                opacity: 1;
-                transform: translateY(0);
+
+            .filter-group .input-group {
+                flex: 2 1 250px;
+                min-width: 220px;
+                max-width: 320px;
+            }
+
+            .filter-group select.form-control {
+                flex: 1 1 140px;
+                min-width: 130px;
+                max-width: 160px;
+            }
+
+            .btn-reset {
+                min-width: 90px;
             }
         }
     </style>
@@ -623,7 +791,7 @@
                     <a href="#" class="text-primary" onclick="openAppointmentModal('in-progress')">View All</a>
                 </div>
                 <div class="card-body">
-                    <div class="filter-group mb-3">
+                    <div class="filter-group" id="filter-group-in-progress">
                         <div class="input-group">
                             <span class="input-group-text"><i class="fas fa-search"></i></span>
                             <input type="text" class="form-control" id="search-in-progress" placeholder="Search by Name or Phone" pattern="[^\s]+" minlength="1" title="Search term cannot contain spaces">
@@ -639,7 +807,10 @@
                         <select class="form-control" id="filter-doctor-in-progress">
                             <option value="">All Doctors</option>
                         </select>
-                        <button class="btn-reset" onclick="resetFilters('in-progress')">Reset</button>
+                        <button class="btn-reset" onclick="resetFilters('in-progress')">
+                            <i class="fas fa-redo"></i>
+                            Reset
+                        </button>
                     </div>
                     <div class="table-responsive">
                         <table class="table table-hover">
@@ -657,7 +828,12 @@
                             <tbody id="in-progress-list"></tbody>
                         </table>
                     </div>
-                    <div class="pagination" id="in-progress-pagination"></div>
+
+                    <!-- Enhanced Pagination Section - Matching doctors.html exactly -->
+                    <div class="pagination-section" id="in-progress-pagination-section" style="display: none;">
+                        <div class="pagination-info" id="in-progress-pagination-info"></div>
+                        <div class="pagination-controls" id="in-progress-pagination-controls"></div>
+                    </div>
                 </div>
             </div>
 
@@ -668,7 +844,7 @@
                     <a href="#" class="text-primary" onclick="openAppointmentModal('completed')">View All</a>
                 </div>
                 <div class="card-body">
-                    <div class="filter-group mb-3">
+                    <div class="filter-group" id="filter-group-completed">
                         <div class="input-group">
                             <span class="input-group-text"><i class="fas fa-search"></i></span>
                             <input type="text" class="form-control" id="search-completed" placeholder="Search by Name or Phone" pattern="[^\s]+" minlength="1" title="Search term cannot contain spaces">
@@ -684,7 +860,10 @@
                         <select class="form-control" id="filter-doctor-completed">
                             <option value="">All Doctors</option>
                         </select>
-                        <button class="btn-reset" onclick="resetFilters('completed')">Reset</button>
+                        <button class="btn-reset" onclick="resetFilters('completed')">
+                            <i class="fas fa-redo"></i>
+                            Reset
+                        </button>
                     </div>
                     <div class="table-responsive">
                         <table class="table table-hover">
@@ -702,7 +881,12 @@
                             <tbody id="completed-list"></tbody>
                         </table>
                     </div>
-                    <div class="pagination" id="completed-pagination"></div>
+
+                    <!-- Enhanced Pagination Section - Matching doctors.html exactly -->
+                    <div class="pagination-section" id="completed-pagination-section" style="display: none;">
+                        <div class="pagination-info" id="completed-pagination-info"></div>
+                        <div class="pagination-controls" id="completed-pagination-controls"></div>
+                    </div>
                 </div>
             </div>
 
@@ -713,7 +897,8 @@
                     <a href="#" class="text-primary" onclick="openAppointmentModal('rejected')">View All</a>
                 </div>
                 <div class="card-body">
-                    <div class="filter-group mb-3">
+
+                    <div class="filter-group" id="filter-group-rejected">
                         <div class="input-group">
                             <span class="input-group-text"><i class="fas fa-search"></i></span>
                             <input type="text" class="form-control" id="search-rejected" placeholder="Search by Name or Phone" pattern="[^\s]+" minlength="1" title="Search term cannot contain spaces">
@@ -729,7 +914,10 @@
                         <select class="form-control" id="filter-doctor-rejected">
                             <option value="">All Doctors</option>
                         </select>
-                        <button class="btn-reset" onclick="resetFilters('rejected')">Reset</button>
+                        <button class="btn-reset" onclick="resetFilters('rejected')">
+                            <i class="fas fa-redo"></i>
+                            Reset
+                        </button>
                     </div>
                     <div class="table-responsive">
                         <table class="table table-hover">
@@ -747,7 +935,12 @@
                             <tbody id="rejected-list"></tbody>
                         </table>
                     </div>
-                    <div class="pagination" id="rejected-pagination"></div>
+
+                    <!-- Enhanced Pagination Section - Matching doctors.html exactly -->
+                    <div class="pagination-section" id="rejected-pagination-section" style="display: none;">
+                        <div class="pagination-info" id="rejected-pagination-info"></div>
+                        <div class="pagination-controls" id="rejected-pagination-controls"></div>
+                    </div>
                 </div>
             </div>
         </main>
@@ -982,7 +1175,9 @@
     // Render appointments with improved pagination
     async function renderAppointments(status, page = 1) {
         const tbody = document.getElementById(`${status}-list`);
-        const pagination = document.getElementById(`${status}-pagination`);
+        const paginationSection = document.getElementById(`${status}-pagination-section`);
+        const paginationInfo = document.getElementById(`${status}-pagination-info`);
+        const paginationControls = document.getElementById(`${status}-pagination-controls`);
         const { searchTerm, filterAgeGroup, filterDoctor } = paginationStates[status];
 
         try {
@@ -1028,110 +1223,120 @@
                 });
             }
 
-            // Render pagination controls
-            renderPaginationControls(status, filteredAppointments.length, page);
+            // Show pagination section only if there are multiple pages
+            const totalItems = filteredAppointments.length;
+            const totalPages = Math.ceil(totalItems / itemsPerPage);
+
+            if (totalPages <= 1) {
+                paginationSection.style.display = 'none';
+                return;
+            }
+
+            paginationSection.style.display = 'flex';
+
+            // Update pagination info
+            const start = Math.min((page - 1) * itemsPerPage + 1, totalItems);
+            const end = Math.min(page * itemsPerPage, totalItems);
+            paginationInfo.textContent = `Showing ${start} - ${end} of ${totalItems} appointments`;
+
+            // Clear existing controls
+            paginationControls.innerHTML = '';
+
+            // Previous button
+            const prevButton = document.createElement('button');
+            prevButton.className = 'pagination-btn pagination-prev';
+            prevButton.innerHTML = '<i class="fas fa-chevron-left"></i>';
+            prevButton.disabled = page === 1;
+            prevButton.onclick = () => {
+                if (page > 1) {
+                    paginationStates[status].currentPage = page - 1;
+                    renderAppointments(status, page - 1);
+                }
+            };
+            paginationControls.appendChild(prevButton);
+
+            // Calculate which page numbers to show
+            let startPage = Math.max(1, page - 2);
+            let endPage = Math.min(totalPages, page + 2);
+
+            // Adjust if we're near the beginning or end
+            if (page <= 3) {
+                endPage = Math.min(5, totalPages);
+            }
+            if (page >= totalPages - 2) {
+                startPage = Math.max(1, totalPages - 4);
+            }
+
+            // Add first page if not included
+            if (startPage > 1) {
+                const firstButton = document.createElement('button');
+                firstButton.className = 'pagination-btn';
+                firstButton.textContent = '1';
+                firstButton.onclick = () => {
+                    paginationStates[status].currentPage = 1;
+                    renderAppointments(status, 1);
+                };
+                paginationControls.appendChild(firstButton);
+
+                if (startPage > 2) {
+                    const dots = document.createElement('span');
+                    dots.textContent = '...';
+                    dots.style.padding = '0.5rem';
+                    dots.style.color = 'var(--text-muted)';
+                    paginationControls.appendChild(dots);
+                }
+            }
+
+            // Create page number buttons
+            for (let i = startPage; i <= endPage; i++) {
+                const button = document.createElement('button');
+                button.className = `pagination-btn ${i === page ? 'active' : ''}`;
+                button.textContent = i;
+                button.disabled = i === page;
+                button.onclick = () => {
+                    paginationStates[status].currentPage = i;
+                    renderAppointments(status, i);
+                };
+                paginationControls.appendChild(button);
+            }
+
+            // Add last page if not included
+            if (endPage < totalPages) {
+                if (endPage < totalPages - 1) {
+                    const dots = document.createElement('span');
+                    dots.textContent = '...';
+                    dots.style.padding = '0.5rem';
+                    dots.style.color = 'var(--text-muted)';
+                    paginationControls.appendChild(dots);
+                }
+
+                const lastButton = document.createElement('button');
+                lastButton.className = 'pagination-btn';
+                lastButton.textContent = totalPages;
+                lastButton.onclick = () => {
+                    paginationStates[status].currentPage = totalPages;
+                    renderAppointments(status, totalPages);
+                };
+                paginationControls.appendChild(lastButton);
+            }
+
+            // Next button
+            const nextButton = document.createElement('button');
+            nextButton.className = 'pagination-btn pagination-next';
+            nextButton.innerHTML = '<i class="fas fa-chevron-right"></i>';
+            nextButton.disabled = page === totalPages;
+            nextButton.onclick = () => {
+                if (page < totalPages) {
+                    paginationStates[status].currentPage = page + 1;
+                    renderAppointments(status, page + 1);
+                }
+            };
+            paginationControls.appendChild(nextButton);
 
         } catch (error) {
             console.error(`Error rendering ${status} appointments:`, error);
             tbody.innerHTML = '<tr><td colspan="7" class="text-center">Error loading appointments</td></tr>';
         }
-    }
-
-    // Render pagination controls
-    function renderPaginationControls(status, totalItems, currentPage) {
-        const pagination = document.getElementById(`${status}-pagination`);
-        const totalPages = Math.ceil(totalItems / itemsPerPage);
-
-        pagination.innerHTML = '';
-
-        if (totalPages <= 1) {
-            return; // No pagination needed
-        }
-
-        // Previous button
-        const prevButton = document.createElement('button');
-        prevButton.textContent = 'Previous';
-        prevButton.disabled = currentPage === 1;
-        prevButton.className = currentPage === 1 ? 'disabled' : '';
-        prevButton.onclick = () => {
-            if (currentPage > 1) {
-                paginationStates[status].currentPage = currentPage - 1;
-                renderAppointments(status, currentPage - 1);
-            }
-        };
-        pagination.appendChild(prevButton);
-
-        // Page number buttons (show max 5 pages)
-        const startPage = Math.max(1, currentPage - 2);
-        const endPage = Math.min(totalPages, startPage + 4);
-
-        if (startPage > 1) {
-            const firstButton = document.createElement('button');
-            firstButton.textContent = '1';
-            firstButton.onclick = () => {
-                paginationStates[status].currentPage = 1;
-                renderAppointments(status, 1);
-            };
-            pagination.appendChild(firstButton);
-
-            if (startPage > 2) {
-                const ellipsis = document.createElement('span');
-                ellipsis.textContent = '...';
-                ellipsis.style.padding = '0.5rem';
-                pagination.appendChild(ellipsis);
-            }
-        }
-
-        for (let i = startPage; i <= endPage; i++) {
-            const pageButton = document.createElement('button');
-            pageButton.textContent = i;
-            pageButton.className = i === currentPage ? 'active' : '';
-            pageButton.disabled = i === currentPage;
-            pageButton.onclick = () => {
-                paginationStates[status].currentPage = i;
-                renderAppointments(status, i);
-            };
-            pagination.appendChild(pageButton);
-        }
-
-        if (endPage < totalPages) {
-            if (endPage < totalPages - 1) {
-                const ellipsis = document.createElement('span');
-                ellipsis.textContent = '...';
-                ellipsis.style.padding = '0.5rem';
-                pagination.appendChild(ellipsis);
-            }
-
-            const lastButton = document.createElement('button');
-            lastButton.textContent = totalPages;
-            lastButton.onclick = () => {
-                paginationStates[status].currentPage = totalPages;
-                renderAppointments(status, totalPages);
-            };
-            pagination.appendChild(lastButton);
-        }
-
-        // Next button
-        const nextButton = document.createElement('button');
-        nextButton.textContent = 'Next';
-        nextButton.disabled = currentPage === totalPages;
-        nextButton.className = currentPage === totalPages ? 'disabled' : '';
-        nextButton.onclick = () => {
-            if (currentPage < totalPages) {
-                paginationStates[status].currentPage = currentPage + 1;
-                renderAppointments(status, currentPage + 1);
-            }
-        };
-        pagination.appendChild(nextButton);
-
-        // Add page info
-        const pageInfo = document.createElement('div');
-        pageInfo.style.marginTop = '0.5rem';
-        pageInfo.style.textAlign = 'center';
-        pageInfo.style.fontSize = '0.875rem';
-        pageInfo.style.color = 'var(--text-muted)';
-        pageInfo.textContent = `Showing page ${currentPage} of ${totalPages} (${totalItems} total items)`;
-        pagination.appendChild(pageInfo);
     }
 
     // Apply filters with reset to page 1
@@ -1447,6 +1652,21 @@
     function toggleNotificationModal() {
         // Placeholder for notification functionality
         console.log('Notification modal toggled');
+    }
+
+    // Toggle filter visibility
+    function toggleFilter(status) {
+        const filterGroup = document.getElementById(`filter-group-${status}`);
+        const isCollapsed = filterGroup.classList.contains('collapsed');
+
+        // Collapse or expand the filter group
+        if (isCollapsed) {
+            filterGroup.classList.remove('collapsed');
+            filterGroup.style.maxHeight = filterGroup.scrollHeight + 'px';
+        } else {
+            filterGroup.classList.add('collapsed');
+            filterGroup.style.maxHeight = 0;
+        }
     }
 </script>
 </body>
