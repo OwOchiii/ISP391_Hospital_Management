@@ -1,6 +1,8 @@
 package orochi.controller;
 
 import java.io.File;
+import java.io.FileOutputStream;
+import java.io.IOException;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -13,6 +15,10 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.stream.Collectors;
+
+// Add PDF generation imports
+import com.itextpdf.text.*;
+import com.itextpdf.text.pdf.*;
 
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
@@ -778,7 +784,7 @@ public class ReceptionistController {
     @GetMapping("/pendingAppointmentRequest")
     public ResponseEntity<?> getPendingAppointmentTableData() {
         try {
-            // Chỉ lấy pending appointments của ngày hiện tại
+            // Ch����� lấy pending appointments của ngày hiện tại
             String todayStr = LocalDate.now().toString();
             List<Map<String, Object>> todaysPendingAppointmentTableData = receptionistService.getTodaysPendingAppointmentTableData(todayStr);
             return ResponseEntity.ok(todaysPendingAppointmentTableData);
@@ -2336,9 +2342,43 @@ public class ReceptionistController {
                                 logger.error("❌ Transaction {} missing AppointmentID or UserID", transactionId);
                             }
 
-                            // 🚫 REMOVED TRANSACTION DELETION - Keep transaction in database as per requirement
-                            // Transaction should remain in database with Status = "Paid", Method = "Banking"
-                            logger.info("💾 Transaction {} KEPT in database with Status='Paid', Method='Banking' as requested", transactionId);
+                            // Get user names for Processed By information
+                            String processedByName = "N/A";
+                            if (savedTransaction.getProcessedByUserId() != null) {
+                                Optional<Users> processedByUser = userRepository.findById(savedTransaction.getProcessedByUserId());
+                                if (processedByUser.isPresent()) {
+                                    processedByName = processedByUser.get().getFullName();
+                                    logger.info("Processed by user: {} (ID: {})", processedByName, savedTransaction.getProcessedByUserId());
+                                }
+                            }
+
+                            String customerName = "N/A";
+                            if (savedTransaction.getUserId() != null) {
+                                Optional<Users> customerUser = userRepository.findById(savedTransaction.getUserId());
+                                if (customerUser.isPresent()) {
+                                    customerName = customerUser.get().getFullName();
+                                    logger.info("Customer: {} (ID: {})", customerName, savedTransaction.getUserId());
+                                }
+                            }
+
+                            // Extract amount from RefundReason if available (only numbers)
+                            Double amountReceived = amountInVND;
+                            if (savedTransaction.getRefundReason() != null && !savedTransaction.getRefundReason().trim().isEmpty()) {
+                                String refundReason = savedTransaction.getRefundReason().trim();
+                                // Extract only numbers from RefundReason
+                                String numberOnly = refundReason.replaceAll("[^0-9.]", "");
+                                if (!numberOnly.isEmpty()) {
+                                    try {
+                                        amountReceived = Double.parseDouble(numberOnly);
+                                        logger.info("Amount received from RefundReason: {} -> {}", refundReason, amountReceived);
+                                    } catch (NumberFormatException e) {
+                                        logger.warn("Could not extract number from RefundReason: {}", refundReason);
+                                    }
+                                }
+                            }
+
+                            // Get payment method from Transaction table
+                            String paymentMethod = savedTransaction.getMethod() != null ? savedTransaction.getMethod() : "Banking";
 
                             // Set success message based on appointment update result
                             if (appointmentUpdated) {
@@ -2347,11 +2387,29 @@ public class ReceptionistController {
                                 model.addAttribute("successMessage", "Payment completed successfully! Transaction saved but appointment requires manual review.");
                             }
 
-                            // Add data to model for display (using saved transaction)
+                            // Add data to model for display (using saved transaction with proper user names)
                             model.addAttribute("transaction", savedTransaction);
                             model.addAttribute("paymentStatus", paymentStatus);
                             model.addAttribute("amount", amountInVND);
                             model.addAttribute("amountInXu", amountInXu);
+                            model.addAttribute("amountReceived", amountReceived);
+                            model.addAttribute("processedByName", processedByName);
+                            model.addAttribute("customerName", customerName);
+                            model.addAttribute("paymentMethod", paymentMethod);
+
+                            // Generate and save PDF receipt
+                            try {
+                                String pdfFilePath = generatePaymentReceiptPdf(savedTransaction, amountInVND, amountReceived, processedByName, customerName, paymentMethod);
+
+                                // Save PDF path to database by updating transaction
+                                savedTransaction.setRefundReason(savedTransaction.getRefundReason() + " | PDF Path: " + pdfFilePath);
+                                transactionRepository.save(savedTransaction);
+
+                                model.addAttribute("pdfReceiptPath", pdfFilePath);
+                                logger.info("PDF receipt generated and saved: {}", pdfFilePath);
+                            } catch (Exception e) {
+                                logger.error("Failed to generate PDF receipt: {}", e.getMessage());
+                            }
 
                             logger.info("=== PAYMENT RETURN PROCESSING COMPLETED ===");
                             return "Receptionists/payment-return";
@@ -2369,10 +2427,25 @@ public class ReceptionistController {
                             Transaction savedTransaction = transactionRepository.save(transaction);
                             logger.info("💾 Transaction {} saved with status: {} after failed payment", transactionId, savedTransaction.getStatus());
 
+                            // Get user names for failed payment display
+                            String processedByName = "N/A";
+                            String customerName = "N/A";
+                            String paymentMethod = savedTransaction.getMethod() != null ? savedTransaction.getMethod() : "Banking";
+
+                            if (savedTransaction.getUserId() != null) {
+                                Optional<Users> customerUser = userRepository.findById(savedTransaction.getUserId());
+                                if (customerUser.isPresent()) {
+                                    customerName = customerUser.get().getFullName();
+                                }
+                            }
+
                             model.addAttribute("transaction", savedTransaction);
                             model.addAttribute("paymentStatus", paymentStatus);
                             model.addAttribute("amount", amountInVND);
                             model.addAttribute("amountInXu", amountInXu);
+                            model.addAttribute("processedByName", processedByName);
+                            model.addAttribute("customerName", customerName);
+                            model.addAttribute("paymentMethod", paymentMethod);
                             model.addAttribute("errorMessage", "Payment failed. Please try again or contact support.");
                         }
                     } else {
@@ -2408,5 +2481,52 @@ public class ReceptionistController {
             default:
                 return "Banking"; // Default to Banking thay vì Cash
         }
+    }
+
+    private String generatePaymentReceiptPdf(Transaction transaction, Double amountVND, Double amountReceived, String processedByName, String customerName, String paymentMethod) throws Exception {
+        // Prepare PDF document
+        Document document = new Document();
+        String pdfFilePath = null;
+
+        try {
+            // Define file name and path
+            String fileName = "Receipt_" + transaction.getTransactionId() + ".pdf";
+            String filePath = System.getProperty("user.dir") + "/uploads/receipts/" + fileName;
+
+            // Create uploads directory if it doesn't exist
+            File uploadDir = new File(System.getProperty("user.dir") + "/uploads/receipts/");
+            if (!uploadDir.exists()) {
+                uploadDir.mkdirs();
+            }
+
+            // Create PDF writer
+            PdfWriter.getInstance(document, new FileOutputStream(filePath));
+
+            // Open document
+            document.open();
+
+            // Add content to PDF
+            document.add(new Paragraph("Payment Receipt", FontFactory.getFont(FontFactory.HELVETICA_BOLD, 16)));
+            document.add(new Paragraph("Transaction ID: " + transaction.getTransactionId()));
+            document.add(new Paragraph("Appointment ID: " + transaction.getAppointmentId()));
+            document.add(new Paragraph("Patient ID: " + transaction.getUserId()));
+            document.add(new Paragraph("Amount (VND): " + amountVND));
+            document.add(new Paragraph("Amount Received: " + amountReceived));
+            document.add(new Paragraph("Payment Method: " + transaction.getMethod()));
+            document.add(new Paragraph("Status: " + transaction.getStatus()));
+            document.add(new Paragraph("Processed By: " + processedByName));
+            document.add(new Paragraph("Customer Name: " + customerName));
+            document.add(new Paragraph("Date: " + LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss"))));
+
+            // Close document
+            document.close();
+
+            pdfFilePath = filePath;
+        } catch (Exception e) {
+            logger.error("Error generating PDF receipt: ", e);
+            throw e;
+        }
+
+        return pdfFilePath;
     }
 }

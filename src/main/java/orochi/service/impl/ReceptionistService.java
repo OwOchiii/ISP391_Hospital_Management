@@ -101,86 +101,150 @@ public class ReceptionistService {
             String addressType = (String) registrationData.get("addressType");
             String description = (String) registrationData.get("description");
 
+            // 🔥 VALIDATE EMAIL AND PHONE UNIQUENESS FIRST
+            logger.info("=== VALIDATING EMAIL AND PHONE UNIQUENESS ===");
+            logger.info("Checking email: {}", email);
+            logger.info("Checking phone: {}", phoneNumber);
+
+            // Check if email already exists
+            Optional<Users> existingUserByEmail = userRepository.findByEmail(email);
+            if (existingUserByEmail.isPresent()) {
+                logger.error("Email already exists: {}", email);
+                throw new RuntimeException("Email already exists");
+            }
+
+            // Check if phone number already exists
+            Optional<Users> existingUserByPhone = userRepository.findByPhoneNumber(phoneNumber);
+            if (existingUserByPhone.isPresent()) {
+                logger.error("Phone number already exists: {}", phoneNumber);
+                throw new RuntimeException("Phone number already exists");
+            }
+
+            logger.info("✅ Email and phone number are unique, proceeding with registration");
+
             // Parse date of birth
             java.time.LocalDate dateOfBirth;
             try {
                 dateOfBirth = java.time.LocalDate.parse(dateOfBirthStr);
             } catch (Exception e) {
+                logger.error("Invalid date format: {}", dateOfBirthStr);
                 throw new RuntimeException("Invalid date format. Please use YYYY-MM-DD format.");
             }
 
             // Create Users entity
             Users newUser = new Users();
             newUser.setFullName(fullName);
-            newUser.setEmail(email);
-            newUser.setPhoneNumber(phoneNumber);
+            newUser.setEmail(email.toLowerCase().trim()); // Normalize email
+            newUser.setPhoneNumber(phoneNumber.trim());
             newUser.setPasswordHash(passwordHash); // In production, this should be encrypted
             newUser.setRoleId(4); // Patient role ID = 4
             newUser.setGuest(false);
             newUser.setStatus("Active");
             newUser.setCreatedAt(java.time.LocalDateTime.now());
 
-            // Save Users first to get UserID
+            // 🔥 SAVE USERS FIRST TO GET UserID
+            logger.info("=== SAVING USERS ENTITY ===");
             Users savedUser = userRepository.save(newUser);
+            logger.info("✅ Users saved with ID: {}", savedUser.getUserId());
 
-            // Check if a Patient record already exists for this user
+            // 🔥 CHECK IF PATIENT RECORD ALREADY EXISTS (double check)
             Optional<Patient> existingPatient = patientRepository.findByUserId(savedUser.getUserId());
             Patient savedPatient;
 
             if (existingPatient.isPresent()) {
                 // Update existing patient instead of creating new one
+                logger.info("Found existing patient record, updating...");
                 savedPatient = existingPatient.get();
                 savedPatient.setDateOfBirth(dateOfBirth);
                 savedPatient.setGender(gender);
-                savedPatient.setDescription(description);
-                // Save the updated patient
+                savedPatient.setDescription(description != null ? description : "");
+                // 🔥 ENSURE USER RELATIONSHIP IS SET
+                savedPatient.setUser(savedUser);
                 savedPatient = patientRepository.save(savedPatient);
-                logger.info("Updated existing patient record with ID: {}", savedPatient.getPatientId());
+                logger.info("✅ Updated existing patient record with ID: {}", savedPatient.getPatientId());
             } else {
-                // Create new Patient entity
+                // 🔥 CREATE NEW PATIENT ENTITY WITH PROPER RELATIONSHIP
+                logger.info("Creating new patient record...");
                 Patient newPatient = new Patient();
-                newPatient.setUserId(savedUser.getUserId());
+                newPatient.setUserId(savedUser.getUserId()); // Set foreign key
                 newPatient.setDateOfBirth(dateOfBirth);
                 newPatient.setGender(gender);
-                newPatient.setDescription(description);
+                newPatient.setDescription(description != null ? description : "");
+                // 🔥 CRUCIAL: Set the bidirectional relationship
+                newPatient.setUser(savedUser);
 
                 // Save Patient
                 savedPatient = patientRepository.save(newPatient);
-                logger.info("Created new patient record with ID: {} with userID", savedPatient.getPatientId(),savedPatient.getUser().getUserId());
+                logger.info("✅ Created new patient record with ID: {}", savedPatient.getPatientId());
             }
 
-            // QUAN TRỌNG: Thiết lập quan hệ bidirectional để email template có thể truy cập dữ liệu
-            savedPatient.setUser(savedUser); // Set user relationship in patient
+            // 🔥 ESTABLISH BIDIRECTIONAL RELATIONSHIP EXPLICITLY
+            logger.info("=== ESTABLISHING BIDIRECTIONAL RELATIONSHIP ===");
             savedUser.setPatient(savedPatient); // Set patient relationship in user
+            savedPatient.setUser(savedUser);     // Set user relationship in patient (redundant but safe)
+
+            // 🔥 SAVE BOTH ENTITIES AGAIN TO ENSURE RELATIONSHIP IS PERSISTED
+            savedUser = userRepository.save(savedUser);
+            savedPatient = patientRepository.save(savedPatient);
+
+            logger.info("✅ Bidirectional relationship established and persisted");
 
             // Create PatientContact entity for address information
+            logger.info("=== CREATING PATIENT CONTACT ===");
             PatientContact patientContact = new PatientContact();
             patientContact.setPatientId(savedPatient.getPatientId());
-            patientContact.setAddressType(addressType != null ? addressType : "Home");
-            patientContact.setStreetAddress(streetAddress);
-            patientContact.setCity(city);
-            patientContact.setCountry(country);
+            patientContact.setAddressType(addressType != null && !addressType.trim().isEmpty() ? addressType : "Home");
+            patientContact.setStreetAddress(streetAddress != null ? streetAddress : "");
+            patientContact.setCity(city != null ? city : "");
+            patientContact.setCountry(country != null ? country : "");
             // Set default values for missing fields if needed
             patientContact.setState(""); // Default empty state
             patientContact.setPostalCode(""); // Default empty postal code
 
             // Save PatientContact
-            patientContactRepository.save(patientContact);
+            PatientContact savedContact = patientContactRepository.save(patientContact);
+            logger.info("✅ PatientContact saved with ID: {}", savedContact.getContactId());
 
-            // Log để debug
-            logger.info("=== Patient Registration Debug ===");
-            logger.info("Created User - ID: {}, FullName: {}, Email: {}, Phone: {}",
+            // 🔥 FINAL VALIDATION - VERIFY RELATIONSHIPS ARE WORKING
+            logger.info("=== FINAL RELATIONSHIP VALIDATION ===");
+            logger.info("SavedUser ID: {}, FullName: {}, Email: {}, Phone: {}",
                        savedUser.getUserId(), savedUser.getFullName(), savedUser.getEmail(), savedUser.getPhoneNumber());
-            logger.info("Created Patient - ID: {}, UserID: {}, Gender: {}, DOB: {}",
+            logger.info("SavedPatient ID: {}, UserID: {}, Gender: {}, DOB: {}",
                        savedPatient.getPatientId(), savedPatient.getUserId(), savedPatient.getGender(), savedPatient.getDateOfBirth());
-            logger.info("Patient.User relationship: {}", savedPatient.getUser() != null ? "SET" : "NULL");
 
+            // Test the relationship
+            if (savedPatient.getUser() != null) {
+                logger.info("✅ Patient.User relationship: WORKING - User ID: {}, FullName: {}",
+                           savedPatient.getUser().getUserId(), savedPatient.getUser().getFullName());
+            } else {
+                logger.error("❌ Patient.User relationship: BROKEN - User is NULL");
+                throw new RuntimeException("Failed to establish Patient-User relationship");
+            }
+
+            if (savedUser.getPatient() != null) {
+                logger.info("✅ User.Patient relationship: WORKING - Patient ID: {}",
+                           savedUser.getPatient().getPatientId());
+            } else {
+                logger.warn("⚠️ User.Patient relationship: NOT SET (this might be normal for lazy loading)");
+            }
+
+            logger.info("=== PATIENT REGISTRATION COMPLETED SUCCESSFULLY ===");
             return savedUser;
 
         } catch (Exception e) {
-            // Log the error
-            logger.error("Error registering new patient: {}", e.getMessage(), e);
-            throw new RuntimeException("Failed to register patient: " + e.getMessage());
+            // Log the error with full stack trace
+            logger.error("❌ Error registering new patient: {}", e.getMessage(), e);
+
+            // Re-throw with more specific error message
+            if (e.getMessage().contains("Email already exists")) {
+                throw new RuntimeException("Email already exists");
+            } else if (e.getMessage().contains("Phone number already exists")) {
+                throw new RuntimeException("Phone number already exists");
+            } else if (e.getMessage().contains("Invalid date format")) {
+                throw new RuntimeException("Invalid date format. Please use YYYY-MM-DD format.");
+            } else {
+                throw new RuntimeException("Failed to register patient: " + e.getMessage());
+            }
         }
     }
 
@@ -1749,67 +1813,193 @@ public class ReceptionistService {
                         logger.info("=== Parsing refundReason ===");
                         logger.info("Raw refundReason: {}", refundReason);
 
-                        if (refundReason != null && !refundReason.trim().isEmpty()) {
-                            // Parse Amount Received
-                            if (refundReason.contains("Amount Received:")) {
-                                try {
-                                    String amountPart = refundReason.substring(refundReason.indexOf("Amount Received: $") + 18);
-                                    String amountStr = amountPart;
+                        // ✅ Thêm refundReasonRaw để frontend có thể extract trực tiếp
+                        invoiceData.put("refundReasonRaw", refundReason != null ? refundReason : "");
 
-                                    // Tìm end của amount (trước | hoặc Notes:)
-                                    if (amountStr.contains(" |")) {
-                                        amountStr = amountStr.substring(0, amountStr.indexOf(" |")).trim();
-                                    } else if (amountStr.contains(" Notes:")) {
-                                        amountStr = amountStr.substring(0, amountStr.indexOf(" Notes:")).trim();
-                                    }
+                        // ✅ FIXED: Lấy paymentMethod TRỰC TIẾP từ Transaction.Method database
+                        String transactionMethod = latestTransaction.getMethod();
+                        logger.info("=== DIRECT Payment Method from Database ===");
+                        logger.info("Raw Transaction.Method value: '{}'", transactionMethod);
 
-                                    double amountReceived = Double.parseDouble(amountStr);
-                                    invoiceData.put("amountReceived", amountReceived);
-                                    logger.info("Successfully parsed amountReceived: {}", amountReceived);
+                        // ✅ SỬA: Hiển thị CHÍNH XÁC giá trị từ database, KHÔNG normalize
+                        String paymentMethodToDisplay;
+                        if (transactionMethod != null && !transactionMethod.trim().isEmpty()) {
+                            // Hiển thị EXACT value từ database
+                            paymentMethodToDisplay = transactionMethod.trim();
+                            logger.info("✅ Using EXACT database value: '{}'", paymentMethodToDisplay);
+                        } else {
+                            // Chỉ fallback khi database value thực sự null/empty
+                            paymentMethodToDisplay = "Cash";
+                            logger.warn("⚠️ Database Method is null/empty, using fallback: Cash");
+                        }
 
-                                    // Calculate change từ total amount nếu có
-                                    Object totalAmountFromInvoice = invoiceData.get("totalAmount");
-                                    double totalForChange = totalAmountFromInvoice != null ?
-                                        ((Number) totalAmountFromInvoice).doubleValue() :
-                                        calculateTotalFromServices(servicesUsed);
-                                    double change = amountReceived - totalForChange;
-                                    invoiceData.put("changeReturned", change > 0 ? change : 0.0);
-                                    logger.info("Calculated change: {} (amountReceived: {} - total: {})", change, amountReceived, totalForChange);
+                        invoiceData.put("paymentMethod", paymentMethodToDisplay);
+                        logger.info("Final paymentMethod in invoiceData: '{}'", paymentMethodToDisplay);
 
-                                } catch (Exception e) {
-                                    logger.warn("Could not parse amount received from refund reason: {}", refundReason);
-                                    invoiceData.put("amountReceived", 0.0);
-                                    invoiceData.put("changeReturned", 0.0);
-                                }
-                            } else {
-                                invoiceData.put("amountReceived", 0.0);
-                                invoiceData.put("changeReturned", 0.0);
-                            }
-
-                            // Parse Notes
-                            if (refundReason.contains("Notes:")) {
-                                try {
-                                    String notesPart = refundReason.substring(refundReason.indexOf("Notes:") + 6).trim();
-                                    invoiceData.put("notes", notesPart);
-                                    logger.info("Successfully parsed notes: {}", notesPart);
-                                } catch (Exception e) {
-                                    logger.warn("Could not parse notes from refund reason: {}", refundReason);
-                                    invoiceData.put("notes", "Payment completed successfully");
-                                }
-                            } else {
-                                // Nếu không có "Notes:" prefix, coi toàn bộ refundReason là notes
-                                if (!refundReason.contains("Amount Received:")) {
-                                    invoiceData.put("notes", refundReason);
-                                    logger.info("Using entire refundReason as notes: {}", refundReason);
+                        // ✅ Lấy Processed By từ ProcessedByUserID map với User table
+                        String processedByName = "N/A";
+                        if (latestTransaction.getProcessedByUserId() != null) {
+                            try {
+                                Optional<Users> processedByUser = userRepository.findById(latestTransaction.getProcessedByUserId());
+                                if (processedByUser.isPresent()) {
+                                    processedByName = processedByUser.get().getFullName() != null ?
+                                        processedByUser.get().getFullName() : "Unknown Staff";
+                                    logger.info("Processed By User found: ID={}, FullName={}",
+                                               latestTransaction.getProcessedByUserId(), processedByName);
                                 } else {
-                                    invoiceData.put("notes", "Payment completed successfully");
+                                    logger.warn("Processed By User not found for ID: {}", latestTransaction.getProcessedByUserId());
+                                }
+                            } catch (Exception e) {
+                                logger.error("Error fetching processed by user: {}", e.getMessage());
+                            }
+                        } else {
+                            logger.info("No ProcessedByUserID found in transaction");
+                        }
+                        invoiceData.put("processedByName", processedByName);
+
+                        // ✅ ENHANCED: Parse Amount Received với FULL pattern support từ RefundReason
+                        double extractedAmountReceived = 0.0;
+                        logger.info("=== ENHANCED Amount Received Extraction ===");
+                        logger.info("Processing RefundReason: '{}'", refundReason);
+
+                        if (refundReason != null && !refundReason.trim().isEmpty()) {
+                            logger.info("Attempting to extract amount from RefundReason...");
+
+                            // ✅ Pattern 1: "Amount Received: $XXX.XX" hoặc "Amount Received: XXX.XX" (case insensitive)
+                            String pattern1 = "(?i)Amount\\s+Received:\\s*\\$?([\\d,]+(?:\\.\\d{1,2})?)";
+                            java.util.regex.Pattern regex1 = java.util.regex.Pattern.compile(pattern1);
+                            java.util.regex.Matcher matcher1 = regex1.matcher(refundReason);
+
+                            if (matcher1.find()) {
+                                try {
+                                    String amountStr = matcher1.group(1).replace(",", "");
+                                    extractedAmountReceived = Double.parseDouble(amountStr);
+                                    logger.info("✅ Pattern 1 SUCCESS - Extracted Amount: {} from '{}'",
+                                               extractedAmountReceived, matcher1.group(0));
+                                } catch (NumberFormatException e) {
+                                    logger.warn("❌ Pattern 1 - Could not parse amount: '{}'", matcher1.group(1));
+                                }
+                            } else {
+                                // ✅ Pattern 2: "Received: $XXX.XX" hoặc "Received: XXX.XX"
+                                String pattern2 = "(?i)Received:\\s*\\$?([\\d,]+(?:\\.\\d{1,2})?)";
+                                java.util.regex.Pattern regex2 = java.util.regex.Pattern.compile(pattern2);
+                                java.util.regex.Matcher matcher2 = regex2.matcher(refundReason);
+
+                                if (matcher2.find()) {
+                                    try {
+                                        String amountStr = matcher2.group(1).replace(",", "");
+                                        extractedAmountReceived = Double.parseDouble(amountStr);
+                                        logger.info("✅ Pattern 2 SUCCESS - Extracted Amount: {} from '{}'",
+                                                   extractedAmountReceived, matcher2.group(0));
+                                    } catch (NumberFormatException e) {
+                                        logger.warn("❌ Pattern 2 - Could not parse amount: '{}'", matcher2.group(1));
+                                    }
+                                } else {
+                                    // ✅ Pattern 3: Tìm số tiền với $ ở đầu
+                                    String pattern3 = "\\$\\s*([\\d,]+(?:\\.\\d{1,2})?)";
+                                    java.util.regex.Pattern regex3 = java.util.regex.Pattern.compile(pattern3);
+                                    java.util.regex.Matcher matcher3 = regex3.matcher(refundReason);
+
+                                    if (matcher3.find()) {
+                                        try {
+                                            String amountStr = matcher3.group(1).replace(",", "");
+                                            extractedAmountReceived = Double.parseDouble(amountStr);
+                                            logger.info("✅ Pattern 3 SUCCESS - Extracted amount with $: {} from '{}'",
+                                                       extractedAmountReceived, matcher3.group(0));
+                                        } catch (NumberFormatException e) {
+                                            logger.warn("❌ Pattern 3 - Could not parse amount: '{}'", matcher3.group(1));
+                                        }
+                                    } else {
+                                        // ✅ Pattern 4: Tìm bất kỳ số thập phân nào
+                                        String pattern4 = "([\\d,]+\\.\\d{1,2})";
+                                        java.util.regex.Pattern regex4 = java.util.regex.Pattern.compile(pattern4);
+                                        java.util.regex.Matcher matcher4 = regex4.matcher(refundReason);
+
+                                        if (matcher4.find()) {
+                                            try {
+                                                String amountStr = matcher4.group(1).replace(",", "");
+                                                extractedAmountReceived = Double.parseDouble(amountStr);
+                                                logger.info("✅ Pattern 4 SUCCESS - Extracted decimal: {} from '{}'",
+                                                           extractedAmountReceived, matcher4.group(0));
+                                            } catch (NumberFormatException e) {
+                                                logger.warn("❌ Pattern 4 - Could not parse amount: '{}'", matcher4.group(1));
+                                            }
+                                        } else {
+                                            // ✅ Pattern 5: Tìm bất kỳ số nguyên nào > 0
+                                            String pattern5 = "([\\d,]+)";
+                                            java.util.regex.Pattern regex5 = java.util.regex.Pattern.compile(pattern5);
+                                            java.util.regex.Matcher matcher5 = regex5.matcher(refundReason);
+
+                                            if (matcher5.find()) {
+                                                try {
+                                                    String amountStr = matcher5.group(1).replace(",", "");
+                                                    double foundAmount = Double.parseDouble(amountStr);
+                                                    // Chỉ lấy số > 10 để tránh lấy ID hoặc số nhỏ khác
+                                                    if (foundAmount > 10) {
+                                                        extractedAmountReceived = foundAmount;
+                                                        logger.info("✅ Pattern 5 SUCCESS - Extracted integer: {} from '{}'",
+                                                                   extractedAmountReceived, matcher5.group(0));
+                                                    } else {
+                                                        logger.warn("❌ Pattern 5 - Found number too small: {}", foundAmount);
+                                                    }
+                                                } catch (NumberFormatException e) {
+                                                    logger.warn("❌ Pattern 5 - Could not parse amount: '{}'", matcher5.group(1));
+                                                }
+                                            } else {
+                                                logger.warn("❌ No amount pattern found in RefundReason: '{}'", refundReason);
+                                            }
+                                        }
+                                    }
                                 }
                             }
                         } else {
-                            invoiceData.put("amountReceived", 0.0);
-                            invoiceData.put("changeReturned", 0.0);
-                            invoiceData.put("notes", "Payment completed successfully");
+                            logger.info("RefundReason is empty, amount received will be 0");
                         }
+
+                        invoiceData.put("amountReceived", extractedAmountReceived);
+                        logger.info("Final amountReceived set in invoiceData: {}", extractedAmountReceived);
+
+                        // Calculate change từ total amount nếu có
+                        Object totalAmountFromInvoice = invoiceData.get("totalAmount");
+                        double totalForChange = totalAmountFromInvoice != null ?
+                            ((Number) totalAmountFromInvoice).doubleValue() :
+                            calculateTotalFromServices(servicesUsed);
+                        double change = extractedAmountReceived - totalForChange;
+                        invoiceData.put("changeReturned", change > 0 ? change : 0.0);
+                        logger.info("Calculated change: {} (amountReceived: {} - total: {})", change, extractedAmountReceived, totalForChange);
+
+                        // ✅ Parse Notes với improved logic - SỬA ĐỂ EXTRACT CHÍNH XÁC
+                        String extractedNotes = "Payment completed successfully"; // Default
+                        if (refundReason != null && !refundReason.trim().isEmpty()) {
+                            logger.info("Extracting notes from RefundReason...");
+
+                            // Tìm pattern "Notes: XXXX" (case insensitive)
+                            String notesPattern = "(?i)Notes:\\s*(.+?)(?:\\s*\\||\\s*PDF\\s*Path:|$)";
+                            java.util.regex.Pattern notesRegex = java.util.regex.Pattern.compile(notesPattern);
+                            java.util.regex.Matcher notesMatcher = notesRegex.matcher(refundReason);
+
+                            if (notesMatcher.find()) {
+                                extractedNotes = notesMatcher.group(1).trim();
+                                logger.info("✅ Extracted notes from 'Notes:' pattern: '{}'", extractedNotes);
+                            } else {
+                                // Nếu không có "Notes:" prefix, loại bỏ Amount Received và PDF Path, lấy phần còn lại
+                                String cleanedNotes = refundReason
+                                    .replaceAll("(?i)Amount\\s+Received:\\s*\\$?[\\d,]+(?:\\.\\d{1,2})?", "") // Remove amount received
+                                    .replaceAll("(?i)\\s*\\|\\s*PDF\\s*Path:.*$", "") // Remove PDF path
+                                    .replaceAll("^\\s*\\|\\s*", "") // Remove leading |
+                                    .replaceAll("\\s*\\|\\s*$", "") // Remove trailing |
+                                    .trim();
+
+                                if (!cleanedNotes.isEmpty() && !cleanedNotes.equals("|")) {
+                                    extractedNotes = cleanedNotes;
+                                    logger.info("✅ Extracted notes from cleaned RefundReason: '{}'", extractedNotes);
+                                } else {
+                                    logger.info("No meaningful notes found, using default");
+                                }
+                            }
+                        }
+                        invoiceData.put("notes", extractedNotes);
+                        logger.info("Final notes set in invoiceData: '{}'", extractedNotes);
                     } else {
                         // Calculate total from services
                         double calculatedTotal = calculateTotalFromServices(servicesUsed);
@@ -2223,6 +2413,46 @@ public class ReceptionistService {
         } catch (Exception e) {
             logger.error("❌ Error processing payment: {}", e.getMessage(), e);
             throw new RuntimeException("Failed to process payment: " + e.getMessage());
+        }
+    }
+
+    /**
+     * Normalize payment method từ database để đảm bảo hiển thị chính xác
+     * Xử lý tất cả các payment methods có thể có trong database
+     */
+    private String normalizePaymentMethod(String transactionMethod) {
+        if (transactionMethod == null || transactionMethod.trim().isEmpty()) {
+            logger.warn("Transaction.Method is null/empty, using fallback: Cash");
+            return "Cash";
+        }
+
+        // Normalize string - remove extra spaces và convert case
+        String normalized = transactionMethod.trim();
+
+        // Map các payment methods phổ biến từ database
+        switch (normalized.toLowerCase()) {
+            case "cash":
+                return "Cash";
+            case "banking":
+            case "bank":
+            case "vnpay":
+            case "momo":
+            case "zalopay":
+                return "Banking";
+            case "credit card":
+            case "creditcard":
+            case "card":
+                return "Credit Card";
+            case "debit card":
+            case "debitcard":
+                return "Debit Card";
+            case "online":
+            case "online payment":
+                return "Online Payment";
+            default:
+                // Giữ nguyên giá trị gốc n���u không match với pattern nào
+                logger.info("Using original Transaction.Method: '{}'", normalized);
+                return normalized;
         }
     }
 }
