@@ -170,7 +170,11 @@ public class PatientDashboardController {
     }
 
     @GetMapping("/search-doctor")
-    public String searchDoctor(Model model) {
+    public String searchDoctor(
+            @RequestParam(required = false) String search,
+            @RequestParam(required = false) Integer specId,
+            @PageableDefault(size = 5, sort = "doctorId") Pageable pageable,
+            Model model) {
         try {
             Integer patientId = getCurrentPatientId();
             if (patientId != null) {
@@ -180,15 +184,27 @@ public class PatientDashboardController {
                     model.addAttribute("patientName", patientOpt.get().getUser().getFullName());
                 }
             }
-            List<Doctor> doctors = doctorRepository.findAll();
-            // Pre-process doctors to include latest education
-            doctors.forEach(PatientDashboardController::accept);
-            model.addAttribute("doctors", doctors);
+            Page<Doctor> doctorPage = doctorRepository.findDoctorsBySearchAndSpecialization(
+                    search != null && !search.trim().isEmpty() ? search.trim() : null,
+                    specId != null && specId > 0 ? specId : null,
+                    pageable);
+            doctorPage.getContent().forEach(doctor -> {
+                // Pre-process to set latestEducation (assuming PatientDashboardController::accept does this)
+                PatientDashboardController.accept(doctor);
+            });
+            model.addAttribute("doctors", doctorPage.getContent());
+            model.addAttribute("currentPage", doctorPage.getNumber());
+            model.addAttribute("totalPages", doctorPage.getTotalPages());
+            model.addAttribute("pageSize", doctorPage.getSize());
+            model.addAttribute("totalElements", doctorPage.getTotalElements());
+            model.addAttribute("search", search != null ? search : "");
+            model.addAttribute("specId", specId != null ? specId : "");
             List<Specialization> specializations = specializationRepository.findAll();
             model.addAttribute("specializations", specializations);
+            logger.info("Search doctor page loaded: search='{}', specId={}, page={}", search, specId, pageable.getPageNumber());
             return "patient/search-doctor";
         } catch (Exception e) {
-            logger.error("Error loading search doctor page: " + e.getMessage(), e);
+            logger.error("Error loading search doctor page: {}", e.getMessage(), e);
             model.addAttribute("errorMessage", "An error occurred while loading the search doctor page.");
             return "error";
         }

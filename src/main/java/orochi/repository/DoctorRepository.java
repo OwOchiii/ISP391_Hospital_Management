@@ -50,4 +50,14 @@ public interface DoctorRepository extends JpaRepository<Doctor, Integer> {
     // Search doctors with optional keyword and pagination, removing status filter
     @Query("SELECT d FROM Doctor d WHERE (:keyword IS NULL OR LOWER(d.bioDescription) LIKE LOWER(CONCAT('%', :keyword, '%')))")
     Page<Doctor> searchDoctors(@Param("keyword") String keyword, Pageable pageable);
+
+    @Query("SELECT d FROM Doctor d " +
+            "JOIN d.user u " +
+            "LEFT JOIN d.specializations s " +
+            "WHERE (:search IS NULL OR LOWER(u.fullName) LIKE LOWER(CONCAT('%', :search, '%'))) " +
+            "AND (:specId IS NULL OR s.specId = :specId)")
+    Page<Doctor> findDoctorsBySearchAndSpecialization(
+            @Param("search") String search,
+            @Param("specId") Integer specId,
+            Pageable pageable);
 }
