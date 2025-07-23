@@ -9,6 +9,8 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
+import org.springframework.data.web.PageableDefault;
+import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -868,7 +870,14 @@ public class PatientDashboardController {
     }
 
     @GetMapping("/payment-history")
-    public String paymentHistory(Model model) {
+    public String paymentHistory(
+            @RequestParam(required = false, defaultValue = "all") String status,
+            @RequestParam(required = false, defaultValue = "all") String method,
+            @RequestParam(required = false) String search,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate fromDate,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate toDate,
+            @PageableDefault(size = 5, sort = "timeOfPayment", direction = org.springframework.data.domain.Sort.Direction.DESC) Pageable pageable,
+            Model model) {
         try {
             Integer patientId = getCurrentPatientId();
             if (patientId == null) {
@@ -887,44 +896,46 @@ public class PatientDashboardController {
             Patient patient = patientOpt.get();
             Integer userId = patient.getUser().getUserId();
 
-            // Get all transactions for the patient
-            List<Transaction> transactions = transactionRepository.findByUserIdOrderByTimeOfPaymentDesc(userId);
+            // Prepare statuses (excluding "Refunded")
+            List<String> statuses = "all".equals(status) ? Arrays.asList("Paid", "Pending") : Arrays.asList(status);
 
-            // Count transactions by status
-            long paidCount = transactions.stream()
-                    .filter(t -> "Paid".equals(t.getStatus()))
-                    .count();
+            // Prepare method filter
+            String methodFilter = "all".equals(method) ? null : method;
 
-            long refundedCount = transactions.stream()
-                    .filter(t -> "Refunded".equals(t.getStatus()))
-                    .count();
+            // Prepare searchId
+            Integer searchId = null;
+            if (search != null && !search.isEmpty()) {
+                try {
+                    searchId = Integer.parseInt(search);
+                } catch (NumberFormatException e) {
+                    // Ignore invalid search term
+                }
+            }
 
-            long pendingCount = transactions.stream()
-                    .filter(t -> "Pending".equals(t.getStatus()))
-                    .count();
+            // Prepare date range
+            LocalDateTime start = fromDate != null ? fromDate.atStartOfDay() : null;
+            LocalDateTime end = toDate != null ? toDate.atTime(23, 59, 59) : null;
 
-            // Count transactions by method
-            long cashCount = transactions.stream()
-                    .filter(t -> "Cash".equals(t.getMethod()))
-                    .count();
-
-            long bankingCount = transactions.stream()
-                    .filter(t -> "Banking".equals(t.getMethod()))
-                    .count();
+            // Fetch paginated transactions
+            Page<Transaction> transactionPage = transactionRepository.findFilteredTransactions(
+                    userId, statuses, methodFilter, searchId, start, end, pageable);
 
             // Add attributes to model
             model.addAttribute("userId", userId);
             model.addAttribute("patientId", patientId);
             model.addAttribute("patientName", patient.getUser() != null ? patient.getUser().getFullName() : "Patient");
-            model.addAttribute("transactions", transactions);
-            model.addAttribute("totalTransactions", transactions.size());
-            model.addAttribute("paidTransactions", paidCount);
-            model.addAttribute("refundedTransactions", refundedCount);
-            model.addAttribute("pendingTransactions", pendingCount);
-            model.addAttribute("cashTransactions", cashCount);
-            model.addAttribute("bankingTransactions", bankingCount);
+            model.addAttribute("transactions", transactionPage.getContent());
+            model.addAttribute("currentPage", transactionPage.getNumber());
+            model.addAttribute("totalPages", transactionPage.getTotalPages());
+            model.addAttribute("pageSize", transactionPage.getSize());
+            model.addAttribute("totalElements", transactionPage.getTotalElements());
+            model.addAttribute("status", status);
+            model.addAttribute("method", method);
+            model.addAttribute("search", search);
+            model.addAttribute("fromDate", fromDate != null ? fromDate.toString() : "");
+            model.addAttribute("toDate", toDate != null ? toDate.toString() : "");
 
-            logger.info("Payment history loaded successfully for patient ID: {}", patientId);
+            logger.info("Payment history loaded successfully for patient ID: {}, page: {}", patientId, pageable.getPageNumber());
             return "patient/payment-history";
         } catch (Exception e) {
             logger.error("Error loading payment history for patient ID: {}", getCurrentPatientId(), e);

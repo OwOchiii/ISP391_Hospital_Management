@@ -1,11 +1,14 @@
 package orochi.repository;
 
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 import orochi.model.Transaction;
 
+import java.time.LocalDateTime;
 import java.util.List;
 
 @Repository
@@ -44,4 +47,19 @@ public interface TransactionRepository extends JpaRepository<Transaction, Intege
     List<Transaction> findByMethod(@Param("method") String method);
 
     List<Transaction> findByUserIdOrderByTimeOfPaymentDesc(Integer userId);
+
+    @Query("SELECT t FROM Transaction t WHERE t.userId = :userId " +
+            "AND t.status IN :statuses " +
+            "AND (:method IS NULL OR t.method = :method) " +
+            "AND (:searchId IS NULL OR t.transactionId = :searchId OR t.appointmentId = :searchId) " +
+            "AND (:start IS NULL OR t.timeOfPayment >= :start) " +
+            "AND (:end IS NULL OR t.timeOfPayment <= :end)")
+    Page<Transaction> findFilteredTransactions(
+            @Param("userId") Integer userId,
+            @Param("statuses") List<String> statuses,
+            @Param("method") String method,
+            @Param("searchId") Integer searchId,
+            @Param("start") LocalDateTime start,
+            @Param("end") LocalDateTime end,
+            Pageable pageable);
 }
