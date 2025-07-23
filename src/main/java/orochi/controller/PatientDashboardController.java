@@ -58,6 +58,9 @@ public class PatientDashboardController {
     private AppointmentRepository appointmentRepository;
 
     @Autowired
+    private NotificationRepository notificationRepository;
+
+    @Autowired
     private MedicalOrderRepository medicalOrderRepository;
 
     @Autowired
@@ -1100,7 +1103,13 @@ public class PatientDashboardController {
     }
 
     @GetMapping("/notifications")
-    public String viewNotifications(Model model) {
+    public String viewNotifications(
+            @RequestParam(required = false, defaultValue = "all") String filter,
+            @RequestParam(required = false) String searchTerm,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate fromDate,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate toDate,
+            @PageableDefault(size = 10) Pageable pageable,
+            Model model) {
         try {
             Integer patientId = getCurrentPatientId();
             if (patientId == null) {
@@ -1118,20 +1127,47 @@ public class PatientDashboardController {
 
             Patient patient = patientOpt.get();
             Integer userId = patient.getUser().getUserId();
-            List<Notification> notifications = notificationService.findByUserIdOrderByCreatedAtDesc(userId);
 
-            // Log notification details for debugging
-            notifications.forEach(n -> logger.debug("Notification ID: {}, IsRead: {}", n.getNotificationId(), n.isRead()));
+            // Determine isRead based on filter
+            Boolean isRead = null;
+            if ("unread".equals(filter)) {
+                isRead = false;
+            } else if ("read".equals(filter)) {
+                isRead = true;
+            }
 
-            model.addAttribute("notifications", notifications);
-            model.addAttribute("totalNotifications", notifications.size());
-            model.addAttribute("unreadNotifications", notifications.stream().filter(n -> !n.isRead()).count());
-            model.addAttribute("readNotifications", notifications.stream().filter(Notification::isRead).count());
+            // Prepare search term
+            String search = searchTerm != null ? searchTerm.trim() : null;
+            if (search != null && search.isEmpty()) {
+                search = null;
+            }
+
+            // Prepare date range
+            LocalDateTime fromDateTime = fromDate != null ? fromDate.atStartOfDay() : null;
+            LocalDateTime toDateTime = toDate != null ? toDate.atTime(23, 59, 59) : null;
+
+            // Fetch paginated notifications
+            Page<Notification> notificationPage = notificationRepository.findFilteredNotifications(
+                    userId, isRead, search, fromDateTime, toDateTime, pageable);
+
+            // Add attributes to model
+            model.addAttribute("notifications", notificationPage.getContent());
+            model.addAttribute("currentPage", notificationPage.getNumber());
+            model.addAttribute("totalPages", notificationPage.getTotalPages());
+            model.addAttribute("pageSize", notificationPage.getSize());
+            model.addAttribute("totalElements", notificationPage.getTotalElements());
+            model.addAttribute("filter", filter);
+            model.addAttribute("searchTerm", searchTerm);
+            model.addAttribute("fromDate", fromDate != null ? fromDate.toString() : "");
+            model.addAttribute("toDate", toDate != null ? toDate.toString() : "");
+            model.addAttribute("totalNotifications", notificationRepository.countByUserId(userId));
+            model.addAttribute("unreadNotifications", notificationRepository.countByUserIdAndIsRead(userId, false));
+            model.addAttribute("readNotifications", notificationRepository.countByUserIdAndIsRead(userId, true));
             model.addAttribute("patientId", patientId);
             model.addAttribute("patientName", patient.getUser().getFullName());
 
-            logger.info("Notifications loaded successfully for patient ID: {}, user ID: {}, total: {}, unread: {}, read: {}",
-                    patientId, userId, notifications.size(), notifications.stream().filter(n -> !n.isRead()).count(), notifications.stream().filter(Notification::isRead).count());
+            logger.info("Notifications loaded successfully for patient ID: {}, user ID: {}, filter: {}, searchTerm: {}, fromDate: {}, toDate: {}, page: {}, totalElements: {}",
+                    patientId, userId, filter, searchTerm, fromDate, toDate, pageable.getPageNumber(), notificationPage.getTotalElements());
             return "patient/notifications";
         } catch (Exception e) {
             logger.error("Error loading notifications for patient ID: {}", getCurrentPatientId(), e);
