@@ -245,7 +245,7 @@
                 <p><span class="font-semibold text-gray-700">Total Amount (incl. Tax):</span> <span id="calculatedTotalAmount">0</span> $</p>
                 <p><span class="font-semibold text-gray-700">Tax Amount:</span> <span id="calculatedTaxAmount">0</span> $</p>
                 <p><span class="font-semibold text-gray-700">Discount Amount:</span> <span id="calculatedDiscountAmount">0</span> $</p>
-                <p><span class="font-semibold text-gray-700">Patient Payment:</span> <span id="calculatedPatientPayment">0</span> $</p>
+                <p><span class="font-semibold text-gray-700">Patient Payment:</span> <span id="calculatedPatientPayment">0</span> $ (<span id="calculatedPatientPaymentVND">0</span> ₫)</p>
                 <p><span class="font-semibold text-gray-700">Status:</span> <span id="transactionStatus" class="status-pending">Pending</span></p>
             </div>
             <div>
@@ -394,6 +394,19 @@
     const urlReceiptId = urlParams.get('receiptId');
     const urlAppointmentId = urlParams.get('appointmentId');
 
+    // 🔥 USD TO VND CONVERSION CONSTANTS
+    const USD_TO_VND_RATE = 24000; // 1 USD = 24,000 VND (có thể cập nhật từ API)
+
+    // 🔥 CURRENCY CONVERSION HELPER FUNCTIONS
+    function convertUSDToVND(usdAmount) {
+        return usdAmount * USD_TO_VND_RATE;
+    }
+
+    function formatCurrencyVND(amount) {
+        const vndAmount = convertUSDToVND(amount);
+        return new Intl.NumberFormat('vi-VN').format(vndAmount);
+    }
+
     // Lấy dữ liệu thực từ Thymeleaf template thay vì hardcode
     const invoiceData = {
         patientPayment: /*[[${invoiceData.totalAmount != null ? invoiceData.totalAmount * 0.2 : 0}]]*/ 0,
@@ -410,6 +423,22 @@
         appointmentTime: /*[[${invoiceData.appointmentTime != null ? invoiceData.appointmentTime : 'N/A'}]]*/ 'N/A',
         description: /*[[${invoiceData.description != null ? invoiceData.description : 'General Consultation'}]]*/ 'General Consultation'
     };
+
+    // 🔥 CONVERT USD TO VND FOR PATIENT PAYMENT 🔥
+    if (invoiceData.totalAmount && invoiceData.totalAmount > 0) {
+        // Convert totalAmount from USD to VND
+        invoiceData.totalAmountVND = convertUSDToVND(invoiceData.totalAmount);
+
+        // Convert patientPayment from USD to VND (20% of total)
+        invoiceData.patientPaymentVND = convertUSDToVND(invoiceData.patientPayment);
+
+        logger.info("=== Currency Conversion Applied ===");
+        logger.info("Total Amount: {} USD -> {} VND", invoiceData.totalAmount, invoiceData.totalAmountVND);
+        logger.info("Patient Payment: {} USD -> {} VND", invoiceData.patientPayment, invoiceData.patientPaymentVND);
+    } else {
+        invoiceData.totalAmountVND = 0;
+        invoiceData.patientPaymentVND = 0;
+    }
 
     // Override with URL parameters if backend data is missing or invalid
     if (invoiceData.userId === 'N/A' && urlPatientId) {
@@ -1059,6 +1088,12 @@
         const patientPaymentElement = document.getElementById('calculatedPatientPayment');
         if (patientPaymentElement) {
             patientPaymentElement.textContent = patientPayment.toLocaleString('en-US');
+        }
+
+        // Patient Payment VND
+        const patientPaymentVNDElement = document.getElementById('calculatedPatientPaymentVND');
+        if (patientPaymentVNDElement) {
+            patientPaymentVNDElement.textContent = formatCurrencyVND(patientPayment);
         }
     }
 
