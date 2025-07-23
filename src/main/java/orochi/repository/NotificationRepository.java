@@ -48,4 +48,7 @@ public interface NotificationRepository extends JpaRepository<Notification, Inte
             @Param("fromDate") LocalDateTime fromDate,
             @Param("toDate") LocalDateTime toDate,
             Pageable pageable);
+
+    // New method to count unread notifications
+    int countByUserIdAndIsReadFalse(Integer userId);
 }

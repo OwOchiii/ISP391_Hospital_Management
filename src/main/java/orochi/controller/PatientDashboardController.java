@@ -148,11 +148,15 @@ public class PatientDashboardController {
             }
             model.addAttribute("lastVisit", lastVisit);
 
-            //Lay thong bao moi nhat va list thong bao
+            // Get the latest notification (existing logic)
             Integer userId = patient.getUser().getUserId();
             List<Notification> notes = notificationService.findByUserIdOrderByCreatedAtDesc(userId);
             Notification latest = notes.isEmpty() ? null : notes.get(0);
             model.addAttribute("latestNotification", latest);
+
+            // Add unread notifications count
+            int unreadCount = notificationService.countUnreadNotifications(userId);
+            model.addAttribute("unreadCount", unreadCount);
 
             logger.info("Dashboard loaded successfully for patient ID: {}", patientId);
             return "patient/dashboard";
