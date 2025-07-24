@@ -384,10 +384,13 @@
 
       <div class="col-12 mt-2">
         <button type="submit" class="btn btn-primary">Apply</button>
-        <a th:href="@{/admin/appointments/statistics/appointments}"
+        <a th:href="@{/admin/appointments/statistics/appointments(
+      adminId=${adminId}
+    )}"
            class="btn btn-outline-secondary ms-2">
           Reset
         </a>
+
         <a th:href="@{/admin/appointments/statistics/appointments(
           adminId=${adminId},
           fromDate=${fromDate},
