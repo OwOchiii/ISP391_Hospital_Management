@@ -157,4 +157,10 @@ public class RoomServiceImpl implements RoomService {
         }
         return roomRepository.findByDepartmentIdAndStatusAvailable(departmentId);
     }
+
+    @Override
+    public Optional<Room> findByRoomNumber(String roomNumber) {
+        // Chúng ta lưu ý dùng method ignoreCase cho dễ so sánh
+        return roomRepository.findByRoomNumberIgnoreCase(roomNumber);
+    }
 }

@@ -135,7 +135,7 @@ public class AdminScheduleController {
             ra.addFlashAttribute("error", "This room has already been assigned for that shift on that date.");
             return "redirect:/admin/schedules?adminId=" + adminId;
         }
-
+        dto.setEventType("appointment");
         scheduleService.saveSchedule(dto);
         return "redirect:/admin/schedules?adminId=" + adminId + "&page=0&size=6";
     }

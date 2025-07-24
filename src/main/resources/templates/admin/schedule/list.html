@@ -555,7 +555,7 @@
             <button class="sidebar-toggle" onclick="toggleSidebar()">
                 <i class="bi bi-list"></i>
             </button>
-            <h1 class="page-title">Schedule List</h1>
+            <h1 class="page-title">Schedule Management</h1>
 
             <button
                     id="addScheduleBtn"
@@ -600,15 +600,6 @@
                 <div class="col-md-2">
                     <label for="scheduleIdFilter" class="form-label">Schedule ID</label>
                     <input type="number" id="scheduleIdFilter" name="scheduleId" th:value="${scheduleId}" class="form-control" placeholder="Enter Schedule ID…" />
-                </div>
-                <div class="col-md-2">
-                    <label for="eventTypeFilter" class="form-label">Event Type</label>
-                    <select id="eventTypeFilter" name="eventType" class="form-select">
-                        <option value="" th:selected="${eventType == null}">All</option>
-                        <option value="appointment" th:selected="${eventType == 'appointment'}">Appointment</option>
-                        <option value="oncall" th:selected="${eventType == 'oncall'}">On-Call</option>
-                        <option value="break" th:selected="${eventType == 'break'}">Break</option>
-                    </select>
                 </div>
                 <div class="col-md-2">
                     <label for="roomIdFilter" class="form-label">Room ID</label>
@@ -660,25 +651,25 @@
                                 th:attr="data-bs-target='#detail-' + ${s.scheduleId}">
                             <i class="bi bi-eye"></i> View Details
                         </button>
-                        <!-- Edit -->
-                        <button type="button"
-                                class="btn btn-outline-secondary btn-action me-2"
-                                data-bs-toggle="modal"
-                                data-bs-target="#scheduleModal"
-                                data-mode="edit"
-                                th:data-id="${s.scheduleId}"
-                                th:data-doctor-id="${s.doctorId}"
-                                th:data-room-id="${s.roomId}"
-                                th:data-schedule-date="${#temporals.format(s.scheduleDate,'yyyy-MM-dd')}"
-                                th:data-start-time="${#temporals.format(s.startTime,'HH:mm')}"
-                                th:data-end-time="${#temporals.format(s.endTime,'HH:mm')}"
-                                th:data-appointment-id="${s.appointmentId}"
-                                th:data-description="${s.description}"
-                                th:data-patient-id="${s.patientId}"
-                                th:data-event-type="${s.eventType}"
-                                th:data-is-completed="${s.isCompleted}">
-                            <i class="bi bi-pencil-square"></i> Edit
-                        </button>
+<!--                        &lt;!&ndash; Edit &ndash;&gt;-->
+<!--                        <button type="button"-->
+<!--                                class="btn btn-outline-secondary btn-action me-2"-->
+<!--                                data-bs-toggle="modal"-->
+<!--                                data-bs-target="#scheduleModal"-->
+<!--                                data-mode="edit"-->
+<!--                                th:data-id="${s.scheduleId}"-->
+<!--                                th:data-doctor-id="${s.doctorId}"-->
+<!--                                th:data-room-id="${s.roomId}"-->
+<!--                                th:data-schedule-date="${#temporals.format(s.scheduleDate,'yyyy-MM-dd')}"-->
+<!--                                th:data-start-time="${#temporals.format(s.startTime,'HH:mm')}"-->
+<!--                                th:data-end-time="${#temporals.format(s.endTime,'HH:mm')}"-->
+<!--                                th:data-appointment-id="${s.appointmentId}"-->
+<!--                                th:data-description="${s.description}"-->
+<!--                                th:data-patient-id="${s.patientId}"-->
+<!--                                th:data-event-type="${s.eventType}"-->
+<!--                                th:data-is-completed="${s.isCompleted}">-->
+<!--                            <i class="bi bi-pencil-square"></i> Edit-->
+<!--                        </button>-->
                         <!-- Delete -->
                         <form th:action="@{/admin/schedules/{id}/delete(id=${s.scheduleId},adminId=${adminId})}"
                               method="post"
@@ -786,15 +777,15 @@
                                         <option value="afternoon">Afternoon (13:00–17:00)</option>
                                     </select>
                                 </div>
-                                <div class="col-md-4">
-                                    <label for="eventType" class="form-label">Event Type *</label>
-                                    <select class="form-select" id="eventType" name="eventType" required>
-                                        <option value="" disabled selected>Select Event Type</option>
-                                        <option value="appointment">Appointment</option>
-                                        <option value="oncall">On-Call</option>
-                                        <option value="break">Break</option>
-                                    </select>
-                                </div>
+<!--                                <div class="col-md-4">-->
+<!--                                    <label for="eventType" class="form-label">Event Type *</label>-->
+<!--                                    <select class="form-select" id="eventType" name="eventType" required>-->
+<!--                                        <option value="" disabled selected>Select Event Type</option>-->
+<!--                                        <option value="appointment">Appointment</option>-->
+<!--                                        <option value="oncall">On-Call</option>-->
+<!--                                        <option value="break">Break</option>-->
+<!--                                    </select>-->
+<!--                                </div>-->
                                 <div class="col-md-4 align-self-end">
                                     <button type="button" class="btn btn-primary" id="toStep2" disabled>Next: Choose Doctor</button>
                                 </div>
@@ -840,7 +831,7 @@
         const roomInput = document.getElementById('roomId');
         const dateInput = document.getElementById('scheduleDate');
         const shiftSel  = document.getElementById('shift');
-        const evtSel    = document.getElementById('eventType');
+        // const evtSel    = document.getElementById('eventType');
         const docSel    = document.getElementById('doctorId');
         // const startTime = document.getElementById('startTime');
         // const endTime   = document.getElementById('endTime');
@@ -856,9 +847,9 @@
         });
 
         // STEP 1 → enable Next khi đủ data
-        [roomInput, dateInput, shiftSel, evtSel].forEach(el =>
+        [roomInput, dateInput, shiftSel].forEach(el =>
             el.addEventListener('change', () => {
-                btnStep2.disabled = !(roomInput.value && dateInput.value && shiftSel.value && evtSel.value);
+                btnStep2.disabled = !(roomInput.value && dateInput.value && shiftSel.value);
             })
         );
 

@@ -75,6 +75,7 @@ public class AdminNotificationController {
 
     @PostMapping("/create")
     public String create(
+            @RequestParam("adminId") Integer adminId,
             @ModelAttribute("notification") Notification notification,
             @RequestParam("target") String target,
             @RequestParam(value="role", required=false) String role,
@@ -83,7 +84,7 @@ public class AdminNotificationController {
         // 1) Manual validate chỉ message và type
         if (notification.getType() == null || notification.getMessage() == null || notification.getMessage().isBlank()) {
             ra.addFlashAttribute("errorMessage", "Type và Message là bắt buộc.");
-            return "redirect:/admin/notifications";
+            return "redirect:/admin/notifications?adminId=" + adminId;
         }
 
         // 2) Xác định recipients như cũ
@@ -113,12 +114,13 @@ public class AdminNotificationController {
         ra.addFlashAttribute("targetFlag", target);
         ra.addFlashAttribute("roleFlag", role);
 
-        return "redirect:/admin/notifications";
+        return "redirect:/admin/notifications?adminId=" + adminId;
     }
 
     /** 5. Xử lý lưu sửa */
     @PostMapping("/edit/{id}")
     public String edit(
+            @RequestParam("adminId") Integer adminId,
             @PathVariable("id") Integer id,
             @Valid @ModelAttribute("notification") Notification notification,
             BindingResult br,
@@ -131,6 +133,6 @@ public class AdminNotificationController {
         notification.setNotificationId(id);
         notificationService.saveAndReturn(notification);
         ra.addFlashAttribute("successMessage", "Cập nhật notification thành công!");
-        return "redirect:/admin/notifications";
+        return "redirect:/admin/notifications?adminId=" + adminId;
     }
 }

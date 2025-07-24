@@ -865,9 +865,6 @@
                     <button class="btn-outline-custom btn-sm" data-bs-toggle="modal" data-bs-target="#doctorModal" data-mode="add">
                         <i class="bi bi-plus-lg"></i> Add Doctor
                     </button>
-                    <button class="btn-outline-custom btn-sm" onclick="refreshDoctors()">
-                        <i class="bi bi-arrow-clockwise"></i> Refresh
-                    </button>
                 </div>
             </div>
 
@@ -919,7 +916,17 @@
                                     aria-expanded="false">
                                 <i class="bi bi-eye"></i> View Details
                             </button>
-
+                            <form th:action="@{/admin/doctors/{id}/toggleLock(adminId=${adminId},id=${doctor.doctorId})}"
+                                  method="post" style="display:inline;">
+                                <!-- CSRF token -->
+                                <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
+                                <!-- Button text switches based on current status -->
+                                <button type="submit"
+                                        class="btn btn-sm"
+                                        th:classappend="${doctor.user.status == 'ACTIVE'} ? 'btn-warning' : 'btn-success'"
+                                        th:text="${doctor.user.status == 'ACTIVE'} ? 'Lock' : 'Unlock'">
+                                </button>
+                            </form>
                         </div>
 
                         <div th:id="'details-' + ${doctor.doctorId}" class="collapse mt-3">

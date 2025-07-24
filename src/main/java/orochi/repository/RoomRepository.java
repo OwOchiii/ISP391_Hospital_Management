@@ -7,6 +7,7 @@ import org.springframework.data.repository.query.Param;
 import orochi.model.Room;
 
 import java.util.List;
+import java.util.Optional;
 
 public interface RoomRepository extends JpaRepository<Room, Integer> {
     // Tìm theo roomNumber hoặc roomName (dùng cho search)
@@ -93,4 +94,6 @@ public interface RoomRepository extends JpaRepository<Room, Integer> {
                    "ORDER BY r.RoomNumber",
            nativeQuery = true)
     List<Object[]> findDetailedRoomsBySpecialtyId(@Param("specialtyId") Integer specialtyId);
+
+    Optional<Room> findByRoomNumberIgnoreCase(String roomNumber);
 }
