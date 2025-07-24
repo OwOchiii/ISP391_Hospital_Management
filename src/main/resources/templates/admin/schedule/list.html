@@ -660,25 +660,25 @@
                                 th:attr="data-bs-target='#detail-' + ${s.scheduleId}">
                             <i class="bi bi-eye"></i> View Details
                         </button>
-                        <!-- Edit -->
-                        <button type="button"
-                                class="btn btn-outline-secondary btn-action me-2"
-                                data-bs-toggle="modal"
-                                data-bs-target="#scheduleModal"
-                                data-mode="edit"
-                                th:data-id="${s.scheduleId}"
-                                th:data-doctor-id="${s.doctorId}"
-                                th:data-room-id="${s.roomId}"
-                                th:data-schedule-date="${#temporals.format(s.scheduleDate,'yyyy-MM-dd')}"
-                                th:data-start-time="${#temporals.format(s.startTime,'HH:mm')}"
-                                th:data-end-time="${#temporals.format(s.endTime,'HH:mm')}"
-                                th:data-appointment-id="${s.appointmentId}"
-                                th:data-description="${s.description}"
-                                th:data-patient-id="${s.patientId}"
-                                th:data-event-type="${s.eventType}"
-                                th:data-is-completed="${s.isCompleted}">
-                            <i class="bi bi-pencil-square"></i> Edit
-                        </button>
+<!--                        &lt;!&ndash; Edit &ndash;&gt;-->
+<!--                        <button type="button"-->
+<!--                                class="btn btn-outline-secondary btn-action me-2"-->
+<!--                                data-bs-toggle="modal"-->
+<!--                                data-bs-target="#scheduleModal"-->
+<!--                                data-mode="edit"-->
+<!--                                th:data-id="${s.scheduleId}"-->
+<!--                                th:data-doctor-id="${s.doctorId}"-->
+<!--                                th:data-room-id="${s.roomId}"-->
+<!--                                th:data-schedule-date="${#temporals.format(s.scheduleDate,'yyyy-MM-dd')}"-->
+<!--                                th:data-start-time="${#temporals.format(s.startTime,'HH:mm')}"-->
+<!--                                th:data-end-time="${#temporals.format(s.endTime,'HH:mm')}"-->
+<!--                                th:data-appointment-id="${s.appointmentId}"-->
+<!--                                th:data-description="${s.description}"-->
+<!--                                th:data-patient-id="${s.patientId}"-->
+<!--                                th:data-event-type="${s.eventType}"-->
+<!--                                th:data-is-completed="${s.isCompleted}">-->
+<!--                            <i class="bi bi-pencil-square"></i> Edit-->
+<!--                        </button>-->
                         <!-- Delete -->
                         <form th:action="@{/admin/schedules/{id}/delete(id=${s.scheduleId},adminId=${adminId})}"
                               method="post"
