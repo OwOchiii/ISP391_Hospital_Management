@@ -735,11 +735,18 @@
       </div>
       <div class="col-md-2">
         <label class="form-label">From</label>
-        <input name="dateFrom" type="datetime-local" class="form-control" th:value="${dateFrom != null ? #dates.format(dateFrom,'yyyy-MM-dd''T''HH:mm') : ''}" />
+        <input name="dateFrom"
+               type="datetime-local"
+               class="form-control"
+               th:value="${dateFrom != null ? #temporals.format(dateFrom, 'yyyy-MM-dd''T''HH:mm') : ''}" />
+
       </div>
       <div class="col-md-2">
         <label class="form-label">To</label>
-        <input name="dateTo" type="datetime-local" class="form-control" th:value="${dateTo != null ? #dates.format(dateTo, 'yyyy-MM-dd''T''HH:mm') : ''}" />
+        <input name="dateTo"
+               type="datetime-local"
+               class="form-control"
+               th:value="${dateTo   != null ? #temporals.format(dateTo,   'yyyy-MM-dd''T''HH:mm') : ''}" />
       </div>
       <div class="col-12 text-end">
         <button type="submit" class="btn btn-primary">Apply Filters</button>
