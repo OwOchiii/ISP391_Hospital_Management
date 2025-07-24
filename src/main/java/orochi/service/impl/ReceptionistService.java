@@ -31,6 +31,13 @@ public class ReceptionistService {
 
     private static final Logger logger = LoggerFactory.getLogger(ReceptionistService.class);
 
+    // 🔥 USD TO VND CONVERSION CONSTANTS
+    private static final double USD_TO_VND_RATE = 24000.0; // 1 USD = 24,000 VND
+    private static final String CURRENCY_SYMBOL_USD = "$";
+    private static final String CURRENCY_SYMBOL_VND = "₫";
+    private static final String CURRENCY_CODE_USD = "USD";
+    private static final String CURRENCY_CODE_VND = "VND";
+
     private final UserRepository userRepository;
     private final AppointmentRepository appointmentRepository;
     private final PatientRepository patientRepository;
@@ -647,70 +654,6 @@ public class ReceptionistService {
                     doctorMap.put("phone", doctor.getUser() != null ? doctor.getUser().getPhoneNumber() : "");
                     doctorMap.put("imageUrl", doctor.getImageUrl()); // Add the imageUrl field
 
-                    // ✅ Bio Description - Lấy từ Doctor.BioDescription
-                    String bioDescription = "Not specified";
-                    if (doctor.getBioDescription() != null && !doctor.getBioDescription().trim().isEmpty()) {
-                        bioDescription = doctor.getBioDescription();
-                    }
-                    doctorMap.put("bio", bioDescription);
-                    doctorMap.put("bioDescription", bioDescription); // Alias for consistency
-
-                    // ✅ Education Information - Lấy Degree v�� Institution từ Education table
-                    String degree = "Not specified";
-                    String institution = "Not specified";
-                    String description = "Not specified";
-
-                    if (doctor.getEducations() != null && !doctor.getEducations().isEmpty()) {
-                        // Get the first education record (you can modify this logic as needed)
-                        var education = doctor.getEducations().get(0);
-                        degree = education.getDegree() != null ? education.getDegree() : "Not specified";
-                        institution = education.getInstitution() != null ? education.getInstitution() : "Not specified";
-                        description = education.getDescription() != null ? education.getDescription() : "Not specified";
-                    }
-                    doctorMap.put("degree", degree);
-                    doctorMap.put("institution", institution);
-                    doctorMap.put("description", description);
-
-                    // ✅ Room Information - Lấy từ Schedule hoặc Department
-                    String roomInfo = "Not assigned";
-                    try {
-                        // Method 1: Get room from doctor's schedules
-                        if (doctor.getSchedules() != null && !doctor.getSchedules().isEmpty()) {
-                            Set<String> rooms = doctor.getSchedules().stream()
-                                .filter(schedule -> schedule.getRoom() != null)
-                                .map(schedule -> schedule.getRoom().getRoomNumber())
-                                .collect(Collectors.toSet());
-
-                            if (!rooms.isEmpty()) {
-                                roomInfo = String.join(", ", rooms);
-                            }
-                        }
-
-                        // Method 2: If no room from schedule, get rooms by specialty
-                        if ("Not assigned".equals(roomInfo) && doctor.getSpecializations() != null && !doctor.getSpecializations().isEmpty()) {
-                            Integer specialtyId = doctor.getSpecializations().get(0).getSpecId();
-                            Integer currentDoctorId = doctor.getDoctorId();
-
-                            List<Map<String, Object>> rooms = getRoomsBySpecialtyAndDoctor(specialtyId, currentDoctorId);
-                            if (!rooms.isEmpty()) {
-                                Set<String> roomNumbers = rooms.stream()
-                                    .map(room -> (String) room.get("roomNumber"))
-                                    .filter(Objects::nonNull)
-                                    .limit(2) // Limit to first 2 rooms
-                                    .collect(Collectors.toSet());
-
-                                if (!roomNumbers.isEmpty()) {
-                                    roomInfo = String.join(", ", roomNumbers);
-                                }
-                            }
-                        }
-                    } catch (Exception e) {
-                        logger.warn("Error getting room info for doctor {}: {}", doctor.getDoctorId(), e.getMessage());
-                        roomInfo = "Not assigned";
-                    }
-
-                    doctorMap.put("room", roomInfo);
-
                     // Get specialty information - show primary specialty or all specialties
                     String specialty = "General Practice"; // Default value
                     if (doctor.getSpecializations() != null && !doctor.getSpecializations().isEmpty()) {
@@ -721,11 +664,6 @@ public class ReceptionistService {
                                 .collect(Collectors.joining(", "));
                     }
                     doctorMap.put("specialty", specialty);
-
-                    // ✅ Add additional fields for export functionality
-                    doctorMap.put("fullName", doctor.getUser() != null ? doctor.getUser().getFullName() : "Unknown");
-                    doctorMap.put("emailAddress", doctor.getUser() != null ? doctor.getUser().getEmail() : "");
-                    doctorMap.put("phoneNumber", doctor.getUser() != null ? doctor.getUser().getPhoneNumber() : "");
 
                     return doctorMap;
                 }).collect(Collectors.toList());
@@ -742,16 +680,10 @@ public class ReceptionistService {
             doctorDetails.put("name", doctor.getUser() != null ? doctor.getUser().getFullName() : "Unknown");
             doctorDetails.put("email", doctor.getUser() != null ? doctor.getUser().getEmail() : "");
             doctorDetails.put("phone", doctor.getUser() != null ? doctor.getUser().getPhoneNumber() : "");
+            doctorDetails.put("bio", doctor.getBioDescription());
+            //doctorDetails.put("avatar", doctor.getUser() != null ? doctor.getUser().getAvatar() : null);
 
-            // ✅ Bio Description - Lấy từ Doctor.BioDescription
-            String bioDescription = "Not specified";
-            if (doctor.getBioDescription() != null && !doctor.getBioDescription().trim().isEmpty()) {
-                bioDescription = doctor.getBioDescription();
-            }
-            doctorDetails.put("bio", bioDescription);
-            doctorDetails.put("bioDescription", bioDescription); // Alias for consistency
-
-            // ✅ Education Information - Lấy Degree và Institution từ Education table
+            // Get education details
             String degree = "Not specified";
             String institution = "Not specified";
             String description = "Not specified";
@@ -767,46 +699,6 @@ public class ReceptionistService {
             doctorDetails.put("degree", degree);
             doctorDetails.put("institution", institution);
             doctorDetails.put("description", description);
-
-            // ✅ Room Information - Lấy từ Schedule hoặc Department (tương tự getAllDoctorsWithDetails)
-            String roomInfo = "Not assigned";
-            try {
-                // Method 1: Get room from doctor's schedules
-                if (doctor.getSchedules() != null && !doctor.getSchedules().isEmpty()) {
-                    Set<String> rooms = doctor.getSchedules().stream()
-                        .filter(schedule -> schedule.getRoom() != null)
-                        .map(schedule -> schedule.getRoom().getRoomNumber())
-                        .collect(Collectors.toSet());
-
-                    if (!rooms.isEmpty()) {
-                        roomInfo = String.join(", ", rooms);
-                    }
-                }
-
-                // Method 2: If no room from schedule, get rooms by specialty
-                if ("Not assigned".equals(roomInfo) && doctor.getSpecializations() != null && !doctor.getSpecializations().isEmpty()) {
-                    Integer specialtyId = doctor.getSpecializations().get(0).getSpecId();
-                    Integer currentDoctorId = doctor.getDoctorId();
-
-                    List<Map<String, Object>> rooms = getRoomsBySpecialtyAndDoctor(specialtyId, currentDoctorId);
-                    if (!rooms.isEmpty()) {
-                        Set<String> roomNumbers = rooms.stream()
-                            .map(room -> (String) room.get("roomNumber"))
-                            .filter(Objects::nonNull)
-                            .limit(2) // Limit to first 2 rooms
-                            .collect(Collectors.toSet());
-
-                        if (!roomNumbers.isEmpty()) {
-                            roomInfo = String.join(", ", roomNumbers);
-                        }
-                    }
-                }
-            } catch (Exception e) {
-                logger.warn("Error getting room info for doctor {}: {}", doctor.getDoctorId(), e.getMessage());
-                roomInfo = "Not assigned";
-            }
-
-            doctorDetails.put("room", roomInfo);
 
             // Get specialty information
             String specialty = "General Practice";
@@ -919,7 +811,7 @@ public class ReceptionistService {
      */
     public List<Map<String, Object>> getTodaysPaymentData() {
         try {
-            // Sử d��ng getAllReceiptsWithTransactionData() để lấy dữ liệu th���c
+            // Sử dụng getAllReceiptsWithTransactionData() để lấy dữ liệu th���c
             List<Map<String, Object>> rawData = receiptRepository.getAllReceiptsWithTransactionData();
 
             // Log để debug
@@ -1413,7 +1305,7 @@ public class ReceptionistService {
                         }
                     }
                 } catch (Exception e) {
-                    logger.error("Error calculating revenue for appointment {}: {}", appointment.getAppointmentId(), e.getMessage());
+                    logger.error("Error calculating revenue for appointment {}: {}", e.getMessage(), e);
                 }
             }
 
@@ -1814,10 +1706,10 @@ public class ReceptionistService {
     /**
      * Get invoice data by patient ID including patient info and appointment details
      * Patient ID: lấy theo Patient ID trong bảng Patient
-     * Full Name: lấy theo FullName trong bảng User
+     * Full Name: lấy theo FullName trong b��ng User
      * Date of Birth: lấy theo dateOfBirth trong bảng Patient
      * Gender: lấy theo Gender trong bảng Patient
-     * Appointment ID: lấy theo Patient ID trong bảng Patient
+     * Appointment ID: lấy theo Patient ID trong b��ng Patient
      * Payer Name: lấy theo AppointmentID trong bảng Appointment
      * Contact: l��y theo PhoneNumber trong bảng User
      */
@@ -1945,193 +1837,67 @@ public class ReceptionistService {
                         logger.info("=== Parsing refundReason ===");
                         logger.info("Raw refundReason: {}", refundReason);
 
-                        // ✅ Thêm refundReasonRaw để frontend có thể extract trực tiếp
-                        invoiceData.put("refundReasonRaw", refundReason != null ? refundReason : "");
-
-                        // ✅ FIXED: Lấy paymentMethod TRỰC TIẾP từ Transaction.Method database
-                        String transactionMethod = latestTransaction.getMethod();
-                        logger.info("=== DIRECT Payment Method from Database ===");
-                        logger.info("Raw Transaction.Method value: '{}'", transactionMethod);
-
-                        // ✅ SỬA: Hiển thị CHÍNH XÁC giá trị từ database, KHÔNG normalize
-                        String paymentMethodToDisplay;
-                        if (transactionMethod != null && !transactionMethod.trim().isEmpty()) {
-                            // Hiển thị EXACT value từ database
-                            paymentMethodToDisplay = transactionMethod.trim();
-                            logger.info("✅ Using EXACT database value: '{}'", paymentMethodToDisplay);
-                        } else {
-                            // Chỉ fallback khi database value thực sự null/empty
-                            paymentMethodToDisplay = "Cash";
-                            logger.warn("⚠️ Database Method is null/empty, using fallback: Cash");
-                        }
-
-                        invoiceData.put("paymentMethod", paymentMethodToDisplay);
-                        logger.info("Final paymentMethod in invoiceData: '{}'", paymentMethodToDisplay);
-
-                        // ✅ Lấy Processed By từ ProcessedByUserID map với User table
-                        String processedByName = "N/A";
-                        if (latestTransaction.getProcessedByUserId() != null) {
-                            try {
-                                Optional<Users> processedByUser = userRepository.findById(latestTransaction.getProcessedByUserId());
-                                if (processedByUser.isPresent()) {
-                                    processedByName = processedByUser.get().getFullName() != null ?
-                                        processedByUser.get().getFullName() : "Unknown Staff";
-                                    logger.info("Processed By User found: ID={}, FullName={}",
-                                               latestTransaction.getProcessedByUserId(), processedByName);
-                                } else {
-                                    logger.warn("Processed By User not found for ID: {}", latestTransaction.getProcessedByUserId());
-                                }
-                            } catch (Exception e) {
-                                logger.error("Error fetching processed by user: {}", e.getMessage());
-                            }
-                        } else {
-                            logger.info("No ProcessedByUserID found in transaction");
-                        }
-                        invoiceData.put("processedByName", processedByName);
-
-                        // ✅ ENHANCED: Parse Amount Received với FULL pattern support từ RefundReason
-                        double extractedAmountReceived = 0.0;
-                        logger.info("=== ENHANCED Amount Received Extraction ===");
-                        logger.info("Processing RefundReason: '{}'", refundReason);
-
                         if (refundReason != null && !refundReason.trim().isEmpty()) {
-                            logger.info("Attempting to extract amount from RefundReason...");
-
-                            // ✅ Pattern 1: "Amount Received: $XXX.XX" hoặc "Amount Received: XXX.XX" (case insensitive)
-                            String pattern1 = "(?i)Amount\\s+Received:\\s*\\$?([\\d,]+(?:\\.\\d{1,2})?)";
-                            java.util.regex.Pattern regex1 = java.util.regex.Pattern.compile(pattern1);
-                            java.util.regex.Matcher matcher1 = regex1.matcher(refundReason);
-
-                            if (matcher1.find()) {
+                            // Parse Amount Received
+                            if (refundReason.contains("Amount Received:")) {
                                 try {
-                                    String amountStr = matcher1.group(1).replace(",", "");
-                                    extractedAmountReceived = Double.parseDouble(amountStr);
-                                    logger.info("✅ Pattern 1 SUCCESS - Extracted Amount: {} from '{}'",
-                                               extractedAmountReceived, matcher1.group(0));
-                                } catch (NumberFormatException e) {
-                                    logger.warn("❌ Pattern 1 - Could not parse amount: '{}'", matcher1.group(1));
+                                    String amountPart = refundReason.substring(refundReason.indexOf("Amount Received: $") + 18);
+                                    String amountStr = amountPart;
+
+                                    // Tìm end của amount (trước | hoặc Notes:)
+                                    if (amountStr.contains(" |")) {
+                                        amountStr = amountStr.substring(0, amountStr.indexOf(" |")).trim();
+                                    } else if (amountStr.contains(" Notes:")) {
+                                        amountStr = amountStr.substring(0, amountStr.indexOf(" Notes:")).trim();
+                                    }
+
+                                    double amountReceived = Double.parseDouble(amountStr);
+                                    invoiceData.put("amountReceived", amountReceived);
+                                    logger.info("Successfully parsed amountReceived: {}", amountReceived);
+
+                                    // Calculate change từ total amount nếu có
+                                    Object totalAmountFromInvoice = invoiceData.get("totalAmount");
+                                    double totalForChange = totalAmountFromInvoice != null ?
+                                        ((Number) totalAmountFromInvoice).doubleValue() :
+                                        calculateTotalFromServices(servicesUsed);
+                                    double change = amountReceived - totalForChange;
+                                    invoiceData.put("changeReturned", change > 0 ? change : 0.0);
+                                    logger.info("Calculated change: {} (amountReceived: {} - total: {})", change, amountReceived, totalForChange);
+
+                                } catch (Exception e) {
+                                    logger.warn("Could not parse amount received from refund reason: {}", refundReason);
+                                    invoiceData.put("amountReceived", 0.0);
+                                    invoiceData.put("changeReturned", 0.0);
                                 }
                             } else {
-                                // ✅ Pattern 2: "Received: $XXX.XX" hoặc "Received: XXX.XX"
-                                String pattern2 = "(?i)Received:\\s*\\$?([\\d,]+(?:\\.\\d{1,2})?)";
-                                java.util.regex.Pattern regex2 = java.util.regex.Pattern.compile(pattern2);
-                                java.util.regex.Matcher matcher2 = regex2.matcher(refundReason);
+                                invoiceData.put("amountReceived", 0.0);
+                                invoiceData.put("changeReturned", 0.0);
+                            }
 
-                                if (matcher2.find()) {
-                                    try {
-                                        String amountStr = matcher2.group(1).replace(",", "");
-                                        extractedAmountReceived = Double.parseDouble(amountStr);
-                                        logger.info("✅ Pattern 2 SUCCESS - Extracted Amount: {} from '{}'",
-                                                   extractedAmountReceived, matcher2.group(0));
-                                    } catch (NumberFormatException e) {
-                                        logger.warn("❌ Pattern 2 - Could not parse amount: '{}'", matcher2.group(1));
-                                    }
+                            // Parse Notes
+                            if (refundReason.contains("Notes:")) {
+                                try {
+                                    String notesPart = refundReason.substring(refundReason.indexOf("Notes:") + 6).trim();
+                                    invoiceData.put("notes", notesPart);
+                                    logger.info("Successfully parsed notes: {}", notesPart);
+                                } catch (Exception e) {
+                                    logger.warn("Could not parse notes from refund reason: {}", refundReason);
+                                    invoiceData.put("notes", "Payment completed successfully");
+                                }
+                            } else {
+                                // Nếu không có "Notes:" prefix, coi toàn bộ refundReason là notes
+                                if (!refundReason.contains("Amount Received:")) {
+                                    invoiceData.put("notes", refundReason);
+                                    logger.info("Using entire refundReason as notes: {}", refundReason);
                                 } else {
-                                    // ✅ Pattern 3: Tìm số tiền với $ ở đầu
-                                    String pattern3 = "\\$\\s*([\\d,]+(?:\\.\\d{1,2})?)";
-                                    java.util.regex.Pattern regex3 = java.util.regex.Pattern.compile(pattern3);
-                                    java.util.regex.Matcher matcher3 = regex3.matcher(refundReason);
-
-                                    if (matcher3.find()) {
-                                        try {
-                                            String amountStr = matcher3.group(1).replace(",", "");
-                                            extractedAmountReceived = Double.parseDouble(amountStr);
-                                            logger.info("✅ Pattern 3 SUCCESS - Extracted amount with $: {} from '{}'",
-                                                       extractedAmountReceived, matcher3.group(0));
-                                        } catch (NumberFormatException e) {
-                                            logger.warn("❌ Pattern 3 - Could not parse amount: '{}'", matcher3.group(1));
-                                        }
-                                    } else {
-                                        // ✅ Pattern 4: Tìm bất kỳ số thập phân nào
-                                        String pattern4 = "([\\d,]+\\.\\d{1,2})";
-                                        java.util.regex.Pattern regex4 = java.util.regex.Pattern.compile(pattern4);
-                                        java.util.regex.Matcher matcher4 = regex4.matcher(refundReason);
-
-                                        if (matcher4.find()) {
-                                            try {
-                                                String amountStr = matcher4.group(1).replace(",", "");
-                                                extractedAmountReceived = Double.parseDouble(amountStr);
-                                                logger.info("✅ Pattern 4 SUCCESS - Extracted decimal: {} from '{}'",
-                                                           extractedAmountReceived, matcher4.group(0));
-                                            } catch (NumberFormatException e) {
-                                                logger.warn("❌ Pattern 4 - Could not parse amount: '{}'", matcher4.group(1));
-                                            }
-                                        } else {
-                                            // ✅ Pattern 5: Tìm bất kỳ số nguyên nào > 0
-                                            String pattern5 = "([\\d,]+)";
-                                            java.util.regex.Pattern regex5 = java.util.regex.Pattern.compile(pattern5);
-                                            java.util.regex.Matcher matcher5 = regex5.matcher(refundReason);
-
-                                            if (matcher5.find()) {
-                                                try {
-                                                    String amountStr = matcher5.group(1).replace(",", "");
-                                                    double foundAmount = Double.parseDouble(amountStr);
-                                                    // Chỉ lấy số > 10 để tránh lấy ID hoặc số nhỏ khác
-                                                    if (foundAmount > 10) {
-                                                        extractedAmountReceived = foundAmount;
-                                                        logger.info("✅ Pattern 5 SUCCESS - Extracted integer: {} from '{}'",
-                                                                   extractedAmountReceived, matcher5.group(0));
-                                                    } else {
-                                                        logger.warn("❌ Pattern 5 - Found number too small: {}", foundAmount);
-                                                    }
-                                                } catch (NumberFormatException e) {
-                                                    logger.warn("❌ Pattern 5 - Could not parse amount: '{}'", matcher5.group(1));
-                                                }
-                                            } else {
-                                                logger.warn("❌ No amount pattern found in RefundReason: '{}'", refundReason);
-                                            }
-                                        }
-                                    }
+                                    invoiceData.put("notes", "Payment completed successfully");
                                 }
                             }
                         } else {
-                            logger.info("RefundReason is empty, amount received will be 0");
+                            invoiceData.put("amountReceived", 0.0);
+                            invoiceData.put("changeReturned", 0.0);
+                            invoiceData.put("notes", "Payment completed successfully");
                         }
-
-                        invoiceData.put("amountReceived", extractedAmountReceived);
-                        logger.info("Final amountReceived set in invoiceData: {}", extractedAmountReceived);
-
-                        // Calculate change từ total amount nếu có
-                        Object totalAmountFromInvoice = invoiceData.get("totalAmount");
-                        double totalForChange = totalAmountFromInvoice != null ?
-                            ((Number) totalAmountFromInvoice).doubleValue() :
-                            calculateTotalFromServices(servicesUsed);
-                        double change = extractedAmountReceived - totalForChange;
-                        invoiceData.put("changeReturned", change > 0 ? change : 0.0);
-                        logger.info("Calculated change: {} (amountReceived: {} - total: {})", change, extractedAmountReceived, totalForChange);
-
-                        // ✅ Parse Notes với improved logic - SỬA ĐỂ EXTRACT CHÍNH XÁC
-                        String extractedNotes = "Payment completed successfully"; // Default
-                        if (refundReason != null && !refundReason.trim().isEmpty()) {
-                            logger.info("Extracting notes from RefundReason...");
-
-                            // Tìm pattern "Notes: XXXX" (case insensitive)
-                            String notesPattern = "(?i)Notes:\\s*(.+?)(?:\\s*\\||\\s*PDF\\s*Path:|$)";
-                            java.util.regex.Pattern notesRegex = java.util.regex.Pattern.compile(notesPattern);
-                            java.util.regex.Matcher notesMatcher = notesRegex.matcher(refundReason);
-
-                            if (notesMatcher.find()) {
-                                extractedNotes = notesMatcher.group(1).trim();
-                                logger.info("✅ Extracted notes from 'Notes:' pattern: '{}'", extractedNotes);
-                            } else {
-                                // Nếu không có "Notes:" prefix, loại bỏ Amount Received và PDF Path, lấy phần còn lại
-                                String cleanedNotes = refundReason
-                                    .replaceAll("(?i)Amount\\s+Received:\\s*\\$?[\\d,]+(?:\\.\\d{1,2})?", "") // Remove amount received
-                                    .replaceAll("(?i)\\s*\\|\\s*PDF\\s*Path:.*$", "") // Remove PDF path
-                                    .replaceAll("^\\s*\\|\\s*", "") // Remove leading |
-                                    .replaceAll("\\s*\\|\\s*$", "") // Remove trailing |
-                                    .trim();
-
-                                if (!cleanedNotes.isEmpty() && !cleanedNotes.equals("|")) {
-                                    extractedNotes = cleanedNotes;
-                                    logger.info("✅ Extracted notes from cleaned RefundReason: '{}'", extractedNotes);
-                                } else {
-                                    logger.info("No meaningful notes found, using default");
-                                }
-                            }
-                        }
-                        invoiceData.put("notes", extractedNotes);
-                        logger.info("Final notes set in invoiceData: '{}'", extractedNotes);
                     } else {
                         // Calculate total from services
                         double calculatedTotal = calculateTotalFromServices(servicesUsed);
@@ -2448,6 +2214,15 @@ public class ReceptionistService {
             logger.info("PatientId: {}, AppointmentId: {}, Method: {}, Amount: {}",
                        patientId, appointmentId, method, totalAmount);
 
+            // 🔥 CONVERT USD TO VND FOR ALL AMOUNTS
+            Double totalAmountVND = convertUSDToVND(totalAmount);
+            Double amountReceivedVND = amountReceived != null ? convertUSDToVND(amountReceived) : null;
+
+            logger.info("💰 Currency conversion: {} USD -> {} VND", totalAmount, totalAmountVND);
+            if (amountReceivedVND != null) {
+                logger.info("💰 Amount received conversion: {} USD -> {} VND", amountReceived, amountReceivedVND);
+            }
+
             // Find the transaction by appointmentId and userId (more reliable than transactionId string)
             List<Transaction> transactions = transactionRepository.findByAppointmentId(appointmentId);
             Transaction transaction = null;
@@ -2492,10 +2267,11 @@ public class ReceptionistService {
             transaction.setProcessedByUserId(issuerId);
             transaction.setTimeOfPayment(java.time.LocalDateTime.now());
 
-            // Store payment details in refundReason field for cash payments
-            if ("Cash".equals(method) && amountReceived != null) {
-                String paymentDetails = String.format("Amount Received: $%.2f | Notes: %s",
-                                                     amountReceived, notes != null ? notes : "Payment completed successfully");
+            // Store payment details in refundReason field for cash payments - NOW IN VND
+            if ("Cash".equals(method) && amountReceivedVND != null) {
+                String paymentDetails = String.format("Amount Received: %s%.0f | Notes: %s",
+                                                     CURRENCY_SYMBOL_VND, amountReceivedVND,
+                                                     notes != null ? notes : "Payment completed successfully");
                 transaction.setRefundReason(paymentDetails);
             } else {
                 transaction.setRefundReason(notes != null ? notes : "Payment completed successfully");
@@ -2505,7 +2281,7 @@ public class ReceptionistService {
             Transaction savedTransaction = transactionRepository.save(transaction);
             logger.info("✅ Transaction {} updated to Paid status", savedTransaction.getTransactionId());
 
-            // Create or update receipt
+            // Create or update receipt - NOW USING VND AMOUNTS
             Receipt receipt = transaction.getReceipt();
             if (receipt == null) {
                 receipt = new Receipt();
@@ -2521,27 +2297,27 @@ public class ReceptionistService {
 
                 receipt.setPdfPath(""); // Empty string instead of NULL
 
-                // Calculate tax amount (10% of total amount)
-                BigDecimal taxAmount = BigDecimal.valueOf(totalAmount * 0.1);
-                receipt.setTaxAmount(taxAmount);
+                // Calculate tax amount (10% of total amount) - IN VND
+                BigDecimal taxAmountVND = BigDecimal.valueOf(totalAmountVND * 0.1);
+                receipt.setTaxAmount(taxAmountVND);
 
                 // Set discount amount (default 0.0 for cash payments)
                 receipt.setDiscountAmount(BigDecimal.ZERO);
             }
 
-            // Update receipt amount and details
-            receipt.setTotalAmount(java.math.BigDecimal.valueOf(totalAmount));
+            // Update receipt amount and details - IN VND
+            receipt.setTotalAmount(BigDecimal.valueOf(totalAmountVND));
             receipt.setNotes(notes != null ? notes : "Payment completed successfully");
 
             // Save receipt
             Receipt savedReceipt = receiptRepository.save(receipt);
-            logger.info("✅ Receipt {} created/updated with amount: {}", savedReceipt.getReceiptId(), savedReceipt.getTotalAmount());
+            logger.info("✅ Receipt {} created/updated with amount: {} VND", savedReceipt.getReceiptId(), savedReceipt.getTotalAmount());
 
             // Update transaction with receipt reference
             savedTransaction.setReceipt(savedReceipt);
             transactionRepository.save(savedTransaction);
 
-            // Prepare response
+            // Prepare response - RETURN VND AMOUNTS
             Map<String, Object> response = new HashMap<>();
             response.put("success", true);
             response.put("transactionId", savedTransaction.getTransactionId());
@@ -2550,14 +2326,80 @@ public class ReceptionistService {
             response.put("method", method);
             response.put("timeOfPayment", savedTransaction.getTimeOfPayment().toString());
             response.put("processedBy", issuerId);
+            response.put("totalAmountVND", totalAmountVND);
+            response.put("amountReceivedVND", amountReceivedVND);
+            response.put("currency", CURRENCY_CODE_VND);
 
-            logger.info("✅ Payment processing completed successfully");
+            logger.info("✅ Payment processing completed successfully - Amount saved in VND: {}", totalAmountVND);
             return response;
 
         } catch (Exception e) {
             logger.error("❌ Error processing payment: {}", e.getMessage(), e);
             throw new RuntimeException("Failed to process payment: " + e.getMessage());
         }
+    }
+
+    // 🔥 USD TO VND CONVERSION HELPER METHODS
+
+    /**
+     * Convert USD amount to VND
+     */
+    public Double convertUSDToVND(Double usdAmount) {
+        if (usdAmount == null || usdAmount <= 0) {
+            return 0.0;
+        }
+        return usdAmount * USD_TO_VND_RATE;
+    }
+
+    /**
+     * Convert VND amount to USD
+     */
+    public Double convertVNDToUSD(Double vndAmount) {
+        if (vndAmount == null || vndAmount <= 0) {
+            return 0.0;
+        }
+        return vndAmount / USD_TO_VND_RATE;
+    }
+
+    /**
+     * Format amount with appropriate currency symbol
+     */
+    public String formatCurrency(Double amount, String currencyCode) {
+        if (amount == null) {
+            return "0";
+        }
+
+        String symbol = CURRENCY_CODE_VND.equals(currencyCode) ? CURRENCY_SYMBOL_VND : CURRENCY_SYMBOL_USD;
+        return String.format("%s%.0f", symbol, amount);
+    }
+
+    /**
+     * Get services used by a patient with VND pricing
+     */
+    public List<Map<String, Object>> getServicesUsedByPatientInVND(Integer patientId, Appointment appointment) {
+        List<Map<String, Object>> services = getServicesUsedByPatient(patientId, appointment);
+
+        // Convert all price-related fields to VND
+        for (Map<String, Object> service : services) {
+            Object priceUSD = service.get("price");
+            Object totalUSD = service.get("total");
+
+            if (priceUSD != null) {
+                Double priceVND = convertUSDToVND(((Number) priceUSD).doubleValue());
+                service.put("price", priceVND);
+                service.put("priceVND", priceVND);
+                service.put("priceUSD", ((Number) priceUSD).doubleValue());
+            }
+
+            if (totalUSD != null) {
+                Double totalVND = convertUSDToVND(((Number) totalUSD).doubleValue());
+                service.put("total", totalVND);
+                service.put("totalVND", totalVND);
+                service.put("totalUSD", ((Number) totalUSD).doubleValue());
+            }
+        }
+
+        return services;
     }
 
     /**
