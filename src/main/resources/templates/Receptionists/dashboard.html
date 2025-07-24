@@ -1674,7 +1674,238 @@
         renderAppointmentTable(appointmentData, currentPage);
     }
 
-    // Enhanced function to load only pending appointments for today (NO AUTO-REFRESH)
+    // === REAL-TIME APPOINTMENT REFRESH SYSTEM ===
+    let appointmentRefreshInterval = null;
+    let lastAppointmentDataHash = null;
+    let isRefreshingAppointments = false;
+    let appointmentRefreshEnabled = true;
+
+    /**
+     * Initialize real-time appointment refresh system
+     */
+    function initializeAppointmentRefresh() {
+        console.log('🚀 Initializing real-time appointment refresh system...');
+
+        // Load initial data
+        loadTodaysAppointments();
+
+        // Start auto-refresh every 15 seconds
+        startAppointmentAutoRefresh();
+
+        // Add visual indicator
+        addRefreshIndicator();
+
+        console.log('✅ Real-time appointment refresh system initialized');
+    }
+
+    /**
+     * Start automatic refresh for appointments
+     */
+    function startAppointmentAutoRefresh() {
+        // Clear existing interval
+        if (appointmentRefreshInterval) {
+            clearInterval(appointmentRefreshInterval);
+        }
+
+        // Set up new interval - refresh every 15 seconds
+        appointmentRefreshInterval = setInterval(() => {
+            if (appointmentRefreshEnabled && !isRefreshingAppointments) {
+                refreshAppointmentsInBackground();
+            }
+        }, 15000); // 15 seconds
+
+        console.log('🔄 Auto-refresh started: checking for appointment updates every 15 seconds');
+    }
+
+    /**
+     * Stop automatic refresh
+     */
+    function stopAppointmentAutoRefresh() {
+        if (appointmentRefreshInterval) {
+            clearInterval(appointmentRefreshInterval);
+            appointmentRefreshInterval = null;
+            console.log('🛑 Auto-refresh stopped');
+        }
+    }
+
+    /**
+     * Refresh appointments in background without disrupting user
+     */
+    function refreshAppointmentsInBackground() {
+        if (isRefreshingAppointments) return;
+
+        isRefreshingAppointments = true;
+        updateRefreshIndicator('syncing');
+
+        // Get today's date
+        const now = new Date();
+        const vietnamTime = new Date(now.getTime() + (7 * 60 * 60 * 1000));
+        const today = vietnamTime.toISOString().split('T')[0];
+
+        fetch(`/receptionist/pendingAppointmentRequest/today?date=${today}&timestamp=${Date.now()}`)
+            .then(response => {
+                if (!response.ok) throw new Error(`HTTP ${response.status}`);
+                return response.json();
+            })
+            .then(data => {
+                const appointments = Array.isArray(data) ? data : [];
+                const newDataHash = generateDataHash(appointments);
+
+                // Check if data has changed
+                if (lastAppointmentDataHash !== null && lastAppointmentDataHash !== newDataHash) {
+                    console.log('📊 Appointment data changed - updating display');
+
+                    // Show notification about changes
+                    const oldCount = appointmentData.length;
+                    const newCount = appointments.length;
+
+                    if (newCount > oldCount) {
+                        showNotification(`${newCount - oldCount} new appointment request(s) received`, 'info');
+                        // Optional: Play notification sound
+                        playNotificationSound();
+                    } else if (newCount < oldCount) {
+                        showNotification(`${oldCount - newCount} appointment(s) updated`, 'info');
+                    }
+
+                    // Update data and re-render
+                    appointmentData = appointments;
+                    renderAppointmentTable(appointmentData, currentPage);
+                    updateAppointmentRequestsCount(appointments.length);
+                    updateDashboardTitle(appointments.length);
+                }
+
+                lastAppointmentDataHash = newDataHash;
+                updateRefreshIndicator('success');
+            })
+            .catch(error => {
+                console.error('❌ Background refresh failed:', error);
+                updateRefreshIndicator('error');
+            })
+            .finally(() => {
+                isRefreshingAppointments = false;
+
+                // Reset indicator after 2 seconds
+                setTimeout(() => {
+                    updateRefreshIndicator('idle');
+                }, 2000);
+            });
+    }
+
+    /**
+     * Generate hash for data comparison
+     */
+    function generateDataHash(data) {
+        return btoa(JSON.stringify(data.map(item => ({
+            id: item.id,
+            status: item.status,
+            dateTime: item.dateTime,
+            name: item.name
+        })))).slice(0, 16);
+    }
+
+    /**
+     * Add refresh indicator to UI
+     */
+    function addRefreshIndicator() {
+        const cardHeader = document.querySelector('.card-header h5.card-title');
+        if (cardHeader && !document.getElementById('refreshIndicator')) {
+            const indicator = document.createElement('span');
+            indicator.id = 'refreshIndicator';
+            indicator.className = 'refresh-indicator ms-2';
+            indicator.innerHTML = '<i class="fas fa-circle text-success" title="Auto-refresh active"></i>';
+            cardHeader.appendChild(indicator);
+        }
+    }
+
+    /**
+     * Update refresh indicator status
+     */
+    function updateRefreshIndicator(status) {
+        const indicator = document.getElementById('refreshIndicator');
+        if (!indicator) return;
+
+        switch (status) {
+            case 'syncing':
+                indicator.innerHTML = '<i class="fas fa-sync fa-spin text-primary" title="Syncing..."></i>';
+                break;
+            case 'success':
+                indicator.innerHTML = '<i class="fas fa-check-circle text-success" title="Up to date"></i>';
+                break;
+            case 'error':
+                indicator.innerHTML = '<i class="fas fa-exclamation-circle text-warning" title="Sync error"></i>';
+                break;
+            default:
+                indicator.innerHTML = '<i class="fas fa-circle text-success" title="Auto-refresh active"></i>';
+        }
+    }
+
+    /**
+     * Play notification sound for new appointments
+     */
+    function playNotificationSound() {
+        try {
+            // Create audio context for notification sound
+            const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+            const oscillator = audioContext.createOscillator();
+            const gainNode = audioContext.createGain();
+
+            oscillator.connect(gainNode);
+            gainNode.connect(audioContext.destination);
+
+            oscillator.frequency.setValueAtTime(800, audioContext.currentTime);
+            oscillator.frequency.setValueAtTime(600, audioContext.currentTime + 0.1);
+
+            gainNode.gain.setValueAtTime(0.1, audioContext.currentTime);
+            gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.2);
+
+            oscillator.start(audioContext.currentTime);
+            oscillator.stop(audioContext.currentTime + 0.2);
+        } catch (error) {
+            console.log('Audio notification not available');
+        }
+    }
+
+    /**
+     * Toggle auto-refresh on/off
+     */
+    function toggleAppointmentRefresh() {
+        appointmentRefreshEnabled = !appointmentRefreshEnabled;
+
+        if (appointmentRefreshEnabled) {
+            startAppointmentAutoRefresh();
+            showNotification('Auto-refresh enabled', 'success');
+            updateRefreshIndicator('idle');
+        } else {
+            stopAppointmentAutoRefresh();
+            showNotification('Auto-refresh disabled', 'info');
+            updateRefreshIndicator('paused');
+        }
+
+        console.log(`🔄 Auto-refresh ${appointmentRefreshEnabled ? 'enabled' : 'disabled'}`);
+    }
+
+    /**
+     * Manual refresh with user feedback
+     */
+    function manualRefreshAppointments() {
+        console.log('🔄 Manual refresh triggered');
+        updateRefreshIndicator('syncing');
+
+        // Reset hash to force update
+        lastAppointmentDataHash = null;
+
+        loadTodaysAppointments();
+
+        showNotification('Appointments refreshed', 'success');
+
+        setTimeout(() => {
+            updateRefreshIndicator('success');
+        }, 1000);
+    }
+
+    // === ENHANCED APPOINTMENT LOADING ===
+
+    // Enhanced function to load only pending appointments for today with better UX
     function loadTodaysAppointments() {
         // Get today's date in Vietnamese timezone (UTC+7)
         const now = new Date();
@@ -2375,10 +2606,208 @@
         // Load today's appointments once
         loadTodaysAppointments();
 
+        // Initialize real-time appointment refresh system
+        initializeAppointmentRefresh();
+
         console.log('Dashboard initialized');
     });
 
     addEventListeners();
+
+    // 🔥 AUTO CANCEL APPOINTMENTS - TỰ ĐỘNG HỦY LỊCH HẸN QUÁ THỜI GIAN
+    let autoCancelInterval = null;
+    let lastAutoCancelCheck = null;
+
+    /**
+     * Tự động kiểm tra và hủy các appointments có status "Pending" đã quá thời gian
+     * Logic theo yêu cầu:
+     * - Kiểm tra thời gian: So sánh appointment.dateTime với LocalDateTime.now()
+     * - Lọc status: Chỉ xử lý appointments có status "Pending"
+     * - Cập nhật database: Set status = "Cancel" và save
+     * - Logging: Ghi log chi tiết quá trình thực hiện
+     * - Trả về kết quả: Số lượng appointments đã được cancel
+     */
+    function autoCheckAndCancelExpiredAppointments() {
+        const now = new Date();
+
+        // Prevent too frequent checks (minimum 30 seconds between checks)
+        if (lastAutoCancelCheck && (now - lastAutoCancelCheck) < 30000) {
+            console.log('⏱️ Auto cancel check skipped - too soon since last check');
+            return;
+        }
+
+        lastAutoCancelCheck = now;
+
+        console.log('🔍 Starting auto cancel check for expired appointments...');
+        console.log('⏰ Current time:', now.toLocaleString('vi-VN'));
+
+        // Get CSRF token for security
+        const csrfToken = document.querySelector('meta[name="_csrf"]')?.getAttribute('content');
+        if (!csrfToken) {
+            console.error('❌ CSRF token not found - cannot proceed with auto cancel');
+            return;
+        }
+
+        // Call backend API to auto cancel expired appointments
+        fetch('/receptionist/api/appointments/auto-cancel', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRF-TOKEN': csrfToken
+            }
+        })
+        .then(response => {
+            if (!response.ok) {
+                throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+            }
+            return response.json();
+        })
+        .then(result => {
+            if (result.success) {
+                const cancelledCount = result.cancelledCount || 0;
+                console.log(`✅ Auto cancel completed successfully`);
+                console.log(`📊 Cancelled appointments: ${cancelledCount}`);
+                console.log(`🕐 Timestamp: ${result.timestamp}`);
+
+                if (cancelledCount > 0) {
+                    console.log(`🔄 ${cancelledCount} appointments were automatically cancelled`);
+
+                    // Show notification to user if any appointments were cancelled
+                    showNotification(
+                        `${cancelledCount} expired appointment(s) automatically cancelled`,
+                        'info'
+                    );
+
+                    // Refresh the appointment table to reflect changes
+                    refreshAppointmentData();
+
+                    // Log details for audit trail
+                    console.log(`📝 Auto cancel audit log:`);
+                    console.log(`   - Check time: ${now.toISOString()}`);
+                    console.log(`   - Cancelled count: ${cancelledCount}`);
+                    console.log(`   - Status: Success`);
+                } else {
+                    console.log('✨ No expired appointments found - all appointments are current');
+                }
+            } else {
+                console.error('❌ Auto cancel failed:', result.message);
+                console.log(`📝 Auto cancel error log:`);
+                console.log(`   - Check time: ${now.toISOString()}`);
+                console.log(`   - Error: ${result.message}`);
+                console.log(`   - Status: Failed`);
+            }
+        })
+        .catch(error => {
+            console.error('💥 Error during auto cancel check:', error);
+            console.log(`📝 Auto cancel exception log:`);
+            console.log(`   - Check time: ${now.toISOString()}`);
+            console.log(`   - Exception: ${error.message}`);
+            console.log(`   - Status: Exception`);
+        });
+    }
+
+    /**
+     * Refresh appointment data after auto cancel operation
+     */
+    function refreshAppointmentData() {
+        try {
+            console.log('🔄 Refreshing appointment data after auto cancel...');
+
+            // Reload today's appointments
+            loadTodaysAppointments();
+
+            // If modal is open, refresh modal data too
+            const modal = document.getElementById('appointmentModal');
+            if (modal && modal.classList.contains('show')) {
+                loadModalPendingAppointments();
+            }
+
+            console.log('✅ Appointment data refreshed successfully');
+        } catch (error) {
+            console.error('❌ Error refreshing appointment data:', error);
+        }
+    }
+
+    /**
+     * Start auto cancel monitoring
+     * Kiểm tra theo thời gian thực - check mỗi 10 giây để phát hiện appointments hết hạn ngay lập tức
+     */
+    function startAutoCancelMonitoring() {
+        // Clear existing interval if any
+        if (autoCancelInterval) {
+            clearInterval(autoCancelInterval);
+            console.log('🛑 Stopped existing auto cancel monitoring');
+        }
+
+        // Start new monitoring interval - CHECK MỖI 10 GIÂY ĐỂ ĐẢM BẢO THỜI GIAN THỰC
+        const intervalSeconds = 1; // Check every 10 seconds for real-time monitoring
+        const intervalMs = intervalSeconds * 10;
+
+        console.log(`🚀 Starting REAL-TIME auto cancel monitoring...`);
+        console.log(`⏰ Check interval: ${intervalSeconds} second(s) - REAL TIME`);
+        console.log(`🎯 Target: Pending appointments past due time`);
+        console.log(`🔧 Logic: appointment.dateTime < LocalDateTime.now()`);
+        console.log(`💡 Real-time monitoring ensures appointments are cancelled immediately when expired`);
+
+        // Run initial check immediately
+        autoCheckAndCancelExpiredAppointments();
+
+        // Set up recurring real-time checks every 10 seconds
+        autoCancelInterval = setInterval(() => {
+            autoCheckAndCancelExpiredAppointments();
+        }, intervalMs);
+
+        console.log(`✅ Real-time auto cancel monitoring started successfully`);
+        console.log(`📝 Monitor ID: ${autoCancelInterval}`);
+        console.log(`🔄 Next check in ${intervalSeconds} seconds`);
+    }
+
+    /**
+     * Stop auto cancel monitoring
+     */
+    function stopAutoCancelMonitoring() {
+        if (autoCancelInterval) {
+            clearInterval(autoCancelInterval);
+            autoCancelInterval = null;
+            lastAutoCancelCheck = null;
+            console.log('🛑 Auto cancel monitoring stopped');
+        }
+    }
+
+    /**
+     * Manual trigger for auto cancel (for testing/debugging)
+     */
+    function manualTriggerAutoCancel() {
+        console.log('🔧 Manual trigger: Starting auto cancel check...');
+        autoCheckAndCancelExpiredAppointments();
+    }
+
+    // Window event listeners for auto cancel monitoring
+    window.addEventListener('load', function() {
+        // Start auto cancel monitoring when page loads
+        setTimeout(() => {
+            startAutoCancelMonitoring();
+        }, 2000); // Wait 2 seconds after page load
+    });
+
+    window.addEventListener('beforeunload', function() {
+        // Stop monitoring when page is about to unload
+        stopAutoCancelMonitoring();
+    });
+
+    // Page visibility API - pause/resume monitoring when tab is hidden/visible
+    document.addEventListener('visibilitychange', function() {
+        if (document.hidden) {
+            console.log('👁️ Page hidden - continuing auto cancel monitoring in background');
+            // Keep monitoring even when tab is hidden
+        } else {
+            console.log('👁️ Page visible - ensuring auto cancel monitoring is active');
+            // Ensure monitoring is still active when tab becomes visible
+            if (!autoCancelInterval) {
+                startAutoCancelMonitoring();
+            }
+        }
+    });
 </script>
 <script>
     document.addEventListener('DOMContentLoaded', () => {

@@ -31,8 +31,12 @@ import java.util.function.Function;
 import java.util.stream.Collectors;
 import orochi.model.*;
 import orochi.repository.*;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 @Service
 public class AppointmentService {
+
+    private static final Logger logger = LoggerFactory.getLogger(AppointmentService.class);
 
     @Autowired
     private AppointmentRepository appointmentRepository;
@@ -714,5 +718,64 @@ public Appointment updateAppointment2(
         return appointmentRepository.findById(appointmentId)
                 .orElseThrow(() -> new RuntimeException("Appointment not found with ID: " + appointmentId));
     }
-}
 
+    /**
+     * Tự động hủy các appointments có status "Pending" và đã quá thời gian
+     * Logic hoạt động:
+     * - Kiểm tra thời gian: So sánh appointment.dateTime với LocalDateTime.now()
+     * - Lọc status: Chỉ xử lý appointments có status "Pending"
+     * - Cập nhật database: Set status = "Cancel" và save
+     * - Logging: Ghi log chi tiết quá trình thực hiện
+     * - Trả về kết quả: Số lượng appointments đã được cancel
+     */
+    @Transactional
+    public int autoCancelAppointments() {
+        int cancelledCount = 0;
+
+        try {
+            logger.info("Bắt đầu quá trình auto cancel appointments...");
+
+            // Lấy thời gian hiện tại để so sánh
+            LocalDateTime currentDateTime = LocalDateTime.now();
+            logger.info("Thời gian hiện tại: {}", currentDateTime);
+
+            // Tìm tất cả appointments có status "Pending" và đã quá thời gian
+            List<Appointment> pendingPastDueAppointments = appointmentRepository.findPendingAppointmentsPastDue(currentDateTime);
+
+            logger.info("Tìm thấy {} appointments cần được auto cancel", pendingPastDueAppointments.size());
+
+            // Xử lý từng appointment
+            for (Appointment appointment : pendingPastDueAppointments) {
+                try {
+                    // Ghi log thông tin appointment trước khi cancel
+                    logger.info("Đang xử lý appointment ID: {}, Patient ID: {}, Doctor ID: {}, DateTime: {}",
+                               appointment.getAppointmentId(),
+                               appointment.getPatientId(),
+                               appointment.getDoctorId(),
+                               appointment.getDateTime());
+
+                    // Cập nhật status thành "Cancel"
+                    appointment.setStatus("Cancel");
+
+                    // Lưu vào database
+                    appointmentRepository.save(appointment);
+
+                    cancelledCount++;
+
+                    logger.info("Đã cancel thành công appointment ID: {}", appointment.getAppointmentId());
+
+                } catch (Exception e) {
+                    logger.error("Lỗi khi cancel appointment ID: {}. Error: {}",
+                               appointment.getAppointmentId(), e.getMessage(), e);
+                }
+            }
+
+            logger.info("Hoàn thành quá trình auto cancel. Tổng số appointments đã cancel: {}", cancelledCount);
+
+        } catch (Exception e) {
+            logger.error("Lỗi trong quá trình auto cancel appointments: {}", e.getMessage(), e);
+        }
+
+        return cancelledCount;
+    }
+}

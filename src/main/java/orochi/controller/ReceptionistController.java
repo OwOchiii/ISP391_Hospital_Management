@@ -2794,4 +2794,41 @@ public class ReceptionistController {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
         }
     }
+
+    /**
+     * API endpoint to auto cancel appointments that are past due
+     * Only processes appointments with status "Pending" and past current time
+     */
+    @PostMapping("/api/appointments/auto-cancel")
+    @ResponseBody
+    public ResponseEntity<Map<String, Object>> autoCancelAppointments(Authentication authentication) {
+        try {
+            if (authentication == null || !authentication.isAuthenticated()) {
+                return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(Map.of(
+                    "success", false,
+                    "message", "Authentication required"
+                ));
+            }
+
+            // Call the service method to auto cancel appointments
+            int cancelledCount = appointmentService.autoCancelAppointments();
+
+            Map<String, Object> response = new HashMap<>();
+            response.put("success", true);
+            response.put("cancelledCount", cancelledCount);
+            response.put("message", String.format("Auto cancelled %d appointments", cancelledCount));
+            response.put("timestamp", LocalDateTime.now().toString());
+
+            logger.info("Auto cancel completed - {} appointments cancelled", cancelledCount);
+            return ResponseEntity.ok(response);
+
+        } catch (Exception e) {
+            logger.error("Error in auto cancel appointments API: {}", e.getMessage(), e);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(Map.of(
+                "success", false,
+                "message", "Error auto cancelling appointments: " + e.getMessage(),
+                "cancelledCount", 0
+            ));
+        }
+    }
 }
