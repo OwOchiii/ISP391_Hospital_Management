@@ -1075,7 +1075,7 @@ public class ReceptionistService {
             return result;
 
         } catch (Exception e) {
-            logger.error("Error fetching patients with appointments today: {}", e.getMessage(), e);
+            logger.error("Error fetching today's appointment payment data: {}", e.getMessage(), e);
             return new ArrayList<>();
         }
     }
@@ -1120,16 +1120,35 @@ public class ReceptionistService {
                     patientPaymentData.put("appointmentTime", appointment.getDateTime().toLocalTime().toString());
                     patientPaymentData.put("appointmentStatus", appointment.getStatus());
 
-                    // Get doctor information
+                    // Get doctor information and calculate amount from specialization
+                    Double amount = 0.0; // Default amount
                     if (appointment.getDoctor() != null && appointment.getDoctor().getUser() != null) {
                         patientPaymentData.put("doctorName", appointment.getDoctor().getUser().getFullName());
+
+                        // 🔥 CALCULATE AMOUNT FROM DOCTOR SPECIALIZATION PRICE 🔥
+                        Doctor doctor = appointment.getDoctor();
+                        if (doctor.getSpecializations() != null && !doctor.getSpecializations().isEmpty()) {
+                            // Get the first specialization price (could be enhanced to select specific specialization)
+                            Specialization specialization = doctor.getSpecializations().get(0);
+                            if (specialization.getPrice() != null) {
+                                amount = specialization.getPrice().doubleValue();
+                                logger.info("✅ Found specialization price for Doctor {}: {} - {} USD",
+                                           doctor.getDoctorId(), specialization.getSpecName(), amount);
+                            } else {
+                                logger.warn("⚠️ Specialization {} has null price for Doctor {}",
+                                           specialization.getSpecName(), doctor.getDoctorId());
+                            }
+                        } else {
+                            logger.warn("⚠️ Doctor {} has no specializations - using default amount", doctor.getDoctorId());
+                            amount = 50.0; // Default consultation fee in USD
+                        }
                     } else {
                         patientPaymentData.put("doctorName", "Not Assigned");
+                        amount = 50.0; // Default consultation fee for unassigned doctors
                     }
 
                     // Get transaction status by AppointmentID mapping
                     String transactionStatus = "unpaid"; // Default status
-                    Double amount = 0.0; // Default amount
                     Integer receiptId = null;
                     Integer transactionId = null;
 
@@ -1143,9 +1162,14 @@ public class ReceptionistService {
                             transactionStatus = mapTransactionStatusToPaymentStatus(latestTransaction.getStatus());
                             transactionId = latestTransaction.getTransactionId();
 
-                            // Get amount from Receipt, not Transaction
+                            // If receipt exists and has amount, use that amount, otherwise keep specialization amount
                             if (latestTransaction.getReceipt() != null && latestTransaction.getReceipt().getTotalAmount() != null) {
-                                amount = latestTransaction.getReceipt().getTotalAmount().doubleValue();
+                                Double receiptAmount = latestTransaction.getReceipt().getTotalAmount().doubleValue();
+                                logger.info("📝 Receipt amount found: {} USD, Specialization amount: {} USD", receiptAmount, amount);
+                                // Use receipt amount if it exists, otherwise keep specialization amount
+                                if (receiptAmount > 0) {
+                                    amount = receiptAmount;
+                                }
                             }
 
                             // Try to find corresponding receipt
@@ -1154,10 +1178,6 @@ public class ReceptionistService {
                                 if (!receipts.isEmpty()) {
                                     Map<String, Object> receipt = receipts.get(0);
                                     receiptId = (Integer) receipt.get("receiptId");
-                                    Object totalAmountFromReceipt = receipt.get("totalAmount");
-                                    if (totalAmountFromReceipt != null) {
-                                        amount = Double.parseDouble(totalAmountFromReceipt.toString());
-                                    }
                                 }
                             } catch (Exception receiptError) {
                                 logger.error("Error fetching receipt for transaction {}: {}", latestTransaction.getTransactionId(), receiptError.getMessage());
@@ -1167,25 +1187,29 @@ public class ReceptionistService {
                         logger.error("Error fetching transactions for appointment {}: {}", appointment.getAppointmentId(), transactionError.getMessage());
                     }
 
-                    // Set payment information
-                    patientPaymentData.put("amount", amount.longValue()); // Convert to long to remove decimals
+                    // 🔥 CONVERT TO VND FOR DISPLAY (Patient Payment in VND) 🔥
+                    double usdToVndRate = 24000.0; // 1 USD = 24,000 VND
+                    Double amountInVND = amount * usdToVndRate;
+
+                    // Set payment information with VND amount
+                    patientPaymentData.put("amount", amountInVND.longValue()); // VND amount as long
+                    patientPaymentData.put("amountUSD", amount); // Keep USD amount for reference
                     patientPaymentData.put("status", transactionStatus);
                     patientPaymentData.put("receiptId", receiptId);
                     patientPaymentData.put("transactionId", transactionId);
 
                     result.add(patientPaymentData);
 
-                    System.out.println("Processed appointment " + appointment.getAppointmentId() +
-                            " for patient " + patient.getPatientId() +
-                            " with status: " + transactionStatus +
-                            " and amount: " + amount);
+                    logger.info("✅ Processed appointment {} for patient {} - Doctor: {}, Amount: {} USD ({} VND), Status: {}",
+                               appointment.getAppointmentId(), patient.getPatientId(),
+                               patientPaymentData.get("doctorName"), amount, amountInVND.longValue(), transactionStatus);
 
                 } catch (Exception e) {
                     logger.error("Error processing appointment {}: {}", appointment.getAppointmentId(), e.getMessage(), e);
                 }
             }
 
-            System.out.println("Returning " + result.size() + " patients with appointments today");
+            logger.info("🏁 Returning {} patients with appointments today", result.size());
             return result;
 
         } catch (Exception e) {
