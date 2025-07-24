@@ -279,6 +279,7 @@
       </div>
       <div class="nav-item">
         <form th:action="@{/auth/logout}" method="post">
+          <input type="hidden" name="adminId" th:value="${adminId}"/>
           <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}" />
           <button type="submit" class="nav-link w-100 text-start border-0 bg-transparent">
             <i class="bi bi-box-arrow-right"></i>
@@ -331,6 +332,7 @@
     <!-- Filter -->
     <form th:action="@{/admin/appointments/statistics/appointments}"
           method="get" class="row g-3 mb-5">
+      <input type="hidden" name="adminId" th:value="${adminId}"/>
       <div class="col-md-2">
         <label>From</label>
         <input type="date" name="fromDate" class="form-control"
@@ -387,6 +389,7 @@
           Reset
         </a>
         <a th:href="@{/admin/appointments/statistics/appointments(
+          adminId=${adminId},
           fromDate=${fromDate},
           toDate=${toDate},
           doctorId=${selectedDoctor},
