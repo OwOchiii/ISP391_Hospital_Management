@@ -791,7 +791,7 @@
         <form class="row g-3" method="get" th:action="@{/admin/receptionists(adminId=${adminId},page=0,size=5)}">
           <input type="hidden" name="adminId" th:value="${adminId}"/>
           <div class="col-md-4">
-            <label for="search" class="form-label">Search by Name/Email</label>
+            <label for="search" class="form-label">Search by Email</label>
             <input type="text" id="search" name="search" th:value="${search}" class="form-control" placeholder="Enter keyword..." maxlength="30"/>
           </div>
           <div class="col-md-3">
