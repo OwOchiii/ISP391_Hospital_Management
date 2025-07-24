@@ -2200,6 +2200,192 @@
                 return 'bg-secondary';
         }
     }
+
+    // Export functions
+    function exportToExcel() {
+        // Prepare data with all fields including Bio Description, Degree, Institution, Room
+        const exportData = filteredDoctors.map(doctor => ({
+            'Full Name': doctor.name || 'N/A',
+            'Email': doctor.email || 'N/A',
+            'Phone Number': doctor.phone || 'N/A',
+            'Bio Description': doctor.bioDescription || doctor.bio || 'N/A',
+            'Description': doctor.description || 'N/A',
+            'Degree': doctor.degree || 'N/A',
+            'Institution': doctor.institution || 'N/A',
+            'Specialty': doctor.specialty || 'N/A',
+            'Room': doctor.room || 'N/A'
+        }));
+
+        // Create worksheet
+        const ws = XLSX.utils.json_to_sheet(exportData);
+
+        // Set column widths for better readability
+        const colWidths = [
+            { wch: 20 }, // Full Name
+            { wch: 25 }, // Email
+            { wch: 15 }, // Phone Number
+            { wch: 35 }, // Bio Description - increased width
+            { wch: 30 }, // Description
+            { wch: 20 }, // Degree - increased width
+            { wch: 30 }, // Institution - increased width
+            { wch: 20 }, // Specialty
+            { wch: 15 }  // Room - increased width
+        ];
+        ws['!cols'] = colWidths;
+
+        // Create workbook and add worksheet
+        const wb = XLSX.utils.book_new();
+        XLSX.utils.book_append_sheet(wb, ws, 'Doctors List');
+
+        // Generate filename with current date
+        const currentDate = new Date().toISOString().split('T')[0];
+        const filename = `doctors_list_${currentDate}.xlsx`;
+
+        // Save file
+        XLSX.writeFile(wb, filename);
+    }
+
+    function exportToPDF() {
+        const { jsPDF } = window.jspdf;
+
+        // Create PDF in landscape orientation for better table display
+        const doc = new jsPDF('landscape', 'mm', 'a4');
+
+        // Colors
+        const primaryColor = [102, 126, 234]; // Primary blue
+        const headerColor = [67, 56, 202]; // Darker blue
+        const alternateRowColor = [248, 250, 252]; // Light gray
+        const textColor = [31, 41, 55]; // Dark gray
+
+        // Header section
+        doc.setFillColor(...primaryColor);
+        doc.rect(0, 0, 297, 25, 'F'); // Full width header background
+
+        // Logo/Icon area (simulated)
+        doc.setFillColor(255, 255, 255);
+        doc.circle(20, 12.5, 8, 'F');
+        doc.setTextColor(...primaryColor);
+        doc.setFontSize(16);
+        doc.text('✚', 17, 16);
+
+        // Title
+        doc.setTextColor(255, 255, 255);
+        doc.setFontSize(20);
+        doc.setFont('helvetica', 'bold');
+        doc.text('MediCare Plus - Doctors List', 35, 16);
+
+        // Subtitle with current date and count
+        doc.setFontSize(12);
+        doc.setFont('helvetica', 'normal');
+        const currentDate = new Date().toLocaleDateString('en-US', {
+            year: 'numeric',
+            month: 'long',
+            day: 'numeric'
+        });
+        doc.text(`Generated on ${currentDate} | Total Doctors: ${filteredDoctors.length}`, 35, 21);
+
+        // Prepare table data with all required fields
+        const tableHeaders = [
+            'Full Name',
+            'Email',
+            'Phone',
+            'Bio Description',
+            'Description',
+            'Degree',
+            'Institution',
+            'Specialty',
+            'Room'
+        ];
+
+        const tableData = filteredDoctors.map(doctor => [
+            doctor.name || 'N/A',
+            doctor.email || 'N/A',
+            doctor.phone || 'N/A',
+            // Truncate long bio descriptions for better PDF layout
+            (doctor.bioDescription || doctor.bio || 'N/A').length > 50 ?
+                (doctor.bioDescription || doctor.bio || 'N/A').substring(0, 50) + '...' :
+                (doctor.bioDescription || doctor.bio || 'N/A'),
+            // Truncate long descriptions for better PDF layout
+            (doctor.description || 'N/A').length > 40 ?
+                (doctor.description || 'N/A').substring(0, 40) + '...' :
+                (doctor.description || 'N/A'),
+            doctor.degree || 'N/A',
+            doctor.institution || 'N/A',
+            doctor.specialty || 'N/A',
+            doctor.room || 'N/A'
+        ]);
+
+        // Create table with enhanced styling
+        doc.autoTable({
+            head: [tableHeaders],
+            body: tableData,
+            startY: 35,
+            theme: 'striped',
+            headStyles: {
+                fillColor: headerColor,
+                textColor: [255, 255, 255],
+                fontSize: 9, // Reduced font size for more columns
+                fontStyle: 'bold',
+                halign: 'center',
+                cellPadding: { top: 3, right: 2, bottom: 3, left: 2 }
+            },
+            bodyStyles: {
+                fontSize: 7, // Reduced font size for better fit
+                textColor: textColor,
+                cellPadding: { top: 2, right: 1, bottom: 2, left: 1 }
+            },
+            alternateRowStyles: {
+                fillColor: alternateRowColor
+            },
+            columnStyles: {
+                0: { cellWidth: 25, fontStyle: 'bold' }, // Full Name
+                1: { cellWidth: 30 }, // Email
+                2: { cellWidth: 18 }, // Phone
+                3: { cellWidth: 35 }, // Bio Description
+                4: { cellWidth: 30 }, // Description
+                5: { cellWidth: 20 }, // Degree
+                6: { cellWidth: 30 }, // Institution
+                7: { cellWidth: 25 }, // Specialty
+                8: { cellWidth: 15 }  // Room
+            },
+            styles: {
+                overflow: 'linebreak',
+                cellPadding: 1.5,
+                fontSize: 7,
+                lineColor: [200, 200, 200],
+                lineWidth: 0.1
+            },
+            margin: { left: 8, right: 8 },
+            didDrawPage: function(data) {
+                // Footer
+                const pageCount = doc.internal.getNumberOfPages();
+                const currentPage = doc.internal.getCurrentPageInfo().pageNumber;
+
+                // Footer background
+                doc.setFillColor(...alternateRowColor);
+                doc.rect(0, 195, 297, 15, 'F');
+
+                // Footer text
+                doc.setTextColor(...textColor);
+                doc.setFontSize(8);
+                doc.setFont('helvetica', 'normal');
+                doc.text(`Page ${currentPage} of ${pageCount}`, 20, 205);
+                doc.text('Generated by MediCare Plus Hospital Management System', 150, 205);
+
+                // Footer line
+                doc.setDrawColor(...primaryColor);
+                doc.setLineWidth(1);
+                doc.line(8, 195, 289, 195);
+            }
+        });
+
+        // Generate filename with current date
+        const currentDateTime = new Date().toISOString().replace(/[:.]/g, '-').split('T')[0];
+        const filename = `doctors_list_${currentDateTime}.pdf`;
+
+        // Save the PDF
+        doc.save(filename);
+    }
 </script>
 </body>
 </html>

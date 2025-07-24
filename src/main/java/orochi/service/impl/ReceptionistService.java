@@ -654,6 +654,70 @@ public class ReceptionistService {
                     doctorMap.put("phone", doctor.getUser() != null ? doctor.getUser().getPhoneNumber() : "");
                     doctorMap.put("imageUrl", doctor.getImageUrl()); // Add the imageUrl field
 
+                    // ✅ Bio Description - Lấy từ Doctor.BioDescription
+                    String bioDescription = "Not specified";
+                    if (doctor.getBioDescription() != null && !doctor.getBioDescription().trim().isEmpty()) {
+                        bioDescription = doctor.getBioDescription();
+                    }
+                    doctorMap.put("bio", bioDescription);
+                    doctorMap.put("bioDescription", bioDescription); // Alias for consistency
+
+                    // ✅ Education Information - Lấy Degree v�� Institution từ Education table
+                    String degree = "Not specified";
+                    String institution = "Not specified";
+                    String description = "Not specified";
+
+                    if (doctor.getEducations() != null && !doctor.getEducations().isEmpty()) {
+                        // Get the first education record (you can modify this logic as needed)
+                        var education = doctor.getEducations().get(0);
+                        degree = education.getDegree() != null ? education.getDegree() : "Not specified";
+                        institution = education.getInstitution() != null ? education.getInstitution() : "Not specified";
+                        description = education.getDescription() != null ? education.getDescription() : "Not specified";
+                    }
+                    doctorMap.put("degree", degree);
+                    doctorMap.put("institution", institution);
+                    doctorMap.put("description", description);
+
+                    // ✅ Room Information - Lấy từ Schedule hoặc Department
+                    String roomInfo = "Not assigned";
+                    try {
+                        // Method 1: Get room from doctor's schedules
+                        if (doctor.getSchedules() != null && !doctor.getSchedules().isEmpty()) {
+                            Set<String> rooms = doctor.getSchedules().stream()
+                                    .filter(schedule -> schedule.getRoom() != null)
+                                    .map(schedule -> schedule.getRoom().getRoomNumber())
+                                    .collect(Collectors.toSet());
+
+                            if (!rooms.isEmpty()) {
+                                roomInfo = String.join(", ", rooms);
+                            }
+                        }
+
+                        // Method 2: If no room from schedule, get rooms by specialty
+                        if ("Not assigned".equals(roomInfo) && doctor.getSpecializations() != null && !doctor.getSpecializations().isEmpty()) {
+                            Integer specialtyId = doctor.getSpecializations().get(0).getSpecId();
+                            Integer currentDoctorId = doctor.getDoctorId();
+
+                            List<Map<String, Object>> rooms = getRoomsBySpecialtyAndDoctor(specialtyId, currentDoctorId);
+                            if (!rooms.isEmpty()) {
+                                Set<String> roomNumbers = rooms.stream()
+                                        .map(room -> (String) room.get("roomNumber"))
+                                        .filter(Objects::nonNull)
+                                        .limit(2) // Limit to first 2 rooms
+                                        .collect(Collectors.toSet());
+
+                                if (!roomNumbers.isEmpty()) {
+                                    roomInfo = String.join(", ", roomNumbers);
+                                }
+                            }
+                        }
+                    } catch (Exception e) {
+                        logger.warn("Error getting room info for doctor {}: {}", doctor.getDoctorId(), e.getMessage());
+                        roomInfo = "Not assigned";
+                    }
+
+                    doctorMap.put("room", roomInfo);
+
                     // Get specialty information - show primary specialty or all specialties
                     String specialty = "General Practice"; // Default value
                     if (doctor.getSpecializations() != null && !doctor.getSpecializations().isEmpty()) {
@@ -680,10 +744,16 @@ public class ReceptionistService {
             doctorDetails.put("name", doctor.getUser() != null ? doctor.getUser().getFullName() : "Unknown");
             doctorDetails.put("email", doctor.getUser() != null ? doctor.getUser().getEmail() : "");
             doctorDetails.put("phone", doctor.getUser() != null ? doctor.getUser().getPhoneNumber() : "");
-            doctorDetails.put("bio", doctor.getBioDescription());
-            //doctorDetails.put("avatar", doctor.getUser() != null ? doctor.getUser().getAvatar() : null);
 
-            // Get education details
+            // ✅ Bio Description - Lấy từ Doctor.BioDescription
+            String bioDescription = "Not specified";
+            if (doctor.getBioDescription() != null && !doctor.getBioDescription().trim().isEmpty()) {
+                bioDescription = doctor.getBioDescription();
+            }
+            doctorDetails.put("bio", bioDescription);
+            doctorDetails.put("bioDescription", bioDescription); // Alias for consistency
+
+            // ✅ Education Information - Lấy Degree và Institution từ Education table
             String degree = "Not specified";
             String institution = "Not specified";
             String description = "Not specified";
@@ -699,6 +769,46 @@ public class ReceptionistService {
             doctorDetails.put("degree", degree);
             doctorDetails.put("institution", institution);
             doctorDetails.put("description", description);
+
+            // ✅ Room Information - Lấy từ Schedule hoặc Department (tương tự getAllDoctorsWithDetails)
+            String roomInfo = "Not assigned";
+            try {
+                // Method 1: Get room from doctor's schedules
+                if (doctor.getSchedules() != null && !doctor.getSchedules().isEmpty()) {
+                    Set<String> rooms = doctor.getSchedules().stream()
+                            .filter(schedule -> schedule.getRoom() != null)
+                            .map(schedule -> schedule.getRoom().getRoomNumber())
+                            .collect(Collectors.toSet());
+
+                    if (!rooms.isEmpty()) {
+                        roomInfo = String.join(", ", rooms);
+                    }
+                }
+
+                // Method 2: If no room from schedule, get rooms by specialty
+                if ("Not assigned".equals(roomInfo) && doctor.getSpecializations() != null && !doctor.getSpecializations().isEmpty()) {
+                    Integer specialtyId = doctor.getSpecializations().get(0).getSpecId();
+                    Integer currentDoctorId = doctor.getDoctorId();
+
+                    List<Map<String, Object>> rooms = getRoomsBySpecialtyAndDoctor(specialtyId, currentDoctorId);
+                    if (!rooms.isEmpty()) {
+                        Set<String> roomNumbers = rooms.stream()
+                                .map(room -> (String) room.get("roomNumber"))
+                                .filter(Objects::nonNull)
+                                .limit(2) // Limit to first 2 rooms
+                                .collect(Collectors.toSet());
+
+                        if (!roomNumbers.isEmpty()) {
+                            roomInfo = String.join(", ", roomNumbers);
+                        }
+                    }
+                }
+            } catch (Exception e) {
+                logger.warn("Error getting room info for doctor {}: {}", doctor.getDoctorId(), e.getMessage());
+                roomInfo = "Not assigned";
+            }
+
+            doctorDetails.put("room", roomInfo);
 
             // Get specialty information
             String specialty = "General Practice";
@@ -2267,11 +2377,10 @@ public class ReceptionistService {
             transaction.setProcessedByUserId(issuerId);
             transaction.setTimeOfPayment(java.time.LocalDateTime.now());
 
-            // Store payment details in refundReason field for cash payments - NOW IN VND
-            if ("Cash".equals(method) && amountReceivedVND != null) {
-                String paymentDetails = String.format("Amount Received: %s%.0f | Notes: %s",
-                                                     CURRENCY_SYMBOL_VND, amountReceivedVND,
-                                                     notes != null ? notes : "Payment completed successfully");
+            // Store payment details in refundReason field for cash payments
+            if ("Cash".equals(method) && amountReceived != null) {
+                String paymentDetails = String.format("Amount Received: $%.2f | Notes: %s",
+                                                     amountReceived, notes != null ? notes : "Payment completed successfully");
                 transaction.setRefundReason(paymentDetails);
             } else {
                 transaction.setRefundReason(notes != null ? notes : "Payment completed successfully");
@@ -2281,7 +2390,7 @@ public class ReceptionistService {
             Transaction savedTransaction = transactionRepository.save(transaction);
             logger.info("✅ Transaction {} updated to Paid status", savedTransaction.getTransactionId());
 
-            // Create or update receipt - NOW USING VND AMOUNTS
+            // Create or update receipt
             Receipt receipt = transaction.getReceipt();
             if (receipt == null) {
                 receipt = new Receipt();
@@ -2297,27 +2406,27 @@ public class ReceptionistService {
 
                 receipt.setPdfPath(""); // Empty string instead of NULL
 
-                // Calculate tax amount (10% of total amount) - IN VND
-                BigDecimal taxAmountVND = BigDecimal.valueOf(totalAmountVND * 0.1);
-                receipt.setTaxAmount(taxAmountVND);
+                // Calculate tax amount (10% of total amount)
+                BigDecimal taxAmount = BigDecimal.valueOf(totalAmount * 0.1);
+                receipt.setTaxAmount(taxAmount);
 
                 // Set discount amount (default 0.0 for cash payments)
                 receipt.setDiscountAmount(BigDecimal.ZERO);
             }
 
-            // Update receipt amount and details - IN VND
-            receipt.setTotalAmount(BigDecimal.valueOf(totalAmountVND));
+            // Update receipt amount and details
+            receipt.setTotalAmount(java.math.BigDecimal.valueOf(totalAmount));
             receipt.setNotes(notes != null ? notes : "Payment completed successfully");
 
             // Save receipt
             Receipt savedReceipt = receiptRepository.save(receipt);
-            logger.info("✅ Receipt {} created/updated with amount: {} VND", savedReceipt.getReceiptId(), savedReceipt.getTotalAmount());
+            logger.info("✅ Receipt {} created/updated with amount: {}", savedReceipt.getReceiptId(), savedReceipt.getTotalAmount());
 
             // Update transaction with receipt reference
             savedTransaction.setReceipt(savedReceipt);
             transactionRepository.save(savedTransaction);
 
-            // Prepare response - RETURN VND AMOUNTS
+            // Prepare response
             Map<String, Object> response = new HashMap<>();
             response.put("success", true);
             response.put("transactionId", savedTransaction.getTransactionId());
@@ -2330,7 +2439,7 @@ public class ReceptionistService {
             response.put("amountReceivedVND", amountReceivedVND);
             response.put("currency", CURRENCY_CODE_VND);
 
-            logger.info("✅ Payment processing completed successfully - Amount saved in VND: {}", totalAmountVND);
+            logger.info("✅ Payment processing completed successfully");
             return response;
 
         } catch (Exception e) {
@@ -2403,8 +2512,8 @@ public class ReceptionistService {
     }
 
     /**
-     * Get doctor patient count from Schedule table
-     * Counts distinct PatientID for a specific DoctorID in Schedule table
+     * Normalize payment method từ database để đảm bảo hiển thị chính xác
+     * Xử lý tất cả các payment methods có thể có trong database
      */
     public Integer getDoctorPatientCountFromSchedule(Integer doctorId) {
         try {
