@@ -368,6 +368,17 @@
       color: var(--text-light);
       line-height: 1.6;
     }
+    .bio-description textarea {
+      width: 100%;
+      min-height: 100px;
+      border: 1px solid var(--border-color);
+      border-radius: 8px;
+      padding: 0.75rem;
+      font-size: 0.875rem;
+      color: var(--text-light);
+      background: var(--bg-white);
+      resize: none;
+    }
     .btn-primary-custom {
       background: linear-gradient(135deg, var(--patient-primary), var(--patient-secondary));
       border: none;
@@ -389,47 +400,63 @@
       text-decoration: none;
     }
     .btn-sm {
-      padding: 0.5rem: 1rem;
+      padding: 0.5rem 1rem;
       font-size: 0.875rem;
     }
+    .pagination {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      gap: 1rem;
+      margin-top: 2rem;
+    }
+    .pagination .btn {
+      padding: 0.5rem 1rem;
+      font-size: 1rem;
+      background: var(--patient-secondary);
+      border: none;
+      color: white;
+      border-radius: 8px;
+      transition: all 0.3s ease;
+    }
+    .pagination .btn:hover {
+      background: var(--patient-primary);
+      transform: translateY(-2px);
+    }
     .empty-state {
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  min-height: 300px;
-  width: 100%;
-  background-color: #f8f9fa;
-  border-radius: 8px;
-}
-
-.empty-state-container {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  text-align: center;
-  gap: 16px;
-  padding: 24px;
-  max-width: 400px;
-}
-
-.empty-state-container i.bi-search {
-  font-size: 48px;
-  color: #6c757d;
-}
-
-.empty-state-container h3 {
-  font-size: 24px;
-  font-weight: 600;
-  color: #343a40;
-  margin: 0;
-}
-
-.empty-state-container p {
-  font-size: 16px;
-  color: #6c757d;
-  margin: 0;
-  line-height: 1.5;
-}
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      min-height: 300px;
+      width: 100%;
+      background-color: #f8f9fa;
+      border-radius: 8px;
+    }
+    .empty-state-container {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      text-align: center;
+      gap: 16px;
+      padding: 24px;
+      max-width: 400px;
+    }
+    .empty-state-container i.bi-search {
+      font-size: 48px;
+      color: #6c757d;
+    }
+    .empty-state-container h3 {
+      font-size: 24px;
+      font-weight: 600;
+      color: #343a40;
+      margin: 0;
+    }
+    .empty-state-container p {
+      font-size: 16px;
+      color: #6c757d;
+      margin: 0;
+      line-height: 1.5;
+    }
     @media (max-width: 768px) {
       .patient-sidebar {
         transform: translateX(-100%);
@@ -499,7 +526,7 @@
     </div>
     <div class="nav-section-title">Medical Services</div>
     <div class="nav-item">
-      <a th:href="@{/patient/search-doctor(patientId=${patientId})}" class="nav-link active">
+      <a th:href="@{/patient/search-doctor(patientId=${patientId}, search=${search}, specId=${specId})}" class="nav-link active">
         <i class="bi bi-search"></i>
         Search Doctors
       </a>
@@ -594,21 +621,28 @@
       </nav>
     </div>
     <div class="controls-section">
-      <div class="d-flex justify-content-between align-items-center flex-wrap gap-3">
-        <div class="search-container">
-          <i class="bi bi-search search-icon"></i>
-          <input type="text" class="search-input" placeholder="Search doctors by name..." id="searchInput">
+      <form th:action="@{/patient/search-doctor}" method="get">
+        <input type="hidden" name="patientId" th:value="${patientId}"/>
+        <div class="d-flex justify-content-between align-items-center flex-wrap gap-3">
+          <div class="search-container">
+            <i class="bi bi-search search-icon"></i>
+            <input type="text" name="search" class="search-input" placeholder="Search doctors by name..." th:value="${search}"/>
+          </div>
+          <div class="d-flex align-items-center gap-3">
+            <select name="specId" class="form-select">
+              <option value="">All Specializations</option>
+              <option th:each="spec : ${specializations}"
+                      th:value="${spec.specId}"
+                      th:text="${spec.specName}"
+                      th:selected="${specId == spec.specId}"></option>
+            </select>
+            <button type="submit" class="btn btn-primary-custom">Filter</button>
+          </div>
         </div>
-        <div>
-          <select id="specializationFilter" class="form-select">
-            <option value="">All Specializations</option>
-            <option th:each="spec : ${specializations}" th:value="${spec.specId}" th:text="${spec.specName}"></option>
-          </select>
-        </div>
-      </div>
+      </form>
     </div>
-    <div class="doctors-container" id="doctorsContainer">
-      <div class="doctor-card" th:each="doctor : ${doctors}" th:attr="data-specialties=${doctor.specializations != null ? #strings.arrayJoin(doctor.specializations.![specId], ',') : ''}">
+    <div th:if="${totalElements > 0}" class="doctors-container">
+      <div class="doctor-card" th:each="doctor : ${doctors}">
         <div class="doctor-header">
           <div class="appointment-title" th:text="${'Dr. ' + doctor.user.fullName}">Dr. John Doe</div>
           <div class="doctor-extra">No review</div>
@@ -645,7 +679,9 @@
             <span class="detail-value" th:text="${doctor.latestEducation != null ? doctor.latestEducation.institution : 'Not Specified'}">Not Specified</span>
           </div>
         </div>
-        <div class="bio-description" th:text="${doctor.bioDescription != null ? doctor.bioDescription : 'No bio description available.'}">No bio description available.</div>
+        <div class="bio-description">
+          <textarea readonly th:text="${doctor.bioDescription != null ? doctor.bioDescription : 'No bio description available.'}"></textarea>
+        </div>
         <div class="appointment-actions">
           <a th:href="@{/patient/book-appointment(patientId=${patientId}, doctorId=${doctor.doctorId}, specialtyId=${doctor.specializations.size() > 0 ? doctor.specializations[0].specId : 0})}" class="btn-primary-custom btn-sm">
             <i class="bi bi-calendar-plus"></i>
@@ -654,20 +690,22 @@
         </div>
       </div>
     </div>
-    <div class="empty-state" id="emptyState" style="display: none;">
+    <div th:if="${totalElements == 0}" class="empty-state">
       <div class="empty-state-container">
         <i class="bi bi-search"></i>
         <h3>No Doctors Found</h3>
         <p>No doctors match your search criteria. Try adjusting your search or filters.</p>
       </div>
     </div>
+    <div th:if="${totalPages > 1}" class="pagination">
+      <a th:if="${currentPage > 0}" th:href="@{/patient/search-doctor(search=${search}, specId=${specId}, page=${currentPage - 1})}" class="btn btn-secondary">Previous</a>
+      <span th:text="'Page ' + ${currentPage + 1} + ' of ' + ${totalPages}"></span>
+      <a th:if="${currentPage < totalPages - 1}" th:href="@{/patient/search-doctor(search=${search}, specId=${specId}, page=${currentPage + 1})}" class="btn btn-secondary">Next</a>
+    </div>
   </div>
 </div>
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 <script th:inline="javascript">
-  function removeDiacritics(str) {
-    return str.normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/đ/g, 'd').replace(/Đ/g, 'D');
-  }
   function toggleSidebar() {
     const sidebar = document.getElementById('sidebar');
     const mainContent = document.getElementById('mainContent');
@@ -685,42 +723,7 @@
       mainContent.classList.remove('expanded');
     }
   }
-  function initializeSearchAndFilters() {
-    const searchInput = document.getElementById('searchInput');
-    const specializationFilter = document.getElementById('specializationFilter');
-    const doctorsContainer = document.getElementById('doctorsContainer');
-    const emptyState = document.getElementById('emptyState');
-    searchInput.addEventListener('input', updateDoctors);
-    specializationFilter.addEventListener('change', updateDoctors);
-    function updateDoctors() {
-      const searchTerm = removeDiacritics(searchInput.value.toLowerCase().trim());
-      const selectedSpec = specializationFilter.value;
-      const doctorCards = doctorsContainer.querySelectorAll('.doctor-card');
-      let visibleCount = 0;
-      doctorCards.forEach(card => {
-        const doctorName = removeDiacritics(card.querySelector('.appointment-title').textContent.toLowerCase().trim());
-        const specialties = card.getAttribute('data-specialties').split(',');
-        const matchesSearch = doctorName.includes(searchTerm);
-        let matchesFilter = true;
-        if (selectedSpec) {
-          matchesFilter = specialties.includes(selectedSpec);
-        }
-        if (matchesSearch && matchesFilter) {
-          card.style.display = 'block';
-          visibleCount++;
-        } else {
-          card.style.display = 'none';
-        }
-      });
-      emptyState.style.display = visibleCount === 0 ? 'flex' : 'none';
-      doctorsContainer.style.display = visibleCount === 0 ? 'none' : 'grid';
-    }
-    updateDoctors();
-  }
-  document.addEventListener('DOMContentLoaded', function() {
-    checkScreenSize();
-    initializeSearchAndFilters();
-  });
+  document.addEventListener('DOMContentLoaded', checkScreenSize);
   window.addEventListener('resize', checkScreenSize);
 </script>
 </body>
