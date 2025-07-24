@@ -742,7 +742,7 @@
         </h5>
         <p class="mb-0">
           <strong>From Admin:</strong>
-          <span th:text="${latestNotification.message}">Nội dung thông báo</span>
+          <span th:text="${latestNotification != null ? latestNotification.message : ''}">Nội dung thông báo</span>
         </p>
       </div>
       <div class="text-end d-flex flex-column align-items-end">
@@ -919,8 +919,8 @@
     const noticeEl = document.getElementById('latest-notice');
     if (markBtn && noticeEl) {
       markBtn.addEventListener('click', () => {
-        // Lấy đúng ID notification từ model
-        const id = /*[[${latestNotification.notificationId}]]*/ 0;
+        // Lấy đúng ID notification từ model với null check
+        const id = /*[[${latestNotification != null ? latestNotification.notificationId : 0}]]*/ 0;
         fetch(`/patient/notifications/mark-read/${id}`, {
           method: 'POST',
           headers: {

@@ -87,4 +87,20 @@ public class AdminPatientController {
                 + (statusFilter != null ? "&statusFilter=" + statusFilter : "")
                 + "&page=" + page + "&size=" + size;
     }
+
+    @PostMapping("/{id}/toggleLock")
+    public String toggleLock(
+            @PathVariable int id,
+            @RequestParam int adminId,
+            RedirectAttributes flash
+    ) {
+        Patient patient = svc.getPatientById(id).orElseThrow(() -> new IllegalArgumentException("Patient not found"));
+        String currentStatus = patient.getUser().getStatus();
+        String newStatus = "LOCKED".equals(currentStatus) ? "ACTIVE" : "LOCKED";
+        patient.getUser().setStatus(newStatus);
+        svc.savePatient(patient);
+        flash.addFlashAttribute("successMessage", "Patient status updated successfully!");
+        return "redirect:/admin/patients?adminId=" + adminId;
+    }
+
 }

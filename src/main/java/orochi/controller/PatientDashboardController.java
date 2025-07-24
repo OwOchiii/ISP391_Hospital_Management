@@ -1255,6 +1255,7 @@ public class PatientDashboardController {
     public ResponseEntity<?> markReadViaAlias(@PathVariable("id") Integer notificationId) {
         return markNotificationAsRead(notificationId);
     }
+
 }
 
 // New form-backing object

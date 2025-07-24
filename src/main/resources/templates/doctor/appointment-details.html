@@ -620,8 +620,8 @@
         <div class="header-content">
             <div>
                 <!-- Return to Dashboard Link -->
-                <a href="/doctor/dashboard" class="return-to-dashboard">
-                    <i class="bi bi-arrow-left"></i> Return to Dashboard
+                <a th:href="@{/doctor/appointments(doctorId=${doctorId})}" class="return-to-dashboard">
+                    <i class="bi bi-arrow-left"></i> Return to Appointment List
                 </a>
 
                 <h1 class="page-title">
