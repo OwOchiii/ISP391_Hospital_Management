@@ -42,6 +42,12 @@ public class CustomUserDetailsService implements UserDetailsService {
         Users user = userRepository.findByEmail(email)
                 .orElseThrow(() -> new UsernameNotFoundException("User not found with email: " + email));
 
+        // Check if account is locked BEFORE proceeding with authentication
+        if ("LOCKED".equals(user.getStatus())) {
+            logger.warn("Login attempt for locked account: {}", email);
+            throw new org.springframework.security.authentication.LockedException("Account is locked. Contact your administrator for support.");
+        }
+
         // Get the exact role name from the user's role
         String authority;
         if (user.getRole() != null) {
@@ -82,8 +88,8 @@ public class CustomUserDetailsService implements UserDetailsService {
                 Collections.singletonList(grantedAuthority),
                 user.getUserId(),
                 doctorId,
-                patientId
+                patientId,
+                user.getStatus()
         );
     }
 }
-
