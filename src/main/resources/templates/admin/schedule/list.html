@@ -377,6 +377,45 @@
             box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
         }
 
+        .overview-grid {
+            display: flex;              /* lay out days in a row */
+            flex-wrap: nowrap;          /* don’t wrap onto multiple lines */
+            gap: 0.5rem;
+            overflow-x: auto;           /* enable horizontal scrolling */
+            padding-bottom: 0.5rem;     /* add a little breathing room under the scroll bar */
+        }
+        .overview-day {
+            flex: 0 0 150px;
+            background: var(--bg-white);
+            border: 1px solid #e0e0e0;
+            border-radius: 8px;
+            padding: 0.75rem;
+            text-align: center;
+            font-size: 0.85rem;
+        }
+        .date {
+            font-weight: 600;
+            margin-bottom: 0.5rem;
+        }
+        .shifts {
+            display: flex;
+            justify-content: center;
+            gap: 0.5rem;
+        }
+        .shift {
+            padding: 0.25rem 0.5rem;
+            border-radius: 4px;
+            min-width: 40px;
+        }
+        .shift.assigned {
+            background-color: var(--success-color);
+            color: white;
+        }
+        .shift.free {
+            background-color: var(--error-color);
+            color: white;
+        }
+
         @media (max-width: 768px) {
             .admin-sidebar {
                 transform: translateX(-100%);
@@ -593,6 +632,67 @@
 
     <!-- Content Area -->
     <div class="content-area">
+        <!-- Shift Overview -->
+        <div class="mb-4">
+            <h5>Shift Overview (Next 7 Days)</h5>
+            <div class="overview-grid">
+                <div th:each="entry : ${shiftOverview}">
+                    <div class="overview-day">
+                        <div class="date" th:text="${#temporals.format(entry.key, 'EEE, dd/MM')}"></div>
+                        <div class="shifts">
+                            <button type="button"
+                                    class="shift btn"
+                                    th:classappend="${entry.value.contains('morning')} ? 'assigned' : 'free'"
+                                    th:attr="data-date=${#temporals.format(entry.key,'yyyy-MM-dd')},data-shift='morning'">
+                                Morning
+                            </button>
+                            <button type="button"
+                                    class="shift btn"
+                                    th:classappend="${entry.value.contains('afternoon')} ? 'assigned' : 'free'"
+                                    th:attr="data-date=${#temporals.format(entry.key,'yyyy-MM-dd')},data-shift='afternoon'">
+                                Afternoon
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ngay dưới phần Shift Overview -->
+        <div class="modal fade" id="shiftDetailModal" tabindex="-1" aria-hidden="true">
+            <div class="modal-dialog">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title">Shift Details</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                    </div>
+                    <div class="modal-body">
+                        <table class="table">
+                            <thead>
+                            <tr><th>Doctor</th><th>Time</th></tr>
+                            </thead>
+                            <tbody id="shiftDetailBody">
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <!-- Danh sách Phòng -->
+        <div class="modal fade" id="roomListModal" tabindex="-1" aria-hidden="true">
+            <div class="modal-dialog modal-dialog-scrollable">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title">Select room for <span id="modalDate"></span> – <span id="modalShift"></span></h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                    </div>
+                    <div class="modal-body">
+                        <div id="roomList" class="d-flex flex-wrap gap-2"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
         <!-- Filter Section -->
         <div class="filter-card">
             <form th:action="@{/admin/schedules(adminId=${adminId},page=0,size=6)}" method="get" class="row g-2 align-items-end">
@@ -651,25 +751,25 @@
                                 th:attr="data-bs-target='#detail-' + ${s.scheduleId}">
                             <i class="bi bi-eye"></i> View Details
                         </button>
-<!--                        &lt;!&ndash; Edit &ndash;&gt;-->
-<!--                        <button type="button"-->
-<!--                                class="btn btn-outline-secondary btn-action me-2"-->
-<!--                                data-bs-toggle="modal"-->
-<!--                                data-bs-target="#scheduleModal"-->
-<!--                                data-mode="edit"-->
-<!--                                th:data-id="${s.scheduleId}"-->
-<!--                                th:data-doctor-id="${s.doctorId}"-->
-<!--                                th:data-room-id="${s.roomId}"-->
-<!--                                th:data-schedule-date="${#temporals.format(s.scheduleDate,'yyyy-MM-dd')}"-->
-<!--                                th:data-start-time="${#temporals.format(s.startTime,'HH:mm')}"-->
-<!--                                th:data-end-time="${#temporals.format(s.endTime,'HH:mm')}"-->
-<!--                                th:data-appointment-id="${s.appointmentId}"-->
-<!--                                th:data-description="${s.description}"-->
-<!--                                th:data-patient-id="${s.patientId}"-->
-<!--                                th:data-event-type="${s.eventType}"-->
-<!--                                th:data-is-completed="${s.isCompleted}">-->
-<!--                            <i class="bi bi-pencil-square"></i> Edit-->
-<!--                        </button>-->
+                        <!--                        &lt;!&ndash; Edit &ndash;&gt;-->
+                        <!--                        <button type="button"-->
+                        <!--                                class="btn btn-outline-secondary btn-action me-2"-->
+                        <!--                                data-bs-toggle="modal"-->
+                        <!--                                data-bs-target="#scheduleModal"-->
+                        <!--                                data-mode="edit"-->
+                        <!--                                th:data-id="${s.scheduleId}"-->
+                        <!--                                th:data-doctor-id="${s.doctorId}"-->
+                        <!--                                th:data-room-id="${s.roomId}"-->
+                        <!--                                th:data-schedule-date="${#temporals.format(s.scheduleDate,'yyyy-MM-dd')}"-->
+                        <!--                                th:data-start-time="${#temporals.format(s.startTime,'HH:mm')}"-->
+                        <!--                                th:data-end-time="${#temporals.format(s.endTime,'HH:mm')}"-->
+                        <!--                                th:data-appointment-id="${s.appointmentId}"-->
+                        <!--                                th:data-description="${s.description}"-->
+                        <!--                                th:data-patient-id="${s.patientId}"-->
+                        <!--                                th:data-event-type="${s.eventType}"-->
+                        <!--                                th:data-is-completed="${s.isCompleted}">-->
+                        <!--                            <i class="bi bi-pencil-square"></i> Edit-->
+                        <!--                        </button>-->
                         <!-- Delete -->
                         <form th:action="@{/admin/schedules/{id}/delete(id=${s.scheduleId},adminId=${adminId})}"
                               method="post"
@@ -777,15 +877,15 @@
                                         <option value="afternoon">Afternoon (13:00–17:00)</option>
                                     </select>
                                 </div>
-<!--                                <div class="col-md-4">-->
-<!--                                    <label for="eventType" class="form-label">Event Type *</label>-->
-<!--                                    <select class="form-select" id="eventType" name="eventType" required>-->
-<!--                                        <option value="" disabled selected>Select Event Type</option>-->
-<!--                                        <option value="appointment">Appointment</option>-->
-<!--                                        <option value="oncall">On-Call</option>-->
-<!--                                        <option value="break">Break</option>-->
-<!--                                    </select>-->
-<!--                                </div>-->
+                                <!--                                <div class="col-md-4">-->
+                                <!--                                    <label for="eventType" class="form-label">Event Type *</label>-->
+                                <!--                                    <select class="form-select" id="eventType" name="eventType" required>-->
+                                <!--                                        <option value="" disabled selected>Select Event Type</option>-->
+                                <!--                                        <option value="appointment">Appointment</option>-->
+                                <!--                                        <option value="oncall">On-Call</option>-->
+                                <!--                                        <option value="break">Break</option>-->
+                                <!--                                    </select>-->
+                                <!--                                </div>-->
                                 <div class="col-md-4 align-self-end">
                                     <button type="button" class="btn btn-primary" id="toStep2" disabled>Next: Choose Doctor</button>
                                 </div>
@@ -823,90 +923,71 @@
 <script th:inline="javascript">
     /*<![CDATA[*/
     document.addEventListener('DOMContentLoaded', () => {
-        const modal     = document.getElementById('scheduleModal');
-        const form      = document.getElementById('scheduleForm');
-        const step1     = document.getElementById('step1');
-        const step2     = document.getElementById('step2');
-        const btnStep2  = document.getElementById('toStep2');
-        const roomInput = document.getElementById('roomId');
-        const dateInput = document.getElementById('scheduleDate');
-        const shiftSel  = document.getElementById('shift');
-        // const evtSel    = document.getElementById('eventType');
-        const docSel    = document.getElementById('doctorId');
-        // const startTime = document.getElementById('startTime');
-        // const endTime   = document.getElementById('endTime');
+        // ——— Schedule Modal: STEP1/STEP2 ———
+        const modal      = document.getElementById('scheduleModal');
+        const form       = document.getElementById('scheduleForm');
+        const step1      = document.getElementById('step1');
+        const step2      = document.getElementById('step2');
+        const btnStep2   = document.getElementById('toStep2');
+        const roomInput  = document.getElementById('roomId');
+        const dateInput  = document.getElementById('scheduleDate');
+        const shiftSel   = document.getElementById('shift');
+        const docSel     = document.getElementById('doctorId');
+        const startTime  = document.getElementById('startTime');
+        const endTime    = document.getElementById('endTime');
 
-        // Mỗi lần mở modal → reset
+        // Reset khi mở modal
         modal.addEventListener('show.bs.modal', () => {
             form.reset();
             step1.style.display = 'flex';
             step2.style.display = 'none';
             btnStep2.disabled = true;
-            // disable nút Save cho đến khi chọn bác sĩ
             document.querySelector('#step2 button[type="submit"]').disabled = true;
         });
 
-        // STEP 1 → enable Next khi đủ data
+        // Bật nút Next khi đủ dữ liệu STEP1
         [roomInput, dateInput, shiftSel].forEach(el =>
             el.addEventListener('change', () => {
                 btnStep2.disabled = !(roomInput.value && dateInput.value && shiftSel.value);
             })
         );
 
-        // STEP 2: gán giờ, load doctors rồi show STEP 2
+        // STEP2: kiểm tra duplicate → gán giờ → load doctors
         btnStep2.addEventListener('click', () => {
-            // 1) Kiểm tra duplicate
-            fetch(`/admin/schedules/check-duplicate`
-                + `?roomId=${roomInput.value}`
-                + `&date=${dateInput.value}`
-                + `&shift=${shiftSel.value}`)
+            fetch(`/admin/schedules/check-duplicate?roomId=${roomInput.value}&date=${dateInput.value}&shift=${shiftSel.value}`)
                 .then(r => r.json())
                 .then(isDup => {
                     if (isDup) {
-                        alert('Lỗi: Ca trực này đã tồn tại cho phòng và ngày đã chọn.');
-                        return;  // dừng tại đây, không sang bước 2
+                        return alert('Lỗi: Ca trực này đã tồn tại cho phòng và ngày đã chọn.');
                     }
-
-                    // 2) Nếu không trùng, gán giờ
+                    // gán giờ
                     if (shiftSel.value === 'morning') {
                         startTime.value = '08:00'; endTime.value = '12:00';
                     } else {
                         startTime.value = '13:00'; endTime.value = '17:00';
                     }
-
-                    // 3) Gọi mới API duy nhất
-                    const params = `?roomId=${roomInput.value}`
-                        + `&shift=${shiftSel.value}`
-                        + `&date=${dateInput.value}`;
-
-                    fetch(`/admin/schedules/eligible-doctors${params}`)
+                    // load bác sĩ
+                    fetch(`/admin/schedules/eligible-doctors?roomId=${roomInput.value}&shift=${shiftSel.value}&date=${dateInput.value}`)
                         .then(r => r.json())
                         .then(list => {
-                            // populate <select>
                             docSel.innerHTML = '<option value="" disabled selected>Select Doctor</option>';
                             list.forEach(d => {
                                 docSel.insertAdjacentHTML('beforeend',
-                                    `<option value="${d.doctorId}">${d.doctorName}</option>`
-                                );
+                                    `<option value="${d.doctorId}">${d.doctorName} (id: ${d.doctorId})</option>`);
                             });
-                            // hiển thị bước 2
                             step1.style.display = 'none';
                             step2.style.display = 'flex';
                         });
                 })
-                .catch(() => {
-                    alert('Không thể kiểm tra trùng ca, vui lòng thử lại.');
-                });
+                .catch(() => alert('Không thể kiểm tra trùng ca, vui lòng thử lại.'));
         });
 
-
-
-        // Enable nút Save khi đã chọn doctor
+        // Enable Save khi chọn doctor
         docSel.addEventListener('change', () => {
             document.querySelector('#step2 button[type="submit"]').disabled = !docSel.value;
         });
 
-        // Validate ngày không được quá khứ
+        // Validate date không quá khứ
         form.addEventListener('submit', e => {
             const d = new Date(dateInput.value), today = new Date();
             today.setHours(0,0,0,0);
@@ -915,9 +996,61 @@
                 e.preventDefault();
             }
         });
+
+        // ——— Shift Overview: chọn ca → show room list → chọn room → show detail ———
+        document.querySelectorAll('.shift').forEach(btn => {
+            btn.addEventListener('click', () => {
+                const date  = btn.getAttribute('data-date');
+                const shift = btn.getAttribute('data-shift');
+
+                // cập nhật tiêu đề modal phòng
+                document.getElementById('modalDate').textContent  = date;
+                document.getElementById('modalShift').textContent = shift === 'morning' ? 'Morning' : 'Afternoon';
+
+                // load danh sách phòng
+                fetch(`/admin/schedules/rooms-by-shift?date=${date}&shift=${shift}`)
+                    .then(r => r.json())
+                    .then(rooms => {
+                        const roomList = document.getElementById('roomList');
+                        roomList.innerHTML = '';
+                        rooms.forEach(rm => {
+                            const b = document.createElement('button');
+                            b.textContent = rm.roomNumber;
+                            b.className = `btn ${rm.assigned ? 'btn-success' : 'btn-danger'} me-2 mb-2`;
+                            b.dataset.roomId = rm.roomId;
+                            // khi chọn phòng → load chi tiết ca
+                            b.addEventListener('click', () => {
+                                fetch(`/admin/schedules/by-shift?date=${date}&shift=${shift}&roomId=${rm.roomId}`)
+                                    .then(r => r.json())
+                                    .then(list => {
+                                        const body = document.getElementById('shiftDetailBody');
+                                        body.innerHTML = '';
+                                        if (list.length === 0) {
+                                            body.insertAdjacentHTML('beforeend',
+                                                '<tr><td colspan="3" class="text-center">No shifts available</td></tr>');
+                                        } else {
+                                            list.forEach(s => {
+                                                body.insertAdjacentHTML('beforeend',
+                                                    `<tr>
+                           <td>${s.doctorName} (id: ${s.doctorId})</td>
+                           <td>${s.startTime} - ${s.endTime}</td>
+                         </tr>`);
+                                            });
+                                        }
+                                        // chuyển modal
+                                        bootstrap.Modal.getInstance(document.getElementById('roomListModal')).hide();
+                                        new bootstrap.Modal(document.getElementById('shiftDetailModal')).show();
+                                    });
+                            });
+                            roomList.appendChild(b);
+                        });
+                        new bootstrap.Modal(document.getElementById('roomListModal')).show();
+                    })
+                    .catch(() => alert('Không thể tải danh sách phòng, vui lòng thử lại.'));
+            });
+        });
     });
     /*]]>*/
 </script>
-
 </body>
 </html>

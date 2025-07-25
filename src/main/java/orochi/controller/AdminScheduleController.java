@@ -3,6 +3,7 @@ package orochi.controller;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 import orochi.dto.ScheduleDTO;
 import orochi.model.Doctor;
+import orochi.model.Room;
 import orochi.model.Schedule;
 import orochi.repository.DoctorRepository;
 import orochi.repository.ScheduleRepository;
@@ -16,13 +17,10 @@ import org.springframework.util.StringUtils;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.bind.annotation.ResponseBody;
 
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Objects;
+import java.util.*;
 import java.util.stream.Collectors;
 import java.time.LocalDate;
 import java.time.LocalTime;
-import java.util.List;
 
 @Controller
 @RequestMapping("/admin/schedules")
@@ -87,6 +85,9 @@ public class AdminScheduleController {
         model.addAttribute("roomId",     roomId);
         model.addAttribute("startDate",  startDateStr);
         model.addAttribute("endDate",    endDateStr);
+        model.addAttribute("overviewStart", today);
+        model.addAttribute("overviewEnd",   maxDate);
+        model.addAttribute("shiftOverview", scheduleService.getShiftOverview(today, maxDate));
 //        model.addAttribute("startTime",  startTimeStr);
 //        model.addAttribute("endTime",    endTimeStr);
         model.addAttribute("adminId",    adminId);
@@ -180,4 +181,52 @@ public class AdminScheduleController {
                 .anyMatch(s -> s.getStartTime().equals(shiftStart));
     }
 
+    @GetMapping("/by-shift")
+    @ResponseBody
+    public List<ScheduleDTO> getSchedulesByShift(
+            @RequestParam("date")  String dateStr,
+            @RequestParam("shift") String shift,
+            @RequestParam(value="roomId", required=false) Integer roomId
+    ) {
+        LocalDate date = LocalDate.parse(dateStr);
+        LocalTime start = "morning".equals(shift)
+                ? LocalTime.of(8,  0)
+                : LocalTime.of(13, 0);
+
+        if (roomId != null) {
+            // delegate qua service mới
+            return scheduleService.findSchedulesByRoomAndShift(date, start, roomId);
+        } else {
+            return scheduleService.findSchedulesByDateAndTimeRange(date, start);
+        }
+    }
+
+    @GetMapping("/rooms-by-shift")
+    @ResponseBody
+    public List<Map<String,Object>> getRoomsByShift(
+            @RequestParam String date,
+            @RequestParam String shift
+    ) {
+        LocalDate ld      = LocalDate.parse(date);
+        // chọn chuỗi giờ‑phút
+        String hhmm       = "morning".equals(shift) ? "08:00" : "13:00";
+
+        // 1) Lấy tất cả phòng
+        List<Room> all    = scheduleService.getAllRooms();
+
+        // 2) Lấy các Schedule đã có trong ca đó
+        List<Schedule> used = scheduleRepository.findByDateAndStartTimeHHMM(ld, hhmm);
+        Set<Integer> assigned = used.stream()
+                .map(Schedule::getRoomId)
+                .collect(Collectors.toSet());
+
+        // 3) Build JSON
+        return all.stream().map(r -> {
+            Map<String,Object> m = new HashMap<>();
+            m.put("roomId",     r.getRoomId());
+            m.put("roomNumber", r.getRoomNumber());
+            m.put("assigned",   assigned.contains(r.getRoomId()));
+            return m;
+        }).toList();
+    }
 }
