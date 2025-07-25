@@ -19,6 +19,8 @@ public class AppointmentFormDTO {
     @NotNull(message = "Doctor selection is required")
     private Integer doctorId;
 
+    private Integer roomId;
+
     @NotNull(message = "Appointment date is required")
     @DateTimeFormat(pattern = "yyyy-MM-dd")
     private LocalDate appointmentDate;
