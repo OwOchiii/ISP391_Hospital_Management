@@ -662,15 +662,16 @@
         updatePagination(page, Math.ceil(dates.length / rowsPerPage));
     }
 
-    // Format amount with $ sign
+    // Format amount with VND (đ) sign
     function formatAmount(amount) {
-        if (!amount) return '$0.00';
+        if (!amount) return '0 đ';
         try {
-            const numAmount = parseFloat(amount.toString().replace(/[$,]/g, ''));
-            if (isNaN(numAmount)) return '$0.00';
-            return `$${numAmount.toFixed(2)}`;
+            const numAmount = parseFloat(amount.toString().replace(/[$,đ]/g, ''));
+            if (isNaN(numAmount)) return '0 đ';
+            // Format with thousands separator and VND symbol
+            return `${numAmount.toLocaleString('vi-VN')} đ`;
         } catch (error) {
-            return '$0.00';
+            return '0 đ';
         }
     }
 

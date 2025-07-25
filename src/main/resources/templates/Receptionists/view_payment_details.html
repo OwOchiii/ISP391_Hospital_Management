@@ -14,7 +14,7 @@
         @media print {
             .no-print { display: none; }
             body { margin: 0; font-size: 10pt; }
-            .invoice-container { box-shadow: none; border: none, padding: 8mm; }
+            .invoice-container { box-shadow: none; border: none; padding: 8mm; }
             .page-break { page-break-before: always; }
         }
         .barcode-placeholder {
@@ -142,9 +142,9 @@
                     <th class="py-3 px-4 text-left">Service Name</th>
                     <th class="py-3 px-4 text-left">Symptom</th>
                     <th class="py-3 px-4 text-left">Quantity</th>
-                    <th class="py-3 px-4 text-left">Price ($)</th>
+                    <th class="py-3 px-4 text-left">Price (đ)</th>
                     <th class="py-3 px-4 text-left">Tax (%)</th>
-                    <th class="py-3 px-4 text-left">Total ($)</th>
+                    <th class="py-3 px-4 text-left">Total (đ)</th>
                     <th class="py-3 px-4 text-left">Date</th>
                 </tr>
                 </thead>
@@ -183,10 +183,10 @@
             <div>
                 <p><span class="font-semibold text-gray-700">Transaction ID:</span> <span th:text="${invoiceData.transactionId}">TRX20250529001</span></p>
                 <p><span class="font-semibold text-gray-700">Receipt Number:</span> <span th:text="${invoiceData.receiptNumber}">REC20250529001</span></p>
-                <p><span class="font-semibold text-gray-700">Total Amount (incl. Tax):</span> <span id="calculatedTotalAmount">0</span> $</p>
-                <p><span class="font-semibold text-gray-700">Tax Amount:</span> <span id="calculatedTaxAmount">0</span> $</p>
-                <p><span class="font-semibold text-gray-700">Discount Amount:</span> <span id="calculatedDiscountAmount">0</span> $</p>
-                <p><span class="font-semibold text-gray-700">Patient Payment:</span> <span id="calculatedPatientPayment">0</span> $</p>
+                <p><span class="font-semibold text-gray-700">Total Amount (incl. Tax):</span> <span id="calculatedTotalAmount">0</span> đ</p>
+                <p><span class="font-semibold text-gray-700">Tax Amount:</span> <span id="calculatedTaxAmount">0</span> đ</p>
+                <p><span class="font-semibold text-gray-700">Discount Amount:</span> <span id="calculatedDiscountAmount">0</span> đ</p>
+                <p><span class="font-semibold text-gray-700">Patient Payment:</span> <span id="calculatedPatientPayment">0</span> </p>
                 <p><span class="font-semibold text-gray-700">Status:</span> <span id="transactionStatus" class="status-paid">Paid</span></p>
             </div>
             <div>
@@ -197,11 +197,11 @@
                     </div>
                 </div>
                 <div class="mb-4">
-                    <label class="block text-sm font-semibold text-gray-700 mb-2">Amount Received ($)</label>
+                    <label class="block text-sm font-semibold text-gray-700 mb-2">Amount Received (đ)</label>
                     <div class="block w-full bg-gray-100 border border-gray-300 rounded-lg p-3 text-sm text-gray-700">
                         <span id="amountReceivedDisplay">0</span>
                     </div>
-                    <p class="mt-3 text-sm text-gray-600">Change Returned: <span id="changeReturnedDisplay">0</span> $</p>
+                    <p class="mt-3 text-sm text-gray-600">Change Returned: <span id="changeReturnedDisplay">0</span> </p>
                 </div>
                 <div>
                     <label class="block text-sm font-semibold text-gray-700 mb-2">Notes</label>
@@ -268,14 +268,14 @@
         discountAmount: /*[[${invoiceData.discountAmount != null ? invoiceData.discountAmount : 0}]]*/ 0,
 
         // ✅ Lấy RefundReason trực tiếp từ Transaction table để extract Amount Received
-        refundReasonRaw: /*[[${invoiceData.refundReasonRaw != null ? invoiceData.refundReasonRaw : ''}]]*/ '',
+        refundReasonRaw: '',
 
         changeReturned: /*[[${invoiceData.changeReturned != null ? invoiceData.changeReturned : 0}]]*/ 0,
         notes: /*[[${invoiceData.notes != null ? invoiceData.notes : 'Payment completed successfully'}]]*/ 'Payment completed successfully',
         timeOfPayment: /*[[${invoiceData.timeOfPayment != null ? invoiceData.timeOfPayment : ''}]]*/ '',
 
         // Processed By - lấy từ backend thay vì staffInfo
-        processedByName: /*[[${invoiceData.processedByName != null ? invoiceData.processedByName : 'Staff Member'}]]*/ 'Staff Member'
+        processedByName: /*[[${staffInfo.fullName != null ? staffInfo.fullName : 'Staff Member'}]]*/ 'Staff Member'
     };
 
     // Global variables để store calculated values
@@ -463,7 +463,7 @@
         // SubTotal
         const subTotalElement = document.getElementById('servicesSubTotal');
         if (subTotalElement) {
-            subTotalElement.textContent = subTotal.toLocaleString('en-US') + ' $';
+            subTotalElement.textContent = subTotal.toLocaleString('en-US') + ' đ';
         }
 
         // Total Amount

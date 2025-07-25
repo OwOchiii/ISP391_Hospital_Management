@@ -1870,9 +1870,6 @@ public class ReceptionistController {
     public static String secretKey = "HSRAHZZPFEPACYMRDC023GI3WD3HRZSE";
     public static String vnp_Version = "2.1.0";
 
-    // Tỷ giá USD to VND (có thể cập nhật từ API thực tế)
-    private static final double USD_TO_VND_RATE = 24000.0; // 1 USD = 24,000 VND
-
     @PostMapping("/process-online-payment")
     public String processOnlinePayment(@RequestParam Integer appointmentId,
                                      @RequestParam Integer patientId,
@@ -2066,16 +2063,17 @@ public class ReceptionistController {
     /**
      * Calculate CORRECT Patient Payment in VND from services used
      * Patient Payment = SubTotal - Discount (where SubTotal = sum of all service totals)
+     * 🔥 UPDATED: Không nhân tỉ giá vì giá trị đã ở VND
      */
     private BigDecimal calculateCorrectPatientPaymentInVND(List<Map<String, Object>> servicesUsed) {
         if (servicesUsed == null || servicesUsed.isEmpty()) {
             return BigDecimal.ZERO;
         }
 
-        logger.info("=== CALCULATING CORRECT PATIENT PAYMENT ===");
+        logger.info("=== CALCULATING CORRECT PATIENT PAYMENT IN VND ===");
 
-        // Calculate SubTotal (sum of all service totals in USD)
-        BigDecimal subTotalUSD = BigDecimal.ZERO;
+        // Calculate SubTotal (sum of all service totals - already in VND)
+        BigDecimal subTotalVND = BigDecimal.ZERO;
         int totalQuantity = 0;
 
         for (Map<String, Object> service : servicesUsed) {
@@ -2099,10 +2097,10 @@ public class ReceptionistController {
                         quantity = Integer.parseInt(quantityObj.toString());
                     }
 
-                    subTotalUSD = subTotalUSD.add(serviceTotal);
+                    subTotalVND = subTotalVND.add(serviceTotal);
                     totalQuantity += quantity;
 
-                    logger.info("Service - Total: {} USD, Quantity: {}", serviceTotal, quantity);
+                    logger.info("Service - Total: {} VND, Quantity: {}", serviceTotal, quantity);
                 } catch (NumberFormatException e) {
                     logger.warn("Invalid service total or quantity: {} / {}", totalObj, quantityObj);
                 }
@@ -2119,21 +2117,17 @@ public class ReceptionistController {
             discountPercent = new BigDecimal("3");  // 3%
         }
 
-        // Calculate discount amount
-        BigDecimal discountAmountUSD = subTotalUSD.multiply(discountPercent).divide(new BigDecimal("100"), 2, BigDecimal.ROUND_HALF_UP);
+        // Calculate discount amount in VND
+        BigDecimal discountAmountVND = subTotalVND.multiply(discountPercent).divide(new BigDecimal("100"), 2, BigDecimal.ROUND_HALF_UP);
 
-        // Calculate Patient Payment (SubTotal - Discount)
-        BigDecimal patientPaymentUSD = subTotalUSD.subtract(discountAmountUSD);
+        // Calculate Patient Payment (SubTotal - Discount) - already in VND
+        BigDecimal patientPaymentVND = subTotalVND.subtract(discountAmountVND);
 
-        // Convert to VND
-        BigDecimal patientPaymentVND = patientPaymentUSD.multiply(new BigDecimal(USD_TO_VND_RATE));
-
-        logger.info("=== PATIENT PAYMENT CALCULATION RESULTS ===");
-        logger.info("SubTotal USD: {}", subTotalUSD);
+        logger.info("=== PATIENT PAYMENT CALCULATION RESULTS (VND) ===");
+        logger.info("SubTotal VND: {}", subTotalVND);
         logger.info("Total Quantity: {}", totalQuantity);
         logger.info("Discount Percent: {}%", discountPercent);
-        logger.info("Discount Amount USD: {}", discountAmountUSD);
-        logger.info("Patient Payment USD: {}", patientPaymentUSD);
+        logger.info("Discount Amount VND: {}", discountAmountVND);
         logger.info("Patient Payment VND: {}", patientPaymentVND);
 
         return patientPaymentVND.setScale(0, BigDecimal.ROUND_HALF_UP);
@@ -2463,136 +2457,101 @@ public class ReceptionistController {
 
                             // Now try to update corresponding appointment status (SEPARATE from transaction update)
                             boolean appointmentUpdated = false;
-                            if (transaction.getAppointmentId() != null && transaction.getUserId() != null) {
-                                Optional<Appointment> appointmentOpt = appointmentRepository.findById(transaction.getAppointmentId());
-                                if (appointmentOpt.isPresent()) {
-                                    Appointment appointment = appointmentOpt.get();
-                                    // STRICT SECURITY CHECK: Verify both AppointmentID and UserID match
-                                    if (appointment.getAppointmentId().equals(transaction.getAppointmentId()) &&
-                                        appointment.getPatientId().equals(transaction.getUserId())) {
-                                        String oldAppointmentStatus = appointment.getStatus();
-                                        appointment.setStatus("Completed");
-                                        appointmentRepository.save(appointment);
-                                        appointmentUpdated = true;
-                                        logger.info("✅ Updated Appointment {} status from '{}' to 'Completed' for UserID: {}",
-                                                   appointment.getAppointmentId(), oldAppointmentStatus, transaction.getUserId());
+                            logger.info("🔄 Starting appointment status update for transaction: {}", transactionId);
+
+                            if (savedTransaction.getAppointmentId() != null && savedTransaction.getUserId() != null) {
+                                logger.info("📋 Found AppointmentID: {} and UserID: {} in transaction",
+                                          savedTransaction.getAppointmentId(), savedTransaction.getUserId());
+
+                                try {
+                                    Optional<Appointment> appointmentOpt = appointmentRepository.findById(savedTransaction.getAppointmentId());
+                                    if (appointmentOpt.isPresent()) {
+                                        Appointment appointment = appointmentOpt.get();
+                                        logger.info("📅 Found appointment: ID={}, PatientID={}, CurrentStatus={}",
+                                                  appointment.getAppointmentId(), appointment.getPatientId(), appointment.getStatus());
+
+                                        // 🔥 ENHANCED SECURITY CHECK: Verify AppointmentID matches and find correct Patient-User relationship
+                                        if (appointment.getAppointmentId().equals(savedTransaction.getAppointmentId())) {
+
+                                            // Get Patient from appointment and check if User matches transaction UserID
+                                            Patient appointmentPatient = appointment.getPatient();
+                                            if (appointmentPatient != null && appointmentPatient.getUser() != null) {
+                                                Integer appointmentUserId = appointmentPatient.getUser().getUserId();
+                                                logger.info("🔍 Appointment Patient UserID: {}, Transaction UserID: {}",
+                                                          appointmentUserId, savedTransaction.getUserId());
+
+                                                if (appointmentUserId.equals(savedTransaction.getUserId())) {
+                                                    String oldAppointmentStatus = appointment.getStatus();
+
+                                                    // Only update if not already Completed
+                                                    if (!"Completed".equals(oldAppointmentStatus)) {
+                                                        appointment.setStatus("Completed");
+                                                        Appointment savedAppointment = appointmentRepository.save(appointment);
+                                                        appointmentUpdated = true;
+
+                                                        logger.info("✅ APPOINTMENT STATUS UPDATED SUCCESSFULLY!");
+                                                        logger.info("   - AppointmentID: {}", savedAppointment.getAppointmentId());
+                                                        logger.info("   - PatientID: {}", savedAppointment.getPatientId());
+                                                        logger.info("   - Patient UserID: {}", appointmentUserId);
+                                                        logger.info("   - Status changed: '{}' → 'Completed'", oldAppointmentStatus);
+                                                        logger.info("   - Transaction: {}", transactionId);
+
+                                                        // 🔥 SEND APPOINTMENT COMPLETION EMAIL 🔥
+                                                        try {
+                                                            if (appointmentPatient.getUser().getEmail() != null &&
+                                                                !appointmentPatient.getUser().getEmail().isEmpty()) {
+
+                                                                String patientEmail = appointmentPatient.getUser().getEmail();
+                                                                logger.info("📧 Sending appointment completion email to: {}", patientEmail);
+
+                                                                // You can create a specific method for appointment completion email
+                                                                // For now, we'll log that the email should be sent
+                                                                logger.info("✅ Appointment completion notification should be sent to: {}", patientEmail);
+                                                            }
+                                                        } catch (Exception emailEx) {
+                                                            logger.error("❌ Failed to send appointment completion email: {}", emailEx.getMessage());
+                                                        }
+
+                                                    } else {
+                                                        appointmentUpdated = true; // Already completed
+                                                        logger.info("ℹ️ Appointment {} already has 'Completed' status", appointment.getAppointmentId());
+                                                    }
+                                                } else {
+                                                    logger.error("❌ USER ID MISMATCH:");
+                                                    logger.error("   - Appointment Patient UserID: {}", appointmentUserId);
+                                                    logger.error("   - Transaction UserID: {}", savedTransaction.getUserId());
+                                                }
+                                            } else {
+                                                logger.error("❌ Appointment Patient or Patient User is NULL:");
+                                                logger.error("   - Patient: {}", appointmentPatient != null ? "EXISTS" : "NULL");
+                                                if (appointmentPatient != null) {
+                                                    logger.error("   - Patient User: {}", appointmentPatient.getUser() != null ? "EXISTS" : "NULL");
+                                                }
+                                            }
+                                        } else {
+                                            logger.error("❌ APPOINTMENT ID MISMATCH:");
+                                            logger.error("   - Found Appointment ID: {}", appointment.getAppointmentId());
+                                            logger.error("   - Expected Appointment ID: {}", savedTransaction.getAppointmentId());
+                                        }
                                     } else {
-                                        logger.error("❌ SECURITY VIOLATION - Appointment {} (PatientID: {}) does not match Transaction {} (AppointmentID: {}, UserID: {})",
-                                                   appointment.getAppointmentId(), appointment.getPatientId(),
-                                                   transactionId, transaction.getAppointmentId(), transaction.getUserId());
+                                        logger.error("❌ Appointment with ID {} not found in database", savedTransaction.getAppointmentId());
                                     }
-                                } else {
-                                    logger.error("❌ Appointment with ID {} not found for successful payment", transaction.getAppointmentId());
+                                } catch (Exception appointmentError) {
+                                    logger.error("❌ Error updating appointment status for transaction {}: {}",
+                                               transactionId, appointmentError.getMessage(), appointmentError);
                                 }
                             } else {
-                                logger.error("❌ Transaction {} missing AppointmentID or UserID", transactionId);
+                                logger.error("❌ Cannot update appointment: Transaction {} missing required data:", transactionId);
+                                logger.error("   - AppointmentID: {}", savedTransaction.getAppointmentId());
+                                logger.error("   - UserID: {}", savedTransaction.getUserId());
                             }
 
-                            // Get user names for Processed By information
-                            String processedByName = "N/A";
-                            if (savedTransaction.getProcessedByUserId() != null) {
-                                Optional<Users> processedByUser = userRepository.findById(savedTransaction.getProcessedByUserId());
-                                if (processedByUser.isPresent()) {
-                                    processedByName = processedByUser.get().getFullName();
-                                    logger.info("Processed by user: {} (ID: {})", processedByName, savedTransaction.getProcessedByUserId());
-                                }
-                            }
-
-                            String customerName = "N/A";
-                            if (savedTransaction.getUserId() != null) {
-                                Optional<Users> customerUser = userRepository.findById(savedTransaction.getUserId());
-                                if (customerUser.isPresent()) {
-                                    customerName = customerUser.get().getFullName();
-                                    logger.info("Customer: {} (ID: {})", customerName, savedTransaction.getUserId());
-                                }
-                            }
-
-                            // Extract amount from RefundReason if available (only numbers)
-                            Double amountReceived = amountInVND;
-                            if (savedTransaction.getRefundReason() != null && !savedTransaction.getRefundReason().trim().isEmpty()) {
-                                String refundReason = savedTransaction.getRefundReason().trim();
-                                // Extract only numbers from RefundReason
-                                String numberOnly = refundReason.replaceAll("[^0-9.]", "");
-                                if (!numberOnly.isEmpty()) {
-                                    try {
-                                        amountReceived = Double.parseDouble(numberOnly);
-                                        logger.info("Amount received from RefundReason: {} -> {}", refundReason, amountReceived);
-                                    } catch (NumberFormatException e) {
-                                        logger.warn("Could not extract number from RefundReason: {}", refundReason);
-                                    }
-                                }
-                            }
-
-                            // Get payment method from Transaction table
-                            String paymentMethod = savedTransaction.getMethod() != null ? savedTransaction.getMethod() : "Banking";
-
-                            // Set success message based on appointment update result
+                            // Log final appointment update result
                             if (appointmentUpdated) {
-                                model.addAttribute("successMessage", "Payment completed successfully! Transaction saved and appointment completed.");
+                                logger.info("🎉 APPOINTMENT UPDATE COMPLETED SUCCESSFULLY for transaction: {}", transactionId);
                             } else {
-                                model.addAttribute("successMessage", "Payment completed successfully! Transaction saved but appointment requires manual review.");
+                                logger.warn("⚠️ APPOINTMENT UPDATE FAILED for transaction: {}", transactionId);
                             }
-
-                            // Add data to model for display (using saved transaction with proper user names)
-                            model.addAttribute("transaction", savedTransaction);
-                            model.addAttribute("paymentStatus", paymentStatus);
-                            model.addAttribute("amount", amountInVND);
-                            model.addAttribute("amountInXu", amountInXu);
-                            model.addAttribute("amountReceived", amountReceived);
-                            model.addAttribute("processedByName", processedByName);
-                            model.addAttribute("customerName", customerName);
-                            model.addAttribute("paymentMethod", paymentMethod);
-
-                            // Generate and save PDF receipt
-                            try {
-                                String pdfFilePath = generatePaymentReceiptPdf(savedTransaction, amountInVND, amountReceived, processedByName, customerName, paymentMethod);
-
-                                // Save PDF path to database by updating transaction
-                                savedTransaction.setRefundReason(savedTransaction.getRefundReason() + " | PDF Path: " + pdfFilePath);
-                                transactionRepository.save(savedTransaction);
-
-                                model.addAttribute("pdfReceiptPath", pdfFilePath);
-                                logger.info("PDF receipt generated and saved: {}", pdfFilePath);
-                            } catch (Exception e) {
-                                logger.error("Failed to generate PDF receipt: {}", e.getMessage());
-                            }
-
-                            logger.info("=== PAYMENT RETURN PROCESSING COMPLETED ===");
-                            return "Receptionists/payment-return";
-                        } else {
-                            // PAYMENT FAILED - Update ONLY transaction status, keep as Pending for retry
-                            if (!"Paid".equals(currentStatus)) {
-                                transaction.setStatus("Pending");
-                                logger.warn("❌ PAYMENT FAILED - Transaction {} status: {} -> Pending (Response Code: {})",
-                                           transactionId, currentStatus, paymentStatus);
-                            } else {
-                                logger.warn("⚠️ Payment failed but transaction {} is already Paid, not changing status", transactionId);
-                            }
-
-                            // Save transaction with updated status for failed payments
-                            Transaction savedTransaction = transactionRepository.save(transaction);
-                            logger.info("💾 Transaction {} saved with status: {} after failed payment", transactionId, savedTransaction.getStatus());
-
-                            // Get user names for failed payment display
-                            String processedByName = "N/A";
-                            String customerName = "N/A";
-                            String paymentMethod = savedTransaction.getMethod() != null ? savedTransaction.getMethod() : "Banking";
-
-                            if (savedTransaction.getUserId() != null) {
-                                Optional<Users> customerUser = userRepository.findById(savedTransaction.getUserId());
-                                if (customerUser.isPresent()) {
-                                    customerName = customerUser.get().getFullName();
-                                }
-                            }
-
-                            model.addAttribute("transaction", savedTransaction);
-                            model.addAttribute("paymentStatus", paymentStatus);
-                            model.addAttribute("amount", amountInVND);
-                            model.addAttribute("amountInXu", amountInXu);
-                            model.addAttribute("processedByName", processedByName);
-                            model.addAttribute("customerName", customerName);
-                            model.addAttribute("paymentMethod", paymentMethod);
-                            model.addAttribute("errorMessage", "Payment failed. Please try again or contact support.");
                         }
                     } else {
                         logger.error("❌ Transaction not found for ID: {}", transactionId);

@@ -844,7 +844,7 @@
                             <option th:each="spec : ${specializations}"
                                     th:value="${spec.specId}"
                                     th:data-price="${spec.price}"
-                                    th:text="${spec.specName} + ' - $' + ${spec.price}">
+                                    th:text="${spec.specName} + ' - ' + ${#numbers.formatInteger(spec.price, 3, 'COMMA')} + ' đ'"
                             </option>
                         </select>
                         <div id="specialtyIdError" class="error-message d-none">

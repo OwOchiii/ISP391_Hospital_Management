@@ -31,12 +31,9 @@ public class ReceptionistService {
 
     private static final Logger logger = LoggerFactory.getLogger(ReceptionistService.class);
 
-    // 🔥 USD TO VND CONVERSION CONSTANTS
-    private static final double USD_TO_VND_RATE = 24000.0; // 1 USD = 24,000 VND
-    private static final String CURRENCY_SYMBOL_USD = "$";
-    private static final String CURRENCY_SYMBOL_VND = "₫";
-    private static final String CURRENCY_CODE_USD = "USD";
+    // Currency constants - chỉ sử dụng VND
     private static final String CURRENCY_CODE_VND = "VND";
+    private static final String CURRENCY_SYMBOL_VND = "₫";
 
     private final UserRepository userRepository;
     private final AppointmentRepository appointmentRepository;
@@ -2314,6 +2311,7 @@ public class ReceptionistService {
     /**
      * Process payment for cash transactions
      * Updates transaction status from Pending to Paid and creates/updates receipt
+     * Chỉ sử dụng VND - không cần chuyển đổi tiền tệ
      */
     @Transactional
     public Map<String, Object> processPayment(Integer patientId, Integer appointmentId, String transactionIdStr,
@@ -2321,17 +2319,8 @@ public class ReceptionistService {
                                             Double amountReceived, String notes, Integer issuerId) {
         try {
             logger.info("=== PROCESSING PAYMENT ===");
-            logger.info("PatientId: {}, AppointmentId: {}, Method: {}, Amount: {}",
+            logger.info("PatientId: {}, AppointmentId: {}, Method: {}, Amount: {} VND",
                        patientId, appointmentId, method, totalAmount);
-
-            // 🔥 CONVERT USD TO VND FOR ALL AMOUNTS
-            Double totalAmountVND = convertUSDToVND(totalAmount);
-            Double amountReceivedVND = amountReceived != null ? convertUSDToVND(amountReceived) : null;
-
-            logger.info("💰 Currency conversion: {} USD -> {} VND", totalAmount, totalAmountVND);
-            if (amountReceivedVND != null) {
-                logger.info("💰 Amount received conversion: {} USD -> {} VND", amountReceived, amountReceivedVND);
-            }
 
             // Find the transaction by appointmentId and userId (more reliable than transactionId string)
             List<Transaction> transactions = transactionRepository.findByAppointmentId(appointmentId);
@@ -2379,7 +2368,7 @@ public class ReceptionistService {
 
             // Store payment details in refundReason field for cash payments
             if ("Cash".equals(method) && amountReceived != null) {
-                String paymentDetails = String.format("Amount Received: $%.2f | Notes: %s",
+                String paymentDetails = String.format("Amount Received: %.0f VND | Notes: %s",
                                                      amountReceived, notes != null ? notes : "Payment completed successfully");
                 transaction.setRefundReason(paymentDetails);
             } else {
@@ -2401,7 +2390,7 @@ public class ReceptionistService {
                 // Set required fields that cannot be NULL
                 receipt.setReceiptNumber("REC" + savedTransaction.getTransactionId() + "_" + System.currentTimeMillis());
 
-                // 🔥 FIX: Use "Digital" instead of "PDF" to match CHECK constraint
+                // Use "Digital" format to match CHECK constraint
                 receipt.setFormat("Digital"); // Valid values: 'Digital', 'Print', 'Both'
 
                 receipt.setPdfPath(""); // Empty string instead of NULL
@@ -2420,13 +2409,13 @@ public class ReceptionistService {
 
             // Save receipt
             Receipt savedReceipt = receiptRepository.save(receipt);
-            logger.info("✅ Receipt {} created/updated with amount: {}", savedReceipt.getReceiptId(), savedReceipt.getTotalAmount());
+            logger.info("✅ Receipt {} created/updated with amount: {} VND", savedReceipt.getReceiptId(), savedReceipt.getTotalAmount());
 
             // Update transaction with receipt reference
             savedTransaction.setReceipt(savedReceipt);
             transactionRepository.save(savedTransaction);
 
-            // Prepare response
+            // Prepare response - chỉ trả về VND
             Map<String, Object> response = new HashMap<>();
             response.put("success", true);
             response.put("transactionId", savedTransaction.getTransactionId());
@@ -2435,8 +2424,8 @@ public class ReceptionistService {
             response.put("method", method);
             response.put("timeOfPayment", savedTransaction.getTimeOfPayment().toString());
             response.put("processedBy", issuerId);
-            response.put("totalAmountVND", totalAmountVND);
-            response.put("amountReceivedVND", amountReceivedVND);
+            response.put("totalAmount", totalAmount);
+            response.put("amountReceived", amountReceived);
             response.put("currency", CURRENCY_CODE_VND);
 
             logger.info("✅ Payment processing completed successfully");
@@ -2450,66 +2439,7 @@ public class ReceptionistService {
 
     // 🔥 USD TO VND CONVERSION HELPER METHODS
 
-    /**
-     * Convert USD amount to VND
-     */
-    public Double convertUSDToVND(Double usdAmount) {
-        if (usdAmount == null || usdAmount <= 0) {
-            return 0.0;
-        }
-        return usdAmount * USD_TO_VND_RATE;
-    }
 
-    /**
-     * Convert VND amount to USD
-     */
-    public Double convertVNDToUSD(Double vndAmount) {
-        if (vndAmount == null || vndAmount <= 0) {
-            return 0.0;
-        }
-        return vndAmount / USD_TO_VND_RATE;
-    }
-
-    /**
-     * Format amount with appropriate currency symbol
-     */
-    public String formatCurrency(Double amount, String currencyCode) {
-        if (amount == null) {
-            return "0";
-        }
-
-        String symbol = CURRENCY_CODE_VND.equals(currencyCode) ? CURRENCY_SYMBOL_VND : CURRENCY_SYMBOL_USD;
-        return String.format("%s%.0f", symbol, amount);
-    }
-
-    /**
-     * Get services used by a patient with VND pricing
-     */
-    public List<Map<String, Object>> getServicesUsedByPatientInVND(Integer patientId, Appointment appointment) {
-        List<Map<String, Object>> services = getServicesUsedByPatient(patientId, appointment);
-
-        // Convert all price-related fields to VND
-        for (Map<String, Object> service : services) {
-            Object priceUSD = service.get("price");
-            Object totalUSD = service.get("total");
-
-            if (priceUSD != null) {
-                Double priceVND = convertUSDToVND(((Number) priceUSD).doubleValue());
-                service.put("price", priceVND);
-                service.put("priceVND", priceVND);
-                service.put("priceUSD", ((Number) priceUSD).doubleValue());
-            }
-
-            if (totalUSD != null) {
-                Double totalVND = convertUSDToVND(((Number) totalUSD).doubleValue());
-                service.put("total", totalVND);
-                service.put("totalVND", totalVND);
-                service.put("totalUSD", ((Number) totalUSD).doubleValue());
-            }
-        }
-
-        return services;
-    }
 
     /**
      * Normalize payment method từ database để đảm bảo hiển thị chính xác
@@ -2536,9 +2466,10 @@ public class ReceptionistService {
             return 0;
         }
     }
-
-    // Normalize payment method từ database để đảm bảo hiển thị chính xác
-    // Xử lý tất cả các payment methods có thể có trong database
+    /**
+     * Normalize payment method từ database để đảm bảo hiển thị chính xác
+     * Xử lý tất cả các payment methods có thể có trong database
+     */
     private String normalizePaymentMethod(String transactionMethod) {
         if (transactionMethod == null || transactionMethod.trim().isEmpty()) {
             logger.warn("Transaction.Method is null/empty, using fallback: Cash");

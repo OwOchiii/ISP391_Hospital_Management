@@ -192,9 +192,9 @@
                     <th class="py-3 px-4 text-left">Service Name</th>
                     <th class="py-3 px-4 text-left">Symptom</th>
                     <th class="py-3 px-4 text-left">Quantity</th>
-                    <th class="py-3 px-4 text-left">Price ($)</th>
+                    <th class="py-3 px-4 text-left">Price (₫)</th>
                     <th class="py-3 px-4 text-left">Tax (%)</th>
-                    <th class="py-3 px-4 text-left">Total ($)</th>
+                    <th class="py-3 px-4 text-left">Total (₫)</th>
                     <th class="py-3 px-4 text-left">Date</th>
                 </tr>
                 </thead>
@@ -214,7 +214,7 @@
                     <!-- Tax percentage (10% standard) -->
                     <td class="py-3 px-4" th:text="${service.taxPercent}">10</td>
                     <!-- Total = Price * Quantity * (1 + Tax%) -->
-                    <td class="py-3 px-4 font-semibold" th:text="${#numbers.formatDecimal(service.total, 0, 0)}">330,000</td>
+                    <td class="py-3 px-4 font-semibold" th:text="${#numbers.formatInteger(service.total, 3, 'COMMA')} + ' VND'">330,000 VND</td>
                     <!-- Service date -->
                     <td class="py-3 px-4" th:text="${service.date}">2025-07-15</td>
                 </tr>
@@ -242,10 +242,10 @@
             <div>
                 <p><span class="font-semibold text-gray-700">Transaction ID:</span> <span th:text="${invoiceData.transactionId}">TRX20250529001</span></p>
                 <p><span class="font-semibold text-gray-700">Receipt Number:</span> <span th:text="${invoiceData.receiptNumber}">REC20250529001</span></p>
-                <p><span class="font-semibold text-gray-700">Total Amount (incl. Tax):</span> <span id="calculatedTotalAmount">0</span> $</p>
-                <p><span class="font-semibold text-gray-700">Tax Amount:</span> <span id="calculatedTaxAmount">0</span> $</p>
-                <p><span class="font-semibold text-gray-700">Discount Amount:</span> <span id="calculatedDiscountAmount">0</span> $</p>
-                <p><span class="font-semibold text-gray-700">Patient Payment:</span> <span id="calculatedPatientPayment">0</span> $ (<span id="calculatedPatientPaymentVND">0</span> ₫)</p>
+                <p><span class="font-semibold text-gray-700">Total Amount (incl. Tax):</span> <span id="calculatedTotalAmount">0</span> ₫</p>
+                <p><span class="font-semibold text-gray-700">Tax Amount:</span> <span id="calculatedTaxAmount">0</span> ₫</p>
+                <p><span class="font-semibold text-gray-700">Discount Amount:</span> <span id="calculatedDiscountAmount">0</span> ₫</p>
+                <p><span class="font-semibold text-gray-700">Patient Payment:</span> <span id="calculatedPatientPayment">0</span> ₫</p>
                 <p><span class="font-semibold text-gray-700">Status:</span> <span id="transactionStatus" class="status-pending">Pending</span></p>
             </div>
             <div>
@@ -257,9 +257,9 @@
                     <input type="hidden" id="paymentMethod" value="Cash">
                 </div>
                 <div id="amountReceivedContainer" class="mb-4">
-                    <label class="block text-sm font-semibold text-gray-700 mb-2">Amount Received ($)</label>
-                    <input id="amountReceived" type="text" class="input-focus block w-full border-gray-300 rounded-lg shadow-sm focus:ring-blue-500 focus:border-blue-500 text-sm py-3" placeholder="Enter amount received">
-                    <p id="changeReturned" class="mt-3 text-sm text-gray-600">Change Returned: 0 $</p>
+                    <label class="block text-sm font-semibold text-gray-700 mb-2">Amount Received (₫)</label>
+                    <input id="amountReceived" type="text" class="input-focus block w-full border-gray-300 rounded-lg shadow-sm focus:ring-blue-500 focus:border-blue-500 text-sm py-3" placeholder="">
+                    <p id="changeReturned" class="mt-3 text-sm text-gray-600">Change Returned: 0 ₫</p>
                     <p id="amountReceivedError" class="mt-2 text-sm text-red-600 hidden">Amount must be at least equal to Patient Payment</p>
                 </div>
                 <div>
@@ -311,7 +311,7 @@
     <div class="modal-content">
         <h3 class="text-lg font-semibold text-gray-800 mb-4">Scan to Pay via Banking</h3>
         <div class="qr-placeholder">[Simulated QR Code]</div>
-        <p class="mt-4 text-sm text-gray-600">Amount: <span th:text="${#numbers.formatDecimal(invoiceData.totalAmount * 0.2, 0, 0)}">220,000</span> $</p>
+        <p class="mt-4 text-sm text-gray-600">Amount: <span th:text="${#numbers.formatDecimal(invoiceData.totalAmount * 0.2, 0, 0)}">220,000</span> ₫</p>
         <p class="text-sm text-gray-600">Receipt: <span th:text="${invoiceData.receiptNumber}">REC20250529001</span></p>
         <button id="simulatePayment" class="mt-6 bg-blue-600 text-white px-6 py-2.5 rounded-lg hover:bg-blue-700 transition duration-300 text-sm font-semibold">
             Simulate Payment
@@ -332,11 +332,11 @@
             <h3 class="text-xl font-semibold text-gray-800 mb-4">Confirm Payment</h3>
             <p class="text-gray-600 mb-2">Are you sure you want to process this payment?</p>
             <div id="confirmPaymentDetails" class="bg-gray-50 p-4 rounded-lg mb-6 text-left">
-                <p class="text-sm"><span class="font-semibold">Amount:</span> <span id="confirmAmount"></span> $</p>
+                <p class="text-sm"><span class="font-semibold">Amount:</span> <span id="confirmAmount"></span> ₫</p>
                 <p class="text-sm"><span class="font-semibold">Method:</span> <span id="confirmMethod"></span></p>
                 <p class="text-sm" id="confirmCashDetails" style="display: none;">
-                    <span class="font-semibold">Amount Received:</span> <span id="confirmAmountReceived"></span> $<br>
-                    <span class="font-semibold">Change:</span> <span id="confirmChange"></span> $
+                    <span class="font-semibold">Amount Received:</span> <span id="confirmAmountReceived"></span> ₫<br>
+                    <span class="font-semibold">Change:</span> <span id="confirmChange"></span> ₫
                 </p>
             </div>
             <div class="flex gap-4 justify-center">
@@ -394,17 +394,9 @@
     const urlReceiptId = urlParams.get('receiptId');
     const urlAppointmentId = urlParams.get('appointmentId');
 
-    // 🔥 USD TO VND CONVERSION CONSTANTS
-    const USD_TO_VND_RATE = 24000; // 1 USD = 24,000 VND (có thể cập nhật từ API)
-
-    // 🔥 CURRENCY CONVERSION HELPER FUNCTIONS
-    function convertUSDToVND(usdAmount) {
-        return usdAmount * USD_TO_VND_RATE;
-    }
-
-    function formatCurrencyVND(amount) {
-        const vndAmount = convertUSDToVND(amount);
-        return new Intl.NumberFormat('vi-VN').format(vndAmount);
+    // 🔥 VND FORMATTING AND CALCULATION FUNCTIONS
+    function formatVND(amount) {
+        return new Intl.NumberFormat('vi-VN').format(amount);
     }
 
     // Lấy dữ liệu thực từ Thymeleaf template thay vì hardcode
@@ -516,7 +508,6 @@
     const userId = invoiceData.userId;
     const issuerId = invoiceData.issuerId;
 
-    // Remove old payment method change listeners since payment method is now fixed to Cash
     // Real-time validation and change calculation for Amount Received
     amountReceivedInput.addEventListener('input', () => {
         const amountReceived = parseFloat(amountReceivedInput.value) || 0;
@@ -540,7 +531,7 @@
 
         // Always calculate and display change (even if negative for visual feedback)
         const change = amountReceived - patientPayment;
-        changeReturnedDisplay.textContent = `Change Returned: ${change >= 0 ? change.toLocaleString('en-US') : 0} $`;
+        changeReturnedDisplay.textContent = `Change Returned: ${change >= 0 ? formatVND(change) : 0} ₫`;
     });
 
     function showSuccessPopup(callback) {
@@ -558,11 +549,11 @@
         processedByDisplay.textContent = data.processedByName || /*[[${staffInfo.fullName}]]*/ 'Staff Member';
         timeOfPaymentDisplay.textContent = data.timeOfPayment || new Date().toLocaleString('en-GB');
 
-        // Set amount received if provided (keep Amount Received always visible)
+        // Set amount received if provided (keep Amount Received always visible) - hiển thị VND
         if (data.amountReceived) {
             amountReceivedInput.value = data.amountReceived;
             const change = parseFloat(data.amountReceived.replace(/,/g, '')) - (window.calculatedPatientPayment || 0);
-            changeReturnedDisplay.textContent = `Change Returned: ${change >= 0 ? change.toLocaleString('en-US') : 0} $`;
+            changeReturnedDisplay.textContent = `Change Returned: ${change >= 0 ? formatVND(change) : 0} ₫`;
         }
     }
 
@@ -753,7 +744,7 @@
 
         // Check if amount is sufficient
         if (amountReceived < patientPayment) {
-            showValidationError('Amount must be at least equal to Patient Payment', errorElement);
+            showValidationError('The amount received must be greater than or equal to the amount of money the patient needs to pay', errorElement);
             return false;
         }
 
@@ -769,11 +760,44 @@
         amountReceivedInput.focus();
     }
 
+    // Function để cập nhật các giá trị hiển thị - CẬP NHẬT HOÀN TOÀN CHO VND
+    function updateDisplayValues(subTotal, taxAmount, discountAmount, patientPayment) {
+        // SubTotal - hiển thị VND
+        const subTotalElement = document.getElementById('servicesSubTotal');
+        if (subTotalElement) {
+            subTotalElement.textContent = formatVND(subTotal) + ' ₫';
+        }
+
+        // Total Amount (giống SubTotal) - hiển thị VND
+        const totalAmountElement = document.getElementById('calculatedTotalAmount');
+        if (totalAmountElement) {
+            totalAmountElement.textContent = formatVND(subTotal);
+        }
+
+        // Tax Amount - hiển thị VND
+        const taxAmountElement = document.getElementById('calculatedTaxAmount');
+        if (taxAmountElement) {
+            taxAmountElement.textContent = formatVND(taxAmount);
+        }
+
+        // Discount Amount - hiển thị VND
+        const discountAmountElement = document.getElementById('calculatedDiscountAmount');
+        if (discountAmountElement) {
+            discountAmountElement.textContent = formatVND(discountAmount);
+        }
+
+        // Patient Payment - hiển thị VND
+        const patientPaymentElement = document.getElementById('calculatedPatientPayment');
+        if (patientPaymentElement) {
+            patientPaymentElement.textContent = formatVND(patientPayment);
+        }
+    }
+
     function updateConfirmationModal(paymentData) {
-        // Update amount
+        // Update amount - hiển thị VND
         const confirmAmountElement = document.getElementById('confirmAmount');
         if (confirmAmountElement) {
-            confirmAmountElement.textContent = paymentData.patientPayment.toLocaleString('en-US');
+            confirmAmountElement.textContent = formatVND(paymentData.patientPayment);
         }
 
         // Update payment method
@@ -782,23 +806,50 @@
             confirmMethodElement.textContent = paymentData.method;
         }
 
-        // Show cash-specific details
+        // Show cash-specific details - hiển thị VND
         const confirmCashDetailsElement = document.getElementById('confirmCashDetails');
         if (paymentData.method === 'Cash' && confirmCashDetailsElement) {
             confirmCashDetailsElement.style.display = 'block';
 
             const confirmAmountReceivedElement = document.getElementById('confirmAmountReceived');
             if (confirmAmountReceivedElement) {
-                confirmAmountReceivedElement.textContent = paymentData.amountReceived.toLocaleString('en-US');
+                confirmAmountReceivedElement.textContent = formatVND(paymentData.amountReceived);
             }
 
             const confirmChangeElement = document.getElementById('confirmChange');
             if (confirmChangeElement) {
-                confirmChangeElement.textContent = paymentData.change.toLocaleString('en-US');
+                confirmChangeElement.textContent = formatVND(paymentData.change);
             }
         } else if (confirmCashDetailsElement) {
             confirmCashDetailsElement.style.display = 'none';
         }
+    }
+
+    function updateUIAfterPayment(paymentData) {
+        // Update transaction status
+        if (transactionStatusDisplay) {
+            transactionStatusDisplay.textContent = 'Paid';
+            transactionStatusDisplay.className = 'text-green-600 font-semibold';
+        }
+
+        // Update time of payment
+        if (timeOfPaymentDisplay) {
+            timeOfPaymentDisplay.textContent = new Date().toLocaleString('en-GB');
+        }
+
+        // Update amount received and change - hiển thị VND
+        if (paymentData.method === 'Cash') {
+            amountReceivedInput.value = paymentData.amountReceived;
+            changeReturnedDisplay.textContent = `Change Returned: ${formatVND(paymentData.change)} ₫`;
+        }
+
+        // Update notes
+        receiptNotesInput.value = paymentData.receipt.notes;
+
+        // Disable payment button
+        paymentButton.disabled = true;
+        paymentButton.textContent = 'Payment Completed';
+        paymentButton.className = 'bg-gray-400 text-white px-8 py-3 rounded-lg cursor-not-allowed flex items-center gap-2 text-sm font-semibold';
     }
 
     function buildPaymentRequest(paymentData) {
@@ -961,9 +1012,9 @@
             errorElement.classList.add('hidden');
             amountReceivedInput.classList.remove('border-red-500');
 
-            // Tính change với Patient Payment thực tế
+            // Tính change với Patient Payment thực tế - hiển thị VND
             const change = amountReceived - patientPayment;
-            changeReturnedDisplay.textContent = `Change Returned: ${change >= 0 ? change.toLocaleString('en-US') : 0} $`;
+            changeReturnedDisplay.textContent = `Change Returned: ${change >= 0 ? formatVND(change) : 0} ₫`;
             return true;
         }
     }
@@ -1063,7 +1114,7 @@
         // SubTotal
         const subTotalElement = document.getElementById('servicesSubTotal');
         if (subTotalElement) {
-            subTotalElement.textContent = subTotal.toLocaleString('en-US') + ' $';
+            subTotalElement.textContent = subTotal.toLocaleString('en-US') + '';
         }
 
         // Total Amount (giống SubTotal)
@@ -1101,12 +1152,12 @@
     amountReceivedInput.addEventListener('input', validateCashPayment);
     receiptNotesInput.addEventListener('input', updateCharacterCount);
 
-    // Cập nhật payment method change handler với null checks
+    // Cập nhật payment method change handler với VND
     paymentMethodSelect.addEventListener('change', () => {
         amountReceivedContainer.classList.toggle('hidden', paymentMethodSelect.value !== 'Cash');
         if (paymentMethodSelect.value === 'Cash') {
             amountReceivedInput.value = '';
-            changeReturnedDisplay.textContent = 'Change Returned: 0 $';
+            changeReturnedDisplay.textContent = 'Change Returned: 0 ₫';
             // Check if element exists before using it
             const validationError = document.getElementById('paymentValidationError');
             if (validationError) {
