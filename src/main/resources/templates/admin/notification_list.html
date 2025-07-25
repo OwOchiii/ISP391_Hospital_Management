@@ -851,6 +851,7 @@
       </div>
       <div class="nav-item">
         <form th:action="@{/auth/logout}" method="post">
+          <input type="hidden" name="adminId" th:value="${adminId}" />
           <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}" />
           <button type="submit" class="nav-link w-100 text-start border-0 bg-transparent">
             <i class="bi bi-box-arrow-right"></i>
@@ -927,6 +928,7 @@
 
     <form th:action="@{/admin/notifications}" method="get" class="row g-2 align-items-end">
       <!-- copy/điền các input search, select loại, checkbox isRead, fromDate, toDate như ở mục 3 & 4 -->
+      <input type="hidden" name="adminId" th:value="${adminId}" />
       <div class="col-auto">
         <label class="form-label">Search</label>
         <input type="text" name="search" placeholder="Enter message..." class="form-control" th:value="${search}">
@@ -953,7 +955,7 @@
       </div>
       <div class="col-auto">
         <button type="submit" class="btn btn-primary">Filter</button>
-        <a th:href="@{/admin/notifications}"
+        <a th:href="@{/admin/notifications(adminId=${adminId})}"
            class="btn btn-outline-secondary">
           <i class="bi bi-arrow-counterclockwise"></i> Reset
         </a>
@@ -1011,7 +1013,8 @@
         <li class="page-item" th:classappend="${pageData.first} ? 'disabled'">
           <a class="page-link"
              th:href="@{/admin/notifications(
-           page=${pageData.number-1},
+             adminId=${adminId},
+           page=${pageData.number - 1},
            search=${search},
            type=${typeFilter},
            fromDate=${#temporals.format(fromDate,'yyyy-MM-dd''T''HH:mm')},
@@ -1027,6 +1030,7 @@
             th:classappend="${i == pageData.number} ? 'active'">
           <a class="page-link"
              th:href="@{/admin/notifications(
+             adminId=${adminId},
            page=${i},
            search=${search},
            type=${typeFilter},
@@ -1040,6 +1044,7 @@
         <li class="page-item" th:classappend="${pageData.last} ? 'disabled'">
           <a class="page-link"
              th:href="@{/admin/notifications(
+             adminId=${adminId},
            page=${pageData.number+1},
            search=${search},
            type=${typeFilter},
@@ -1084,6 +1089,7 @@
       </div>
       <div class="modal-body">
         <form id="notificationForm" method="post" onsubmit="return validateNotificationForm()">
+          <input type="hidden" name="adminId" th:value="${adminId}" />
           <!-- ► START Send‑To selector -->
           <div class="form-group mb-3">
             <label class="form-label">Send To</label>

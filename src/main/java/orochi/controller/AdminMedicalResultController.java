@@ -31,9 +31,13 @@ public class AdminMedicalResultController {
             @RequestParam(required = false) String doctorName,
             @RequestParam(required = false) String patientName,
             @RequestParam(required = false)
-            @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime dateFrom,
+            @DateTimeFormat(pattern = "yyyy-MM-dd'T'HH:mm")
+            LocalDateTime dateFrom,
+
             @RequestParam(required = false)
-            @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime dateTo,
+            @DateTimeFormat(pattern = "yyyy-MM-dd'T'HH:mm")
+            LocalDateTime dateTo,
+
             @RequestParam Integer adminId,
             @PageableDefault(size = 10, sort = "resultDate") Pageable pageable,
             Model model
