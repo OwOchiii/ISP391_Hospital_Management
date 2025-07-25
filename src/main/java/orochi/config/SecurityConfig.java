@@ -11,8 +11,10 @@ import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.AuthenticationSuccessHandler;
+import org.springframework.security.web.authentication.AuthenticationFailureHandler;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 import orochi.security.CaptchaVerificationFilter;
+import orochi.security.CustomAuthenticationFailureHandler;
 import orochi.service.CaptchaService;
 
 @Configuration
@@ -31,6 +33,11 @@ public class SecurityConfig {
     @Bean
     public AuthenticationSuccessHandler authenticationSuccessHandler() {
         return new CustomAuthenticationSuccessHandler();
+    }
+
+    @Bean
+    public AuthenticationFailureHandler authenticationFailureHandler() {
+        return new CustomAuthenticationFailureHandler();
     }
 
     @Bean
@@ -62,7 +69,7 @@ public class SecurityConfig {
                                 .loginPage("/auth/login")
                                 .loginProcessingUrl("/auth/process-login")
                                 .successHandler(authenticationSuccessHandler())
-                                .failureUrl("/auth/login?error=true")
+                                .failureHandler(authenticationFailureHandler())
                                 .permitAll()
                 )
                 .logout(logout ->

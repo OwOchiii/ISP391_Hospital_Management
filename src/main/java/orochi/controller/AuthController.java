@@ -41,14 +41,64 @@ public class AuthController {
     @GetMapping("/login")
     public String login(
             @RequestParam(value = "error", required = false) String error,
+            @RequestParam(value = "errorType", required = false) String errorType,
             @RequestParam(value = "logout", required = false) String logout,
             @RequestParam(value = "captchaError", required = false) String captchaError,
             HttpServletRequest request,
             Model model) {
 
         if (error != null) {
-            model.addAttribute("errorMessage", "Invalid email or password");
-            logger.warn("Failed login attempt");
+            // Handle specific error types from our custom failure handler
+            if (errorType != null) {
+                switch (errorType) {
+                    case "account_locked":
+                        model.addAttribute("errorMessage", "Your account is currently locked. Please contact your administrator for support.");
+                        logger.warn("Login attempt for locked account");
+                        break;
+                    case "credentials_expired":
+                        model.addAttribute("errorMessage", "Your password has expired. Please contact your administrator for support.");
+                        logger.warn("Login attempt with expired credentials");
+                        break;
+                    case "bad_credentials":
+                        model.addAttribute("errorMessage", "Invalid email or password");
+                        logger.warn("Failed login attempt - bad credentials");
+                        break;
+                    case "authentication_failed":
+                    default:
+                        model.addAttribute("errorMessage", "Invalid email or password");
+                        logger.warn("Failed login attempt - authentication failed");
+                        break;
+                }
+            } else {
+                // Fallback to original logic for backwards compatibility
+                Exception exception = (Exception) request.getSession().getAttribute("SPRING_SECURITY_LAST_EXCEPTION");
+                if (exception != null) {
+                    String exceptionMessage = exception.getMessage();
+                    String exceptionClass = exception.getClass().getSimpleName();
+
+                    logger.info("Authentication exception: {} - {}", exceptionClass, exceptionMessage);
+
+                    // Check for various account locked scenarios
+                    if (exceptionMessage != null && exceptionMessage.contains("Account is locked")) {
+                        model.addAttribute("errorMessage", "Your account is currently locked. Please contact your administrator for support.");
+                        logger.warn("Login attempt for locked account");
+                    } else if ("AccountExpiredException".equals(exceptionClass) ||
+                              "LockedException".equals(exceptionClass) ||
+                              "DisabledException".equals(exceptionClass)) {
+                        model.addAttribute("errorMessage", "Your account is currently locked. Please contact your administrator for support.");
+                        logger.warn("Login attempt for locked account - Exception type: {}", exceptionClass);
+                    } else if ("CredentialsExpiredException".equals(exceptionClass)) {
+                        model.addAttribute("errorMessage", "Your password has expired. Please contact your administrator for support.");
+                        logger.warn("Login attempt with expired credentials");
+                    } else {
+                        model.addAttribute("errorMessage", "Invalid email or password");
+                        logger.warn("Failed login attempt - Exception: {} - {}", exceptionClass, exceptionMessage);
+                    }
+                } else {
+                    model.addAttribute("errorMessage", "Invalid email or password");
+                    logger.warn("Failed login attempt - No exception details available");
+                }
+            }
         }
 
         if (logout != null) {
