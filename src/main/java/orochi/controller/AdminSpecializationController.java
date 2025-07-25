@@ -14,6 +14,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.List;
+import orochi.model.Doctor;
+import orochi.service.impl.DoctorServiceImpl;
 
 @Controller
 @RequestMapping("/admin/specializations")
@@ -23,6 +25,9 @@ public class AdminSpecializationController {
 
     @Autowired
     private SpecializationServiceImpl specializationService;
+
+    @Autowired
+    private DoctorServiceImpl doctorService;
 
     @GetMapping
     public String showSpecializations(
@@ -161,5 +166,74 @@ public class AdminSpecializationController {
             logger.error("Error deleting specialization: {}", e.getMessage()); // ADDED: Log error
         }
         return "redirect:/admin/specializations?adminId=" + adminId;
+    }
+
+    @GetMapping("/details/{specId}")
+    public String showSpecializationDetails(
+            @PathVariable("specId") Integer specId,
+            @RequestParam("adminId") Integer adminId,
+            @RequestParam(value="page", defaultValue="0") int page,
+            @RequestParam(value="size", defaultValue="6") int size,
+            @RequestParam(value="doctorSearch", required=false) String doctorSearch,
+            Model model) {
+
+        Specialization specialization = specializationService.getSpecializationById(specId);
+        if (specialization == null) {
+            logger.warn("Specialization not found with ID: {}", specId);
+            return "redirect:/admin/specializations?adminId=" + adminId;
+        }
+
+        // Get doctors in this specialization with pagination
+        Page<Doctor> doctorsPage = specializationService.getDoctorsBySpecializationId(
+                specId, page, size, doctorSearch);
+
+        // Get available doctors (not in this specialization)
+        List<Doctor> availableDoctors = specializationService.getAvailableDoctorsForSpecialization(specId);
+
+        model.addAttribute("specialization", specialization);
+        model.addAttribute("doctorsPage", doctorsPage);
+        model.addAttribute("availableDoctors", availableDoctors);
+        model.addAttribute("adminId", adminId);
+        model.addAttribute("doctorSearch", doctorSearch);
+
+        return "admin/specialization/details";
+    }
+
+    @PostMapping("/addDoctor")
+    public String addDoctorToSpecialization(
+            @RequestParam("adminId") Integer adminId,
+            @RequestParam("specId") Integer specId,
+            @RequestParam("doctorId") Integer doctorId,
+            Model model) {
+
+        try {
+            specializationService.addDoctorToSpecialization(doctorId, specId);
+            logger.info("Successfully added doctor {} to specialization {}", doctorId, specId);
+            model.addAttribute("successMessage", "Doctor successfully added to specialization.");
+        } catch (Exception e) {
+            logger.error("Error adding doctor to specialization: {}", e.getMessage());
+            model.addAttribute("errorMessage", "Cannot add doctor to specialization: " + e.getMessage());
+        }
+
+        return "redirect:/admin/specializations/details/" + specId + "?adminId=" + adminId;
+    }
+
+    @PostMapping("/removeDoctor")
+    public String removeDoctorFromSpecialization(
+            @RequestParam("adminId") Integer adminId,
+            @RequestParam("specId") Integer specId,
+            @RequestParam("doctorId") Integer doctorId,
+            Model model) {
+
+        try {
+            specializationService.removeDoctorFromSpecialization(doctorId, specId);
+            logger.info("Successfully removed doctor {} from specialization {}", doctorId, specId);
+            model.addAttribute("successMessage", "Doctor successfully removed from specialization.");
+        } catch (Exception e) {
+            logger.error("Error removing doctor from specialization: {}", e.getMessage());
+            model.addAttribute("errorMessage", "Cannot remove doctor from specialization: " + e.getMessage());
+        }
+
+        return "redirect:/admin/specializations/details/" + specId + "?adminId=" + adminId;
     }
 }
