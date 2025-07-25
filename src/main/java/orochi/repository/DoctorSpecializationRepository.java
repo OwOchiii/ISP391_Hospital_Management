@@ -17,4 +17,12 @@ public interface DoctorSpecializationRepository extends JpaRepository<DoctorSpec
     @Modifying
     @Query("DELETE FROM DoctorSpecialization ds WHERE ds.specialization.specId = :specId")
     void deleteBySpecId(@Param("specId") Integer specId);
+
+    // Fix: Use explicit query instead of method name convention
+    @Query("SELECT CASE WHEN COUNT(ds) > 0 THEN true ELSE false END FROM DoctorSpecialization ds WHERE ds.doctor.doctorId = :doctorId AND ds.specialization.specId = :specId")
+    boolean existsByDoctorIdAndSpecId(@Param("doctorId") Integer doctorId, @Param("specId") Integer specId);
+
+    @Modifying
+    @Query("DELETE FROM DoctorSpecialization ds WHERE ds.doctor.doctorId = :doctorId AND ds.specialization.specId = :specId")
+    void deleteByDoctorIdAndSpecId(@Param("doctorId") Integer doctorId, @Param("specId") Integer specId);
 }
