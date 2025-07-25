@@ -1,5 +1,6 @@
 package orochi.dto;
 
+import com.fasterxml.jackson.annotation.JsonFormat;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.NotNull;
@@ -27,6 +28,7 @@ public class AppointmentFormDTO {
 
     @NotNull(message = "Appointment date is required")
     @DateTimeFormat(pattern = "yyyy-MM-dd")
+    @JsonFormat(pattern = "yyyy-MM-dd")
     private LocalDate appointmentDate;
 
     @NotEmpty(message = "Appointment time is required")

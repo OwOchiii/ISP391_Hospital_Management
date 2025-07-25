@@ -1851,23 +1851,34 @@
             mainContent.classList.remove('loading');
 
             if (result.success) {
-                // Show success message
+                // Get display values for success message
+                const displayDate = document.getElementById('appointmentDate').value; // MM/DD/YYYY format
+                const displayTime = formatTimeForDisplay(appointmentData.appointmentTime.substr(0, 5));
+                const patientName = document.getElementById('fullName').value;
+
+                // Show enhanced success message with date, time and patient info
                 const successMessage = document.getElementById('successMessage');
                 successMessage.classList.remove('d-none');
                 successMessage.innerHTML = `
                     <i class="bi bi-check-circle-fill"></i>
-                    <span>Appointment booked successfully for ${appointmentData.appointmentDate} at
-                    ${formatTimeForDisplay(appointmentData.appointmentTime.substr(0, 5))}!</span>
+                    <span><strong>Appointment booked successfully!</strong><br>
+                    Patient: <strong>${patientName}</strong><br>
+                    Date: <strong>${displayDate}</strong> at <strong>${displayTime}</strong></span>
                 `;
 
-                // Comprehensive form reset
-                resetAppointmentForm();
+                // Reset search section and appointment form fields
+                resetSearchAndAppointmentForm();
 
-                // Scroll to top
+                // Scroll to top to show success message
                 window.scrollTo({
                     top: 0,
                     behavior: 'smooth'
                 });
+
+                // Auto-hide success message after 8 seconds
+                setTimeout(() => {
+                    successMessage.classList.add('d-none');
+                }, 8000);
             } else {
                 alert('Error booking appointment: ' + (result.message || 'Unknown error'));
             }
@@ -1990,7 +2001,7 @@
                         const doctor = doctors[0];
                         const option = document.createElement('option');
                         option.value = doctor.doctorId;
-                        option.text = `Dr. ${doctor.fullName}`;
+                        option.text = ` ${doctor.fullName}`;
                         option.setAttribute('data-bio', doctor.bioDescription);
                         option.setAttribute('data-name', doctor.fullName);
                         option.selected = true; // Auto-select the doctor
@@ -2794,6 +2805,113 @@
             dateInput.addEventListener('change', hideScheduleOnChange);
         }
     });
+
+    // Function to reset the entire appointment form
+    function resetAppointmentForm() {
+        // Clear all input fields and select elements
+        document.getElementById('appointmentForm').reset();
+
+        // Reset specialty dropdown to default state
+        const specialtySelect = document.getElementById('specialtyId');
+        if (specialtySelect) {
+            specialtySelect.value = ''; // Reset to default "Select Medical Specialty"
+        }
+
+        // Clear doctor and room selections
+        const doctorSelect = document.getElementById('doctorId');
+        const roomSelect = document.getElementById('roomId');
+        doctorSelect.innerHTML = '<option value="">Choose a Doctor</option>';
+        roomSelect.innerHTML = '<option value="">Choose a Room</option>';
+
+        // Clear appointment time
+        document.getElementById('appointmentTime').value = '';
+
+        // Hide doctor and room info displays
+        document.getElementById('doctorInfoDisplay').classList.remove('show');
+        const roomInfoDisplay = document.getElementById('roomInfoDisplay');
+        if (roomInfoDisplay) {
+            roomInfoDisplay.classList.add('d-none');
+        }
+
+        // Clear time slots selection
+        document.querySelectorAll('.time-slot').forEach(slot => {
+            slot.classList.remove('disabled', 'selected', 'conflict');
+            slot.disabled = false;
+            slot.style.display = 'inline-block';
+            slot.style.opacity = '1';
+        });
+
+        // Clear date picker
+        const dateInput = document.getElementById('appointmentDate');
+        if (dateInput) {
+            $(dateInput).datepicker('setDate', null);
+            dateInput.value = '';
+        }
+
+        // Clear all error messages
+        clearAllErrors();
+
+        // Hide schedule section
+        const scheduleSection = document.getElementById('scheduleSection');
+        if (scheduleSection) {
+            scheduleSection.classList.remove('show');
+        }
+
+        // Re-initialize date picker and set fields read-only
+        initializeDatePicker();
+        setFieldsReadOnly();
+
+        console.log('Appointment form has been completely reset');
+    }
+
+    // Function to reset only the search section
+    function resetSearchSection() {
+        // Clear search input
+        document.getElementById('searchQuery').value = '';
+
+        // Hide search results
+        const searchResults = document.getElementById('searchResults');
+        if (searchResults) {
+            searchResults.classList.add('d-none');
+            document.getElementById('searchResultsBody').innerHTML = '';
+        }
+
+        // Clear search error messages
+        clearSearchError();
+
+        // Clear patient ID
+        document.getElementById('patientIdInput').value = '';
+
+        // Reset read-only fields
+        const readOnlyFields = ['fullName', 'phoneNumber', 'email', 'dateOfBirth', 'gender', 'country', 'province', 'district', 'streetAddress', 'postalCode', 'addressType'];
+        readOnlyFields.forEach(id => {
+            const el = document.getElementById(id);
+            if (el) {
+                el.value = '';
+                el.readOnly = true;
+                el.classList.add('readonly');
+            }
+        });
+
+        // Disable description textarea
+        const description = document.getElementById('description');
+        if (description) {
+            description.value = '';
+            description.disabled = true;
+            description.classList.add('readonly');
+        }
+
+        console.log('Search section has been reset');
+    }
+
+    // New function to reset both search and appointment form fields
+    function resetSearchAndAppointmentForm() {
+        // Reset search section
+        resetSearchSection();
+
+        // Reset appointment form
+        resetAppointmentForm();
+    }
 </script>
 </body>
 </html>
