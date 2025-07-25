@@ -31,6 +31,7 @@ import java.util.function.Function;
 import java.util.stream.Collectors;
 import orochi.model.*;
 import orochi.repository.*;
+
 @Service
 public class AppointmentService {
 
@@ -70,18 +71,15 @@ public class AppointmentService {
     }
 
     public AppointmentDTO getAppointmentDetails(Integer appointmentId) {
-        // Tìm kiếm lịch hẹn trong cơ sở dữ liệu dựa trên appointmentId - avoid loading transactions
         Appointment appointment = appointmentRepository.findById(appointmentId)
                 .orElse(null);
 
         List<Specialization> specializations = specializationRepository.findAll();
 
-        // Nếu không tìm thấy lịch hẹn, trả về null
         if (appointment == null) {
             return null;
         }
 
-        // Ánh xạ từ entity Appointment sang DTO
         AppointmentDTO appointmentDTO = new AppointmentDTO();
         appointmentDTO.setId(Long.valueOf(appointment.getAppointmentId()));
         appointmentDTO.setFullName(appointment.getPatient().getFullName());
@@ -93,8 +91,7 @@ public class AppointmentService {
         appointmentDTO.setSpecializations(specializations);
         appointmentDTO.setAppointmentTime(appointment.getDateTime().toLocalTime());
 
-        // Lấy thông tin liên hệ từ PatientContact (lấy contact đầu tiên nếu có)
-        if (appointment.getPatient().getContacts() != null && !appointment.getPatient().getContacts().isEmpty()) {
+        if ( appointment.getPatient().getContacts() != null && !appointment.getPatient().getContacts().isEmpty()) {
             orochi.model.PatientContact contact = appointment.getPatient().getContacts().get(0);
             appointmentDTO.setAddressType(contact.getAddressType());
             appointmentDTO.setStreetAddress(contact.getStreetAddress());
@@ -104,7 +101,6 @@ public class AppointmentService {
             appointmentDTO.setCountry(contact.getCountry());
         }
 
-        // Set appointment specific information
         appointmentDTO.setRoom(appointment.getRoom().getRoomNumber());
         appointmentDTO.setDoctor(appointment.getDoctor());
         appointmentDTO.setSpecialtyId(String.valueOf(appointment.getDoctor().getSpecializations().get(0).getSpecId()));
@@ -113,30 +109,23 @@ public class AppointmentService {
         appointmentDTO.setReasonForVisit(appointment.getDescription());
         appointmentDTO.setAppointmentDate(appointment.getDateTime().toLocalDate());
 
-        // Fetch payment status separately to avoid SQL grammar exception
         String paymentStatus = getPaymentStatusForAppointment(appointmentId);
         appointmentDTO.setPaymentStatus(paymentStatus);
 
         return appointmentDTO;
     }
 
-    /**
-     * Get payment status for an appointment by querying transactions separately
-     */
     private String getPaymentStatusForAppointment(Integer appointmentId) {
         try {
-            // Query transactions directly using a custom repository method
             List<Transaction> transactions = transactionRepository.findByAppointmentId(appointmentId);
 
             if (transactions.isEmpty()) {
                 return "Unpaid";
             }
 
-            // Get the latest transaction status
             Transaction latestTransaction = transactions.get(0);
             String transactionStatus = latestTransaction.getStatus();
 
-            // Map transaction status to payment status
             switch (transactionStatus.toLowerCase()) {
                 case "completed":
                 case "success":
@@ -152,7 +141,6 @@ public class AppointmentService {
                     return "Unpaid";
             }
         } catch (Exception e) {
-            // Log the error and return default status
             System.err.println("Error fetching payment status for appointment " + appointmentId + ": " + e.getMessage());
             return "Unknown";
         }
@@ -175,46 +163,21 @@ public class AppointmentService {
                 .map(appointment -> appointment.getDateTime().toLocalTime().format(DateTimeFormatter.ofPattern("HH:mm:ss")))
                 .collect(Collectors.toList());
 
-        // Fetch on-call schedules
-        List<Schedule> onCallSchedules = scheduleRepository.findByDoctorIdAndScheduleDateAndEventType(doctorId, date, "oncall");
+        // Fetch appointment type schedules
+        List<Schedule> appointmentSchedules = scheduleRepository.findByDoctorIdAndScheduleDateAndEventType(doctorId, date, "appointment");
 
-        // Calculate unavailable times due to on-call periods
-        Set<String> onCallUnavailableTimes = new HashSet<>();
+        // Calculate unavailable times: slots not covered by any appointment schedule
+        List<String> unavailableTimes = new ArrayList<>();
         for (String timeSlot : ALL_TIME_SLOTS) {
             LocalTime slotTime = LocalTime.parse(timeSlot);
             LocalTime slotEnd = slotTime.plusMinutes(30);
-            for (Schedule onCall : onCallSchedules) {
-                LocalTime onCallStart = onCall.getStartTime();
-                LocalTime onCallEnd = onCall.getEndTime();
-                if (slotTime.isBefore(onCallEnd) && slotEnd.isAfter(onCallStart)) {
-                    onCallUnavailableTimes.add(timeSlot);
-                    break;
-                }
+            boolean isCovered = appointmentSchedules.stream().anyMatch(schedule ->
+                    !schedule.getStartTime().isAfter(slotTime) && !schedule.getEndTime().isBefore(slotEnd)
+            );
+            if (!isCovered && !bookedTimes.contains(timeSlot)) {
+                unavailableTimes.add(timeSlot);
             }
         }
-        // Calculate unavailable times due to proximity to booked appointments
-        List<String> proximityUnavailableTimes = new ArrayList<>();
-        for (Appointment appointment : bookedAppointments) {
-            LocalTime appointmentTime = appointment.getDateTime().toLocalTime();
-            for (String timeSlot : ALL_TIME_SLOTS) {
-                LocalTime slotTime = LocalTime.parse(timeSlot);
-                int minutesDifference = Math.abs(
-                        (slotTime.getHour() * 60 + slotTime.getMinute()) -
-                                (appointmentTime.getHour() * 60 + appointmentTime.getMinute())
-                );
-                if (minutesDifference < APPOINTMENT_DURATION && !bookedTimes.contains(timeSlot)) {
-                    proximityUnavailableTimes.add(timeSlot);
-                }
-            }
-        }
-
-        // Combine all unavailable times, excluding booked times
-        Set<String> allUnavailableTimes = new HashSet<>(onCallUnavailableTimes);
-        allUnavailableTimes.addAll(proximityUnavailableTimes);
-        List<String> unavailableTimes = allUnavailableTimes.stream()
-                .filter(time -> !bookedTimes.contains(time))
-                .distinct()
-                .collect(Collectors.toList());
 
         Map<String, List<String>> result = new HashMap<>();
         result.put("bookedTimes", bookedTimes);
@@ -232,11 +195,20 @@ public class AppointmentService {
         LocalDateTime endOfDay = date.atTime(23, 59, 59);
 
         List<Appointment> bookedAppointments = appointmentRepository
-            .findByDoctorIdAndDateTimeBetweenOrderByDateTime(doctorId, startOfDay, endOfDay);
+                .findByDoctorIdAndDateTimeBetweenOrderByDateTime(doctorId, startOfDay, endOfDay);
 
         return bookedAppointments.stream()
-            .map(appointment -> appointment.getDateTime().toLocalTime().format(DateTimeFormatter.ofPattern("HH:mm:ss")))
-            .collect(Collectors.toList());
+                .map(appointment -> appointment.getDateTime().toLocalTime().format(DateTimeFormatter.ofPattern("HH:mm:ss")))
+                .collect(Collectors.toList());
+    }
+
+    // Helper method to find the covering schedule
+    private Schedule findCoveringSchedule(Integer doctorId, LocalDate date, LocalTime startTime, LocalTime endTime) {
+        List<Schedule> schedules = scheduleRepository.findByDoctorIdAndScheduleDateAndEventType(doctorId, date, "appointment");
+        return schedules.stream()
+                .filter(schedule -> !schedule.getStartTime().isAfter(startTime) && !schedule.getEndTime().isBefore(endTime))
+                .findFirst()
+                .orElse(null);
     }
 
     @Transactional
@@ -267,9 +239,18 @@ public class AppointmentService {
             throw new RuntimeException("The selected time slot is unavailable. Please choose another time.");
         }
 
+        // Find the covering schedule and set RoomID
+        LocalTime appointmentStart = time;
+        LocalTime appointmentEnd = time.plusMinutes(30);
+        Schedule coveringSchedule = findCoveringSchedule(doctorId, appointmentDate, appointmentStart, appointmentEnd);
+        if (coveringSchedule == null) {
+            throw new RuntimeException("No schedule covers the selected time slot.");
+        }
+
         Appointment appointment = new Appointment();
         appointment.setPatientId(patientId);
         appointment.setDoctorId(doctorId);
+        appointment.setRoomId(coveringSchedule.getRoomId());
         appointment.setDateTime(dateTime);
         appointment.setStatus("Pending");
         appointment.setEmail(email);
@@ -311,7 +292,16 @@ public class AppointmentService {
             throw new RuntimeException("The selected time slot is unavailable. Please choose another time.");
         }
 
+        // Find the covering schedule and set RoomID
+        LocalTime appointmentStart = time;
+        LocalTime appointmentEnd = time.plusMinutes(30);
+        Schedule coveringSchedule = findCoveringSchedule(doctorId, appointmentDate, appointmentStart, appointmentEnd);
+        if (coveringSchedule == null) {
+            throw new RuntimeException("No schedule covers the selected time slot.");
+        }
+
         appointment.setDoctorId(doctorId);
+        appointment.setRoomId(coveringSchedule.getRoomId());
         appointment.setDateTime(dateTime);
         appointment.setEmail(email);
         appointment.setPhoneNumber(phoneNumber);
@@ -320,18 +310,15 @@ public class AppointmentService {
         return appointmentRepository.save(appointment);
     }
 
-    //public abstract Appointment bookAppointment(AppointmentFormDTO appointmentDTO);
     public Appointment updateAppointmentStatus(Integer appointmentId, String status) {
         Appointment appointment = appointmentRepository.findById(appointmentId)
-            .orElseThrow(() -> new RuntimeException("Appointment not found with ID: " + appointmentId));
-        appointment.setStatus(status); // Direct assignment of enum value instead of toString()
+                .orElseThrow(() -> new RuntimeException("Appointment not found with ID: " + appointmentId));
+        appointment.setStatus(status);
         appointmentRepository.save(appointment);
         return appointment;
     }
 
     public Page<Appointment> searchAppointmentsByDoctorId(Integer doctorId, String search, Pageable pageable) {
-        // Search appointments for a specific doctor with a search term (patient name)
-        // Convert list to page for pagination
         List<Appointment> appointments = appointmentRepository.findByDoctorIdAndPatientUserFullNameContainingIgnoreCase(doctorId, search);
 
         int start = (int) pageable.getOffset();
@@ -355,49 +342,45 @@ public class AppointmentService {
         return appointmentRepository.findAll(pageable);
     }
 
-    /**
-     * Get appointments filtered by status
-     * @param status The status to filter by (Scheduled, Completed, Cancel, Pending)
-     * @param pageable Pagination information
-     * @return Page of filtered appointments
-     */
     public Page<Appointment> getAppointmentsByStatus(String status, Pageable pageable) {
         return appointmentRepository.findByStatusOrderByDateTimeDesc(status, pageable);
     }
 
     @Transactional
     public Appointment bookAppointment(AppointmentFormDTO appointmentDTO) {
-        // Validate doctor and patient existence
         Doctor doctor = doctorRepository.findById(appointmentDTO.getDoctorId())
-            .orElseThrow(() -> new RuntimeException("Doctor not found with ID: " + appointmentDTO.getDoctorId()));
+                .orElseThrow(() -> new RuntimeException("Doctor not found with ID: " + appointmentDTO.getDoctorId()));
 
         Patient patient = patientRepository.findById(appointmentDTO.getPatientId())
-            .orElseThrow(() -> new RuntimeException("Patient not found with ID: " + appointmentDTO.getPatientId()));
+                .orElseThrow(() -> new RuntimeException("Patient not found with ID: " + appointmentDTO.getPatientId()));
 
-        // Get date and time
-        LocalDate appointmentDate = appointmentDTO.getAppointmentDate(); // Already a LocalDate, no need to parse
+        LocalDate appointmentDate = appointmentDTO.getAppointmentDate();
         LocalTime appointmentTime = LocalTime.parse(appointmentDTO.getAppointmentTime());
         LocalDateTime dateTime = LocalDateTime.of(appointmentDate, appointmentTime);
 
-        // Check time slot availability
         Map<String, List<String>> availability = getDoctorAvailability(appointmentDate, appointmentDTO.getDoctorId());
         if (availability.get("bookedTimes").contains(appointmentDTO.getAppointmentTime()) ||
                 availability.get("unavailableTimes").contains(appointmentDTO.getAppointmentTime())) {
             throw new RuntimeException("The selected time slot is unavailable. Please choose another time.");
         }
 
-        // Create new appointment
+        LocalTime appointmentStart = appointmentTime;
+        LocalTime appointmentEnd = appointmentTime.plusMinutes(30);
+        Schedule coveringSchedule = findCoveringSchedule(appointmentDTO.getDoctorId(), appointmentDate, appointmentStart, appointmentEnd);
+        if (coveringSchedule == null) {
+            throw new RuntimeException("No schedule covers the selected time slot.");
+        }
+
         Appointment appointment = new Appointment();
         appointment.setPatientId(appointmentDTO.getPatientId());
         appointment.setDoctorId(appointmentDTO.getDoctorId());
-        appointment.setRoomId(appointmentDTO.getRoomId()); // SET ROOM ID HERE
+        appointment.setRoomId(coveringSchedule.getRoomId());
         appointment.setDateTime(dateTime);
-        appointment.setStatus("Pending"); // Default status
+        appointment.setStatus("Pending");
         appointment.setEmail(appointmentDTO.getEmail());
         appointment.setPhoneNumber(appointmentDTO.getPhoneNumber());
         appointment.setDescription(appointmentDTO.getDescription());
 
-        // Save appointment
         return appointmentRepository.save(appointment);
     }
 
@@ -408,17 +391,23 @@ public class AppointmentService {
             if (optionalAppointment.isPresent()) {
                 Appointment appointment = optionalAppointment.get();
 
-                // Update appointment fields
                 if (appointmentFormDTO.getDoctorId() != null) {
                     appointment.setDoctorId(appointmentFormDTO.getDoctorId());
                 }
 
                 if (appointmentFormDTO.getAppointmentDate() != null && appointmentFormDTO.getAppointmentTime() != null) {
                     LocalDateTime dateTime = LocalDateTime.of(
-                        appointmentFormDTO.getAppointmentDate(),
+                            appointmentFormDTO.getAppointmentDate(),
                             LocalTime.parse(appointmentFormDTO.getAppointmentTime())
                     );
+                    LocalTime appointmentStart = LocalTime.parse(appointmentFormDTO.getAppointmentTime());
+                    LocalTime appointmentEnd = appointmentStart.plusMinutes(30);
+                    Schedule coveringSchedule = findCoveringSchedule(appointment.getDoctorId(), appointmentFormDTO.getAppointmentDate(), appointmentStart, appointmentEnd);
+                    if (coveringSchedule == null) {
+                        throw new RuntimeException("No schedule covers the selected time slot.");
+                    }
                     appointment.setDateTime(dateTime);
+                    appointment.setRoomId(coveringSchedule.getRoomId());
                 }
 
                 if (appointmentFormDTO.getDescription() != null) {
@@ -439,10 +428,6 @@ public class AppointmentService {
         return null;
     }
 
-    /**
-     * Get all appointments for a specific doctor on a specific date
-     * Used for checking time slot conflicts
-     */
     public List<Appointment> getAppointmentsByDoctorAndDate(Integer doctorId, LocalDate date) {
         try {
             LocalDateTime startOfDay = date.atStartOfDay();
@@ -676,8 +661,6 @@ public Appointment updateAppointment2(
     }
 
     public Page<Appointment> searchAndFilter(String search, String status, Pageable pg) {
-        // gọi repo.findWithFilters (thư viện filter động) mà bạn đã có
-        // giả sử repo.findWithFilters nhận: (null,null,status,search,start,end,pg)
         LocalDateTime start = LocalDate.now().minusYears(100).atStartOfDay();
         LocalDateTime end   = LocalDate.now().plusYears(100).atTime(23,59);
         return appointmentRepository.findWithFilters(
@@ -695,7 +678,6 @@ public Appointment updateAppointment2(
         Pageable firstPage = PageRequest.of(0, pg.getPageSize());
         return new PageImpl<>(list, firstPage, list.size());
     }
-
 
     public Page<Appointment> findByDoctorIdAndStatusAndName(
             Integer doctorId, String status, String name, Pageable pg) {
