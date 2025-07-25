@@ -83,4 +83,8 @@ public class NotificationService {
         );
     }
 
+    // New method to count unread notifications
+    public int countUnreadNotifications(Integer userId) {
+        return notificationRepository.countByUserIdAndIsReadFalse(userId);
+    }
 }

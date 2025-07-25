@@ -297,6 +297,66 @@
       margin-bottom: 0;
     }
 
+    /* Notification Card */
+    .notification-card {
+      background: var(--bg-white);
+      padding: 2rem;
+      border-radius: 16px;
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+      margin-bottom: 2rem;
+      border: 1px solid rgba(5, 150, 105, 0.1);
+      transition: all 0.3s ease;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .notification-card:hover {
+      transform: translateY(-4px);
+      box-shadow: 0 8px 30px rgba(5, 150, 105, 0.15);
+    }
+
+    .notification-icon {
+      width: 60px;
+      height: 60px;
+      border-radius: 16px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.5rem;
+      color: white;
+      background: linear-gradient(135deg, var(--patient-primary), var(--patient-accent));
+      margin-right: 1.5rem;
+    }
+
+    .notification-content {
+      flex-grow: 1;
+    }
+
+    .notification-title {
+      font-size: 1.25rem;
+      font-weight: 600;
+      color: var(--text-dark);
+      margin-bottom: 0.5rem;
+    }
+
+    .notification-action {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+      color: var(--patient-primary);
+      font-weight: 600;
+      font-size: 0.875rem;
+      transition: all 0.3s ease;
+      text-decoration: none;
+    }
+
+    .notification-action:hover {
+      color: var(--patient-secondary);
+      transform: translateX(4px);
+      text-decoration: none;
+    }
+
     /* Features Grid */
     .features-grid {
       display: grid;
@@ -490,6 +550,15 @@
       .stats-grid {
         grid-template-columns: repeat(2, 1fr);
       }
+
+      .notification-card {
+        flex-direction: column;
+        align-items: flex-start;
+      }
+
+      .notification-action {
+        margin-top: 1rem;
+      }
     }
 
     @media (max-width: 576px) {
@@ -497,7 +566,7 @@
         grid-template-columns: 1fr;
       }
 
-      .feature-card {
+      .feature-card, .notification-card {
         padding: 1.5rem;
       }
     }
@@ -649,6 +718,20 @@
       </div>
     </div>
 
+    <!-- Unread Notifications Card -->
+    <div th:if="${unreadCount > 0}" class="notification-card">
+      <div class="notification-icon">
+        <i class="bi bi-bell-fill"></i>
+      </div>
+      <div class="notification-content">
+        <h3 class="notification-title">You have <span th:text="${unreadCount}"></span> unread messages!</h3>
+      </div>
+      <a th:href="@{/patient/notifications}" class="notification-action">
+        View Notifications <i class="bi bi-arrow-right"></i>
+      </a>
+    </div>
+
+    <!-- Latest Notification -->
     <div id="latest-notice"
          th:if="${latestNotification != null and !latestNotification.isRead}"
          class="alert alert-info mt-3 w-100 d-flex justify-content-between align-items-start">
@@ -675,8 +758,6 @@
         </a>
       </div>
     </div>
-
-
 
     <!-- Quick Stats -->
     <div class="quick-stats">
@@ -868,8 +949,8 @@
       });
     });
 
-    // Hover effect cho feature-card
-    document.querySelectorAll('.feature-card').forEach(card => {
+    // Hover effect cho feature-card và notification-card
+    document.querySelectorAll('.feature-card, .notification-card').forEach(card => {
       card.addEventListener('mouseenter', () => card.style.transform = 'translateY(-8px)');
       card.addEventListener('mouseleave', () => card.style.transform = '');
     });

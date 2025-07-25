@@ -954,7 +954,7 @@
                                         <td th:text="${edu.graduation}">–</td>
                                         <td th:text="${edu.description}">–</td>
                                         <td>
-                                            <img th:if="${edu.certificateImageUrl != null and #strings.isNotEmpty(edu.certificateImageUrl)}"
+                                            <img th:if="${edu.certificateImageUrl != null and !#strings.isEmpty(edu.certificateImageUrl)}"
                                                  th:src="${edu.certificateImageUrl}"
                                                  alt="certificate" style="max-height:60px;"/>
                                             <span th:if="${edu.certificateImageUrl == null or #strings.isEmpty(edu.certificateImageUrl)}">–</span>
