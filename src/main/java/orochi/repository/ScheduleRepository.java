@@ -186,10 +186,19 @@ public interface ScheduleRepository extends JpaRepository<Schedule, Integer>,Jpa
     @Query("SELECT DISTINCT s.doctorId FROM Schedule s WHERE s.roomId = :roomId")
     List<Integer> findDistinctDoctorIdsByRoomId(@Param("roomId") Integer roomId);
 
+    @Query(value = """
+        SELECT *
+          FROM Schedule
+         WHERE RoomID       = :roomId
+           AND ScheduleDate = :scheduleDate
+           AND CONVERT(VARCHAR(5), startTime, 108) = :hhmm
+        """,
+            nativeQuery = true
+    )
     List<Schedule> findByRoomIdAndScheduleDateAndStartTime(
-            Integer roomId,
-            LocalDate scheduleDate,
-            LocalTime startTime
+            @Param("roomId")       Integer   roomId,
+            @Param("scheduleDate") LocalDate scheduleDate,
+            @Param("hhmm")         String    hhmm
     );
 
     List<Schedule> findByRoomIdAndScheduleDate(Integer roomId, LocalDate scheduleDate);
@@ -231,4 +240,45 @@ public interface ScheduleRepository extends JpaRepository<Schedule, Integer>,Jpa
 
     List<Schedule> findByScheduleDate(LocalDate scheduleDate);
 
+    @Query("SELECT s FROM Schedule s " +
+            " WHERE s.scheduleDate = :date " +
+            "   AND s.startTime  = :startTime")
+    List<Schedule> findByScheduleDateAndStartTime(LocalDate date, java.sql.Time startTime);
+
+    @Query(value =
+            "SELECT * FROM Schedule " +
+                    "WHERE ScheduleDate = :date " +
+                    "  AND CONVERT(time, startTime) = :startTime",
+            nativeQuery = true)
+    List<Schedule> findByDateAndStartTimeNative(
+            @Param("date") LocalDate date,
+            @Param("startTime") LocalTime startTime
+    );
+
+    List<Schedule> findByScheduleDateBetween(LocalDate start, LocalDate end);
+
+    @Query(
+            value = """
+        SELECT *
+          FROM Schedule
+         WHERE CAST(ScheduleDate AS date)     = :date
+           AND CONVERT(time, startTime)       = :startTime
+      """,
+            nativeQuery = true
+    )
+    List<Schedule> findByScheduleDateAndStartTime(
+            @Param("date")       LocalDate   date,
+            @Param("startTime")  LocalTime   startTime
+    );
+
+    @Query(value = """
+    SELECT *
+      FROM Schedule
+     WHERE ScheduleDate       = :date
+       AND CONVERT(varchar(5), startTime, 108) = :hhmm
+    """, nativeQuery = true)
+    List<Schedule> findByDateAndStartTimeHHMM(
+            @Param("date") LocalDate date,
+            @Param("hhmm") String    hhmm
+    );
 }

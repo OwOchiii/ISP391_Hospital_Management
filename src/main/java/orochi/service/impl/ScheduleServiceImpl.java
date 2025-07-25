@@ -10,7 +10,9 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
 import jakarta.persistence.criteria.Predicate;
-import java.util.ArrayList;
+import java.time.format.DateTimeFormatter;
+import java.util.*;
+
 import org.springframework.util.StringUtils;
 import orochi.dto.ScheduleDTO;
 import orochi.model.*;
@@ -22,8 +24,6 @@ import java.time.DayOfWeek;
 import java.time.LocalDate;
 import java.time.LocalTime;
 import java.time.temporal.TemporalAdjusters;
-import java.util.List;
-import java.util.Optional;
 import java.util.stream.Collectors;
 
 @Service
@@ -416,5 +416,48 @@ public class ScheduleServiceImpl implements ScheduleService {
             return doctorRepository.findAllById(usedIds);
         }
     }
+
+    @Override
+    public Map<LocalDate, Set<String>> getShiftOverview(LocalDate start, LocalDate end) {
+        // khởi tạo map giữ thứ tự ngày
+        Map<LocalDate, Set<String>> overview = new LinkedHashMap<>();
+        for (LocalDate d = start; !d.isAfter(end); d = d.plusDays(1)) {
+            overview.put(d, new HashSet<>());
+        }
+
+        // lấy tất cả lịch trong khoảng
+        List<Schedule> list = scheduleRepository.findByDateRange(start, end);
+        for (Schedule s : list) {
+            LocalDate d = s.getScheduleDate();
+            if (s.getStartTime().equals(LocalTime.of(8, 0)))
+                overview.get(d).add("morning");
+            else if (s.getStartTime().equals(LocalTime.of(13, 0)))
+                overview.get(d).add("afternoon");
+        }
+        return overview;
+    }
+
+    @Override
+    public List<ScheduleDTO> findSchedulesByDateAndTimeRange(LocalDate date, LocalTime start) {
+        // Lấy tất cả schedule của ngày đó
+        List<Schedule> all = scheduleRepository.findByScheduleDate(date);
+        // Lọc ra ca đúng giờ
+        return all.stream()
+                .filter(s -> s.getStartTime().equals(start))
+                .map(this::convertToDTO)
+                .toList();
+    }
+
+    @Override
+    public List<ScheduleDTO> findSchedulesByRoomAndShift(LocalDate date, LocalTime start, Integer roomId) {
+        // format LocalTime thành "HH:mm"
+        String hhmm = start.format(DateTimeFormatter.ofPattern("HH:mm"));
+        List<Schedule> list = scheduleRepository
+                .findByRoomIdAndScheduleDateAndStartTime(roomId, date, hhmm);
+        return list.stream()
+                .map(this::convertToDTO)
+                .collect(Collectors.toList());
+    }
+
 
 }
