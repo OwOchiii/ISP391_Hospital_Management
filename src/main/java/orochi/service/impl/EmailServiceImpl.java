@@ -343,27 +343,85 @@ public class EmailServiceImpl implements EmailService {
 
             Context context = new Context();
 
-            // Set receipt, patient, and transaction data in the context
+            // 🔥 SET CORE DATA WITH NULL SAFETY
             context.setVariable("receipt", receipt);
             context.setVariable("patient", patient);
             context.setVariable("transaction", transaction);
 
-            logger.info("Setting template variables...");
+            // 🔥 SET FORMATTED DATA FOR TEMPLATE CONVENIENCE
+            try {
+                // Format amounts for display
+                if (receipt.getTotalAmount() != null) {
+                    context.setVariable("formattedTotalAmount",
+                        String.format("%,.0f VND", receipt.getTotalAmount().doubleValue()));
+                }
+
+                if (receipt.getTaxAmount() != null) {
+                    context.setVariable("formattedTaxAmount",
+                        String.format("%,.0f VND", receipt.getTaxAmount().doubleValue()));
+                }
+
+                if (receipt.getDiscountAmount() != null) {
+                    context.setVariable("formattedDiscountAmount",
+                        String.format("%,.0f VND", receipt.getDiscountAmount().doubleValue()));
+                }
+
+                // Calculate subtotal (total + discount - tax)
+                if (receipt.getTotalAmount() != null && receipt.getTaxAmount() != null && receipt.getDiscountAmount() != null) {
+                    double subtotal = receipt.getTotalAmount().doubleValue() + receipt.getDiscountAmount().doubleValue() - receipt.getTaxAmount().doubleValue();
+                    context.setVariable("formattedSubtotal", String.format("%,.0f VND", subtotal));
+                }
+
+                // Format dates
+                if (receipt.getIssuedDate() != null) {
+                    context.setVariable("formattedIssuedDate", receipt.getIssuedDate().toString());
+                } else {
+                    context.setVariable("formattedIssuedDate", java.time.LocalDate.now().toString());
+                }
+
+                // Format payment time
+                if (transaction.getTimeOfPayment() != null) {
+                    context.setVariable("formattedPaymentTime",
+                        transaction.getTimeOfPayment().format(java.time.format.DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm")));
+                }
+
+                // Patient information
+                context.setVariable("patientName", patient.getUser().getFullName());
+                context.setVariable("patientEmail", patient.getUser().getEmail());
+                context.setVariable("patientPhone", patient.getUser().getPhoneNumber());
+
+                // Payment method normalization
+                String paymentMethod = transaction.getMethod();
+                if (paymentMethod != null) {
+                    switch (paymentMethod.toLowerCase()) {
+                        case "banking":
+                        case "vnpay":
+                        case "momo":
+                        case "zalopay":
+                            context.setVariable("displayPaymentMethod", "Online Banking");
+                            break;
+                        case "cash":
+                            context.setVariable("displayPaymentMethod", "Cash");
+                            break;
+                        default:
+                            context.setVariable("displayPaymentMethod", paymentMethod);
+                    }
+                } else {
+                    context.setVariable("displayPaymentMethod", "Unknown");
+                }
+
+                logger.info("✅ Template variables set successfully");
+
+            } catch (Exception dataException) {
+                logger.error("Error setting template data: {}", dataException.getMessage(), dataException);
+                // Continue with basic data
+            }
 
             // Set hospital information variables
             Map<String, String> hospitalInfo = getHospitalInfo();
             for (Map.Entry<String, String> entry : hospitalInfo.entrySet()) {
                 context.setVariable(entry.getKey(), entry.getValue());
                 logger.debug("Hospital info - {}: {}", entry.getKey(), entry.getValue());
-            }
-
-            // Add current date for the email if receipt date is missing
-            if (receipt.getIssuedDate() == null) {
-                context.setVariable("issuedDate", java.time.LocalDate.now());
-                logger.info("Using current date as receipt date: {}", java.time.LocalDate.now());
-            } else {
-                context.setVariable("issuedDate", receipt.getIssuedDate());
-                logger.info("Using receipt issued date: {}", receipt.getIssuedDate());
             }
 
             logger.info("Processing Thymeleaf template: email/receipt-email");
@@ -387,60 +445,189 @@ public class EmailServiceImpl implements EmailService {
                     logger.debug("HTML content: {}", htmlContent);
                 }
 
+                // Send the HTML email
+                logger.info("Sending HTML receipt email...");
+                sendHtmlMessage(to, subject, htmlContent);
+                logger.info("✅ Receipt email sent successfully to: {}", to);
+
             } catch (Exception templateException) {
                 logger.error("❌ Template processing failed: {}", templateException.getMessage(), templateException);
                 logger.error("Template: email/receipt-email");
-                logger.error("Context variables: receipt={}, patient={}, transaction={}",
-                           receipt != null, patient != null, transaction != null);
+                logger.error("Context variables count: {}", context.getVariableNames().size());
+                logger.error("Available variables: {}", context.getVariableNames());
 
-                // Create fallback plain text content
-                logger.info("Creating fallback plain text email...");
-                String plainTextContent = "Dear " + patient.getUser().getFullName() + ",\n\n" +
-                        "Thank you for your payment. Here is your receipt:\n\n" +
-                        "Receipt Number: " + receipt.getReceiptNumber() + "\n" +
-                        "Date: " + receipt.getIssuedDate() + "\n" +
-                        "Amount: " + receipt.getTotalAmount() + " VND\n" +
-                        "Transaction ID: " + receipt.getTransactionId() + "\n\n" +
-                        "Thank you for choosing MediCare Plus for your healthcare needs.\n\n" +
-                        "Best Regards,\n" +
-                        "MediCare Plus Team";
+                // 🔥 CREATE ENHANCED FALLBACK HTML EMAIL INSTEAD OF PLAIN TEXT
+                logger.info("Creating enhanced fallback HTML email...");
+                String fallbackHtmlContent = createFallbackReceiptHtml(receipt, patient, transaction, hospitalInfo);
 
-                logger.info("Sending fallback plain text email...");
-                sendSimpleMessage(to, subject, plainTextContent);
-                logger.info("✅ Fallback plain text receipt email sent successfully to: {}", to);
-                return;
+                logger.info("Sending fallback HTML email...");
+                sendHtmlMessage(to, subject, fallbackHtmlContent);
+                logger.info("✅ Fallback HTML receipt email sent successfully to: {}", to);
             }
-
-            // Send the HTML email
-            logger.info("Sending HTML receipt email...");
-            sendHtmlMessage(to, subject, htmlContent);
-            logger.info("✅ Receipt email sent successfully to: {}", to);
 
         } catch (Exception e) {
             logger.error("❌ Failed to send receipt email to {}: {}", to, e.getMessage(), e);
             logger.error("Full stack trace:", e);
 
-            // 🔥 ATTEMPT EMERGENCY FALLBACK EMAIL
+            // 🔥 ATTEMPT EMERGENCY FALLBACK EMAIL WITH BETTER FORMATTING
             try {
                 logger.info("Attempting emergency fallback email...");
                 String emergencySubject = "Payment Confirmation - MediCare Plus";
-                String emergencyContent = "Dear Patient,\n\n" +
-                        "We have received your payment successfully. " +
-                        "Due to a technical issue, we cannot send your detailed receipt at this moment. " +
-                        "Please contact our support team for a copy of your receipt.\n\n" +
-                        "Transaction completed successfully.\n\n" +
-                        "Best Regards,\n" +
-                        "MediCare Plus Team\n" +
-                        "Phone: (555) 123-4567\n" +
-                        "Email: support@medicareplus.com";
+                String emergencyHtml = createEmergencyFallbackHtml(receipt, patient, transaction);
 
-                sendSimpleMessage(to, emergencySubject, emergencyContent);
+                sendHtmlMessage(to, emergencySubject, emergencyHtml);
                 logger.info("✅ Emergency fallback email sent successfully to: {}", to);
             } catch (Exception fallbackException) {
                 logger.error("❌ Even emergency fallback email failed: {}", fallbackException.getMessage(), fallbackException);
                 // Don't throw exception to prevent receipt process from failing if email fails
             }
         }
+    }
+
+    /**
+     * Create fallback HTML content when template processing fails
+     */
+    private String createFallbackReceiptHtml(Receipt receipt, Patient patient, Transaction transaction, Map<String, String> hospitalInfo) {
+        StringBuilder html = new StringBuilder();
+
+        html.append("<!DOCTYPE html>");
+        html.append("<html><head><meta charset='UTF-8'>");
+        html.append("<title>Payment Receipt - MediCare Plus</title>");
+        html.append("<style>");
+        html.append("body { font-family: Arial, sans-serif; margin: 0; padding: 20px; background-color: #f9f9f9; }");
+        html.append(".container { max-width: 600px; margin: 0 auto; background-color: #ffffff; border-radius: 8px; overflow: hidden; box-shadow: 0 0 20px rgba(0, 0, 0, 0.1); }");
+        html.append(".header { background: linear-gradient(135deg, #007bff, #0056b3); color: #ffffff; padding: 25px; text-align: center; }");
+        html.append(".content { padding: 30px; }");
+        html.append(".receipt-box { border: 1px solid #ddd; border-radius: 8px; padding: 20px; margin-bottom: 25px; }");
+        html.append(".detail-row { display: flex; margin-bottom: 10px; }");
+        html.append(".detail-label { width: 40%; font-weight: 600; color: #555; }");
+        html.append(".detail-value { width: 60%; }");
+        html.append(".summary { background-color: #f8f9fa; border-radius: 6px; padding: 15px; margin-top: 15px; }");
+        html.append(".total { font-weight: 700; font-size: 18px; color: #007bff; }");
+        html.append(".footer { background-color: #f8f9fa; padding: 20px; text-align: center; font-size: 14px; color: #666; }");
+        html.append("</style></head><body>");
+
+        html.append("<div class='container'>");
+        html.append("<div class='header'>");
+        html.append("<h1>Payment Receipt</h1>");
+        html.append("<p>Thank you for your payment</p>");
+        html.append("</div>");
+
+        html.append("<div class='content'>");
+        html.append("<p>Dear ").append(patient.getUser().getFullName()).append(",</p>");
+        html.append("<p>Thank you for your payment. Please find your receipt details below:</p>");
+
+        html.append("<div class='receipt-box'>");
+        html.append("<h3 style='color: #007bff; margin-top: 0;'>RECEIPT</h3>");
+        html.append("<p><strong>Receipt #:</strong> ").append(receipt.getReceiptNumber() != null ? receipt.getReceiptNumber() : "N/A").append("</p>");
+
+        html.append("<div class='detail-row'>");
+        html.append("<div class='detail-label'>Patient Name:</div>");
+        html.append("<div class='detail-value'>").append(patient.getUser().getFullName()).append("</div>");
+        html.append("</div>");
+
+        html.append("<div class='detail-row'>");
+        html.append("<div class='detail-label'>Patient ID:</div>");
+        html.append("<div class='detail-value'>").append(patient.getPatientId()).append("</div>");
+        html.append("</div>");
+
+        html.append("<div class='detail-row'>");
+        html.append("<div class='detail-label'>Date:</div>");
+        html.append("<div class='detail-value'>").append(receipt.getIssuedDate() != null ? receipt.getIssuedDate().toString() : java.time.LocalDate.now().toString()).append("</div>");
+        html.append("</div>");
+
+        html.append("<div class='detail-row'>");
+        html.append("<div class='detail-label'>Transaction ID:</div>");
+        html.append("<div class='detail-value'>").append(transaction.getTransactionId()).append("</div>");
+        html.append("</div>");
+
+        html.append("<div class='detail-row'>");
+        html.append("<div class='detail-label'>Payment Method:</div>");
+        html.append("<div class='detail-value'>").append(transaction.getMethod() != null ? transaction.getMethod() : "Unknown").append("</div>");
+        html.append("</div>");
+
+        html.append("<div class='summary'>");
+        html.append("<div class='total'>Total Amount: ").append(String.format("%,.0f VND", receipt.getTotalAmount().doubleValue())).append("</div>");
+        html.append("</div>");
+
+        html.append("<p style='margin-top: 20px; font-style: italic;'>");
+        html.append(receipt.getNotes() != null ? receipt.getNotes() : "Thank you for your payment. We appreciate your business.");
+        html.append("</p>");
+
+        html.append("</div>");
+
+        html.append("<p>If you have any questions regarding this payment, please contact our billing department at ");
+        html.append(hospitalInfo.get("hospitalPhone")).append(" or email us at ");
+        html.append("<a href='mailto:").append(hospitalInfo.get("hospitalEmail")).append("'>").append(hospitalInfo.get("hospitalEmail")).append("</a>.</p>");
+
+        html.append("<p>Thank you for choosing ").append(hospitalInfo.get("hospitalName")).append(" for your healthcare needs.</p>");
+        html.append("<p>Best regards,<br>").append(hospitalInfo.get("hospitalName")).append(" Team</p>");
+
+        html.append("</div>");
+
+        html.append("<div class='footer'>");
+        html.append("<p>").append(hospitalInfo.get("hospitalName")).append("</p>");
+        html.append("<p>").append(hospitalInfo.get("hospitalAddress")).append("</p>");
+        html.append("<p>Phone: ").append(hospitalInfo.get("hospitalPhone")).append(" | Email: ");
+        html.append("<a href='mailto:").append(hospitalInfo.get("hospitalEmail")).append("'>").append(hospitalInfo.get("hospitalEmail")).append("</a></p>");
+        html.append("</div>");
+
+        html.append("</div></body></html>");
+
+        return html.toString();
+    }
+
+    /**
+     * Create emergency fallback HTML content
+     */
+    private String createEmergencyFallbackHtml(Receipt receipt, Patient patient, Transaction transaction) {
+        StringBuilder html = new StringBuilder();
+
+        html.append("<!DOCTYPE html>");
+        html.append("<html><head><meta charset='UTF-8'>");
+        html.append("<title>Payment Confirmation - MediCare Plus</title>");
+        html.append("<style>");
+        html.append("body { font-family: Arial, sans-serif; margin: 0; padding: 20px; background-color: #f9f9f9; }");
+        html.append(".container { max-width: 600px; margin: 0 auto; background-color: #ffffff; padding: 30px; border-radius: 8px; }");
+        html.append(".header { text-align: center; color: #007bff; margin-bottom: 30px; }");
+        html.append(".content { line-height: 1.6; }");
+        html.append(".highlight { background-color: #e7f3ff; padding: 15px; border-radius: 5px; margin: 20px 0; }");
+        html.append("</style></head><body>");
+
+        html.append("<div class='container'>");
+        html.append("<div class='header'>");
+        html.append("<h1>Payment Confirmation</h1>");
+        html.append("</div>");
+
+        html.append("<div class='content'>");
+        html.append("<p>Dear ").append(patient != null && patient.getUser() != null ? patient.getUser().getFullName() : "Valued Patient").append(",</p>");
+
+        html.append("<p>We have successfully received your payment. Here are the basic details:</p>");
+
+        html.append("<div class='highlight'>");
+        if (receipt != null) {
+            html.append("<p><strong>Receipt Number:</strong> ").append(receipt.getReceiptNumber() != null ? receipt.getReceiptNumber() : "Generated").append("</p>");
+            html.append("<p><strong>Amount:</strong> ").append(String.format("%,.0f VND", receipt.getTotalAmount().doubleValue())).append("</p>");
+            html.append("<p><strong>Date:</strong> ").append(receipt.getIssuedDate() != null ? receipt.getIssuedDate().toString() : java.time.LocalDate.now().toString()).append("</p>");
+        }
+        if (transaction != null) {
+            html.append("<p><strong>Transaction ID:</strong> ").append(transaction.getTransactionId()).append("</p>");
+        }
+        html.append("</div>");
+
+        html.append("<p>Due to a technical issue, we cannot send your detailed receipt at this moment. ");
+        html.append("Please contact our support team if you need a detailed copy of your receipt.</p>");
+
+        html.append("<p><strong>Contact Information:</strong><br>");
+        html.append("Phone: (555) 123-4567<br>");
+        html.append("Email: <a href='mailto:support@medicareplus.com'>support@medicareplus.com</a></p>");
+
+        html.append("<p>Thank you for choosing MediCare Plus for your healthcare needs.</p>");
+        html.append("<p>Best Regards,<br>MediCare Plus Team</p>");
+
+        html.append("</div></div></body></html>");
+
+        return html.toString();
     }
 
     /**

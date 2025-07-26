@@ -36,13 +36,14 @@
         .header h1 {
             margin: 0;
             padding: 0;
-            font-size: 24px;
+            font-size: 28px;
             font-weight: 700;
         }
 
         .header p {
             margin: 5px 0 0;
-            opacity: 0.8;
+            opacity: 0.9;
+            font-size: 16px;
         }
 
         /* Content */
@@ -52,24 +53,28 @@
 
         /* Receipt Box */
         .receipt-box {
-            border: 1px solid #ddd;
+            border: 2px solid #007bff;
             border-radius: 8px;
-            padding: 20px;
+            padding: 25px;
             margin-bottom: 25px;
             position: relative;
+            background-color: #fafbff;
         }
 
         .receipt-header {
             display: flex;
             justify-content: space-between;
-            border-bottom: 2px solid #f2f2f2;
+            align-items: center;
+            border-bottom: 2px solid #e9ecef;
             padding-bottom: 15px;
             margin-bottom: 20px;
         }
 
-        .receipt-logo img {
-            height: 50px;
-            width: auto;
+        .receipt-logo h3 {
+            margin: 0;
+            color: #007bff;
+            font-size: 24px;
+            font-weight: 700;
         }
 
         .receipt-title {
@@ -78,13 +83,15 @@
 
         .receipt-title h2 {
             margin: 0;
-            font-size: 22px;
+            font-size: 24px;
             color: #007bff;
+            font-weight: 700;
         }
 
         .receipt-title p {
             margin: 5px 0 0;
             color: #666;
+            font-size: 14px;
         }
 
         /* Receipt Details */
@@ -94,58 +101,112 @@
 
         .detail-row {
             display: flex;
-            margin-bottom: 10px;
+            margin-bottom: 12px;
+            align-items: center;
         }
 
         .detail-label {
             width: 40%;
             font-weight: 600;
             color: #555;
+            font-size: 14px;
         }
 
         .detail-value {
             width: 60%;
+            font-size: 14px;
+            color: #333;
         }
 
-        /* Receipt Summary */
-        .receipt-summary {
-            background-color: #f8f9fa;
-            border-radius: 6px;
-            padding: 15px;
-            margin-top: 15px;
-        }
-
-        .summary-row {
-            display: flex;
-            justify-content: space-between;
-            margin-bottom: 10px;
-        }
-
-        .summary-row:last-child {
-            margin-bottom: 0;
-            padding-top: 10px;
-            border-top: 1px dashed #ddd;
-            font-weight: 700;
-        }
-
+        /* Payment Status Badge */
         .status-badge {
             display: inline-block;
-            padding: 5px 10px;
-            border-radius: 4px;
-            font-size: 14px;
-            font-weight: 600;
+            padding: 6px 12px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 700;
             text-transform: uppercase;
+            letter-spacing: 0.5px;
         }
 
         .status-paid {
             background-color: #d4edda;
             color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+
+        .status-pending {
+            background-color: #fff3cd;
+            color: #856404;
+            border: 1px solid #ffeaa7;
+        }
+
+        /* Receipt Summary */
+        .receipt-summary {
+            background: linear-gradient(135deg, #f8f9fa, #e9ecef);
+            border-radius: 8px;
+            padding: 20px;
+            margin-top: 20px;
+            border: 1px solid #dee2e6;
+        }
+
+        .summary-row {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 12px;
+            font-size: 14px;
+        }
+
+        .summary-row:last-child {
+            margin-bottom: 0;
+            padding-top: 15px;
+            border-top: 2px dashed #007bff;
+            font-weight: 700;
+            font-size: 18px;
+            color: #007bff;
+        }
+
+        .summary-label {
+            font-weight: 600;
+            color: #555;
+        }
+
+        .summary-value {
+            font-weight: 600;
+            color: #333;
+        }
+
+        /* Payment Information Section */
+        .payment-info {
+            background-color: #e7f3ff;
+            border-radius: 8px;
+            padding: 20px;
+            margin: 20px 0;
+            border-left: 4px solid #007bff;
+        }
+
+        .payment-info h4 {
+            margin: 0 0 15px 0;
+            color: #007bff;
+            font-size: 16px;
+            font-weight: 700;
+        }
+
+        /* Notes Section */
+        .notes-section {
+            background-color: #f8f9fa;
+            border-radius: 6px;
+            padding: 15px;
+            margin: 20px 0;
+            border-left: 4px solid #28a745;
+            font-style: italic;
+            color: #555;
         }
 
         /* Footer */
         .footer {
             background-color: #f8f9fa;
-            padding: 20px 30px;
+            padding: 25px 30px;
             text-align: center;
             font-size: 14px;
             color: #666;
@@ -153,7 +214,7 @@
         }
 
         .footer p {
-            margin: 5px 0;
+            margin: 8px 0;
         }
 
         .hospital-info {
@@ -163,7 +224,16 @@
         }
 
         .contact-info {
-            margin-top: 10px;
+            margin-top: 15px;
+        }
+
+        .contact-info a {
+            color: #007bff;
+            text-decoration: none;
+        }
+
+        .contact-info a:hover {
+            text-decoration: underline;
         }
 
         /* Responsive */
@@ -171,10 +241,15 @@
             .container {
                 width: 100%;
                 border-radius: 0;
+                margin: 0;
             }
 
             .header, .content, .footer {
-                padding: 15px;
+                padding: 20px 15px;
+            }
+
+            .receipt-box {
+                padding: 20px 15px;
             }
 
             .receipt-header {
@@ -189,108 +264,198 @@
 
             .detail-row {
                 flex-direction: column;
+                align-items: flex-start;
+                margin-bottom: 15px;
             }
 
             .detail-label, .detail-value {
                 width: 100%;
+            }
+
+            .detail-label {
+                margin-bottom: 5px;
+            }
+
+            .summary-row {
+                font-size: 13px;
+            }
+
+            .summary-row:last-child {
+                font-size: 16px;
+            }
+        }
+
+        /* Print Styles */
+        @media print {
+            body {
+                background-color: white;
+            }
+
+            .container {
+                box-shadow: none;
+                border: 1px solid #ddd;
+            }
+
+            .header {
+                background: #007bff !important;
+                -webkit-print-color-adjust: exact;
             }
         }
     </style>
 </head>
 <body>
     <div class="container">
+        <!-- Header Section -->
         <div class="header">
             <h1>Payment Receipt</h1>
-            <p>Thank you for your payment</p>
+            <p>Thank you for your payment - <span th:text="${hospitalName ?: 'MediCare Plus'}">MediCare Plus</span></p>
         </div>
 
+        <!-- Content Section -->
         <div class="content">
-            <p>Dear <span th:text="${patient.user.fullName}">Patient Name</span>,</p>
+            <p>Dear <strong th:text="${patient.user.fullName ?: patientName ?: 'Valued Patient'}">Patient Name</strong>,</p>
 
-            <p>Thank you for your payment. Please find your receipt details below:</p>
+            <p>Thank you for your payment. Your transaction has been processed successfully. Please find your detailed receipt below:</p>
 
+            <!-- Receipt Box -->
             <div class="receipt-box">
                 <div class="receipt-header">
                     <div class="receipt-logo">
-                        <h3 th:text="${hospitalName}">MediCare Plus</h3>
+                        <h3 th:text="${hospitalName ?: 'MediCare Plus'}">MediCare Plus</h3>
+                        <p style="margin: 0; font-size: 12px; color: #666;" th:text="${hospitalTagline ?: 'Your Health, Our Priority'}">Your Health, Our Priority</p>
                     </div>
                     <div class="receipt-title">
                         <h2>RECEIPT</h2>
-                        <p>Receipt #: <span th:text="${receipt.receiptNumber}">R12345</span></p>
+                        <p>Receipt #: <strong th:text="${receipt.receiptNumber ?: 'N/A'}">R12345</strong></p>
+                        <p>Date: <strong th:text="${formattedIssuedDate ?: #temporals.format(#temporals.createNow(), 'dd/MM/yyyy')}">26/07/2025</strong></p>
                     </div>
                 </div>
 
+                <!-- Patient Information -->
                 <div class="receipt-details">
+                    <h4 style="color: #007bff; margin: 0 0 15px 0; font-size: 16px;">Patient Information</h4>
+
                     <div class="detail-row">
                         <div class="detail-label">Patient Name:</div>
-                        <div class="detail-value" th:text="${patient.user.fullName}">John Doe</div>
+                        <div class="detail-value" th:text="${patient.user.fullName ?: patientName ?: 'N/A'}">John Doe</div>
                     </div>
                     <div class="detail-row">
                         <div class="detail-label">Patient ID:</div>
-                        <div class="detail-value" th:text="${patient.patientId}">P12345</div>
+                        <div class="detail-value" th:text="${patient.patientId ?: 'N/A'}">P12345</div>
                     </div>
-                    <div class="detail-row">
-                        <div class="detail-label">Date:</div>
-                        <div class="detail-value" th:text="${#temporals.format(receipt.issuedDate, 'dd/MM/yyyy')}">01/01/2025</div>
+                    <div class="detail-row" th:if="${patient.user.email}">
+                        <div class="detail-label">Email:</div>
+                        <div class="detail-value" th:text="${patient.user.email}">patient@email.com</div>
                     </div>
+                    <div class="detail-row" th:if="${patient.user.phoneNumber}">
+                        <div class="detail-label">Phone:</div>
+                        <div class="detail-value" th:text="${patient.user.phoneNumber}">+84 123 456 789</div>
+                    </div>
+                </div>
+
+                <!-- Transaction Information -->
+                <div class="payment-info">
+                    <h4>Transaction Information</h4>
+
                     <div class="detail-row">
                         <div class="detail-label">Transaction ID:</div>
-                        <div class="detail-value" th:text="${receipt.transactionId}">T54321</div>
+                        <div class="detail-value" th:text="${transaction.transactionId ?: 'N/A'}">T54321</div>
                     </div>
                     <div class="detail-row">
                         <div class="detail-label">Payment Method:</div>
-                        <div class="detail-value" th:text="${transaction.method}">Credit Card</div>
+                        <div class="detail-value" th:text="${displayPaymentMethod ?: transaction.method ?: 'Unknown'}">Online Banking</div>
                     </div>
                     <div class="detail-row">
+                        <div class="detail-label">Payment Status:</div>
+                        <div class="detail-value">
+                            <span class="status-badge status-paid"
+                                  th:class="'status-badge ' + (${transaction.status == 'Paid'} ? 'status-paid' : 'status-pending')"
+                                  th:text="${transaction.status ?: 'Completed'}">Paid</span>
+                        </div>
+                    </div>
+                    <div class="detail-row" th:if="${formattedPaymentTime}">
+                        <div class="detail-label">Payment Time:</div>
+                        <div class="detail-value" th:text="${formattedPaymentTime}">26/07/2025 14:30</div>
+                    </div>
+                    <div class="detail-row" th:if="${receipt.issuer}">
                         <div class="detail-label">Processed By:</div>
-                        <div class="detail-value" th:text="${receipt.issuer != null ? receipt.issuer.fullName : 'System'}">Jane Smith</div>
+                        <div class="detail-value" th:text="${receipt.issuer.fullName ?: 'System'}">Staff Name</div>
                     </div>
                 </div>
 
+                <!-- Financial Summary -->
                 <div class="receipt-summary">
-                    <div class="summary-row">
-                        <div>Subtotal:</div>
-                        <div th:text="${#numbers.formatDecimal(receipt.totalAmount.add(receipt.discountAmount).subtract(receipt.taxAmount), 0, 'COMMA', 0, 'POINT')} + ' VND'">450,000 VND</div>
+                    <h4 style="color: #007bff; margin: 0 0 15px 0; font-size: 16px;">Payment Summary</h4>
+
+                    <!-- Subtotal -->
+                    <div class="summary-row" th:if="${formattedSubtotal}">
+                        <div class="summary-label">Subtotal:</div>
+                        <div class="summary-value" th:text="${formattedSubtotal}">450,000 VND</div>
                     </div>
-                    <div class="summary-row">
-                        <div>Tax (10%):</div>
-                        <div th:text="${#numbers.formatDecimal(receipt.taxAmount, 0, 'COMMA', 0, 'POINT')} + ' VND'">45,000 VND</div>
+
+                    <!-- Tax -->
+                    <div class="summary-row" th:if="${receipt.taxAmount and receipt.taxAmount.compareTo(T(java.math.BigDecimal).ZERO) > 0}">
+                        <div class="summary-label">Tax (10%):</div>
+                        <div class="summary-value" th:text="${formattedTaxAmount ?: (#numbers.formatDecimal(receipt.taxAmount, 0, 'COMMA', 0, 'POINT') + ' VND')}">45,000 VND</div>
                     </div>
-                    <div class="summary-row" th:if="${receipt.discountAmount.compareTo(java.math.BigDecimal.ZERO) > 0}">
-                        <div>Discount:</div>
-                        <div th:text="'-' + ${#numbers.formatDecimal(receipt.discountAmount, 0, 'COMMA', 0, 'POINT')} + ' VND'">-50,000 VND</div>
+
+                    <!-- Discount -->
+                    <div class="summary-row" th:if="${receipt.discountAmount and receipt.discountAmount.compareTo(T(java.math.BigDecimal).ZERO) > 0}">
+                        <div class="summary-label">Discount:</div>
+                        <div class="summary-value" th:text="'-' + ${formattedDiscountAmount ?: (#numbers.formatDecimal(receipt.discountAmount, 0, 'COMMA', 0, 'POINT') + ' VND')}">-50,000 VND</div>
                     </div>
+
+                    <!-- Total Amount -->
                     <div class="summary-row">
-                        <div>Total Amount:</div>
-                        <div th:text="${#numbers.formatDecimal(receipt.totalAmount, 0, 'COMMA', 0, 'POINT')} + ' VND'">445,000 VND</div>
+                        <div class="summary-label">Total Amount:</div>
+                        <div class="summary-value" th:text="${formattedTotalAmount ?: (#numbers.formatDecimal(receipt.totalAmount, 0, 'COMMA', 0, 'POINT') + ' VND')}">445,000 VND</div>
                     </div>
                 </div>
 
-                <div style="margin-top: 20px; font-style: italic;">
-                    <p th:text="${receipt.notes}">Thank you for your payment. We appreciate your business.</p>
+                <!-- Notes Section -->
+                <div class="notes-section" th:if="${receipt.notes}">
+                    <p style="margin: 0; font-weight: 600; color: #28a745;">Notes:</p>
+                    <p style="margin: 10px 0 0 0;" th:text="${receipt.notes}">Thank you for your payment. We appreciate your business.</p>
                 </div>
             </div>
 
-            <p>If you have any questions regarding this payment, please contact our billing department at <span th:text="${hospitalPhone}">(555) 123-4567</span> or email us at <a th:href="'mailto:' + ${hospitalEmail}" th:text="${hospitalEmail}">billing@medicareplus.com</a>.</p>
+            <!-- Contact Information -->
+            <div style="background-color: #f8f9fa; padding: 20px; border-radius: 8px; margin: 20px 0;">
+                <h4 style="margin: 0 0 15px 0; color: #007bff;">Need Help?</h4>
+                <p style="margin: 0 0 10px 0;">If you have any questions regarding this payment or need a copy of this receipt, please don't hesitate to contact us:</p>
+                <p style="margin: 0;">
+                    <strong>Phone:</strong> <span th:text="${hospitalPhone ?: '(555) 123-4567'}">(555) 123-4567</span><br>
+                    <strong>Email:</strong> <a th:href="'mailto:' + ${hospitalEmail ?: 'billing@medicareplus.com'}"
+                                               th:text="${hospitalEmail ?: 'billing@medicareplus.com'}">billing@medicareplus.com</a><br>
+                    <strong>Hours:</strong> <span th:text="${hospitalHours ?: 'Monday - Friday, 8:00 AM - 6:00 PM'}">Monday - Friday, 8:00 AM - 6:00 PM</span>
+                </p>
+            </div>
 
-            <p>Thank you for choosing <span th:text="${hospitalName}">MediCare Plus</span> for your healthcare needs.</p>
+            <p>Thank you for choosing <strong th:text="${hospitalName ?: 'MediCare Plus'}">MediCare Plus</strong> for your healthcare needs. We appreciate your trust in our services.</p>
 
             <p>Best regards,<br>
-            <span th:text="${hospitalName}">MediCare Plus</span> Team</p>
+            <strong th:text="${hospitalName ?: 'MediCare Plus'}">MediCare Plus</strong> Team</p>
         </div>
 
+        <!-- Footer Section -->
         <div class="footer">
             <div class="hospital-info">
-                <p th:text="${hospitalName}">MediCare Plus</p>
-                <p th:text="${hospitalAddress}">123 Medical Center Drive, Healthcare City, HC 12345</p>
+                <p><strong th:text="${hospitalName ?: 'MediCare Plus'}">MediCare Plus</strong></p>
+                <p th:text="${hospitalAddress ?: '123 Medical Center Drive, Healthcare City, HC 12345'}">123 Medical Center Drive, Healthcare City, HC 12345</p>
             </div>
             <div class="contact-info">
-                <p>Phone: <span th:text="${hospitalPhone}">(555) 123-4567</span> | Email: <a th:href="'mailto:' + ${hospitalEmail}" th:text="${hospitalEmail}">info@medicareplus.com</a></p>
-                <p>Hours: <span th:text="${hospitalHours}">Monday - Friday, 8:00 AM - 6:00 PM</span></p>
+                <p>
+                    Phone: <span th:text="${hospitalPhone ?: '(555) 123-4567'}">(555) 123-4567</span> |
+                    Email: <a th:href="'mailto:' + ${hospitalEmail ?: 'info@medicareplus.com'}"
+                              th:text="${hospitalEmail ?: 'info@medicareplus.com'}">info@medicareplus.com</a>
+                </p>
+                <p>Business Hours: <span th:text="${hospitalHours ?: 'Monday - Friday, 8:00 AM - 6:00 PM'}">Monday - Friday, 8:00 AM - 6:00 PM</span></p>
             </div>
-            <p class="disclaimer" th:text="${emailDisclaimer}">This email contains confidential information. If you received this email in error, please delete it immediately.</p>
+            <p class="disclaimer" style="font-size: 12px; color: #999; margin-top: 15px; padding-top: 15px; border-top: 1px solid #ddd;"
+               th:text="${emailDisclaimer ?: 'This email contains confidential information. If you received this email in error, please delete it immediately.'}">
+               This email contains confidential information. If you received this email in error, please delete it immediately.
+            </p>
         </div>
     </div>
 </body>
 </html>
-
