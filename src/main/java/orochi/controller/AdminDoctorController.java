@@ -235,9 +235,30 @@ public class AdminDoctorController {
 
 
     @PostMapping("/{id}/toggleLock")
-    public String toggleLock(@PathVariable int id,
-                             @RequestParam int adminId) {
-        doctorService.toggleDoctorLock(id);
+    public String toggleLock(
+            @PathVariable int id,
+            @RequestParam int adminId,
+            RedirectAttributes redirectAttributes
+    ) {
+        try {
+            // Thực hiện đổi trạng thái
+            doctorService.toggleDoctorLock(id);
+
+            // Lấy lại bác sĩ vừa cập nhật để kiểm tra status
+            Doctor updated = doctorService.getDoctorByIdWithEducation(id);
+            String newStatus = updated.getUser().getStatus();
+
+            if ("LOCKED".equalsIgnoreCase(newStatus)) {
+                redirectAttributes.addFlashAttribute("successMessage", "Doctor has been locked successfully.");
+            } else {
+                redirectAttributes.addFlashAttribute("successMessage", "Doctor has been unlocked successfully.");
+            }
+        } catch (Exception e) {
+            logger.error("Error toggling doctor lock status for id " + id, e);
+            redirectAttributes.addFlashAttribute("errorMessage", "Failed to update doctor status: " + e.getMessage());
+        }
+
         return "redirect:/admin/doctors?adminId=" + adminId;
     }
+
 }
