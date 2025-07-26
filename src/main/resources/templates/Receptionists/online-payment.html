@@ -597,9 +597,19 @@
                 </div>
                 <div class="text-end">
                     <h3>INVOICE</h3>
-                    <p class="mb-0">Receipt: <span th:text="${invoiceData.receiptNumber}">REC20250529001</span></p>
-                    <p class="mb-0">Date: <span th:text="${#temporals.format(#temporals.createNow(), 'MMMM dd, yyyy', #locale.ENGLISH)}">July 15, 2025</span></p>
-                    <div class="barcode-placeholder mt-2" th:text="${invoiceData.receiptNumber}">REC20250529001</div>
+                    <p class="mb-0">Receipt:
+                        <span th:if="${invoiceData.receiptNumber != null and invoiceData.receiptNumber != 'N/A'}"
+                              th:text="${invoiceData.receiptNumber}">REC20250529001</span>
+                        <span th:if="${invoiceData.receiptNumber == null or invoiceData.receiptNumber == 'N/A'}"
+                              th:text="'REC' + ${#temporals.format(#temporals.createNow(), 'yyyyMMddHHmmss')}">REC20250529001</span>
+                    </p>
+                    <p class="mb-0">Date: <span th:text="${#temporals.format(#temporals.createNow(), 'MMMM dd, yyyy', #locale.ENGLISH)}">July 27, 2025</span></p>
+                    <div class="barcode-placeholder mt-2">
+                        <span th:if="${invoiceData.receiptNumber != null and invoiceData.receiptNumber != 'N/A'}"
+                              th:text="${invoiceData.receiptNumber}">REC20250529001</span>
+                        <span th:if="${invoiceData.receiptNumber == null or invoiceData.receiptNumber == 'N/A'}"
+                              th:text="'REC' + ${#temporals.format(#temporals.createNow(), 'yyyyMMddHHmmss')}">REC20250529001</span>
+                    </div>
                 </div>
             </div>
 
@@ -679,7 +689,12 @@
                 <div class="payment-details">
                     <div class="payment-info">
                         <p><span class="info-label">Transaction ID:</span> <span th:text="${invoiceData.transactionId}">TRX20250529001</span></p>
-                        <p><span class="info-label">Receipt Number:</span> <span th:text="${invoiceData.receiptNumber}">REC20250529001</span></p>
+                        <p><span class="info-label">Receipt Number:</span>
+                            <span th:if="${invoiceData.receiptNumber != null and invoiceData.receiptNumber != 'N/A'}"
+                                  th:text="${invoiceData.receiptNumber}">REC20250529001</span>
+                            <span th:if="${invoiceData.receiptNumber == null or invoiceData.receiptNumber == 'N/A'}"
+                                  th:text="'REC' + ${#temporals.format(#temporals.createNow(), 'yyyyMMddHHmmss')}">REC20250529001</span>
+                        </p>
                         <p><span class="info-label">Total Amount:</span> <span id="calculatedTotalAmount">0</span> ₫</p>
                         <p><span class="info-label">Tax Amount:</span> <span id="calculatedTaxAmount">0</span> ₫</p>
                         <p><span class="info-label">Discount:</span> <span id="calculatedDiscountAmount">0</span> ₫</p>
