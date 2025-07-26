@@ -2,6 +2,7 @@ package orochi.service.impl;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
+import java.time.LocalTime;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Set;
@@ -15,8 +16,10 @@ import orochi.model.Appointment;
 import orochi.model.Patient;
 import orochi.model.PatientContact;
 import orochi.model.Users;
+import orochi.model.Schedule;
 import orochi.repository.*;
 import orochi.model.*;
+import orochi.service.ScheduleService;
 
 import java.util.List;
 import java.util.Map;
@@ -54,6 +57,9 @@ public class ReceptionistService {
     @Autowired
     private ScheduleRepository scheduleRepository;
 
+    @Autowired
+    private ScheduleService scheduleService;
+
     public ReceptionistService(
             UserRepository userRepository,
             AppointmentRepository appointmentRepository,
@@ -63,7 +69,8 @@ public class ReceptionistService {
             PatientContactRepository patientContactRepository,
             DoctorRepository doctorRepository,
             ReceiptRepository receiptRepository,
-            RoomRepository roomRepository) {
+            RoomRepository roomRepository,
+            ScheduleService scheduleService) {
         this.userRepository = userRepository;
         this.appointmentRepository = appointmentRepository;
         this.patientRepository = patientRepository;
@@ -73,6 +80,7 @@ public class ReceptionistService {
         this.DoctorRepository = doctorRepository;
         this.receiptRepository = receiptRepository;
         this.roomRepository = roomRepository;
+        this.scheduleService = scheduleService;
     }
 
     // Fetch all appointments for scheduling purposes
@@ -328,11 +336,15 @@ public class ReceptionistService {
             appointment.setStatus(status);
             appointmentRepository.save(appointment);
 
-            // 🔥 LOGIC T���O TRANSACTION KHI CONFIRM APPOINTMENT (Pending -> Scheduled)
+            // 🔥 LOGIC TẠO TRANSACTION KHI CONFIRM APPOINTMENT (Pending -> Scheduled)
             if ("Scheduled".equals(status) && "Pending".equals(oldStatus)) {
                 logger.info("=== TRIGGERING TRANSACTION CREATION ===");
                 logger.info("Status changed from {} to {} for AppointmentID: {}", oldStatus, status, appointmentId);
                 createTransactionForConfirmedAppointment(appointment);
+
+                // 🔥 NEW: CREATE SCHEDULE WHEN APPOINTMENT IS CONFIRMED
+                logger.info("=== TRIGGERING SCHEDULE CREATION ===");
+                createScheduleForConfirmedAppointment(appointment);
             }
 
             return true;
@@ -439,6 +451,131 @@ public class ReceptionistService {
             logger.error("❌ Full stack trace:", e);
             // Không throw exception để không ảnh hưởng đến việc confirm appointment
             // Nhưng log chi tiết để debug
+        }
+    }
+
+    /**
+     * Create schedule when appointment is confirmed
+     * Schedule will have:
+     * - DoctorID from appointment
+     * - RoomID from appointment
+     * - PatientID from appointment
+     * - AppointmentID from appointment
+     * - ScheduleDate from appointment DateTime (date part)
+     * - StartTime from appointment DateTime (time part)
+     * - EndTime = StartTime + 30 minutes
+     * - EventType = "Appointment"
+     * - Description from appointment description
+     * - IsCompleted = false (default)
+     */
+    @Transactional
+    protected void createScheduleForConfirmedAppointment(Appointment appointment) {
+        try {
+            logger.info("=== CREATING SCHEDULE FOR CONFIRMED APPOINTMENT ===");
+            logger.info("Processing AppointmentID: {}, PatientID: {}",
+                       appointment.getAppointmentId(), appointment.getPatientId());
+
+            // BƯỚC 1: Check if schedule already exists for this appointment
+            Optional<Schedule> existingSchedule = scheduleRepository.findByAppointmentId(appointment.getAppointmentId());
+            if (existingSchedule.isPresent()) {
+                logger.info("⚠️ Schedule already exists for AppointmentID: {}, skipping creation",
+                           appointment.getAppointmentId());
+                return;
+            }
+
+            // BƯỚC 2: Validate required data from appointment
+            if (appointment.getDoctor() == null) {
+                logger.error("❌ Doctor not found for AppointmentID: {}", appointment.getAppointmentId());
+                return;
+            }
+
+            if (appointment.getPatient() == null) {
+                logger.error("❌ Patient not found for AppointmentID: {}", appointment.getAppointmentId());
+                return;
+            }
+
+            // BƯỚC 3: Create new Schedule entity
+            Schedule schedule = new Schedule();
+
+            // Set IDs from appointment
+            schedule.setDoctorId(appointment.getDoctor().getDoctorId());
+            schedule.setPatientId(appointment.getPatient().getPatientId());
+            schedule.setAppointmentId(appointment.getAppointmentId());
+
+            // Set Room ID if available
+            if (appointment.getRoom() != null) {
+                schedule.setRoomId(appointment.getRoom().getRoomId());
+            } else {
+                // Try to get a room from the doctor's specialty
+                try {
+                    if (!appointment.getDoctor().getSpecializations().isEmpty()) {
+                        Integer specialtyId = appointment.getDoctor().getSpecializations().get(0).getSpecId();
+                        List<Map<String, Object>> rooms = getRoomsBySpecialtyAndDoctor(specialtyId, appointment.getDoctor().getDoctorId());
+                        if (!rooms.isEmpty()) {
+                            Object roomId = rooms.get(0).get("roomId");
+                            if (roomId != null) {
+                                schedule.setRoomId((Integer) roomId);
+                                logger.info("✅ Assigned room {} from specialty {} to schedule", roomId, specialtyId);
+                            }
+                        }
+                    }
+                } catch (Exception e) {
+                    logger.warn("Could not assign room automatically: {}", e.getMessage());
+                }
+            }
+
+            // Set date and time from appointment
+            schedule.setScheduleDate(appointment.getDateTime().toLocalDate());
+            schedule.setStartTime(appointment.getDateTime().toLocalTime());
+
+            // Set end time = start time + 30 minutes
+            LocalTime startTime = appointment.getDateTime().toLocalTime();
+            LocalTime endTime = startTime.plusMinutes(30);
+            schedule.setEndTime(endTime);
+
+            // Set event type as "Appointment"
+            schedule.setEventType("Appointment");
+
+            // Set description from appointment
+            String description = appointment.getDescription();
+            if (description == null || description.trim().isEmpty()) {
+                description = "Medical consultation appointment";
+            }
+            schedule.setDescription(description);
+
+            // Set as not completed initially
+            schedule.setIsCompleted(false);
+
+            // BƯỚC 4: Save schedule to database
+            Schedule savedSchedule = scheduleRepository.save(schedule);
+
+            logger.info("✅ SCHEDULE CREATED SUCCESSFULLY:");
+            logger.info("   ScheduleID: {}", savedSchedule.getScheduleId());
+            logger.info("   DoctorID: {}", savedSchedule.getDoctorId());
+            logger.info("   PatientID: {}", savedSchedule.getPatientId());
+            logger.info("   RoomID: {}", savedSchedule.getRoomId());
+            logger.info("   AppointmentID: {}", savedSchedule.getAppointmentId());
+            logger.info("   ScheduleDate: {}", savedSchedule.getScheduleDate());
+            logger.info("   StartTime: {}", savedSchedule.getStartTime());
+            logger.info("   EndTime: {}", savedSchedule.getEndTime());
+            logger.info("   EventType: {}", savedSchedule.getEventType());
+            logger.info("   Description: {}", savedSchedule.getDescription());
+            logger.info("   IsCompleted: {}", savedSchedule.getIsCompleted());
+
+            // BƯỚC 5: Verify schedule was saved correctly
+            Optional<Schedule> verifySchedule = scheduleRepository.findByAppointmentId(appointment.getAppointmentId());
+            if (verifySchedule.isPresent()) {
+                logger.info("✅ VERIFIED: Schedule {} exists in database for AppointmentID: {}",
+                           verifySchedule.get().getScheduleId(), appointment.getAppointmentId());
+            } else {
+                logger.error("❌ VERIFICATION FAILED: No schedule found after save operation");
+            }
+
+        } catch (Exception e) {
+            logger.error("❌ Error creating schedule for confirmed appointment: {}", e.getMessage(), e);
+            logger.error("❌ Full stack trace:", e);
+            // Don't throw exception to avoid affecting appointment confirmation
+            // But log detailed error for debugging
         }
     }
 
@@ -2103,14 +2240,16 @@ public class ReceptionistService {
     }
 
     /**
-     * Find receptionist by user ID
+     * Find a Receptionist by User ID
+     * Used for avatar functionality
      */
     public Receptionist findByUserId(Integer userId) {
         return receptionistEntityRepository.findByUserId(userId).orElse(null);
     }
 
     /**
-     * Save receptionist entity
+     * Save a Receptionist entity
+     * Used for avatar functionality
      */
     public Receptionist save(Receptionist receptionist) {
         return receptionistEntityRepository.save(receptionist);

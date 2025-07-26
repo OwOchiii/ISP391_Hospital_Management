@@ -789,7 +789,9 @@
     <!-- Search & Filter -->
     <div class="search-filters">
       <form class="row g-3" method="get"
-            th:action="@{/admin/appointments/all(adminId=${adminId})}">
+            th:action="@{/admin/appointments/all}">
+        <!-- Bắt buộc phải có hidden input này để controller nhận được adminId -->
+        <input type="hidden" name="adminId" th:value="${adminId}" />
 
         <!-- 1) Search by Appointment ID -->
         <div class="col-md-3">
@@ -807,8 +809,8 @@
           <label for="searchName" class="form-label">Patient Name</label>
           <input type="text"
                  id="searchName"
-                 name="searchName"
-                 th:value="${searchName}"
+                 name="search"
+                 th:value="${search}"
                  class="form-control"
                  placeholder="e.g. Alice"/>
         </div>
@@ -845,9 +847,6 @@
         </div>
       </form>
     </div>
-
-
-
 
     <!-- Appointments List -->
     <div class="appointments-container">
@@ -954,41 +953,48 @@
           <li class="page-item" th:classappend="${appointments.first} ? 'disabled'">
             <a class="page-link"
                th:href="@{/admin/appointments/all(
-             adminId=${adminId},
-             appointmentId=${appointmentId},
-             searchName=${searchName},
-             doctorId=${selectedDoctorId},
-             status=${currentStatus},
-             page=${appointments.number-1},
-             size=${appointments.size}
-           )}">«</a>
+       adminId=${adminId},
+       appointmentId=${appointmentId},
+       search=${search},
+       doctorId=${selectedDoctorId},
+       status=${currentStatus},
+       page=${appointments.number - 1},
+       size=${appointments.size}
+     )}">
+              «
+            </a>
           </li>
+
           <li class="page-item"
               th:each="i : ${#numbers.sequence(0, appointments.totalPages-1)}"
               th:classappend="${i == appointments.number} ? 'active'">
             <a class="page-link"
                th:text="${i+1}"
                th:href="@{/admin/appointments/all(
-             adminId=${adminId},
-             appointmentId=${appointmentId},
-             searchName=${searchName},
-             doctorId=${selectedDoctorId},
-             status=${currentStatus},
-             page=${i},
-             size=${appointments.size}
-           )}"></a>
+       adminId=${adminId},
+       appointmentId=${appointmentId},
+       search=${search},
+       doctorId=${selectedDoctorId},
+       status=${currentStatus},
+       page=${i},
+       size=${appointments.size}
+     )}">
+            </a>
           </li>
+
           <li class="page-item" th:classappend="${appointments.last} ? 'disabled'">
             <a class="page-link"
                th:href="@{/admin/appointments/all(
-             adminId=${adminId},
-             appointmentId=${appointmentId},
-             searchName=${searchName},
-             doctorId=${selectedDoctorId},
-             status=${currentStatus},
-             page=${appointments.number+1},
-             size=${appointments.size}
-           )}">»</a>
+       adminId=${adminId},
+       appointmentId=${appointmentId},
+       search=${search},
+       doctorId=${selectedDoctorId},
+       status=${currentStatus},
+       page=${appointments.number+1},
+       size=${appointments.size}
+     )}">
+              »
+            </a>
           </li>
         </ul>
       </nav>
@@ -1059,5 +1065,6 @@
   });
   /*]]>*/
 </script>
+
 </body>
 </html>

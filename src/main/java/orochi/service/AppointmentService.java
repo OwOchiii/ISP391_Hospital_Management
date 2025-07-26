@@ -109,7 +109,7 @@ public class AppointmentService {
         }
 
         // Set appointment specific information
-        appointmentDTO.setRoom(appointment.getRoom() != null ? appointment.getRoom().getRoomNumber() : "NA");
+        appointmentDTO.setRoom(appointment.getRoom().getRoomNumber());
         appointmentDTO.setDoctor(appointment.getDoctor());
         appointmentDTO.setSpecialtyId(String.valueOf(appointment.getDoctor().getSpecializations().get(0).getSpecId()));
         appointmentDTO.setSpecialtyName(appointment.getDoctor().getSpecializations().get(0).getSpecName());
@@ -718,6 +718,8 @@ public Appointment updateAppointment2(
         return appointmentRepository.findById(appointmentId)
                 .orElseThrow(() -> new RuntimeException("Appointment not found with ID: " + appointmentId));
     }
+
+
 
     /**
      * Tự động hủy các appointments có status "Pending" và đã quá thời gian

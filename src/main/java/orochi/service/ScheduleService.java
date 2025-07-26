@@ -9,6 +9,8 @@ import org.springframework.data.domain.Page;
 import java.time.LocalTime;
 import java.time.LocalDate;
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 public interface ScheduleService {
 
@@ -154,7 +156,14 @@ public interface ScheduleService {
         public void setCompletedSchedules(Integer completedSchedules) {
             this.completedSchedules = completedSchedules;
         }
-
-
     }
+
+    List<Doctor> findDoctorsByRoom(Integer roomId);
+
+    Map<LocalDate, Set<String>> getShiftOverview(LocalDate start, LocalDate end);
+
+    List<ScheduleDTO> findSchedulesByDateAndTimeRange(LocalDate date, LocalTime start);
+
+    List<ScheduleDTO> findSchedulesByRoomAndShift(LocalDate date, LocalTime start, Integer roomId);
+
 }

@@ -34,6 +34,7 @@ public class AdminRevenueController {
             @RequestParam(value = "to", required = false)
             @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate to,
             @RequestParam(value = "year", required = false) Integer year,
+            @RequestParam(value="dateRange", required=false) String dateRange,
             Model model
     ) {
         LocalDate today = LocalDate.now();
@@ -59,7 +60,8 @@ public class AdminRevenueController {
         model.addAttribute("from", from);
         model.addAttribute("to", to);
         model.addAttribute("year", year);
-
+        if (dateRange == null) dateRange = "month";  // fallback
+        model.addAttribute("dateRange", dateRange);
         model.addAttribute("totalRevenue", totalRevenue);
         model.addAttribute("revenueByDepartment", byDept);
         model.addAttribute("revenueByDoctor", byDoc);

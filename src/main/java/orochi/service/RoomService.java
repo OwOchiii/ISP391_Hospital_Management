@@ -37,4 +37,6 @@ public interface RoomService {
 
     // NEW: Get available rooms by department ID
     List<Room> getAvailableRoomsByDepartmentId(Integer departmentId);
+
+    Optional<Room> findByRoomNumber(String roomNumber);
 }

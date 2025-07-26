@@ -53,7 +53,7 @@ public class AdminAppointmentController {
 
     @GetMapping
     public String showAppointments(@RequestParam Integer adminId,
-            @RequestParam(defaultValue = "0") int page,
+                                   @RequestParam(defaultValue = "0") int page,
                                    @RequestParam(defaultValue = "10") int size,
                                    @RequestParam(defaultValue = "ALL") String status,
                                    @RequestParam(required = false) String search,
@@ -65,7 +65,7 @@ public class AdminAppointmentController {
         if (userDetails.getAuthorities().stream().anyMatch(a -> a.getAuthority().equals("ROLE_DOCTOR"))) {
             Integer doctorId = userDetails.getDoctorId();
             if (search != null && !search.isBlank()) {
-                appointments = appointmentService.searchAppointmentsByDoctorId(doctorId, search, pageable);
+                appointments = appointmentService.searchAppointmentsByDoctorId2(doctorId, search, pageable);
             } else {
                 appointments = appointmentService.getAppointmentsByDoctorId(doctorId, pageable);
             }
@@ -104,8 +104,8 @@ public class AdminAppointmentController {
                                           @AuthenticationPrincipal CustomUserDetails userDetails) {
         if (userDetails.getAuthorities().stream().noneMatch(a ->
                 a.getAuthority().equals("ROLE_ADMIN") ||
-                a.getAuthority().equals("ROLE_DOCTOR") ||
-                a.getAuthority().equals("ROLE_RECEPTIONIST"))) {
+                        a.getAuthority().equals("ROLE_DOCTOR") ||
+                        a.getAuthority().equals("ROLE_RECEPTIONIST"))) {
             throw new SecurityException("Unauthorized action");
         }
 
@@ -283,7 +283,7 @@ public class AdminAppointmentController {
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "5") int size,
             @RequestParam(required = false) Integer appointmentId,
-            @RequestParam(required = false) String searchName,
+            @RequestParam(required = false) String search,
             @RequestParam(required = false) Integer doctorId,
             @RequestParam(defaultValue = "ALL") String status,
             @AuthenticationPrincipal CustomUserDetails userDetails,
@@ -301,13 +301,13 @@ public class AdminAppointmentController {
             appointments = appointmentService.findByDoctorIdAndStatusAndName(
                     doctorId,
                     status,
-                    searchName,
+                    search,
                     pageable
             );
         }
         // 3) Tìm theo tên bệnh nhân (searchName) kết hợp với trạng thái
-        else if (searchName != null && !searchName.isBlank()) {
-            appointments = appointmentService.searchAndFilter(searchName, status, pageable);
+        else if (search != null && !search.isBlank()) {
+            appointments = appointmentService.searchAndFilter(search, status, pageable);
         }
         // 4) Chỉ filter theo trạng thái
         else if (!"ALL".equalsIgnoreCase(status)) {
@@ -320,7 +320,7 @@ public class AdminAppointmentController {
 
         model.addAttribute("appointments",       appointments);
         model.addAttribute("appointmentId",      appointmentId);
-        model.addAttribute("searchName",         searchName);
+        model.addAttribute("search",         search);
         model.addAttribute("selectedDoctorId",   doctorId);
         model.addAttribute("currentStatus",      status);
         model.addAttribute("adminId", adminId);

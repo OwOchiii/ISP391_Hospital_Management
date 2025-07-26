@@ -1,6 +1,8 @@
 package orochi.repository;
 
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -61,4 +63,23 @@ public interface PrescriptionRepository extends JpaRepository<Prescription, Inte
      * @return Page of prescriptions for the patient
      */
     Page<Prescription> findByPatientId(Integer patientId, Pageable pageable);
+
+    /**
+     * Count prescriptions created between two dates
+     *
+     * @param startDate The start date
+     * @param endDate   The end date
+     * @return Count of prescriptions in the date range
+     */
+    @Query("SELECT COUNT(p) FROM Prescription p WHERE p.prescriptionDate BETWEEN :startDate AND :endDate")
+    Long countByPrescriptionDateBetween(@Param("startDate") LocalDateTime startDate,
+                                       @Param("endDate") LocalDateTime endDate);
+
+    /**
+     * Count all prescriptions
+     *
+     * @return Total count of prescriptions
+     */
+    @Query("SELECT COUNT(p) FROM Prescription p")
+    Long countAllPrescriptions();
 }

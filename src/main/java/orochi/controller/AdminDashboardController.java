@@ -15,6 +15,8 @@ import orochi.service.RevenueService;
 import orochi.service.RoomService;
 import orochi.service.UserService;
 
+import java.time.LocalDate;
+
 @Controller
 @RequestMapping("/admin")
 public class AdminDashboardController {
@@ -54,39 +56,37 @@ public class AdminDashboardController {
         }
         String adminName = "Admin User";
 
+        // Calculate date ranges for revenue calculations
+        LocalDate today = LocalDate.now();
+        LocalDate startOfMonth = today.withDayOfMonth(1);
+        LocalDate startOfYear = today.withDayOfYear(1);
+
         // Basic info
         model.addAttribute("adminId", adminId);
         model.addAttribute("adminName", adminName);
 
-        // Statistics
+        // Statistics - using calculated values instead of hardcoded ones
         model.addAttribute("totalUsers", userService.getTotalUsers());
         model.addAttribute("totalAppointments", appointmentService.getTotalAppointments());
-        model.addAttribute("totalRevenue", revenueService.getMonthlyRevenue());
         model.addAttribute("totalDoctors", doctorService.getActiveDoctors());
         model.addAttribute("totalRooms", roomService.getTotalRooms());
         model.addAttribute("totalPrescriptions", prescriptionService.getMonthlyCount());
 
-        // Growth metrics
-        model.addAttribute("userGrowth", userService.getGrowthPercentage());
-        model.addAttribute("appointmentGrowth", appointmentService.getGrowthPercentage());
-        model.addAttribute("revenueGrowth", revenueService.getGrowthPercentage());
-        model.addAttribute("doctorGrowth", 5); // PLACEHOLDER: 5% growth for doctors
+        // Revenue calculations - using actual calculated values
+        Double monthlyRevenue = revenueService.getTotalRevenue(startOfMonth, today);
+        Double yearlyRevenue = revenueService.getTotalRevenue(startOfYear, today);
+        model.addAttribute("totalRevenue", monthlyRevenue != null ? monthlyRevenue : 0.0);
+        model.addAttribute("monthlyRevenue", monthlyRevenue != null ? monthlyRevenue : 0.0);
+        model.addAttribute("yearlyRevenue", yearlyRevenue != null ? yearlyRevenue : 0.0);
 
-        // Management summaries
+        // Management summaries - removing growth percentages as requested
         model.addAttribute("activeUsers", userService.getGuestUsers());
         model.addAttribute("newUsersToday", userService.getNewUsersToday());
         model.addAttribute("todayAppointments", appointmentService.getTodayAppointments());
         model.addAttribute("pendingAppointments", appointmentService.getPendingAppointments());
         model.addAttribute("onlineDoctors", doctorService.getOnlineDoctors());
-        model.addAttribute("busyDoctors", 15); // PLACEHOLDER: 15 busy doctors
         model.addAttribute("availableRooms", roomService.getAvailableRooms());
-        model.addAttribute("occupiedRooms", 6); // PLACEHOLDER: 6 occupied rooms
         model.addAttribute("pendingOrders", medicalOrderService.getPendingOrders());
-        model.addAttribute("completedOrders", 156); // PLACEHOLDER: 156 completed orders
-
-        // Additional revenue statistics
-        model.addAttribute("monthlyRevenue", revenueService.getMonthlyRevenue());
-        model.addAttribute("yearlyRevenue", 485670.0); // PLACEHOLDER: $485,670 yearly revenue
 
         return "admin/dashboard";
     }

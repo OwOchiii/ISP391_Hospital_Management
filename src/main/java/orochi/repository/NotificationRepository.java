@@ -48,4 +48,25 @@ public interface NotificationRepository extends JpaRepository<Notification, Inte
             @Param("fromDate") LocalDateTime fromDate,
             @Param("toDate") LocalDateTime toDate,
             Pageable pageable);
+
+    // New method to count unread notifications
+    int countByUserIdAndIsReadFalse(Integer userId);
+
+    @Query("SELECT n FROM Notification n WHERE n.userId = :userId " +
+            "AND (:isRead IS NULL OR n.isRead = :isRead) " +
+            "AND (:searchTerm IS NULL OR LOWER(n.type) LIKE LOWER(CONCAT('%', :searchTerm, '%')) OR CONCAT('', n.notificationId) LIKE CONCAT('%', :searchTerm, '%')) " +
+            "AND (:fromDate IS NULL OR n.createdAt >= :fromDate) " +
+            "AND (:toDate IS NULL OR n.createdAt <= :toDate) " +
+            "ORDER BY n.createdAt DESC")
+    Page<Notification> findFilteredNotifications(
+            @Param("userId") Integer userId,
+            @Param("isRead") Boolean isRead,
+            @Param("searchTerm") String searchTerm,
+            @Param("fromDate") LocalDateTime fromDate,
+            @Param("toDate") LocalDateTime toDate,
+            Pageable pageable);
+
+    long countByUserId(Integer userId);
+
+    long countByUserIdAndIsRead(Integer userId, boolean isRead);
 }

@@ -735,11 +735,18 @@
       </div>
       <div class="col-md-2">
         <label class="form-label">From</label>
-        <input name="dateFrom" type="datetime-local" class="form-control" th:value="${dateFrom != null ? #dates.format(dateFrom,'yyyy-MM-dd''T''HH:mm') : ''}" />
+        <input name="dateFrom"
+               type="datetime-local"
+               class="form-control"
+               th:value="${dateFrom != null ? #temporals.format(dateFrom, 'yyyy-MM-dd''T''HH:mm') : ''}" />
+
       </div>
       <div class="col-md-2">
         <label class="form-label">To</label>
-        <input name="dateTo" type="datetime-local" class="form-control" th:value="${dateTo != null ? #dates.format(dateTo, 'yyyy-MM-dd''T''HH:mm') : ''}" />
+        <input name="dateTo"
+               type="datetime-local"
+               class="form-control"
+               th:value="${dateTo   != null ? #temporals.format(dateTo,   'yyyy-MM-dd''T''HH:mm') : ''}" />
       </div>
       <div class="col-12 text-end">
         <button type="submit" class="btn btn-primary">Apply Filters</button>
@@ -795,15 +802,51 @@
           <nav>
             <ul class="pagination justify-content-center">
               <li class="page-item" th:classappend="${!page.hasPrevious()} ? 'disabled'">
-                <a class="page-link" th:href="@{|/admin/medical-results?adminId=${adminId}&appointmentId=${appointmentId}&status=${status}&doctorName=${doctorName}&patientName=${patientName}${dateFrom != null ? '&dateFrom=' + #dates.format(dateFrom,'yyyy-MM-dd''T''HH:mm') : ''}${dateTo != null ? '&dateTo=' + #dates.format(dateTo, 'yyyy-MM-dd''T''HH:mm') : ''}&page=${page.number-1}&size=${page.size}|}">
+                <a class="page-link"
+                   th:href="@{/admin/medical-results(
+             adminId=${adminId},
+             appointmentId=${appointmentId},
+             status=${status},
+             doctorName=${doctorName},
+             patientName=${patientName},
+             dateFrom=${dateFrom != null ? #temporals.format(dateFrom,'yyyy-MM-dd''T''HH:mm') : null},
+             dateTo=${dateTo     != null ? #temporals.format(dateTo,  'yyyy-MM-dd''T''HH:mm') : null},
+             page=${page.number - 1},
+             size=${page.size}
+         )}">
                   « Prev
                 </a>
               </li>
-              <li class="page-item" th:each="i : ${#numbers.sequence(0, page.totalPages - 1)}" th:classappend="${i == page.number} ? 'active'">
-                <a class="page-link" th:text="${i + 1}" th:href="@{|/admin/medical-results?adminId=${adminId}&appointmentId=${appointmentId}&status=${status}&doctorName=${doctorName}&patientName=${patientName}${dateFrom != null ? '&dateFrom=' + #dates.format(dateFrom,'yyyy-MM-dd''T''HH:mm') : ''}${dateTo != null ? '&dateTo=' + #dates.format(dateTo, 'yyyy-MM-dd''T''HH:mm') : ''}&page=${i}&size=${page.size}|}"></a>
+              <li class="page-item"
+                  th:each="i : ${#numbers.sequence(0, page.totalPages - 1)}"
+                  th:classappend="${i == page.number} ? 'active'">
+                <a class="page-link"
+                   th:text="${i + 1}"
+                   th:href="@{/admin/medical-results(
+             adminId=${adminId},
+             appointmentId=${appointmentId},
+             status=${status},
+             doctorName=${doctorName},
+             patientName=${patientName},
+             dateFrom=${dateFrom != null ? #temporals.format(dateFrom,'yyyy-MM-dd''T''HH:mm') : null},
+             dateTo=${dateTo     != null ? #temporals.format(dateTo,  'yyyy-MM-dd''T''HH:mm') : null},
+             page=${i},
+             size=${page.size}
+         )}"></a>
               </li>
               <li class="page-item" th:classappend="${!page.hasNext()} ? 'disabled'">
-                <a class="page-link" th:href="@{|/admin/medical-results?adminId=${adminId}&appointmentId=${appointmentId}&status=${status}&doctorName=${doctorName}&patientName=${patientName}${dateFrom != null ? '&dateFrom=' + #dates.format(dateFrom,'yyyy-MM-dd''T''HH:mm') : ''}${dateTo != null ? '&dateTo=' + #dates.format(dateTo, 'yyyy-MM-dd''T''HH:mm') : ''}&page=${page.number+1}&size=${page.size}|}">
+                <a class="page-link"
+                   th:href="@{/admin/medical-results(
+             adminId=${adminId},
+             appointmentId=${appointmentId},
+             status=${status},
+             doctorName=${doctorName},
+             patientName=${patientName},
+             dateFrom=${dateFrom != null ? #temporals.format(dateFrom,'yyyy-MM-dd''T''HH:mm') : null},
+             dateTo=${dateTo     != null ? #temporals.format(dateTo,  'yyyy-MM-dd''T''HH:mm') : null},
+             page=${page.number+1},
+             size=${page.size}
+         )}">
                   Next »
                 </a>
               </li>

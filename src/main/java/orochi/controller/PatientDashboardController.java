@@ -9,6 +9,8 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
+import org.springframework.data.web.PageableDefault;
+import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -54,6 +56,9 @@ public class PatientDashboardController {
 
     @Autowired
     private AppointmentRepository appointmentRepository;
+
+    @Autowired
+    private NotificationRepository notificationRepository;
 
     @Autowired
     private MedicalOrderRepository medicalOrderRepository;
@@ -148,11 +153,15 @@ public class PatientDashboardController {
             }
             model.addAttribute("lastVisit", lastVisit);
 
-            //Lay thong bao moi nhat va list thong bao
+            // Get the latest notification (existing logic)
             Integer userId = patient.getUser().getUserId();
             List<Notification> notes = notificationService.findByUserIdOrderByCreatedAtDesc(userId);
             Notification latest = notes.isEmpty() ? null : notes.get(0);
             model.addAttribute("latestNotification", latest);
+
+            // Add unread notifications count
+            int unreadCount = notificationService.countUnreadNotifications(userId);
+            model.addAttribute("unreadCount", unreadCount);
 
             logger.info("Dashboard loaded successfully for patient ID: {}", patientId);
             return "patient/dashboard";
@@ -164,7 +173,11 @@ public class PatientDashboardController {
     }
 
     @GetMapping("/search-doctor")
-    public String searchDoctor(Model model) {
+    public String searchDoctor(
+            @RequestParam(required = false) String search,
+            @RequestParam(required = false) Integer specId,
+            @PageableDefault(size = 5, sort = "doctorId") Pageable pageable,
+            Model model) {
         try {
             Integer patientId = getCurrentPatientId();
             if (patientId != null) {
@@ -174,15 +187,27 @@ public class PatientDashboardController {
                     model.addAttribute("patientName", patientOpt.get().getUser().getFullName());
                 }
             }
-            List<Doctor> doctors = doctorRepository.findAll();
-            // Pre-process doctors to include latest education
-            doctors.forEach(PatientDashboardController::accept);
-            model.addAttribute("doctors", doctors);
+            Page<Doctor> doctorPage = doctorRepository.findDoctorsBySearchAndSpecialization(
+                    search != null && !search.trim().isEmpty() ? search.trim() : null,
+                    specId != null && specId > 0 ? specId : null,
+                    pageable);
+            doctorPage.getContent().forEach(doctor -> {
+                // Pre-process to set latestEducation (assuming PatientDashboardController::accept does this)
+                PatientDashboardController.accept(doctor);
+            });
+            model.addAttribute("doctors", doctorPage.getContent());
+            model.addAttribute("currentPage", doctorPage.getNumber());
+            model.addAttribute("totalPages", doctorPage.getTotalPages());
+            model.addAttribute("pageSize", doctorPage.getSize());
+            model.addAttribute("totalElements", doctorPage.getTotalElements());
+            model.addAttribute("search", search != null ? search : "");
+            model.addAttribute("specId", specId != null ? specId : "");
             List<Specialization> specializations = specializationRepository.findAll();
             model.addAttribute("specializations", specializations);
+            logger.info("Search doctor page loaded: search='{}', specId={}, page={}", search, specId, pageable.getPageNumber());
             return "patient/search-doctor";
         } catch (Exception e) {
-            logger.error("Error loading search doctor page: " + e.getMessage(), e);
+            logger.error("Error loading search doctor page: {}", e.getMessage(), e);
             model.addAttribute("errorMessage", "An error occurred while loading the search doctor page.");
             return "error";
         }
@@ -864,7 +889,14 @@ public class PatientDashboardController {
     }
 
     @GetMapping("/payment-history")
-    public String paymentHistory(Model model) {
+    public String paymentHistory(
+            @RequestParam(required = false, defaultValue = "all") String status,
+            @RequestParam(required = false, defaultValue = "all") String method,
+            @RequestParam(required = false) String search,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate fromDate,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate toDate,
+            @PageableDefault(size = 5, sort = "timeOfPayment", direction = org.springframework.data.domain.Sort.Direction.DESC) Pageable pageable,
+            Model model) {
         try {
             Integer patientId = getCurrentPatientId();
             if (patientId == null) {
@@ -883,44 +915,46 @@ public class PatientDashboardController {
             Patient patient = patientOpt.get();
             Integer userId = patient.getUser().getUserId();
 
-            // Get all transactions for the patient
-            List<Transaction> transactions = transactionRepository.findByUserIdOrderByTimeOfPaymentDesc(userId);
+            // Prepare statuses (excluding "Refunded")
+            List<String> statuses = "all".equals(status) ? Arrays.asList("Paid", "Pending") : Arrays.asList(status);
 
-            // Count transactions by status
-            long paidCount = transactions.stream()
-                    .filter(t -> "Paid".equals(t.getStatus()))
-                    .count();
+            // Prepare method filter
+            String methodFilter = "all".equals(method) ? null : method;
 
-            long refundedCount = transactions.stream()
-                    .filter(t -> "Refunded".equals(t.getStatus()))
-                    .count();
+            // Prepare searchId
+            Integer searchId = null;
+            if (search != null && !search.isEmpty()) {
+                try {
+                    searchId = Integer.parseInt(search);
+                } catch (NumberFormatException e) {
+                    // Ignore invalid search term
+                }
+            }
 
-            long pendingCount = transactions.stream()
-                    .filter(t -> "Pending".equals(t.getStatus()))
-                    .count();
+            // Prepare date range
+            LocalDateTime start = fromDate != null ? fromDate.atStartOfDay() : null;
+            LocalDateTime end = toDate != null ? toDate.atTime(23, 59, 59) : null;
 
-            // Count transactions by method
-            long cashCount = transactions.stream()
-                    .filter(t -> "Cash".equals(t.getMethod()))
-                    .count();
-
-            long bankingCount = transactions.stream()
-                    .filter(t -> "Banking".equals(t.getMethod()))
-                    .count();
+            // Fetch paginated transactions
+            Page<Transaction> transactionPage = transactionRepository.findFilteredTransactions(
+                    userId, statuses, methodFilter, searchId, start, end, pageable);
 
             // Add attributes to model
             model.addAttribute("userId", userId);
             model.addAttribute("patientId", patientId);
             model.addAttribute("patientName", patient.getUser() != null ? patient.getUser().getFullName() : "Patient");
-            model.addAttribute("transactions", transactions);
-            model.addAttribute("totalTransactions", transactions.size());
-            model.addAttribute("paidTransactions", paidCount);
-            model.addAttribute("refundedTransactions", refundedCount);
-            model.addAttribute("pendingTransactions", pendingCount);
-            model.addAttribute("cashTransactions", cashCount);
-            model.addAttribute("bankingTransactions", bankingCount);
+            model.addAttribute("transactions", transactionPage.getContent());
+            model.addAttribute("currentPage", transactionPage.getNumber());
+            model.addAttribute("totalPages", transactionPage.getTotalPages());
+            model.addAttribute("pageSize", transactionPage.getSize());
+            model.addAttribute("totalElements", transactionPage.getTotalElements());
+            model.addAttribute("status", status);
+            model.addAttribute("method", method);
+            model.addAttribute("search", search);
+            model.addAttribute("fromDate", fromDate != null ? fromDate.toString() : "");
+            model.addAttribute("toDate", toDate != null ? toDate.toString() : "");
 
-            logger.info("Payment history loaded successfully for patient ID: {}", patientId);
+            logger.info("Payment history loaded successfully for patient ID: {}, page: {}", patientId, pageable.getPageNumber());
             return "patient/payment-history";
         } catch (Exception e) {
             logger.error("Error loading payment history for patient ID: {}", getCurrentPatientId(), e);
@@ -1069,7 +1103,13 @@ public class PatientDashboardController {
     }
 
     @GetMapping("/notifications")
-    public String viewNotifications(Model model) {
+    public String viewNotifications(
+            @RequestParam(required = false, defaultValue = "all") String filter,
+            @RequestParam(required = false) String searchTerm,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate fromDate,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate toDate,
+            @PageableDefault(size = 10) Pageable pageable,
+            Model model) {
         try {
             Integer patientId = getCurrentPatientId();
             if (patientId == null) {
@@ -1087,20 +1127,47 @@ public class PatientDashboardController {
 
             Patient patient = patientOpt.get();
             Integer userId = patient.getUser().getUserId();
-            List<Notification> notifications = notificationService.findByUserIdOrderByCreatedAtDesc(userId);
 
-            // Log notification details for debugging
-            notifications.forEach(n -> logger.debug("Notification ID: {}, IsRead: {}", n.getNotificationId(), n.isRead()));
+            // Determine isRead based on filter
+            Boolean isRead = null;
+            if ("unread".equals(filter)) {
+                isRead = false;
+            } else if ("read".equals(filter)) {
+                isRead = true;
+            }
 
-            model.addAttribute("notifications", notifications);
-            model.addAttribute("totalNotifications", notifications.size());
-            model.addAttribute("unreadNotifications", notifications.stream().filter(n -> !n.isRead()).count());
-            model.addAttribute("readNotifications", notifications.stream().filter(Notification::isRead).count());
+            // Prepare search term
+            String search = searchTerm != null ? searchTerm.trim() : null;
+            if (search != null && search.isEmpty()) {
+                search = null;
+            }
+
+            // Prepare date range
+            LocalDateTime fromDateTime = fromDate != null ? fromDate.atStartOfDay() : null;
+            LocalDateTime toDateTime = toDate != null ? toDate.atTime(23, 59, 59) : null;
+
+            // Fetch paginated notifications
+            Page<Notification> notificationPage = notificationRepository.findFilteredNotifications(
+                    userId, isRead, search, fromDateTime, toDateTime, pageable);
+
+            // Add attributes to model
+            model.addAttribute("notifications", notificationPage.getContent());
+            model.addAttribute("currentPage", notificationPage.getNumber());
+            model.addAttribute("totalPages", notificationPage.getTotalPages());
+            model.addAttribute("pageSize", notificationPage.getSize());
+            model.addAttribute("totalElements", notificationPage.getTotalElements());
+            model.addAttribute("filter", filter);
+            model.addAttribute("searchTerm", searchTerm);
+            model.addAttribute("fromDate", fromDate != null ? fromDate.toString() : "");
+            model.addAttribute("toDate", toDate != null ? toDate.toString() : "");
+            model.addAttribute("totalNotifications", notificationRepository.countByUserId(userId));
+            model.addAttribute("unreadNotifications", notificationRepository.countByUserIdAndIsRead(userId, false));
+            model.addAttribute("readNotifications", notificationRepository.countByUserIdAndIsRead(userId, true));
             model.addAttribute("patientId", patientId);
             model.addAttribute("patientName", patient.getUser().getFullName());
 
-            logger.info("Notifications loaded successfully for patient ID: {}, user ID: {}, total: {}, unread: {}, read: {}",
-                    patientId, userId, notifications.size(), notifications.stream().filter(n -> !n.isRead()).count(), notifications.stream().filter(Notification::isRead).count());
+            logger.info("Notifications loaded successfully for patient ID: {}, user ID: {}, filter: {}, searchTerm: {}, fromDate: {}, toDate: {}, page: {}, totalElements: {}",
+                    patientId, userId, filter, searchTerm, fromDate, toDate, pageable.getPageNumber(), notificationPage.getTotalElements());
             return "patient/notifications";
         } catch (Exception e) {
             logger.error("Error loading notifications for patient ID: {}", getCurrentPatientId(), e);
