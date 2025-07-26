@@ -625,7 +625,7 @@
             border: 1px solid rgba(102, 126, 234, 0.2);
             border-radius: 8px;
             background: var(--bg-white);
-            color: var(--primary);
+            color: var(--text-dark);
             cursor: pointer;
             transition: all 0.3s ease;
         }
@@ -2411,10 +2411,11 @@
         const targetDate = new Date(today);
         targetDate.setDate(today.getDate() + selectedDayIndex);
 
-        // Format target date to match appointment date format (YYYY-MM-DD)
-        const targetDateString = targetDate.toISOString().split('T')[0];
+        // Format target date to match appointment date format (YYYY-MM-DD) - sử dụng local date thay vì UTC
+        const targetDateString = formatDateToYYYYMMDD(targetDate);
 
         console.log(`Filtering appointments for day ${selectedDayIndex}: ${targetDateString}`);
+        console.log(`Today: ${formatDateToYYYYMMDD(today)}, Target: ${targetDateString}`);
 
         // Filter appointments for the selected day
         const filteredData = appointmentData.filter(appointment => {
@@ -2439,10 +2440,10 @@
                     appointmentDateString = appointment.date;
                 }
             } else if (appointment.appointmentDateTime) {
-                // Extract date from datetime
+                // Extract date from datetime - sử dụng local date
                 try {
                     const dateTime = new Date(appointment.appointmentDateTime);
-                    appointmentDateString = dateTime.toISOString().split('T')[0];
+                    appointmentDateString = formatDateToYYYYMMDD(dateTime);
                 } catch (e) {
                     return false;
                 }
@@ -2468,6 +2469,16 @@
     }
 
     /**
+     * Helper function to format date to YYYY-MM-DD using local timezone
+     */
+    function formatDateToYYYYMMDD(date) {
+        const year = date.getFullYear();
+        const month = (date.getMonth() + 1).toString().padStart(2, '0');
+        const day = date.getDate().toString().padStart(2, '0');
+        return `${year}-${month}-${day}`;
+    }
+
+    /**
      * Generate date boxes for the next 7 days to show visual representation
      */
     function generateDateBoxes() {
@@ -2480,6 +2491,8 @@
 
         dateBoxContainer.innerHTML = '';
 
+        console.log('Generating date boxes for the next 7 days:');
+
         for (let i = 0; i < 7; i++) {
             const date = new Date(today);
             date.setDate(today.getDate() + i);
@@ -2489,8 +2502,10 @@
             const dateString = date.getDate().toString().padStart(2, '0');
             const monthName = date.toLocaleDateString('en-US', { month: 'short' });
 
-            // Count appointments for this day
-            const dateKey = date.toISOString().split('T')[0];
+            // Count appointments for this day - sử dụng local date
+            const dateKey = formatDateToYYYYMMDD(date);
+            console.log(`Day ${i} (${dayName}): ${dateKey}`);
+
             const appointmentCount = appointmentData.filter(appointment => {
                 if (!appointment.date && !appointment.appointmentDateTime) return false;
 
@@ -2510,7 +2525,7 @@
                 } else if (appointment.appointmentDateTime) {
                     try {
                         const dateTime = new Date(appointment.appointmentDateTime);
-                        appointmentDateString = dateTime.toISOString().split('T')[0];
+                        appointmentDateString = formatDateToYYYYMMDD(dateTime);
                     } catch (e) {
                         return false;
                     }
@@ -2525,7 +2540,8 @@
                 <div class="card text-center date-box ${i === 0 ? 'border-primary' : ''}"
                      style="cursor: pointer; transition: all 0.3s ease;"
                      onclick="selectDateFilter(${i})"
-                     data-day-index="${i}">
+                     data-day-index="${i}"
+                     data-date="${dateKey}">
                     <div class="card-body p-2">
                         <div class="fw-bold ${i === 0 ? 'text-primary' : ''}">${dayName}</div>
                         <div class="h5 mb-1 ${i === 0 ? 'text-primary' : ''}">${dateString}</div>
