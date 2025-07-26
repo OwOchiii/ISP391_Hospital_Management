@@ -3,306 +3,810 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Payment Result - Medicare Plus</title>
+    <title>Payment Result - MediCare Plus</title>
 
     <!-- Bootstrap CSS -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Bootstrap Icons -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css">
     <!-- Font Awesome -->
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 
     <style>
+        :root {
+            --primary-color: #059669;
+            --secondary-color: #047857;
+            --success-color: #22c55e;
+            --error-color: #ef4444;
+            --warning-color: #f59e0b;
+            --text-dark: #1f2937;
+            --text-light: #6b7280;
+            --bg-light: #f8fafc;
+            --border-color: #e5e7eb;
+            --blue-primary: #1E3A8A;
+            --blue-secondary: #3B82F6;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background: linear-gradient(135deg, #f0fdf4 0%, #ecfdf5 100%);
+            min-height: 100vh;
+            color: var(--text-dark);
+        }
+
         .payment-result-container {
-            max-width: 600px;
+            max-width: 900px;
             margin: 50px auto;
             padding: 20px;
         }
 
         .result-card {
             border: none;
-            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-            border-radius: 10px;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.15);
+            border-radius: 20px;
+            overflow: hidden;
+            background: white;
+            margin-bottom: 20px;
         }
 
-        .success-icon {
-            color: #28a745;
-            font-size: 4rem;
-        }
-
-        .error-icon {
-            color: #dc3545;
-            font-size: 4rem;
-        }
-
-        .result-header {
+        .success-header {
+            background: linear-gradient(135deg, var(--success-color), var(--primary-color));
+            color: white;
             text-align: center;
-            padding: 30px 20px 20px;
+            padding: 50px 30px;
         }
 
-        .result-body {
-            padding: 20px;
+        .error-header {
+            background: linear-gradient(135deg, var(--error-color), #dc2626);
+            color: white;
+            text-align: center;
+            padding: 50px 30px;
         }
 
-        .info-row {
+        .success-icon, .error-icon {
+            font-size: 5rem;
+            margin-bottom: 25px;
+            display: block;
+        }
+
+        .payment-details {
+            padding: 40px 30px;
+            background: white;
+        }
+
+        .detail-section {
+            margin-bottom: 30px;
+        }
+
+        .detail-section h5 {
+            color: var(--blue-primary);
+            font-weight: 700;
+            margin-bottom: 20px;
+            padding-bottom: 10px;
+            border-bottom: 2px solid var(--blue-secondary);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .detail-item {
             display: flex;
             justify-content: space-between;
-            margin-bottom: 10px;
-            padding: 8px 0;
-            border-bottom: 1px solid #f0f0f0;
+            align-items: center;
+            padding: 15px 0;
+            border-bottom: 1px solid var(--border-color);
         }
 
-        .info-label {
+        .detail-item:last-child {
+            border-bottom: none;
+        }
+
+        .detail-label {
             font-weight: 600;
-            color: #666;
+            color: var(--text-dark);
+            flex: 1;
         }
 
-        .info-value {
-            color: #333;
-        }
-
-        .btn-return {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            border: none;
-            padding: 12px 30px;
-            border-radius: 6px;
-            color: white;
+        .detail-value {
             font-weight: 500;
-            transition: all 0.3s ease;
+            color: var(--text-light);
+            text-align: right;
+            flex: 1;
         }
 
-        .btn-return:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+        .amount-highlight {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: var(--success-color);
+        }
+
+        .status-success {
+            background: #dcfce7;
+            color: #166534;
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-weight: 600;
+            font-size: 0.9rem;
+        }
+
+        .status-failed {
+            background: #fee2e2;
+            color: #991b1b;
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-weight: 600;
+            font-size: 0.9rem;
+        }
+
+        .action-buttons {
+            padding: 30px;
+            background: var(--bg-light);
+            text-align: center;
+            display: flex;
+            gap: 15px;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+
+        .btn-custom {
+            padding: 12px 30px;
+            border-radius: 10px;
+            font-weight: 600;
+            text-decoration: none;
+            border: none;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .btn-primary-custom {
+            background: var(--blue-primary);
             color: white;
         }
 
-        .loading-spinner {
+        .btn-primary-custom:hover {
+            background: var(--blue-secondary);
+            color: white;
+            transform: translateY(-2px);
+        }
+
+        .btn-success-custom {
+            background: var(--success-color);
+            color: white;
+        }
+
+        .btn-success-custom:hover {
+            background: var(--primary-color);
+            color: white;
+            transform: translateY(-2px);
+        }
+
+        .btn-secondary-custom {
+            background: var(--text-light);
+            color: white;
+        }
+
+        .btn-secondary-custom:hover {
+            background: var(--text-dark);
+            color: white;
+            transform: translateY(-2px);
+        }
+
+        .transaction-info {
+            background: linear-gradient(45deg, #f0f9ff, #e0f2fe);
+            border-radius: 15px;
+            padding: 25px;
+            margin-bottom: 25px;
+        }
+
+        .qr-code-section {
+            text-align: center;
+            padding: 20px;
+            background: #f8fafc;
+            border-radius: 10px;
+            margin: 20px 0;
+        }
+
+        .loading-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(255, 255, 255, 0.9);
+            display: none;
+            justify-content: center;
+            align-items: center;
+            z-index: 9999;
+        }
+
+        .spinner-border {
+            color: var(--primary-color);
+        }
+
+        @media (max-width: 768px) {
+            .payment-result-container {
+                margin: 20px auto;
+                padding: 15px;
+            }
+
+            .payment-details {
+                padding: 25px 20px;
+            }
+
+            .action-buttons {
+                flex-direction: column;
+                align-items: center;
+            }
+
+            .btn-custom {
+                width: 100%;
+                max-width: 300px;
+            }
+
+            .detail-item {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 5px;
+            }
+
+            .detail-value {
+                text-align: left;
+            }
+        }
+
+        /* Print Styles */
+        @media print {
+            body {
+                background: white !important;
+                color: black !important;
+                font-size: 12pt;
+                line-height: 1.4;
+            }
+
+            .payment-result-container {
+                max-width: none !important;
+                margin: 0 !important;
+                padding: 0 !important;
+                box-shadow: none !important;
+            }
+
+            .result-card {
+                box-shadow: none !important;
+                border: 1px solid #ddd !important;
+                border-radius: 0 !important;
+                margin: 0 !important;
+                page-break-inside: avoid;
+            }
+
+            .success-header, .error-header {
+                background: #f8f9fa !important;
+                color: black !important;
+                border-bottom: 2px solid #dee2e6 !important;
+                -webkit-print-color-adjust: exact;
+                print-color-adjust: exact;
+            }
+
+            .success-icon, .error-icon {
+                color: #28a745 !important;
+                -webkit-print-color-adjust: exact;
+                print-color-adjust: exact;
+            }
+
+            .payment-details {
+                padding: 20px !important;
+            }
+
+            .transaction-info {
+                background: #f8f9fa !important;
+                border: 1px solid #dee2e6 !important;
+                -webkit-print-color-adjust: exact;
+                print-color-adjust: exact;
+            }
+
+            .detail-section h5 {
+                color: #495057 !important;
+                border-bottom: 1px solid #dee2e6 !important;
+            }
+
+            .amount-highlight {
+                color: #28a745 !important;
+                -webkit-print-color-adjust: exact;
+                print-color-adjust: exact;
+            }
+
+            .status-success {
+                background: #d4edda !important;
+                color: #155724 !important;
+                border: 1px solid #c3e6cb !important;
+                -webkit-print-color-adjust: exact;
+                print-color-adjust: exact;
+            }
+
+            .status-failed {
+                background: #f8d7da !important;
+                color: #721c24 !important;
+                border: 1px solid #f5c6cb !important;
+                -webkit-print-color-adjust: exact;
+                print-color-adjust: exact;
+            }
+
+            .action-buttons {
+                display: none !important;
+            }
+
+            .alert {
+                border: 1px solid #ffeaa7 !important;
+                background: #ffeaa7 !important;
+                -webkit-print-color-adjust: exact;
+                print-color-adjust: exact;
+            }
+
+            /* Add company header for print */
+            .print-header {
+                display: block !important;
+                text-align: center;
+                margin-bottom: 20px;
+                padding-bottom: 20px;
+                border-bottom: 2px solid #dee2e6;
+            }
+
+            .print-footer {
+                display: block !important;
+                text-align: center;
+                margin-top: 30px;
+                padding-top: 20px;
+                border-top: 1px solid #dee2e6;
+                font-size: 10pt;
+                color: #6c757d;
+            }
+        }
+
+        /* Hide print elements on screen */
+        .print-header, .print-footer {
             display: none;
         }
     </style>
 </head>
 <body>
-<div class="container">
-    <div class="payment-result-container">
-        <div class="card result-card">
-            <!-- Success Result -->
-            <div th:if="${successMessage}" class="result-header">
-                <i class="fas fa-check-circle success-icon"></i>
-                <h2 class="mt-3 text-success">Payment Successful!</h2>
-                <p class="text-muted" th:text="${successMessage}">Payment completed successfully!</p>
-            </div>
-
-            <!-- Error Result -->
-            <div th:if="${errorMessage}" class="result-header">
-                <i class="fas fa-times-circle error-icon"></i>
-                <h2 class="mt-3 text-danger">Payment Failed</h2>
-                <p class="text-muted" th:text="${errorMessage}">Payment failed. Please try again.</p>
-            </div>
-
-            <!-- Payment Details -->
-            <div class="result-body" th:if="${transactionId}">
-                <h5 class="mb-3">Payment Details</h5>
-
-                <div class="info-row">
-                    <span class="info-label">Transaction ID:</span>
-                    <span class="info-value" th:text="${transactionId}">-</span>
-                </div>
-
-                <div class="info-row" th:if="${vnp_Amount}">
-                    <span class="info-label">Amount:</span>
-                    <span class="info-value" th:text="${#numbers.formatDecimal(vnp_Amount / 100, 0, 'COMMA', 0, 'POINT')} + ' VND'">-</span>
-                </div>
-
-                <div class="info-row" th:if="${vnp_OrderInfo}">
-                    <span class="info-label">Order Info:</span>
-                    <span class="info-value" th:text="${vnp_OrderInfo}">-</span>
-                </div>
-
-                <div class="info-row" th:if="${vnp_PayDate}">
-                    <span class="info-label">Payment Date:</span>
-                    <span class="info-value" th:text="${vnp_PayDate}">-</span>
-                </div>
-
-                <div class="info-row" th:if="${vnp_BankCode}">
-                    <span class="info-label">Bank:</span>
-                    <span class="info-value" th:text="${vnp_BankCode}">-</span>
-                </div>
-            </div>
-
-            <!-- Action Buttons -->
-            <div class="result-body text-center">
-                <div th:if="${successMessage}">
-                    <button class="btn btn-return me-3" onclick="returnToPayments()">
-                        <i class="fas fa-arrow-left me-2"></i>Back to Payments
-                    </button>
-                    <button class="btn btn-outline-primary" onclick="printReceipt()">
-                        <i class="fas fa-print me-2"></i>Print Receipt
-                    </button>
-                </div>
-
-                <div th:if="${errorMessage}">
-                    <button class="btn btn-return me-3" onclick="retryPayment()">
-                        <i class="fas fa-redo me-2"></i>Try Again
-                    </button>
-                    <button class="btn btn-outline-secondary" onclick="returnToPayments()">
-                        <i class="fas fa-arrow-left me-2"></i>Back to Payments
-                    </button>
-                </div>
-            </div>
-        </div>
-
-        <!-- Loading Spinner -->
-        <div class="text-center mt-3 loading-spinner" id="loadingSpinner">
-            <div class="spinner-border text-primary" role="status">
+    <!-- Loading Overlay -->
+    <div class="loading-overlay" id="loadingOverlay">
+        <div class="text-center">
+            <div class="spinner-border" role="status">
                 <span class="visually-hidden">Loading...</span>
             </div>
-            <p class="mt-2 text-muted">Processing...</p>
+            <div class="mt-3">
+                <h5>Processing...</h5>
+                <p class="text-muted">Please wait</p>
+            </div>
         </div>
     </div>
-</div>
 
-<!-- Bootstrap JS -->
-<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <div class="payment-result-container">
+        <!-- Success Result -->
+        <div th:if="${vnp_ResponseCode == '00'}" class="result-card">
+            <div class="success-header">
+                <i class="fas fa-check-circle success-icon"></i>
+                <h1 class="mb-3">Payment Successful!</h1>
+                <p class="mb-0" th:text="${successMessage ?: 'Your payment has been processed successfully.'}">
+                    Your payment has been processed successfully.
+                </p>
+            </div>
 
-<script>
-    // Auto-redirect after successful payment (optional)
-    const urlParams = new URLSearchParams(window.location.search);
-    const isSuccess = urlParams.get('vnp_ResponseCode') === '00';
-
-    if (isSuccess) {
-        // Optional: Auto-redirect to payments page after 10 seconds
-        setTimeout(() => {
-            if (confirm('Payment successful! Would you like to return to the payments page?')) {
-                returnToPayments();
-            }
-        }, 10000);
-    }
-
-    function returnToPayments() {
-        showLoading();
-        window.location.href = '/receptionist/payments';
-    }
-
-    function retryPayment() {
-        showLoading();
-        // Extract patient and appointment info from URL parameters or redirect to online payment
-        const patientId = urlParams.get('patientId') || getPatientIdFromOrderInfo();
-        const appointmentId = urlParams.get('appointmentId') || getAppointmentIdFromOrderInfo();
-
-        if (patientId && appointmentId) {
-            window.location.href = `/receptionist/online-payment?patientId=${patientId}&appointmentId=${appointmentId}`;
-        } else {
-            window.location.href = '/receptionist/payments';
-        }
-    }
-
-    function printReceipt() {
-        // Create a simple receipt print view
-        const printWindow = window.open('', '_blank');
-        const receiptContent = createReceiptContent();
-
-        printWindow.document.write(receiptContent);
-        printWindow.document.close();
-        printWindow.focus();
-        printWindow.print();
-        printWindow.close();
-    }
-
-    function createReceiptContent() {
-        const transactionId = urlParams.get('vnp_TxnRef') || 'N/A';
-        const amount = urlParams.get('vnp_Amount') || '0';
-        const orderInfo = urlParams.get('vnp_OrderInfo') || 'Hospital Payment';
-        const payDate = urlParams.get('vnp_PayDate') || new Date().toISOString();
-        const bankCode = urlParams.get('vnp_BankCode') || 'VNPay';
-
-        return `
-                <!DOCTYPE html>
-                <html>
-                <head>
-                    <title>Payment Receipt</title>
-                    <style>
-                        body { font-family: Arial, sans-serif; margin: 20px; }
-                        .receipt { max-width: 400px; margin: 0 auto; }
-                        .header { text-align: center; border-bottom: 2px solid #333; padding-bottom: 10px; margin-bottom: 20px; }
-                        .row { display: flex; justify-content: space-between; margin-bottom: 8px; }
-                        .total { border-top: 1px solid #333; padding-top: 10px; font-weight: bold; }
-                    </style>
-                </head>
-                <body>
-                    <div class="receipt">
-                        <div class="header">
-                            <h2>Medicare Plus</h2>
-                            <p>Payment Receipt</p>
+            <div class="payment-details">
+                <!-- Transaction Information -->
+                <div class="transaction-info">
+                    <h4 class="text-center mb-3">
+                        <i class="fas fa-receipt me-2"></i>Transaction Details
+                    </h4>
+                    <div class="row">
+                        <div class="col-md-6">
+                            <p><strong>Transaction ID:</strong> <span th:text="${transactionId ?: vnp_TxnRef}">N/A</span></p>
+                            <p><strong>Receipt Number:</strong> <span th:text="${receiptNumber ?: ('REC' + transactionId)}">N/A</span></p>
                         </div>
-                        <div class="row">
-                            <span>Transaction ID:</span>
-                            <span>${transactionId}</span>
-                        </div>
-                        <div class="row">
-                            <span>Order Info:</span>
-                            <span>${orderInfo}</span>
-                        </div>
-                        <div class="row">
-                            <span>Payment Date:</span>
-                            <span>${formatDate(payDate)}</span>
-                        </div>
-                        <div class="row">
-                            <span>Bank:</span>
-                            <span>${bankCode}</span>
-                        </div>
-                        <div class="row total">
-                            <span>Amount:</span>
-                            <span>${formatAmount(amount)} VND</span>
-                        </div>
-                        <div style="text-align: center; margin-top: 20px;">
-                            <p>Thank you for your payment!</p>
+                        <div class="col-md-6">
+                            <p><strong>Payment Date:</strong> <span th:text="${#temporals.format(#temporals.createNow(), 'dd/MM/yyyy HH:mm')}">N/A</span></p>
+                            <p><strong>Bank Code:</strong> <span th:text="${vnp_BankCode ?: 'VNPay'}">VNPay</span></p>
                         </div>
                     </div>
-                </body>
-                </html>
-            `;
-    }
+                </div>
 
-    function formatAmount(amount) {
-        return new Intl.NumberFormat('vi-VN').format(parseInt(amount) / 100);
-    }
+                <!-- Patient Information -->
+                <div class="detail-section">
+                    <h5><i class="fas fa-user-injured"></i>Patient Information</h5>
+                    <div class="detail-item">
+                        <span class="detail-label">Patient Name:</span>
+                        <span class="detail-value" th:text="${patientName ?: customerName ?: 'N/A'}">N/A</span>
+                    </div>
+                    <div class="detail-item" th:if="${customerPhone}">
+                        <span class="detail-label">Phone Number:</span>
+                        <span class="detail-value" th:text="${customerPhone}">N/A</span>
+                    </div>
+                    <div class="detail-item" th:if="${customerEmail}">
+                        <span class="detail-label">Email:</span>
+                        <span class="detail-value" th:text="${customerEmail}">N/A</span>
+                    </div>
+                    <div class="detail-item" th:if="${appointmentId}">
+                        <span class="detail-label">Appointment ID:</span>
+                        <span class="detail-value" th:text="${appointmentId}">N/A</span>
+                    </div>
+                </div>
 
-    function formatDate(dateStr) {
-        if (!dateStr || dateStr === 'N/A') return new Date().toLocaleString();
+                <!-- Payment Information -->
+                <div class="detail-section">
+                    <h5><i class="fas fa-credit-card"></i>Payment Information</h5>
+                    <div class="detail-item">
+                        <span class="detail-label">Payment Method:</span>
+                        <span class="detail-value" th:text="${paymentMethod ?: 'VNPay Banking'}">VNPay Banking</span>
+                    </div>
+                    <div class="detail-item">
+                        <span class="detail-label">Payment Status:</span>
+                        <span class="status-success">Paid</span>
+                    </div>
+                    <div class="detail-item">
+                        <span class="detail-label">Amount Paid:</span>
+                        <span class="detail-value amount-highlight" th:text="${amountVND != null ? #numbers.formatDecimal(amountVND, 0, 0) + ' VND' : (vnp_Amount != null ? #numbers.formatDecimal(vnp_Amount / 100, 0, 0) + ' VND' : '0 VND')}">0 VND</span>
+                    </div>
+                    <div class="detail-item" th:if="${vnp_OrderInfo}">
+                        <span class="detail-label">Order Info:</span>
+                        <span class="detail-value" th:text="${vnp_OrderInfo}">N/A</span>
+                    </div>
+                </div>
 
-        // VNPay date format: yyyyMMddHHmmss
-        if (dateStr.length === 14) {
-            const year = dateStr.substring(0, 4);
-            const month = dateStr.substring(4, 6);
-            const day = dateStr.substring(6, 8);
-            const hour = dateStr.substring(8, 10);
-            const minute = dateStr.substring(10, 12);
-            const second = dateStr.substring(12, 14);
+                <!-- Receipt Information -->
+                <div class="detail-section" th:if="${receiptId}">
+                    <h5><i class="fas fa-file-invoice"></i>Receipt Information</h5>
+                    <div class="detail-item">
+                        <span class="detail-label">Receipt ID:</span>
+                        <span class="detail-value" th:text="${receiptId}">N/A</span>
+                    </div>
+                    <div class="detail-item">
+                        <span class="detail-label">Receipt Number:</span>
+                        <span class="detail-value" th:text="${receiptNumber}">N/A</span>
+                    </div>
+                    <div class="detail-item">
+                        <span class="detail-label">Issue Date:</span>
+                        <span class="detail-value" th:text="${#temporals.format(#temporals.createNow(), 'dd/MM/yyyy')}">N/A</span>
+                    </div>
+                </div>
+            </div>
 
-            return `${day}/${month}/${year} ${hour}:${minute}:${second}`;
+            <div class="action-buttons">
+                <a href="#" onclick="printReceipt()" class="btn-custom btn-success-custom">
+                    <i class="fas fa-print"></i>Print Receipt
+                </a>
+                <a th:href="@{/receptionist/payments}" class="btn-custom btn-secondary-custom">
+                    <i class="fas fa-arrow-left"></i>Back to Payments
+                </a>
+                <a th:href="@{/receptionist/dashboard}" class="btn-custom btn-primary-custom">
+                    <i class="fas fa-home"></i>Dashboard
+                </a>
+            </div>
+        </div>
+
+        <!-- Error Result -->
+        <div th:unless="${vnp_ResponseCode == '00'}" class="result-card">
+            <div class="error-header">
+                <i class="fas fa-times-circle error-icon"></i>
+                <h1 class="mb-3">Payment Failed</h1>
+                <p class="mb-0" th:text="${errorMessage ?: 'Payment could not be processed. Please try again.'}">
+                    Payment could not be processed. Please try again.
+                </p>
+            </div>
+
+            <div class="payment-details">
+                <!-- Error Information -->
+                <div class="detail-section">
+                    <h5><i class="fas fa-exclamation-triangle text-warning"></i>Error Details</h5>
+                    <div class="detail-item">
+                        <span class="detail-label">Error Code:</span>
+                        <span class="detail-value" th:text="${vnp_ResponseCode ?: 'Unknown'}">Unknown</span>
+                    </div>
+                    <div class="detail-item">
+                        <span class="detail-label">Transaction ID:</span>
+                        <span class="detail-value" th:text="${transactionId ?: vnp_TxnRef ?: 'N/A'}">N/A</span>
+                    </div>
+                    <div class="detail-item">
+                        <span class="detail-label">Payment Status:</span>
+                        <span class="status-failed">Failed</span>
+                    </div>
+                    <div class="detail-item" th:if="${amountVND or vnp_Amount}">
+                        <span class="detail-label">Attempted Amount:</span>
+                        <span class="detail-value" th:text="${amountVND != null ? #numbers.formatDecimal(amountVND, 0, 0) + ' VND' : (vnp_Amount != null ? #numbers.formatDecimal(vnp_Amount / 100, 0, 0) + ' VND' : '0 VND')}">0 VND</span>
+                    </div>
+                </div>
+
+                <!-- Common Error Messages -->
+                <div class="alert alert-warning" role="alert">
+                    <h6 class="alert-heading"><i class="fas fa-info-circle me-2"></i>What to do next:</h6>
+                    <ul class="mb-0">
+                        <li>Check your bank account balance</li>
+                        <li>Verify your card/account is enabled for online payments</li>
+                        <li>Try a different payment method</li>
+                        <li>Contact our support team if the problem persists</li>
+                    </ul>
+                </div>
+            </div>
+
+            <div class="action-buttons">
+                <a th:href="@{/receptionist/online-payment(patientId=${patientId ?: 0}, appointmentId=${appointmentId ?: 0})}" class="btn-custom btn-primary-custom">
+                    <i class="fas fa-redo"></i>Try Again
+                </a>
+                <a th:href="@{/receptionist/payments}" class="btn-custom btn-secondary-custom">
+                    <i class="fas fa-arrow-left"></i>Back to Payments
+                </a>
+                <a th:href="@{/receptionist/dashboard}" class="btn-custom btn-secondary-custom">
+                    <i class="fas fa-home"></i>Dashboard
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Bootstrap JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+
+    <script>
+        // Format VND currency
+        function formatVND(amount) {
+            const numericAmount = Number(amount) || 0;
+            return new Intl.NumberFormat('vi-VN', {
+                minimumFractionDigits: 0,
+                maximumFractionDigits: 0,
+                useGrouping: true
+            }).format(Math.round(numericAmount)).replace(/,/g, '.');
         }
 
-        return new Date(dateStr).toLocaleString();
-    }
+        // Print receipt functionality - capture actual page content
+        function printReceipt() {
+            try {
+                // Hide action buttons temporarily for cleaner print
+                const actionButtons = document.querySelector('.action-buttons');
+                const originalDisplay = actionButtons ? actionButtons.style.display : '';
+                if (actionButtons) {
+                    actionButtons.style.display = 'none';
+                }
 
-    function getPatientIdFromOrderInfo() {
-        const orderInfo = urlParams.get('vnp_OrderInfo') || '';
-        const match = orderInfo.match(/PatientID:\s*(\d+)/);
-        return match ? match[1] : null;
-    }
+                // Add print-specific styling temporarily
+                const originalTitle = document.title;
+                document.title = 'Payment Receipt - MediCare Plus';
 
-    function getAppointmentIdFromOrderInfo() {
-        const orderInfo = urlParams.get('vnp_OrderInfo') || '';
-        const match = orderInfo.match(/AppointmentID:\s*(\d+)/);
-        return match ? match[1] : null;
-    }
+                // Create print styles for better formatting
+                const printStyle = document.createElement('style');
+                printStyle.id = 'temp-print-style';
+                printStyle.textContent = `
+                    @media print {
+                        body {
+                            margin: 0 !important;
+                            padding: 20px !important;
+                            background: white !important;
+                            font-size: 12pt !important;
+                            line-height: 1.4 !important;
+                        }
+                        .payment-result-container {
+                            max-width: none !important;
+                            margin: 0 !important;
+                            padding: 0 !important;
+                            box-shadow: none !important;
+                        }
+                        .result-card {
+                            box-shadow: none !important;
+                            border: 1px solid #000 !important;
+                            border-radius: 0 !important;
+                            margin: 0 !important;
+                            page-break-inside: avoid !important;
+                        }
+                        .success-header {
+                            background: #f8f9fa !important;
+                            color: #000 !important;
+                            border-bottom: 2px solid #000 !important;
+                            -webkit-print-color-adjust: exact !important;
+                            print-color-adjust: exact !important;
+                            text-align: center !important;
+                            padding: 30px !important;
+                        }
+                        .success-icon {
+                            color: #28a745 !important;
+                            font-size: 3rem !important;
+                            -webkit-print-color-adjust: exact !important;
+                            print-color-adjust: exact !important;
+                        }
+                        .payment-details {
+                            padding: 20px !important;
+                            background: white !important;
+                        }
+                        .transaction-info {
+                            background: #f8f9fa !important;
+                            border: 1px solid #dee2e6 !important;
+                            border-radius: 5px !important;
+                            padding: 15px !important;
+                            margin-bottom: 20px !important;
+                            -webkit-print-color-adjust: exact !important;
+                            print-color-adjust: exact !important;
+                        }
+                        .detail-section h5 {
+                            color: #000 !important;
+                            border-bottom: 1px solid #000 !important;
+                            padding-bottom: 5px !important;
+                            margin-bottom: 15px !important;
+                            font-size: 14pt !important;
+                            font-weight: bold !important;
+                        }
+                        .detail-item {
+                            display: flex !important;
+                            justify-content: space-between !important;
+                            padding: 8px 0 !important;
+                            border-bottom: 1px solid #eee !important;
+                        }
+                        .detail-label {
+                            font-weight: bold !important;
+                            color: #000 !important;
+                        }
+                        .detail-value {
+                            color: #000 !important;
+                            text-align: right !important;
+                        }
+                        .amount-highlight {
+                            color: #28a745 !important;
+                            font-size: 14pt !important;
+                            font-weight: bold !important;
+                            -webkit-print-color-adjust: exact !important;
+                            print-color-adjust: exact !important;
+                        }
+                        .status-success {
+                            background: #d4edda !important;
+                            color: #155724 !important;
+                            border: 1px solid #c3e6cb !important;
+                            border-radius: 15px !important;
+                            padding: 5px 10px !important;
+                            font-weight: bold !important;
+                            -webkit-print-color-adjust: exact !important;
+                            print-color-adjust: exact !important;
+                        }
+                        .action-buttons {
+                            display: none !important;
+                        }
+                        /* Add company header and footer for print */
+                        .print-header {
+                            display: block !important;
+                            text-align: center !important;
+                            margin-bottom: 20px !important;
+                            padding-bottom: 20px !important;
+                            border-bottom: 2px solid #000 !important;
+                        }
+                        .print-footer {
+                            display: block !important;
+                            text-align: center !important;
+                            margin-top: 30px !important;
+                            padding-top: 20px !important;
+                            border-top: 1px solid #000 !important;
+                            font-size: 10pt !important;
+                        }
+                        /* Hide loading overlay during print */
+                        .loading-overlay {
+                            display: none !important;
+                        }
+                        /* Ensure all text is black */
+                        * {
+                            color: #000 !important;
+                        }
+                        /* Make sure icons print in black */
+                        .fas, .fa {
+                            color: #000 !important;
+                        }
+                        /* Special styling for success status */
+                        h1, h2, h3, h4, h5, h6 {
+                            color: #000 !important;
+                        }
+                    }
+                `;
+                document.head.appendChild(printStyle);
 
-    function showLoading() {
-        document.getElementById('loadingSpinner').style.display = 'block';
-    }
+                // Add company header and footer for print
+                const companyHeader = document.createElement('div');
+                companyHeader.className = 'print-header';
+                companyHeader.innerHTML = `
+                    <h2 style="margin: 0; color: #000;">MediCare Plus Hospital</h2>
+                    <p style="margin: 5px 0; color: #000;">123 Healthcare Street, Medical District</p>
+                    <p style="margin: 5px 0; color: #000;">Phone: (84) 123-456-789 | Email: info@medicareplus.vn</p>
+                    <p style="margin: 5px 0; color: #000;"><strong>PAYMENT RECEIPT</strong></p>
+                `;
 
-    // Extract all URL parameters for debugging
-    console.log('VNPay Return Parameters:', Object.fromEntries(urlParams));
-</script>
+                const companyFooter = document.createElement('div');
+                companyFooter.className = 'print-footer';
+                companyFooter.innerHTML = `
+                    <p style="margin: 5px 0; color: #000;">Thank you for choosing MediCare Plus!</p>
+                    <p style="margin: 5px 0; color: #000;">This is a computer-generated receipt.</p>
+                    <p style="margin: 5px 0; color: #000;">Generated on: ${new Date().toLocaleString('vi-VN')}</p>
+                `;
+
+                // Insert header and footer
+                const resultCard = document.querySelector('.result-card');
+                if (resultCard) {
+                    resultCard.insertBefore(companyHeader, resultCard.firstChild);
+                    resultCard.appendChild(companyFooter);
+                }
+
+                // Trigger print dialog
+                setTimeout(() => {
+                    window.print();
+
+                    // Clean up after printing
+                    setTimeout(() => {
+                        // Restore action buttons
+                        if (actionButtons) {
+                            actionButtons.style.display = originalDisplay;
+                        }
+
+                        // Remove temporary print style
+                        const tempStyle = document.getElementById('temp-print-style');
+                        if (tempStyle) {
+                            tempStyle.remove();
+                        }
+
+                        // Remove company header and footer
+                        if (companyHeader && companyHeader.parentNode) {
+                            companyHeader.parentNode.removeChild(companyHeader);
+                        }
+                        if (companyFooter && companyFooter.parentNode) {
+                            companyFooter.parentNode.removeChild(companyFooter);
+                        }
+
+                        // Restore original title
+                        document.title = originalTitle;
+
+                        console.log('Print cleanup completed');
+                    }, 1000);
+                }, 100);
+
+            } catch (error) {
+                console.error('Error printing receipt:', error);
+                alert('Có lỗi xảy ra khi in hóa đơn. Vui lòng thử lại.');
+            }
+        }
+
+        // Download receipt as PDF (placeholder - would need server-side implementation)
+        function downloadReceipt() {
+            const transactionId = document.querySelector('[th\\:text*="transactionId"]')?.textContent || 'N/A';
+
+            // Show loading
+            document.getElementById('loadingOverlay').style.display = 'flex';
+
+            // Simulate download (in real implementation, this would call a server endpoint)
+            setTimeout(() => {
+                document.getElementById('loadingOverlay').style.display = 'none';
+                alert('Receipt download feature will be implemented soon.\n\nTransaction ID: ' + transactionId);
+            }, 2000);
+        }
+
+        // Auto-hide alerts after 5 seconds
+        document.addEventListener('DOMContentLoaded', function() {
+            const alerts = document.querySelectorAll('.alert');
+            alerts.forEach(alert => {
+                setTimeout(() => {
+                    alert.style.opacity = '0';
+                    setTimeout(() => alert.remove(), 300);
+                }, 5000);
+            });
+
+            // Format all amounts on page load
+            const amountElements = document.querySelectorAll('.amount-highlight');
+            amountElements.forEach(element => {
+                const amount = element.textContent.replace(/[^\d]/g, '');
+                if (amount) {
+                    element.textContent = formatVND(amount) + ' VND';
+                }
+            });
+        });
+
+        // Prevent back button issues
+        window.history.pushState(null, "", window.location.href);
+        window.onpopstate = function() {
+            window.history.pushState(null, "", window.location.href);
+        };
+    </script>
 </body>
 </html>
-
