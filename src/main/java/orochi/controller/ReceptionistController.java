@@ -715,13 +715,27 @@ public class ReceptionistController {
                 return "redirect:/receptionist/payments";
             }
 
-            // Lấy thông tin bệnh nhân v�� cuộc hẹn giống như pay_invoice
+            logger.info("=== VIEW PAYMENT DETAILS DEBUG ===");
+            logger.info("PatientID: {}, ReceiptID: {}", patientId, receiptId);
+
+            // Lấy thông tin bệnh nhân và cuộc hẹn giống như pay_invoice
             Map<String, Object> invoiceData = receptionistService.getInvoiceDataByPatientId(patientId);
 
             if (invoiceData == null) {
+                logger.error("❌ Invoice data is NULL for patientId: {}", patientId);
                 model.addAttribute("errorMessage", "Patient not found");
                 return "redirect:/receptionist/payments";
             }
+
+            // 🔥 DEBUG: Log all invoice data to see what's actually being passed
+            logger.info("=== INVOICE DATA DEBUG ===");
+            logger.info("Full invoiceData map: {}", invoiceData);
+            logger.info("Transaction ID: {}", invoiceData.get("transactionId"));
+            logger.info("Payment Method: {}", invoiceData.get("paymentMethod"));
+            logger.info("Payment Method Raw: {}", invoiceData.get("paymentMethodRaw"));
+            logger.info("Receipt Number: {}", invoiceData.get("receiptNumber"));
+            logger.info("Total Amount: {}", invoiceData.get("totalAmount"));
+            logger.info("Patient Name: {}", invoiceData.get("fullName"));
 
             // Lấy thông tin staff để hiển thị trong "Processed By"
             Map<String, Object> staffInfo = receptionistService.getReceptionistStaffInfo();
@@ -735,13 +749,19 @@ public class ReceptionistController {
             model.addAttribute("patientId", patientId);
             model.addAttribute("receiptId", receiptId);
 
-            // Debug model attributes
-            logger.info("=== Model attributes debug ===");
-            logger.info("Model staffInfo: {}", model.getAttribute("staffInfo"));
+            // 🔥 DEBUG: Verify model attributes
+            logger.info("=== MODEL ATTRIBUTES VERIFICATION ===");
+            Object modelInvoiceData = model.getAttribute("invoiceData");
+            logger.info("Model invoiceData: {}", modelInvoiceData);
+            if (modelInvoiceData instanceof Map) {
+                Map<String, Object> modelMap = (Map<String, Object>) modelInvoiceData;
+                logger.info("Model Transaction ID: {}", modelMap.get("transactionId"));
+                logger.info("Model Payment Method: {}", modelMap.get("paymentMethod"));
+            }
 
             return "Receptionists/view_payment_details";
         } catch (Exception e) {
-            logger.error("Error loading view payment details page: {}", e.getMessage(), e);
+            logger.error("❌ Error loading view payment details page: {}", e.getMessage(), e);
             model.addAttribute("errorMessage", "Error loading payment details: " + e.getMessage());
             return "redirect:/receptionist/payments";
         }
@@ -840,7 +860,7 @@ public class ReceptionistController {
     @GetMapping("/pendingAppointmentRequest")
     public ResponseEntity<?> getPendingAppointmentTableData() {
         try {
-            // Ch����� lấy pending appointments của ngày hiện tại
+            // Ch����� lấy pending appointments c���a ngày hiện tại
             String todayStr = LocalDate.now().toString();
             List<Map<String, Object>> todaysPendingAppointmentTableData = receptionistService.getTodaysPendingAppointmentTableData(todayStr);
             return ResponseEntity.ok(todaysPendingAppointmentTableData);

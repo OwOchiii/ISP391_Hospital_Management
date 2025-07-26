@@ -181,7 +181,7 @@
         </h3>
         <div class="grid grid-cols-2 gap-10 bg-gray-50 p-8 rounded-lg shadow-sm">
             <div>
-                <p><span class="font-semibold text-gray-700">Transaction ID:</span> <span th:text="${invoiceData.transactionId}">TRX20250529001</span></p>
+                <p><span class="font-semibold text-gray-700">Transaction ID:</span> <span id="transactionIdDisplay" th:text="${invoiceData.transactionId != null ? invoiceData.transactionId : 'N/A'}">TRX20250529001</span></p>
                 <p><span class="font-semibold text-gray-700">Receipt Number:</span> <span th:text="${invoiceData.receiptNumber}">REC20250529001</span></p>
                 <p><span class="font-semibold text-gray-700">Total Amount (incl. Tax):</span> <span id="calculatedTotalAmount">0</span> đ</p>
                 <p><span class="font-semibold text-gray-700">Tax Amount:</span> <span id="calculatedTaxAmount">0</span> đ</p>
@@ -193,7 +193,12 @@
                 <div class="mb-4">
                     <label class="block text-sm font-semibold text-gray-700 mb-2">Payment Method</label>
                     <div class="block w-full bg-gray-100 border border-gray-300 rounded-lg p-3 text-sm text-gray-700">
-                        <span id="paymentMethodDisplay" th:text="${invoiceData.paymentMethod != null ? invoiceData.paymentMethod : 'N/A'}">Cash</span>
+                        <span id="paymentMethodDisplay">
+                            <span th:if="${invoiceData.paymentMethod != null and invoiceData.paymentMethod != ''}"
+                                  th:text="${invoiceData.paymentMethod}">Banking</span>
+                            <span th:if="${invoiceData.paymentMethod == null or invoiceData.paymentMethod == ''}"
+                                  th:text="'N/A'">N/A</span>
+                        </span>
                     </div>
                 </div>
                 <div class="mb-4">
@@ -291,7 +296,7 @@
 
         if (!rawMethod || rawMethod.trim() === '' || rawMethod === 'N/A') {
             console.log('No valid payment method from database, using fallback: Cash');
-            return 'Cash';
+            return 'Banking';
         }
 
         // Normalize string - remove extra spaces và convert case
@@ -301,24 +306,24 @@
         switch (normalized.toLowerCase()) {
             case 'cash':
                 console.log('✅ Normalized Cash method');
-                return 'Cash Payment';
+                return 'Banking';
 
             case 'banking':
             case 'bank':
                 console.log('✅ Normalized Banking method');
-                return 'Banking Transfer';
+                return 'Banking';
 
             case 'vnpay':
                 console.log('✅ Normalized VNPay method');
-                return 'VNPay Online Banking';
+                return 'Banking';
 
             case 'momo':
                 console.log('✅ Normalized MoMo method');
-                return 'MoMo E-Wallet';
+                return 'Banking';
 
             case 'zalopay':
                 console.log('✅ Normalized ZaloPay method');
-                return 'ZaloPay E-Wallet';
+                return 'Banking';
 
             case 'credit card':
             case 'creditcard':
@@ -342,6 +347,11 @@
                 return normalized;
         }
     }
+
+    // 🔥 DEBUG: Add logging to track when page loads
+    console.log('=== VIEW PAYMENT DETAILS PAGE LOADED ===');
+    console.log('Current URL:', window.location.href);
+    console.log('URLSearchParams:', new URLSearchParams(window.location.search).toString());
 
     // ✅ ENHANCED: Function để extract chính xác Amount Received từ RefundReason với FULL pattern support
     function extractAmountReceivedFromRefundReason(refundReasonText) {
@@ -558,14 +568,18 @@
         setTimeout(() => {
             const calculationResults = calculateAllAmounts();
 
-            // ✅ Payment Method - KHÔNG override nữa, để HTML Thymeleaf hiển thị trực tiếp từ database
+            // ✅ Payment Method - Apply normalization function
             const paymentMethodDisplay = document.getElementById('paymentMethodDisplay');
             if (paymentMethodDisplay) {
                 console.log('=== Payment Method Debug ===');
                 console.log('Current displayed value from HTML/Thymeleaf:', paymentMethodDisplay.textContent);
                 console.log('Raw Transaction.Method from database:', invoiceData.paymentMethodRaw);
-                // KHÔNG ghi đè nữa - để HTML Thymeleaf xử lý
-                console.log('✅ Payment method keeping original value from database via Thymeleaf');
+
+                // Apply normalization function to get proper display value
+                const normalizedPaymentMethod = normalizePaymentMethodFromDatabase(invoiceData.paymentMethodRaw);
+                paymentMethodDisplay.textContent = normalizedPaymentMethod;
+
+                console.log('✅ Payment method normalized from:', invoiceData.paymentMethodRaw, 'to:', normalizedPaymentMethod);
             }
 
             // ✅ Amount Received - Extract trực tiếp từ RefundReason field
@@ -812,11 +826,11 @@
                     // Tạo tên file với timestamp
                     const now = new Date();
                     const timestamp = now.getFullYear() +
-                                    String(now.getMonth() + 1).padStart(2, '0') +
-                                    String(now.getDate()).padStart(2, '0') + '_' +
-                                    String(now.getHours()).padStart(2, '0') +
-                                    String(now.getMinutes()).padStart(2, '0') +
-                                    String(now.getSeconds()).padStart(2, '0');
+                        String(now.getMonth() + 1).padStart(2, '0') +
+                        String(now.getDate()).padStart(2, '0') + '_' +
+                        String(now.getHours()).padStart(2, '0') +
+                        String(now.getMinutes()).padStart(2, '0') +
+                        String(now.getSeconds()).padStart(2, '0');
 
                     const fileName = `MediCare_Plus_Receipt_${invoiceData.receiptNumber}_${timestamp}.pdf`;
 

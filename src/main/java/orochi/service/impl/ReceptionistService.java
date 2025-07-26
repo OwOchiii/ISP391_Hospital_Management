@@ -409,10 +409,9 @@ public class ReceptionistService {
             // 🔥 SỬA LỖI: Set Method với giá trị hợp lệ thay vì "Pending"
             // Method phải là payment method thực tế, không phải status
             transaction.setMethod("Cash"); // Default payment method cho transaction được tạo khi confirm
-
             // BƯỚC 4: Đảm bảo tất cả field NOT NULL được set
             // RefundReason có thể null nên không cần set
-            // ProcessedByUserID có thể null khi tạo mới (s��� set khi process payment)
+            // ProcessedByUserID có thể null khi tạo mới (s���� set khi process payment)
 
             // BƯỚC 5: Lưu Transaction vào database với proper error handling
             logger.info("🔥 ATTEMPTING TO SAVE TRANSACTION TO DATABASE...");
@@ -2039,49 +2038,108 @@ public class ReceptionistService {
             List<Map<String, Object>> servicesUsed = getServicesUsedByPatient(patientId, latestAppointment);
             invoiceData.put("servicesUsed", servicesUsed);
 
-            // Payment/Transaction Information
+            // Payment/Transaction Information - ENHANCED ERROR HANDLING WITH AUTO-CREATION
             if (latestAppointment != null) {
                 try {
                     List<Transaction> transactions = transactionRepository.findByAppointmentId(latestAppointment.getAppointmentId());
-                    if (!transactions.isEmpty()) {
-                        Transaction latestTransaction = transactions.get(0);
-                        invoiceData.put("transactionId", latestTransaction.getTransactionId());
-                        invoiceData.put("transactionStatus", latestTransaction.getStatus());
-                        invoiceData.put("paymentMethod", latestTransaction.getMethod());
+                    Transaction latestTransaction = null;
 
-                        // Generate receipt number based on transaction ID
-                        invoiceData.put("receiptNumber", "REC" + latestTransaction.getTransactionId());
+                    // If no transaction exists, create one automatically for pending payment
+                    if (transactions.isEmpty()) {
+                        logger.info("=== NO TRANSACTION FOUND - CREATING PENDING TRANSACTION ===");
+                        logger.info("AppointmentID: {}, PatientID: {}, UserID: {}",
+                                   latestAppointment.getAppointmentId(), patientId, user.getUserId());
+
+                        try {
+                            // Create a new pending transaction
+                            Transaction newTransaction = new Transaction();
+                            newTransaction.setAppointmentId(latestAppointment.getAppointmentId());
+                            newTransaction.setUserId(user.getUserId());
+                            newTransaction.setTimeOfPayment(java.time.LocalDateTime.now());
+                            newTransaction.setStatus("Pending");
+                            newTransaction.setMethod("Cash"); // Default payment method, will be updated below
+
+                            // Set a helpful default message for pending transactions
+                            newTransaction.setRefundReason("Payment pending - awaiting payment processing");
+
+                            // Save the new transaction
+                            latestTransaction = transactionRepository.save(newTransaction);
+                            logger.info("✅ Created new pending transaction with ID: {}", latestTransaction.getTransactionId());
+
+                        } catch (Exception createError) {
+                            logger.error("❌ Failed to create pending transaction: {}", createError.getMessage(), createError);
+                            // Continue with null transaction to show pending state
+                        }
+                    } else {
+                        latestTransaction = transactions.get(0);
+                        logger.info("✅ Found existing transaction ID: {}", latestTransaction.getTransactionId());
+                    }
+
+                    if (latestTransaction != null) {
+                        // 🔥 ENHANCED: Log the exact database values being retrieved
+                        logger.info("=== RETRIEVING EXACT DATABASE VALUES ===");
+                        logger.info("Transaction.TransactionID from database: {}", latestTransaction.getTransactionId());
+                        logger.info("Transaction.Method from database: '{}'", latestTransaction.getMethod());
+                        logger.info("Transaction.Status from database: '{}'", latestTransaction.getStatus());
+
+                        // ✅ FIXED: Transaction ID - Use [TransactionID] directly from Transaction table
+                        Integer transactionId = latestTransaction.getTransactionId();
+                        invoiceData.put("transactionId", transactionId != null ? transactionId : "N/A");
+                        logger.info("✅ Transaction ID set from Transaction.TransactionID: {}", transactionId);
+
+                        // ✅ FIXED: Payment Method - Use raw [Method] directly from Transaction table
+                        String rawMethod = latestTransaction.getMethod();
+                        invoiceData.put("paymentMethod", rawMethod != null ? rawMethod : "N/A");
+                        // Store raw method for debugging/reference
+                        invoiceData.put("paymentMethodRaw", rawMethod);
+                        logger.info("✅ Payment Method set from Transaction.Method (raw): '{}'", rawMethod);
+
+                        // ✅ Transaction Status with safe handling
+                        String status = latestTransaction.getStatus();
+                        invoiceData.put("transactionStatus", (status != null && !status.trim().isEmpty()) ? status : "Pending");
+
+                        // ✅ FIXED: Receipt Number - Use [ReceiptNumber] directly from Receipt table
+                        String receiptNumber = "N/A";
+                        Integer receiptId = null;
+
+                        if (latestTransaction.getReceipt() != null) {
+                            receiptId = latestTransaction.getReceipt().getReceiptId();
+                            // Use actual ReceiptNumber field from Receipt table
+                            String actualReceiptNumber = latestTransaction.getReceipt().getReceiptNumber();
+                            if (actualReceiptNumber != null && !actualReceiptNumber.trim().isEmpty()) {
+                                receiptNumber = actualReceiptNumber;
+                                logger.info("✅ Receipt Number set from Receipt.ReceiptNumber: {}", receiptNumber);
+                            } else if (receiptId != null) {
+                                // Fallback to ReceiptID if ReceiptNumber is null/empty
+                                receiptNumber = "REC" + receiptId.toString();
+                                logger.warn("⚠️ ReceiptNumber is null/empty, using fallback: {}", receiptNumber);
+                            }
+                        } else {
+                            logger.warn("⚠️ No Receipt found for Transaction {}", transactionId);
+                        }
+
+                        invoiceData.put("receiptNumber", receiptNumber);
+                        invoiceData.put("receiptId", receiptId != null ? receiptId : "N/A");
+
+                        // ✅ ENHANCED: Final verification log showing the correct data flow
+                        logger.info("=== FINAL DATA RETRIEVAL VERIFICATION ===");
+                        logger.info("✅ Transaction ID from Transaction.TransactionID: {}", invoiceData.get("transactionId"));
+                        logger.info("✅ Payment Method from Transaction.Method (raw): '{}'", invoiceData.get("paymentMethod"));
+                        logger.info("✅ Receipt Number from Receipt.ReceiptID: {}", invoiceData.get("receiptNumber"));
+                        logger.info("✅ Receipt ID from Receipt.ReceiptID: {}", invoiceData.get("receiptId"));
+                        logger.info("✅ Transaction Status: {}", invoiceData.get("transactionStatus"));
 
                         // IMPROVED: Calculate amount from service prices with fallback logic
-                        double finalAmount = 0.0;
+                        double finalAmount;
                         try {
                             // Primary: Calculate from services used
-                            double calculatedFromServices = calculateTotalFromServices(servicesUsed);
-                            if (calculatedFromServices > 0) {
-                                finalAmount = calculatedFromServices;
-                                logger.info("Amount calculated from services: {}", finalAmount);
-                            } else {
-                                // Fallback: Use receipt amount if service calculation fails
-                                if (latestTransaction.getReceipt() != null &&
-                                    latestTransaction.getReceipt().getTotalAmount() != null) {
-                                    finalAmount = latestTransaction.getReceipt().getTotalAmount().doubleValue();
-                                    logger.info("Fallback to receipt amount: {}", finalAmount);
-                                } else {
-                                    finalAmount = 0.0;
-                                    logger.warn("No amount available from services or receipt");
-                                }
-                            }
+                            finalAmount = calculateTotalFromServices(servicesUsed);
+                            logger.info("Calculated final amount from services: {}", finalAmount);
                         } catch (Exception e) {
-                            logger.error("Error calculating amount from services, using receipt fallback: {}", e.getMessage());
-                            // Fallback: Use receipt amount if service calculation throws exception
-                            if (latestTransaction.getReceipt() != null &&
-                                latestTransaction.getReceipt().getTotalAmount() != null) {
-                                finalAmount = latestTransaction.getReceipt().getTotalAmount().doubleValue();
-                                logger.info("Exception fallback to receipt amount: {}", finalAmount);
-                            } else {
-                                finalAmount = 0.0;
-                                logger.warn("No fallback amount available");
-                            }
+                            logger.error("Error calculating final amount from services: {}", e.getMessage());
+                            // Fallback: Use 0 if calculation fails
+                            finalAmount = 0.0;
+                            logger.info("Fallback to default amount: {}", finalAmount);
                         }
 
                         invoiceData.put("totalAmount", finalAmount);
@@ -2156,7 +2214,7 @@ public class ReceptionistService {
                                     logger.info("Successfully parsed notes: {}", notesPart);
                                 } catch (Exception e) {
                                     logger.warn("Could not parse notes from refund reason: {}", refundReason);
-                                    invoiceData.put("notes", "Payment completed successfully");
+                                    invoiceData.put("notes", "Payment pending - awaiting processing");
                                 }
                             } else {
                                 // Nếu không có "Notes:" prefix, coi toàn bộ refundReason là notes
@@ -2164,20 +2222,23 @@ public class ReceptionistService {
                                     invoiceData.put("notes", refundReason);
                                     logger.info("Using entire refundReason as notes: {}", refundReason);
                                 } else {
-                                    invoiceData.put("notes", "Payment completed successfully");
+                                    invoiceData.put("notes", "Payment pending - awaiting processing");
                                 }
                             }
                         } else {
                             invoiceData.put("amountReceived", 0.0);
                             invoiceData.put("changeReturned", 0.0);
-                            invoiceData.put("notes", "Payment completed successfully");
+                            invoiceData.put("notes", "Payment pending - awaiting processing");
                         }
                     } else {
-                        // Calculate total from services
+                        // Handle case where transaction creation failed
+                        logger.warn("❌ No transaction available and failed to create one");
+                        // Calculate total from services for fallback
                         double calculatedTotal = calculateTotalFromServices(servicesUsed);
                         invoiceData.put("transactionId", "N/A");
                         invoiceData.put("transactionStatus", "Pending");
                         invoiceData.put("paymentMethod", "N/A");
+                        invoiceData.put("paymentMethodRaw", null);
                         invoiceData.put("receiptId", "N/A");
                         invoiceData.put("receiptNumber", "PENDING");
                         invoiceData.put("totalAmount", calculatedTotal);
@@ -2187,12 +2248,13 @@ public class ReceptionistService {
                         // Add default payment fields
                         invoiceData.put("amountReceived", 0.0);
                         invoiceData.put("changeReturned", 0.0);
-                        invoiceData.put("notes", "No appointment found");
+                        invoiceData.put("notes", "Error retrieving payment details");
                         invoiceData.put("timeOfPayment", "");
+                        invoiceData.put("refundReason", "");
                     }
                 } catch (Exception e) {
                     logger.error("Error fetching transaction data for patient {}: {}", patientId, e.getMessage());
-                    // IMPROVED: Calculate total from services for fallback with proper error handling
+                    // IMPROVED: Calculate total from services with error handling when no appointment
                     double calculatedTotal = 0.0;
                     try {
                         calculatedTotal = calculateTotalFromServices(servicesUsed);
@@ -2205,6 +2267,7 @@ public class ReceptionistService {
                     invoiceData.put("transactionId", "N/A");
                     invoiceData.put("transactionStatus", "Pending");
                     invoiceData.put("paymentMethod", "N/A");
+                    invoiceData.put("paymentMethodRaw", null);
                     invoiceData.put("receiptId", "N/A");
                     invoiceData.put("receiptNumber", "PENDING");
                     invoiceData.put("totalAmount", calculatedTotal);
@@ -2216,6 +2279,8 @@ public class ReceptionistService {
                     invoiceData.put("changeReturned", 0.0);
                     invoiceData.put("notes", "Error retrieving payment details");
                     invoiceData.put("timeOfPayment", "");
+                    // 🔥 FIX: Add missing refundReason property to prevent template error
+                    invoiceData.put("refundReason", "");
                 }
             } else {
                 // IMPROVED: Calculate total from services with error handling when no appointment
@@ -2231,6 +2296,7 @@ public class ReceptionistService {
                 invoiceData.put("transactionId", "N/A");
                 invoiceData.put("transactionStatus", "Pending");
                 invoiceData.put("paymentMethod", "N/A");
+                invoiceData.put("paymentMethodRaw", null);
                 invoiceData.put("receiptId", "N/A");
                 invoiceData.put("receiptNumber", "PENDING");
                 invoiceData.put("totalAmount", calculatedTotal);
@@ -2242,6 +2308,8 @@ public class ReceptionistService {
                 invoiceData.put("changeReturned", 0.0);
                 invoiceData.put("notes", "No appointment found");
                 invoiceData.put("timeOfPayment", "");
+                // 🔥 FIX: Add missing refundReason property to prevent template error
+                invoiceData.put("refundReason", "");
             }
 
             logger.info("=== Final Invoice Data ===");
@@ -2536,8 +2604,13 @@ public class ReceptionistService {
                                             Double amountReceived, String notes, Integer issuerId) {
         try {
             logger.info("=== PROCESSING PAYMENT ===");
-            logger.info("PatientId: {}, AppointmentId: {}, Method: {}, Amount: {} VND",
+            logger.info("PatientId: {}, AppointmentId: {}, Method: '{}', Amount: {} VND",
                        patientId, appointmentId, method, totalAmount);
+
+            // Debug log for method parameter
+            logger.info("=== METHOD PARAMETER DEBUG ===");
+            logger.info("Received method parameter: '{}'", method);
+            logger.info("Method parameter class: {}", method != null ? method.getClass().getSimpleName() : "null");
 
             // Find the transaction by appointmentId and userId (more reliable than transactionId string)
             List<Transaction> transactions = transactionRepository.findByAppointmentId(appointmentId);
@@ -2568,18 +2641,23 @@ public class ReceptionistService {
                 transaction.setUserId(userId);
                 transaction.setTimeOfPayment(java.time.LocalDateTime.now());
                 transaction.setStatus("Pending");
-                transaction.setMethod("Cash"); // Default to Cash, will be updated below
+                // Set the actual payment method instead of default "Cash"
+                transaction.setMethod(method != null ? method : "Cash");
 
-                // Save the new transaction first to get an ID
+                // Set a helpful default message for pending transactions
+                transaction.setRefundReason("Payment pending - awaiting payment processing");
+
+                // Save the new transaction with the correct method
                 transaction = transactionRepository.save(transaction);
-                logger.info("✅ Created new transaction with ID: {}", transaction.getTransactionId());
+                logger.info("✅ Created new transaction with ID: {} and method: '{}'", transaction.getTransactionId(), transaction.getMethod());
             }
 
-            logger.info("Found/created transaction: {} with current status: {}", transaction.getTransactionId(), transaction.getStatus());
+            logger.info("Found/created transaction: {} with current status: {} and method: '{}'",
+                       transaction.getTransactionId(), transaction.getStatus(), transaction.getMethod());
 
             // Update transaction status and details
             transaction.setStatus("Paid");
-            transaction.setMethod(method);
+            transaction.setMethod(method); // Ensure the method is set correctly
             transaction.setProcessedByUserId(issuerId);
             transaction.setTimeOfPayment(java.time.LocalDateTime.now());
 
@@ -2595,6 +2673,26 @@ public class ReceptionistService {
             // Save transaction
             Transaction savedTransaction = transactionRepository.save(transaction);
             logger.info("✅ Transaction {} updated to Paid status", savedTransaction.getTransactionId());
+
+            // Debug log after saving to verify what was actually saved
+            logger.info("=== AFTER FINAL SAVE ===");
+            logger.info("Saved transaction method: '{}'", savedTransaction.getMethod());
+            logger.info("Saved transaction status: '{}'", savedTransaction.getStatus());
+            logger.info("Original method parameter: '{}'", method);
+
+            // Additional verification by re-querying the database
+            try {
+                Transaction verifyTransaction = transactionRepository.findById(savedTransaction.getTransactionId()).orElse(null);
+                if (verifyTransaction != null) {
+                    logger.info("=== DATABASE VERIFICATION ===");
+                    logger.info("Re-queried transaction method: '{}'", verifyTransaction.getMethod());
+                    logger.info("Re-queried transaction status: '{}'", verifyTransaction.getStatus());
+                } else {
+                    logger.error("❌ Could not re-query transaction for verification");
+                }
+            } catch (Exception verifyError) {
+                logger.error("❌ Error during database verification: {}", verifyError.getMessage());
+            }
 
             // Create or update receipt
             Receipt receipt = transaction.getReceipt();
@@ -2649,7 +2747,7 @@ public class ReceptionistService {
             return response;
 
         } catch (Exception e) {
-            logger.error("❌ Error processing payment: {}", e.getMessage(), e);
+            logger.error("���� Error processing payment: {}", e.getMessage(), e);
             throw new RuntimeException("Failed to process payment: " + e.getMessage());
         }
     }
@@ -2743,10 +2841,10 @@ public class ReceptionistService {
         provinceMap.put("hanoi", "Hà Nội");
         provinceMap.put("ho chi minh", "Hồ Chí Minh");
         provinceMap.put("hcm", "Hồ Chí Minh");
-        provinceMap.put("sai gon", "Hồ Chí Minh");
+        provinceMap.put("sai gon", "H�� Chí Minh");
         provinceMap.put("saigon", "Hồ Chí Minh");
         provinceMap.put("da nang", "Đà Nẵng");
-        provinceMap.put("danang", "Đà Nẵng");
+        provinceMap.put("danang", "Đà N���ng");
 
         // Northern provinces
         provinceMap.put("hai phong", "Hải Phòng");
@@ -2791,7 +2889,7 @@ public class ReceptionistService {
         provinceMap.put("ninh thuan", "Ninh Thuận");
         provinceMap.put("ninhthuan", "Ninh Thuận");
         provinceMap.put("binh thuan", "Bình Thuận");
-        provinceMap.put("binhthuan", "Bình Thuận");
+        provinceMap.put("binhthuan", "Bình Thu��n");
         provinceMap.put("kon tum", "Kon Tum");
         provinceMap.put("kontum", "Kon Tum");
         provinceMap.put("gia lai", "Gia Lai");
@@ -2822,7 +2920,7 @@ public class ReceptionistService {
         provinceMap.put("travinh", "Trà Vinh");
         provinceMap.put("vinh long", "Vĩnh Long");
         provinceMap.put("vinhlong", "Vĩnh Long");
-        provinceMap.put("dong thap", "Đồng Tháp");
+        provinceMap.put("dong thap", "Đồng Th��p");
         provinceMap.put("dongthap", "Đồng Tháp");
         provinceMap.put("an giang", "An Giang");
         provinceMap.put("angiang", "An Giang");
@@ -2868,7 +2966,7 @@ public class ReceptionistService {
         provinceMap.put("backan", "Bắc Kạn");
         provinceMap.put("bac ninh", "Bắc Ninh");
         provinceMap.put("bacninh", "Bắc Ninh");
-        provinceMap.put("thai nguyen", "Thái Nguyên");
+        provinceMap.put("thai nguyen", "Th��i Nguyên");
         provinceMap.put("thainguyen", "Thái Nguyên");
         provinceMap.put("phu tho", "Phú Thọ");
         provinceMap.put("phutho", "Phú Thọ");
