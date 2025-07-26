@@ -24,6 +24,9 @@ public interface UserRepository extends JpaRepository<Users, Integer>, JpaSpecif
 
     List<Users> findByRoleId(Integer roleId);
 
+    // Find users by role ID and status
+    List<Users> findByRoleIdAndStatus(Integer roleId, String status);
+
     // Count users created between dates
     @Query("SELECT COUNT(u) FROM Users u WHERE u.createdAt BETWEEN :startDate AND :endDate")
     Integer countByCreatedAtBetween(@Param("startDate") LocalDateTime startDate,

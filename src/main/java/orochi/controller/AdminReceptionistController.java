@@ -49,7 +49,7 @@ public class AdminReceptionistController {
 
         Pageable pageable = PageRequest.of(page, size);
         Page<Users> receptionistPage =
-                receptionistService.getAllReceptionists(search, statusFilter, pageable);
+                userService.getAllReceptionists(search, statusFilter, pageable);
 
         model.addAttribute("receptionists", receptionistPage.getContent());
         model.addAttribute("adminId", adminId);

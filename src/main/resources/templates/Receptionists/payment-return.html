@@ -1,0 +1,308 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Payment Result - Medicare Plus</title>
+
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Font Awesome -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+
+    <style>
+        .payment-result-container {
+            max-width: 600px;
+            margin: 50px auto;
+            padding: 20px;
+        }
+
+        .result-card {
+            border: none;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            border-radius: 10px;
+        }
+
+        .success-icon {
+            color: #28a745;
+            font-size: 4rem;
+        }
+
+        .error-icon {
+            color: #dc3545;
+            font-size: 4rem;
+        }
+
+        .result-header {
+            text-align: center;
+            padding: 30px 20px 20px;
+        }
+
+        .result-body {
+            padding: 20px;
+        }
+
+        .info-row {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 10px;
+            padding: 8px 0;
+            border-bottom: 1px solid #f0f0f0;
+        }
+
+        .info-label {
+            font-weight: 600;
+            color: #666;
+        }
+
+        .info-value {
+            color: #333;
+        }
+
+        .btn-return {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border: none;
+            padding: 12px 30px;
+            border-radius: 6px;
+            color: white;
+            font-weight: 500;
+            transition: all 0.3s ease;
+        }
+
+        .btn-return:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+            color: white;
+        }
+
+        .loading-spinner {
+            display: none;
+        }
+    </style>
+</head>
+<body>
+<div class="container">
+    <div class="payment-result-container">
+        <div class="card result-card">
+            <!-- Success Result -->
+            <div th:if="${successMessage}" class="result-header">
+                <i class="fas fa-check-circle success-icon"></i>
+                <h2 class="mt-3 text-success">Payment Successful!</h2>
+                <p class="text-muted" th:text="${successMessage}">Payment completed successfully!</p>
+            </div>
+
+            <!-- Error Result -->
+            <div th:if="${errorMessage}" class="result-header">
+                <i class="fas fa-times-circle error-icon"></i>
+                <h2 class="mt-3 text-danger">Payment Failed</h2>
+                <p class="text-muted" th:text="${errorMessage}">Payment failed. Please try again.</p>
+            </div>
+
+            <!-- Payment Details -->
+            <div class="result-body" th:if="${transactionId}">
+                <h5 class="mb-3">Payment Details</h5>
+
+                <div class="info-row">
+                    <span class="info-label">Transaction ID:</span>
+                    <span class="info-value" th:text="${transactionId}">-</span>
+                </div>
+
+                <div class="info-row" th:if="${vnp_Amount}">
+                    <span class="info-label">Amount:</span>
+                    <span class="info-value" th:text="${#numbers.formatDecimal(vnp_Amount / 100, 0, 'COMMA', 0, 'POINT')} + ' VND'">-</span>
+                </div>
+
+                <div class="info-row" th:if="${vnp_OrderInfo}">
+                    <span class="info-label">Order Info:</span>
+                    <span class="info-value" th:text="${vnp_OrderInfo}">-</span>
+                </div>
+
+                <div class="info-row" th:if="${vnp_PayDate}">
+                    <span class="info-label">Payment Date:</span>
+                    <span class="info-value" th:text="${vnp_PayDate}">-</span>
+                </div>
+
+                <div class="info-row" th:if="${vnp_BankCode}">
+                    <span class="info-label">Bank:</span>
+                    <span class="info-value" th:text="${vnp_BankCode}">-</span>
+                </div>
+            </div>
+
+            <!-- Action Buttons -->
+            <div class="result-body text-center">
+                <div th:if="${successMessage}">
+                    <button class="btn btn-return me-3" onclick="returnToPayments()">
+                        <i class="fas fa-arrow-left me-2"></i>Back to Payments
+                    </button>
+                    <button class="btn btn-outline-primary" onclick="printReceipt()">
+                        <i class="fas fa-print me-2"></i>Print Receipt
+                    </button>
+                </div>
+
+                <div th:if="${errorMessage}">
+                    <button class="btn btn-return me-3" onclick="retryPayment()">
+                        <i class="fas fa-redo me-2"></i>Try Again
+                    </button>
+                    <button class="btn btn-outline-secondary" onclick="returnToPayments()">
+                        <i class="fas fa-arrow-left me-2"></i>Back to Payments
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Loading Spinner -->
+        <div class="text-center mt-3 loading-spinner" id="loadingSpinner">
+            <div class="spinner-border text-primary" role="status">
+                <span class="visually-hidden">Loading...</span>
+            </div>
+            <p class="mt-2 text-muted">Processing...</p>
+        </div>
+    </div>
+</div>
+
+<!-- Bootstrap JS -->
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+
+<script>
+    // Auto-redirect after successful payment (optional)
+    const urlParams = new URLSearchParams(window.location.search);
+    const isSuccess = urlParams.get('vnp_ResponseCode') === '00';
+
+    if (isSuccess) {
+        // Optional: Auto-redirect to payments page after 10 seconds
+        setTimeout(() => {
+            if (confirm('Payment successful! Would you like to return to the payments page?')) {
+                returnToPayments();
+            }
+        }, 10000);
+    }
+
+    function returnToPayments() {
+        showLoading();
+        window.location.href = '/receptionist/payments';
+    }
+
+    function retryPayment() {
+        showLoading();
+        // Extract patient and appointment info from URL parameters or redirect to online payment
+        const patientId = urlParams.get('patientId') || getPatientIdFromOrderInfo();
+        const appointmentId = urlParams.get('appointmentId') || getAppointmentIdFromOrderInfo();
+
+        if (patientId && appointmentId) {
+            window.location.href = `/receptionist/online-payment?patientId=${patientId}&appointmentId=${appointmentId}`;
+        } else {
+            window.location.href = '/receptionist/payments';
+        }
+    }
+
+    function printReceipt() {
+        // Create a simple receipt print view
+        const printWindow = window.open('', '_blank');
+        const receiptContent = createReceiptContent();
+
+        printWindow.document.write(receiptContent);
+        printWindow.document.close();
+        printWindow.focus();
+        printWindow.print();
+        printWindow.close();
+    }
+
+    function createReceiptContent() {
+        const transactionId = urlParams.get('vnp_TxnRef') || 'N/A';
+        const amount = urlParams.get('vnp_Amount') || '0';
+        const orderInfo = urlParams.get('vnp_OrderInfo') || 'Hospital Payment';
+        const payDate = urlParams.get('vnp_PayDate') || new Date().toISOString();
+        const bankCode = urlParams.get('vnp_BankCode') || 'VNPay';
+
+        return `
+                <!DOCTYPE html>
+                <html>
+                <head>
+                    <title>Payment Receipt</title>
+                    <style>
+                        body { font-family: Arial, sans-serif; margin: 20px; }
+                        .receipt { max-width: 400px; margin: 0 auto; }
+                        .header { text-align: center; border-bottom: 2px solid #333; padding-bottom: 10px; margin-bottom: 20px; }
+                        .row { display: flex; justify-content: space-between; margin-bottom: 8px; }
+                        .total { border-top: 1px solid #333; padding-top: 10px; font-weight: bold; }
+                    </style>
+                </head>
+                <body>
+                    <div class="receipt">
+                        <div class="header">
+                            <h2>Medicare Plus</h2>
+                            <p>Payment Receipt</p>
+                        </div>
+                        <div class="row">
+                            <span>Transaction ID:</span>
+                            <span>${transactionId}</span>
+                        </div>
+                        <div class="row">
+                            <span>Order Info:</span>
+                            <span>${orderInfo}</span>
+                        </div>
+                        <div class="row">
+                            <span>Payment Date:</span>
+                            <span>${formatDate(payDate)}</span>
+                        </div>
+                        <div class="row">
+                            <span>Bank:</span>
+                            <span>${bankCode}</span>
+                        </div>
+                        <div class="row total">
+                            <span>Amount:</span>
+                            <span>${formatAmount(amount)} VND</span>
+                        </div>
+                        <div style="text-align: center; margin-top: 20px;">
+                            <p>Thank you for your payment!</p>
+                        </div>
+                    </div>
+                </body>
+                </html>
+            `;
+    }
+
+    function formatAmount(amount) {
+        return new Intl.NumberFormat('vi-VN').format(parseInt(amount) / 100);
+    }
+
+    function formatDate(dateStr) {
+        if (!dateStr || dateStr === 'N/A') return new Date().toLocaleString();
+
+        // VNPay date format: yyyyMMddHHmmss
+        if (dateStr.length === 14) {
+            const year = dateStr.substring(0, 4);
+            const month = dateStr.substring(4, 6);
+            const day = dateStr.substring(6, 8);
+            const hour = dateStr.substring(8, 10);
+            const minute = dateStr.substring(10, 12);
+            const second = dateStr.substring(12, 14);
+
+            return `${day}/${month}/${year} ${hour}:${minute}:${second}`;
+        }
+
+        return new Date(dateStr).toLocaleString();
+    }
+
+    function getPatientIdFromOrderInfo() {
+        const orderInfo = urlParams.get('vnp_OrderInfo') || '';
+        const match = orderInfo.match(/PatientID:\s*(\d+)/);
+        return match ? match[1] : null;
+    }
+
+    function getAppointmentIdFromOrderInfo() {
+        const orderInfo = urlParams.get('vnp_OrderInfo') || '';
+        const match = orderInfo.match(/AppointmentID:\s*(\d+)/);
+        return match ? match[1] : null;
+    }
+
+    function showLoading() {
+        document.getElementById('loadingSpinner').style.display = 'block';
+    }
+
+    // Extract all URL parameters for debugging
+    console.log('VNPay Return Parameters:', Object.fromEntries(urlParams));
+</script>
+</body>
+</html>
+

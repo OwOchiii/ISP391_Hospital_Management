@@ -27,6 +27,10 @@ public interface PatientRepository extends JpaRepository<Patient, Integer> {
     @Query("SELECT p FROM Patient p JOIN p.user u WHERE LOWER(u.fullName) LIKE LOWER(CONCAT('%', :name, '%'))")
     List<Patient> findByFullNameContainingIgnoreCase(@Param("name") String name);
 
+    // CRITICAL: Add method to eagerly fetch Patient with User relationship
+    @Query("SELECT p FROM Patient p JOIN FETCH p.user WHERE p.patientId = :patientId")
+    Optional<Patient> findByIdWithUser(@Param("patientId") Integer patientId);
+
     // Count methods for patient statuses
     // Additional custom methods if needed
     @Query("SELECT COUNT(p) FROM Patient p JOIN p.user u WHERE UPPER(u.status) = UPPER(:status)")

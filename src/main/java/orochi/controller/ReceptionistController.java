@@ -1,7 +1,14 @@
 package orochi.controller;
 
 import java.io.File;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.math.BigDecimal;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
+import java.net.URLEncoder;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -9,6 +16,12 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
+// Add PDF generation imports
+import com.itextpdf.text.*;
+import com.itextpdf.text.pdf.*;
+
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
 import jakarta.transaction.Transactional;
 import jakarta.validation.Valid;
 import org.slf4j.Logger;
@@ -30,8 +43,7 @@ import orochi.dto.AppointmentDTO;
 import orochi.dto.AppointmentFormDTO;
 import orochi.dto.SpecializationDTO;
 import orochi.model.*;
-import orochi.repository.PatientRepository;
-import orochi.repository.UserRepository;
+import orochi.repository.*;
 import orochi.service.*;
 import orochi.service.impl.ReceptionistService;
 import orochi.service.FileStorageService;
@@ -49,7 +61,9 @@ public class ReceptionistController {
     private final RoomService roomService;
     private final EmailService emailService;
     private final FileStorageService fileStorageService;
-
+    private final TransactionRepository transactionRepository;
+    private final AppointmentRepository appointmentRepository;
+    private final ReceiptRepository receiptRepository;
     @Autowired
     private PasswordEncoder passwordEncoder;
 
@@ -60,7 +74,8 @@ public class ReceptionistController {
                                   SpecializationService specializationService, AppointmentService appointmentService,
                                   PatientRepository patientRepository, RoomService roomService,
                                   NotificationService notificationService, EmailService emailService,
-                                  FileStorageService fileStorageService) {
+                                  FileStorageService fileStorageService, TransactionRepository transactionRepository,
+                                  AppointmentRepository appointmentRepository, ReceiptRepository receiptRepository) {
         this.receptionistService = receptionistService;
         this.userRepository = userRepository;
         this.specializationService = specializationService;
@@ -70,6 +85,9 @@ public class ReceptionistController {
         this.notificationService = notificationService;
         this.emailService = emailService;
         this.fileStorageService = fileStorageService;
+        this.transactionRepository = transactionRepository;
+        this.appointmentRepository = appointmentRepository;
+        this.receiptRepository = receiptRepository;
     }
 
     @GetMapping("/dashboard")
@@ -764,7 +782,7 @@ public class ReceptionistController {
     @GetMapping("/pendingAppointmentRequest")
     public ResponseEntity<?> getPendingAppointmentTableData() {
         try {
-            // Chỉ lấy pending appointments của ngày hiện tại
+            // Ch����� lấy pending appointments của ngày hiện tại
             String todayStr = LocalDate.now().toString();
             List<Map<String, Object>> todaysPendingAppointmentTableData = receptionistService.getTodaysPendingAppointmentTableData(todayStr);
             return ResponseEntity.ok(todaysPendingAppointmentTableData);
@@ -795,14 +813,23 @@ public class ReceptionistController {
             @RequestParam int id
     ) {
         try {
-            // Update status to "Scheduled" (Approved)
+            logger.info("=== CONFIRM APPOINTMENT REQUEST ===");
+            logger.info("Confirming appointment with ID: {}", id);
+
+            // Update status to "Scheduled" (Approved) - Điều này sẽ trigger tạo Transaction
             boolean isSuccess = receptionistService.updateAppointmentStatus(id, "Scheduled");
             if (isSuccess) {
-                return ResponseEntity.ok("Appointment approved successfully");
+                logger.info("✅ Appointment {} confirmed successfully - Transaction should be created automatically", id);
+                return ResponseEntity.ok(Map.of(
+                    "success", true,
+                    "message", "Appointment confirmed successfully and transaction created"
+                ));
             } else {
+                logger.error("❌ Failed to confirm appointment {}", id);
                 return ResponseEntity.badRequest().body("Failed to approve appointment");
             }
         } catch (Exception e) {
+            logger.error("❌ Error confirming appointment {}: {}", id, e.getMessage(), e);
             return ResponseEntity.badRequest().body("Error approving appointment: " + e.getMessage());
         }
     }
@@ -1115,7 +1142,7 @@ public class ReceptionistController {
             try {
                 logger.info("Sending registration confirmation email to: {}", email);
 
-                // QUAN TRỌNG: Đảm bảo patient object có đầy đủ thông tin user
+                // QUAN TRỌNG: Đảm bảo patient object có đ���y đủ thông tin user
                 Patient patientForEmail = newPatient.getPatient();
                 if (patientForEmail != null) {
                     // Đảm bảo user relationship được set
@@ -1485,6 +1512,10 @@ public class ReceptionistController {
                 }
             }
 
+            // Get current user ID as issuer
+            CustomUserDetails userDetails = (CustomUserDetails) authentication.getPrincipal();
+            Integer issuerId = userDetails.getUserId();
+
             // Process payment through service - this will update status from Pending to Paid
             Map<String, Object> result = receptionistService.processPayment(
                 patientId,
@@ -1494,10 +1525,42 @@ public class ReceptionistController {
                 method,
                 totalAmount,
                 amountReceived,
-                notes
+                notes,
+                issuerId  // Pass the issuer ID to fix the NULL constraint error
             );
 
             logger.info("Payment processed successfully: {}", result);
+
+            // Send receipt email to patient after successful payment
+            try {
+                // Get patient information
+                Patient patient = patientRepository.findById(patientId)
+                    .orElseThrow(() -> new RuntimeException("Patient not found"));
+
+                // Get receipt and transaction from result
+                Integer receiptId = (Integer) result.get("receiptId");
+                Integer transactionId = (Integer) result.get("transactionId");
+
+                if (receiptId != null && transactionId != null) {
+                    Receipt receipt = receiptRepository.findById(receiptId).orElse(null);
+                    Transaction transaction = transactionRepository.findById(transactionId).orElse(null);
+
+                    // Send email if receipt and transaction exist and patient has email
+                    if (receipt != null && transaction != null && patient.getUser() != null &&
+                        patient.getUser().getEmail() != null && !patient.getUser().getEmail().isEmpty()) {
+
+                        String patientEmail = patient.getUser().getEmail();
+                        logger.info("Sending receipt email to patient: {}", patientEmail);
+                        emailService.sendReceiptEmail(patientEmail, receipt, patient, transaction);
+                        logger.info("Receipt email sent successfully to: {}", patientEmail);
+                    } else {
+                        logger.warn("Cannot send receipt email: missing receipt, transaction, or patient email");
+                    }
+                }
+            } catch (Exception emailEx) {
+                logger.error("Failed to send receipt email: {}", emailEx.getMessage(), emailEx);
+                // Continue with success response even if email fails
+            }
 
             return ResponseEntity.ok(Map.of(
                 "success", true,
@@ -1738,8 +1801,8 @@ public class ReceptionistController {
             Receptionist receptionist = receptionistService.findByUserId(userId);
 
             response.put("success", true);
-            response.put("hasAvatar", receptionist != null && receptionist.getImageUrl() != null);
-            response.put("imageUrl", receptionist != null ? receptionist.getImageUrl() : null);
+            response.put("hasAvatar", receptionist != null && user.getAvatarUrl() != null);
+            response.put("imageUrl", receptionist != null ? user.getAvatarUrl() : null);
 
             return ResponseEntity.ok(response);
 
@@ -1749,5 +1812,1056 @@ public class ReceptionistController {
             response.put("message", "Lỗi hệ thống: " + e.getMessage());
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
         }
+    }
+
+    @GetMapping("/online-payment")
+    public String onlinePayment(@RequestParam Integer patientId,
+                               @RequestParam Integer appointmentId,
+                               Model model,
+                               Authentication authentication) {
+        try {
+            // Ensure authentication is not null
+            if (authentication == null || !authentication.isAuthenticated()) {
+                return "redirect:/login";
+            }
+
+            // Fetch invoice data for the patient
+            Map<String, Object> invoiceData = receptionistService.getInvoiceDataByPatientId(patientId);
+
+            if (invoiceData == null) {
+                model.addAttribute("errorMessage", "Patient not found");
+                return "redirect:/receptionist/payments";
+            }
+
+            // Get staff info for the "Processed By" field
+            Map<String, Object> staffInfo = receptionistService.getReceptionistStaffInfo();
+
+            // Calculate payment amounts (similar to PatientController)
+            BigDecimal consultationFee = new BigDecimal("500000"); // 500,000 VND
+            BigDecimal serviceFee = new BigDecimal("50000");       // 50,000 VND
+            BigDecimal discount = new BigDecimal("50000");         // 50,000 VND discount
+            BigDecimal totalAmount = consultationFee.add(serviceFee).subtract(discount);
+
+            // Add data to the model
+            model.addAttribute("invoiceData", invoiceData);
+            model.addAttribute("staffInfo", staffInfo);
+            model.addAttribute("patientId", patientId);
+            model.addAttribute("appointmentId", appointmentId);
+            // Add the missing totalAmount and amount attributes
+            model.addAttribute("totalAmount", totalAmount);
+            model.addAttribute("amount", totalAmount);
+            model.addAttribute("consultationFee", consultationFee);
+            model.addAttribute("serviceFee", serviceFee);
+            model.addAttribute("discount", discount);
+
+            // Return the online payment template
+            return "Receptionists/online-payment";
+        } catch (Exception e) {
+            logger.error("Error loading online payment page: {}", e.getMessage(), e);
+            model.addAttribute("errorMessage", "Error loading payment details: " + e.getMessage());
+            return "redirect:/receptionist/payments";
+        }
+    }
+
+    // VNPay Configuration - cập nhật để xử lý VND
+    public static String vnp_PayUrl = "https://sandbox.vnpayment.vn/paymentv2/vpcpay.html";
+    public static String vnp_ReturnUrl = "http://localhost:8089/receptionist/payment-return";
+    public static String vnp_TmnCode = "K65YFBNM";
+    public static String secretKey = "HSRAHZZPFEPACYMRDC023GI3WD3HRZSE";
+    public static String vnp_Version = "2.1.0";
+
+    @PostMapping("/process-online-payment")
+    public String processOnlinePayment(@RequestParam Integer appointmentId,
+                                     @RequestParam Integer patientId,
+                                     @RequestParam BigDecimal amount,
+                                     @RequestParam String paymentMethod,
+                                     @RequestParam String customerName,
+                                     @RequestParam String customerPhone,
+                                     @RequestParam String customerEmail,
+                                     @RequestParam(required = false) String notes,
+                                     RedirectAttributes redirectAttributes,
+                                     HttpServletRequest request,
+                                     HttpServletResponse response) {
+        try {
+            logger.info("=== STARTING ONLINE PAYMENT PROCESSING ===");
+            logger.info("AppointmentId: {}, PatientId: {}, Amount (VND): {}, Method: {}",
+                       appointmentId, patientId, amount, paymentMethod);
+            logger.info("Customer: {}, Phone: {}, Email: {}", customerName, customerPhone, customerEmail);
+
+            // STEP 1: Validate appointment exists
+            Appointment appointment = appointmentService.getAppointmentById(appointmentId);
+            if (appointment == null) {
+                logger.error("Invalid appointment ID: {}", appointmentId);
+                redirectAttributes.addFlashAttribute("errorMessage", "Invalid appointment");
+                return "redirect:/receptionist/online-payment?patientId=" + patientId + "&appointmentId=" + appointmentId;
+            }
+
+            // STEP 2: Get patient information and validate
+            Optional<Patient> patientOpt = patientRepository.findById(patientId);
+            if (patientOpt.isEmpty()) {
+                logger.error("Patient not found: {}", patientId);
+                redirectAttributes.addFlashAttribute("errorMessage", "Patient not found");
+                return "redirect:/receptionist/online-payment?patientId=" + patientId + "&appointmentId=" + appointmentId;
+            }
+
+            // STEP 3: Calculate correct Patient Payment amount from services
+            Map<String, Object> invoiceData = receptionistService.getInvoiceDataByPatientId(patientId);
+            if (invoiceData == null) {
+                logger.error("Invoice data not found for patient: {}", patientId);
+                redirectAttributes.addFlashAttribute("errorMessage", "Invoice data not found");
+                return "redirect:/receptionist/online-payment?patientId=" + patientId + "&appointmentId=" + appointmentId;
+            }
+
+            // 🔥 CALCULATE PATIENT PAYMENT CORRECTLY 🔥
+            List<Map<String, Object>> servicesUsed = (List<Map<String, Object>>) invoiceData.get("servicesUsed");
+            BigDecimal correctPatientPaymentVND = calculateCorrectPatientPaymentInVND(servicesUsed);
+
+            logger.info("=== PAYMENT AMOUNT VALIDATION ===");
+            logger.info("Received Amount from Form (VND): {}", amount);
+            logger.info("Calculated Patient Payment (VND): {}", correctPatientPaymentVND);
+
+            // Validate that the amount matches the calculated Patient Payment
+            BigDecimal tolerance = new BigDecimal("1000"); // Allow 1,000 VND tolerance
+            if (amount.subtract(correctPatientPaymentVND).abs().compareTo(tolerance) > 0) {
+                logger.warn("Amount mismatch - Expected Patient Payment: {} VND, Received: {} VND",
+                           correctPatientPaymentVND, amount);
+
+                // Force use the correct Patient Payment amount
+                amount = correctPatientPaymentVND;
+                logger.info("��� Updated amount to correct Patient Payment: {} VND", amount);
+            }
+
+            // STEP 4: 🔥 FIND EXISTING TRANSACTION - DO NOT CREATE NEW 🔥
+            Transaction transaction = null;
+
+            // Find existing transaction by AppointmentID and UserID
+            List<Transaction> existingTransactions = transactionRepository.findByAppointmentId(appointmentId);
+            if (!existingTransactions.isEmpty()) {
+                // Filter by UserID to ensure exact match
+                Optional<Transaction> matchingTransaction = existingTransactions.stream()
+                    .filter(t -> t.getUserId() != null && t.getUserId().equals(patientOpt.get().getUser().getUserId()))
+                    .findFirst();
+
+                if (matchingTransaction.isPresent()) {
+                    transaction = matchingTransaction.get();
+                    logger.info("✅ FOUND EXISTING Transaction {} for AppointmentID={} AND UserID={}",
+                               transaction.getTransactionId(), appointmentId, patientOpt.get().getUser().getUserId());
+                }
+            }
+
+            // If NO existing transaction found, CREATE ONLY ONE transaction
+            if (transaction == null) {
+                logger.info("No existing transaction found - creating new one for AppointmentID={} AND UserID={}",
+                           appointmentId, patientOpt.get().getUser().getUserId());
+
+                transaction = new Transaction();
+                transaction.setAppointmentId(appointmentId);
+                transaction.setUserId(patientOpt.get().getUser().getUserId());
+
+                // Map payment method to database-compatible values
+                String dbMethod = mapPaymentMethodToDbValue(paymentMethod);
+                transaction.setMethod(dbMethod);
+                transaction.setStatus("Pending");
+                transaction.setTimeOfPayment(LocalDateTime.now());
+
+                // Save ONLY if no existing transaction found
+                transaction = transactionRepository.save(transaction);
+                logger.info("✅ CREATED NEW Transaction {} for AppointmentID={} AND UserID={}",
+                           transaction.getTransactionId(), appointmentId, patientOpt.get().getUser().getUserId());
+            } else {
+                // Update existing transaction method and status if needed
+                if (!"Paid".equalsIgnoreCase(transaction.getStatus())) {
+                    String dbMethod = mapPaymentMethodToDbValue(paymentMethod);
+                    transaction.setMethod(dbMethod);
+                    transaction.setStatus("Pending");
+                    transaction.setTimeOfPayment(LocalDateTime.now());
+                    transaction = transactionRepository.save(transaction);
+                    logger.info("✅ UPDATED EXISTING Transaction {} - Method: {}, Status: Pending",
+                               transaction.getTransactionId(), dbMethod);
+                } else {
+                    logger.warn("⚠️ Transaction {} is already PAID - redirecting to success page", transaction.getTransactionId());
+                    redirectAttributes.addFlashAttribute("successMessage", "Payment already completed successfully!");
+                    return "redirect:/receptionist/payment-return?vnp_TxnRef=" + transaction.getTransactionId() + "&vnp_ResponseCode=00";
+                }
+            }
+
+            // STEP 5: Process payment URL based on method
+            String redirectUrl = null;
+            switch (paymentMethod.toLowerCase()) {
+                case "vnpay":
+                    logger.info("Processing VNPay payment with Patient Payment amount {} VND...", amount);
+                    redirectUrl = createVNPayPaymentUrl(transaction, request, amount);
+                    logger.info("VNPay URL result: {}", redirectUrl != null ? "SUCCESS" : "FAILED");
+                    break;
+                case "momo":
+                    redirectUrl = createMoMoPaymentUrl(transaction);
+                    break;
+                case "zalopay":
+                    redirectUrl = createZaloPayPaymentUrl(transaction);
+                    break;
+                default:
+                    logger.error("Invalid payment method: {}", paymentMethod);
+                    redirectAttributes.addFlashAttribute("errorMessage", "Invalid payment method: " + paymentMethod);
+                    return "redirect:/receptionist/online-payment?patientId=" + patientId + "&appointmentId=" + appointmentId;
+            }
+
+            if (redirectUrl == null || redirectUrl.isEmpty()) {
+                logger.error("FAILED to create payment URL for method: {}", paymentMethod);
+                redirectAttributes.addFlashAttribute("errorMessage", "Failed to initiate payment. Please try again.");
+                return "redirect:/receptionist/online-payment?patientId=" + patientId + "&appointmentId=" + appointmentId;
+            }
+
+            logger.info("=== PREPARING REDIRECT ===");
+            logger.info("Using Transaction ID: {}", transaction.getTransactionId());
+            logger.info("Method: {}", paymentMethod);
+            logger.info("Amount (VND): {}", amount);
+            logger.info("URL: {}", redirectUrl);
+
+            // Validate VNPay URL before redirect
+            if (paymentMethod.equalsIgnoreCase("vnpay")) {
+                if (!redirectUrl.startsWith("https://sandbox.vnpayment.vn")) {
+                    logger.error("Invalid VNPay URL format: {}", redirectUrl);
+                    redirectAttributes.addFlashAttribute("errorMessage", "Invalid payment gateway URL");
+                    return "redirect:/receptionist/online-payment?patientId=" + patientId + "&appointmentId=" + appointmentId;
+                }
+
+                try {
+                    java.net.URL testUrl = new java.net.URL(redirectUrl);
+                    logger.info("URL validation passed for: {}", testUrl.getHost());
+                } catch (java.net.MalformedURLException e) {
+                    logger.error("Malformed VNPay URL: {}", e.getMessage());
+                    redirectAttributes.addFlashAttribute("errorMessage", "Invalid payment URL format");
+                    return "redirect:/receptionist/online-payment?patientId=" + patientId + "&appointmentId=" + appointmentId;
+                }
+            }
+
+            logger.info("=== EXECUTING REDIRECT ===");
+            logger.info("Redirecting to: {}", redirectUrl);
+
+            // For VNPay, use direct redirect
+            if (paymentMethod.equalsIgnoreCase("vnpay")) {
+                logger.info("Using direct redirect to VNPay");
+                try {
+                    response.sendRedirect(redirectUrl);
+                    return null;
+                } catch (Exception redirectException) {
+                    logger.error("Direct redirect failed: {}", redirectException.getMessage());
+                    redirectAttributes.addFlashAttribute("errorMessage", "Failed to redirect to VNPay: " + redirectException.getMessage());
+                    return "redirect:/receptionist/online-payment?patientId=" + patientId + "&appointmentId=" + appointmentId;
+                }
+            }
+
+            return "redirect:" + redirectUrl;
+
+        } catch (Exception e) {
+            logger.error("EXCEPTION in processOnlinePayment", e);
+            redirectAttributes.addFlashAttribute("errorMessage", "An error occurred while processing the payment: " + e.getMessage());
+            return "redirect:/receptionist/online-payment?patientId=" + patientId + "&appointmentId=" + appointmentId;
+        }
+    }
+
+    /**
+     * Calculate CORRECT Patient Payment in VND from services used
+     * Patient Payment = SubTotal - Discount (where SubTotal = sum of all service totals)
+     * 🔥 UPDATED: Không nhân tỉ giá vì giá trị đã ở VND
+     */
+    private BigDecimal calculateCorrectPatientPaymentInVND(List<Map<String, Object>> servicesUsed) {
+        if (servicesUsed == null || servicesUsed.isEmpty()) {
+            return BigDecimal.ZERO;
+        }
+
+        logger.info("=== CALCULATING CORRECT PATIENT PAYMENT IN VND ===");
+
+        // Calculate SubTotal (sum of all service totals - already in VND)
+        BigDecimal subTotalVND = BigDecimal.ZERO;
+        int totalQuantity = 0;
+
+        for (Map<String, Object> service : servicesUsed) {
+            Object totalObj = service.get("total");
+            Object quantityObj = service.get("quantity");
+
+            if (totalObj != null && quantityObj != null) {
+                BigDecimal serviceTotal;
+                int quantity;
+
+                try {
+                    if (totalObj instanceof Number) {
+                        serviceTotal = new BigDecimal(((Number) totalObj).doubleValue());
+                    } else {
+                        serviceTotal = new BigDecimal(totalObj.toString());
+                    }
+
+                    if (quantityObj instanceof Number) {
+                        quantity = ((Number) quantityObj).intValue();
+                    } else {
+                        quantity = Integer.parseInt(quantityObj.toString());
+                    }
+
+                    subTotalVND = subTotalVND.add(serviceTotal);
+                    totalQuantity += quantity;
+
+                    logger.info("Service - Total: {} VND, Quantity: {}", serviceTotal, quantity);
+                } catch (NumberFormatException e) {
+                    logger.warn("Invalid service total or quantity: {} / {}", totalObj, quantityObj);
+                }
+            }
+        }
+
+        // Calculate discount based on quantity rules
+        BigDecimal discountPercent = BigDecimal.ZERO;
+        if (totalQuantity >= 5) {
+            discountPercent = new BigDecimal("10"); // 10%
+        } else if (totalQuantity >= 3) {
+            discountPercent = new BigDecimal("5");  // 5%
+        } else if (totalQuantity == 1) {
+            discountPercent = new BigDecimal("3");  // 3%
+        }
+
+        // Calculate discount amount in VND
+        BigDecimal discountAmountVND = subTotalVND.multiply(discountPercent).divide(new BigDecimal("100"), 2, BigDecimal.ROUND_HALF_UP);
+
+        // Calculate Patient Payment (SubTotal - Discount) - already in VND
+        BigDecimal patientPaymentVND = subTotalVND.subtract(discountAmountVND);
+
+        logger.info("=== PATIENT PAYMENT CALCULATION RESULTS (VND) ===");
+        logger.info("SubTotal VND: {}", subTotalVND);
+        logger.info("Total Quantity: {}", totalQuantity);
+        logger.info("Discount Percent: {}%", discountPercent);
+        logger.info("Discount Amount VND: {}", discountAmountVND);
+        logger.info("Patient Payment VND: {}", patientPaymentVND);
+
+        return patientPaymentVND.setScale(0, BigDecimal.ROUND_HALF_UP);
+    }
+
+    private String createVNPayPaymentUrl(Transaction transaction, HttpServletRequest request, BigDecimal amount) {
+        try {
+            logger.info("=== Creating VNPay URL ===");
+            logger.info("Transaction ID: {}, Amount (VND): {}", transaction.getTransactionId(), amount);
+
+            // Validate input parameters
+            if (transaction == null || transaction.getTransactionId() == null) {
+                logger.error("Transaction or TransactionID is null");
+                return null;
+            }
+            if (amount == null || amount.compareTo(BigDecimal.ZERO) <= 0) {
+                logger.error("Amount is null or invalid: {}", amount);
+                return null;
+            }
+
+            Map<String, String> vnpParams = new HashMap<>();
+            vnpParams.put("vnp_Version", vnp_Version);
+            vnpParams.put("vnp_Command", "pay");
+            vnpParams.put("vnp_TmnCode", vnp_TmnCode);
+
+            // VNPay requires amount in smallest unit (xu) - multiply VND by 100
+            // Example: 5,808,000 VND -> 580,800,000 (xu)
+            long amountInXu = amount.multiply(new BigDecimal(100)).longValue();
+            vnpParams.put("vnp_Amount", String.valueOf(amountInXu));
+
+            logger.info("Amount conversion: {} VND -> {} xu", amount, amountInXu);
+
+            vnpParams.put("vnp_CurrCode", "VND");
+            vnpParams.put("vnp_TxnRef", String.valueOf(transaction.getTransactionId()));
+
+            String orderInfo = String.format("Thanh toan kham benh - Ma GD: %d - Ma hen: %d - So tien: %s VND",
+                                            transaction.getTransactionId(),
+                                            transaction.getAppointmentId(),
+                                            amount.toPlainString());
+            vnpParams.put("vnp_OrderInfo", orderInfo);
+            vnpParams.put("vnp_OrderType", "other");
+            vnpParams.put("vnp_Locale", "vn");
+            vnpParams.put("vnp_ReturnUrl", vnp_ReturnUrl);
+            vnpParams.put("vnp_IpAddr", getClientIpAddress(request));
+
+            String createDate = LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyyMMddHHmmss"));
+            vnpParams.put("vnp_CreateDate", createDate);
+
+            logger.info("=== VNPay Parameters ===");
+            logger.info("vnp_Version: {}", vnpParams.get("vnp_Version"));
+            logger.info("vnp_Command: {}", vnpParams.get("vnp_Command"));
+            logger.info("vnp_TmnCode: {}", vnpParams.get("vnp_TmnCode"));
+            logger.info("vnp_Amount (xu): {}", vnpParams.get("vnp_Amount"));
+            logger.info("vnp_CurrCode: {}", vnpParams.get("vnp_CurrCode"));
+            logger.info("vnp_TxnRef: {}", vnpParams.get("vnp_TxnRef"));
+            logger.info("vnp_OrderInfo: {}", vnpParams.get("vnp_OrderInfo"));
+            logger.info("vnp_ReturnUrl: {}", vnpParams.get("vnp_ReturnUrl"));
+            logger.info("vnp_CreateDate: {}", vnpParams.get("vnp_CreateDate"));
+
+            // Build query string and sort parameters alphabetically
+            StringBuilder query = new StringBuilder();
+            vnpParams.entrySet().stream()
+                    .filter(entry -> entry.getValue() != null && !entry.getValue().isEmpty())
+                    .sorted(Map.Entry.comparingByKey())
+                    .forEach(entry -> {
+                        if (query.length() > 0) query.append("&");
+                        try {
+                            query.append(entry.getKey())
+                                 .append("=")
+                                 .append(URLEncoder.encode(entry.getValue(), StandardCharsets.UTF_8));
+                        } catch (Exception e) {
+                            logger.error("Error encoding parameter: {} = {}", entry.getKey(), entry.getValue());
+                        }
+                    });
+
+            String queryString = query.toString();
+            logger.info("Query string before hash: {}", queryString);
+
+            // Generate secure hash using HMAC SHA512
+            String secureHash = hmacSHA512(secretKey, queryString);
+            if (secureHash == null || secureHash.isEmpty()) {
+                logger.error("Failed to generate secure hash");
+                return null;
+            }
+            logger.info("Generated secure hash: {}", secureHash);
+
+            String finalQuery = queryString + "&vnp_SecureHash=" + secureHash;
+            String finalUrl = vnp_PayUrl + "?" + finalQuery;
+
+            logger.info("=== Final VNPay URL ===");
+            logger.info("Base URL: {}", vnp_PayUrl);
+            logger.info("Full URL length: {} characters", finalUrl.length());
+            logger.info("Final URL: {}", finalUrl);
+
+            // Validate URL format
+            if (!finalUrl.startsWith("https://sandbox.vnpayment.vn")) {
+                logger.error("Invalid VNPay URL format: {}", finalUrl);
+                return null;
+            }
+
+            // Test URL construction
+            try {
+                java.net.URL testUrl = new java.net.URL(finalUrl);
+                logger.info("URL validation successful: {}", testUrl.getHost());
+            } catch (java.net.MalformedURLException e) {
+                logger.error("Malformed URL: {}", e.getMessage());
+                return null;
+            }
+
+            logger.info("VNPay URL created successfully, ready for redirect");
+            return finalUrl;
+
+        } catch (Exception e) {
+            logger.error("Error creating VNPay payment URL", e);
+            e.printStackTrace(); // Print full stack trace for debugging
+            return null;
+        }
+    }
+
+    private String createMoMoPaymentUrl(Transaction transaction) {
+        logger.info("MoMo payment initiated for transaction: {}", transaction.getTransactionId());
+        return "/receptionist/payment-processing?method=momo&transactionId=" + transaction.getTransactionId();
+    }
+
+    private String createZaloPayPaymentUrl(Transaction transaction) {
+        logger.info("ZaloPay payment initiated for transaction: {}", transaction.getTransactionId());
+        return "/receptionist/payment-processing?method=zalopay&transactionId=" + transaction.getTransactionId();
+    }
+
+    private String getClientIpAddress(HttpServletRequest request) {
+        String xfHeader = request.getHeader("X-Forwarded-For");
+        if (xfHeader == null) {
+            return request.getRemoteAddr();
+        }
+        return xfHeader.split(",")[0];
+    }
+
+    private String hmacSHA512(String key, String data) {
+        try {
+            javax.crypto.Mac mac = javax.crypto.Mac.getInstance("HmacSHA512");
+            javax.crypto.spec.SecretKeySpec secretKeySpec = new javax.crypto.spec.SecretKeySpec(key.getBytes(), "HmacSHA512");
+            mac.init(secretKeySpec);
+            byte[] hash = mac.doFinal(data.getBytes());
+            StringBuilder result = new StringBuilder();
+            for (byte b : hash) {
+                result.append(String.format("%02x", b));
+            }
+            return result.toString();
+        } catch (Exception e) {
+            logger.error("Error generating HMAC SHA512", e);
+            return null;
+        }
+    }
+
+    @GetMapping("/payment-return")
+    public String paymentReturn(@RequestParam Map<String, String> allRequestParams, Model model) {
+        try {
+            logger.info("=== VNPAY PAYMENT RETURN IN RECEPTIONIST CONTROLLER ===");
+            logger.info("VNPay payment return with params: {}", allRequestParams);
+
+            String transactionId = allRequestParams.get("vnp_TxnRef");
+            String paymentStatus = allRequestParams.get("vnp_ResponseCode");
+            String amountStr = allRequestParams.get("vnp_Amount");
+
+            logger.info("VNPay return parameters:");
+            logger.info("- Transaction ID: {}", transactionId);
+            logger.info("- Response Code: {}", paymentStatus);
+            logger.info("- Amount (xu): {}", amountStr);
+
+            // Convert amount string to proper number (VNPay returns amount in xu - smallest unit)
+            Long amountInXu = null;
+            Double amountInVND = null;
+            if (amountStr != null && !amountStr.trim().isEmpty()) {
+                try {
+                    amountInXu = Long.parseLong(amountStr);
+                    // Convert from xu to VND (divide by 100)
+                    amountInVND = amountInXu / 100.0;
+                    logger.info("Amount conversion: {} xu -> {} VND", amountInXu, amountInVND);
+                } catch (NumberFormatException e) {
+                    logger.error("Error parsing amount: {}", amountStr, e);
+                }
+            }
+
+            // Get current receptionist user ID for ProcessedByUserID
+            Integer currentReceptionistId = getCurrentUserId();
+            logger.info("Current receptionist processing payment: {}", currentReceptionistId);
+
+            if (transactionId != null && !transactionId.trim().isEmpty()) {
+                try {
+                    Optional<Transaction> transactionOpt = transactionRepository.findById(Integer.valueOf(transactionId));
+                    if (transactionOpt.isPresent()) {
+                        Transaction transaction = transactionOpt.get();
+
+                        String currentStatus = transaction.getStatus();
+                        logger.info("Current transaction status before update: {}", currentStatus);
+
+                        // Map VNPay response code to valid database Status values
+                        if ("00".equals(paymentStatus)) {
+                            // PAYMENT SUCCESSFUL - Update Transaction FIRST (ALWAYS update regardless of appointment check)
+                            transaction.setStatus("Paid");
+                            transaction.setProcessedByUserId(currentReceptionistId);
+                            transaction.setMethod("Banking"); // VNPay is Banking method
+
+                            // SAVE TRANSACTION IMMEDIATELY - This must happen regardless of appointment validation
+                            Transaction savedTransaction = transactionRepository.save(transaction);
+                            logger.info("✅ PAYMENT SUCCESSFUL - Transaction {} updated: Status='Paid', ProcessedBy={}, Method='Banking'",
+                                       transactionId, currentReceptionistId);
+                            logger.info("💾 Transaction {} saved to database with final status: {}, ProcessedBy: {}, Method: {}",
+                                       transactionId, savedTransaction.getStatus(), savedTransaction.getProcessedByUserId(), savedTransaction.getMethod());
+
+                            // 🔥 ADD RECEIPT CREATION LOGIC HERE 🔥
+                            try {
+                                // Check if receipt already exists
+                                Receipt receipt = savedTransaction.getReceipt();
+                                if (receipt == null) {
+                                    // Create new receipt
+                                    receipt = new Receipt();
+                                    receipt.setTransactionId(savedTransaction.getTransactionId());
+                                    receipt.setIssuedDate(java.time.LocalDate.now());
+                                    receipt.setIssuerId(currentReceptionistId);
+                                    receipt.setReceiptNumber("REC" + savedTransaction.getTransactionId() + "_" + System.currentTimeMillis());
+                                    receipt.setFormat("Digital"); // Valid values: 'Digital', 'Print', 'Both'
+                                    receipt.setPdfPath(""); // Empty string instead of NULL
+
+                                    // Use the actual amount from VNPay if available
+                                    if (amountInVND != null) {
+                                        BigDecimal totalAmount = new BigDecimal(amountInVND);
+                                        receipt.setTotalAmount(totalAmount);
+                                        // Calculate tax amount (10% of total amount)
+                                        BigDecimal taxAmount = totalAmount.multiply(new BigDecimal("0.1"));
+                                        receipt.setTaxAmount(taxAmount);
+                                    } else {
+                                        // Default amount and tax if VNPay amount is not available
+                                        receipt.setTotalAmount(new BigDecimal("500000"));
+                                        receipt.setTaxAmount(new BigDecimal("50000"));
+                                    }
+
+                                    // Set discount amount (0 for online payments)
+                                    receipt.setDiscountAmount(BigDecimal.ZERO);
+                                    receipt.setNotes("Online payment via VNPay - Transaction ID: " + transactionId);
+
+                                    // Save receipt
+                                    Receipt savedReceipt = receiptRepository.save(receipt);
+
+                                    // Link receipt to transaction
+                                    savedTransaction.setReceipt(savedReceipt);
+                                    transactionRepository.save(savedTransaction);
+
+                                    logger.info("✅ Created new receipt {} for transaction {}",
+                                               savedReceipt.getReceiptId(), savedTransaction.getTransactionId());
+
+                                    // Send receipt email after successful online payment
+                                    try {
+                                        // Get patient information for the receipt email
+                                        if (transaction.getUserId() != null) {
+                                            Optional<Patient> patientOpt = patientRepository.findById(transaction.getUserId());
+                                            if (patientOpt.isPresent()) {
+                                                Patient patient = patientOpt.get();
+
+                                                // Send email if patient has valid email
+                                                if (patient.getUser() != null &&
+                                                    patient.getUser().getEmail() != null &&
+                                                    !patient.getUser().getEmail().isEmpty()) {
+
+                                                    String patientEmail = patient.getUser().getEmail();
+                                                    logger.info("✉️ Sending online payment receipt email to patient: {}", patientEmail);
+                                                    emailService.sendReceiptEmail(patientEmail, savedReceipt, patient, savedTransaction);
+                                                    logger.info("✅ Online payment receipt email sent successfully to: {}", patientEmail);
+                                                } else {
+                                                    logger.warn("⚠️ Cannot send online payment receipt email: Patient has no email address");
+                                                }
+                                            } else {
+                                                logger.warn("⚠️ Cannot send online payment receipt email: Patient not found with ID: {}", transaction.getUserId());
+                                            }
+                                        } else {
+                                            logger.warn("⚠️ Cannot send online payment receipt email: Transaction has no UserID");
+                                        }
+                                    } catch (Exception emailEx) {
+                                        logger.error("❌ Failed to send online payment receipt email: {}", emailEx.getMessage(), emailEx);
+                                        // Continue processing - don't fail the payment processing if email fails
+                                    }
+                                } else {
+                                    // Update existing receipt
+                                    if (amountInVND != null) {
+                                        receipt.setTotalAmount(new BigDecimal(amountInVND));
+                                        // Recalculate tax
+                                        receipt.setTaxAmount(receipt.getTotalAmount().multiply(new BigDecimal("0.1")));
+                                    }
+                                    receipt.setIssuedDate(java.time.LocalDate.now());
+                                    receipt.setIssuerId(currentReceptionistId);
+                                    receipt.setNotes("Online payment via VNPay - Transaction ID: " + transactionId);
+
+                                    Receipt savedReceipt = receiptRepository.save(receipt);
+                                    logger.info("✅ Updated existing receipt {} for transaction {}",
+                                               savedReceipt.getReceiptId(), savedTransaction.getTransactionId());
+
+                                    // Send receipt email for updated receipt
+                                    try {
+                                        // Get patient information for the receipt email
+                                        if (transaction.getUserId() != null) {
+                                            Optional<Patient> patientOpt = patientRepository.findById(transaction.getUserId());
+                                            if (patientOpt.isPresent()) {
+                                                Patient patient = patientOpt.get();
+
+                                                // Send email if patient has valid email
+                                                if (patient.getUser() != null &&
+                                                    patient.getUser().getEmail() != null &&
+                                                    !patient.getUser().getEmail().isEmpty()) {
+
+                                                    String patientEmail = patient.getUser().getEmail();
+                                                    logger.info("✉️ Sending updated online payment receipt email to patient: {}", patientEmail);
+                                                    emailService.sendReceiptEmail(patientEmail, savedReceipt, patient, savedTransaction);
+                                                    logger.info("✅ Updated online payment receipt email sent successfully to: {}", patientEmail);
+                                                }
+                                            }
+                                        }
+                                    } catch (Exception emailEx) {
+                                        logger.error("❌ Failed to send updated online payment receipt email: {}", emailEx.getMessage(), emailEx);
+                                        // Continue processing - don't fail the payment processing if email fails
+                                    }
+                                }
+                            } catch (Exception receiptError) {
+                                logger.error("❌ Error creating/updating receipt for transaction {}: {}",
+                                           savedTransaction.getTransactionId(), receiptError.getMessage(), receiptError);
+                                // Continue processing - don't fail the entire payment return
+                            }
+
+                            // Now try to update corresponding appointment status (SEPARATE from transaction update)
+                            boolean appointmentUpdated = false;
+                            logger.info("🔄 Starting appointment status update for transaction: {}", transactionId);
+
+                            if (savedTransaction.getAppointmentId() != null && savedTransaction.getUserId() != null) {
+                                logger.info("📋 Found AppointmentID: {} and UserID: {} in transaction",
+                                          savedTransaction.getAppointmentId(), savedTransaction.getUserId());
+
+                                try {
+                                    Optional<Appointment> appointmentOpt = appointmentRepository.findById(savedTransaction.getAppointmentId());
+                                    if (appointmentOpt.isPresent()) {
+                                        Appointment appointment = appointmentOpt.get();
+                                        logger.info("📅 Found appointment: ID={}, PatientID={}, CurrentStatus={}",
+                                                  appointment.getAppointmentId(), appointment.getPatientId(), appointment.getStatus());
+
+                                        // 🔥 ENHANCED SECURITY CHECK: Verify AppointmentID matches and find correct Patient-User relationship
+                                        if (appointment.getAppointmentId().equals(savedTransaction.getAppointmentId())) {
+
+                                            // Get Patient from appointment and check if User matches transaction UserID
+                                            Patient appointmentPatient = appointment.getPatient();
+                                            if (appointmentPatient != null && appointmentPatient.getUser() != null) {
+                                                Integer appointmentUserId = appointmentPatient.getUser().getUserId();
+                                                logger.info("🔍 Appointment Patient UserID: {}, Transaction UserID: {}",
+                                                          appointmentUserId, savedTransaction.getUserId());
+
+                                                if (appointmentUserId.equals(savedTransaction.getUserId())) {
+                                                    String oldAppointmentStatus = appointment.getStatus();
+
+                                                    // Only update if not already Completed
+                                                    if (!"Completed".equals(oldAppointmentStatus)) {
+                                                        appointment.setStatus("Completed");
+                                                        Appointment savedAppointment = appointmentRepository.save(appointment);
+                                                        appointmentUpdated = true;
+
+                                                        logger.info("✅ APPOINTMENT STATUS UPDATED SUCCESSFULLY!");
+                                                        logger.info("   - AppointmentID: {}", savedAppointment.getAppointmentId());
+                                                        logger.info("   - PatientID: {}", savedAppointment.getPatientId());
+                                                        logger.info("   - Patient UserID: {}", appointmentUserId);
+                                                        logger.info("   - Status changed: '{}' → 'Completed'", oldAppointmentStatus);
+                                                        logger.info("   - Transaction: {}", transactionId);
+
+                                                        // 🔥 SEND APPOINTMENT COMPLETION EMAIL 🔥
+                                                        try {
+                                                            if (appointmentPatient.getUser().getEmail() != null &&
+                                                                !appointmentPatient.getUser().getEmail().isEmpty()) {
+
+                                                                String patientEmail = appointmentPatient.getUser().getEmail();
+                                                                logger.info("📧 Sending appointment completion email to: {}", patientEmail);
+
+                                                                // You can create a specific method for appointment completion email
+                                                                // For now, we'll log that the email should be sent
+                                                                logger.info("✅ Appointment completion notification should be sent to: {}", patientEmail);
+                                                            }
+                                                        } catch (Exception emailEx) {
+                                                            logger.error("❌ Failed to send appointment completion email: {}", emailEx.getMessage());
+                                                        }
+
+                                                    } else {
+                                                        appointmentUpdated = true; // Already completed
+                                                        logger.info("ℹ️ Appointment {} already has 'Completed' status", appointment.getAppointmentId());
+                                                    }
+                                                } else {
+                                                    logger.error("❌ USER ID MISMATCH:");
+                                                    logger.error("   - Appointment Patient UserID: {}", appointmentUserId);
+                                                    logger.error("   - Transaction UserID: {}", savedTransaction.getUserId());
+                                                }
+                                            } else {
+                                                logger.error("❌ Appointment Patient or Patient User is NULL:");
+                                                logger.error("   - Patient: {}", appointmentPatient != null ? "EXISTS" : "NULL");
+                                                if (appointmentPatient != null) {
+                                                    logger.error("   - Patient User: {}", appointmentPatient.getUser() != null ? "EXISTS" : "NULL");
+                                                }
+                                            }
+                                        } else {
+                                            logger.error("❌ APPOINTMENT ID MISMATCH:");
+                                            logger.error("   - Found Appointment ID: {}", appointment.getAppointmentId());
+                                            logger.error("   - Expected Appointment ID: {}", savedTransaction.getAppointmentId());
+                                        }
+                                    } else {
+                                        logger.error("❌ Appointment with ID {} not found in database", savedTransaction.getAppointmentId());
+                                    }
+                                } catch (Exception appointmentError) {
+                                    logger.error("❌ Error updating appointment status for transaction {}: {}",
+                                               transactionId, appointmentError.getMessage(), appointmentError);
+                                }
+                            } else {
+                                logger.error("❌ Cannot update appointment: Transaction {} missing required data:", transactionId);
+                                logger.error("   - AppointmentID: {}", savedTransaction.getAppointmentId());
+                                logger.error("   - UserID: {}", savedTransaction.getUserId());
+                            }
+
+                            // Log final appointment update result
+                            if (appointmentUpdated) {
+                                logger.info("🎉 APPOINTMENT UPDATE COMPLETED SUCCESSFULLY for transaction: {}", transactionId);
+                            } else {
+                                logger.warn("⚠️ APPOINTMENT UPDATE FAILED for transaction: {}", transactionId);
+                            }
+                        }
+                    } else {
+                        logger.error("❌ Transaction not found for ID: {}", transactionId);
+                        model.addAttribute("errorMessage", "Transaction not found with ID: " + transactionId);
+                    }
+                } catch (NumberFormatException e) {
+                    logger.error("❌ Invalid transaction ID format: {}", transactionId, e);
+                    model.addAttribute("errorMessage", "Invalid transaction ID format");
+                }
+            } else {
+                logger.error("❌ Transaction ID is missing from VNPay response");
+                model.addAttribute("errorMessage", "Transaction ID is missing from payment response");
+            }
+
+            logger.info("=== PAYMENT RETURN PROCESSING COMPLETED ===");
+            return "Receptionists/payment-return";
+        } catch (Exception e) {
+            logger.error("💥 ERROR handling payment return in ReceptionistController", e);
+            model.addAttribute("errorMessage", "An error occurred while processing the payment return: " + e.getMessage());
+            return "error";
+        }
+    }
+
+    private String mapPaymentMethodToDbValue(String paymentMethod) {
+        switch (paymentMethod.toLowerCase()) {
+            case "vnpay":
+            case "momo":
+            case "zalopay":
+                return "Banking"; // Tất cả payment method online đều là Banking
+            case "cash":
+                return "Cash"; // Chỉ Cash mới là Cash
+            default:
+                return "Banking"; // Default to Banking thay vì Cash
+        }
+    }
+
+    private String generatePaymentReceiptPdf(Transaction transaction, Double amountVND, Double amountReceived, String processedByName, String customerName, String paymentMethod) throws Exception {
+        // Prepare PDF document
+        Document document = new Document();
+        String pdfFilePath = null;
+
+        try {
+            // Define file name and path
+            String fileName = "Receipt_" + transaction.getTransactionId() + ".pdf";
+            String filePath = System.getProperty("user.dir") + "/uploads/receipts/" + fileName;
+
+            // Create uploads directory if it doesn't exist
+            File uploadDir = new File(System.getProperty("user.dir") + "/uploads/receipts/");
+            if (!uploadDir.exists()) {
+                uploadDir.mkdirs();
+            }
+
+            // Create PDF writer
+            PdfWriter.getInstance(document, new FileOutputStream(filePath));
+
+            // Open document
+            document.open();
+
+            // Add content to PDF
+            document.add(new Paragraph("Payment Receipt", FontFactory.getFont(FontFactory.HELVETICA_BOLD, 16)));
+            document.add(new Paragraph("Transaction ID: " + transaction.getTransactionId()));
+            document.add(new Paragraph("Appointment ID: " + transaction.getAppointmentId()));
+            document.add(new Paragraph("Patient ID: " + transaction.getUserId()));
+            document.add(new Paragraph("Amount (VND): " + amountVND));
+            document.add(new Paragraph("Amount Received: " + amountReceived));
+            document.add(new Paragraph("Payment Method: " + transaction.getMethod()));
+            document.add(new Paragraph("Status: " + transaction.getStatus()));
+            document.add(new Paragraph("Processed By: " + processedByName));
+            document.add(new Paragraph("Customer Name: " + customerName));
+            document.add(new Paragraph("Date: " + LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss"))));
+
+            // Close document
+            document.close();
+
+            pdfFilePath = filePath;
+        } catch (Exception e) {
+            logger.error("Error generating PDF receipt: ", e);
+            throw e;
+        }
+
+        return pdfFilePath;
+    }
+
+    // API endpoint to get doctor patient count from Schedule table
+    @GetMapping("/api/doctors/{doctorId}/patient-count")
+    @ResponseBody
+    public ResponseEntity<Map<String, Object>> getDoctorPatientCount(@PathVariable Integer doctorId) {
+        try {
+            // Get patient count from Schedule table by DoctorID
+            Integer patientCount = receptionistService.getDoctorPatientCountFromSchedule(doctorId);
+
+            Map<String, Object> response = new HashMap<>();
+            response.put("count", patientCount != null ? patientCount : 0);
+            response.put("doctorId", doctorId);
+
+            return ResponseEntity.ok(response);
+        } catch (Exception e) {
+            logger.error("Error fetching patient count for doctor {}: {}", doctorId, e.getMessage());
+            Map<String, Object> errorResponse = new HashMap<>();
+            errorResponse.put("count", 0);
+            errorResponse.put("doctorId", doctorId);
+            errorResponse.put("error", "Failed to fetch patient count");
+            return ResponseEntity.ok(errorResponse);
+        }
+    }
+
+    /**
+     * API endpoint to check if email already exists in database
+     */
+    @GetMapping("/api/check-email")
+    @ResponseBody
+    public ResponseEntity<Map<String, Object>> checkEmailExists(@RequestParam String email) {
+        Map<String, Object> response = new HashMap<>();
+
+        try {
+            // Validate email format first
+            if (email == null || email.trim().isEmpty()) {
+                response.put("exists", false);
+                response.put("message", "Email is required");
+                response.put("valid", false);
+                return ResponseEntity.ok(response);
+            }
+
+            if (!email.matches("^[\\w-\\.]+@([\\w-]+\\.)+[\\w-]{2,4}$")) {
+                response.put("exists", false);
+                response.put("message", "Invalid email format");
+                response.put("valid", false);
+                return ResponseEntity.ok(response);
+            }
+
+            // Check if email exists in database
+            Optional<Users> existingUser = userRepository.findByEmail(email.trim().toLowerCase());
+
+            if (existingUser.isPresent()) {
+                response.put("exists", true);
+                response.put("message", "This email address is already registered");
+                response.put("valid", false);
+            } else {
+                response.put("exists", false);
+                response.put("message", "Email is available");
+                response.put("valid", true);
+            }
+
+            return ResponseEntity.ok(response);
+
+        } catch (Exception e) {
+            logger.error("Error checking email existence: {}", e.getMessage());
+            response.put("exists", false);
+            response.put("message", "Error checking email availability");
+            response.put("valid", false);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
+        }
+    }
+
+    /**
+     * API endpoint to check if phone number already exists in database
+     */
+    @GetMapping("/api/check-phone")
+    @ResponseBody
+    public ResponseEntity<Map<String, Object>> checkPhoneExists(@RequestParam String phoneNumber) {
+        Map<String, Object> response = new HashMap<>();
+
+        try {
+            // Validate phone format first
+            if (phoneNumber == null || phoneNumber.trim().isEmpty()) {
+                response.put("exists", false);
+                response.put("message", "Phone number is required");
+                response.put("valid", false);
+                return ResponseEntity.ok(response);
+            }
+
+            if (!phoneNumber.matches("^(0[3|5|7|8|9])+([0-9]{8})$")) {
+                response.put("exists", false);
+                response.put("message", "Invalid phone number format (must be 10 digits starting with 03, 05, 07, 08, 09)");
+                response.put("valid", false);
+                return ResponseEntity.ok(response);
+            }
+
+            // Check if phone number exists in database
+            Optional<Users> existingUser = userRepository.findByPhoneNumber(phoneNumber.trim());
+
+            if (existingUser.isPresent()) {
+                response.put("exists", true);
+                response.put("message", "This phone number is already registered");
+                response.put("valid", false);
+            } else {
+                response.put("exists", false);
+                response.put("message", "Phone number is available");
+                response.put("valid", true);
+            }
+
+            return ResponseEntity.ok(response);
+
+        } catch (Exception e) {
+            logger.error("Error checking phone existence: {}", e.getMessage());
+            response.put("exists", false);
+            response.put("message", "Error checking phone availability");
+            response.put("valid", false);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
+        }
+    }
+
+    /**
+     * API endpoint to auto cancel appointments that are past due
+     * Only processes appointments with status "Pending" and past current time
+     */
+    @PostMapping("/api/appointments/auto-cancel")
+    @ResponseBody
+    public ResponseEntity<Map<String, Object>> autoCancelAppointments(Authentication authentication) {
+        try {
+            if (authentication == null || !authentication.isAuthenticated()) {
+                return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(Map.of(
+                    "success", false,
+                    "message", "Authentication required"
+                ));
+            }
+
+            // Call the service method to auto cancel appointments
+            int cancelledCount = appointmentService.autoCancelAppointments();
+
+            Map<String, Object> response = new HashMap<>();
+            response.put("success", true);
+            response.put("cancelledCount", cancelledCount);
+            response.put("message", String.format("Auto cancelled %d appointments", cancelledCount));
+            response.put("timestamp", LocalDateTime.now().toString());
+
+            logger.info("Auto cancel completed - {} appointments cancelled", cancelledCount);
+            return ResponseEntity.ok(response);
+
+        } catch (Exception e) {
+            logger.error("Error in auto cancel appointments API: {}", e.getMessage(), e);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(Map.of(
+                "success", false,
+                "message", "Error auto cancelling appointments: " + e.getMessage(),
+                "cancelledCount", 0
+            ));
+        }
+    }
+
+    /**
+     * API endpoint to get current user profile data
+     */
+    @GetMapping("/getProfile")
+    @ResponseBody
+    public ResponseEntity<Map<String, Object>> getCurrentProfile(Authentication authentication) {
+        Map<String, Object> response = new HashMap<>();
+
+        try {
+            // Check authentication
+            if (authentication == null || !authentication.isAuthenticated()) {
+                response.put("success", false);
+                response.put("message", "User not authenticated");
+                return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(response);
+            }
+
+            // Get current user
+            CustomUserDetails userDetails = (CustomUserDetails) authentication.getPrincipal();
+            Integer userId = userDetails.getUserId();
+
+            Users user = userRepository.findById(userId)
+                    .orElseThrow(() -> new RuntimeException("User not found"));
+
+            // Verify user is receptionist
+            if (!user.getRole().getRoleName().equals("RECEPTIONIST")) {
+                response.put("success", false);
+                response.put("message", "Access denied");
+                return ResponseEntity.status(HttpStatus.FORBIDDEN).body(response);
+            }
+
+            // Build profile response
+            Map<String, Object> profile = new HashMap<>();
+            profile.put("fullName", user.getFullName());
+            profile.put("email", user.getEmail());
+            profile.put("phone", user.getPhoneNumber());
+            profile.put("role", "Receptionist");
+
+            // Check for avatar - first try Users.avatarUrl, then Receptionist.imageUrl
+            String avatarUrl = user.getAvatarUrl();
+            if (avatarUrl == null || avatarUrl.isEmpty()) {
+                // Try to get from Receptionist table
+                Receptionist receptionist = receptionistService.findByUserId(userId);
+                if (receptionist != null && receptionist.getImageUrl() != null) {
+                    avatarUrl = receptionist.getImageUrl();
+                }
+            }
+            profile.put("avatar", avatarUrl);
+
+            return ResponseEntity.ok(profile);
+
+        } catch (Exception e) {
+            logger.error("Error getting current profile: ", e);
+            response.put("success", false);
+            response.put("message", "Error loading profile: " + e.getMessage());
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
+        }
+    }
+
+    /**
+     * API endpoint to save profile data
+     */
+    @PostMapping("/saveProfile")
+    @ResponseBody
+    public ResponseEntity<Map<String, Object>> saveProfile(
+            @RequestParam("fullName") String fullName,
+            @RequestParam("email") String email,
+            @RequestParam("phone") String phone,
+            @RequestParam(value = "avatarFile", required = false) MultipartFile avatarFile,
+            Authentication authentication) {
+
+        // Redirect to the existing profile update endpoint
+        return updateProfile(fullName, email, phone, avatarFile, authentication);
     }
 }

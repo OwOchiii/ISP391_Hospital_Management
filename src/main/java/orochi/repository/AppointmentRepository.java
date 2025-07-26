@@ -368,4 +368,21 @@ public interface AppointmentRepository extends JpaRepository<Appointment, Intege
         ORDER BY a.dateTime DESC
         """)
     List<Appointment> findByPatientPatientIdOrderByDateTimeDesc(@Param("patientId") Integer patientId);
+
+
+    // =====================================================================
+    // Auto Cancel Appointment Methods
+    // =====================================================================
+
+    /**
+     * Tìm tất cả appointments có status "Pending" và đã quá thời gian hiện tại
+     */
+    @Query("""
+      SELECT a
+        FROM Appointment a
+       WHERE a.status = 'Pending'
+         AND a.dateTime < :currentDateTime
+       ORDER BY a.dateTime ASC
+    """)
+    List<Appointment> findPendingAppointmentsPastDue(@Param("currentDateTime") LocalDateTime currentDateTime);
 }

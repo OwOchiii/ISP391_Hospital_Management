@@ -33,6 +33,7 @@
             overflow-x: hidden;
         }
 
+        /* Sidebar Styles */
         .sidebar {
             position: fixed;
             top: 0;
@@ -55,6 +56,7 @@
             padding: 1.5rem;
             border-bottom: 1px solid rgba(255, 255, 255, 0.1);
             background: rgba(255, 255, 255, 0.05);
+            text-align: left;
         }
 
         .logo a {
@@ -78,6 +80,7 @@
             font-size: 1.25rem;
             font-weight: 600;
             margin: 0;
+            line-height: 1.2;
         }
 
         .logo small {
@@ -91,9 +94,14 @@
             font-size: 0.75rem;
             font-weight: 600;
             text-transform: uppercase;
+            letter-spacing: 0.05em;
             color: rgba(255, 255, 255, 0.6);
             padding: 0 1.5rem;
             margin: 1.5rem 0 0.75rem;
+        }
+
+        .nav-item {
+            margin: 0.25rem 1rem;
         }
 
         .nav-link {
@@ -107,6 +115,10 @@
             font-weight: 500;
             transition: all 0.3s ease;
             position: relative;
+            border: none;
+            background: none;
+            width: 100%;
+            text-align: left;
         }
 
         .nav-link:hover {
@@ -118,6 +130,7 @@
         .nav-link.active {
             background: rgba(255, 255, 255, 0.15);
             color: white;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
         }
 
         .nav-link.active::before {
@@ -135,6 +148,16 @@
         .nav-link i {
             font-size: 1.125rem;
             width: 20px;
+        }
+
+        .logout-btn {
+            cursor: pointer;
+        }
+
+        .logout-btn:hover {
+            background: rgba(255, 255, 255, 0.1);
+            color: white;
+            transform: translateX(4px);
         }
 
         .main-content {
