@@ -715,7 +715,7 @@ public class ReceptionistController {
                 return "redirect:/receptionist/payments";
             }
 
-            // Lấy thông tin bệnh nhân và cuộc hẹn giống như pay_invoice
+            // Lấy thông tin bệnh nhân v�� cuộc hẹn giống như pay_invoice
             Map<String, Object> invoiceData = receptionistService.getInvoiceDataByPatientId(patientId);
 
             if (invoiceData == null) {
@@ -2667,7 +2667,7 @@ public class ReceptionistController {
                                         logger.error("❌ Appointment with ID {} not found in database", savedTransaction.getAppointmentId());
                                     }
                                 } catch (Exception appointmentError) {
-                                    logger.error("❌ Error updating appointment status for transaction {}: {}",
+                                    logger.error("��� Error updating appointment status for transaction {}: {}",
                                                transactionId, appointmentError.getMessage(), appointmentError);
                                 }
                             } else {
@@ -3055,5 +3055,42 @@ public class ReceptionistController {
 
         // Redirect to the existing profile update endpoint
         return updateProfile(fullName, email, phone, avatarFile, authentication);
+    }
+
+    /**
+     * API endpoint to get invoice data by patient ID for amount calculation
+     * This returns invoice data including services with prices from Service table
+     */
+    @GetMapping("/api/invoice/{patientId}")
+    @ResponseBody
+    public ResponseEntity<Map<String, Object>> getInvoiceDataByPatientIdApi(@PathVariable Integer patientId, Authentication authentication) {
+        try {
+            // Ensure authentication is not null
+            if (authentication == null || !authentication.isAuthenticated()) {
+                return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(Map.of("error", "Authentication required"));
+            }
+
+            logger.info("=== API CALL: Getting invoice data for patient ID: {} ===", patientId);
+
+            // Get invoice data from service - this includes services with prices from Service table
+            Map<String, Object> invoiceData = receptionistService.getInvoiceDataByPatientId(patientId);
+
+            if (invoiceData == null) {
+                logger.error("Invoice data not found for patient ID: {}", patientId);
+                return ResponseEntity.notFound().build();
+            }
+
+            logger.info("Successfully retrieved invoice data for patient {}", patientId);
+            logger.info("Services count: {}",
+                       invoiceData.get("servicesUsed") != null ?
+                       ((List<?>) invoiceData.get("servicesUsed")).size() : 0);
+
+            return ResponseEntity.ok(invoiceData);
+
+        } catch (Exception e) {
+            logger.error("Error fetching invoice data for patient {}: {}", patientId, e.getMessage(), e);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(Map.of("error", "Error fetching invoice data: " + e.getMessage()));
+        }
     }
 }
