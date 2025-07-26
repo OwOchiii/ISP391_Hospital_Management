@@ -2100,6 +2100,9 @@ public class ReceptionistService {
                         invoiceData.put("timeOfPayment", latestTransaction.getTimeOfPayment() != null ?
                                latestTransaction.getTimeOfPayment().toString() : "");
 
+                        // 🔥 THÊM refundReason vào invoiceData để template có thể truy cập
+                        invoiceData.put("refundReason", latestTransaction.getRefundReason());
+
                         // Parse payment details from refundReason field - UPDATED FOR VND CURRENCY
                         String refundReason = latestTransaction.getRefundReason();
                         logger.info("=== Parsing refundReason ===");
@@ -2664,6 +2667,7 @@ public class ReceptionistService {
             logger.info("=== GETTING DOCTOR PATIENT COUNT FROM SCHEDULE ===");
             logger.info("DoctorID: {}", doctorId);
 
+            // Validate input parameters
             if (doctorId == null) {
                 logger.warn("DoctorID is null, returning 0");
                 return 0;
@@ -2819,7 +2823,7 @@ public class ReceptionistService {
         provinceMap.put("vinh long", "Vĩnh Long");
         provinceMap.put("vinhlong", "Vĩnh Long");
         provinceMap.put("dong thap", "Đồng Tháp");
-        provinceMap.put("dongthap", "Đồng Th��p");
+        provinceMap.put("dongthap", "Đồng Tháp");
         provinceMap.put("an giang", "An Giang");
         provinceMap.put("angiang", "An Giang");
         provinceMap.put("kien giang", "Kiên Giang");
@@ -2867,7 +2871,7 @@ public class ReceptionistService {
         provinceMap.put("thai nguyen", "Thái Nguyên");
         provinceMap.put("thainguyen", "Thái Nguyên");
         provinceMap.put("phu tho", "Phú Thọ");
-        provinceMap.put("phutho", "Phú Th���");
+        provinceMap.put("phutho", "Phú Thọ");
         provinceMap.put("vinh phuc", "Vĩnh Phúc");
         provinceMap.put("vinhphuc", "Vĩnh Phúc");
 
