@@ -1,5 +1,6 @@
 package orochi.controller;
 
+import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 import orochi.model.Specialization;
 import orochi.service.impl.SpecializationServiceImpl;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -87,6 +88,7 @@ public class AdminSpecializationController {
             @RequestParam(value="symptomFilter", required=false) String symptomFilter,
             @Valid @ModelAttribute Specialization specialization,
             BindingResult result,
+            RedirectAttributes ra,
             Model model) {
 
         if (result.hasErrors()) {
@@ -94,42 +96,41 @@ public class AdminSpecializationController {
             Page<Specialization> specPage =
                     specializationService.getSpecializationsPage(page, size, search, symptomFilter);
             model.addAttribute("specializations", specPage.getContent());
-            model.addAttribute("currentPage", page);
-            model.addAttribute("totalPages", specPage.getTotalPages());
-            model.addAttribute("pageSize", size);
-            model.addAttribute("adminId", adminId);
-            model.addAttribute("search", search);
-            model.addAttribute("symptomFilter", symptomFilter);
-            model.addAttribute("symptomList", specializationService.getAllDistinctSymptoms());
-            model.addAttribute("isAddMode", specialization.getSpecId() == null);
+            model.addAttribute("currentPage",     page);
+            model.addAttribute("totalPages",      specPage.getTotalPages());
+            model.addAttribute("pageSize",        size);
+            model.addAttribute("adminId",         adminId);
+            model.addAttribute("search",          search);
+            model.addAttribute("symptomFilter",   symptomFilter);
+            model.addAttribute("symptomList",     specializationService.getAllDistinctSymptoms());
+            model.addAttribute("isAddMode",       specialization.getSpecId() == null);
             return "admin/specialization/list";
         }
 
+        boolean isNew = (specialization.getSpecId() == null);
         try {
             specializationService.saveSpecialization(specialization);
         } catch (Exception e) {
             logger.error("Error saving specialization: {}", e.getMessage());
-            model.addAttribute("errorMessage", "Cannot save specialization: " + e.getMessage());
-            Page<Specialization> specPage =
-                    specializationService.getSpecializationsPage(page, size, search, symptomFilter);
-            model.addAttribute("specializations", specPage.getContent());
-            model.addAttribute("currentPage", page);
-            model.addAttribute("totalPages", specPage.getTotalPages());
-            model.addAttribute("pageSize", size);
-            model.addAttribute("adminId", adminId);
-            model.addAttribute("search", search);
-            model.addAttribute("symptomFilter", symptomFilter);
-            model.addAttribute("symptomList", specializationService.getAllDistinctSymptoms());
-            model.addAttribute("isAddMode", specialization.getSpecId() == null);
-            return "admin/specialization/list";
+            ra.addFlashAttribute("errorMessage", "Cannot save specialty: " + e.getMessage());
+            return "redirect:/admin/specializations"
+                    + "?adminId="      + adminId
+                    + "&page="         + page
+                    + "&size="         + size
+                    + (search        != null ? "&search="       + search       : "")
+                    + (symptomFilter != null ? "&symptomFilter="+ symptomFilter: "");
         }
 
+        ra.addFlashAttribute("successMessage",
+                isNew
+                        ? "New specialty added successfully!"
+                        : "Specialty updated successfully!");
         return "redirect:/admin/specializations"
-                + "?adminId=" + adminId
-                + "&page=" + page
-                + "&size=" + size
-                + (search != null ? "&search=" + search : "")
-                + (symptomFilter != null ? "&symptomFilter=" + symptomFilter : "");
+                + "?adminId="      + adminId
+                + "&page="         + page
+                + "&size="         + size
+                + (search        != null ? "&search="       + search       : "")
+                + (symptomFilter != null ? "&symptomFilter="+ symptomFilter: "");
     }
 
     @GetMapping("/edit/{specId}")
@@ -158,13 +159,18 @@ public class AdminSpecializationController {
     @GetMapping("/delete/{specId}")
     public String deleteSpecialization(
             @PathVariable("specId") Integer specId,
-            @RequestParam("adminId") Integer adminId) {
+            @RequestParam("adminId") Integer adminId,
+            RedirectAttributes ra) {
+
         try {
             specializationService.deleteSpecialization(specId);
-            logger.info("Successfully deleted specialization: {}", specId); // ADDED: Log success
+            logger.info("Successfully deleted specialty: {}", specId);
+            ra.addFlashAttribute("successMessage", "Specialty deleted successfully!");
         } catch (Exception e) {
-            logger.error("Error deleting specialization: {}", e.getMessage()); // ADDED: Log error
+            logger.error("Error deleting specialty: {}", e.getMessage());
+            ra.addFlashAttribute("errorMessage", "Cannot delete specialty: " + e.getMessage());
         }
+
         return "redirect:/admin/specializations?adminId=" + adminId;
     }
 

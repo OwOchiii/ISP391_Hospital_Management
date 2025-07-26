@@ -2,6 +2,7 @@
 package orochi.controller;
 
 import jakarta.validation.Valid;
+import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 import orochi.model.MedicalService;
 import orochi.service.impl.ServiceServiceImpl;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -83,39 +84,60 @@ public class AdminServiceController {
 
             @Valid @ModelAttribute("service") MedicalService service,
             BindingResult result,
+            RedirectAttributes ra,
             Model model
     ) {
+        // Nếu có lỗi validation, trả lại view để hiển thị form + lỗi
         if (result.hasErrors()) {
-            // rebuild page & model để show lại danh sách + form lỗi
             Page<MedicalService> servicePage =
                     serviceService.getServicesPage(page, size, search, specFilter);
 
-            model.addAttribute("services",      servicePage.getContent());
-            model.addAttribute("currentPage",   servicePage.getNumber());
-            model.addAttribute("totalPages",    servicePage.getTotalPages());
-            model.addAttribute("pageSize",      servicePage.getSize());
-            model.addAttribute("search",        search);
-            model.addAttribute("specFilter",    specFilter);
+            model.addAttribute("services",        servicePage.getContent());
+            model.addAttribute("currentPage",     servicePage.getNumber());
+            model.addAttribute("totalPages",      servicePage.getTotalPages());
+            model.addAttribute("pageSize",        servicePage.getSize());
+            model.addAttribute("search",          search);
+            model.addAttribute("specFilter",      specFilter);
             model.addAttribute("specializations", serviceService.getAllSpecializations());
-            model.addAttribute("adminId",       adminId);
-            model.addAttribute("isAddMode",     service.getServiceId() == null);
+            model.addAttribute("adminId",         adminId);
+            model.addAttribute("isAddMode",       service.getServiceId() == null);
             return "admin/service/list";
         }
 
+        // Xác định là thêm mới hay cập nhật
+        boolean isNew = (service.getServiceId() == null);
+
+        // Lưu service
         serviceService.saveService(service);
+
+        // Đẩy flash‑message
+        ra.addFlashAttribute("successMessage",
+                isNew
+                        ? "New service created successfully!"
+                        : "Service updated successfully!");
+
+        // Redirect về danh sách kèm paging và filter giữ nguyên
         return "redirect:/admin/services?adminId=" + adminId
-                + "&page="      + page
-                + "&size="      + size
-                + (search      != null ? "&search="     + search     : "")
-                + (specFilter  != null ? "&specFilter=" + specFilter : "");
+                + "&page="     + page
+                + "&size="     + size
+                + (search     != null ? "&search="     + search     : "")
+                + (specFilter != null ? "&specFilter=" + specFilter : "");
     }
 
     @GetMapping("/delete/{serviceId}")
     public String deleteService(
             @PathVariable Integer serviceId,
-            @RequestParam("adminId") Integer adminId
+            @RequestParam("adminId") Integer adminId,
+            RedirectAttributes ra
     ) {
+        // Xóa service
         serviceService.deleteService(serviceId);
+
+        // Đẩy flash‑message
+        ra.addFlashAttribute("successMessage", "Service deleted successfully!");
+
+        // Redirect về danh sách
         return "redirect:/admin/services?adminId=" + adminId;
     }
+
 }

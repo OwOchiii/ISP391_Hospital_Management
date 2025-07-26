@@ -3,6 +3,7 @@ package orochi.controller;
 
 import jakarta.validation.Valid;
 import org.springframework.validation.BindingResult;
+import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 import orochi.model.Room;
 import orochi.model.Department;
 import orochi.service.RoomService;
@@ -99,17 +100,36 @@ public class AdminRoomController {
     @PostMapping("/{id}/toggleStatus")
     public String toggleRoomStatus(
             @PathVariable("id") Integer roomId,
-            @RequestParam("adminId") Integer adminId) {
+            @RequestParam("adminId") Integer adminId,
+            RedirectAttributes redirectAttrs) {
 
         Optional<Room> roomOpt = roomService.findById(roomId);
         if (roomOpt.isPresent()) {
             Room r = roomOpt.get();
-            String newStatus = r.getStatus().equalsIgnoreCase("Available") ? "Occupied" : "Available";
+            String oldStatus = r.getStatus();
+            String newStatus = oldStatus.equalsIgnoreCase("Available")
+                    ? "Occupied"
+                    : "Available";
             r.setStatus(newStatus);
             roomService.save(r);
+
+            // flash message
+            redirectAttrs.addFlashAttribute(
+                    "successMessage",
+                    String.format("Room “%s” is now %s.", r.getRoomNumber(), newStatus)
+            );
+        } else {
+            redirectAttrs.addFlashAttribute(
+                    "errorMessage",
+                    "Room not found — trạng thái không đổi được."
+            );
         }
+
         return "redirect:/admin/rooms?adminId=" + adminId;
     }
+
+
+    // src/main/java/orochi/controller/AdminRoomController.java
 
     @PostMapping("/save")
     public String saveRoom(
@@ -117,6 +137,7 @@ public class AdminRoomController {
             @Valid @ModelAttribute("room") Room room,
             BindingResult result,
             Model model,
+            RedirectAttributes redirectAttrs,
             @RequestParam(value = "search",       required = false) String  search,
             @RequestParam(value = "statusFilter", required = false) String  statusFilter,
             @RequestParam(value = "typeFilter",   required = false) String  typeFilter,
@@ -149,6 +170,8 @@ public class AdminRoomController {
                     .distinct()
                     .toList());
             model.addAttribute("showRoomModal",       true);
+            // đặt errorMessage để hiển thị alert
+            model.addAttribute("errorMessage", "Failed to save room. Please fix the errors below.");
             // giữ lại filter + paging
             model.addAttribute("search",       search);
             model.addAttribute("statusFilter", statusFilter);
@@ -161,10 +184,15 @@ public class AdminRoomController {
             return "admin/room/list";
         }
 
-        // 3) lưu
+        // 3) lưu thành công
         roomService.save(room);
+        // đẩy flash message
+        redirectAttrs.addFlashAttribute("successMessage",
+                room.getRoomId() == null
+                        ? "New room created successfully!"
+                        : "Room updated successfully!");
 
-        // 4) redirect về danh sách
+        // 4) redirect về danh sách kèm query params
         return "redirect:/admin/rooms?adminId=" + adminId
                 + (search       != null ? "&search="       + search      : "")
                 + (statusFilter != null ? "&statusFilter=" + statusFilter: "")
@@ -172,4 +200,5 @@ public class AdminRoomController {
                 + (deptFilter   != null ? "&deptFilter="   + deptFilter  : "")
                 + "&page=" + page + "&size=" + size;
     }
+
 }
