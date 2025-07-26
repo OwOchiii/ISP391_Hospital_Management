@@ -18,7 +18,7 @@
       --patient-light: #ecfdf5;
       --patient-dark: #064e3b;
       --text-dark: #1f2937;
-      --text-light: #6b7280;
+      --Text-light: #6b7280;
       --text-muted: #9ca3af;
       --bg-light: #f8fafc;
       --bg-white: #ffffff;
@@ -45,7 +45,7 @@
       overflow-x: hidden;
     }
 
-    /* Sidebar Styles (same as Appointment List) */
+    /* Sidebar Styles */
     .patient-sidebar {
       position: fixed;
       top: 0;
@@ -159,7 +159,7 @@
       content: '';
       position: absolute;
       left: 0;
-     CAST top: 50%;
+      top: 50%;
       transform: translateY(-50%);
       width: 4px;
       height: 24px;
@@ -335,48 +335,6 @@
       color: white;
     }
 
-    .filter-tab .count {
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      min-width: 24px;
-      height: 24px;
-      border-radius: 12px;
-      font-size: 0.75rem;
-      font-weight: 600;
-      color: white;
-      padding: 0 8px;
-      line-height: 1;
-    }
-
-    .filter-tab[data-filter="all"] .count {
-      background: #6b7280; /* Gray for All Payments */
-    }
-
-    .filter-tab[data-filter="paid"] .count {
-      background: var(--success-color); /* Green for Paid */
-    }
-
-    .filter-tab[data-filter="refunded"] .count {
-      background: var(--warning-color); /* Orange for Refunded */
-    }
-
-    .filter-tab[data-filter="pending"] .count {
-      background: var(--info-color); /* Blue for Pending */
-    }
-
-    .filter-tab[data-filter="allMethod"] .count {
-      background: #374151; /* Dark gray for All Methods */
-    }
-
-    .filter-tab[data-filter="cash"] .count {
-      background: #059669; /* Green for Cash */
-    }
-
-    .filter-tab[data-filter="banking"] .count {
-      background: #1e40af; /* Blue for Banking */
-    }
-
     .search-container {
       position: relative;
       flex: 1;
@@ -444,10 +402,6 @@
       border-left-color: var(--success-color);
     }
 
-    .transaction-card.refunded {
-      border-left-color: var(--warning-color);
-    }
-
     .transaction-card.pending {
       border-left-color: var(--info-color);
     }
@@ -497,11 +451,6 @@
     .status-paid {
       background: #d1fae5;
       color: #065f46;
-    }
-
-    .status-refunded {
-      background: #fef3c7;
-      color: #92400e;
     }
 
     .status-pending {
@@ -571,44 +520,58 @@
 
     /* Empty State */
     .empty-state {
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  min-height: 300px;
-  width: 100%;
-  background: var(--bg-white);
-  border-radius: 16px;
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
-}
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      min-height: 300px;
+      width: 100%;
+      background: var(--bg-white);
+      border-radius: 16px;
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+    }
 
-.empty-state-container {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  text-align: center;
-  gap: 16px;
-  padding: 24px;
-  max-width: 400px;
-}
+    .empty-state-container {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      text-align: center;
+      gap: 16px;
+      padding: 24px;
+      max-width: 400px;
+    }
 
-.empty-state-container i {
-  font-size: 48px;
-  color: var(--text-muted);
-}
+    .empty-state-container i {
+      font-size: 48px;
+      color: var(--text-muted);
+    }
 
-.empty-state-container h3 {
-  font-size: 24px;
-  font-weight: 600;
-  color: var(--text-dark);
-  margin: 0;
-}
+    .empty-state-container h3 {
+      font-size: 24px;
+      font-weight: 600;
+      color: var(--text-dark);
+      margin: 0;
+    }
 
-.empty-state-container p {
-  font-size: 16px;
-  color: var(--text-light);
-  margin: 0;
-  line-height: 1.5;
-}
+    .empty-state-container p {
+      font-size: 16px;
+      color: var(--text-light);
+      margin: 0;
+      line-height: 1.5;
+    }
+
+    /* Pagination */
+    .pagination {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      gap: 1rem;
+      margin-top: 2rem;
+    }
+
+    .pagination .btn {
+      padding: 0.5rem 1rem;
+      font-size: 1rem;
+    }
 
     /* Responsive Design */
     @media (max-width: 768px) {
@@ -680,7 +643,7 @@
   </style>
 </head>
 <body>
-<!-- Patient Sidebar Navigation (same as Appointment List) -->
+<!-- Patient Sidebar Navigation -->
 <div class="patient-sidebar" id="sidebar">
   <div class="sidebar-header">
     <a href="#" class="patient-brand">
@@ -803,36 +766,40 @@
 
     <!-- Controls Section -->
     <div class="controls-section">
-      <!-- Status Filter Tabs -->
+      <!-- Status Filter Tabs (Removed Refunded) -->
       <div class="filter-tabs" id="statusFilter">
-        <a href="#" class="filter-tab active" data-filter="all">All Payments<span class="count"></span></a>
-        <a href="#" class="filter-tab" data-filter="paid">Paid<span class="count"></span></a>
-        <a href="#" class="filter-tab" data-filter="refunded">Refunded<span class="count"></span></a>
-        <a href="#" class="filter-tab" data-filter="pending">Pending<span class="count"></span></a>
+        <a th:href="@{/patient/payment-history(status='all', method=${method}, search=${search}, fromDate=${fromDate}, toDate=${toDate}, page=0)}" class="filter-tab" th:classappend="${status == 'all' ? 'active' : ''}" data-filter="all">All Payments</a>
+        <a th:href="@{/patient/payment-history(status='paid', method=${method}, search=${search}, fromDate=${fromDate}, toDate=${toDate}, page=0)}" class="filter-tab" th:classappend="${status == 'paid' ? 'active' : ''}" data-filter="paid">Paid</a>
+        <a th:href="@{/patient/payment-history(status='pending', method=${method}, search=${search}, fromDate=${fromDate}, toDate=${toDate}, page=0)}" class="filter-tab" th:classappend="${status == 'pending' ? 'active' : ''}" data-filter="pending">Pending</a>
       </div>
       <!-- Method Filter Tabs -->
       <div class="filter-tabs" id="methodFilter">
-        <a href="#" class="filter-tab active" data-filter="all">All Methods<span class="count"></span></a>
-        <a href="#" class="filter-tab" data-filter="cash">Cash<span class="count"></span></a>
-        <a href="#" class="filter-tab" data-filter="banking">Banking<span class="count"></span></a>
+        <a th:href="@{/patient/payment-history(status=${status}, method='all', search=${search}, fromDate=${fromDate}, toDate=${toDate}, page=0)}" class="filter-tab" th:classappend="${method == 'all' ? 'active' : ''}" data-filter="all">All Methods</a>
+        <a th:href="@{/patient/payment-history(status=${status}, method='cash', search=${search}, fromDate=${fromDate}, toDate=${toDate}, page=0)}" class="filter-tab" th:classappend="${method == 'cash' ? 'active' : ''}" data-filter="cash">Cash</a>
+        <a th:href="@{/patient/payment-history(status=${status}, method='banking', search=${search}, fromDate=${fromDate}, toDate=${toDate}, page=0)}" class="filter-tab" th:classappend="${method == 'banking' ? 'active' : ''}" data-filter="banking">Banking</a>
       </div>
-      <!-- Search and Date Range -->
-      <div class="d-flex justify-content-between align-items-center flex-wrap gap-3">
-        <div class="search-container">
-          <i class="bi bi-search search-icon"></i>
-          <input type="text" class="search-input" placeholder="Search by Transaction ID or Appointment ID..." id="searchInput">
+      <!-- Search and Date Range Form -->
+      <form th:action="@{/patient/payment-history}" method="get">
+        <input type="hidden" name="status" th:value="${status}"/>
+        <input type="hidden" name="method" th:value="${method}"/>
+        <div class="d-flex justify-content-between align-items-center flex-wrap gap-3">
+          <div class="search-container">
+            <i class="bi bi-search search-icon"></i>
+            <input type="text" name="search" class="search-input" placeholder="Search by Transaction ID or Appointment ID..." th:value="${search}"/>
+          </div>
+          <div class="date-range-container">
+            <input type="date" name="fromDate" class="date-input" th:value="${fromDate}"/>
+            <i class="bi bi-calendar date-icon"></i>
+            <input type="date" name="toDate" class="date-input" th:value="${toDate}"/>
+            <i class="bi bi-calendar date-icon"></i>
+            <button type="submit" class="btn btn-primary">Apply Filters</button>
+          </div>
         </div>
-        <div class="date-range-container">
-          <input type="date" class="date-input" id="fromDate">
-          <i class="bi bi-calendar date-icon"></i>
-          <input type="date" class="date-input" id="toDate">
-          <i class="bi bi-calendar date-icon"></i>
-        </div>
-      </div>
+      </form>
     </div>
 
     <!-- Transactions Container -->
-    <div class="transactions-container" id="transactionsContainer">
+    <div th:if="${totalElements > 0}" class="transactions-container" id="transactionsContainer">
       <div th:each="transaction : ${transactions}" class="transaction-card" th:classappend="${transaction.status.toLowerCase()}">
         <div class="transaction-header">
           <div class="transaction-info">
@@ -840,10 +807,10 @@
             <div th:if="${transaction.appointmentId != null}" class="appointment-id">Appointment ID: <span th:text="${'APT' + transaction.appointmentId}">APT001</span></div>
           </div>
           <div class="transaction-status">
-              <span class="status-badge" th:classappend="${transaction.status == 'Paid' ? 'status-paid' : transaction.status == 'Refunded' ? 'status-refunded' : 'status-pending'}">
-                <i class="bi" th:classappend="${transaction.status == 'Paid' ? 'bi-check-circle' : transaction.status == 'Refunded' ? 'bi-arrow-counterclockwise' : 'bi-hourglass-split'}"></i>
-                <span th:text="${transaction.status ?: 'Pending'}">Pending</span>
-              </span>
+            <span class="status-badge" th:classappend="${transaction.status == 'Paid' ? 'status-paid' : 'status-pending'}">
+              <i class="bi" th:classappend="${transaction.status == 'Paid' ? 'bi-check-circle' : 'bi-hourglass-split'}"></i>
+              <span th:text="${transaction.status ?: 'Pending'}">Pending</span>
+            </span>
           </div>
         </div>
         <div class="transaction-details">
@@ -855,10 +822,6 @@
             <span class="detail-label">Time of Payment</span>
             <h6 th:text="${transaction.timeOfPayment != null ? #temporals.format(transaction.timeOfPayment, 'EEEE, MMMM d, yyyy h:mm a') : 'Date TBD'}">Monday, June 15, 2024</h6>
           </div>
-          <div class="detail-item" th:if="${transaction.refundReason != null and transaction.status == 'Refunded'}">
-            <span class="detail-label">Refund Reason</span>
-            <span class="detail-value" th:text="${transaction.refundReason}">N/A</span>
-          </div>
         </div>
         <div class="transaction-actions">
           <a th:href="@{/patient/payment-details/{id}(id=${transaction.transactionId})}" class="btn-primary-custom btn-sm">
@@ -869,8 +832,15 @@
       </div>
     </div>
 
+    <!-- Pagination -->
+    <div th:if="${totalElements > 0}" class="pagination">
+      <a th:if="${currentPage > 0}" th:href="@{/patient/payment-history(status=${status}, method=${method}, search=${search}, fromDate=${fromDate}, toDate=${toDate}, page=${currentPage - 1})}" class="btn btn-secondary">Previous</a>
+      <span th:text="'Page ' + ${currentPage + 1} + ' of ' + ${totalPages}"></span>
+      <a th:if="${currentPage < totalPages - 1}" th:href="@{/patient/payment-history(status=${status}, method=${method}, search=${search}, fromDate=${fromDate}, toDate=${toDate}, page=${currentPage + 1})}" class="btn btn-secondary">Next</a>
+    </div>
+
     <!-- Empty State -->
-    <div class="empty-state" id="emptyState">
+    <div th:if="${totalElements == 0}" class="empty-state" id="emptyState">
       <div class="empty-state-container">
         <i class="bi bi-wallet2"></i>
         <h3>No Payment Records Found</h3>
@@ -883,7 +853,6 @@
 <!-- Bootstrap JS -->
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 <script th:inline="javascript">
-  /*<![CDATA[*/
   function toggleSidebar() {
     const sidebar = document.getElementById('sidebar');
     const mainContent = document.getElementById('mainContent');
@@ -903,164 +872,8 @@
     }
   }
 
-  // Parse date string in format "Day, Month d, yyyy" to Date object
-  function parseAppointmentDate(dateStr) {
-    if (dateStr === 'Date TBD') return null;
-    try {
-      return new Date(dateStr);
-    } catch (e) {
-      console.error('Error parsing date:', dateStr, e);
-      return null;
-    }
-  }
-
-  function initializeSearchAndFilters() {
-    const searchInput = document.getElementById('searchInput');
-    const fromDateInput = document.getElementById('fromDate');
-    const toDateInput = document.getElementById('toDate');
-    const statusFilterTabs = document.querySelectorAll('#statusFilter .filter-tab');
-    const methodFilterTabs = document.querySelectorAll('#methodFilter .filter-tab');
-    const transactionsContainer = document.getElementById('transactionsContainer');
-    const emptyState = document.getElementById('emptyState');
-    let activeStatusFilter = 'all';
-    let activeMethodFilter = 'all';
-
-    // Validate "from date" is before "to date"
-    function validateDateRange() {
-      const fromDate = fromDateInput.value ? new Date(fromDateInput.value) : null;
-      const toDate = toDateInput.value ? new Date(toDateInput.value) : null;
-
-      if (fromDate && toDate && fromDate > toDate) {
-        toDateInput.setCustomValidity('To date must be after from date');
-        toDateInput.reportValidity();
-        return false;
-      } else {
-        toDateInput.setCustomValidity('');
-        return true;
-      }
-    }
-
-    // Update filter tab counts
-    function updateFilterCounts() {
-      const transactionCards = transactionsContainer.querySelectorAll('.transaction-card');
-      const counts = {
-        all: 0, paid: 0, refunded: 0, pending: 0,
-        allMethod: 0, cash: 0, banking: 0
-      };
-
-      transactionCards.forEach(card => {
-        const status = card.querySelector('.status-badge').textContent.toLowerCase().trim();
-        const method = card.querySelector('.detail-value').textContent.toLowerCase().trim();
-        counts.all++;
-        switch (status) {
-          case 'paid': counts.paid++; break;
-          case 'refunded': counts.refunded++; break;
-          case 'pending': counts.pending++; break;
-        }
-        switch (method) {
-          case 'cash': counts.cash++; break;
-          case 'banking': counts.banking++; break;
-        }
-        counts.allMethod++;
-      });
-
-      statusFilterTabs.forEach(tab => {
-        const filter = tab.getAttribute('data-filter');
-        const countSpan = tab.querySelector('.count');
-        if (countSpan) countSpan.textContent = counts[filter] || 0;
-      });
-      methodFilterTabs.forEach(tab => {
-        const filter = tab.getAttribute('data-filter');
-        const countSpan = tab.querySelector('.count');
-        if (countSpan) countSpan.textContent = counts[filter] || 0;
-      });
-    }
-
-    statusFilterTabs.forEach(tab => {
-      tab.addEventListener('click', function(e) {
-        e.preventDefault();
-        statusFilterTabs.forEach(t => t.classList.remove('active'));
-        this.classList.add('active');
-        activeStatusFilter = this.getAttribute('data-filter');
-        updateTransactions();
-      });
-    });
-
-    methodFilterTabs.forEach(tab => {
-      tab.addEventListener('click', function(e) {
-        e.preventDefault();
-        methodFilterTabs.forEach(t => t.classList.remove('active'));
-        this.classList.add('active');
-        activeMethodFilter = this.getAttribute('data-filter');
-        updateTransactions();
-      });
-    });
-
-    searchInput.addEventListener('input', updateTransactions);
-    fromDateInput.addEventListener('change', function() {
-      if (validateDateRange()) updateTransactions();
-    });
-    toDateInput.addEventListener('change', function() {
-      if (validateDateRange()) updateTransactions();
-    });
-
-    function updateTransactions() {
-      const searchTerm = searchInput.value.toLowerCase().trim();
-      const fromDate = fromDateInput.value ? new Date(fromDateInput.value) : null;
-      const toDate = toDateInput.value ? new Date(toDateInput.value) : null;
-      const transactionCards = transactionsContainer.querySelectorAll('.transaction-card');
-      let visibleCount = 0;
-
-      transactionCards.forEach(card => {
-        const transactionId = card.querySelector('.transaction-id').textContent.toLowerCase();
-        const appointmentIdElement = card.querySelector('.appointment-id');
-        const appointmentId = appointmentIdElement ? appointmentIdElement.textContent.toLowerCase() : '';
-        const matchesSearch = transactionId.includes(searchTerm) || appointmentId.includes(searchTerm);
-
-        const status = card.querySelector('.status-badge').textContent.toLowerCase().trim();
-        const matchesStatus = activeStatusFilter === 'all' || status.includes(activeStatusFilter);
-
-        const method = card.querySelector('.detail-value').textContent.toLowerCase().trim();
-        const matchesMethod = activeMethodFilter === 'all' || method === activeMethodFilter;
-
-        const dateElement = card.querySelector('.transaction-details h6');
-        const transactionDate = dateElement ? parseAppointmentDate(dateElement.textContent) : null;
-        let matchesDate = true;
-
-        if ((fromDate || toDate) && transactionDate) {
-          if (fromDate && transactionDate < fromDate) matchesDate = false;
-          if (toDate) {
-            const endOfToDate = new Date(toDate);
-            endOfToDate.setHours(23, 59, 59, 999);
-            if (transactionDate > endOfToDate) matchesDate = false;
-          }
-        } else if ((fromDate || toDate) && !transactionDate) {
-          matchesDate = false; // Hide if no valid date and filters are applied
-        }
-
-        if (matchesSearch && matchesStatus && matchesMethod && matchesDate) {
-          card.style.display = 'block';
-          visibleCount++;
-        } else {
-          card.style.display = 'none';
-        }
-      });
-
-      emptyState.style.display = visibleCount === 0 ? 'flex' : 'none';
-      transactionsContainer.style.display = visibleCount === 0 ? 'none' : 'grid';
-      updateFilterCounts();
-    }
-
-    updateTransactions();
-  }
-
-  document.addEventListener('DOMContentLoaded', function() {
-    checkScreenSize();
-    initializeSearchAndFilters();
-  });
-
+  document.addEventListener('DOMContentLoaded', checkScreenSize);
   window.addEventListener('resize', checkScreenSize);
-  /*]]>*/
 </script>
 </body>
 </html>

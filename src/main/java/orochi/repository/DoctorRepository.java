@@ -48,9 +48,29 @@ public interface DoctorRepository extends JpaRepository<Doctor, Integer> {
         """)
     List<Doctor> findBySpecialtyId(int specialtyId);
 
+    // Find doctors by specialization ID with pagination
+    @Query("SELECT DISTINCT d, u.fullName FROM Doctor d JOIN d.specializations s JOIN d.user u WHERE s.specId = :specId")
+    Page<Object[]> findBySpecializationIdWithUserName(@Param("specId") Integer specId, Pageable pageable);
+
+    // Find doctors by specialization ID and user name search with pagination
+    @Query("SELECT DISTINCT d, u.fullName FROM Doctor d JOIN d.specializations s JOIN d.user u WHERE s.specId = :specId AND LOWER(u.fullName) LIKE LOWER(CONCAT('%', :search, '%'))")
+    Page<Object[]> findBySpecializationIdAndUserFullNameContainingIgnoreCaseWithUserName(@Param("specId") Integer specId, @Param("search") String search, Pageable pageable);
+
+    // Find doctors not in a specific specialization
+    @Query("SELECT d FROM Doctor d WHERE d.doctorId NOT IN (SELECT DISTINCT ds.doctor.doctorId FROM DoctorSpecialization ds WHERE ds.specialization.specId = :specId)")
+    List<Doctor> findDoctorsNotInSpecialization(@Param("specId") Integer specId);
+
     // Search doctors with optional keyword and pagination, removing status filter
     @Query("SELECT d FROM Doctor d WHERE (:keyword IS NULL OR LOWER(d.bioDescription) LIKE LOWER(CONCAT('%', :keyword, '%')))")
     Page<Doctor> searchDoctors(@Param("keyword") String keyword, Pageable pageable);
 
-
+    @Query("SELECT d FROM Doctor d " +
+            "JOIN d.user u " +
+            "LEFT JOIN d.specializations s " +
+            "WHERE (:search IS NULL OR LOWER(u.fullName) LIKE LOWER(CONCAT('%', :search, '%'))) " +
+            "AND (:specId IS NULL OR s.specId = :specId)")
+    Page<Doctor> findDoctorsBySearchAndSpecialization(
+            @Param("search") String search,
+            @Param("specId") Integer specId,
+            Pageable pageable);
 }

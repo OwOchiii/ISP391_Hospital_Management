@@ -19,7 +19,7 @@
       --patient-accent: #10b981;
       --patient-light: #ecfdf5;
       --patient-dark: #064e3b;
-      --text-dark: #1f2937;
+DIY: var(--text-dark);
       --text-light: #6b7280;
       --text-muted: #9ca3af;
       --bg-light: #f8fafc;
@@ -389,7 +389,7 @@
       align-items: center;
       gap: 1rem;
       font-size: 0.875rem;
-      flex-wrap: wrap; /* Allow wrapping for long content */
+      flex-wrap: wrap;
     }
 
     .notification-card:hover {
@@ -428,10 +428,10 @@
     .notification-message {
       width: 35%;
       color: var(--text-dark);
-      white-space: normal; /* Allow text to wrap */
-      word-break: break-word; /* Break long words if necessary */
-      overflow: visible; /* Ensure content is not hidden */
-      flex-grow: 1; /* Allow message to take available space */
+      white-space: normal;
+      word-break: break-word;
+      overflow: visible;
+      flex-grow: 1;
     }
 
     .notification-status {
@@ -493,66 +493,66 @@
 
     /* Empty State */
     .empty-state {
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  min-height: 300px;
-  width: 100%;
-  background: var(--bg-white);
-  border-radius: 16px;
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
-}
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      min-height: 300px;
+      width: 100%;
+      background: var(--bg-white);
+      border-radius: 16px;
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+    }
 
-.empty-state-container {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  text-align: center;
-  gap: 16px;
-  padding: 24px;
-  max-width: 400px;
-}
+    .empty-state-container {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      text-align: center;
+      gap: 16px;
+      padding: 24px;
+      max-width: 400px;
+    }
 
-.empty-state-container i {
-  font-size: 48px;
-  color: var(--text-muted);
-}
+    .empty-state-container i {
+      font-size: 48px;
+      color: var(--text-muted);
+    }
 
-.empty-state-container h3 {
-  font-size: 24px;
-  font-weight: 600;
-  color: var(--text-dark);
-  margin: 0;
-}
+    .empty-state-container h3 {
+      font-size: 24px;
+      font-weight: 600;
+      color: var(--text-dark);
+      margin: 0;
+    }
 
-.empty-state-container p {
-  font-size: 16px;
-  color: var(--text-light);
-  margin: 0;
-  line-height: 1.5;
-}
+    .empty-state-container p {
+      font-size: 16px;
+      color: var(--text-light);
+      margin: 0;
+      line-height: 1.5;
+    }
 
-.empty-state-container .btn-primary-custom {
-  background: linear-gradient(135deg, var(--patient-primary), var(--patient-secondary));
-  border: none;
-  padding: 0.75rem 1.5rem;
-  border-radius: 8px;
-  color: white;
-  font-weight: 600;
-  text-decoration: none;
-  transition: all 0.3s ease;
-  display: inline-flex;
-  align-items: center;
-  gap: 0.5rem;
-  cursor: pointer;
-}
+    .empty-state-container .btn-primary-custom {
+      background: linear-gradient(135deg, var(--patient-primary), var(--patient-secondary));
+      border: none;
+      padding: 0.75rem 1.5rem;
+      border-radius: 8px;
+      color: white;
+      font-weight: 600;
+      text-decoration: none;
+      transition: all 0.3s ease;
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+      cursor: pointer;
+    }
 
-.empty-state-container .btn-primary-custom:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 6px 20px rgba(5, 150, 105, 0.3);
-  color: white;
-  text-decoration: none;
-}
+    .empty-state-container .btn-primary-custom:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 6px 20px rgba(5, 150, 105, 0.3);
+      color: white;
+      text-decoration: none;
+    }
 
     /* Animation */
     .notifications-container {
@@ -568,6 +568,20 @@
         opacity: 1;
         transform: translateY(0);
       }
+    }
+
+    /* Pagination */
+    .pagination {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      gap: 1rem;
+      margin-top: 2rem;
+    }
+
+    .pagination .btn {
+      padding: 0.5rem 1rem;
+      font-size: 1rem;
     }
 
     /* Responsive Design */
@@ -595,7 +609,7 @@
       .notification-card {
         padding: 0.5rem;
         font-size: 0.75rem;
-        flex-direction: column; /* Stack items vertically on mobile */
+        flex-direction: column;
         align-items: flex-start;
       }
 
@@ -617,9 +631,9 @@
       .notification-message {
         width: 100%;
         order: 4;
-        white-space: normal; /* Ensure text wraps */
-        word-break: break-word; /* Break long words */
-        overflow: visible; /* Ensure content is not hidden */
+        white-space: normal;
+        word-break: break-word;
+        overflow: visible;
       }
 
       .notification-status {
@@ -811,92 +825,84 @@
     <div class="controls-section">
       <!-- Filter Tabs -->
       <div class="filter-tabs">
-        <a href="#" class="filter-tab active" data-filter="all">
+        <a th:href="@{/patient/notifications(filter='all', searchTerm=${searchTerm}, fromDate=${fromDate}, toDate=${toDate}, page=0)}"
+           class="filter-tab" th:classappend="${filter == 'all' ? 'active' : ''}">
           <i class="bi bi-bell"></i>
           All Notifications
-          <span class="badge bg-primary ms-2" id="totalNotifications" th:text="${totalNotifications ?: '0'}"></span>
+          <span class="badge bg-primary ms-2" th:text="${totalNotifications ?: '0'}"></span>
         </a>
-        <a href="#" class="filter-tab" data-filter="unread">
+        <a th:href="@{/patient/notifications(filter='unread', searchTerm=${searchTerm}, fromDate=${fromDate}, toDate=${toDate}, page=0)}"
+           class="filter-tab" th:classappend="${filter == 'unread' ? 'active' : ''}">
           <i class="bi bi-envelope"></i>
           Unread
-          <span class="badge bg-info ms-2" id="unreadNotifications" th:text="${unreadNotifications ?: '0'}"></span>
+          <span class="badge bg-info ms-2" th:text="${unreadNotifications ?: '0'}"></span>
         </a>
-        <a href="#" class="filter-tab" data-filter="read">
+        <a th:href="@{/patient/notifications(filter='read', searchTerm=${searchTerm}, fromDate=${fromDate}, toDate=${toDate}, page=0)}"
+           class="filter-tab" th:classappend="${filter == 'read' ? 'active' : ''}">
           <i class="bi bi-envelope-open"></i>
           Read
-          <span class="badge bg-success ms-2" id="readNotifications" th:text="${readNotifications ?: '0'}"></span>
+          <span class="badge bg-success ms-2" th:text="${readNotifications ?: '0'}"></span>
         </a>
       </div>
 
       <!-- Search and Controls -->
-      <div class="d-flex justify-content-between align-items-center flex-wrap gap-3">
-        <div class="d-flex gap-3 align-items-center">
-          <div class="search-container">
-            <i class="bi bi-search search-icon"></i>
-            <input type="text" class="search-input" maxlength="50" placeholder="Search notifications by ID or type..." id="searchInput">
-          </div>
-          <div class="date-range-container">
-            <input type="date" class="date-input" id="fromDate" placeholder="From Date">
-            <i class="bi bi-calendar date-icon"></i>
-            <input type="date" class="date-input" id="toDate" placeholder="To Date">
-            <i class="bi bi-calendar date-icon"></i>
+      <form th:action="@{/patient/notifications}" method="get" onsubmit="return validateForm()">
+        <input type="hidden" name="filter" th:value="${filter}"/>
+        <div class="d-flex justify-content-between align-items-center flex-wrap gap-3">
+          <div class="d-flex gap-3 align-items-center">
+            <div class="search-container">
+              <i class="bi bi-search search-icon"></i>
+              <input type="text" name="searchTerm" class="search-input" maxlength="50" placeholder="Search notifications by ID or type..." th:value="${searchTerm}"/>
+            </div>
+            <div class="date-range-container">
+              <input type="date" name="fromDate" class="date-input" id="fromDate" th:value="${fromDate}"/>
+              <i class="bi bi-calendar date-icon"></i>
+              <input type="date" name="toDate" class="date-input" id="toDate" th:value="${toDate}"/>
+              <i class="bi bi-calendar date-icon"></i>
+              <button type="submit" class="btn btn-primary">Apply</button>
+            </div>
           </div>
         </div>
-      </div>
+      </form>
     </div>
 
-    <!-- Notifications List -->
-    <div class="notifications-container" id="notificationsContainer">
-      <!-- Notification Card Template -->
-      <div class="notification-card" th:each="notification : ${notifications}"
-           th:classappend="${notification.isRead ? 'read' : 'unread'}"
-           th:attr="data-is-read=${notification.isRead}, data-created-at=${#temporals.format(notification.createdAt, 'yyyy-MM-dd HH:mm:ss')}, data-id=${notification.notificationId}">
-        <div class="notification-id" th:text="${notification.notificationId}">123</div>
-        <div class="notification-type" th:text="${notification.type}">Appointment</div>
-        <div class="notification-date"
-             th:text="${notification.createdAt != null ? #temporals.format(notification.createdAt, 'MMM d, yyyy h:mm a') : 'Date TBD'}">Jun 15, 2025 2:30 PM</div>
-        <div class="notification-message" th:text="${notification.message != null and !#strings.isEmpty(notification.message) ? notification.message : '-'}" title="${notification.message}">Your appointment is scheduled.</div>
-        <div class="notification-status">
-          <span class="status-badge"
-                th:classappend="${notification.isRead ? 'status-read' : 'status-unread'}">
-            <i class="bi" th:classappend="${notification.isRead ? 'bi-envelope-open' : 'bi-envelope'}"></i>
-            <span th:text="${notification.isRead ? 'Read' : 'Unread'}"></span>
-          </span>
-        </div>
-        <div class="notification-actions">
-          <button class="btn-outline-custom"
-                  th:attr="data-id=${notification.notificationId}, data-is-read=${notification.isRead}"
-                  th:style="${notification.isRead ? 'display:none' : ''}"
-                  onclick="markAsRead(this)">
-            Mark as Read
-          </button>
-        </div>
-      </div>
-
-      <!-- Default notifications if none exist -->
-      <div th:if="${#lists.isEmpty(notifications)}">
-        <div class="notification-card unread" data-is-read="false" data-created-at="2025-06-15 14:30:00" data-id="123">
-          <div class="notification-id">123</div>
-          <div class="notification-type">Appointment</div>
-          <div class="notification-date">Jun 15, 2025 2:30 PM</div>
-          <div class="notification-message" title="Your appointment is scheduled.">Your appointment is scheduled.</div>
+    <!-- Notifications List and Pagination -->
+    <div th:if="${totalElements > 0}">
+      <div class="notifications-container">
+        <div class="notification-card" th:each="notification : ${notifications}"
+             th:classappend="${notification.isRead ? 'read' : 'unread'}"
+             th:attr="data-is-read=${notification.isRead}, data-created-at=${#temporals.format(notification.createdAt, 'yyyy-MM-dd HH:mm:ss')}, data-id=${notification.notificationId}">
+          <div class="notification-id" th:text="${notification.notificationId}">123</div>
+          <div class="notification-type" th:text="${notification.type}">Appointment</div>
+          <div class="notification-date"
+               th:text="${notification.createdAt != null ? #temporals.format(notification.createdAt, 'MMM d, yyyy h:mm a') : 'Date TBD'}">Jun 15, 2025 2:30 PM</div>
+          <div class="notification-message" th:text="${notification.message != null and !#strings.isEmpty(notification.message) ? notification.message : '-'}" title="${notification.message}">Your appointment is scheduled.</div>
           <div class="notification-status">
-            <span class="status-badge status-unread">
-              <i class="bi bi-envelope"></i>
-              Unread
+            <span class="status-badge"
+                  th:classappend="${notification.isRead ? 'status-read' : 'status-unread'}">
+              <i class="bi" th:classappend="${notification.isRead ? 'bi-envelope-open' : 'bi-envelope'}"></i>
+              <span th:text="${notification.isRead ? 'Read' : 'Unread'}"></span>
             </span>
           </div>
           <div class="notification-actions">
-            <button class="btn-outline-custom" data-id="123" data-is-read="false">
+            <button class="btn-outline-custom"
+                    th:attr="data-id=${notification.notificationId}, data-is-read=${notification.isRead}"
+                    th:style="${notification.isRead ? 'display:none' : ''}"
+                    onclick="markAsRead(this)">
               Mark as Read
             </button>
           </div>
         </div>
       </div>
+      <div th:if="${totalPages > 1}" class="pagination">
+        <a th:if="${currentPage > 0}" th:href="@{/patient/notifications(filter=${filter}, searchTerm=${searchTerm}, fromDate=${fromDate}, toDate=${toDate}, page=${currentPage - 1})}" class="btn btn-secondary">Previous</a>
+        <span th:text="'Page ' + ${currentPage + 1} + ' of ' + ${totalPages}"></span>
+        <a th:if="${currentPage < totalPages - 1}" th:href="@{/patient/notifications(filter=${filter}, searchTerm=${searchTerm}, fromDate=${fromDate}, toDate=${toDate}, page=${currentPage + 1})}" class="btn btn-secondary">Next</a>
+      </div>
     </div>
 
     <!-- Empty State -->
-    <div class="empty-state" id="emptyState">
+    <div th:if="${totalElements == 0}" class="empty-state">
       <div class="empty-state-container">
         <i class="bi bi-bell-slash"></i>
         <h3>No Notifications Found</h3>
@@ -916,31 +922,6 @@
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 
 <script th:inline="javascript">
-  /*<![CDATA[*/
-  // Function to remove diacritics for search
-  function removeDiacritics(str) {
-    return str.normalize('NFD')
-      .replace(/[\u0300-\u036f]/g, '')
-      .replace(/đ/g, 'd')
-      .replace(/Đ/g, 'D');
-  }
-
-  // Function to normalize multiple spaces
-  function normalizeSpaces(str) {
-    return str.replace(/\s+/g, ' ').trim();
-  }
-
-  // Parse date string in format "yyyy-MM-dd HH:mm:ss" to Date object
-  function parseNotificationDate(dateStr) {
-    if (dateStr === 'Date TBD') return null;
-    try {
-      return new Date(dateStr);
-    } catch (e) {
-      console.error('Error parsing date:', dateStr, e);
-      return null;
-    }
-  }
-
   // Sidebar toggle functionality
   function toggleSidebar() {
     const sidebar = document.getElementById('sidebar');
@@ -967,9 +948,6 @@
   // Mark notification as read
   function markAsRead(button) {
     const notificationId = button.getAttribute('data-id');
-    const isRead = button.getAttribute('data-is-read') === 'true';
-    if (isRead) return; // Already read, no action needed
-
     const csrfToken = document.getElementById('csrfToken').value;
     fetch(`/patient/notifications/${notificationId}/read`, {
       method: 'POST',
@@ -979,19 +957,7 @@
       }
     }).then(response => {
       if (response.ok) {
-        const card = button.closest('.notification-card');
-        card.setAttribute('data-is-read', 'true');
-        card.classList.remove('unread');
-        card.classList.add('read');
-        const statusBadge = card.querySelector('.status-badge');
-        statusBadge.classList.remove('status-unread');
-        statusBadge.classList.add('status-read');
-        statusBadge.querySelector('i').classList.remove('bi-envelope');
-        statusBadge.querySelector('i').classList.add('bi-envelope-open');
-        statusBadge.querySelector('span').textContent = 'Read';
-        button.setAttribute('data-is-read', 'true');
-        button.style.display = 'none'; // Hide button after marking as read
-        updateNotifications(); // Update filter counts
+        window.location.reload();
       } else {
         console.error('Failed to mark notification as read:', notificationId);
       }
@@ -1000,154 +966,24 @@
     });
   }
 
-  function initializeSearchAndFilters() {
-    const searchInput = document.getElementById('searchInput');
-    const fromDateInput = document.getElementById('fromDate');
-    const toDateInput = document.getElementById('toDate');
-    const filterTabs = document.querySelectorAll('.filter-tab');
-    const notificationsContainer = document.getElementById('notificationsContainer');
-    const emptyState = document.getElementById('emptyState');
-    const totalNotificationsBadge = document.getElementById('totalNotifications');
-    const unreadNotificationsBadge = document.getElementById('unreadNotifications');
-    const readNotificationsBadge = document.getElementById('readNotifications');
-    let activeFilter = 'all';
-
-    // Validate "from date" is before "to date"
-    function validateDateRange() {
-      const fromDate = fromDateInput.value ? new Date(fromDateInput.value) : null;
-      const toDate = toDateInput.value ? new Date(toDateInput.value) : null;
-
-      if (fromDate && toDate && fromDate > toDate) {
-        toDateInput.setCustomValidity('To date must be after from date');
-        toDateInput.reportValidity();
-        return false;
-      } else {
-        toDateInput.setCustomValidity('');
-        return true;
-      }
+  // Validate date range
+  function validateForm() {
+    const fromDate = document.getElementById('fromDate').value;
+    const toDate = document.getElementById('toDate').value;
+    if (fromDate && toDate && new Date(fromDate) > new Date(toDate)) {
+      alert('To date must be after from date');
+      return false;
     }
-
-    // Update filter tabs
-    filterTabs.forEach(tab => {
-      tab.addEventListener('click', function(e) {
-        e.preventDefault();
-        filterTabs.forEach(t => t.classList.remove('active'));
-        this.classList.add('active');
-        activeFilter = this.getAttribute('data-filter');
-        updateNotifications();
-      });
-    });
-
-    // Update on search input
-    searchInput.addEventListener('input', updateNotifications);
-
-    // Update on date input
-    fromDateInput.addEventListener('change', function() {
-      if (validateDateRange()) {
-        updateNotifications();
-      }
-    });
-    toDateInput.addEventListener('change', function() {
-      if (validateDateRange()) {
-        updateNotifications();
-      }
-    });
-
-    function updateNotifications() {
-      // Normalize search input: remove diacritics and multiple spaces
-      let searchTerm = searchInput.value.toLowerCase();
-      searchTerm = normalizeSpaces(removeDiacritics(searchTerm));
-
-      // Get date range
-      const fromDate = fromDateInput.value ? new Date(fromDateInput.value) : null;
-      const toDate = toDateInput.value ? new Date(toDateInput.value) : null;
-
-      const notificationCards = notificationsContainer.querySelectorAll('.notification-card');
-      let visibleCount = 0;
-      let totalCount = 0;
-      let readCount = 0;
-      let unreadCount = 0;
-
-      notificationCards.forEach(card => {
-        // Search criteria with diacritic-insensitive comparison
-        const notificationId = removeDiacritics(card.querySelector('.notification-id').textContent).toLowerCase();
-        const type = removeDiacritics(card.querySelector('.notification-type').textContent).toLowerCase();
-        const matchesSearch = notificationId.includes(searchTerm) || type.includes(searchTerm);
-
-        // Filter criteria
-        const isRead = card.getAttribute('data-is-read') === 'true';
-        let matchesFilter = false;
-
-        switch(activeFilter) {
-          case 'all':
-            matchesFilter = true;
-            break;
-          case 'read':
-            matchesFilter = isRead;
-            break;
-          case 'unread':
-            matchesFilter = !isRead;
-            break;
-        }
-
-        // Date range filtering
-        const dateStr = card.getAttribute('data-created-at');
-        const notificationDate = dateStr ? parseNotificationDate(dateStr) : null;
-        let matchesDate = true;
-
-        if (notificationDate && (fromDate || toDate)) {
-          if (fromDate && notificationDate < fromDate) {
-            matchesDate = false;
-          }
-          if (toDate) {
-            const endOfToDate = new Date(toDate);
-            endOfToDate.setHours(23, 59, 59, 999);
-            if (notificationDate > endOfToDate) {
-              matchesDate = false;
-            }
-          }
-        } else if (!notificationDate && (fromDate || toDate)) {
-          matchesDate = false;
-        }
-
-        // Update visibility and counts
-        if (matchesSearch && matchesFilter && matchesDate) {
-          card.style.display = 'flex';
-          visibleCount++;
-          totalCount++;
-          if (isRead) readCount++;
-          else unreadCount++;
-        } else {
-          card.style.display = 'none';
-          totalCount++;
-          if (isRead) readCount++;
-          else unreadCount++;
-        }
-      });
-
-      // Update badge counts
-      totalNotificationsBadge.textContent = totalCount;
-      readNotificationsBadge.textContent = readCount;
-      unreadNotificationsBadge.textContent = unreadCount;
-
-      // Show/hide empty state
-      emptyState.style.display = visibleCount === 0 ? 'flex' : 'none';
-      notificationsContainer.style.display = visibleCount === 0 ? 'none' : 'grid';
-    }
-
-    // Initial update
-    updateNotifications();
+    return true;
   }
 
   // Initialize page
   document.addEventListener('DOMContentLoaded', function() {
     console.log('Page loaded, initializing...');
     checkScreenSize();
-    initializeSearchAndFilters();
   });
 
   window.addEventListener('resize', checkScreenSize);
-  /*]]>*/
 </script>
 </body>
 </html>

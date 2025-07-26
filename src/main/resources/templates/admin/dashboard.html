@@ -856,10 +856,6 @@
                 <div class="stat-info">
                     <div class="stat-value" th:text="${totalUsers != null ? totalUsers : '0'}">1,247</div>
                     <div class="stat-label">Total Users</div>
-                    <div class="stat-change positive">
-                        <i class="bi bi-arrow-up"></i>
-                        <span th:text="${userGrowth != null ? userGrowth + '%' : '+12%'}">+12%</span>
-                    </div>
                 </div>
             </div>
 
@@ -870,10 +866,6 @@
                 <div class="stat-info">
                     <div class="stat-value" th:text="${totalAppointments != null ? totalAppointments : '0'}">856</div>
                     <div class="stat-label">Total Appointments</div>
-                    <div class="stat-change positive">
-                        <i class="bi bi-arrow-up"></i>
-                        <span th:text="${appointmentGrowth != null ? appointmentGrowth + '%' : '+8%'}">+8%</span>
-                    </div>
                 </div>
             </div>
 
@@ -884,10 +876,6 @@
                 <div class="stat-info">
                     <div class="stat-value" th:text="${totalRevenue != null ? '$' + totalRevenue : '$0'}">$45,230</div>
                     <div class="stat-label">Monthly Revenue</div>
-                    <div class="stat-change positive">
-                        <i class="bi bi-arrow-up"></i>
-                        <span th:text="${revenueGrowth != null ? revenueGrowth + '%' : '+15%'}">+15%</span>
-                    </div>
                 </div>
             </div>
 
@@ -898,10 +886,6 @@
                 <div class="stat-info">
                     <div class="stat-value" th:text="${totalDoctors != null ? totalDoctors : '0'}">42</div>
                     <div class="stat-label">Active Doctors</div>
-                    <div class="stat-change positive">
-                        <i class="bi bi-arrow-up"></i>
-                        <span th:text="${doctorGrowth != null ? doctorGrowth + '%' : '+5%'}">+5%</span>
-                    </div>
                 </div>
             </div>
 
@@ -912,10 +896,6 @@
                 <div class="stat-info">
                     <div class="stat-value" th:text="${totalRooms != null ? totalRooms : '0'}">28</div>
                     <div class="stat-label">Available Rooms</div>
-                    <div class="stat-change">
-                        <i class="bi bi-dash"></i>
-                        <span>Stable</span>
-                    </div>
                 </div>
             </div>
 
@@ -926,10 +906,6 @@
                 <div class="stat-info">
                     <div class="stat-value" th:text="${totalPrescriptions != null ? totalPrescriptions : '0'}">324</div>
                     <div class="stat-label">Prescriptions Issued</div>
-                    <div class="stat-change positive">
-                        <i class="bi bi-arrow-up"></i>
-                        <span th:text="${prescriptionGrowth != null ? prescriptionGrowth + '%' : '+18%'}">+18%</span>
-                    </div>
                 </div>
             </div>
         </div>
@@ -1133,61 +1109,6 @@
         </div>
 
         <!-- Quick Actions -->
-        <div class="quick-actions">
-            <h3 class="quick-actions-title">
-                <i class="bi bi-lightning"></i>
-                Quick Actions
-            </h3>
-            <div class="actions-grid">
-                <a th:href="@{/admin/users/new(adminId=${adminId})}" class="action-item">
-                    <div class="action-icon">
-                        <i class="bi bi-person-plus"></i>
-                    </div>
-                    <div class="action-title">Add New User</div>
-                    <div class="action-description">Register a new user account</div>
-                </a>
-
-                <a th:href="@{/admin/appointments/schedule(adminId=${adminId})}" class="action-item">
-                    <div class="action-icon">
-                        <i class="bi bi-calendar-plus"></i>
-                    </div>
-                    <div class="action-title">Schedule Appointment</div>
-                    <div class="action-description">Book a new appointment</div>
-                </a>
-
-                <a th:href="@{/admin/doctors/new(adminId=${adminId})}" class="action-item">
-                    <div class="action-icon">
-                        <i class="bi bi-person-badge"></i>
-                    </div>
-                    <div class="action-title">Add Doctor</div>
-                    <div class="action-description">Register a new doctor</div>
-                </a>
-
-                <a th:href="@{/admin/rooms/new(adminId=${adminId})}" class="action-item">
-                    <div class="action-icon">
-                        <i class="bi bi-door-open"></i>
-                    </div>
-                    <div class="action-title">Add Room</div>
-                    <div class="action-description">Register a new room</div>
-                </a>
-
-                <a th:href="@{/admin/services/new(adminId=${adminId})}" class="action-item">
-                    <div class="action-icon">
-                        <i class="bi bi-heart-pulse"></i>
-                    </div>
-                    <div class="action-title">Add Service</div>
-                    <div class="action-description">Create a new medical service</div>
-                </a>
-
-                <a th:href="@{/admin/reports(adminId=${adminId})}" class="action-item">
-                    <div class="action-icon">
-                        <i class="bi bi-file-earmark-text"></i>
-                    </div>
-                    <div class="action-title">Generate Report</div>
-                    <div class="action-description">Create system reports</div>
-                </a>
-            </div>
-        </div>
     </div>
 </div>
 
