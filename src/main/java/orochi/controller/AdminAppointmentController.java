@@ -65,7 +65,7 @@ public class AdminAppointmentController {
         if (userDetails.getAuthorities().stream().anyMatch(a -> a.getAuthority().equals("ROLE_DOCTOR"))) {
             Integer doctorId = userDetails.getDoctorId();
             if (search != null && !search.isBlank()) {
-                appointments = appointmentService.searchAppointmentsByDoctorId2(doctorId, search, status, pageable);
+                appointments = appointmentService.searchAppointmentsByDoctorId2(doctorId, search, pageable);
             } else {
                 appointments = appointmentService.getAppointmentsByDoctorId(doctorId, pageable);
             }

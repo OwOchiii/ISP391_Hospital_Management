@@ -717,7 +717,6 @@
                     <!-- Avatar Section -->
                     <div class="avatar-container">
                         <img id="avatar" class="avatar hidden" alt="Profile Avatar">
-                        <div id="avatarPlaceholder" class="avatar-placeholder">No Avatar</div>
                         <input id="avatarInput" type="file" accept=".jpg,.jpeg,.png" class="avatar-input hidden">
                     </div>
 
@@ -814,9 +813,41 @@
         modal.style.display = modal.style.display === 'block' ? 'none' : 'block';
     }
 
+    // Load avatar from server when page loads
+    async function loadAvatar() {
+        try {
+            const response = await fetch('/receptionist/api/avatar');
+            if (response.ok) {
+                const data = await response.json();
+
+                if (data.success && data.hasAvatar && data.imageUrl) {
+                    // Update both avatars with the URL from server
+                    const avatar = document.getElementById('avatar');
+                    const avatarPlaceholder = document.getElementById('avatarPlaceholder');
+                    const headerAvatar = document.getElementById('headerAvatar');
+
+                    avatar.src = data.imageUrl;
+                    headerAvatar.src = data.imageUrl;
+
+                    // Show avatar and hide placeholder
+                    avatar.classList.remove('hidden');
+                    avatarPlaceholder.classList.add('hidden');
+                    headerAvatar.style.display = 'block';
+                }
+            } else {
+                console.error('Failed to load avatar');
+            }
+        } catch (error) {
+            console.error('Error loading avatar:', error);
+        }
+    }
+
     // Initialize
     checkScreenSize();
-    window.addEventListener('load', checkScreenSize);
+    window.addEventListener('load', () => {
+        checkScreenSize();
+        loadAvatar(); // Load avatar when page loads
+    });
     window.addEventListener('resize', checkScreenSize);
 
     // Close notification modal when clicking outside

@@ -1801,8 +1801,8 @@ public class ReceptionistController {
             Receptionist receptionist = receptionistService.findByUserId(userId);
 
             response.put("success", true);
-            response.put("hasAvatar", receptionist != null && receptionist.getImageUrl() != null);
-            response.put("imageUrl", receptionist != null ? receptionist.getImageUrl() : null);
+            response.put("hasAvatar", receptionist != null && user.getAvatarUrl() != null);
+            response.put("imageUrl", receptionist != null ? user.getAvatarUrl() : null);
 
             return ResponseEntity.ok(response);
 
@@ -2789,5 +2789,79 @@ public class ReceptionistController {
                 "cancelledCount", 0
             ));
         }
+    }
+
+    /**
+     * API endpoint to get current user profile data
+     */
+    @GetMapping("/getProfile")
+    @ResponseBody
+    public ResponseEntity<Map<String, Object>> getCurrentProfile(Authentication authentication) {
+        Map<String, Object> response = new HashMap<>();
+
+        try {
+            // Check authentication
+            if (authentication == null || !authentication.isAuthenticated()) {
+                response.put("success", false);
+                response.put("message", "User not authenticated");
+                return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(response);
+            }
+
+            // Get current user
+            CustomUserDetails userDetails = (CustomUserDetails) authentication.getPrincipal();
+            Integer userId = userDetails.getUserId();
+
+            Users user = userRepository.findById(userId)
+                    .orElseThrow(() -> new RuntimeException("User not found"));
+
+            // Verify user is receptionist
+            if (!user.getRole().getRoleName().equals("RECEPTIONIST")) {
+                response.put("success", false);
+                response.put("message", "Access denied");
+                return ResponseEntity.status(HttpStatus.FORBIDDEN).body(response);
+            }
+
+            // Build profile response
+            Map<String, Object> profile = new HashMap<>();
+            profile.put("fullName", user.getFullName());
+            profile.put("email", user.getEmail());
+            profile.put("phone", user.getPhoneNumber());
+            profile.put("role", "Receptionist");
+
+            // Check for avatar - first try Users.avatarUrl, then Receptionist.imageUrl
+            String avatarUrl = user.getAvatarUrl();
+            if (avatarUrl == null || avatarUrl.isEmpty()) {
+                // Try to get from Receptionist table
+                Receptionist receptionist = receptionistService.findByUserId(userId);
+                if (receptionist != null && receptionist.getImageUrl() != null) {
+                    avatarUrl = receptionist.getImageUrl();
+                }
+            }
+            profile.put("avatar", avatarUrl);
+
+            return ResponseEntity.ok(profile);
+
+        } catch (Exception e) {
+            logger.error("Error getting current profile: ", e);
+            response.put("success", false);
+            response.put("message", "Error loading profile: " + e.getMessage());
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
+        }
+    }
+
+    /**
+     * API endpoint to save profile data
+     */
+    @PostMapping("/saveProfile")
+    @ResponseBody
+    public ResponseEntity<Map<String, Object>> saveProfile(
+            @RequestParam("fullName") String fullName,
+            @RequestParam("email") String email,
+            @RequestParam("phone") String phone,
+            @RequestParam(value = "avatarFile", required = false) MultipartFile avatarFile,
+            Authentication authentication) {
+
+        // Redirect to the existing profile update endpoint
+        return updateProfile(fullName, email, phone, avatarFile, authentication);
     }
 }
