@@ -972,8 +972,8 @@
     function calculateAllAmounts() {
         console.log('=== Calculating All Amounts (VND Native) ===');
 
-        // Tìm tất cả các hàng service trong table (loại trừ hàng SubTotal)
-        const serviceRows = document.querySelectorAll('tbody tr:not(:last-child):not(.bg-blue-50)');
+        // Tìm tất cả các hàng service trong table
+        const serviceRows = document.querySelectorAll('tbody tr:not(:last-child)'); // Loại trừ hàng SubTotal
         console.log('Found service rows:', serviceRows.length);
 
         let subTotal = 0;
@@ -1027,6 +1027,16 @@
 
         const discountAmount = subTotal * discountPercent / 100;
         const patientPayment = subTotal - discountAmount;
+
+        console.log('Calculation Results:', {
+            subTotal,
+            totalTaxAmount,
+            totalQuantity,
+            discountPercent,
+            discountAmount,
+            patientPayment
+        });
+
         const totalAmountInclTax = subTotal; // SubTotal already includes tax
 
         console.log('Calculation Results (VND Native):', {
@@ -1049,136 +1059,42 @@
     }
 
     // Function để cập nhật các giá trị hiển thị (VND)
-    function updateDisplayValues(subTotalVND, totalAmountVND, taxAmountVND, discountAmountVND, patientPaymentVND) {
-        console.log('=== Updating Display Values (VND Native) ===');
-        console.log('SubTotal VND:', subTotalVND);
-        console.log('Total Amount VND:', totalAmountVND);
-        console.log('Tax VND:', taxAmountVND);
-        console.log('Discount VND:', discountAmountVND);
-        console.log('Patient Payment VND:', patientPaymentVND);
-
-        // SubTotal: hiển thị VND với định dạng xxx.xxx đ
+    function updateDisplayValues(subTotal, taxAmount, discountAmount, patientPayment) {
+        // SubTotal
         const subTotalElement = document.getElementById('servicesSubTotal');
         if (subTotalElement) {
-            subTotalElement.textContent = formatVND(subTotalVND) + ' ₫';
-            console.log('Updated SubTotal:', subTotalElement.textContent);
+            subTotalElement.textContent = subTotal.toLocaleString('en-US') + '';
         }
 
-        // Total Amount (incl. Tax) - Display with proper VND formatting
+        // Total Amount (giống SubTotal)
         const totalAmountElement = document.getElementById('calculatedTotalAmount');
         if (totalAmountElement) {
-            totalAmountElement.textContent = formatVND(totalAmountVND);
-            console.log('Updated Total Amount:', totalAmountElement.textContent);
+            totalAmountElement.textContent = formatVND(subTotal);
         }
 
-
-        // Tax Amount - sử dụng formatVND để có định dạng đúng
+        // Tax Amount - sửa để hiển thị đúng định dạng VND với đ
         const taxAmountElement = document.getElementById('calculatedTaxAmount');
         if (taxAmountElement) {
-            taxAmountElement.textContent = formatVND(taxAmountVND);
-            console.log('Updated Tax Amount:', taxAmountElement.textContent);
+            taxAmountElement.textContent = formatVND(taxAmount) + '.000';
         }
 
         // Discount Amount - Display with proper VND formatting
         const discountAmountElement = document.getElementById('calculatedDiscountAmount');
         if (discountAmountElement) {
-            discountAmountElement.textContent = formatVND(discountAmountVND);
-            console.log('Updated Discount Amount:', discountAmountElement.textContent);
+            discountAmountElement.textContent = formatVND(discountAmount);
         }
 
-        // Patient Payment - Display with proper VND formatting
+        // Patient Payment
         const patientPaymentElement = document.getElementById('calculatedPatientPayment');
         if (patientPaymentElement) {
-            patientPaymentElement.textContent = formatVND(patientPaymentVND);
-            console.log('Updated Patient Payment:', patientPaymentElement.textContent);
+            patientPaymentElement.textContent = patientPayment.toLocaleString('en-US');
         }
 
-        // Update the hidden amount input to VND for payment processing
-        const amountInput = document.querySelector('input[name="amount"]');
-        if (amountInput) {
-            amountInput.value = Math.round(patientPaymentVND);
-            console.log('Updated hidden amount input:', amountInput.value, 'VND');
+        // Patient Payment VND
+        const patientPaymentVNDElement = document.getElementById('calculatedPatientPaymentVND');
+        if (patientPaymentVNDElement) {
+            patientPaymentVNDElement.textContent = formatCurrencyVND(patientPayment);
         }
-    }
-
-    // Tính toán SubTotal và Payment amounts - phiên bản được cải thiện
-    function calculateAllAmounts() {
-        console.log('=== Calculating All Amounts (VND Native) ===');
-
-        // Tìm tất cả các hàng service trong table (loại trừ hàng SubTotal)
-        const serviceRows = document.querySelectorAll('tbody tr:not(:last-child):not(.bg-blue-50)');
-        console.log('Found service rows:', serviceRows.length);
-
-        let subTotal = 0;
-        let totalTaxAmount = 0;
-        let totalQuantity = 0;
-
-        serviceRows.forEach((row, index) => {
-            const cells = row.querySelectorAll('td');
-            if (cells.length >= 8) {
-                // Lấy dữ liệu từ các cột
-                const quantityText = cells[3].textContent.trim();
-                const priceText = cells[4].textContent.trim();
-                const taxText = cells[5].textContent.trim();
-                const totalText = cells[6].textContent.trim();
-
-                // Parse numbers - Remove currency symbols and commas, work with VND directly
-                const quantity = parseFloat(quantityText) || 0;
-                const priceVND = parseFloat(priceText.replace(/[^\d.]/g, '')) || 0; // Already in VND
-                const taxPercent = parseFloat(taxText) || 0;
-                const totalVND = parseFloat(totalText.replace(/[^\d.]/g, '')) || 0; // Already in VND
-
-                console.log(`Service ${index + 1}:`, {
-                    quantity,
-                    priceVND: priceVND + ' VND',
-                    taxPercent: taxPercent + '%',
-                    totalVND: totalVND + ' VND'
-                });
-
-                if (quantity > 0 && priceVND > 0 && totalVND > 0) {
-                    // Cộng vào SubTotal (already in VND)
-                    subTotal += totalVND;
-
-                    // Tính Tax Amount = Price * Quantity * Tax%
-                    totalTaxAmount += (priceVND * quantity * taxPercent / 100);
-
-                    // Cộng quantity để tính discount
-                    totalQuantity += quantity;
-                }
-            }
-        });
-
-        // Tính discount theo rules
-        let discountPercent = 0;
-        if (totalQuantity >= 5) {
-            discountPercent = 10;
-        } else if (totalQuantity >= 3) {
-            discountPercent = 5;
-        } else if (totalQuantity === 1) {
-            discountPercent = 3;
-        }
-
-        const discountAmount = subTotal * discountPercent / 100;
-        const patientPayment = subTotal - discountAmount;
-        const totalAmountInclTax = subTotal; // SubTotal already includes tax
-
-        console.log('Calculation Results (VND Native):', {
-            subTotal: subTotal + ' VND',
-            totalAmountInclTax: totalAmountInclTax + ' VND',
-            totalTaxAmount: totalTaxAmount + ' VND',
-            totalQuantity,
-            discountPercent: discountPercent + '%',
-            discountAmount: discountAmount + ' VND',
-            patientPayment: patientPayment + ' VND'
-        });
-
-        // Cập nhật hiển thị
-        updateDisplayValues(subTotal, totalAmountInclTax, totalTaxAmount, discountAmount, patientPayment);
-
-        // Lưu Patient Payment để dùng cho validation (already in VND)
-        window.calculatedPatientPayment = patientPayment;
-
-        return { subTotal, totalAmountInclTax, totalTaxAmount, discountAmount, patientPayment };
     }
     // Tính toán SubTotal và Payment amounts - phiên bản đơn giản và chính xác
     function calculateAllAmounts() {
@@ -1273,16 +1189,16 @@
         // Tax Amount - sử dụng formatVND để có định dạng đúng
         const taxAmountElement = document.getElementById('calculatedTaxAmount');
         if (taxAmountElement) {
-            taxAmountElement.textContent = formatVND(taxAmount);
+            taxAmountElement.textContent = formatVND(taxAmount) + '.000';
         }
 
         // Discount Amount - Display with proper VND formatting
         const discountAmountElement = document.getElementById('calculatedDiscountAmount');
         if (discountAmountElement) {
-            discountAmountElement.textContent = formatVND(discountAmount);
+            discountAmountElement.textContent = formatVND(discountAmount) ;
         }
 
-        // Patient Payment
+        // Patient Payment - Display with proper VND formatting
         const patientPaymentElement = document.getElementById('calculatedPatientPayment');
         if (patientPaymentElement) {
             patientPaymentElement.textContent = patientPayment.toLocaleString('en-US');
@@ -1309,7 +1225,7 @@
                     const priceText = priceCell.textContent.trim();
                     const priceValue = parseFloat(priceText.replace(/[^\d.]/g, '')) || 0;
                     if (priceValue > 0) {
-                        priceCell.textContent = formatVND(priceValue) + ' ₫';
+                        priceCell.textContent = formatVND(priceValue) ;
                     }
                 }
 

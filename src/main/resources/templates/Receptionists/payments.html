@@ -571,11 +571,12 @@
                     </div>
                 </a>
             </div>
+
             <nav class="sidebar-nav">
                 <div class="nav-section-title">Navigation</div>
                 <ul class="nav flex-column">
                     <li class="nav-item">
-                        <a href="/receptionist/dashboard" class="nav-link"><i class="fas fa-th-large"></i>
+                        <a href="/receptionist/dashboard" class="nav-link active"><i class="fas fa-th-large"></i>
                             Dashboard</a>
                     </li>
                     <div class="nav-section-title">Medical Services</div>
@@ -591,13 +592,10 @@
                             <a href="/receptionist/patients" class="nav-link"><i class="fas fa-users"></i> Patients</a>
                         </li>
                         <li class="nav-item">
-                            <a href="/receptionist/payments" class="nav-link active"><i class="fas fa-money-bill-wave"></i> Payments</a>
-                        </li>
-                        <li class="nav-item">
-                            <a href="/receptionist/reports" class="nav-link"><i class="fas fa-chart-bar"></i>
-                                Reports</a>
+                            <a href="/receptionist/payments" class="nav-link"><i class="fas fa-money-bill-wave"></i> Payments</a>
                         </li>
                     </ul>
+
                     <div class="nav-section-title">Account</div>
                     <ul class="nav flex-column">
                         <li class="nav-item">
@@ -605,11 +603,6 @@
                         </li>
                     </ul>
                     <div class="nav-section-title">System</div>
-                    <ul class="nav flex-column">
-                        <li class="nav-item">
-                            <a href="/receptionist/settings" class="nav-link"><i class="fas fa-cog"></i> Settings</a>
-                        </li>
-                    </ul>
                     <form class="nav-item" th:action="@{/auth/logout}" method="post">
                         <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
                         <button type="submit" class="nav-link logout-btn">
@@ -923,7 +916,7 @@
         });
     }
 
-    // Calculate daily total - Updated to fetch actual payment amounts from payment history
+    // Calculate daily total - Updated to fetch actual payment amounts from payment history in VND
     function calculateDailyTotal() {
         console.log('Fetching daily total from payment history...');
 
@@ -940,12 +933,12 @@
                 console.log('Daily total data received:', data);
                 const total = data.total || 0;
                 console.log('Calculated total:', total);
-                // Format as currency with 2 decimal places
-                document.getElementById('dailyTotal').textContent = total.toFixed(2);
+                // Format as VND currency with whole numbers (no decimals)
+                document.getElementById('dailyTotal').textContent = Math.round(total).toLocaleString('vi-VN') + ' ₫';
             })
             .catch(error => {
                 console.error('Error fetching daily total:', error);
-                console.log('Setting default value to 0.00');
+                console.log('Setting default value to 0 VND');
 
                 // Fallback: Try to calculate from existing payment history data
                 console.log('Attempting fallback calculation...');
@@ -953,7 +946,7 @@
             });
     }
 
-    // Fallback function to calculate daily total from payment history API
+    // Fallback function to calculate daily total from payment history API - Updated for VND
     function calculateDailyTotalFallback() {
         console.log('Starting fallback calculation...');
 
@@ -1001,7 +994,8 @@
                 }
 
                 console.log('Final calculated daily total:', dailyTotal);
-                document.getElementById('dailyTotal').textContent = dailyTotal.toFixed(2);
+                // Display as VND with whole numbers
+                document.getElementById('dailyTotal').textContent = Math.round(dailyTotal).toLocaleString('vi-VN') + ' ₫';
             })
             .catch(fallbackError => {
                 console.error('Fallback calculation also failed:', fallbackError);
@@ -1012,16 +1006,16 @@
             });
     }
 
-    // Last resort: Use sample data when all APIs fail
+    // Last resort: Use sample data when all APIs fail - Updated for VND
     function useSampleDataForTotal() {
         console.log('Using sample data for total revenue...');
 
-        // Sample payment data for today (July 11, 2025) - only "paid" status
+        // Sample payment data for today (July 26, 2025) - only "paid" status - Updated amounts for VND
         const samplePayments = [
-            { amount: 50.00, status: 'paid', dateTime: '2025-07-11 09:30:00' },
-            { amount: 75.50, status: 'paid', dateTime: '2025-07-11 11:15:00' },
-            { amount: 100.00, status: 'paid', dateTime: '2025-07-11 14:20:00' },
-            { amount: 25.00, status: 'paid', dateTime: '2025-07-11 16:45:00' }
+            { amount: 500000, status: 'paid', dateTime: '2025-07-26 09:30:00' },  // 500,000 VND
+            { amount: 750000, status: 'paid', dateTime: '2025-07-26 11:15:00' },  // 750,000 VND
+            { amount: 1000000, status: 'paid', dateTime: '2025-07-26 14:20:00' }, // 1,000,000 VND
+            { amount: 250000, status: 'paid', dateTime: '2025-07-26 16:45:00' }   // 250,000 VND
         ];
 
         // Only calculate total for payments with status = "paid"
@@ -1030,7 +1024,8 @@
             .reduce((sum, payment) => sum + payment.amount, 0);
 
         console.log('Sample data total calculated (only paid):', total);
-        document.getElementById('dailyTotal').textContent = total.toFixed(2);
+        // Display as VND with whole numbers
+        document.getElementById('dailyTotal').textContent = Math.round(total).toLocaleString('vi-VN') + ' ₫';
 
         // Show warning message that this is sample data
         console.warn('Displaying sample data - please check database connection');
@@ -1047,40 +1042,80 @@
                 console.log('Today\'s pending payment data from database:', pendingPaymentData);
 
                 if (pendingPaymentData && pendingPaymentData.length > 0) {
-                    // Filter out patients who have already paid successfully
-                    const unpaidOnly = pendingPaymentData.filter(payment => {
-                        const status = payment.status ? payment.status.toLowerCase() : '';
-                        // Only show pending/unpaid payments, hide paid/completed/successful payments
-                        return status === 'pending' || status === 'unpaid' ||
-                               status.includes('pending') || status.includes('unpaid') ||
-                               status === 'scheduled' || status === 'waiting';
+                    // 🔥 ENHANCED: Calculate Amount từ bảng Service thông qua API
+                    const processPaymentPromises = pendingPaymentData.map(async (payment) => {
+                        try {
+                            // Lấy invoice data cho mỗi patient để tính Amount từ services
+                            const invoiceResponse = await fetch(`/receptionist/api/invoice/${payment.patientId}`);
+                            if (invoiceResponse.ok) {
+                                const invoiceData = await invoiceResponse.json();
+                                console.log(`Invoice data for patient ${payment.patientId}:`, invoiceData);
+
+                                // Tính Amount từ services trong invoice
+                                if (invoiceData.servicesUsed && invoiceData.servicesUsed.length > 0) {
+                                    let calculatedAmount = 0;
+                                    invoiceData.servicesUsed.forEach(service => {
+                                        if (service.total && typeof service.total === 'number') {
+                                            calculatedAmount += service.total;
+                                        }
+                                    });
+
+                                    console.log(`Calculated amount from services for patient ${payment.patientId}: ${calculatedAmount} VND`);
+
+                                    // Cập nhật amount với giá trị tính từ services
+                                    payment.amount = Math.round(calculatedAmount);
+                                } else if (invoiceData.totalAmount && typeof invoiceData.totalAmount === 'number') {
+                                    // Fallback: sử dụng totalAmount từ invoice
+                                    payment.amount = Math.round(invoiceData.totalAmount);
+                                    console.log(`Using totalAmount from invoice for patient ${payment.patientId}: ${payment.amount} VND`);
+                                }
+                            } else {
+                                console.warn(`Could not fetch invoice data for patient ${payment.patientId}`);
+                            }
+                        } catch (error) {
+                            console.error(`Error calculating amount for patient ${payment.patientId}:`, error);
+                        }
+
+                        return payment;
                     });
 
-                    console.log('Filtered unpaid-only data:', unpaidOnly);
+                    // Đợi tất cả các calculation hoàn thành
+                    Promise.all(processPaymentPromises).then(processedPayments => {
+                        // Filter out patients who have already paid successfully
+                        const unpaidOnly = processedPayments.filter(payment => {
+                            const status = payment.status ? payment.status.toLowerCase() : '';
+                            // Only show pending/unpaid payments, hide paid/completed/successful payments
+                            return status === 'pending' || status === 'unpaid' ||
+                                   status.includes('pending') || status.includes('unpaid') ||
+                                   status === 'scheduled' || status === 'waiting';
+                        });
 
-                    // Process the data to match frontend expectations
-                    payments = unpaidOnly.map(payment => ({
-                        appointmentId: payment.appointmentId,
-                        patientId: payment.patientId,
-                        patientName: payment.patientName,
-                        visitDate: payment.phoneNumber, // Using phone number as visitDate field
-                        phoneNumber: payment.phoneNumber,
-                        appointmentDate: payment.appointmentDate,
-                        appointmentTime: payment.appointmentTime,
-                        appointmentStatus: payment.appointmentStatus,
-                        doctorName: payment.doctorName,
-                        amount: payment.amount || 0,
-                        status: payment.status || 'Pending', // Should be Pending only
-                        receiptId: payment.receiptId,
-                        transactionId: payment.transactionId,
-                        paymentDate: payment.appointmentDate // Use appointment date as payment date
-                    }));
+                        console.log('Filtered unpaid-only data with calculated amounts:', unpaidOnly);
 
-                    filteredPayments = [...payments];
-                    renderTable(filteredPayments, currentPage);
-                    updateDailyStats();
+                        // Process the data to match frontend expectations
+                        payments = unpaidOnly.map(payment => ({
+                            appointmentId: payment.appointmentId,
+                            patientId: payment.patientId,
+                            patientName: payment.patientName,
+                            visitDate: payment.phoneNumber, // Using phone number as visitDate field
+                            phoneNumber: payment.phoneNumber,
+                            appointmentDate: payment.appointmentDate,
+                            appointmentTime: payment.appointmentTime,
+                            appointmentStatus: payment.appointmentStatus,
+                            doctorName: payment.doctorName,
+                            amount: payment.amount || 0, // Amount đã được tính từ services
+                            status: payment.status || 'Pending', // Should be Pending only
+                            receiptId: payment.receiptId,
+                            transactionId: payment.transactionId,
+                            paymentDate: payment.appointmentDate // Use appointment date as payment date
+                        }));
 
-                    console.log('Processed pending payment data (paid patients hidden):', payments);
+                        filteredPayments = [...payments];
+                        renderTable(filteredPayments, currentPage);
+                        updateDailyStats();
+
+                        console.log('Processed pending payment data with amounts from Service table:', payments);
+                    });
                 } else {
                     // No pending payment data available for today
                     payments = [];
@@ -1315,12 +1350,14 @@
         `;
     }
 
-    // New function to open Payment Method modal
+    // New function to open Payment Method modal - Updated for VND
     function openPaymentMethodModal(patientId, patientName, amount, appointmentId, appointmentDate, status) {
         // Populate modal with patient information
         document.getElementById('modalPatientName').textContent = patientName || 'N/A';
         document.getElementById('modalPatientId').textContent = patientId || 'N/A';
-        document.getElementById('modalAmount').textContent = amount ? `$${Number(amount).toFixed(2)}` : '$0.00';
+        // Display amount in VND format with whole numbers
+        document.getElementById('modalAmount').textContent = amount ?
+            `${Number(amount).toLocaleString('vi-VN')} ₫` : '0 ₫';
         document.getElementById('modalAppointmentDate').textContent = appointmentDate || 'N/A';
         document.getElementById('modalStatus').textContent = status || 'N/A';
         document.getElementById('selectedAppointmentId').value = appointmentId || '';

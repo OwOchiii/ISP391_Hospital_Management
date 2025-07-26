@@ -193,7 +193,7 @@
                 <div class="mb-4">
                     <label class="block text-sm font-semibold text-gray-700 mb-2">Payment Method</label>
                     <div class="block w-full bg-gray-100 border border-gray-300 rounded-lg p-3 text-sm text-gray-700">
-                        <span id="paymentMethodDisplay">Cash</span>
+                        <span id="paymentMethodDisplay" th:text="${invoiceData.paymentMethod != null ? invoiceData.paymentMethod : 'N/A'}">Cash</span>
                     </div>
                 </div>
                 <div class="mb-4">
@@ -261,14 +261,14 @@
         patientName: /*[[${invoiceData.fullName != null ? invoiceData.fullName : 'N/A'}]]*/ 'N/A',
         servicesUsed: /*[[${invoiceData.servicesUsed}]]*/ [],
 
-        // Dữ liệu payment từ database - sử dụng các field thực tế có sẵn
+        // 🔥 ENHANCED: Payment Method - Lấy trực tiếp từ Transaction.Method database với xử lý normalize
         transactionStatus: /*[[${invoiceData.transactionStatus != null ? invoiceData.transactionStatus : 'Paid'}]]*/ 'Paid',
-        paymentMethod: /*[[${invoiceData.paymentMethod != null ? invoiceData.paymentMethod : 'Cash'}]]*/ 'Cash', // Từ Transaction.Method
+        paymentMethodRaw: /*[[${invoiceData.paymentMethod != null ? invoiceData.paymentMethod : 'Cash'}]]*/ 'Cash', // Raw từ Transaction.Method
         taxAmount: /*[[${invoiceData.taxAmount != null ? invoiceData.taxAmount : 0}]]*/ 0,
         discountAmount: /*[[${invoiceData.discountAmount != null ? invoiceData.discountAmount : 0}]]*/ 0,
 
         // ✅ Lấy RefundReason trực tiếp từ Transaction table để extract Amount Received
-        refundReasonRaw: '',
+        refundReasonRaw: /*[[${invoiceData.refundReason != null ? invoiceData.refundReason : ''}]]*/ '',
 
         changeReturned: /*[[${invoiceData.changeReturned != null ? invoiceData.changeReturned : 0}]]*/ 0,
         notes: /*[[${invoiceData.notes != null ? invoiceData.notes : 'Payment completed successfully'}]]*/ 'Payment completed successfully',
@@ -283,6 +283,65 @@
     window.calculatedTaxAmount = 0;
     window.calculatedDiscountAmount = 0;
     window.calculatedPatientPayment = 0;
+
+    // 🔥 NEW: Function để normalize Payment Method từ Transaction.Method database
+    function normalizePaymentMethodFromDatabase(rawMethod) {
+        console.log('=== NORMALIZING PAYMENT METHOD FROM DATABASE ===');
+        console.log('Raw Transaction.Method from database:', rawMethod);
+
+        if (!rawMethod || rawMethod.trim() === '' || rawMethod === 'N/A') {
+            console.log('No valid payment method from database, using fallback: Cash');
+            return 'Cash';
+        }
+
+        // Normalize string - remove extra spaces và convert case
+        const normalized = rawMethod.trim();
+
+        // Map các payment methods từ Transaction.Method database để hiển thị user-friendly
+        switch (normalized.toLowerCase()) {
+            case 'cash':
+                console.log('✅ Normalized Cash method');
+                return 'Cash Payment';
+
+            case 'banking':
+            case 'bank':
+                console.log('✅ Normalized Banking method');
+                return 'Banking Transfer';
+
+            case 'vnpay':
+                console.log('✅ Normalized VNPay method');
+                return 'VNPay Online Banking';
+
+            case 'momo':
+                console.log('✅ Normalized MoMo method');
+                return 'MoMo E-Wallet';
+
+            case 'zalopay':
+                console.log('✅ Normalized ZaloPay method');
+                return 'ZaloPay E-Wallet';
+
+            case 'credit card':
+            case 'creditcard':
+            case 'card':
+                console.log('✅ Normalized Credit Card method');
+                return 'Credit Card';
+
+            case 'debit card':
+            case 'debitcard':
+                console.log('✅ Normalized Debit Card method');
+                return 'Debit Card';
+
+            case 'online':
+            case 'online payment':
+                console.log('✅ Normalized Online Payment method');
+                return 'Online Payment';
+
+            default:
+                // Giữ nguyên giá trị gốc từ database nếu không match với pattern nào
+                console.log('Using original Transaction.Method value:', normalized);
+                return normalized;
+        }
+    }
 
     // ✅ ENHANCED: Function để extract chính xác Amount Received từ RefundReason với FULL pattern support
     function extractAmountReceivedFromRefundReason(refundReasonText) {
@@ -499,25 +558,14 @@
         setTimeout(() => {
             const calculationResults = calculateAllAmounts();
 
-            // ✅ Payment Method - hiển thị đúng từ Transaction.Method database
+            // ✅ Payment Method - KHÔNG override nữa, để HTML Thymeleaf hiển thị trực tiếp từ database
             const paymentMethodDisplay = document.getElementById('paymentMethodDisplay');
             if (paymentMethodDisplay) {
-                // Sử dụng trực tiếp paymentMethod từ backend (đã được xử lý đúng)
-                let displayMethod = invoiceData.paymentMethod;
-
                 console.log('=== Payment Method Debug ===');
-                console.log('Raw paymentMethod from backend:', displayMethod);
-
-                // Đảm bảo hiển thị đúng tất cả payment methods từ database
-                if (displayMethod && displayMethod !== 'N/A') {
-                    // Hiển thị trực tiếp method từ Transaction.Method database
-                    paymentMethodDisplay.textContent = displayMethod;
-                    console.log('✅ Payment method set to database value:', displayMethod);
-                } else {
-                    // Chỉ fallback khi thực sự không có data
-                    paymentMethodDisplay.textContent = 'Cash';
-                    console.log('⚠️ Payment method fallback to Cash (no database value)');
-                }
+                console.log('Current displayed value from HTML/Thymeleaf:', paymentMethodDisplay.textContent);
+                console.log('Raw Transaction.Method from database:', invoiceData.paymentMethodRaw);
+                // KHÔNG ghi đè nữa - để HTML Thymeleaf xử lý
+                console.log('✅ Payment method keeping original value from database via Thymeleaf');
             }
 
             // ✅ Amount Received - Extract trực tiếp từ RefundReason field
@@ -557,7 +605,7 @@
             if (notesDisplay) {
                 let displayNotes = invoiceData.notes;
 
-                // Nếu có RefundReason, extract notes từ đó
+                // Nếu có RefundReason, extract notes t�� đó
                 if (invoiceData.refundReasonRaw && invoiceData.refundReasonRaw.trim() !== '') {
                     const extractedNotes = extractNotesFromRefundReason(invoiceData.refundReasonRaw);
                     if (extractedNotes && extractedNotes !== 'Payment completed successfully') {
@@ -651,7 +699,7 @@
                 throw new Error('Không tìm thấy container hóa đơn');
             }
 
-            // Ẩn tạm thời các elements không cần xuất PDF
+            // Ẩn tạm th���i các elements không cần xuất PDF
             const elementsToHide = document.querySelectorAll('.no-print');
             elementsToHide.forEach(el => {
                 el.style.display = 'none';
@@ -715,7 +763,7 @@
                     const xPosition = (pageWidth - imageWidth) / 2;
                     const yPosition = margin;
 
-                    // Chuyển canvas thành data URL
+                    // Chuyển canvas th��nh data URL
                     const imageData = canvas.toDataURL('image/png', 1.0);
 
                     // Kiểm tra xem có cần nhiều trang không

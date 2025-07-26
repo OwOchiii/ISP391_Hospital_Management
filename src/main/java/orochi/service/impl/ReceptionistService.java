@@ -1812,12 +1812,12 @@ public class ReceptionistService {
                 if (amount != null) {
                     try {
                         double amountValue = Double.parseDouble(amount.toString());
-                        processedPayment.put("amount", String.format("$%.2f", amountValue));
+                        processedPayment.put("amount", String.format("%.0f", amountValue));
                     } catch (NumberFormatException e) {
-                        processedPayment.put("amount", "$0.00");
+                        processedPayment.put("amount", "0");
                     }
                 } else {
-                    processedPayment.put("amount", "$0.00");
+                    processedPayment.put("amount", "0");
                 }
 
                 // Additional fields cho debug và reference
@@ -1869,12 +1869,12 @@ public class ReceptionistService {
                 if (amount != null) {
                     try {
                         double amountValue = Double.parseDouble(amount.toString());
-                        processedPayment.put("amount", String.format("$%.2f", amountValue));
+                        processedPayment.put("amount", String.format("%.0f", amountValue));
                     } catch (NumberFormatException e) {
-                        processedPayment.put("amount", "$0.00");
+                        processedPayment.put("amount", "0");
                     }
                 } else {
-                    processedPayment.put("amount", "$0.00");
+                    processedPayment.put("amount", "0");
                 }
 
                 processedPayment.put("transactionId", payment.get("transactionId"));
@@ -1926,12 +1926,12 @@ public class ReceptionistService {
                 if (amount != null) {
                     try {
                         double amountValue = Double.parseDouble(amount.toString());
-                        processedPayment.put("amount", String.format("$%.2f", amountValue));
+                        processedPayment.put("amount", String.format("%.0f", amountValue));
                     } catch (NumberFormatException e) {
-                        processedPayment.put("amount", "$0.00");
+                        processedPayment.put("amount", "0");
                     }
                 } else {
-                    processedPayment.put("amount", "$0.00");
+                    processedPayment.put("amount", "0");
                 }
 
                 processedPayment.put("transactionId", payment.get("transactionId"));
@@ -2052,22 +2052,46 @@ public class ReceptionistService {
                         // Generate receipt number based on transaction ID
                         invoiceData.put("receiptNumber", "REC" + latestTransaction.getTransactionId());
 
-                        // Add financial calculation properties that template expects
-                        double calculatedTotal = calculateTotalFromServices(servicesUsed);
-                        invoiceData.put("totalAmount", calculatedTotal);
-                        invoiceData.put("taxAmount", calculatedTotal * 0.1); // 10% tax
+                        // IMPROVED: Calculate amount from service prices with fallback logic
+                        double finalAmount = 0.0;
+                        try {
+                            // Primary: Calculate from services used
+                            double calculatedFromServices = calculateTotalFromServices(servicesUsed);
+                            if (calculatedFromServices > 0) {
+                                finalAmount = calculatedFromServices;
+                                logger.info("Amount calculated from services: {}", finalAmount);
+                            } else {
+                                // Fallback: Use receipt amount if service calculation fails
+                                if (latestTransaction.getReceipt() != null &&
+                                    latestTransaction.getReceipt().getTotalAmount() != null) {
+                                    finalAmount = latestTransaction.getReceipt().getTotalAmount().doubleValue();
+                                    logger.info("Fallback to receipt amount: {}", finalAmount);
+                                } else {
+                                    finalAmount = 0.0;
+                                    logger.warn("No amount available from services or receipt");
+                                }
+                            }
+                        } catch (Exception e) {
+                            logger.error("Error calculating amount from services, using receipt fallback: {}", e.getMessage());
+                            // Fallback: Use receipt amount if service calculation throws exception
+                            if (latestTransaction.getReceipt() != null &&
+                                latestTransaction.getReceipt().getTotalAmount() != null) {
+                                finalAmount = latestTransaction.getReceipt().getTotalAmount().doubleValue();
+                                logger.info("Exception fallback to receipt amount: {}", finalAmount);
+                            } else {
+                                finalAmount = 0.0;
+                                logger.warn("No fallback amount available");
+                            }
+                        }
+
+                        invoiceData.put("totalAmount", finalAmount);
+                        invoiceData.put("taxAmount", finalAmount * 0.1); // 10% tax
                         invoiceData.put("discountAmount", 0.0);
                         invoiceData.put("issuedDate", LocalDate.now().toString());
 
                         // Add receipt information
                         if (latestTransaction.getReceipt() != null) {
                             invoiceData.put("receiptId", latestTransaction.getReceipt().getReceiptId());
-                            // Use receipt total amount if available, otherwise use calculated
-                            if (latestTransaction.getReceipt().getTotalAmount() != null) {
-                                double receiptTotal = latestTransaction.getReceipt().getTotalAmount().doubleValue();
-                                invoiceData.put("totalAmount", receiptTotal);
-                                invoiceData.put("taxAmount", receiptTotal * 0.1);
-                            }
                         } else {
                             invoiceData.put("receiptId", "N/A");
                         }
@@ -2076,16 +2100,26 @@ public class ReceptionistService {
                         invoiceData.put("timeOfPayment", latestTransaction.getTimeOfPayment() != null ?
                                latestTransaction.getTimeOfPayment().toString() : "");
 
-                        // Parse payment details from refundReason field - SỬA ĐỂ PARSE CHÍNH XÁC
+                        // 🔥 THÊM refundReason vào invoiceData để template có thể truy cập
+                        invoiceData.put("refundReason", latestTransaction.getRefundReason());
+
+                        // Parse payment details from refundReason field - UPDATED FOR VND CURRENCY
                         String refundReason = latestTransaction.getRefundReason();
                         logger.info("=== Parsing refundReason ===");
                         logger.info("Raw refundReason: {}", refundReason);
 
                         if (refundReason != null && !refundReason.trim().isEmpty()) {
-                            // Parse Amount Received
+                            // Parse Amount Received - Updated to handle both $ and VND formats
                             if (refundReason.contains("Amount Received:")) {
                                 try {
-                                    String amountPart = refundReason.substring(refundReason.indexOf("Amount Received: $") + 18);
+                                    String amountPart;
+                                    // Handle both "Amount Received: $" and "Amount Received: " (VND) formats
+                                    if (refundReason.contains("Amount Received: $")) {
+                                        amountPart = refundReason.substring(refundReason.indexOf("Amount Received: $") + 18);
+                                    } else {
+                                        amountPart = refundReason.substring(refundReason.indexOf("Amount Received:") + 16).trim();
+                                    }
+
                                     String amountStr = amountPart;
 
                                     // Tìm end của amount (trước | hoặc Notes:)
@@ -2099,14 +2133,10 @@ public class ReceptionistService {
                                     invoiceData.put("amountReceived", amountReceived);
                                     logger.info("Successfully parsed amountReceived: {}", amountReceived);
 
-                                    // Calculate change từ total amount nếu có
-                                    Object totalAmountFromInvoice = invoiceData.get("totalAmount");
-                                    double totalForChange = totalAmountFromInvoice != null ?
-                                        ((Number) totalAmountFromInvoice).doubleValue() :
-                                        calculateTotalFromServices(servicesUsed);
-                                    double change = amountReceived - totalForChange;
+                                    // Calculate change using the final calculated amount
+                                    double change = amountReceived - finalAmount;
                                     invoiceData.put("changeReturned", change > 0 ? change : 0.0);
-                                    logger.info("Calculated change: {} (amountReceived: {} - total: {})", change, amountReceived, totalForChange);
+                                    logger.info("Calculated change: {} (amountReceived: {} - total: {})", change, amountReceived, finalAmount);
 
                                 } catch (Exception e) {
                                     logger.warn("Could not parse amount received from refund reason: {}", refundReason);
@@ -2162,8 +2192,16 @@ public class ReceptionistService {
                     }
                 } catch (Exception e) {
                     logger.error("Error fetching transaction data for patient {}: {}", patientId, e.getMessage());
-                    // Calculate total from services for fallback
-                    double calculatedTotal = calculateTotalFromServices(servicesUsed);
+                    // IMPROVED: Calculate total from services for fallback with proper error handling
+                    double calculatedTotal = 0.0;
+                    try {
+                        calculatedTotal = calculateTotalFromServices(servicesUsed);
+                        logger.info("Fallback amount calculation successful: {}", calculatedTotal);
+                    } catch (Exception serviceError) {
+                        logger.error("Error in fallback amount calculation: {}", serviceError.getMessage());
+                        calculatedTotal = 0.0;
+                    }
+
                     invoiceData.put("transactionId", "N/A");
                     invoiceData.put("transactionStatus", "Pending");
                     invoiceData.put("paymentMethod", "N/A");
@@ -2180,8 +2218,16 @@ public class ReceptionistService {
                     invoiceData.put("timeOfPayment", "");
                 }
             } else {
-                // Calculate total from services
-                double calculatedTotal = calculateTotalFromServices(servicesUsed);
+                // IMPROVED: Calculate total from services with error handling when no appointment
+                double calculatedTotal = 0.0;
+                try {
+                    calculatedTotal = calculateTotalFromServices(servicesUsed);
+                    logger.info("No appointment - calculated total from services: {}", calculatedTotal);
+                } catch (Exception e) {
+                    logger.error("Error calculating total from services (no appointment): {}", e.getMessage());
+                    calculatedTotal = 0.0;
+                }
+
                 invoiceData.put("transactionId", "N/A");
                 invoiceData.put("transactionStatus", "Pending");
                 invoiceData.put("paymentMethod", "N/A");
@@ -2322,29 +2368,61 @@ public class ReceptionistService {
                     Long serviceCount = medicalServiceRepository.countByServiceName(serviceName);
                     serviceData.put("quantity", serviceCount != null && serviceCount > 0 ? serviceCount.intValue() : 1);
 
-                    // Price: lấy theo [Price] trong bảng Service
+                    // 🔥 ENHANCED: Price lấy trực tiếp từ [Price] trong bảng Service với validation
                     Object priceObj = rawService.get("price");
-                    Double servicePrice = 100.0; // Default price
+                    Double servicePrice = null;
+
+                    logger.info("=== PROCESSING SERVICE PRICE FROM DATABASE ===");
+                    logger.info("ServiceID: {}, ServiceName: {}", serviceId, serviceName);
+                    logger.info("Raw price from database: {} (Type: {})", priceObj, priceObj != null ? priceObj.getClass().getSimpleName() : "NULL");
+
                     if (priceObj != null) {
-                        if (priceObj instanceof Number) {
-                            servicePrice = ((Number) priceObj).doubleValue();
-                        } else {
-                            try {
+                        try {
+                            if (priceObj instanceof Number) {
+                                servicePrice = ((Number) priceObj).doubleValue();
+                                logger.info("✅ Price converted from Number: {} VND", servicePrice);
+                            } else if (priceObj instanceof String) {
                                 servicePrice = Double.parseDouble(priceObj.toString());
-                            } catch (NumberFormatException e) {
-                                logger.warn("Could not parse price: {}, using default", priceObj);
+                                logger.info("✅ Price parsed from String: {} VND", servicePrice);
+                            } else {
+                                servicePrice = Double.parseDouble(priceObj.toString());
+                                logger.info("✅ Price parsed from Object.toString(): {} VND", servicePrice);
                             }
+
+                            // Validate price is positive
+                            if (servicePrice <= 0) {
+                                logger.warn("⚠️ Invalid price <= 0: {}, using default", servicePrice);
+                                servicePrice = 500000.0; // Default 500,000 VND
+                            }
+                        } catch (NumberFormatException e) {
+                            logger.error("❌ Could not parse price: {}, using default. Error: {}", priceObj, e.getMessage());
+                            servicePrice = 500000.0; // Default 500,000 VND for consultation
                         }
+                    } else {
+                        logger.warn("⚠️ Price is NULL in database for ServiceID: {}, using default", serviceId);
+                        servicePrice = 500000.0; // Default 500,000 VND
                     }
+
                     serviceData.put("price", servicePrice);
+                    logger.info("Final service price set: {} VND", servicePrice);
 
                     // Tax percentage (standard 10%)
                     serviceData.put("taxPercent", 10);
 
-                    // Total = price * quantity * (1 + tax%)
+                    // 🔥 ENHANCED: Total calculation with proper VND amounts
                     Integer quantity = (Integer) serviceData.get("quantity");
-                    Double total = servicePrice * quantity * 1.1; // Include 10% tax
+                    Double subtotal = servicePrice * quantity;
+                    Double taxAmount = subtotal * 0.1; // 10% tax
+                    Double total = subtotal + taxAmount; // Total = Price * Quantity + Tax
+
+                    serviceData.put("subtotal", subtotal);
+                    serviceData.put("taxAmount", taxAmount);
                     serviceData.put("total", total);
+
+                    logger.info("=== SERVICE AMOUNT CALCULATION ===");
+                    logger.info("Price: {} VND x Quantity: {} = Subtotal: {} VND", servicePrice, quantity, subtotal);
+                    logger.info("Tax (10%): {} VND", taxAmount);
+                    logger.info("Final Total: {} VND", total);
 
                     // Date - appointment date or current date
                     String serviceDate = appointment != null ?
@@ -2354,8 +2432,8 @@ public class ReceptionistService {
 
                     services.add(serviceData);
 
-                    logger.info("✅ Processed service: ID={}, Name={}, Symptom={}, Price={}, Quantity={}, Total={}",
-                               serviceId, serviceName, symptom, servicePrice, quantity, total);
+                    logger.info("✅ Processed service: ID={}, Name={}, Price={} VND, Quantity={}, Total={} VND",
+                               serviceId, serviceName, servicePrice, quantity, total);
                 }
             }
 
@@ -2589,6 +2667,7 @@ public class ReceptionistService {
             logger.info("=== GETTING DOCTOR PATIENT COUNT FROM SCHEDULE ===");
             logger.info("DoctorID: {}", doctorId);
 
+            // Validate input parameters
             if (doctorId == null) {
                 logger.warn("DoctorID is null, returning 0");
                 return 0;
@@ -2889,5 +2968,119 @@ public class ReceptionistService {
         }
 
         return country.trim();
+    }
+
+    /**
+     * Get appointments for the next 7 days (including today) grouped by date
+     * Returns a map with date groups and appointment counts for each day
+     * OPTIMIZED: Only fetch appointments within the 7-day range instead of all appointments
+     */
+    public Map<String, Object> getNext7DaysAppointmentTableData() {
+        try {
+            LocalDate today = LocalDate.now();
+            LocalDate endDate = today.plusDays(6); // 7 days total (today + 6 more days)
+
+            // Convert to LocalDateTime for database query
+            java.time.LocalDateTime startDateTime = today.atStartOfDay();
+            java.time.LocalDateTime endDateTime = endDate.atTime(23, 59, 59);
+
+            logger.info("=== FETCHING APPOINTMENTS FOR NEXT 7 DAYS ===");
+            logger.info("Date range: {} to {}", startDateTime, endDateTime);
+
+            Map<String, Object> result = new HashMap<>();
+            Map<String, List<Map<String, Object>>> appointmentsByDate = new HashMap<>();
+            Map<String, Integer> countsByDate = new HashMap<>();
+
+            // OPTIMIZED: Only get appointments within the 7-day range
+            List<Appointment> next7DaysAppointments = appointmentRepository.findByDateTimeBetween(startDateTime, endDateTime);
+            logger.info("Found {} appointments in the next 7 days", next7DaysAppointments.size());
+
+            // Process each of the next 7 days
+            for (int i = 0; i < 7; i++) {
+                final int dayIndex = i; // Create final copy for lambda usage
+                LocalDate targetDate = today.plusDays(i);
+                String dateKey = targetDate.toString();
+                String dayName = targetDate.getDayOfWeek().toString();
+
+                // Filter appointments for this specific date from the already filtered list
+                List<Map<String, Object>> dayAppointments = next7DaysAppointments.stream()
+                    .filter(appointment -> {
+                        LocalDate appointmentDate = appointment.getDateTime().toLocalDate();
+                        return appointmentDate.equals(targetDate);
+                    })
+                    .map(appointment -> {
+                        Map<String, Object> appointmentData = new HashMap<>();
+                        appointmentData.put("id", appointment.getAppointmentId());
+                        appointmentData.put("name", appointment.getPatient().getUser().getFullName());
+                        appointmentData.put("phone", appointment.getPatient().getUser().getPhoneNumber());
+                        appointmentData.put("gender", appointment.getPatient().getGender());
+                        appointmentData.put("date", appointment.getDateTime().toLocalDate().toString());
+                        appointmentData.put("time", appointment.getDateTime().toLocalTime().toString());
+                        appointmentData.put("status", appointment.getStatus());
+                        appointmentData.put("email", appointment.getEmail());
+                        appointmentData.put("description", appointment.getDescription());
+                        appointmentData.put("appointmentDateTime", appointment.getDateTime().toString());
+                        appointmentData.put("dateTime", appointment.getDateTime().toString());
+                        appointmentData.put("patientId", appointment.getPatient().getPatientId());
+                        appointmentData.put("dayName", dayName);
+                        appointmentData.put("dayIndex", dayIndex); // Use final copy instead of i
+
+                        // Calculate age
+                        if (appointment.getPatient().getDateOfBirth() != null) {
+                            LocalDate birthDate = appointment.getPatient().getDateOfBirth();
+                            int age = today.getYear() - birthDate.getYear();
+                            if (today.getDayOfYear() < birthDate.getDayOfYear()) {
+                                age--;
+                            }
+                            appointmentData.put("age", age);
+                        } else {
+                            appointmentData.put("age", "N/A");
+                        }
+
+                        // Add doctor name if available
+                        if (appointment.getDoctor() != null && appointment.getDoctor().getUser() != null) {
+                            appointmentData.put("doctorName", appointment.getDoctor().getUser().getFullName());
+                        } else {
+                            appointmentData.put("doctorName", "Not Assigned");
+                        }
+
+                        return appointmentData;
+                    })
+                    .collect(Collectors.toList());
+
+                appointmentsByDate.put(dateKey, dayAppointments);
+                countsByDate.put(dateKey, dayAppointments.size());
+
+                logger.info("Date {} ({}): {} appointments found", dateKey, dayName, dayAppointments.size());
+            }
+
+            // Prepare result structure
+            result.put("appointmentsByDate", appointmentsByDate);
+            result.put("countsByDate", countsByDate);
+            result.put("dateRange", Map.of(
+                "startDate", today.toString(),
+                "endDate", today.plusDays(6).toString(),
+                "totalDays", 7
+            ));
+
+            // Calculate total appointments across all 7 days
+            int totalAppointments = countsByDate.values().stream().mapToInt(Integer::intValue).sum();
+            result.put("totalAppointments", totalAppointments);
+
+            // Add summary information for frontend
+            result.put("summary", Map.of(
+                "totalAppointments", totalAppointments,
+                "daysWithAppointments", countsByDate.values().stream().mapToInt(count -> count > 0 ? 1 : 0).sum(),
+                "averagePerDay", totalAppointments / 7.0,
+                "queryRange", startDateTime + " to " + endDateTime
+            ));
+
+            logger.info("✅ Successfully retrieved appointments for next 7 days. Total: {} appointments", totalAppointments);
+            return result;
+
+        } catch (Exception e) {
+            logger.error("❌ Error retrieving next 7 days appointment data: {}", e.getMessage(), e);
+            throw new RuntimeException("Failed to retrieve next 7 days appointment data", e);
+        }
     }
 }

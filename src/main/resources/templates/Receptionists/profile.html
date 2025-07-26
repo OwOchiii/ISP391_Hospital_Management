@@ -630,11 +630,12 @@
                     </div>
                 </a>
             </div>
+
             <nav class="sidebar-nav">
                 <div class="nav-section-title">Navigation</div>
                 <ul class="nav flex-column">
                     <li class="nav-item">
-                        <a href="/receptionist/dashboard" class="nav-link"><i class="fas fa-th-large"></i>
+                        <a href="/receptionist/dashboard" class="nav-link active"><i class="fas fa-th-large"></i>
                             Dashboard</a>
                     </li>
                     <div class="nav-section-title">Medical Services</div>
@@ -652,24 +653,15 @@
                         <li class="nav-item">
                             <a href="/receptionist/payments" class="nav-link"><i class="fas fa-money-bill-wave"></i> Payments</a>
                         </li>
-                        <li class="nav-item">
-                            <a href="/receptionist/reports" class="nav-link"><i class="fas fa-chart-bar"></i>
-                                Reports</a>
-                        </li>
                     </ul>
 
                     <div class="nav-section-title">Account</div>
                     <ul class="nav flex-column">
                         <li class="nav-item">
-                            <a href="/receptionist/profile" class="nav-link active"><i class="fas fa-stethoscope"></i> Profile</a>
+                            <a href="/receptionist/profile" class="nav-link"><i class="fas fa-stethoscope"></i> Profile</a>
                         </li>
                     </ul>
                     <div class="nav-section-title">System</div>
-                    <ul class="nav flex-column">
-                        <li class="nav-item">
-                            <a href="/receptionist/settings" class="nav-link"><i class="fas fa-cog"></i> Settings</a>
-                        </li>
-                    </ul>
                     <form class="nav-item" th:action="@{/auth/logout}" method="post">
                         <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
                         <button type="submit" class="nav-link logout-btn">

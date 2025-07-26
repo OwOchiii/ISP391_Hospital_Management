@@ -241,6 +241,51 @@ public class ReceptionistController {
         }
     }
 
+    /**
+     * NEW API endpoint to get appointments for the next 7 days grouped by date
+     * This endpoint provides data for the 7-day appointment dashboard view
+     */
+    @GetMapping("/api/appointments/next-7-days")
+    @ResponseBody
+    public ResponseEntity<Map<String, Object>> getNext7DaysAppointments() {
+        try {
+            logger.info("=== API CALL: Getting appointments for next 7 days ===");
+            Map<String, Object> appointmentsData = receptionistService.getNext7DaysAppointmentTableData();
+            logger.info("Successfully retrieved appointments data with {} total appointments",
+                       appointmentsData.get("totalAppointments"));
+            return ResponseEntity.ok(appointmentsData);
+        } catch (Exception e) {
+            logger.error("Error fetching next 7 days appointments: {}", e.getMessage(), e);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
+        }
+    }
+
+    /**
+     * API endpoint to get appointments for a specific date
+     * Useful for the date filter functionality
+     */
+    @GetMapping("/api/appointments/by-date")
+    @ResponseBody
+    public ResponseEntity<List<Map<String, Object>>> getAppointmentsByDate(@RequestParam String date) {
+        try {
+            logger.info("=== API CALL: Getting appointments for date: {} ===", date);
+
+            // Get all 7 days data and filter for specific date
+            Map<String, Object> allData = receptionistService.getNext7DaysAppointmentTableData();
+            @SuppressWarnings("unchecked")
+            Map<String, List<Map<String, Object>>> appointmentsByDate =
+                (Map<String, List<Map<String, Object>>>) allData.get("appointmentsByDate");
+
+            List<Map<String, Object>> dateAppointments = appointmentsByDate.getOrDefault(date, new ArrayList<>());
+
+            logger.info("Found {} appointments for date: {}", dateAppointments.size(), date);
+            return ResponseEntity.ok(dateAppointments);
+        } catch (Exception e) {
+            logger.error("Error fetching appointments for date {}: {}", date, e.getMessage(), e);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
+        }
+    }
+
 
     @GetMapping("/doctors")
     public String doctors(Authentication authentication) {
@@ -670,7 +715,7 @@ public class ReceptionistController {
                 return "redirect:/receptionist/payments";
             }
 
-            // Lấy thông tin bệnh nhân và cuộc hẹn giống như pay_invoice
+            // Lấy thông tin bệnh nhân v�� cuộc hẹn giống như pay_invoice
             Map<String, Object> invoiceData = receptionistService.getInvoiceDataByPatientId(patientId);
 
             if (invoiceData == null) {
@@ -775,6 +820,19 @@ public class ReceptionistController {
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                     .body("Error retrieving today's appointment table data: " + e.getMessage());
+        }
+    }
+
+    // New endpoint for next 7 days appointments
+    @GetMapping("/appointmentRequest/next7days")
+    public ResponseEntity<?> getNext7DaysAppointmentTableData() {
+        try {
+            // Get appointments for the next 7 days (including today)
+            Map<String, Object> next7DaysAppointmentData = receptionistService.getNext7DaysAppointmentTableData();
+            return ResponseEntity.ok(next7DaysAppointmentData);
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body("Error retrieving next 7 days appointment data: " + e.getMessage());
         }
     }
 
@@ -1865,7 +1923,21 @@ public class ReceptionistController {
 
     // VNPay Configuration - cập nhật để xử lý VND
     public static String vnp_PayUrl = "https://sandbox.vnpayment.vn/paymentv2/vpcpay.html";
-    public static String vnp_ReturnUrl = "http://localhost:8089/receptionist/payment-return";
+    // Thay đổi thành dynamic URL thay vì hardcode localhost
+    public static String getVnpReturnUrl(HttpServletRequest request) {
+        String serverName = request.getServerName();
+        int serverPort = request.getServerPort();
+        String contextPath = request.getContextPath();
+
+        if (serverPort == 80 || serverPort == 443) {
+            return String.format("%s://%s%s/receptionist/payment-return",
+                                request.getScheme(), serverName, contextPath);
+        } else {
+            return String.format("%s://%s:%d%s/receptionist/payment-return",
+                                request.getScheme(), serverName, serverPort, contextPath);
+        }
+    }
+    public static String vnp_ReturnUrl = "http://localhost:8089/receptionist/payment-return"; // Fallback
     public static String vnp_TmnCode = "K65YFBNM";
     public static String secretKey = "HSRAHZZPFEPACYMRDC023GI3WD3HRZSE";
     public static String vnp_Version = "2.1.0";
@@ -2170,7 +2242,8 @@ public class ReceptionistController {
             vnpParams.put("vnp_OrderInfo", orderInfo);
             vnpParams.put("vnp_OrderType", "other");
             vnpParams.put("vnp_Locale", "vn");
-            vnpParams.put("vnp_ReturnUrl", vnp_ReturnUrl);
+            // Use dynamic URL instead of hardcode
+            vnpParams.put("vnp_ReturnUrl", getVnpReturnUrl(request));
             vnpParams.put("vnp_IpAddr", getClientIpAddress(request));
 
             String createDate = LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyyMMddHHmmss"));
@@ -2291,11 +2364,22 @@ public class ReceptionistController {
             String transactionId = allRequestParams.get("vnp_TxnRef");
             String paymentStatus = allRequestParams.get("vnp_ResponseCode");
             String amountStr = allRequestParams.get("vnp_Amount");
+            String orderInfo = allRequestParams.get("vnp_OrderInfo");
+            String payDate = allRequestParams.get("vnp_PayDate");
+            String bankCode = allRequestParams.get("vnp_BankCode");
 
             logger.info("VNPay return parameters:");
             logger.info("- Transaction ID: {}", transactionId);
             logger.info("- Response Code: {}", paymentStatus);
             logger.info("- Amount (xu): {}", amountStr);
+
+            // Add VNPay parameters to model for display
+            model.addAttribute("vnp_ResponseCode", paymentStatus);
+            model.addAttribute("vnp_TxnRef", transactionId);
+            model.addAttribute("vnp_Amount", amountStr);
+            model.addAttribute("vnp_OrderInfo", orderInfo);
+            model.addAttribute("vnp_PayDate", payDate);
+            model.addAttribute("vnp_BankCode", bankCode);
 
             // Convert amount string to proper number (VNPay returns amount in xu - smallest unit)
             Long amountInXu = null;
@@ -2326,19 +2410,66 @@ public class ReceptionistController {
 
                         // Map VNPay response code to valid database Status values
                         if ("00".equals(paymentStatus)) {
-                            // PAYMENT SUCCESSFUL - Update Transaction FIRST (ALWAYS update regardless of appointment check)
+                            // PAYMENT SUCCESSFUL - Ensure all required attributes are set
+                            model.addAttribute("successMessage", "Payment completed successfully! Your transaction has been processed.");
+                            model.addAttribute("transactionId", transactionId);
+                            model.addAttribute("paymentStatus", "Success");
+                            model.addAttribute("paymentMethod", "VNPay Banking");
+
+                            // Set amount in VND for display
+                            if (amountInVND != null) {
+                                model.addAttribute("amountVND", amountInVND);
+                            }
+
+                            // 🔥 SỬA LOGIC TÌM PATIENT - Tìm theo UserID từ Transaction
+                            try {
+                                if (transaction.getUserId() != null) {
+                                    // Tìm Patient bằng UserId từ Transaction - SỬA LẠI ĐÚNG METHOD
+                                    Optional<Patient> patientOpt = patientRepository.findByUserId(transaction.getUserId());
+                                    if (patientOpt.isPresent()) {
+                                        Patient patient = patientOpt.get();
+                                        if (patient.getUser() != null && patient.getUser().getFullName() != null) {
+                                            model.addAttribute("patientName", patient.getUser().getFullName());
+                                            model.addAttribute("customerName", patient.getUser().getFullName());
+                                            model.addAttribute("customerEmail", patient.getUser().getEmail());
+                                            model.addAttribute("customerPhone", patient.getUser().getPhoneNumber());
+                                            model.addAttribute("patientId", patient.getPatientId());
+                                            logger.info("✅ Added patient info to model: {}", patient.getUser().getFullName());
+                                        }
+                                    } else {
+                                        // Fallback: tìm trong Users table trực tiếp
+                                        Optional<Users> userOpt = userRepository.findById(transaction.getUserId());
+                                        if (userOpt.isPresent()) {
+                                            Users user = userOpt.get();
+                                            model.addAttribute("patientName", user.getFullName());
+                                            model.addAttribute("customerName", user.getFullName());
+                                            model.addAttribute("customerEmail", user.getEmail());
+                                            model.addAttribute("customerPhone", user.getPhoneNumber());
+                                            logger.info("✅ Added patient name from Users table: {}", user.getFullName());
+                                        }
+                                    }
+                                }
+                            } catch (Exception e) {
+                                logger.error("Error getting patient name: {}", e.getMessage());
+                            }
+
+                            // 🔥 THÊM APPOINTMENT ID VÀO MODEL - QUAN TRỌNG CHO TEMPLATE
+                            if (transaction.getAppointmentId() != null) {
+                                model.addAttribute("appointmentId", transaction.getAppointmentId());
+                                logger.info("✅ Added appointmentId to model: {}", transaction.getAppointmentId());
+                            }
+
+                            // Update Transaction FIRST
                             transaction.setStatus("Paid");
                             transaction.setProcessedByUserId(currentReceptionistId);
                             transaction.setMethod("Banking"); // VNPay is Banking method
 
-                            // SAVE TRANSACTION IMMEDIATELY - This must happen regardless of appointment validation
+                            // SAVE TRANSACTION IMMEDIATELY
                             Transaction savedTransaction = transactionRepository.save(transaction);
                             logger.info("✅ PAYMENT SUCCESSFUL - Transaction {} updated: Status='Paid', ProcessedBy={}, Method='Banking'",
                                        transactionId, currentReceptionistId);
-                            logger.info("💾 Transaction {} saved to database with final status: {}, ProcessedBy: {}, Method: {}",
-                                       transactionId, savedTransaction.getStatus(), savedTransaction.getProcessedByUserId(), savedTransaction.getMethod());
 
-                            // 🔥 ADD RECEIPT CREATION LOGIC HERE 🔥
+                            // Receipt creation logic
                             try {
                                 // Check if receipt already exists
                                 Receipt receipt = savedTransaction.getReceipt();
@@ -2349,45 +2480,39 @@ public class ReceptionistController {
                                     receipt.setIssuedDate(java.time.LocalDate.now());
                                     receipt.setIssuerId(currentReceptionistId);
                                     receipt.setReceiptNumber("REC" + savedTransaction.getTransactionId() + "_" + System.currentTimeMillis());
-                                    receipt.setFormat("Digital"); // Valid values: 'Digital', 'Print', 'Both'
-                                    receipt.setPdfPath(""); // Empty string instead of NULL
+                                    receipt.setFormat("Digital");
+                                    receipt.setPdfPath("");
 
-                                    // Use the actual amount from VNPay if available
                                     if (amountInVND != null) {
                                         BigDecimal totalAmount = new BigDecimal(amountInVND);
                                         receipt.setTotalAmount(totalAmount);
-                                        // Calculate tax amount (10% of total amount)
                                         BigDecimal taxAmount = totalAmount.multiply(new BigDecimal("0.1"));
                                         receipt.setTaxAmount(taxAmount);
                                     } else {
-                                        // Default amount and tax if VNPay amount is not available
                                         receipt.setTotalAmount(new BigDecimal("500000"));
                                         receipt.setTaxAmount(new BigDecimal("50000"));
                                     }
 
-                                    // Set discount amount (0 for online payments)
                                     receipt.setDiscountAmount(BigDecimal.ZERO);
                                     receipt.setNotes("Online payment via VNPay - Transaction ID: " + transactionId);
 
-                                    // Save receipt
                                     Receipt savedReceipt = receiptRepository.save(receipt);
-
-                                    // Link receipt to transaction
                                     savedTransaction.setReceipt(savedReceipt);
                                     transactionRepository.save(savedTransaction);
 
                                     logger.info("✅ Created new receipt {} for transaction {}",
                                                savedReceipt.getReceiptId(), savedTransaction.getTransactionId());
 
+                                    // Add receipt info to model - THIS IS CRUCIAL FOR DISPLAY
+                                    model.addAttribute("receiptId", savedReceipt.getReceiptId());
+                                    model.addAttribute("receiptNumber", savedReceipt.getReceiptNumber());
+
                                     // Send receipt email after successful online payment
                                     try {
-                                        // Get patient information for the receipt email
                                         if (transaction.getUserId() != null) {
-                                            Optional<Patient> patientOpt = patientRepository.findById(transaction.getUserId());
+                                            Optional<Patient> patientOpt = patientRepository.findByUserId(transaction.getUserId());
                                             if (patientOpt.isPresent()) {
                                                 Patient patient = patientOpt.get();
-
-                                                // Send email if patient has valid email
                                                 if (patient.getUser() != null &&
                                                     patient.getUser().getEmail() != null &&
                                                     !patient.getUser().getEmail().isEmpty()) {
@@ -2396,14 +2521,8 @@ public class ReceptionistController {
                                                     logger.info("✉️ Sending online payment receipt email to patient: {}", patientEmail);
                                                     emailService.sendReceiptEmail(patientEmail, savedReceipt, patient, savedTransaction);
                                                     logger.info("✅ Online payment receipt email sent successfully to: {}", patientEmail);
-                                                } else {
-                                                    logger.warn("⚠️ Cannot send online payment receipt email: Patient has no email address");
                                                 }
-                                            } else {
-                                                logger.warn("⚠️ Cannot send online payment receipt email: Patient not found with ID: {}", transaction.getUserId());
                                             }
-                                        } else {
-                                            logger.warn("⚠️ Cannot send online payment receipt email: Transaction has no UserID");
                                         }
                                     } catch (Exception emailEx) {
                                         logger.error("❌ Failed to send online payment receipt email: {}", emailEx.getMessage(), emailEx);
@@ -2423,6 +2542,10 @@ public class ReceptionistController {
                                     Receipt savedReceipt = receiptRepository.save(receipt);
                                     logger.info("✅ Updated existing receipt {} for transaction {}",
                                                savedReceipt.getReceiptId(), savedTransaction.getTransactionId());
+
+                                    // Add receipt info to model - THIS IS CRUCIAL FOR DISPLAY
+                                    model.addAttribute("receiptId", savedReceipt.getReceiptId());
+                                    model.addAttribute("receiptNumber", savedReceipt.getReceiptNumber());
 
                                     // Send receipt email for updated receipt
                                     try {
@@ -2452,10 +2575,9 @@ public class ReceptionistController {
                             } catch (Exception receiptError) {
                                 logger.error("❌ Error creating/updating receipt for transaction {}: {}",
                                            savedTransaction.getTransactionId(), receiptError.getMessage(), receiptError);
-                                // Continue processing - don't fail the entire payment return
                             }
 
-                            // Now try to update corresponding appointment status (SEPARATE from transaction update)
+                            // Appointment update logic
                             boolean appointmentUpdated = false;
                             logger.info("🔄 Starting appointment status update for transaction: {}", transactionId);
 
@@ -2496,6 +2618,10 @@ public class ReceptionistController {
                                                         logger.info("   - Status changed: '{}' → 'Completed'", oldAppointmentStatus);
                                                         logger.info("   - Transaction: {}", transactionId);
 
+                                                        // Add appointment info to model - 🔥 QUAN TRỌNG CHO TEMPLATE
+                                                        model.addAttribute("appointmentId", savedAppointment.getAppointmentId());
+                                                        model.addAttribute("appointmentStatus", "Completed");
+
                                                         // 🔥 SEND APPOINTMENT COMPLETION EMAIL 🔥
                                                         try {
                                                             if (appointmentPatient.getUser().getEmail() != null &&
@@ -2515,6 +2641,10 @@ public class ReceptionistController {
                                                     } else {
                                                         appointmentUpdated = true; // Already completed
                                                         logger.info("ℹ️ Appointment {} already has 'Completed' status", appointment.getAppointmentId());
+
+                                                        // Still add appointment info to model
+                                                        model.addAttribute("appointmentId", appointment.getAppointmentId());
+                                                        model.addAttribute("appointmentStatus", "Completed");
                                                     }
                                                 } else {
                                                     logger.error("❌ USER ID MISMATCH:");
@@ -2537,11 +2667,12 @@ public class ReceptionistController {
                                         logger.error("❌ Appointment with ID {} not found in database", savedTransaction.getAppointmentId());
                                     }
                                 } catch (Exception appointmentError) {
-                                    logger.error("❌ Error updating appointment status for transaction {}: {}",
+                                    logger.error("��� Error updating appointment status for transaction {}: {}",
                                                transactionId, appointmentError.getMessage(), appointmentError);
                                 }
                             } else {
-                                logger.error("❌ Cannot update appointment: Transaction {} missing required data:", transactionId);
+                                logger.error("❌ Cannot update appointment: Transaction {} missing required data:",
+                                           transactionId);
                                 logger.error("   - AppointmentID: {}", savedTransaction.getAppointmentId());
                                 logger.error("   - UserID: {}", savedTransaction.getUserId());
                             }
@@ -2551,6 +2682,43 @@ public class ReceptionistController {
                                 logger.info("🎉 APPOINTMENT UPDATE COMPLETED SUCCESSFULLY for transaction: {}", transactionId);
                             } else {
                                 logger.warn("⚠️ APPOINTMENT UPDATE FAILED for transaction: {}", transactionId);
+                            }
+
+                        } else {
+                            // PAYMENT FAILED
+                            String errorMessage = getVNPayErrorMessage(paymentStatus);
+                            model.addAttribute("errorMessage", errorMessage);
+                            logger.error("❌ VNPay payment failed with response code: {} - {}", paymentStatus, errorMessage);
+
+                            // Still add basic transaction info for failed payments
+                            model.addAttribute("transactionId", transactionId);
+                            model.addAttribute("paymentStatus", "Failed");
+                            model.addAttribute("paymentMethod", "VNPay Banking");
+
+                            // Add appointment ID even for failed payments
+                            if (transaction.getAppointmentId() != null) {
+                                model.addAttribute("appointmentId", transaction.getAppointmentId());
+                            }
+
+                            if (amountInVND != null) {
+                                model.addAttribute("amountVND", amountInVND);
+                            }
+
+                            // Try to get patient info even for failed payments
+                            try {
+                                if (transaction.getUserId() != null) {
+                                    Optional<Patient> patientOpt = patientRepository.findByUserId(transaction.getUserId());
+                                    if (patientOpt.isPresent()) {
+                                        Patient patient = patientOpt.get();
+                                        if (patient.getUser() != null) {
+                                            model.addAttribute("patientName", patient.getUser().getFullName());
+                                            model.addAttribute("customerName", patient.getUser().getFullName());
+                                            model.addAttribute("patientId", patient.getPatientId());
+                                        }
+                                    }
+                                }
+                            } catch (Exception e) {
+                                logger.error("Error getting patient info for failed payment: {}", e.getMessage());
                             }
                         }
                     } else {
@@ -2571,7 +2739,31 @@ public class ReceptionistController {
         } catch (Exception e) {
             logger.error("💥 ERROR handling payment return in ReceptionistController", e);
             model.addAttribute("errorMessage", "An error occurred while processing the payment return: " + e.getMessage());
-            return "error";
+            return "Receptionists/payment-return";
+        }
+    }
+
+    /**
+     * Helper method to get VNPay error message based on response code
+     */
+    private String getVNPayErrorMessage(String responseCode) {
+        if (responseCode == null) return "Unknown error occurred";
+
+        switch (responseCode) {
+            case "00": return "Payment successful";
+            case "07": return "Payment cancelled by user";
+            case "09": return "Card/account not registered for internet banking";
+            case "10": return "Incorrect authentication information";
+            case "11": return "Payment timeout";
+            case "12": return "Card/account locked";
+            case "13": return "Incorrect OTP";
+            case "24": return "Payment cancelled";
+            case "51": return "Insufficient account balance";
+            case "65": return "Bank processing limit exceeded";
+            case "75": return "Bank under maintenance";
+            case "79": return "Transaction limit exceeded";
+            case "99": return "Unknown error";
+            default: return "Payment failed with code: " + responseCode;
         }
     }
 
@@ -2707,7 +2899,7 @@ public class ReceptionistController {
     }
 
     /**
-     * API endpoint to check if phone number already exists in database
+     * Helper method to get VNPay error message based on response code
      */
     @GetMapping("/api/check-phone")
     @ResponseBody
@@ -2863,5 +3055,42 @@ public class ReceptionistController {
 
         // Redirect to the existing profile update endpoint
         return updateProfile(fullName, email, phone, avatarFile, authentication);
+    }
+
+    /**
+     * API endpoint to get invoice data by patient ID for amount calculation
+     * This returns invoice data including services with prices from Service table
+     */
+    @GetMapping("/api/invoice/{patientId}")
+    @ResponseBody
+    public ResponseEntity<Map<String, Object>> getInvoiceDataByPatientIdApi(@PathVariable Integer patientId, Authentication authentication) {
+        try {
+            // Ensure authentication is not null
+            if (authentication == null || !authentication.isAuthenticated()) {
+                return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(Map.of("error", "Authentication required"));
+            }
+
+            logger.info("=== API CALL: Getting invoice data for patient ID: {} ===", patientId);
+
+            // Get invoice data from service - this includes services with prices from Service table
+            Map<String, Object> invoiceData = receptionistService.getInvoiceDataByPatientId(patientId);
+
+            if (invoiceData == null) {
+                logger.error("Invoice data not found for patient ID: {}", patientId);
+                return ResponseEntity.notFound().build();
+            }
+
+            logger.info("Successfully retrieved invoice data for patient {}", patientId);
+            logger.info("Services count: {}",
+                       invoiceData.get("servicesUsed") != null ?
+                       ((List<?>) invoiceData.get("servicesUsed")).size() : 0);
+
+            return ResponseEntity.ok(invoiceData);
+
+        } catch (Exception e) {
+            logger.error("Error fetching invoice data for patient {}: {}", patientId, e.getMessage(), e);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(Map.of("error", "Error fetching invoice data: " + e.getMessage()));
+        }
     }
 }

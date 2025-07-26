@@ -952,10 +952,6 @@
                         <li class="nav-item">
                             <a href="/receptionist/payments" class="nav-link"><i class="fas fa-money-bill-wave"></i> Payments</a>
                         </li>
-                        <li class="nav-item">
-                            <a href="/receptionist/reports" class="nav-link"><i class="fas fa-chart-bar"></i>
-                                Reports</a>
-                        </li>
                     </ul>
 
                     <div class="nav-section-title">Account</div>
@@ -965,11 +961,6 @@
                         </li>
                     </ul>
                     <div class="nav-section-title">System</div>
-                    <ul class="nav flex-column">
-                        <li class="nav-item">
-                            <a href="/receptionist/settings" class="nav-link"><i class="fas fa-cog"></i> Settings</a>
-                        </li>
-                    </ul>
                     <form class="nav-item" th:action="@{/auth/logout}" method="post">
                         <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
                         <button type="submit" class="nav-link logout-btn">
@@ -1132,19 +1123,48 @@
 
             <!-- Tables -->
             <div class="row g-4">
-                <!-- Appointment Requests -->
-                <div class="col-lg-6">
+                <!-- Appointment Requests for Next 7 Days -->
+                <div class="col-lg-12">
                     <div class="card">
                         <div class="card-header d-flex justify-content-between align-items-center">
-                            <h5 class="card-title mb-0">Appointment Requests</h5>
+                            <h5 class="card-title mb-0">Appointment Requests - Next 7 Days</h5>
                             <a href="#" class="text-primary" onclick="openAppointmentModal()">View All</a>
                         </div>
                         <div class="card-body">
-                            <div class="input-group mb-3">
-                                <span class="input-group-text"><i class="fas fa-search"></i></span>
-                                <input type="text" class="form-control" id="patientSearch"
-                                       placeholder="Search by patient name or phone" onkeyup="searchPatients()">
+                            <!-- Filter Controls -->
+                            <div class="row mb-3">
+                                <div class="col-md-6">
+                                    <div class="input-group">
+                                        <span class="input-group-text"><i class="fas fa-search"></i></span>
+                                        <input type="text" class="form-control" id="patientSearch"
+                                               placeholder="Search by patient name or phone" onkeyup="searchAppointmentsIn7Days()">
+                                    </div>
+                                </div>
+                                <div class="col-md-3">
+                                    <select class="form-control" id="dayFilter" onchange="filterAppointmentsByDay()">
+                                        <option value="">All Days</option>
+                                        <option value="0">Today</option>
+                                        <option value="1">Tomorrow</option>
+                                        <option value="2">Day 3</option>
+                                        <option value="3">Day 4</option>
+                                        <option value="4">Day 5</option>
+                                        <option value="5">Day 6</option>
+                                        <option value="6">Day 7</option>
+                                    </select>
+                                </div>
+                                <div class="col-md-3">
+                                    <button class="btn btn-outline-secondary" onclick="clearAllFilters()">
+                                        <i class="fas fa-times"></i> Clear
+                                    </button>
+                                </div>
                             </div>
+
+                            <!-- Date Boxes Container -->
+                            <div id="dateBoxContainer" class="row mb-4">
+                                <!-- Date boxes will be generated dynamically -->
+                            </div>
+
+                            <!-- Appointments Table -->
                             <div class="table-responsive">
                                 <table class="table table-hover" id="appointmentTable">
                                     <thead>
@@ -1163,7 +1183,7 @@
                                 </table>
                             </div>
 
-                            <!-- Enhanced Pagination Section - Matching doctors.html exactly -->
+                            <!-- Enhanced Pagination Section -->
                             <div class="pagination-section" id="appointmentPaginationSection" style="display: none;">
                                 <div class="pagination-info" id="appointmentPaginationInfo"></div>
                                 <div class="pagination-controls" id="appointmentPaginationControls"></div>
@@ -1171,7 +1191,6 @@
                         </div>
                     </div>
                 </div>
-                <!-- Patient Reviews -->
 
             </div>
         </main>
@@ -1737,18 +1756,15 @@
         isRefreshingAppointments = true;
         updateRefreshIndicator('syncing');
 
-        // Get today's date
-        const now = new Date();
-        const vietnamTime = new Date(now.getTime() + (7 * 60 * 60 * 1000));
-        const today = vietnamTime.toISOString().split('T')[0];
-
-        fetch(`/receptionist/pendingAppointmentRequest/today?date=${today}&timestamp=${Date.now()}`)
+        // Use the 7-day appointments endpoint instead of today only
+        fetch(`/receptionist/api/appointments/next-7-days?timestamp=${Date.now()}`)
             .then(response => {
                 if (!response.ok) throw new Error(`HTTP ${response.status}`);
                 return response.json();
             })
             .then(data => {
-                const appointments = Array.isArray(data) ? data : [];
+                // The new endpoint returns a different structure, handle accordingly
+                const appointments = data.appointments || [];
                 const newDataHash = generateDataHash(appointments);
 
                 // Check if data has changed
@@ -1905,23 +1921,18 @@
 
     // === ENHANCED APPOINTMENT LOADING ===
 
-    // Enhanced function to load only pending appointments for today with better UX
+    // Enhanced function to load appointments for the next 7 days
     function loadTodaysAppointments() {
-        // Get today's date in Vietnamese timezone (UTC+7)
-        const now = new Date();
-        const vietnamTime = new Date(now.getTime() + (7 * 60 * 60 * 1000));
-        const today = vietnamTime.toISOString().split('T')[0];
-
-        console.log(`Loading appointments for today: ${today}`);
+        console.log('Loading appointments for the next 7 days...');
 
         // Show loading indicator
         const tableBody = document.getElementById('appointmentTableBody');
         if (tableBody) {
-            tableBody.innerHTML = '<tr><td colspan="6" class="text-center"><i class="fas fa-spinner fa-spin"></i> Loading today\'s appointments...</td></tr>';
+            tableBody.innerHTML = '<tr><td colspan="8" class="text-center"><i class="fas fa-spinner fa-spin"></i> Loading appointments for next 7 days...</td></tr>';
         }
 
-        // Use the today-specific endpoint with better error handling
-        fetch(`/receptionist/pendingAppointmentRequest/today?date=${today}&timestamp=${Date.now()}`)
+        // Use the 7-day appointments endpoint
+        fetch(`/receptionist/api/appointments/next-7-days?timestamp=${Date.now()}`)
             .then(response => {
                 if (!response.ok) {
                     throw new Error(`HTTP ${response.status}: Failed to fetch appointment data`);
@@ -1931,20 +1942,35 @@
             .then(data => {
                 console.log('Received appointment data:', data);
 
-                // Ensure data is an array
-                const appointments = Array.isArray(data) ? data : [];
+                // Extract appointments from the backend response structure
+                let appointments = [];
 
-                appointmentData = appointments;
+                if (data.appointmentsByDate) {
+                    // Flatten all appointments from all dates into a single array
+                    Object.values(data.appointmentsByDate).forEach(dayAppointments => {
+                        appointments = appointments.concat(dayAppointments);
+                    });
+                } else if (data.appointments) {
+                    // Fallback to old structure if it exists
+                    appointments = data.appointments;
+                }
+
+                // Filter to only show PENDING appointments
+                const pendingAppointments = appointments.filter(appointment =>
+                    appointment.status && appointment.status.toLowerCase() === 'pending'
+                );
+
+                console.log(`Extracted ${appointments.length} total appointments, ${pendingAppointments.length} pending appointments from response`);
+
+                appointmentData = pendingAppointments;
                 currentPage = 1;
                 renderAppointmentTable(appointmentData, currentPage);
 
+                // Generate date boxes for the next 7 days with appointment counts
+                generateDateBoxes();
+
                 // Update appointment requests count badge
-                updateAppointmentRequestsCount(appointments.length);
-
-                // Update dashboard title to show it's today's appointments
-                updateDashboardTitle(appointments.length);
-
-                console.log(`Successfully loaded ${appointments.length} appointments for today`);
+                updateAppointmentRequestsCount(pendingAppointments.length);
             })
             .catch(error => {
                 console.error('Error loading appointments:', error);
@@ -1955,7 +1981,7 @@
                 if (tableBody) {
                     tableBody.innerHTML = `
                         <tr>
-                            <td colspan="6" class="text-center text-danger">
+                            <td colspan="8" class="text-center text-danger">
                                 <i class="fas fa-exclamation-triangle"></i>
                                 Error loading appointments: ${error.message}
                                 <br>
@@ -1972,24 +1998,21 @@
 
     // Function to load appointments for the modal (all pending appointments)
     function loadModalPendingAppointments() {
-        console.log('Loading all pending appointments for modal...');
+        console.log('Loading PENDING appointments for next 7 days in modal...');
 
         // Show loading in modal
         const tableBody = document.getElementById('modalAppointmentTableBody');
         if (tableBody) {
             tableBody.innerHTML = `
                 <tr>
-                    <td colspan="10" class="text-center py-4">
-                        <div class="spinner-border text-primary" role="status">
-                            <span class="visually-hidden">Loading...</span>
-                        </div>
-                        <div class="mt-2">Loading appointments...</div>
+                    <td colspan="10" class="text-center">
+                        <i class="fas fa-spinner fa-spin"></i> Loading PENDING appointments for next 7 days...
                     </td>
                 </tr>
             `;
         }
 
-        fetch("/receptionist/pendingAppointmentRequest")
+        fetch(`/receptionist/api/appointments/next-7-days?timestamp=${Date.now()}`)
             .then(response => {
                 if (!response.ok) {
                     throw new Error(`HTTP ${response.status}: Failed to fetch appointment data`);
@@ -1999,20 +2022,37 @@
             .then(data => {
                 console.log('Received modal appointment data:', data);
 
-                // Ensure data is an array
-                const appointments = Array.isArray(data) ? data : [];
+                // Extract appointments from the backend response structure
+                let appointments = [];
+
+                if (data.appointmentsByDate) {
+                    // Flatten all appointments from all dates into a single array
+                    Object.values(data.appointmentsByDate).forEach(dayAppointments => {
+                        appointments = appointments.concat(dayAppointments);
+                    });
+                } else if (data.appointments) {
+                    // Fallback to old structure if it exists
+                    appointments = data.appointments;
+                }
+
+                // Filter to only show PENDING appointments in modal too
+                const pendingAppointments = appointments.filter(appointment =>
+                    appointment.status && appointment.status.toLowerCase() === 'pending'
+                );
+
+                console.log(`Extracted ${appointments.length} total appointments, ${pendingAppointments.length} PENDING appointments from modal response`);
 
                 const tableBody = document.getElementById('modalAppointmentTableBody');
                 tableBody.innerHTML = '';
 
-                if (appointments.length === 0) {
-                    tableBody.innerHTML = '<tr><td colspan="10" class="text-center">No pending appointments found</td></tr>';
+                if (pendingAppointments.length === 0) {
+                    tableBody.innerHTML = '<tr><td colspan="10" class="text-center">No PENDING appointments found for the next 7 days</td></tr>';
                     // Update pagination to show 0 appointments
                     updateModalPaginationInfo(0, 0, 0);
                     return;
                 }
 
-                appointments.forEach((row, index) => {
+                pendingAppointments.forEach((row, index) => {
                     const tr = document.createElement('tr');
 
                     // Format date and time properly
@@ -2064,9 +2104,9 @@
                 });
 
                 // Update pagination info to show correct counts
-                updateModalPaginationInfo(1, appointments.length, appointments.length);
+                updateModalPaginationInfo(1, pendingAppointments.length, pendingAppointments.length);
 
-                console.log(`Successfully loaded ${appointments.length} pending appointments in modal`);
+                console.log(`Successfully loaded ${pendingAppointments.length} PENDING appointments in modal`);
             })
             .catch(error => {
                 console.error('Error loading modal appointments:', error);
@@ -2097,12 +2137,12 @@
         const searchTerm = document.getElementById('modalPatientSearch').value.toLowerCase();
 
         if (!searchTerm.trim()) {
-            // If search is empty, reload all appointments
+            // If search is empty, reload all pending appointments
             loadModalPendingAppointments();
             return;
         }
 
-        fetch("/receptionist/pendingAppointmentRequest")
+        fetch(`/receptionist/api/appointments/next-7-days?timestamp=${Date.now()}`)
             .then(response => {
                 if (!response.ok) {
                     throw new Error('Failed to fetch appointment data');
@@ -2110,8 +2150,25 @@
                 return response.json();
             })
             .then(data => {
-                const appointments = Array.isArray(data) ? data : [];
-                const filteredData = appointments.filter(row =>
+                // Extract appointments from the backend response structure
+                let appointments = [];
+
+                if (data.appointmentsByDate) {
+                    // Flatten all appointments from all dates into a single array
+                    Object.values(data.appointmentsByDate).forEach(dayAppointments => {
+                        appointments = appointments.concat(dayAppointments);
+                    });
+                } else if (data.appointments) {
+                    // Fallback to old structure if it exists
+                    appointments = data.appointments;
+                }
+
+                // Filter to only show PENDING appointments first, then filter by search term
+                const pendingAppointments = appointments.filter(appointment =>
+                    appointment.status && appointment.status.toLowerCase() === 'pending'
+                );
+
+                const filteredData = pendingAppointments.filter(row =>
                     (row.name && row.name.toLowerCase().includes(searchTerm)) ||
                     (row.phone && row.phone.toLowerCase().includes(searchTerm)) ||
                     (row.doctorName && row.doctorName.toLowerCase().includes(searchTerm))
@@ -2121,7 +2178,7 @@
                 tableBody.innerHTML = '';
 
                 if (filteredData.length === 0) {
-                    tableBody.innerHTML = '<tr><td colspan="10" class="text-center">No appointments found matching your search</td></tr>';
+                    tableBody.innerHTML = '<tr><td colspan="10" class="text-center">No PENDING appointments found matching your search</td></tr>';
                     // Update pagination to show 0 results
                     updateModalPaginationInfo(0, 0, 0);
                     return;
@@ -2155,6 +2212,8 @@
                         <td>${row.name || 'N/A'}</td>
                         <td>${row.age || 'N/A'}</td>
                         <td>${row.gender || 'N/A'}</td>
+                        <td>${row.phone || 'N/A'}</td>
+                        <td>${row.doctorName || 'Not Assigned'}</td>
                         <td>${displayDate}</td>
                         <td>${displayTime}</td>
                         <td>
@@ -2178,6 +2237,7 @@
 
                 // Update pagination info for filtered results
                 updateModalPaginationInfo(1, filteredData.length, filteredData.length);
+                console.log(`Search completed: Found ${filteredData.length} PENDING appointments matching "${searchTerm}"`);
             })
             .catch(error => {
                 console.error('Error searching appointments:', error);
@@ -2311,6 +2371,248 @@
     }
 
     // Search functions for dashboard
+    function searchAppointmentsIn7Days() {
+        const searchTerm = document.getElementById('patientSearch').value.toLowerCase();
+
+        if (!searchTerm.trim()) {
+            // If search is empty, reload today's appointments
+            loadTodaysAppointments();
+            return;
+        }
+
+        // Filter current appointment data
+        const filteredData = appointmentData.filter(row =>
+            (row.name && row.name.toLowerCase().includes(searchTerm)) ||
+            (row.phone && row.phone.toLowerCase().includes(searchTerm))
+        );
+
+        currentPage = 1; // Reset to first page
+        renderAppointmentTable(filteredData, currentPage);
+    }
+
+    /**
+     * Filter appointments by specific day (0-6 representing the next 7 days)
+     * Day 0 = Today, Day 1 = Tomorrow, etc.
+     */
+    function filterAppointmentsByDay() {
+        const dayFilter = document.getElementById('dayFilter').value;
+
+        if (!dayFilter || dayFilter === '') {
+            // Show all appointments if no specific day is selected
+            currentPage = 1;
+            renderAppointmentTable(appointmentData, currentPage);
+            return;
+        }
+
+        const selectedDayIndex = parseInt(dayFilter);
+
+        // Calculate the target date based on current date + selected day offset
+        const today = new Date();
+        const targetDate = new Date(today);
+        targetDate.setDate(today.getDate() + selectedDayIndex);
+
+        // Format target date to match appointment date format (YYYY-MM-DD)
+        const targetDateString = targetDate.toISOString().split('T')[0];
+
+        console.log(`Filtering appointments for day ${selectedDayIndex}: ${targetDateString}`);
+
+        // Filter appointments for the selected day
+        const filteredData = appointmentData.filter(appointment => {
+            if (!appointment.date && !appointment.appointmentDateTime) {
+                return false;
+            }
+
+            let appointmentDateString = '';
+
+            // Handle different date formats
+            if (appointment.date) {
+                // If date is in DD/MM/YYYY format, convert to YYYY-MM-DD
+                if (appointment.date.includes('/')) {
+                    const parts = appointment.date.split('/');
+                    if (parts.length === 3) {
+                        const day = parts[0].padStart(2, '0');
+                        const month = parts[1].padStart(2, '0');
+                        const year = parts[2];
+                        appointmentDateString = `${year}-${month}-${day}`;
+                    }
+                } else {
+                    appointmentDateString = appointment.date;
+                }
+            } else if (appointment.appointmentDateTime) {
+                // Extract date from datetime
+                try {
+                    const dateTime = new Date(appointment.appointmentDateTime);
+                    appointmentDateString = dateTime.toISOString().split('T')[0];
+                } catch (e) {
+                    return false;
+                }
+            }
+
+            return appointmentDateString === targetDateString;
+        });
+
+        console.log(`Found ${filteredData.length} appointments for ${targetDateString}`);
+
+        currentPage = 1; // Reset to first page
+        renderAppointmentTable(filteredData, currentPage);
+
+        // Show notification about filter results
+        const dayNames = ['Today', 'Tomorrow', 'Day 3', 'Day 4', 'Day 5', 'Day 6', 'Day 7'];
+        const dayName = dayNames[selectedDayIndex] || `Day ${selectedDayIndex + 1}`;
+
+        if (filteredData.length === 0) {
+            showNotification(`No appointments found for ${dayName}`, 'info');
+        } else {
+            showNotification(`Showing ${filteredData.length} appointment(s) for ${dayName}`, 'success');
+        }
+    }
+
+    /**
+     * Generate date boxes for the next 7 days to show visual representation
+     */
+    function generateDateBoxes() {
+        const dateBoxContainer = document.getElementById('dateBoxContainer');
+        if (!dateBoxContainer) return;
+
+        const today = new Date();
+        const dayNames = ['Today', 'Tomorrow', 'Day 3', 'Day 4', 'Day 5', 'Day 6', 'Day 7'];
+        const weekDays = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+
+        dateBoxContainer.innerHTML = '';
+
+        for (let i = 0; i < 7; i++) {
+            const date = new Date(today);
+            date.setDate(today.getDate() + i);
+
+            const dayName = dayNames[i];
+            const weekDay = weekDays[date.getDay()];
+            const dateString = date.getDate().toString().padStart(2, '0');
+            const monthName = date.toLocaleDateString('en-US', { month: 'short' });
+
+            // Count appointments for this day
+            const dateKey = date.toISOString().split('T')[0];
+            const appointmentCount = appointmentData.filter(appointment => {
+                if (!appointment.date && !appointment.appointmentDateTime) return false;
+
+                let appointmentDateString = '';
+                if (appointment.date) {
+                    if (appointment.date.includes('/')) {
+                        const parts = appointment.date.split('/');
+                        if (parts.length === 3) {
+                            const day = parts[0].padStart(2, '0');
+                            const month = parts[1].padStart(2, '0');
+                            const year = parts[2];
+                            appointmentDateString = `${year}-${month}-${day}`;
+                        }
+                    } else {
+                        appointmentDateString = appointment.date;
+                    }
+                } else if (appointment.appointmentDateTime) {
+                    try {
+                        const dateTime = new Date(appointment.appointmentDateTime);
+                        appointmentDateString = dateTime.toISOString().split('T')[0];
+                    } catch (e) {
+                        return false;
+                    }
+                }
+
+                return appointmentDateString === dateKey;
+            }).length;
+
+            const dateBox = document.createElement('div');
+            dateBox.className = 'col-md-1 col-sm-2 col-4 mb-2';
+            dateBox.innerHTML = `
+                <div class="card text-center date-box ${i === 0 ? 'border-primary' : ''}"
+                     style="cursor: pointer; transition: all 0.3s ease;"
+                     onclick="selectDateFilter(${i})"
+                     data-day-index="${i}">
+                    <div class="card-body p-2">
+                        <div class="fw-bold ${i === 0 ? 'text-primary' : ''}">${dayName}</div>
+                        <div class="h5 mb-1 ${i === 0 ? 'text-primary' : ''}">${dateString}</div>
+                        <div class="small text-muted">${weekDay}, ${monthName}</div>
+                        <div class="small ${appointmentCount > 0 ? 'text-success fw-bold' : 'text-muted'}">
+                            ${appointmentCount} apt${appointmentCount !== 1 ? 's' : ''}
+                        </div>
+                    </div>
+                </div>
+            `;
+
+            dateBoxContainer.appendChild(dateBox);
+        }
+    }
+
+    /**
+     * Select date filter from date box click
+     */
+    function selectDateFilter(dayIndex) {
+        // Update the day filter dropdown
+        const dayFilter = document.getElementById('dayFilter');
+        dayFilter.value = dayIndex.toString();
+
+        // Highlight the selected date box
+        const dateBoxes = document.querySelectorAll('.date-box');
+        dateBoxes.forEach((box, index) => {
+            if (index === dayIndex) {
+                box.classList.add('border-primary', 'bg-light');
+                box.querySelectorAll('div').forEach(div => div.classList.add('text-primary'));
+            } else {
+                box.classList.remove('border-primary', 'bg-light');
+                box.querySelectorAll('div').forEach(div => div.classList.remove('text-primary'));
+            }
+        });
+
+        // Apply the filter
+        filterAppointmentsByDay();
+    }
+
+    /**
+     * Clear all filters and show all appointments
+     */
+    function clearAllFilters() {
+        // Clear search input
+        const patientSearch = document.getElementById('patientSearch');
+        if (patientSearch) {
+            patientSearch.value = '';
+        }
+
+        // Clear day filter
+        const dayFilter = document.getElementById('dayFilter');
+        if (dayFilter) {
+            dayFilter.value = '';
+        }
+
+        // Clear modal search input
+        const modalPatientSearch = document.getElementById('modalPatientSearch');
+        if (modalPatientSearch) {
+            modalPatientSearch.value = '';
+        }
+
+        // Reset date box highlighting
+        const dateBoxes = document.querySelectorAll('.date-box');
+        dateBoxes.forEach((box, index) => {
+            if (index === 0) {
+                // Keep "Today" highlighted by default
+                box.classList.add('border-primary');
+                box.querySelectorAll('div').forEach(div => div.classList.add('text-primary'));
+            } else {
+                box.classList.remove('border-primary', 'bg-light');
+                box.querySelectorAll('div').forEach(div => div.classList.remove('text-primary'));
+            }
+        });
+
+        // Reset to show all appointments
+        currentPage = 1;
+        renderAppointmentTable(appointmentData, currentPage);
+
+        // If modal is open, reload modal data
+        const modal = document.getElementById('appointmentModal');
+        if (modal && modal.classList.contains('show')) {
+            loadModalPendingAppointments();
+        }
+
+        showNotification('Filters cleared', 'info');
+    }
+
     function searchPatients() {
         const searchTerm = document.getElementById('patientSearch').value.toLowerCase();
 
