@@ -916,6 +916,10 @@
                                     aria-expanded="false">
                                 <i class="bi bi-eye"></i> View Details
                             </button>
+                            <a th:href="@{/admin/doctors/{id}/edit(id=${doctor.doctorId},adminId=${adminId})}"
+                               class="btn-primary-custom btn-sm">
+                                <i class="bi bi-pencil"></i> Edit
+                            </a>
                             <form th:action="@{/admin/doctors/{id}/toggleLock(adminId=${adminId},id=${doctor.doctorId})}"
                                   method="post" style="display:inline;">
                                 <!-- CSRF token -->
@@ -1004,7 +1008,7 @@
             <div class="modal-dialog modal-lg">
                 <div class="modal-content">
                     <div class="modal-header">
-                        <h5 class="modal-title" id="doctorModalLabel">Add/Edit Doctor</h5>
+                        <h5 class="modal-title" id="doctorModalLabel" th:text="${isEdit ? 'Edit Doctor' : 'Add New Doctor'}">Add/Edit Doctor</h5>
                         <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                     </div>
                     <div class="modal-body">
@@ -1171,6 +1175,73 @@
                 link.classList.remove('active');
             });
             document.querySelector('.nav-link[href*="doctors"]').classList.add('active');
+        }
+
+        // Check if we need to open the edit modal automatically (when redirected from edit link)
+        const isEditMode = /*[[${isEdit}]]*/ false;
+        if (isEditMode) {
+            const doctorModal = new bootstrap.Modal(document.getElementById('doctorModal'));
+            doctorModal.show();
+
+            // Populate education fields if available
+            const educationContainer = document.getElementById('educationContainer');
+            const degrees = /*[[${doctorForm.degrees}]]*/ [];
+            const institutions = /*[[${doctorForm.institutions}]]*/ [];
+            const graduations = /*[[${doctorForm.graduations}]]*/ [];
+            const descriptions = /*[[${doctorForm.educationDescriptions}]]*/ [];
+            const certificateUrls = /*[[${doctorForm.certificateImageUrls}]]*/ [];
+
+            if (degrees && degrees.length > 0) {
+                // Clear the default empty education form
+                educationContainer.innerHTML = '';
+
+                // Add existing education records
+                for (let i = 0; i < degrees.length; i++) {
+                    const educationItem = document.createElement('div');
+                    educationItem.className = 'education-item mb-3' + (i > 0 ? ' pt-3 border-top' : '');
+
+                    let header = '';
+                    if (i > 0) {
+                        header = `
+                            <div class="d-flex justify-content-between mb-2">
+                                <h6>Additional Education</h6>
+                                <button type="button" class="btn btn-sm btn-outline-danger remove-education-btn">
+                                    <i class="bi bi-trash"></i> Remove
+                                </button>
+                            </div>
+                        `;
+                    }
+
+                    educationItem.innerHTML = `
+                        ${header}
+                        <div class="row g-2">
+                            <div class="col-md-6">
+                                <label class="form-label">Degree</label>
+                                <input type="text" name="degrees[]" class="form-control" value="${degrees[i] || ''}" placeholder="e.g., MD, PhD" required>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label">Institution</label>
+                                <input type="text" name="institutions[]" class="form-control" value="${institutions[i] || ''}" placeholder="e.g., Harvard Medical School" required>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label">Graduation Year</label>
+                                <input type="number" name="graduations[]" class="form-control" value="${graduations[i] || ''}" placeholder="e.g., 2020" min="1950" max="2030">
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label">Certificate Image</label>
+                                <input type="file" name="certificateImages[]" class="form-control" accept="image/png, image/jpeg, image/jpg, image/pdf">
+                                ${certificateUrls[i] ? `<div class="mt-1"><small>Current: <a href="${certificateUrls[i]}" target="_blank">View Image</a></small></div>` : ''}
+                            </div>
+                            <div class="col-12 mt-2">
+                                <label class="form-label">Description</label>
+                                <textarea name="educationDescriptions[]" class="form-control" rows="2" placeholder="Additional details about the education">${descriptions[i] || ''}</textarea>
+                            </div>
+                        </div>
+                    `;
+
+                    educationContainer.appendChild(educationItem);
+                }
+            }
         }
 
         // Initialize Bootstrap collapse
@@ -1452,3 +1523,4 @@
 </script>
 </body>
 </html>
+
