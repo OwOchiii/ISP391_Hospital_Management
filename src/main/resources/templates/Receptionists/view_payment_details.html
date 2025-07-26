@@ -267,8 +267,8 @@
         taxAmount: /*[[${invoiceData.taxAmount != null ? invoiceData.taxAmount : 0}]]*/ 0,
         discountAmount: /*[[${invoiceData.discountAmount != null ? invoiceData.discountAmount : 0}]]*/ 0,
 
-        // ✅ Lấy RefundReason trực tiếp từ Transaction table để extract Amount Received
-        refundReasonRaw: /*[[${invoiceData.refundReason != null ? invoiceData.refundReason : ''}]]*/ '',
+        // ✅ Lấy RefundReason trực tiếp từ Transaction table để extract Amount Received - sử dụng cách truy cập HashMap an toàn
+        refundReasonRaw: /*[[${invoiceData['refundReason'] != null ? invoiceData['refundReason'] : ''}]]*/ '',
 
         changeReturned: /*[[${invoiceData.changeReturned != null ? invoiceData.changeReturned : 0}]]*/ 0,
         notes: /*[[${invoiceData.notes != null ? invoiceData.notes : 'Payment completed successfully'}]]*/ 'Payment completed successfully',
