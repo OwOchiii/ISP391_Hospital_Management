@@ -767,6 +767,24 @@
 
   <!-- Content Area -->
   <div class="content-area">
+    <!-- Success flash -->
+    <div th:if="${successMessage}"
+         class="alert alert-success-custom alert-dismissible fade show"
+         role="alert">
+      <i class="bi bi-check-circle me-2"></i>
+      <span th:text="${successMessage}">Success text</span>
+      <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    </div>
+
+    <!-- Error flash -->
+    <div th:if="${errorMessage}"
+         class="alert alert-error-custom alert-dismissible fade show"
+         role="alert">
+      <i class="bi bi-exclamation-circle me-2"></i>
+      <span th:text="${errorMessage}">Error text</span>
+      <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    </div>
+
     <!-- New Receptionist Password Alert -->
     <div th:if="${newReceptionistPassword}" class="alert alert-info-custom alert-dismissible fade show" role="alert">
       <i class="bi bi-lock-fill me-2"></i>

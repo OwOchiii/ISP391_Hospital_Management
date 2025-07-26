@@ -869,15 +869,24 @@
                 </div>
             </div>
 
+            <!-- Stats Grid – Monthly Revenue -->
+            <!-- Stats Grid – Monthly Revenue -->
             <div class="stat-card">
                 <div class="stat-icon revenue">
                     <i class="bi bi-currency-dollar"></i>
                 </div>
                 <div class="stat-info">
-                    <div class="stat-value" th:text="${totalRevenue != null ? '$' + totalRevenue : '$0'}">$45,230</div>
+                    <div class="stat-value"
+                         th:text="${totalRevenue != null
+                    ? #numbers.formatDecimal(totalRevenue, 0, 0, 'COMMA') + ' VND'
+                    : '0 VND'}">
+                        0 VND
+                    </div>
                     <div class="stat-label">Monthly Revenue</div>
                 </div>
             </div>
+
+
 
             <div class="stat-card">
                 <div class="stat-icon doctors">
@@ -1085,14 +1094,29 @@
                 </div>
                 <div class="card-body">
                     <div class="management-summary">
+                        <!-- Management Grid – Revenue Overview (This Month) -->
                         <div class="summary-item">
-                            <div class="summary-value" th:text="${monthlyRevenue != null ? '$' + monthlyRevenue : '$0'}">$45,230</div>
+                            <div class="summary-value"
+                                 th:text="${monthlyRevenue != null
+                  ? #numbers.formatDecimal(monthlyRevenue, 0, 0, 'COMMA') + ' VND'
+                  : '0 VND'}">
+                                0 VND
+                            </div>
                             <div class="summary-label">This Month</div>
                         </div>
+
+
                         <div class="summary-item">
-                            <div class="summary-value" th:text="${yearlyRevenue != null ? '$' + yearlyRevenue : '$0'}">$485,670</div>
+                            <div class="summary-value"
+                                 th:text="${yearlyRevenue != null
+                  ? #numbers.formatDecimal(yearlyRevenue, 0, 0, 'COMMA') + ' VND'
+                  : '0 VND'}">
+                                0 VND
+                            </div>
                             <div class="summary-label">This Year</div>
                         </div>
+
+
                     </div>
                     <div class="card-actions">
                         <a th:href="@{/admin/statistics/revenue(adminId=${adminId})}" class="btn-admin-primary">

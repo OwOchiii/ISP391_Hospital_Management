@@ -65,15 +65,25 @@ public class AdminReceptionistController {
     @PostMapping("/{id}/toggleLock")
     public String toggleLockReceptionist(
             @PathVariable("id") Integer userId,
-            @RequestParam("adminId") Integer adminId) {
+            @RequestParam("adminId") Integer adminId,
+            RedirectAttributes ra) {
 
-        userService.findById(userId).ifPresent(u -> {
-            String newStatus = u.getStatus().equalsIgnoreCase("LOCKED") ? "ACTIVE" : "LOCKED";
+        userService.findById(userId).ifPresentOrElse(u -> {
+            String oldStatus = u.getStatus();
+            String newStatus = oldStatus.equalsIgnoreCase("LOCKED") ? "ACTIVE" : "LOCKED";
             u.setStatus(newStatus);
             userService.save(u);
+            ra.addFlashAttribute(
+                    "successMessage",
+                    "Receptionist “" + u.getFullName() + "” is now " + newStatus.toLowerCase() + "."
+            );
+        }, () -> {
+            ra.addFlashAttribute("errorMessage", "Receptionist not found (ID=" + userId + ").");
         });
 
-        return "redirect:/admin/receptionists?adminId=" + adminId + "&page=0&size=5";
+        return "redirect:/admin/receptionists"
+                + "?adminId=" + adminId
+                + "&page=0&size=" + 5;
     }
 
     @PostMapping("/save")
