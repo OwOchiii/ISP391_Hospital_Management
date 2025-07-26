@@ -1277,6 +1277,8 @@
             var inputPhone = form.querySelector('#phoneNumber');
             var inputBio = form.querySelector('#bioDescription');
             var selectStatus = form.querySelector('#status');
+            var currentImageContainer = form.querySelector('.profile-image-container');
+            var currentImageUrl = form.querySelector('#currentImageUrl');
 
             if (mode === 'add') {
                 modalTitle.textContent = 'Add New Doctor';
@@ -1286,6 +1288,40 @@
                 inputPhone.value = '';
                 inputBio.value = '';
                 selectStatus.value = 'ACTIVE';
+                
+                // Clear the profile image
+                currentImageUrl.value = '';
+
+                // Reset the image container to show "No profile image uploaded"
+                currentImageContainer.innerHTML = '<div class="alert alert-secondary">No profile image uploaded</div>';
+
+                // Reset education container to a single empty education form
+                educationContainer.innerHTML = `
+                    <div class="education-item mb-3">
+                        <div class="row g-2">
+                            <div class="col-md-6">
+                                <label class="form-label">Degree</label>
+                                <input type="text" name="degrees[]" class="form-control" placeholder="e.g., MD, PhD" required>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label">Institution</label>
+                                <input type="text" name="institutions[]" class="form-control" placeholder="e.g., Harvard Medical School" required>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label">Graduation Year</label>
+                                <input type="number" name="graduations[]" class="form-control" placeholder="e.g., 2020" min="1950" max="2030">
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label">Certificate Image</label>
+                                <input type="file" name="certificateImages[]" class="form-control" accept="image/png, image/jpeg, image/jpg, image/pdf">
+                            </div>
+                            <div class="col-12 mt-2">
+                                <label class="form-label">Description</label>
+                                <textarea name="educationDescriptions[]" class="form-control" rows="2" placeholder="Additional details about the education"></textarea>
+                            </div>
+                        </div>
+                    </div>
+                `;
             } else if (mode === 'edit') {
                 modalTitle.textContent = 'Edit Doctor';
                 inputId.value = button.getAttribute('data-id') || '';
