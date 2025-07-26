@@ -718,15 +718,15 @@
         </div>
         <div class="detail-item">
           <span class="detail-label">Tax Amount</span>
-          <span class="detail-value" th:text="'$' + ${#numbers.formatDecimal(receipt.taxAmount, 1, 2)}">$5.00</span>
+          <span class="detail-value" th:text="${#numbers.formatDecimal(receipt.taxAmount, 1, 2) + 'VND'}">$5.00</span>
         </div>
         <div class="detail-item">
           <span class="detail-label">Discount Amount</span>
-          <span class="detail-value" th:text="'$' + ${#numbers.formatDecimal(receipt.discountAmount, 1, 2)}">$10.00</span>
+          <span class="detail-value" th:text="${#numbers.formatDecimal(receipt.discountAmount, 1, 2) + 'VND'}">$10.00</span>
         </div>
         <div class="detail-item">
           <span class="detail-label">Total Amount</span>
-          <span class="detail-value" th:text="'$' + ${#numbers.formatDecimal(receipt.totalAmount, 1, 2)}">$95.00</span>
+          <span class="detail-value" th:text="${#numbers.formatDecimal(receipt.totalAmount, 1, 2) + 'VND'}">$95.00</span>
         </div>
       </div>
       <hr>

@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Payment Processing - MediCare Plus</title>
+
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Bootstrap Icons -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css">
+
+    <style>
+        :root {
+            --primary-color: #059669;
+            --secondary-color: #047857;
+            --light-green: #ecfdf5;
+            --text-dark: #1f2937;
+            --text-light: #6b7280;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background: linear-gradient(135deg, var(--light-green) 0%, #f0fdf4 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .processing-card {
+            background: white;
+            border-radius: 16px;
+            padding: 40px;
+            text-align: center;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.1);
+            max-width: 500px;
+            width: 100%;
+        }
+
+        .spinner {
+            width: 80px;
+            height: 80px;
+            border: 8px solid #f3f3f3;
+            border-top: 8px solid var(--primary-color);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 30px;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .processing-title {
+            color: var(--primary-color);
+            font-weight: 600;
+            margin-bottom: 20px;
+        }
+
+        .processing-text {
+            color: var(--text-light);
+            margin-bottom: 30px;
+        }
+
+        .btn-primary {
+            background: var(--primary-color);
+            border: none;
+            border-radius: 8px;
+            padding: 12px 30px;
+            font-weight: 600;
+        }
+
+        .btn-primary:hover {
+            background: var(--secondary-color);
+        }
+    </style>
+</head>
+<body>
+    <div class="processing-card">
+        <div class="spinner"></div>
+        <h2 class="processing-title">Processing Payment</h2>
+        <p class="processing-text">
+            Your payment is being processed. Please wait while we redirect you to the payment gateway.
+        </p>
+        <p class="small text-muted">
+            <i class="bi bi-info-circle me-1"></i>
+            Do not close this window or navigate away from this page.
+        </p>
+
+        <div class="mt-4">
+            <p><strong>Transaction ID:</strong> <span th:text="${param.transactionId}">TXN123456</span></p>
+            <p><strong>Payment Method:</strong> <span th:text="${param.method}" style="text-transform: uppercase;">VNPay</span></p>
+        </div>
+
+        <div class="mt-4">
+            <a href="/patient-legacy/dashboard" class="btn btn-outline-secondary">
+                <i class="bi bi-arrow-left me-2"></i>Back to Dashboard
+            </a>
+        </div>
+    </div>
+
+    <script>
+        // Auto redirect after 3 seconds for demo purposes
+        setTimeout(function() {
+            // In real implementation, this would redirect to actual payment gateway
+            const method = new URLSearchParams(window.location.search).get('method');
+            const transactionId = new URLSearchParams(window.location.search).get('transactionId');
+
+            if (method === 'vnpay') {
+                // Redirect to VNPay
+                alert('Redirecting to VNPay payment gateway...');
+            } else if (method === 'momo') {
+                // Redirect to MoMo
+                alert('Redirecting to MoMo payment...');
+            } else if (method === 'zalopay') {
+                // Redirect to ZaloPay
+                alert('Redirecting to ZaloPay...');
+            } else {
+                // Bank transfer
+                alert('Redirecting to bank payment...');
+            }
+
+            // For demo, redirect back to dashboard
+            window.location.href = '/patient-legacy/dashboard';
+        }, 3000);
+    </script>
+</body>
+</html>
+

@@ -534,32 +534,48 @@
                     </h3>
                     <div class="row g-4">
                         <div class="col-md-6">
-                            <label class="form-label">Street Address <span class="required">*</span></label>
-                            <input type="text" name="streetAddress" id="streetAddress" class="form-control" required>
-                            <div class="error-message d-none" id="streetAddressError">
-                                <i class="fas fa-exclamation-circle"></i>
-                                <span></span>
-                            </div>
-                        </div>
-                        <div class="col-md-6">
-                            <label class="form-label">City <span class="required">*</span></label>
-                            <input type="text" name="city" id="city" class="form-control" required>
-                            <div class="error-message d-none" id="cityError">
-                                <i class="fas fa-exclamation-circle"></i>
-                                <span></span>
-                            </div>
-                        </div>
-                        <div class="col-md-6">
                             <label class="form-label">Country <span class="required">*</span></label>
-                            <input type="text" name="country" id="country" class="form-control" required>
+                            <select name="country" id="country" class="form-select" required>
+                                <option value="">Select Country</option>
+                                <option value="Vietnam" selected>Vietnam</option>
+                                <option value="United States">United States</option>
+                                <option value="Japan">Japan</option>
+                                <option value="South Korea">South Korea</option>
+                                <option value="Singapore">Singapore</option>
+                                <option value="Thailand">Thailand</option>
+                                <option value="Malaysia">Malaysia</option>
+                                <option value="Other">Other</option>
+                            </select>
                             <div class="error-message d-none" id="countryError">
                                 <i class="fas fa-exclamation-circle"></i>
                                 <span></span>
                             </div>
                         </div>
                         <div class="col-md-6">
+                            <label class="form-label">City <span class="required">*</span></label>
+                            <select name="city" id="city" class="form-select" required>
+                                <option value="">Select City/Province</option>
+                            </select>
+                            <div class="error-message d-none" id="cityError">
+                                <i class="fas fa-exclamation-circle"></i>
+                                <span></span>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">Street Address <span class="required">*</span></label>
+                            <select name="streetAddress" id="streetAddress" class="form-select" required disabled>
+                                <option value="">Select District/Ward</option>
+                            </select>
+                            <div class="error-message d-none" id="streetAddressError">
+                                <i class="fas fa-exclamation-circle"></i>
+                                <span></span>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
                             <label class="form-label">Address Type <span class="required">*</span></label>
-                            <input type="text" name="addressType" id="addressType" class="form-control" required placeholder="e.g., Home, Work">
+                            <select name="addressType" id="addressType" class="form-select" required disabled>
+                                <option value="">Select Address Type</option>
+                            </select>
                             <div class="error-message d-none" id="addressTypeError">
                                 <i class="fas fa-exclamation-circle"></i>
                                 <span></span>
@@ -607,11 +623,11 @@
     dateOfBirthField.min = '1900-01-01';
     dateOfBirthField.max = new Date().toISOString().split('T')[0];
 
-    // Real-time validation for all fields
+    // Real-time validation for all fields - Updated to use AJAX for email and phone
     const formFields = [
         { id: 'fullName', validator: validateFullName },
-        { id: 'email', validator: validateEmail },
-        { id: 'phoneNumber', validator: validatePhoneNumber },
+        { id: 'email', validator: validateEmailWithAjax }, // Updated to use AJAX
+        { id: 'phoneNumber', validator: validatePhoneWithAjax }, // Updated to use AJAX
         { id: 'passwordHash', validator: validatePassword },
         { id: 'dateOfBirth', validator: validateDateOfBirth },
         { id: 'gender', validator: validateGender },
@@ -632,7 +648,7 @@
                 }
             });
 
-            // Validate on input (while user is typing) with debounce
+            // Enhanced validation on input with special handling for email and phone
             let timeoutId;
             element.addEventListener('input', () => {
                 // Clear previous validation states while typing
@@ -642,12 +658,15 @@
                 // Clear previous timeout
                 clearTimeout(timeoutId);
 
+                // For email and phone, use longer delay for AJAX calls
+                const delay = (field.id === 'email' || field.id === 'phoneNumber') ? 1000 : 500;
+
                 // Set new timeout to validate after user stops typing
                 timeoutId = setTimeout(() => {
                     if (element.value.trim()) {
                         field.validator(element.value, field.id);
                     }
-                }, 500); // 500ms delay after user stops typing
+                }, delay);
             });
 
             // Immediate validation for certain fields on change
@@ -802,8 +821,8 @@
     }
 
     function validateStreetAddress(value, fieldId) {
-        if (!value || value.trim().length < 5) {
-            showError(fieldId + 'Error', 'Please enter detailed address (minimum 5 characters)');
+        if (!value) {
+            showError(fieldId + 'Error', 'Please select district/ward');
             return false;
         }
         document.getElementById(fieldId).classList.add('is-valid');
@@ -811,12 +830,8 @@
     }
 
     function validateCity(value, fieldId) {
-        if (!value || value.trim().length < 2) {
-            showError(fieldId + 'Error', 'Please enter city name');
-            return false;
-        }
-        if (!/^[a-zA-ZÀ-ỹ\s]+$/.test(value)) {
-            showError(fieldId + 'Error', 'City name can only contain letters and spaces');
+        if (!value) {
+            showError(fieldId + 'Error', 'Please select a city/province');
             return false;
         }
         document.getElementById(fieldId).classList.add('is-valid');
@@ -824,12 +839,8 @@
     }
 
     function validateCountry(value, fieldId) {
-        if (!value || value.trim().length < 2) {
-            showError(fieldId + 'Error', 'Please enter country name');
-            return false;
-        }
-        if (!/^[a-zA-ZÀ-ỹ\s]+$/.test(value)) {
-            showError(fieldId + 'Error', 'Country name can only contain letters and spaces');
+        if (!value) {
+            showError(fieldId + 'Error', 'Please select country');
             return false;
         }
         document.getElementById(fieldId).classList.add('is-valid');
@@ -838,42 +849,149 @@
 
     function validateAddressType(value, fieldId) {
         if (!value) {
-            showError(fieldId + 'Error', 'Please enter address type (e.g., Home, Office)');
+            showError(fieldId + 'Error', 'Please select address type');
             return false;
         }
         document.getElementById(fieldId).classList.add('is-valid');
         return true;
     }
 
-    // Form validation
-    function validateForm() {
-        let isValid = true;
-        let firstErrorField = null;
+    // Real-time AJAX validation for email and phone
+    let emailValidationTimeout;
+    let phoneValidationTimeout;
 
-        // Clear previous errors
-        document.querySelectorAll('.error-message').forEach(el => el.classList.add('d-none'));
-        document.querySelectorAll('.form-control').forEach(el => {
-            el.classList.remove('is-invalid');
-            el.classList.remove('is-valid');
-        });
-
-        // Validate all fields
-        formFields.forEach(field => {
-            const element = document.getElementById(field.id);
-            if (element && !field.validator(element.value, field.id)) {
-                isValid = false;
-                if (!firstErrorField) {
-                    firstErrorField = element;
-                }
-            }
-        });
-
-        // Show general error message if validation fails
-        if (!isValid) {
-            showGeneralErrorMessage('Please check and fill in all required fields marked with (*)', firstErrorField);
+    // Enhanced email validation with AJAX check
+    function validateEmailWithAjax(value, fieldId) {
+        // Clear previous timeout
+        if (emailValidationTimeout) {
+            clearTimeout(emailValidationTimeout);
         }
 
-        return isValid;
+        // First validate format
+        if (!value || value.trim().length === 0) {
+            showError(fieldId + 'Error', 'Please enter email address');
+            return false;
+        }
+
+        if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value)) {
+            showError(fieldId + 'Error', 'Please enter a valid email format (e.g., name@example.com)');
+            return false;
+        }
+
+        // Show loading state
+        const emailField = document.getElementById(fieldId);
+        const originalBorder = emailField.style.border;
+        emailField.style.border = '2px solid #fbbf24'; // Yellow for loading
+
+        // Set timeout for AJAX call to avoid too many requests
+        emailValidationTimeout = setTimeout(() => {
+            fetch('/receptionist/api/check-email?email=' + encodeURIComponent(value.trim().toLowerCase()), {
+                method: 'GET',
+                headers: {
+                    'Content-Type': 'application/json',
+                }
+            })
+            .then(response => response.json())
+            .then(data => {
+                emailField.style.border = originalBorder; // Reset border
+
+                if (data.exists) {
+                    // Email already exists
+                    showError(fieldId + 'Error', data.message || 'This email address is already registered');
+                    emailField.classList.add('is-invalid');
+                    emailField.classList.remove('is-valid');
+                    return false;
+                } else if (data.valid) {
+                    // Email is available and valid
+                    clearError(fieldId + 'Error');
+                    emailField.classList.add('is-valid');
+                    emailField.classList.remove('is-invalid');
+                    return true;
+                } else {
+                    // Invalid format or other error
+                    showError(fieldId + 'Error', data.message || 'Invalid email format');
+                    emailField.classList.add('is-invalid');
+                    emailField.classList.remove('is-valid');
+                    return false;
+                }
+            })
+            .catch(error => {
+                console.error('Error checking email:', error);
+                emailField.style.border = originalBorder;
+                // Don't show error for network issues, just clear validation states
+                emailField.classList.remove('is-invalid', 'is-valid');
+                clearError(fieldId + 'Error');
+            });
+        }, 800); // 800ms delay after user stops typing
+
+        return true; // Return true for now, actual validation happens in async call
+    }
+
+    // Enhanced phone validation with AJAX check
+    function validatePhoneWithAjax(value, fieldId) {
+        // Clear previous timeout
+        if (phoneValidationTimeout) {
+            clearTimeout(phoneValidationTimeout);
+        }
+
+        // First validate format
+        if (!value || value.trim().length === 0) {
+            showError(fieldId + 'Error', 'Please enter phone number');
+            return false;
+        }
+
+        if (!/^(0[3|5|7|8|9])+([0-9]{8})$/.test(value)) {
+            showError(fieldId + 'Error', 'Please enter a valid phone number (10 digits, starting with 03, 05, 07, 08, 09)');
+            return false;
+        }
+
+        // Show loading state
+        const phoneField = document.getElementById(fieldId);
+        const originalBorder = phoneField.style.border;
+        phoneField.style.border = '2px solid #fbbf24'; // Yellow for loading
+
+        // Set timeout for AJAX call to avoid too many requests
+        phoneValidationTimeout = setTimeout(() => {
+            fetch('/receptionist/api/check-phone?phoneNumber=' + encodeURIComponent(value.trim()), {
+                method: 'GET',
+                headers: {
+                    'Content-Type': 'application/json',
+                }
+            })
+            .then(response => response.json())
+            .then(data => {
+                phoneField.style.border = originalBorder; // Reset border
+
+                if (data.exists) {
+                    // Phone already exists
+                    showError(fieldId + 'Error', data.message || 'This phone number is already registered');
+                    phoneField.classList.add('is-invalid');
+                    phoneField.classList.remove('is-valid');
+                    return false;
+                } else if (data.valid) {
+                    // Phone is available and valid
+                    clearError(fieldId + 'Error');
+                    phoneField.classList.add('is-valid');
+                    phoneField.classList.remove('is-invalid');
+                    return true;
+                } else {
+                    // Invalid format or other error
+                    showError(fieldId + 'Error', data.message || 'Invalid phone number format');
+                    phoneField.classList.add('is-invalid');
+                    phoneField.classList.remove('is-valid');
+                    return false;
+                }
+            })
+            .catch(error => {
+                console.error('Error checking phone:', error);
+                phoneField.style.border = originalBorder;
+                // Don't show error for network issues, just clear validation states
+                phoneField.classList.remove('is-invalid', 'is-valid');
+                clearError(fieldId + 'Error');
+            });
+        }, 800); // 800ms delay after user stops typing
+
+        return true; // Return true for now, actual validation happens in async call
     }
 
     function showError(elementId, message) {
@@ -927,6 +1045,43 @@
                 alertElement.classList.add('d-none');
             }
         }, 5000);
+    }
+
+    // Function to validate form before submission
+    function validateForm() {
+        let isValid = true;
+        let firstErrorField = null;
+
+        // Validate all fields
+        formFields.forEach(field => {
+            const element = document.getElementById(field.id);
+            if (element && element.value.trim()) {
+                if (!field.validator(element.value, field.id)) {
+                    isValid = false;
+                    if (!firstErrorField) {
+                        firstErrorField = element;
+                    }
+                }
+            } else if (element) {
+                // Check if field is required
+                if (element.hasAttribute('required')) {
+                    showError(field.id + 'Error', 'This field is required');
+                    element.classList.add('is-invalid');
+                    element.classList.remove('is-valid');
+                    isValid = false;
+                    if (!firstErrorField) {
+                        firstErrorField = element;
+                    }
+                }
+            }
+        });
+
+        // Show general error message if validation fails
+        if (!isValid) {
+            showGeneralErrorMessage('Please check and fill in all required fields marked with (*)', firstErrorField);
+        }
+
+        return isValid;
     }
 
     // Form submission
@@ -1018,11 +1173,19 @@
                             }
                             return jsonData;
                         } catch (parseError) {
-                            // If not JSON, it's likely HTML error page
+                            // If not JSON, it's likely HTML error page or plain text error
                             if (text.includes('<!DOCTYPE') || text.includes('<html>')) {
                                 throw new Error(`Server error (${response.status}): Please check server logs for details`);
                             } else {
-                                throw new Error(text || `Server error: ${response.status}`);
+                                // Handle specific error messages
+                                const errorMessage = text.trim();
+                                if (errorMessage === 'Email already exists') {
+                                    throw new Error('This email address is already registered. Please use a different email or contact support if this is your email.');
+                                } else if (errorMessage === 'Phone number already exists') {
+                                    throw new Error('This phone number is already registered. Please use a different phone number or contact support if this is your phone.');
+                                } else {
+                                    throw new Error(errorMessage || `Server error: ${response.status}`);
+                                }
                             }
                         }
                     });
@@ -1033,28 +1196,72 @@
                     showSuccessMessage(data.message);
                     resetForm();
                 } else {
-                    alert('Error: ' + (data.message || 'Registration failed'));
+                    // Handle specific error cases
+                    const errorMsg = data.message || 'Registration failed';
+                    if (errorMsg.includes('Email already exists') || errorMsg.includes('email')) {
+                        showFieldError('email', 'This email address is already registered. Please use a different email.');
+                        scrollToField('email');
+                    } else if (errorMsg.includes('Phone number already exists') || errorMsg.includes('phone')) {
+                        showFieldError('phoneNumber', 'This phone number is already registered. Please use a different phone number.');
+                        scrollToField('phoneNumber');
+                    } else {
+                        showGeneralErrorMessage(errorMsg);
+                    }
                 }
             })
             .catch(error => {
                 console.error('Error:', error);
 
-                // More user-friendly error messages
+                // More user-friendly error messages with specific field highlighting
                 let errorMessage = error.message;
-                if (errorMessage.includes('Server error (500)')) {
+
+                if (errorMessage.includes('email') && errorMessage.includes('already')) {
+                    showFieldError('email', 'This email address is already registered. Please use a different email.');
+                    scrollToField('email');
+                } else if (errorMessage.includes('phone') && errorMessage.includes('already')) {
+                    showFieldError('phoneNumber', 'This phone number is already registered. Please use a different phone number.');
+                    scrollToField('phoneNumber');
+                } else if (errorMessage.includes('Server error (500)')) {
                     errorMessage = 'Server error occurred. Please check if all required fields are filled correctly and try again.';
+                    showGeneralErrorMessage(errorMessage);
                 } else if (errorMessage.includes('Server error (401)')) {
                     errorMessage = 'Authentication required. Please refresh the page and login again.';
+                    showGeneralErrorMessage(errorMessage);
                 } else if (errorMessage.includes('Server error (403)')) {
                     errorMessage = 'Access denied. You do not have permission to register patients.';
+                    showGeneralErrorMessage(errorMessage);
+                } else {
+                    showGeneralErrorMessage('Error registering patient: ' + errorMessage);
                 }
-
-                alert('Error registering patient: ' + errorMessage);
 
                 if (mainContent) {
                     mainContent.classList.remove('loading');
                 }
             });
+        }
+    }
+
+    // Helper function to show field-specific errors
+    function showFieldError(fieldId, message) {
+        const field = document.getElementById(fieldId);
+        const errorElement = document.getElementById(fieldId + 'Error');
+
+        if (field && errorElement) {
+            field.classList.add('is-invalid');
+            field.classList.remove('is-valid');
+            errorElement.querySelector('span').textContent = message;
+            errorElement.classList.remove('d-none');
+        }
+    }
+
+    // Helper function to scroll to a specific field
+    function scrollToField(fieldId) {
+        const field = document.getElementById(fieldId);
+        if (field) {
+            field.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            setTimeout(() => {
+                field.focus();
+            }, 500);
         }
     }
 
@@ -1094,7 +1301,175 @@
         document.querySelectorAll('.error-message').forEach(el => {
             el.classList.add('d-none');
         });
+
+        // Hide general error alert if exists
+        const generalAlert = document.getElementById('generalErrorAlert');
+        if (generalAlert) {
+            generalAlert.classList.add('d-none');
+        }
+
+        // Reset address dropdowns
+        citySelect.innerHTML = '<option value="">Select City/Province</option>';
+        streetAddressSelect.innerHTML = '<option value="">Select District/Ward</option>';
+        addressTypeSelect.innerHTML = '<option value="">Select Address Type</option>';
+        citySelect.disabled = true;
+        streetAddressSelect.disabled = true;
+        addressTypeSelect.disabled = true;
+
+        // Trigger country change to reload provinces if Vietnam is selected
+        if (countrySelect.value === 'Vietnam') {
+            countrySelect.dispatchEvent(new Event('change'));
+        }
     }
+
+    // Vietnamese address API integration
+    const countrySelect = document.getElementById('country');
+    const citySelect = document.getElementById('city');
+    const streetAddressSelect = document.getElementById('streetAddress');
+    const addressTypeSelect = document.getElementById('addressType');
+
+    // When country changes, load provinces/cities
+    countrySelect.addEventListener('change', function() {
+        const country = this.value;
+        citySelect.innerHTML = '<option value="">Select City/Province</option>';
+        streetAddressSelect.innerHTML = '<option value="">Select District/Ward</option>';
+        addressTypeSelect.innerHTML = '<option value="">Select Address Type</option>';
+        citySelect.disabled = true;
+        streetAddressSelect.disabled = true;
+        addressTypeSelect.disabled = true;
+
+        if (country === 'Vietnam') {
+            // Fetch provinces from Vietnamese API
+            fetch('https://provinces.open-api.vn/api/p')
+                .then(response => response.json())
+                .then(data => {
+                    if (Array.isArray(data)) {
+                        data.forEach(province => {
+                            const option = document.createElement('option');
+                            option.value = province.name; // Changed from province.code to province.name
+                            option.textContent = province.name;
+                            option.dataset.provinceId = province.code;
+                            citySelect.appendChild(option);
+                        });
+                        citySelect.disabled = false;
+                    }
+                })
+                .catch(error => console.error('Error fetching provinces:', error));
+        } else if (country) {
+            // For other countries, add some example cities
+            const cities = {
+                'United States': ['New York', 'Los Angeles', 'Chicago', 'Houston', 'Phoenix'],
+                'Japan': ['Tokyo', 'Osaka', 'Kyoto', 'Hiroshima', 'Sapporo'],
+                'South Korea': ['Seoul', 'Busan', 'Incheon', 'Daegu', 'Daejeon'],
+                'Singapore': ['Singapore'],
+                'Thailand': ['Bangkok', 'Chiang Mai', 'Phuket', 'Pattaya'],
+                'Malaysia': ['Kuala Lumpur', 'George Town', 'Johor Bahru', 'Malacca City']
+            };
+
+            if (cities[country]) {
+                cities[country].forEach(city => {
+                    const option = document.createElement('option');
+                    option.value = city;
+                    option.textContent = city;
+                    citySelect.appendChild(option);
+                });
+                citySelect.disabled = false;
+            }
+        }
+    });
+
+    // When city changes, load districts/wards for Vietnam
+    citySelect.addEventListener('change', function() {
+        const cityValue = this.value;
+        const provinceId = this.options[this.selectedIndex]?.dataset?.provinceId;
+        streetAddressSelect.innerHTML = '<option value="">Select District/Ward</option>';
+        addressTypeSelect.innerHTML = '<option value="">Select Address Type</option>';
+        streetAddressSelect.disabled = true;
+        addressTypeSelect.disabled = true;
+
+        if (countrySelect.value === 'Vietnam' && provinceId) {
+            // Fetch districts for Vietnamese provinces
+            fetch(`https://provinces.open-api.vn/api/p/${provinceId}?depth=2`)
+                .then(response => response.json())
+                .then(data => {
+                    if (data && data.districts) {
+                        data.districts.forEach(district => {
+                            const option = document.createElement('option');
+                            option.value = district.name; // Changed from district.code to district.name
+                            option.textContent = district.name;
+                            option.dataset.districtId = district.code;
+                            streetAddressSelect.appendChild(option);
+                        });
+                        streetAddressSelect.disabled = false;
+                    }
+                })
+                .catch(error => console.error('Error fetching districts:', error));
+        } else if (cityValue) {
+            // For non-Vietnam countries, add generic districts
+            const districts = ['District 1', 'District 2', 'District 3', 'Central District', 'Business District'];
+            districts.forEach(district => {
+                const option = document.createElement('option');
+                option.value = district;
+                option.textContent = district;
+                streetAddressSelect.appendChild(option);
+            });
+            streetAddressSelect.disabled = false;
+        }
+    });
+
+    // When street address (district) changes, load wards for Vietnam
+    streetAddressSelect.addEventListener('change', function() {
+        const districtValue = this.value;
+        const districtId = this.options[this.selectedIndex]?.dataset?.districtId;
+        addressTypeSelect.innerHTML = '<option value="">Select Address Type</option>';
+        addressTypeSelect.disabled = true;
+
+        if (countrySelect.value === 'Vietnam' && districtId) {
+            // Fetch wards for Vietnamese districts
+            fetch(`https://provinces.open-api.vn/api/d/${districtId}?depth=2`)
+                .then(response => response.json())
+                .then(data => {
+                    if (data && data.wards) {
+                        data.wards.forEach(ward => {
+                            const option = document.createElement('option');
+                            option.value = ward.name;
+                            option.textContent = ward.name;
+                            addressTypeSelect.appendChild(option);
+                        });
+                        addressTypeSelect.disabled = false;
+                    }
+                })
+                .catch(error => console.error('Error fetching wards:', error));
+        } else if (districtValue) {
+            // For non-Vietnam countries, add address types
+            const addressTypes = ['Residential', 'Commercial', 'Office', 'Apartment', 'Condominium'];
+            addressTypes.forEach(type => {
+                const option = document.createElement('option');
+                option.value = type;
+                option.textContent = type;
+                addressTypeSelect.appendChild(option);
+            });
+            addressTypeSelect.disabled = false;
+        }
+    });
+
+    // Trigger initial load if Vietnam is selected by default
+    if (countrySelect.value === 'Vietnam') {
+        countrySelect.dispatchEvent(new Event('change'));
+    }
+
+    // Form submission handler - simplified to use actual address names
+    document.getElementById('patientForm').addEventListener('submit', function(event) {
+        event.preventDefault(); // Prevent default submission
+
+        // Validate form first
+        if (validateForm()) {
+            // Show confirmation popup
+            document.getElementById('confirmationOverlay').classList.add('active');
+        } else {
+            console.log('Form validation failed');
+        }
+    });
 </script>
 </body>
 </html>

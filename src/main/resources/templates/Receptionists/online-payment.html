@@ -1,0 +1,1380 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Online Payment - MediCare Plus</title>
+
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Bootstrap Icons -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css">
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css">
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+
+    <style>
+        :root {
+            --primary-color: #059669;
+            --secondary-color: #047857;
+            --accent-color: #10b981;
+            --light-green: #ecfdf5;
+            --dark-green: #064e3b;
+            --text-dark: #1f2937;
+            --text-light: #6b7280;
+            --text-muted: #9ca3af;
+            --bg-light: #f8fafc;
+            --bg-white: #ffffff;
+            --success-color: #22c55e;
+            --warning-color: #f59e0b;
+            --error-color: #ef4444;
+            --border-color: #e5e7eb;
+            --vnpay-color: #0066cc;
+            --momo-color: #d82d8b;
+            --zalo-color: #0180c7;
+            --blue-primary: #1E3A8A;
+            --blue-secondary: #3B82F6;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            line-height: 1.6;
+            color: var(--text-dark);
+            background: linear-gradient(135deg, var(--light-green) 0%, #f0fdf4 100%);
+            min-height: 100vh;
+        }
+
+        .payment-container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        .payment-header {
+            background: var(--bg-white);
+            border-radius: 16px;
+            padding: 30px;
+            margin-bottom: 30px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+            border: 1px solid var(--border-color);
+        }
+
+        .payment-header h1 {
+            color: #007bff;
+            font-weight: 700;
+            margin-bottom: 10px;
+        }
+
+        .breadcrumb-nav {
+            background: transparent;
+            padding: 0;
+            margin-bottom: 20px;
+        }
+
+        .breadcrumb-nav .breadcrumb-item a {
+            color: var(--primary-color);
+            text-decoration: none;
+        }
+
+        .payment-content {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+            min-height: calc(100vh - 150px);
+        }
+
+        .payment-form {
+            background: var(--bg-white);
+            border-radius: 16px;
+            padding: 25px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+            border: 1px solid var(--border-color);
+            height: fit-content;
+        }
+
+        .section-title {
+            font-size: 1.5rem;
+            font-weight: 700;
+            margin-bottom: 1.5rem;
+            color: #007bff;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .payment-method-card {
+            background: var(--bg-light);
+            border-radius: 12px;
+            border: 1px solid var(--border-color);
+            margin-bottom: 16px;
+            overflow: hidden;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .payment-method-card:hover {
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+            border-color: var(--primary-color);
+        }
+
+        .payment-method-card input[type="radio"] {
+            display: none;
+        }
+
+        .payment-method-content {
+            padding: 16px;
+            display: flex;
+            align-items: center;
+            gap: 16px;
+        }
+
+        .payment-method-icon {
+            width: 50px;
+            height: 50px;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            color: white;
+            background-size: contain;
+            background-repeat: no-repeat;
+            background-position: center;
+        }
+
+        .vnpay-icon {
+            background-color: var(--vnpay-color);
+            background-image: url('https://stcd02206177151.cloud.edgevnpay.vn/assets/images/logo-icon/logo-primary.svg');
+        }
+
+        .momo-icon {
+            background-color: var(--momo-color);
+            background-image: url('https://developers.momo.vn/v3/assets/images/logo.png');
+        }
+
+        .zalo-icon {
+            background-color: var(--zalo-color);
+            background-image: url('https://stc-developers.zalopay.vn/images/logo-zalopay.svg');
+        }
+
+        .payment-method-info h5 {
+            margin-bottom: 4px;
+            font-weight: 600;
+            font-size: 1rem;
+        }
+
+        .payment-method-info p {
+            margin-bottom: 0;
+            font-size: 0.875rem;
+            color: var(--text-light);
+        }
+
+        .payment-method-details {
+            padding: 0;
+            height: 0;
+            overflow: hidden;
+            transition: all 0.3s ease;
+        }
+
+        .payment-method-card.selected .payment-method-details {
+            padding: 16px;
+            height: auto;
+            border-top: 1px solid var(--border-color);
+        }
+
+        .payment-method-card.selected {
+            border-color: var(--primary-color);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        }
+
+        .payment-method-card.selected .bi-check-circle {
+            display: inline-block !important;
+        }
+
+        .qr-code-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 16px 0;
+        }
+
+        .qr-code-placeholder {
+            width: 150px;
+            height: 150px;
+            background-color: var(--bg-light);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 8px;
+            margin-bottom: 12px;
+        }
+
+        .security-notice {
+            margin-top: 24px;
+            padding: 16px;
+            background-color: var(--light-green);
+            border-radius: 12px;
+            color: var(--dark-green);
+        }
+
+        /* Invoice Styles */
+        .invoice-container {
+            background: var(--bg-white);
+            border-radius: 16px;
+            padding: 25px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+            border: 1px solid var(--border-color);
+            height: 100%;
+            overflow-y: auto;
+            max-height: 90vh;
+        }
+
+        .invoice-header {
+            background: linear-gradient(to right, var(--blue-primary), var(--blue-secondary));
+            color: white;
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .hospital-info {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .hospital-logo {
+            width: 60px;
+            height: 60px;
+            background: white;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--blue-secondary);
+            font-size: 24px;
+            font-weight: bold;
+        }
+
+        .barcode-placeholder {
+            font-family: 'Courier New', Courier, monospace;
+            letter-spacing: 4px;
+            padding: 8px 12px;
+            display: inline-block;
+            font-size: 14px;
+            background: rgba(255, 255, 255, 0.2);
+            border-radius: 4px;
+        }
+
+        .invoice-section {
+            margin-bottom: 24px;
+        }
+
+        .invoice-section-title {
+            background: linear-gradient(to right, var(--blue-primary), var(--blue-secondary));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            font-size: 1.5rem;
+            font-weight: 700;
+            margin-bottom: 15px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .invoice-section-title i {
+            color: var(--blue-secondary);
+            -webkit-text-fill-color: var(--blue-secondary);
+        }
+
+        .info-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+            background: var(--bg-light);
+            padding: 15px;
+            border-radius: 8px;
+        }
+
+        .info-item {
+            margin-bottom: 8px;
+            font-size: 0.9rem;
+        }
+
+        .info-label {
+            font-weight: 600;
+            color: var(--text-dark);
+        }
+
+        .services-table {
+            width: 100%;
+            border-collapse: separate;
+            border-spacing: 0;
+            font-size: 0.9rem;
+        }
+
+        .services-table th, .services-table td {
+            border: 1px solid var(--border-color);
+            padding: 10px;
+        }
+
+        .services-table th {
+            background: #EFF6FF;
+            color: var(--blue-primary);
+            font-weight: 600;
+        }
+
+        .services-table tr:nth-child(even) {
+            background: #F9FAFB;
+        }
+
+        .payment-details {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+            background: var(--bg-light);
+            padding: 20px;
+            border-radius: 8px;
+        }
+
+        .payment-info p {
+            margin-bottom: 10px;
+            font-size: 0.9rem;
+        }
+
+        .payment-controls label {
+            display: block;
+            font-weight: 600;
+            margin-bottom: 5px;
+            font-size: 0.9rem;
+        }
+
+        .payment-controls select,
+        .payment-controls input,
+        .payment-controls textarea {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            margin-bottom: 15px;
+            font-size: 0.9rem;
+        }
+
+        .terms {
+            background: var(--bg-light);
+            padding: 15px;
+            border-radius: 8px;
+            font-size: 0.85rem;
+            color: var(--text-light);
+        }
+
+        .terms p {
+            margin-bottom: 6px;
+        }
+
+        .invoice-footer {
+            border-top: 2px solid var(--blue-secondary);
+            padding-top: 15px;
+            text-align: center;
+            font-size: 0.85rem;
+            color: var(--text-light);
+            margin-top: 20px;
+        }
+
+        .action-buttons {
+            margin-top: 20px;
+            text-align: center;
+        }
+
+        .payment-btn {
+            background: var(--success-color);
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 8px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .payment-btn:hover {
+            background: #16a34a;
+            transform: translateY(-2px);
+        }
+
+        .status-pending {
+            color: var(--warning-color);
+            font-weight: 600;
+        }
+
+        .status-paid {
+            color: var(--success-color);
+            font-weight: 600;
+        }
+
+        /* Modal Styles */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.5);
+            z-index: 1000;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .modal-content {
+            background: white;
+            padding: 24px;
+            border-radius: 16px;
+            max-width: 500px;
+            width: 90%;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
+        }
+
+        /* Loading Overlay */
+        .loading-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(255, 255, 255, 0.9);
+            display: none;
+            justify-content: center;
+            align-items: center;
+            z-index: 9999;
+        }
+
+        .loading-spinner {
+            text-align: center;
+        }
+
+        .spinner-border {
+            color: var(--primary-color);
+        }
+
+        /* Responsive */
+        @media (max-width: 1200px) {
+            .payment-content {
+                grid-template-columns: 1fr;
+                gap: 30px;
+            }
+
+            .invoice-container {
+                max-height: none;
+                height: auto;
+            }
+
+            .payment-details {
+                grid-template-columns: 1fr;
+            }
+
+            .info-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+<div class="loading-overlay" id="loadingOverlay">
+    <div class="loading-spinner">
+        <div class="spinner-border" role="status">
+            <span class="visually-hidden">Loading...</span>
+        </div>
+        <div class="mt-3">
+            <h5>Đang xử lý thanh toán...</h5>
+            <p class="text-muted">Vui lòng không đóng trang này</p>
+        </div>
+    </div>
+</div>
+
+<div class="payment-container">
+    <!-- Header -->
+    <div class="payment-header">
+        <nav class="breadcrumb-nav">
+            <ol class="breadcrumb">
+                <li class="breadcrumb-item"><a href="/receptionist/dashboard">Dashboard</a></li>
+                <li class="breadcrumb-item"><a href="/receptionist/payments">Payments</a></li>
+                <li class="breadcrumb-item active">Online Payment</li>
+            </ol>
+        </nav>
+        <h1><i class="bi bi-credit-card-2-front me-2"></i>Online Payment</h1>
+        <p class="text-muted mb-0">Complete your appointment payment securely</p>
+    </div>
+
+    <div class="payment-content">
+        <!-- Payment Form (Left Side) -->
+        <div class="payment-form">
+            <h3 class="section-title">
+                <i class="bi bi-wallet2"></i>
+                Choose Payment Method
+            </h3>
+
+            <form id="paymentForm" th:action="@{/receptionist/process-online-payment}" method="POST">
+                <input type="hidden" name="appointmentId" th:value="${appointmentId}">
+                <input type="hidden" name="patientId" th:value="${patientId}">
+                <input type="hidden" name="amount" th:value="${totalAmount}">
+                <input type="hidden" name="customerName" th:value="${invoiceData.fullName}">
+                <input type="hidden" name="customerPhone" th:value="${invoiceData.contact}">
+                <input type="hidden" name="customerEmail" th:value="${invoiceData.email}">
+                <input type="hidden" name="notes" id="hiddenNotes">
+
+                <!-- VNPay -->
+                <div class="payment-method-card" onclick="selectPaymentMethod('vnpay')">
+                    <input type="radio" name="paymentMethod" value="vnpay" id="vnpay">
+                    <div class="payment-method-content">
+                        <div class="payment-method-icon vnpay-icon">
+                            VNP
+                        </div>
+                        <div class="payment-method-info">
+                            <h5>VNPay</h5>
+                            <p>Pay with VNPay wallet or linked bank cards</p>
+                        </div>
+                        <div class="ms-auto">
+                            <i class="bi bi-check-circle text-success" style="display: none;"></i>
+                        </div>
+                    </div>
+                    <div class="payment-method-details">
+                        <div class="alert alert-info">
+                            <i class="bi bi-info-circle me-2"></i>
+                            You will be redirected to VNPay gateway to complete the payment
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Action Buttons -->
+                <div class="d-flex gap-3 mt-4">
+                    <button type="button" class="btn btn-outline-secondary" onclick="history.back()">
+                        <i class="bi bi-arrow-left me-2"></i>Back
+                    </button>
+                    <button type="submit" class="btn btn-primary flex-fill" id="paymentButton" disabled>
+                        <i class="bi bi-shield-lock me-2"></i>Proceed to Payment
+                    </button>
+                </div>
+
+                <div class="security-notice">
+                    <div class="d-flex align-items-start gap-3">
+                        <i class="bi bi-shield-check fs-4"></i>
+                        <div>
+                            <h6 class="mb-1">Secure Payment</h6>
+                            <p class="mb-0 small">Your payment information is encrypted and secure. We do not store your payment details.</p>
+                        </div>
+                    </div>
+                </div>
+            </form>
+        </div>
+
+        <!-- Payment Summary/Invoice (Right Side) -->
+        <div class="invoice-container">
+            <!-- Header -->
+            <div class="invoice-header">
+                <div class="hospital-info">
+                    <div class="hospital-logo">
+                        <i class="fas fa-hospital"></i>
+                    </div>
+                    <div>
+                        <h2>MediCare Plus</h2>
+                        <p class="mb-0">Tax Code: 123456789-0</p>
+                        <p class="mb-0">123 Lang Street, Dong Da, Hanoi</p>
+                    </div>
+                </div>
+                <div class="text-end">
+                    <h3>INVOICE</h3>
+                    <p class="mb-0">Receipt: <span th:text="${invoiceData.receiptNumber}">REC20250529001</span></p>
+                    <p class="mb-0">Date: <span th:text="${#temporals.format(#temporals.createNow(), 'MMMM dd, yyyy', #locale.ENGLISH)}">July 15, 2025</span></p>
+                    <div class="barcode-placeholder mt-2" th:text="${invoiceData.receiptNumber}">REC20250529001</div>
+                </div>
+            </div>
+
+            <!-- Patient Information -->
+            <div class="invoice-section">
+                <h3 class="invoice-section-title">
+                    <i class="fas fa-user"></i> Patient Information
+                </h3>
+                <div class="info-grid">
+                    <div>
+                        <p class="info-item"><span class="info-label">Patient ID:</span> <span th:text="${invoiceData.patientId}">PAT123456</span></p>
+                        <p class="info-item"><span class="info-label">Full Name:</span> <span th:text="${invoiceData.fullName}">John Doe</span></p>
+                        <p class="info-item"><span class="info-label">Date of Birth:</span> <span th:text="${invoiceData.dateOfBirth}">01/01/1990</span></p>
+                        <p class="info-item"><span class="info-label">Gender:</span> <span th:text="${invoiceData.gender}">Male</span></p>
+                    </div>
+                    <div>
+                        <p class="info-item"><span class="info-label">Appointment ID:</span> <span th:text="${invoiceData.appointmentId}">APP789012</span></p>
+                        <p class="info-item"><span class="info-label">Payer Name:</span> <span th:text="${invoiceData.payerName}">John Doe</span></p>
+                        <p class="info-item"><span class="info-label">Contact:</span> <span th:text="${invoiceData.contact}">(+84) 901 234 567</span></p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Services Used -->
+            <div class="invoice-section">
+                <h3 class="invoice-section-title">
+                    <i class="fas fa-list-ul"></i> Services Used
+                </h3>
+                <div class="table-responsive">
+                    <table class="services-table">
+                        <thead>
+                        <tr>
+                            <th>Service ID</th>
+                            <th>Service Name</th>
+                            <th>Symptom</th>
+                            <th>Qty</th>
+                                <th>Price (đ)</th>
+                            <th>Tax (%)</th>
+                            <th>Total (đ)</th>
+                            <th>Date</th>
+                        </tr>
+                        </thead>
+                        <tbody>
+                        <!-- Data will be populated from Service and Specialization tables -->
+                        <tr th:each="service : ${invoiceData.servicesUsed}">
+                            <!-- Service ID from Service table [ServiceID] -->
+                            <td class="py-3 px-4" th:text="${service.serviceId}">SRV001</td>
+                            <!-- Service Name from Service table [ServiceName] -->
+                            <td class="py-3 px-4" th:text="${service.serviceName}">General Consultation</td>
+                            <!-- Symptom from Specialization table [Symptom] based on SpecID -->
+                            <td class="py-3 px-4" th:text="${service.symptom}">General Medicine</td>
+                            <!-- Quantity: count of Service Name occurrences -->
+                            <td class="py-3 px-4" th:text="${service.quantity}">1</td>
+                            <!-- Price from Service table [Price] -->
+                            <td class="py-3 px-4" th:text="${#numbers.formatDecimal(service.price, 0, 0)}">300,000</td>
+                            <!-- Tax percentage (10% standard) -->
+                            <td class="py-3 px-4" th:text="${service.taxPercent}">10</td>
+                            <!-- Total = Price * Quantity * (1 + Tax%) -->
+                            <td class="py-3 px-4 font-semibold" th:text="${#numbers.formatDecimal(service.total, 0, 0)}">330,000</td>
+                            <!-- Service date -->
+                            <td class="py-3 px-4" th:text="${service.date}">2025-07-15</td>
+                        </tr>
+                        <tr class="fw-bold" style="background-color: #EFF6FF;">
+                            <td colspan="6" class="text-end">SubTotal:</td>
+                            <td colspan="2" id="servicesSubTotal" th:text="${invoiceData.totalAmount != null ? #numbers.formatDecimal(invoiceData.totalAmount, 3, 0) + ' ₫' : ' ₫'}">0 ₫</td>
+                        </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Payment Section -->
+            <div class="invoice-section">
+                <h3 class="invoice-section-title">
+                    <i class="fas fa-wallet"></i> Payment & Receipt
+                </h3>
+                <div class="payment-details">
+                    <div class="payment-info">
+                        <p><span class="info-label">Transaction ID:</span> <span th:text="${invoiceData.transactionId}">TRX20250529001</span></p>
+                        <p><span class="info-label">Receipt Number:</span> <span th:text="${invoiceData.receiptNumber}">REC20250529001</span></p>
+                        <p><span class="info-label">Total Amount:</span> <span id="calculatedTotalAmount">0</span> ₫</p>
+                        <p><span class="info-label">Tax Amount:</span> <span id="calculatedTaxAmount">0</span> ₫</p>
+                        <p><span class="info-label">Discount:</span> <span id="calculatedDiscountAmount">0</span> ₫</p>
+                        <p><span class="info-label">Patient Payment:</span> <span id="calculatedPatientPayment">0</span> ₫</p>
+                        <p><span class="info-label">Status:</span> <span id="transactionStatus" class="status-pending">Pending</span></p>
+                    </div>
+                    <div class="payment-controls">
+                        <div class="mb-3">
+                            <label for="paymentMethod">Payment Method</label>
+                            <div class="form-control bg-light d-flex align-items-center">
+                                <i class="bi bi-credit-card text-primary me-2"></i>
+                                <span class="fw-semibold">Banking (Online Payment)</span>
+                            </div>
+                            <!-- Hidden input to maintain banking payment method -->
+                            <input type="hidden" id="paymentMethod" value="Banking">
+                            <div id="paymentMethodError" class="text-danger mt-1" style="display: none;">Please select a payment method</div>
+                        </div>
+                        <!-- Hide amount received container for online payments -->
+                        <div id="amountReceivedContainer" class="mb-3" style="display: none;">
+                            <label for="amountReceived">Amount Received ($)</label>
+                            <input id="amountReceived" type="text" class="form-control" placeholder="Enter amount received">
+                            <p id="changeReturned" class="text-muted mt-1">Change Returned: 0 $</p>
+                            <div id="amountReceivedError" class="text-danger mt-1" style="display: none;">Amount must be at least equal to Patient Payment</div>
+                        </div>
+                        <div class="mb-3">
+                            <label for="receiptNotes">Notes</label>
+                            <textarea id="receiptNotes" maxlength="100" class="form-control" placeholder="Enter any notes about the online payment (max 100 characters)" rows="3"></textarea>
+                            <div class="d-flex justify-content-between mt-1">
+                                <small class="text-muted">Maximum 100 characters</small>
+                                <small id="charCount" class="text-muted">0/100</small>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="mt-3 p-3" style="background-color: #e0f2fe; border-radius: 8px;">
+                    <p class="mb-2"><span class="info-label">Processed By:</span> <span id="processedBy" th:text="${staffInfo.fullName}">Staff Member</span></p>
+                    <p class="mb-0"><span class="info-label">Time of Payment:</span> <span id="timeOfPayment" th:text="${#temporals.format(#temporals.createNow(), 'yyyy-MM-dd HH:mm:ss')}">Not yet paid</span></p>
+                </div>
+            </div>
+
+            <!-- Terms and Conditions -->
+            <div class="invoice-section">
+                <h3 class="invoice-section-title">
+                    <i class="fas fa-file-alt"></i> Terms & Conditions
+                </h3>
+                <div class="terms">
+                    <p>1. Payment is due upon receipt of this invoice.</p>
+                    <p>2. All services are non-refundable once provided.</p>
+                    <p>3. For insurance claims, please contact your provider within 30 days.</p>
+                    <p>4. Disputes must be reported to MediCare Plus within 7 days.</p>
+                </div>
+            </div>
+
+            <!-- Footer -->
+            <div class="invoice-footer">
+                <p class="fw-semibold">Thank you for choosing MediCare Plus</p>
+                <p>Contact us at (+84) 912 345 678 or contact@medicareplus.vn</p>
+                <p>123 Lang Street, Dong Da, Hanoi, Vietnam</p>
+            </div>
+
+            <!-- Action Buttons -->
+
+        </div>
+    </div>
+</div>
+
+<!-- QR Modal -->
+<div id="qrModal" class="modal">
+    <div class="modal-content">
+        <h3 class="mb-4">Scan to Pay via Banking</h3>
+        <div style="width: 180px; height: 180px; background: #f3f4f6; display: flex; align-items: center; justify-content: center; margin: 0 auto; border-radius: 8px; border: 2px dashed #6B7280;">
+            [Simulated QR Code]
+        </div>
+        <p class="mt-3">Amount: <span id="qrAmount">0</span>đ</p>
+        <p>Receipt: <span id="qrReceipt" th:text="${invoiceData.receiptNumber}">REC20250529001</span></p>
+        <div class="mt-4">
+            <button id="simulatePayment" class="btn btn-primary">Simulate Payment</button>
+            <button id="closeQrModal" class="btn btn-secondary ms-2">Cancel</button>
+        </div>
+    </div>
+</div>
+
+<!-- Payment Confirmation Modal -->
+<div id="paymentConfirmModal" class="modal">
+    <div class="modal-content">
+        <div class="text-center">
+            <div class="mb-4" style="width: 60px; height: 60px; background: #FEF3C7; border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto;">
+                <i class="fas fa-exclamation-triangle text-warning fs-4"></i>
+            </div>
+            <h3 class="mb-3">Confirm Payment</h3>
+            <p class="text-muted mb-3">Are you sure you want to process this payment?</p>
+            <div class="bg-light p-3 rounded mb-4 text-start">
+                <p class="mb-2"><span class="fw-bold">Full Name:</span> <span id="confirmPatientName"></span></p>
+                <p class="mb-2"><span class="fw-bold">Amount:</span> <span id="confirmAmount"></span>đ</p>
+                <p class="mb-2"><span class="fw-bold">Method:</span> <span id="confirmMethod"></span></p>
+                <div id="confirmCashDetails" style="display: none;">
+                    <p class="mb-1"><span class="fw-bold">Amount Received:</span> <span id="confirmAmountReceived"></span>đ</p>
+                    <p class="mb-0"><span class="fw-bold">Change:</span> <span id="confirmChange"></span>đ</p>
+                </div>
+            </div>
+            <div class="d-flex justify-content-center gap-3">
+                <button id="confirmPaymentBtn" class="btn btn-success">
+                    <i class="fas fa-check me-2"></i>Confirm Payment
+                </button>
+                <button id="cancelPaymentBtn" class="btn btn-secondary">
+                    <i class="fas fa-times me-2"></i>Cancel
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Processing Modal -->
+<div id="processingModal" class="modal">
+    <div class="modal-content">
+        <div class="text-center">
+            <div class="mb-4" style="width: 60px; height: 60px; background: #DBEAFE; border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto;">
+                <i class="fas fa-spinner fa-spin text-primary fs-4"></i>
+            </div>
+            <h3 class="mb-3">Processing Payment...</h3>
+            <p class="text-muted">Please wait while we process your payment.</p>
+        </div>
+    </div>
+</div>
+
+<!-- Success Popup -->
+<div id="successPopup" style="display: none; position: fixed; top: 20px; right: 20px; background: #10B981; color: white; padding: 16px; border-radius: 8px; box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15); z-index: 1001;">
+    <p class="mb-0">Payment Successful!</p>
+</div>
+
+<!-- Bootstrap JS -->
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+<script>
+    // 🔥 VND FORMATTING FUNCTION - Consistent Vietnamese currency formatting
+    function formatVND(amount) {
+        // Ensure the amount is a number and handle edge cases
+        const numericAmount = Number(amount) || 0;
+
+        // Use Vietnamese locale formatting with explicit options to ensure dots as thousand separators
+        return new Intl.NumberFormat('vi-VN', {
+            minimumFractionDigits: 0,
+            maximumFractionDigits: 0,
+            useGrouping: true
+        }).format(Math.round(numericAmount)).replace(/,/g, '.');
+    }
+
+    // Payment Method Selection
+    function selectPaymentMethod(method) {
+        document.querySelectorAll('.payment-method-card').forEach(card => {
+            card.classList.remove('selected');
+            card.querySelector('.bi-check-circle').style.display = 'none';
+        });
+
+        document.getElementById(method).checked = true;
+        document.getElementById(method).closest('.payment-method-card').classList.add('selected');
+        document.getElementById(method).closest('.payment-method-card').querySelector('.bi-check-circle').style.display = 'inline-block';
+
+        document.getElementById('paymentButton').disabled = false;
+    }
+
+    // Handle form submission
+    document.getElementById('paymentForm').addEventListener('submit', function(e) {
+        e.preventDefault();
+
+        const selectedMethod = document.querySelector('input[name="paymentMethod"]:checked');
+        if (!selectedMethod) {
+            alert('Please select a payment method');
+            return;
+        }
+
+        // Get notes from the receipt notes textarea
+        const notes = document.getElementById('receiptNotes').value;
+        document.getElementById('hiddenNotes').value = notes;
+
+        // 🔥 LẤY PATIENT PAYMENT VND TRỰC TIẾP (KHÔNG CHUYỂN ĐỔI USD) 🔥
+        let finalAmountVND = 0;
+
+        console.log('=== PAYMENT AMOUNT CALCULATION DEBUG (VND NATIVE) ===');
+
+        // METHOD 1: Lấy từ window.calculatedPatientPayment (ưu tiên cao nhất) - Already in VND
+        if (window.calculatedPatientPayment && window.calculatedPatientPayment > 0) {
+            finalAmountVND = window.calculatedPatientPayment; // Already in VND
+            console.log('✅ METHOD 1 - Using window.calculatedPatientPayment (VND):', finalAmountVND + ' VND');
+        }
+        // METHOD 2: Lấy từ Patient Payment element trên UI
+        else {
+            const patientPaymentElement = document.getElementById('calculatedPatientPayment');
+            console.log('Patient Payment Element found:', patientPaymentElement ? 'YES' : 'NO');
+
+            if (patientPaymentElement && patientPaymentElement.textContent) {
+                console.log('Patient Payment Element text content:', patientPaymentElement.textContent);
+
+                // Parse text content carefully - loại bỏ ₫ và khoảng trắng, commas
+                const cleanText = patientPaymentElement.textContent.replace(/[₫\s,]/g, '');
+                console.log('Cleaned text:', cleanText);
+
+                finalAmountVND = parseFloat(cleanText);
+                console.log('Parsed VND amount:', finalAmountVND);
+
+                if (!isNaN(finalAmountVND) && finalAmountVND > 0) {
+                    console.log('✅ METHOD 2 - Using UI Patient Payment (VND):', finalAmountVND + ' VND');
+                } else {
+                    console.log('❌ METHOD 2 - Invalid parsed amount from UI');
+                    finalAmountVND = 0;
+                }
+            } else {
+                console.log('❌ METHOD 2 - Patient Payment element not found or empty');
+            }
+        }
+
+        // METHOD 3: Fallback - Tính lại từ calculateAllAmounts() và lấy PATIENT PAYMENT
+        if (finalAmountVND === 0) {
+            console.log('⚠️ Using METHOD 3 - Recalculating Patient Payment...');
+            try {
+                const recalculated = calculateAllAmounts();
+                if (recalculated && recalculated.patientPayment > 0) {
+                    finalAmountVND = recalculated.patientPayment; // Already in VND
+                    console.log('✅ METHOD 3 - Recalculated Patient Payment (VND):', finalAmountVND + ' VND');
+                }
+            } catch (calcError) {
+                console.error('Error in recalculation:', calcError);
+            }
+        }
+
+        // METHOD 4: Final fallback - Emergency calculation
+        if (finalAmountVND === 0) {
+            console.log('⚠️ Using METHOD 4 - Emergency fallback with default Patient Payment...');
+
+            // Tính toán emergency fallback từ services (VND)
+            try {
+                const serviceRows = document.querySelectorAll('tbody tr:not(:last-child)');
+                let emergencySubTotal = 0;
+                let emergencyQuantity = 0;
+
+                serviceRows.forEach((row) => {
+                    const cells = row.querySelectorAll('td');
+                    if (cells.length >= 8) {
+                        const total = parseFloat(cells[6].textContent.replace(/[^\d.]/g, '')) || 0; // VND
+                        const quantity = parseFloat(cells[3].textContent.trim()) || 0;
+                        emergencySubTotal += total;
+                        emergencyQuantity += quantity;
+                    }
+                });
+
+                // Apply discount rules
+                let discountPercent = 0;
+                if (emergencyQuantity >= 5) discountPercent = 10;
+                else if (emergencyQuantity >= 3) discountPercent = 5;
+                else if (emergencyQuantity === 1) discountPercent = 3;
+
+                const discountAmount = emergencySubTotal * discountPercent / 100;
+                finalAmountVND = emergencySubTotal - discountAmount; // PATIENT PAYMENT in VND
+
+                console.log('✅ METHOD 4 - Emergency Patient Payment calculation (VND):', finalAmountVND + ' VND');
+            } catch (e) {
+                console.error('Emergency calculation failed:', e);
+                finalAmountVND = 3840000; // Hard fallback (160 USD * 24000 = 3,840,000 VND)
+                console.log('✅ METHOD 4 - Hard fallback Patient Payment (VND):', finalAmountVND + ' VND');
+            }
+        }
+
+        // Validate final amount
+        if (finalAmountVND <= 0) {
+            console.error('❌ FINAL VALIDATION FAILED');
+            console.error('Final VND:', finalAmountVND);
+            alert('Invalid payment amount detected. Please refresh the page and try again.');
+            return;
+        }
+
+        // LOG FINAL RESULT
+        console.log('=== FINAL PAYMENT AMOUNT (PATIENT PAYMENT VND NATIVE) ===');
+        console.log('Final VND Amount (Patient Payment):', finalAmountVND);
+        console.log('Method Selected:', selectedMethod.value);
+
+        // Cập nhật amount input với giá trị Patient Payment VND chính xác
+        document.querySelector('input[name="amount"]').value = Math.round(finalAmountVND);
+        console.log('Updated form input amount to Patient Payment:', Math.round(finalAmountVND), 'VND');
+
+        // Show loading overlay BEFORE form submission
+        document.getElementById('loadingOverlay').style.display = 'flex';
+
+        // Add delay to ensure loading overlay is visible
+        setTimeout(() => {
+            // Submit the form to the backend
+            this.submit();
+        }, 100);
+    });
+
+    // Calculate amounts in VND directly (no USD conversion needed)
+    function calculateAllAmounts() {
+        console.log('=== Calculating All Amounts (VND Native) ===');
+
+        // Tìm tất cả các hàng service trong table (loại trừ hàng SubTotal)
+        const serviceRows = document.querySelectorAll('tbody tr:not(:last-child):not(.bg-blue-50)');
+        console.log('Found service rows:', serviceRows.length);
+
+        let subTotal = 0;
+        let totalTaxAmount = 0;
+        let totalQuantity = 0;
+
+        serviceRows.forEach((row, index) => {
+            const cells = row.querySelectorAll('td');
+            if (cells.length >= 8) {
+                // Lấy dữ liệu từ các cột
+                const quantityText = cells[3].textContent.trim();
+                const priceText = cells[4].textContent.trim();
+                const taxText = cells[5].textContent.trim();
+                const totalText = cells[6].textContent.trim();
+
+                // Parse numbers - Remove currency symbols and commas, work with VND directly
+                const quantity = parseFloat(quantityText) || 0;
+                const priceVND = parseFloat(priceText.replace(/[^\d.]/g, '')) || 0; // Already in VND
+                const taxPercent = parseFloat(taxText) || 0;
+                const totalVND = parseFloat(totalText.replace(/[^\d.]/g, '')) || 0; // Already in VND
+
+                console.log(`Service ${index + 1}:`, {
+                    quantity,
+                    priceVND: priceVND + ' VND',
+                    taxPercent: taxPercent + '%',
+                    totalVND: totalVND + ' VND'
+                });
+
+                if (quantity > 0 && priceVND > 0 && totalVND > 0) {
+                    // Cộng vào SubTotal (already in VND)
+                    subTotal += totalVND;
+
+                    // Tính Tax Amount = Price * Quantity * Tax%
+                    totalTaxAmount += (priceVND * quantity * taxPercent / 100);
+
+                    // Cộng quantity để tính discount
+                    totalQuantity += quantity;
+                }
+            }
+        });
+
+        // Tính discount theo rules
+        let discountPercent = 0;
+        if (totalQuantity >= 5) {
+            discountPercent = 10;
+        } else if (totalQuantity >= 3) {
+            discountPercent = 5;
+        } else if (totalQuantity === 1) {
+            discountPercent = 3;
+        }
+
+        const discountAmount = subTotal * discountPercent / 100;
+        const patientPayment = subTotal - discountAmount;
+        const totalAmountInclTax = subTotal; // SubTotal already includes tax
+
+        console.log('Calculation Results (VND Native):', {
+            subTotal: subTotal + ' VND',
+            totalAmountInclTax: totalAmountInclTax + ' VND',
+            totalTaxAmount: totalTaxAmount + ' VND',
+            totalQuantity,
+            discountPercent: discountPercent + '%',
+            discountAmount: discountAmount + ' VND',
+            patientPayment: patientPayment + ' VND'
+        });
+
+        // Cập nhật hiển thị
+        updateDisplayValues(subTotal, totalAmountInclTax, totalTaxAmount, discountAmount, patientPayment);
+
+        // Lưu Patient Payment để dùng cho validation (already in VND)
+        window.calculatedPatientPayment = patientPayment;
+
+        return { subTotal, totalAmountInclTax, totalTaxAmount, discountAmount, patientPayment };
+    }
+
+    // Function để cập nhật các giá trị hiển thị (VND)
+    function updateDisplayValues(subTotalVND, totalAmountVND, taxAmountVND, discountAmountVND, patientPaymentVND) {
+        console.log('=== Updating Display Values (VND Native) ===');
+        console.log('SubTotal VND:', subTotalVND);
+        console.log('Total Amount VND:', totalAmountVND);
+        console.log('Tax VND:', taxAmountVND);
+        console.log('Discount VND:', discountAmountVND);
+        console.log('Patient Payment VND:', patientPaymentVND);
+
+        // SubTotal: hiển thị VND với định dạng xxx.xxx đ
+        const subTotalElement = document.getElementById('servicesSubTotal');
+        if (subTotalElement) {
+            subTotalElement.textContent = formatVND(subTotalVND) + ' ₫';
+            console.log('Updated SubTotal:', subTotalElement.textContent);
+        }
+
+        // Total Amount (incl. Tax) - Display with proper VND formatting
+        const totalAmountElement = document.getElementById('calculatedTotalAmount');
+        if (totalAmountElement) {
+            totalAmountElement.textContent = formatVND(totalAmountVND);
+            console.log('Updated Total Amount:', totalAmountElement.textContent);
+        }
+
+
+        // Tax Amount - sử dụng formatVND để có định dạng đúng
+        const taxAmountElement = document.getElementById('calculatedTaxAmount');
+        if (taxAmountElement) {
+            taxAmountElement.textContent = formatVND(taxAmountVND);
+            console.log('Updated Tax Amount:', taxAmountElement.textContent);
+        }
+
+        // Discount Amount - Display with proper VND formatting
+        const discountAmountElement = document.getElementById('calculatedDiscountAmount');
+        if (discountAmountElement) {
+            discountAmountElement.textContent = formatVND(discountAmountVND);
+            console.log('Updated Discount Amount:', discountAmountElement.textContent);
+        }
+
+        // Patient Payment - Display with proper VND formatting
+        const patientPaymentElement = document.getElementById('calculatedPatientPayment');
+        if (patientPaymentElement) {
+            patientPaymentElement.textContent = formatVND(patientPaymentVND);
+            console.log('Updated Patient Payment:', patientPaymentElement.textContent);
+        }
+
+        // Update the hidden amount input to VND for payment processing
+        const amountInput = document.querySelector('input[name="amount"]');
+        if (amountInput) {
+            amountInput.value = Math.round(patientPaymentVND);
+            console.log('Updated hidden amount input:', amountInput.value, 'VND');
+        }
+    }
+
+    // Tính toán SubTotal và Payment amounts - phiên bản được cải thiện
+    function calculateAllAmounts() {
+        console.log('=== Calculating All Amounts (VND Native) ===');
+
+        // Tìm tất cả các hàng service trong table (loại trừ hàng SubTotal)
+        const serviceRows = document.querySelectorAll('tbody tr:not(:last-child):not(.bg-blue-50)');
+        console.log('Found service rows:', serviceRows.length);
+
+        let subTotal = 0;
+        let totalTaxAmount = 0;
+        let totalQuantity = 0;
+
+        serviceRows.forEach((row, index) => {
+            const cells = row.querySelectorAll('td');
+            if (cells.length >= 8) {
+                // Lấy dữ liệu từ các cột
+                const quantityText = cells[3].textContent.trim();
+                const priceText = cells[4].textContent.trim();
+                const taxText = cells[5].textContent.trim();
+                const totalText = cells[6].textContent.trim();
+
+                // Parse numbers - Remove currency symbols and commas, work with VND directly
+                const quantity = parseFloat(quantityText) || 0;
+                const priceVND = parseFloat(priceText.replace(/[^\d.]/g, '')) || 0; // Already in VND
+                const taxPercent = parseFloat(taxText) || 0;
+                const totalVND = parseFloat(totalText.replace(/[^\d.]/g, '')) || 0; // Already in VND
+
+                console.log(`Service ${index + 1}:`, {
+                    quantity,
+                    priceVND: priceVND + ' VND',
+                    taxPercent: taxPercent + '%',
+                    totalVND: totalVND + ' VND'
+                });
+
+                if (quantity > 0 && priceVND > 0 && totalVND > 0) {
+                    // Cộng vào SubTotal (already in VND)
+                    subTotal += totalVND;
+
+                    // Tính Tax Amount = Price * Quantity * Tax%
+                    totalTaxAmount += (priceVND * quantity * taxPercent / 100);
+
+                    // Cộng quantity để tính discount
+                    totalQuantity += quantity;
+                }
+            }
+        });
+
+        // Tính discount theo rules
+        let discountPercent = 0;
+        if (totalQuantity >= 5) {
+            discountPercent = 10;
+        } else if (totalQuantity >= 3) {
+            discountPercent = 5;
+        } else if (totalQuantity === 1) {
+            discountPercent = 3;
+        }
+
+        const discountAmount = subTotal * discountPercent / 100;
+        const patientPayment = subTotal - discountAmount;
+        const totalAmountInclTax = subTotal; // SubTotal already includes tax
+
+        console.log('Calculation Results (VND Native):', {
+            subTotal: subTotal + ' VND',
+            totalAmountInclTax: totalAmountInclTax + ' VND',
+            totalTaxAmount: totalTaxAmount + ' VND',
+            totalQuantity,
+            discountPercent: discountPercent + '%',
+            discountAmount: discountAmount + ' VND',
+            patientPayment: patientPayment + ' VND'
+        });
+
+        // Cập nhật hiển thị
+        updateDisplayValues(subTotal, totalAmountInclTax, totalTaxAmount, discountAmount, patientPayment);
+
+        // Lưu Patient Payment để dùng cho validation (already in VND)
+        window.calculatedPatientPayment = patientPayment;
+
+        return { subTotal, totalAmountInclTax, totalTaxAmount, discountAmount, patientPayment };
+    }
+    // Tính toán SubTotal và Payment amounts - phiên bản đơn giản và chính xác
+    function calculateAllAmounts() {
+        console.log('=== Calculating All Amounts ===');
+
+        // Tìm tất cả các hàng service trong table
+        const serviceRows = document.querySelectorAll('tbody tr:not(.bg-blue-50)'); // Loại trừ hàng SubTotal
+        console.log('Found service rows:', serviceRows.length);
+
+        let subTotal = 0;
+        let totalTaxAmount = 0;
+        let totalQuantity = 0;
+
+        serviceRows.forEach((row, index) => {
+            const cells = row.querySelectorAll('td');
+            if (cells.length >= 8) {
+                // Lấy dữ liệu từ các cột
+                const quantityText = cells[3].textContent.trim();
+                const priceText = cells[4].textContent.trim();
+                const taxText = cells[5].textContent.trim();
+                const totalText = cells[6].textContent.trim();
+
+                // Parse numbers
+                const quantity = parseFloat(quantityText) || 0;
+                const price = parseFloat(priceText.replace(/[^\d.]/g, '')) || 0;
+                const taxPercent = parseFloat(taxText) || 0;
+                const total = parseFloat(totalText.replace(/[^\d.]/g, '')) || 0;
+
+                console.log(`Service ${index + 1}:`, {
+                    quantity, price, taxPercent, total
+                });
+
+                if (quantity > 0 && price > 0 && total > 0) {
+                    // Cộng vào SubTotal
+                    subTotal += total;
+
+                    // Tính Tax Amount = Price * Quantity * Tax%
+                    totalTaxAmount += (price * quantity * taxPercent / 100);
+
+                    // Cộng quantity để tính discount
+                    totalQuantity += quantity;
+                }
+            }
+        });
+
+        // Tính discount theo rules
+        let discountPercent = 0;
+        if (totalQuantity >= 5) {
+            discountPercent = 10;
+        } else if (totalQuantity >= 3) {
+            discountPercent = 5;
+        } else if (totalQuantity === 1) {
+            discountPercent = 3;
+        }
+
+        const discountAmount = subTotal * discountPercent / 100;
+        const patientPayment = subTotal - discountAmount;
+
+        console.log('Calculation Results:', {
+            subTotal,
+            totalTaxAmount,
+            totalQuantity,
+            discountPercent,
+            discountAmount,
+            patientPayment
+        });
+
+        // Cập nhật hiển thị
+        updateDisplayValues(subTotal, totalTaxAmount, discountAmount, patientPayment);
+
+        // Lưu Patient Payment để dùng cho validation
+        window.calculatedPatientPayment = patientPayment;
+
+        return { subTotal, totalTaxAmount, discountAmount, patientPayment };
+    }
+
+    // Function để cập nhật các giá trị hiển thị
+    function updateDisplayValues(subTotal, taxAmount, discountAmount, patientPayment) {
+        // SubTotal
+        const subTotalElement = document.getElementById('servicesSubTotal');
+        if (subTotalElement) {
+            subTotalElement.textContent = subTotal.toLocaleString('en-US') + '';
+        }
+
+        // Total Amount (giống SubTotal)
+        const totalAmountElement = document.getElementById('calculatedTotalAmount');
+        if (totalAmountElement) {
+            totalAmountElement.textContent = formatVND(subTotal);
+        }
+
+
+        // Tax Amount - sử dụng formatVND để có định dạng đúng
+        const taxAmountElement = document.getElementById('calculatedTaxAmount');
+        if (taxAmountElement) {
+            taxAmountElement.textContent = formatVND(taxAmount);
+        }
+
+        // Discount Amount - Display with proper VND formatting
+        const discountAmountElement = document.getElementById('calculatedDiscountAmount');
+        if (discountAmountElement) {
+            discountAmountElement.textContent = formatVND(discountAmount);
+        }
+
+        // Patient Payment
+        const patientPaymentElement = document.getElementById('calculatedPatientPayment');
+        if (patientPaymentElement) {
+            patientPaymentElement.textContent = patientPayment.toLocaleString('en-US');
+        }
+
+        // Patient Payment VND
+        const patientPaymentVNDElement = document.getElementById('calculatedPatientPaymentVND');
+        if (patientPaymentVNDElement) {
+            patientPaymentVNDElement.textContent = formatCurrencyVND(patientPayment);
+        }
+    }
+    // Function to update service table to display VND properly
+    function updateServiceTableToVND() {
+        console.log('=== Updating Service Table to VND Display ===');
+
+        const serviceRows = document.querySelectorAll('tbody tr:not(:last-child)');
+
+        serviceRows.forEach((row, index) => {
+            const cells = row.querySelectorAll('td');
+            if (cells.length >= 8) {
+                // Update price column (column 4) - ensure VND format with đ
+                const priceCell = cells[4];
+                if (priceCell) {
+                    const priceText = priceCell.textContent.trim();
+                    const priceValue = parseFloat(priceText.replace(/[^\d.]/g, '')) || 0;
+                    if (priceValue > 0) {
+                        priceCell.textContent = formatVND(priceValue) + ' ₫';
+                    }
+                }
+
+                // Update total column (column 6) - ensure VND format with đ
+                const totalCell = cells[6];
+                if (totalCell) {
+                    const totalText = totalCell.textContent.trim();
+                    const totalValue = parseFloat(totalText.replace(/[^\d.]/g, '')) || 0;
+                    if (totalValue > 0) {
+                    }
+                }
+            }
+        });
+
+        console.log('Service table updated to VND format');
+    }
+
+    // Character count for notes
+    const receiptNotesInput = document.getElementById('receiptNotes');
+    const charCountDisplay = document.getElementById('charCount');
+
+    receiptNotesInput.addEventListener('input', function() {
+        const count = this.value.length;
+        charCountDisplay.textContent = count + '/100';
+    });
+
+    // Initialize calculations when page loads
+    document.addEventListener('DOMContentLoaded', function() {
+        // Update table headers and service prices to VND first
+        setTimeout(() => {
+            updateServiceTableToVND();
+            calculateAllAmounts();
+        }, 500);
+
+        // Monitor for changes in the table
+        const observer = new MutationObserver((mutations) => {
+            let hasRelevantChanges = false;
+            mutations.forEach((mutation) => {
+                if (mutation.type === 'childList' || mutation.type === 'characterData') {
+                    hasRelevantChanges = true;
+                }
+            });
+
+            if (hasRelevantChanges) {
+                console.log('Table content changed, recalculating...');
+                setTimeout(() => {
+                    updateServiceTableToVND();
+                    calculateAllAmounts();
+                }, 100);
+            }
+        });
+
+        // Start observing the table when available
+        setTimeout(() => {
+            const tableBody = document.querySelector('tbody');
+            if (tableBody) {
+                observer.observe(tableBody, {
+                    childList: true,
+                    subtree: true,
+                    characterData: true
+                });
+                console.log('Started observing table changes');
+            }
+        }, 1000);
+    });
+</script>
+</body>
+</html>

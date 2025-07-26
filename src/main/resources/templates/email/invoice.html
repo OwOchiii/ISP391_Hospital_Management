@@ -1,0 +1,753 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <title>Invoice - MediCare Plus</title>
+
+    <!--[if mso]>
+    <noscript>
+        <xml>
+            <o:OfficeDocumentSettings>
+                <o:PixelsPerInch>96</o:PixelsPerInch>
+            </o:OfficeDocumentSettings>
+        </xml>
+    </noscript>
+    <![endif]-->
+
+    <style>
+        /* Reset styles for email clients */
+        body, table, td, p, a, li, blockquote {
+            -webkit-text-size-adjust: 100%;
+            -ms-text-size-adjust: 100%;
+        }
+
+        table, td {
+            mso-table-lspace: 0pt;
+            mso-table-rspace: 0pt;
+        }
+
+        img {
+            -ms-interpolation-mode: bicubic;
+            border: 0;
+            height: auto;
+            line-height: 100%;
+            outline: none;
+            text-decoration: none;
+        }
+
+        /* Client-specific styles */
+        body {
+            height: 100% !important;
+            margin: 0 !important;
+            padding: 0 !important;
+            width: 100% !important;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #f4f6f9;
+        }
+
+        /* Prevent auto-linking */
+        .appleNoLinks a {
+            color: inherit !important;
+            text-decoration: none !important;
+        }
+
+        /* Main container */
+        .email-container {
+            max-width: 650px;
+            margin: 0 auto;
+            background-color: #ffffff;
+        }
+
+        /* Header styles */
+        .header {
+            background: linear-gradient(135deg, #1E3A8A 0%, #3B82F6 100%);
+            padding: 30px 25px;
+            text-align: left;
+        }
+
+        .header-content {
+            display: table;
+            width: 100%;
+        }
+
+        .header-left {
+            display: table-cell;
+            vertical-align: middle;
+            width: 60%;
+        }
+
+        .header-right {
+            display: table-cell;
+            vertical-align: middle;
+            width: 40%;
+            text-align: right;
+        }
+
+        .logo-section {
+            display: table;
+            width: 100%;
+        }
+
+        .logo-icon {
+            display: table-cell;
+            width: 60px;
+            vertical-align: middle;
+        }
+
+        .logo-icon-circle {
+            width: 50px;
+            height: 50px;
+            background: #ffffff;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #3B82F6;
+            font-size: 24px;
+            font-weight: bold;
+        }
+
+        .logo-text {
+            display: table-cell;
+            vertical-align: middle;
+            padding-left: 15px;
+        }
+
+        .hospital-name {
+            color: #ffffff;
+            font-size: 28px;
+            font-weight: bold;
+            margin: 0 0 5px 0;
+        }
+
+        .hospital-info {
+            color: rgba(255, 255, 255, 0.9);
+            font-size: 12px;
+            margin: 0;
+            line-height: 1.4;
+        }
+
+        .invoice-title {
+            color: #ffffff;
+            font-size: 24px;
+            font-weight: bold;
+            margin: 0 0 10px 0;
+        }
+
+        .invoice-meta {
+            color: rgba(255, 255, 255, 0.9);
+            font-size: 12px;
+            line-height: 1.5;
+        }
+
+        .barcode-placeholder {
+            background: rgba(255, 255, 255, 0.1);
+            color: #ffffff;
+            font-family: 'Courier New', Courier, monospace;
+            letter-spacing: 2px;
+            padding: 8px 12px;
+            border-radius: 4px;
+            font-size: 12px;
+            margin-top: 10px;
+        }
+
+        /* Content styles */
+        .content {
+            padding: 30px 25px;
+        }
+
+        /* Section styles */
+        .section {
+            margin-bottom: 30px;
+        }
+
+        .section-title {
+            font-size: 18px;
+            font-weight: bold;
+            color: #1E3A8A;
+            margin-bottom: 15px;
+            display: table;
+            width: 100%;
+        }
+
+        .section-icon {
+            display: table-cell;
+            width: 30px;
+            vertical-align: middle;
+            color: #3B82F6;
+            font-size: 18px;
+        }
+
+        .section-text {
+            display: table-cell;
+            vertical-align: middle;
+            padding-left: 10px;
+        }
+
+        /* Patient info styles */
+        .patient-info {
+            background: #f8fafc;
+            border-radius: 8px;
+            padding: 20px;
+            border-left: 4px solid #3B82F6;
+        }
+
+        .info-grid {
+            display: table;
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        .info-row {
+            display: table-row;
+        }
+
+        .info-label {
+            display: table-cell;
+            padding: 8px 15px 8px 0;
+            font-weight: 600;
+            color: #374151;
+            font-size: 14px;
+            vertical-align: top;
+            width: 40%;
+        }
+
+        .info-value {
+            display: table-cell;
+            padding: 8px 0;
+            color: #1f2937;
+            font-size: 14px;
+            vertical-align: top;
+        }
+
+        /* Services table */
+        .services-section {
+            background: #ffffff;
+            border-radius: 8px;
+            overflow: hidden;
+            border: 1px solid #e5e7eb;
+        }
+
+        .services-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 13px;
+        }
+
+        .services-table th {
+            background: #EFF6FF;
+            color: #1E3A8A;
+            padding: 12px 8px;
+            text-align: left;
+            font-weight: bold;
+            border-bottom: 2px solid #3B82F6;
+        }
+
+        .services-table td {
+            padding: 12px 8px;
+            border-bottom: 1px solid #e5e7eb;
+            vertical-align: top;
+        }
+
+        .services-table tr:nth-child(even) {
+            background: #f9fafb;
+        }
+
+        .services-table .total-row {
+            background: #EFF6FF !important;
+            font-weight: bold;
+        }
+
+        .services-table .total-row td {
+            border-top: 2px solid #3B82F6;
+            border-bottom: none;
+        }
+
+        /* Payment summary */
+        .payment-summary {
+            background: #f0f9ff;
+            border-radius: 8px;
+            padding: 20px;
+            border-left: 4px solid #0891b2;
+        }
+
+        .summary-grid {
+            display: table;
+            width: 100%;
+        }
+
+        .summary-row {
+            display: table-row;
+        }
+
+        .summary-label {
+            display: table-cell;
+            padding: 8px 15px 8px 0;
+            font-weight: 600;
+            color: #0c4a6e;
+            font-size: 14px;
+            width: 60%;
+        }
+
+        .summary-value {
+            display: table-cell;
+            padding: 8px 0;
+            color: #0c4a6e;
+            font-size: 14px;
+            text-align: right;
+            font-weight: bold;
+        }
+
+        .final-amount {
+            font-size: 18px !important;
+            color: #1E3A8A !important;
+        }
+
+        /* Status badge */
+        .status-badge {
+            display: inline-block;
+            padding: 6px 12px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: bold;
+            text-transform: uppercase;
+        }
+
+        .status-pending {
+            background: #fef3c7;
+            color: #92400e;
+        }
+
+        .status-paid {
+            background: #d1fae5;
+            color: #065f46;
+        }
+
+        .status-overdue {
+            background: #fee2e2;
+            color: #991b1b;
+        }
+
+        /* Action buttons */
+        .action-section {
+            text-align: center;
+            margin: 30px 0;
+        }
+
+        .primary-button {
+            display: inline-block;
+            background: linear-gradient(135deg, #3B82F6, #1E3A8A);
+            color: #ffffff;
+            text-decoration: none;
+            padding: 15px 30px;
+            border-radius: 8px;
+            font-weight: bold;
+            font-size: 16px;
+            margin: 0 10px 10px 0;
+        }
+
+        .secondary-button {
+            display: inline-block;
+            background: #ffffff;
+            color: #3B82F6;
+            text-decoration: none;
+            padding: 15px 30px;
+            border-radius: 8px;
+            font-weight: bold;
+            font-size: 16px;
+            border: 2px solid #3B82F6;
+            margin: 0 10px 10px 0;
+        }
+
+        /* Terms section */
+        .terms-section {
+            background: #f9fafb;
+            border-radius: 8px;
+            padding: 20px;
+            border: 1px solid #e5e7eb;
+        }
+
+        .terms-list {
+            margin: 0;
+            padding-left: 20px;
+            color: #4b5563;
+            font-size: 13px;
+            line-height: 1.6;
+        }
+
+        .terms-list li {
+            margin-bottom: 8px;
+        }
+
+        /* Footer styles */
+        .footer {
+            background: #1f2937;
+            color: #d1d5db;
+            padding: 30px 25px;
+            text-align: center;
+        }
+
+        .footer-content {
+            font-size: 13px;
+            line-height: 1.6;
+            margin-bottom: 15px;
+        }
+
+        .footer-links {
+            margin-bottom: 15px;
+        }
+
+        .footer-link {
+            color: #60a5fa;
+            text-decoration: none;
+            margin: 0 10px;
+            font-size: 12px;
+        }
+
+        .footer-disclaimer {
+            font-size: 11px;
+            color: #9ca3af;
+            margin-top: 15px;
+            padding-top: 15px;
+            border-top: 1px solid #374151;
+        }
+
+        /* Responsive styles */
+        @media only screen and (max-width: 600px) {
+            .email-container {
+                width: 100% !important;
+            }
+
+            .header {
+                padding: 20px 15px !important;
+            }
+
+            .content {
+                padding: 20px 15px !important;
+            }
+
+            .header-content {
+                display: block !important;
+            }
+
+            .header-left,
+            .header-right {
+                display: block !important;
+                width: 100% !important;
+                text-align: left !important;
+            }
+
+            .header-right {
+                margin-top: 20px;
+            }
+
+            .logo-section {
+                display: block !important;
+            }
+
+            .logo-icon,
+            .logo-text {
+                display: block !important;
+                width: 100% !important;
+            }
+
+            .logo-text {
+                padding-left: 0 !important;
+                margin-top: 15px;
+            }
+
+            .info-label {
+                width: 100% !important;
+                display: block !important;
+                padding-bottom: 5px !important;
+            }
+
+            .info-value {
+                display: block !important;
+                padding-bottom: 15px !important;
+            }
+
+            .services-table {
+                font-size: 11px !important;
+            }
+
+            .services-table th,
+            .services-table td {
+                padding: 8px 4px !important;
+            }
+
+            .primary-button,
+            .secondary-button {
+                display: block !important;
+                margin: 10px 0 !important;
+                text-align: center;
+            }
+        }
+
+        /* Dark mode support */
+        @media (prefers-color-scheme: dark) {
+            .email-container {
+                background-color: #1f2937 !important;
+            }
+
+            .content {
+                color: #f9fafb !important;
+            }
+
+            .patient-info {
+                background-color: #374151 !important;
+            }
+
+            .services-section {
+                background-color: #374151 !important;
+                border-color: #4b5563 !important;
+            }
+        }
+    </style>
+</head>
+<body>
+<div class="email-container">
+    <!-- Header -->
+    <div class="header">
+        <div class="header-content">
+            <div class="header-left">
+                <div class="logo-section">
+                    <div class="logo-icon">
+                        <div class="logo-icon-circle">🏥</div>
+                    </div>
+                    <div class="logo-text">
+                        <h1 class="hospital-name">MediCare Plus</h1>
+                        <div class="hospital-info">
+                            Tax Code: 123456789-0<br>
+                            123 Lang Street, Dong Da, Hanoi, Vietnam<br>
+                            Phone: (+84) 912 345 678 | Email: info@medicareplus.com
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="header-right">
+                <h2 class="invoice-title">INVOICE</h2>
+                <div class="invoice-meta">
+                    <strong>Receipt Number:</strong><br>
+                    <span th:text="${invoiceData.receiptNumber}">REC20250529001</span><br><br>
+                    <strong>Issued Date:</strong><br>
+                    <span th:text="${#temporals.format(#temporals.createNow(), 'MMMM dd, yyyy')}">July 15, 2025</span><br><br>
+                    <strong>Due Date:</strong><br>
+                    <span th:text="${#temporals.format(#temporals.createNow(), 'MMMM dd, yyyy')}">July 15, 2025</span>
+                </div>
+                <div class="barcode-placeholder" th:text="${invoiceData.receiptNumber}">REC20250529001</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Main Content -->
+    <div class="content">
+        <!-- Patient Information -->
+        <div class="section">
+            <div class="section-title">
+                <div class="section-icon">👤</div>
+                <div class="section-text">Patient Information</div>
+            </div>
+
+            <div class="patient-info">
+                <div class="info-grid">
+                    <div class="info-row">
+                        <div class="info-label">Patient ID:</div>
+                        <div class="info-value" th:text="${invoiceData.patientId}">PAT123456</div>
+                    </div>
+                    <div class="info-row">
+                        <div class="info-label">Full Name:</div>
+                        <div class="info-value" th:text="${invoiceData.fullName}">John Doe</div>
+                    </div>
+                    <div class="info-row">
+                        <div class="info-label">Date of Birth:</div>
+                        <div class="info-value" th:text="${invoiceData.dateOfBirth}">01/01/1990</div>
+                    </div>
+                    <div class="info-row">
+                        <div class="info-label">Gender:</div>
+                        <div class="info-value" th:text="${invoiceData.gender}">Male</div>
+                    </div>
+                    <div class="info-row">
+                        <div class="info-label">Appointment ID:</div>
+                        <div class="info-value" th:text="${invoiceData.appointmentId}">APP789012</div>
+                    </div>
+                    <div class="info-row">
+                        <div class="info-label">Contact:</div>
+                        <div class="info-value" th:text="${invoiceData.contact}">(+84) 901 234 567</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Services Used -->
+        <div class="section">
+            <div class="section-title">
+                <div class="section-icon">📋</div>
+                <div class="section-text">Services Used</div>
+            </div>
+
+            <div class="services-section">
+                <table class="services-table">
+                    <thead>
+                    <tr>
+                        <th>Service ID</th>
+                        <th>Service Name</th>
+                        <th>Symptom</th>
+                        <th>Qty</th>
+                        <th>Price ($)</th>
+                        <th>Tax (%)</th>
+                        <th>Total ($)</th>
+                        <th>Date</th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                    <tr th:each="service : ${invoiceData.servicesUsed}">
+                        <td th:text="${service.serviceId}">SRV001</td>
+                        <td th:text="${service.serviceName}">General Consultation</td>
+                        <td th:text="${service.symptom}">General Medicine</td>
+                        <td th:text="${service.quantity}">1</td>
+                        <td th:text="${#numbers.formatDecimal(service.price, 0, 0)}">300,000</td>
+                        <td th:text="${service.taxPercent}">10</td>
+                        <td th:text="${#numbers.formatDecimal(service.total, 0, 0)}">330,000</td>
+                        <td th:text="${service.date}">2025-07-15</td>
+                    </tr>
+
+                    <!-- Default service if none exist -->
+                    <tr th:if="${#lists.isEmpty(invoiceData.servicesUsed)}">
+                        <td>SRV001</td>
+                        <td>General Consultation</td>
+                        <td>General Medicine</td>
+                        <td>1</td>
+                        <td>300,000</td>
+                        <td>10</td>
+                        <td>330,000</td>
+                        <td>2025-07-15</td>
+                    </tr>
+
+                    <tr class="total-row">
+                        <td colspan="6"></td>
+                        <td><strong>SubTotal</strong></td>
+                        <td><strong th:text="${#numbers.formatDecimal(invoiceData.subTotal ?: 330000, 0, 0)} + ' $'">330,000 $</strong></td>
+                    </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- Payment Summary -->
+        <div class="section">
+            <div class="section-title">
+                <div class="section-icon">💰</div>
+                <div class="section-text">Payment Summary</div>
+            </div>
+
+            <div class="payment-summary">
+                <div class="summary-grid">
+                    <div class="summary-row">
+                        <div class="summary-label">Transaction ID:</div>
+                        <div class="summary-value" th:text="${invoiceData.transactionId}">TRX20250529001</div>
+                    </div>
+                    <div class="summary-row">
+                        <div class="summary-label">Total Amount (incl. Tax):</div>
+                        <div class="summary-value" th:text="${#numbers.formatDecimal(invoiceData.totalAmount ?: 330000, 0, 0)} + ' $'">330,000 $</div>
+                    </div>
+                    <div class="summary-row">
+                        <div class="summary-label">Tax Amount:</div>
+                        <div class="summary-value" th:text="${#numbers.formatDecimal(invoiceData.taxAmount ?: 30000, 0, 0)} + ' $'">30,000 $</div>
+                    </div>
+                    <div class="summary-row">
+                        <div class="summary-label">Discount Amount:</div>
+                        <div class="summary-value" th:text="${#numbers.formatDecimal(invoiceData.discountAmount ?: 9900, 0, 0)} + ' $'">9,900 $</div>
+                    </div>
+                    <div class="summary-row">
+                        <div class="summary-label">Payment Status:</div>
+                        <div class="summary-value">
+                                <span class="status-badge"
+                                      th:classappend="${invoiceData.status == 'Paid' ? 'status-paid' :
+                                                       invoiceData.status == 'Overdue' ? 'status-overdue' : 'status-pending'}"
+                                      th:text="${invoiceData.status ?: 'Pending'}">Pending</span>
+                        </div>
+                    </div>
+                    <div class="summary-row">
+                        <div class="summary-label final-amount">Amount Due:</div>
+                        <div class="summary-value final-amount" th:text="${#numbers.formatDecimal(invoiceData.patientPayment ?: 320100, 0, 0)} + ' $'">320,100 $</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+
+        <!-- Payment Information (if paid) -->
+        <div class="section" th:if="${invoiceData.status == 'Paid'}">
+            <div class="section-title">
+                <div class="section-icon">✅</div>
+                <div class="section-text">Payment Information</div>
+            </div>
+
+            <div class="patient-info">
+                <div class="info-grid">
+                    <div class="info-row">
+                        <div class="info-label">Payment Method:</div>
+                        <div class="info-value" th:text="${invoiceData.paymentMethod ?: 'Cash'}">Cash</div>
+                    </div>
+                    <div class="info-row">
+                        <div class="info-label">Amount Received:</div>
+                        <div class="info-value" th:text="${#numbers.formatDecimal(invoiceData.amountReceived ?: 350000, 0, 0)} + ' $'">350,000 $</div>
+                    </div>
+                    <div class="info-row" th:if="${invoiceData.paymentMethod == 'Cash'}">
+                        <div class="info-label">Change Returned:</div>
+                        <div class="info-value" th:text="${#numbers.formatDecimal(invoiceData.changeReturned ?: 29900, 0, 0)} + ' $'">29,900 $</div>
+                    </div>
+                    <div class="info-row">
+                        <div class="info-label">Processed By:</div>
+                        <div class="info-value" th:text="${invoiceData.processedBy ?: 'Staff Member'}">Staff Member</div>
+                    </div>
+                    <div class="info-row">
+                        <div class="info-label">Payment Time:</div>
+                        <div class="info-value" th:text="${invoiceData.paymentTime ?: #temporals.format(#temporals.createNow(), 'yyyy-MM-dd HH:mm:ss')}">2025-07-15 14:30:00</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Terms & Conditions -->
+        <div class="section">
+            <div class="section-title">
+                <div class="section-icon">📜</div>
+                <div class="section-text">Terms & Conditions</div>
+            </div>
+
+            <div class="terms-section">
+                <ul class="terms-list">
+                    <li>Payment is due upon receipt of this invoice.</li>
+                    <li>All services are non-refundable once provided.</li>
+                    <li>For insurance claims, please contact your provider within 30 days.</li>
+                    <li>Disputes must be reported to MediCare Plus within 7 days.</li>
+                    <li>Late payments may incur additional charges as per hospital policy.</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+
+    <!-- Footer -->
+    <div class="footer">
+        <div class="footer-content">
+            <strong>MediCare Plus Hospital</strong><br>
+            123 Lang Street, Dong Da, Hanoi, Vietnam<br>
+            Phone: (+84) 912 345 678 | Email: info@medicareplus.com
+        </div>
+
+
+
+        <div class="footer-disclaimer">
+            This invoice is confidential and protected under healthcare privacy regulations.
+            If you received this email in error, please delete it immediately and notify us at privacy@medicareplus.com.
+            <br><br>
+            <strong>Thank you for choosing MediCare Plus for your healthcare needs.</strong>
+        </div>
+    </div>
+</div>
+</body>
+</html>

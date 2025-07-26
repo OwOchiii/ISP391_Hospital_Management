@@ -241,27 +241,27 @@
                 <div class="row g-4">
                     <div class="col-md-6">
                         <label class="form-label field-required">Full Name</label>
-                        <p id="fullName" th:text="${appointment.fullName != null ? appointment.fullName : '-'}">-</p>
+                        <p id="fullName" th:text="${appointment.fullName != null ? appointment.fullName : 'NA'}">NA</p>
                     </div>
                     <div class="col-md-6">
                         <label class="form-label field-required">Patient ID</label>
-                        <p id="patientID" th:text="${appointment.patientID != null ? appointment.patientID : '-'}">-</p>
+                        <p id="patientID" th:text="${appointment.patientID != null ? appointment.patientID : 'NA'}">NA</p>
                     </div>
                     <div class="col-md-6">
                         <label class="form-label field-required">Gender</label>
-                        <p id="gender" th:text="${appointment.gender != null ? appointment.gender : '-'}">-</p>
+                        <p id="gender" th:text="${appointment.gender != null ? appointment.gender : 'NA'}">NA</p>
                     </div>
                     <div class="col-md-6">
                         <label class="form-label field-required">Date of Birth</label>
-                        <p id="dateOfBirth" th:text="${appointment.dateOfBirth != null ? #temporals.format(appointment.dateOfBirth, 'dd/MM/yyyy') : '-'}">-</p>
+                        <p id="dateOfBirth" th:text="${appointment.dateOfBirth != null ? #temporals.format(appointment.dateOfBirth, 'dd/MM/yyyy') : 'NA'}">NA</p>
                     </div>
                     <div class="col-md-6">
                         <label class="form-label field-required">Phone Number</label>
-                        <p id="phoneNumber" th:text="${appointment.phoneNumber != null ? appointment.phoneNumber : '-'}">-</p>
+                        <p id="phoneNumber" th:text="${appointment.phoneNumber != null ? appointment.phoneNumber : 'NA'}">NA</p>
                     </div>
                     <div class="col-md-6">
                         <label class="form-label">Email</label>
-                        <p id="email" th:text="${appointment.email != null ? appointment.email : '-'}">-</p>
+                        <p id="email" th:text="${appointment.email != null ? appointment.email : 'NA'}">NA</p>
                     </div>
                 </div>
             </div>
@@ -272,27 +272,27 @@
                 <div class="row g-4">
                     <div class="col-md-6">
                         <label class="form-label">Address Type</label>
-                        <p id="addressType" th:text="${appointment.addressType != null ? appointment.addressType : '-'}">-</p>
+                        <p id="addressType" th:text="${appointment.addressType != null ? appointment.addressType : 'NA'}">NA</p>
                     </div>
                     <div class="col-md-6">
                         <label class="form-label">Street Address</label>
-                        <p id="streetAddress" th:text="${appointment.streetAddress != null ? appointment.streetAddress : '-'}">-</p>
+                        <p id="streetAddress" th:text="${appointment.streetAddress != null ? appointment.streetAddress : 'NA'}">NA</p>
                     </div>
                     <div class="col-md-6">
                         <label class="form-label">City</label>
-                        <p id="city" th:text="${appointment.city != null ? appointment.city : '-'}">-</p>
+                        <p id="city" th:text="${appointment.city != null ? appointment.city : 'NA'}">NA</p>
                     </div>
                     <div class="col-md-6">
                         <label class="form-label">State/Province</label>
-                        <p id="state" th:text="${appointment.state != null ? appointment.state : '-'}">-</p>
+                        <p id="state" th:text="${appointment.state != null ? appointment.state : 'NA'}">NA</p>
                     </div>
                     <div class="col-md-6">
                         <label class="form-label">Postal Code</label>
-                        <p id="postalCode" th:text="${appointment.postalCode != null ? appointment.postalCode : '-'}">-</p>
+                        <p id="postalCode" th:text="${appointment.postalCode != null ? appointment.postalCode : 'NA'}">NA</p>
                     </div>
                     <div class="col-md-6">
                         <label class="form-label">Country</label>
-                        <p id="country" th:text="${appointment.country != null ? appointment.country : '-'}">-</p>
+                        <p id="country" th:text="${appointment.country != null ? appointment.country : 'NA'}">NA</p>
                     </div>
                 </div>
             </div>
@@ -303,7 +303,7 @@
                 <div class="row g-4">
                     <div class="col-md-6">
                         <label class="form-label field-required">Medical Specialty</label>
-                        <p id="specialty" th:text="${appointment.specialtyId != null ? appointment.specialtyName : '-'}">-</p>
+                        <p id="specialty" th:text="${appointment.specialtyId != null ? appointment.specialtyName : 'NA'}">NA</p>
                         <select id="specialtyInput" class="form-select d-none" onchange="updateDoctors()">
                             <option value="">Select Medical Specialty</option>
                             <option th:each="spec : ${specializations}"
@@ -315,7 +315,7 @@
                     </div>
                     <div class="col-md-6">
                         <label class="form-label field-required">Assigned Doctor</label>
-                        <p id="assignedDoctor" th:text="${appointment.doctor.getUser().getFullName() != null ? appointment.doctor.getUser().getFullName() : '-'}">-</p>
+                        <p id="assignedDoctor" th:text="${appointment.doctor.getUser().getFullName() != null ? appointment.doctor.getUser().getFullName() : 'NA'}">NA</p>
                         <select id="assignedDoctorInput" class="form-select d-none">
                             <option value="">Choose a Doctor</option>
                         </select>
@@ -323,13 +323,13 @@
                     </div>
                     <div class="col-md-6">
                         <label class="form-label field-required">Appointment Date</label>
-                        <p id="appointmentDate" th:text="${appointment.appointmentDate != null ? #temporals.format(appointment.appointmentDate, 'dd/MM/yyyy') : '-'}">-</p>
+                        <p id="appointmentDate" th:text="${appointment.appointmentDate != null ? #temporals.format(appointment.appointmentDate, 'dd/MM/yyyy') : 'NA'}">NA</p>
                         <input id="appointmentDateInput" type="text" class="form-control d-none" placeholder="MM/DD/YYYY" th:value="${appointment.appointmentDate != null ? #temporals.format(appointment.appointmentDate, 'MM/dd/yyyy') : ''}">
                         <div id="appointmentDateError" class="invalid-feedback">Appointment Date is required.</div>
                     </div>
                     <div class="col-md-6">
                         <label class="form-label field-required">Appointment Time</label>
-                        <p id="appointmentTime" th:text="${appointment.appointmentTime != null ? #temporals.format(appointment.appointmentTime, 'HH:mm') : '-'}">-</p>
+                        <p id="appointmentTime" th:text="${appointment.appointmentTime != null ? #temporals.format(appointment.appointmentTime, 'HH:mm') : 'NA'}">NA</p>
                         <div id="appointmentTimeInput" class="time-slots-container d-none">
                             <button type="button" class="time-slot" onclick="selectTime('08:00:00', this)" data-time="08:00:00">08:00 AM</button>
                             <button type="button" class="time-slot" onclick="selectTime('08:30:00', this)" data-time="08:30:00">08:30 AM</button>
@@ -353,15 +353,15 @@
                     </div>
                     <div class="col-md-6">
                         <label class="form-label">Room</label>
-                        <p id="room" th:text="${appointment.room != null ? appointment.room : '-'}">-</p>
+                        <p id="room" th:text="${appointment.room != null ? appointment.room : 'NA'}">NA</p>
                     </div>
                     <div class="col-md-6">
                         <label class="form-label">Appointment Status</label>
-                        <p id="appointmentStatus" th:text="${appointment.appointmentStatus != null ? appointment.appointmentStatus : '-'}">-</p>
+                        <p id="appointmentStatus" th:text="${appointment.appointmentStatus != null ? appointment.appointmentStatus : 'NA'}">NA</p>
                     </div>
                     <div class="col-md-12">
                         <label class="form-label">Reason for Visit</label>
-                        <p id="reasonForVisit" th:text="${appointment.reasonForVisit != null ? appointment.reasonForVisit : '-'}">-</p>
+                        <p id="reasonForVisit" th:text="${appointment.reasonForVisit != null ? appointment.reasonForVisit : 'NA'}">NA</p>
                         <textarea id="reasonForVisitInput" class="form-control d-none" rows="4" maxlength="250" th:text="${appointment.reasonForVisit}"></textarea>
                         <p class="character-counter d-none" id="reasonForVisitCounter">0/250 characters</p>
                         <div id="reasonForVisitError" class="invalid-feedback">Reason for Visit cannot exceed 250 characters.</div>
@@ -375,7 +375,7 @@
                 <div class="row g-4">
                     <div class="col-md-6">
                         <label class="form-label">Payment Status</label>
-                        <p id="paymentStatus" th:text="${appointment.paymentStatus != null ? appointment.paymentStatus : '-'}">-</p>
+                        <p id="paymentStatus" th:text="${appointment.paymentStatus != null ? appointment.paymentStatus : 'NA'}">NA</p>
                     </div>
                 </div>
             </div>

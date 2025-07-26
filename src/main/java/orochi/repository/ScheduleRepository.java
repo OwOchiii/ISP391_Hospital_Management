@@ -165,6 +165,11 @@ public interface ScheduleRepository extends JpaRepository<Schedule, Integer>,Jpa
     @Query("SELECT COUNT(s) FROM Schedule s WHERE s.endTime = :endTime AND s.scheduleDate BETWEEN :startDate AND :endDate")
     long countByEndTimeAndDateRange(@Param("endTime") LocalTime endTime, @Param("startDate") LocalDate startDate, @Param("endDate") LocalDate endDate);
 
+    @Query("SELECT COUNT(DISTINCT s.patientId) FROM Schedule s WHERE s.doctorId = :doctorId AND s.patientId IS NOT NULL")
+    Integer countDistinctPatientsByDoctorId(@Param("doctorId") Integer doctorId);
+
+    @Query("SELECT COUNT(DISTINCT s.patientId) FROM Schedule s WHERE s.doctorId = :doctorId AND s.patientId IS NOT NULL AND s.scheduleDate BETWEEN :startDate AND :endDate")
+    Integer countDistinctPatientsInDateRange(@Param("doctorId") Integer doctorId, @Param("startDate") LocalDate startDate, @Param("endDate") LocalDate endDate);
     // thêm vào ScheduleRepository
     @Query(value =
             "SELECT * " +
