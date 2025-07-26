@@ -639,9 +639,7 @@
             </header>
             <div class="container-fluid p-4">
                 <!-- Daily Total -->
-                <div class="daily-total">
-                    Total Revenue Today: $<span id="dailyTotal">0.00</span>
-                </div>
+
                 <!-- Search Bar -->
                 <div class="search-bar">
                     <div class="input-group mb-3">
@@ -732,6 +730,148 @@
         <small>1 day ago</small>
     </div>
 </div>
+
+<!-- Payment Method Modal -->
+<div class="modal fade" id="paymentMethodModal" tabindex="-1" aria-labelledby="paymentMethodModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="paymentMethodModalLabel">
+                    <i class="fas fa-credit-card me-2"></i>Select Payment Method
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <div class="row mb-3">
+                    <div class="col-md-6">
+                        <h6><i class="fas fa-user me-2"></i>Patient Information</h6>
+                        <p class="mb-1"><strong>Name:</strong> <span id="modalPatientName">-</span></p>
+                        <p class="mb-1"><strong>ID:</strong> <span id="modalPatientId">-</span></p>
+                        <p class="mb-1"><strong>Amount:</strong> <span id="modalAmount">-</span></p>
+                    </div>
+                    <div class="col-md-6">
+                        <h6><i class="fas fa-calendar me-2"></i>Appointment Details</h6>
+                        <p class="mb-1"><strong>Date:</strong> <span id="modalAppointmentDate">-</span></p>
+                        <p class="mb-1"><strong>Status:</strong> <span id="modalStatus">-</span></p>
+                    </div>
+                </div>
+
+                <hr>
+
+                <h6 class="mb-3"><i class="fas fa-wallet me-2"></i>Choose Payment Method</h6>
+
+                <div class="row g-3">
+                    <!-- Cash Payment -->
+                    <div class="col-md-6">
+                        <div class="payment-method-card" onclick="redirectToCashPayment()" data-method="cash">
+                            <div class="payment-method-content">
+                                <div class="payment-method-icon cash-icon">
+                                    <i class="fas fa-money-bill-wave"></i>
+                                </div>
+                                <div class="payment-method-info">
+                                    <h6>Cash Payment</h6>
+                                    <p>Pay directly at reception desk</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Banking/Online Payment -->
+                    <div class="col-md-6">
+                        <div class="payment-method-card" onclick="redirectToOnlinePayment()" data-method="banking">
+                            <div class="payment-method-content">
+                                <div class="payment-method-icon banking-icon">
+                                    <i class="fas fa-university"></i>
+                                </div>
+                                <div class="payment-method-info">
+                                    <h6>Online Banking</h6>
+                                    <p>VNPay, MoMo, ZaloPay</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <input type="hidden" id="selectedPaymentMethod" value="">
+                <input type="hidden" id="selectedAppointmentId" value="">
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                    <i class="fas fa-times me-2"></i>Cancel
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+.payment-method-card {
+    border: 2px solid #e5e7eb;
+    border-radius: 12px;
+    padding: 20px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    background: white;
+    height: 100%;
+}
+
+.payment-method-card:hover {
+    border-color: var(--primary);
+    box-shadow: 0 4px 12px rgba(102, 126, 234, 0.15);
+    transform: translateY(-2px);
+}
+
+.payment-method-card.selected {
+    border-color: var(--primary);
+    background: rgba(102, 126, 234, 0.05);
+}
+
+.payment-method-content {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+}
+
+.payment-method-icon {
+    width: 60px;
+    height: 60px;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.5rem;
+    color: white;
+}
+
+.cash-icon {
+    background: linear-gradient(135deg, #22c55e, #16a34a);
+}
+
+.banking-icon {
+    background: linear-gradient(135deg, #3b82f6, #1d4ed8);
+}
+
+.card-icon {
+    background: linear-gradient(135deg, #f59e0b, #d97706);
+}
+
+.insurance-icon {
+    background: linear-gradient(135deg, #8b5cf6, #7c3aed);
+}
+
+.payment-method-info h6 {
+    margin: 0;
+    font-weight: 600;
+    color: var(--text-dark);
+}
+
+.payment-method-info p {
+    margin: 0;
+    font-size: 0.9rem;
+    color: var(--text-light);
+}
+</style>
+
 <script>
     function toggleSidebar() {
         const sidebar = document.getElementById('patientSidebar');
@@ -1136,10 +1276,13 @@
                 <td>${payment.patientId || 'N/A'}</td>
                 <td>${payment.patientName || 'N/A'}</td>
                 <td>${payment.visitDate || 'N/A'}</td>
-                <td>$${payment.amount ? Number(payment.amount).toFixed(2) : '0.00'}</td>
+                <td>${payment.amount ? Number(payment.amount).toLocaleString('vi-VN') + ' ₫' : '0 ₫'}</td>
                 <td>${getStatusDisplay(payment.status)}</td>
                 <td>
-                    ${payment.status.toLowerCase() === 'pending' ? `<button class="btn btn-sm btn-success" onclick="payInvoice('${payment.patientId}', '${payment.receiptId}')"><i class="fas fa-money-check-alt"></i> Pay</button>` :
+                    ${payment.status.toLowerCase() === 'pending' ?
+                        `<button class="btn btn-sm btn-primary" onclick="openPaymentMethodModal('${payment.patientId}', '${payment.patientName}', '${payment.amount}', '${payment.appointmentId}', '${payment.appointmentDate}', '${payment.status}')">
+                            <i class="fas fa-credit-card"></i> Process Payment
+                        </button>` :
                       payment.status.toLowerCase() === 'paid' ? '<span class="text-success">Completed</span>' :
                       payment.status.toLowerCase() === 'refunded' ? '<span class="text-muted">No Action</span>' :
                       '<span class="text-muted">No Action</span>'}
@@ -1172,11 +1315,28 @@
         `;
     }
 
-    function changePage(page) {
-        if (page < 1 || page > Math.ceil(filteredPayments.length / rowsPerPage)) return;
-        currentPage = page;
-        renderTable(filteredPayments, currentPage);
+    // New function to open Payment Method modal
+    function openPaymentMethodModal(patientId, patientName, amount, appointmentId, appointmentDate, status) {
+        // Populate modal with patient information
+        document.getElementById('modalPatientName').textContent = patientName || 'N/A';
+        document.getElementById('modalPatientId').textContent = patientId || 'N/A';
+        document.getElementById('modalAmount').textContent = amount ? `$${Number(amount).toFixed(2)}` : '$0.00';
+        document.getElementById('modalAppointmentDate').textContent = appointmentDate || 'N/A';
+        document.getElementById('modalStatus').textContent = status || 'N/A';
+        document.getElementById('selectedAppointmentId').value = appointmentId || '';
+
+        // Reset payment method selection
+        document.querySelectorAll('.payment-method-card').forEach(card => {
+            card.classList.remove('selected');
+        });
+        selectedPaymentMethod = '';
+
+        // Show the modal
+        const modal = new bootstrap.Modal(document.getElementById('paymentMethodModal'));
+        modal.show();
     }
+
+    // ...existing code...
 
     function filterPayments() {
         const searchValue = document.getElementById('searchInput').value.trim().toLowerCase();
@@ -1290,6 +1450,117 @@
             console.error('Error initializing:', error);
         }
     });
+
+    // Payment method selection
+    let selectedPaymentMethod = '';
+
+    function selectPaymentMethod(method) {
+        // Deselect all methods
+        document.querySelectorAll('.payment-method-card').forEach(card => {
+            card.classList.remove('selected');
+        });
+
+        // Select the clicked method
+        const selectedCard = document.querySelector(`.payment-method-card[data-method="${method}"]`);
+        if (selectedCard) {
+            selectedCard.classList.add('selected');
+            selectedPaymentMethod = method;
+        }
+
+        // Enable or disable the proceed button
+        document.getElementById('proceedPaymentBtn').disabled = (selectedPaymentMethod === '');
+    }
+
+    function proceedWithPayment() {
+        const patientId = document.getElementById('modalPatientId').textContent.trim();
+        const appointmentId = document.getElementById('selectedAppointmentId').value;
+
+        if (selectedPaymentMethod === 'cash') {
+            // Cash payment - redirect to pay_invoice.html
+            window.location.href = `/receptionist/pay_invoice?patientId=${patientId}&appointmentId=${appointmentId}`;
+        } else if (selectedPaymentMethod === 'banking') {
+            // Banking - redirect to online-payment.html
+            window.location.href = `/receptionist/online-payment?patientId=${patientId}&appointmentId=${appointmentId}`;
+        } else if (selectedPaymentMethod === 'card') {
+            // Credit/Debit card - show not implemented message or redirect to card payment
+            alert('Credit/Debit card payment is not yet implemented. Please choose another method.');
+        } else if (selectedPaymentMethod === 'insurance') {
+            // Insurance - show not implemented message or redirect to insurance processing
+            alert('Insurance payment is not yet implemented. Please choose another method.');
+        } else {
+            alert('Please select a payment method first.');
+        }
+
+        // Close modal after processing
+        const modal = bootstrap.Modal.getInstance(document.getElementById('paymentMethodModal'));
+        if (modal) {
+            modal.hide();
+        }
+    }
+
+    function markPaymentAsPaid(patientId, appointmentId) {
+        // Simulate marking payment as paid and updating appointment status
+        console.log(`Marking payment as paid for Patient ID: ${patientId}, Appointment ID: ${appointmentId}`);
+
+        // Here you would typically make an API call to update the payment status in the backend
+        // For this demo, we'll just show a success message and reload the data
+        setTimeout(() => {
+            alert('Payment marked as paid successfully.');
+            location.reload(); // Reload the page to see the updated data
+        }, 1000);
+    }
+
+    function redirectToOnlinePayment() {
+        const patientId = document.getElementById('modalPatientId').textContent.trim();
+        const appointmentId = document.getElementById('selectedAppointmentId').value;
+
+        console.log("Patient ID:", patientId);
+        console.log("Appointment ID:", appointmentId);
+
+        // Validate that we have a patientId before redirecting
+        if (!patientId || patientId === '-' || patientId === 'N/A') {
+            alert("Error: Patient ID is required for online payment");
+            return;
+        }
+
+        // Validate appointment ID
+        if (!appointmentId) {
+            alert("Error: Appointment ID is required for online payment");
+            return;
+        }
+
+        // Redirect directly to online payment page with proper encoding
+        window.location.href = `/receptionist/online-payment?patientId=${encodeURIComponent(patientId)}&appointmentId=${encodeURIComponent(appointmentId)}`;
+    }
+
+    function redirectToCashPayment() {
+        const patientId = document.getElementById('modalPatientId').textContent.trim();
+        const appointmentId = document.getElementById('selectedAppointmentId').value;
+
+        console.log("Patient ID for cash payment:", patientId);
+        console.log("Appointment ID for cash payment:", appointmentId);
+
+        // Validate that we have a patientId before redirecting
+        if (!patientId || patientId === '-' || patientId === 'N/A') {
+            alert("Error: Patient ID is required for cash payment");
+            return;
+        }
+
+        // Validate appointment ID
+        if (!appointmentId) {
+            alert("Error: Appointment ID is required for cash payment");
+            return;
+        }
+
+        // Redirect directly to pay_invoice.html
+        window.location.href = `/receptionist/pay_invoice?patientId=${encodeURIComponent(patientId)}&appointmentId=${encodeURIComponent(appointmentId)}`;
+
+        // Close the modal after redirect is initiated
+        const modal = bootstrap.Modal.getInstance(document.getElementById('paymentMethodModal'));
+        if (modal) {
+            modal.hide();
+        }
+    }
 </script>
 <!-- Bootstrap JS -->
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>

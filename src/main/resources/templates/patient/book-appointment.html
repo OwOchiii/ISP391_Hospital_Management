@@ -852,7 +852,7 @@
               <option value="">Select Medical Specialty</option>
               <option th:each="specialty : ${specialties}"
                       th:value="${specialty.specId}"
-                      th:text="${specialty.specName + ' - $' + specialty.price}"
+                      th:text="${specialty.specName + ' - ' + specialty.price + 'VND'}"
                       th:data-price="${specialty.price}"
                       th:selected="${appointmentForm.specialtyId == specialty.specId}">
                 Cardiology - $150

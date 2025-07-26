@@ -34,6 +34,7 @@
             --info-color: #3b82f6;
             --sidebar-width: 280px;
             --header-height: 70px;
+            --border-color: rgba(102, 126, 234, 0.2);
         }
 
         * {
@@ -508,8 +509,13 @@
             transition: all 0.3s ease;
         }
 
-        .card:hover {
-            box-shadow: 0 8px 30px rgba(102, 126, 234, 0.25);
+        /* Override Bootstrap col-lg-6 width limitation */
+        @media (min-width: 992px) {
+            .col-lg-6 {
+                flex: 0 0 auto;
+                /* width: 50%; - Removed to allow full width expansion */
+                width: 100% !important;
+            }
         }
 
         .card-header {
@@ -551,9 +557,10 @@
         }
 
         .table td {
-            font-size: 0.875rem;
+            font-size: 1rem;
             color: var(--text-dark);
             vertical-align: middle;
+            padding: 1rem;
         }
 
         /* Action Icons */
@@ -770,28 +777,141 @@
             }
         }
 
-        /* Action buttons styling */
-        .action-buttons {
+        /* Pagination Styles - Matching doctors.html exactly */
+        .pagination-section {
+            background: var(--bg-white);
+            border-radius: 12px;
+            padding: 1.5rem;
+            margin-top: 2rem;
             display: flex;
-            gap: 8px;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+        }
+
+        .pagination-info {
+            font-family: 'Inter', sans-serif;
+            font-size: 0.875rem; /* 14px matching appointments.html */
+            padding: 1rem;
+            font-weight: 500; /* Medium weight */
+
+            color: var(--text-muted);
+        }
+
+        .pagination-controls {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .pagination-btn {
+            font-family: 'Inter', sans-serif;
+            background: var(--bg-white);
+            border: 2px solid var(--border-color);
+            color: var(--text-dark);
+            padding: 0.5rem 1rem;
+            border-radius: 8px;
+            font-size: 0.875rem; /* 14px matching appointments.html */
+            font-weight: 500; /* Medium weight */
+            line-height: 1.6;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            min-width: 40px;
+            height: 40px;
+            display: flex;
+            align-items: center;
             justify-content: center;
         }
 
-        .btn-confirm {
-            background: var(--success-color);
+        .pagination-btn:hover:not(:disabled) {
+            background: var(--primary);
+            border-color: var(--primary);
             color: white;
-            border: none;
-            padding: 6px 15px;
-            border-radius: 6px;
-            font-size: 0.875rem;
-            font-weight: 500;
-            cursor: pointer;
-            transition: all 0.3s ease;
+            transform: translateY(-1px);
         }
 
-        .btn-confirm:hover {
-            background: #059669;
+        .pagination-btn.active {
+            background: var(--primary);
+            border-color: var(--primary);
+            color: white;
+            box-shadow: 0 2px 8px rgba(102, 126, 234, 0.3);
+        }
+
+        .pagination-btn:disabled {
+            background: var(--bg-light);
+            border-color: #e0e0e0;
+            color: var(--text-muted);
+            cursor: not-allowed;
+        }
+
+        .pagination-prev,
+        .pagination-next {
+            font-family: 'Inter', sans-serif;
+            background: var(--primary);
+            border-color: var(--primary);
+            color: white;
+            font-weight: 600; /* Semi-bold for navigation buttons */
+        }
+
+        .pagination-prev:hover:not(:disabled),
+        .pagination-next:hover:not(:disabled) {
+            background: var(--secondary);
+            border-color: var(--secondary);
             transform: translateY(-1px);
+        }
+
+        .pagination-prev:disabled,
+        .pagination-next:disabled {
+            background: var(--bg-light);
+            border-color: #e0e0e0;
+            color: var(--text-muted);
+        }
+
+        .page-size-selector {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            font-family: 'Inter', sans-serif;
+            font-size: 0.875rem; /* 14px */
+            font-weight: 400; /* Regular weight */
+            line-height: 1.6;
+            color: var(--text-muted);
+        }
+
+        .page-size-selector select {
+            padding: 0.25rem 0.5rem;
+            border: 1px solid var(--border-color);
+            border-radius: 6px;
+            font-family: 'Inter', sans-serif;
+            font-size: 0.875rem; /* 14px */
+            font-weight: 400;
+            line-height: 1.6;
+            background: var(--bg-white);
+        }
+
+        /* Mobile pagination adjustments - Matching doctors.html */
+        @media (max-width: 768px) {
+            .pagination-section {
+                flex-direction: column;
+                gap: 1rem;
+                padding: 1rem;
+            }
+
+            .pagination-controls {
+                flex-wrap: wrap;
+                justify-content: center;
+            }
+
+            .pagination-btn {
+                min-width: 35px;
+                height: 35px;
+                padding: 0.25rem 0.75rem;
+                font-size: 0.75rem; /* 12px for mobile responsive */
+            }
+
+            .pagination-info {
+                font-size: 0.75rem; /* 12px for mobile responsive */
+            }
         }
     </style>
 </head>
@@ -1031,6 +1151,8 @@
                                     <tr>
                                         <th style="width: 60px; text-align: center;">No.</th>
                                         <th>Name</th>
+                                        <th>Age</th>
+                                        <th>Gender</th>
                                         <th>Date</th>
                                         <th>Time</th>
                                         <th>Status</th>
@@ -1040,31 +1162,17 @@
                                     <tbody id="appointmentTableBody"></tbody>
                                 </table>
                             </div>
-                            <div class="pagination-container">
-                                <button class="pagination-btn" id="prevPage" onclick="changePage(-1)">Previous</button>
-                                <span class="pagination-info" id="pageInfo">Page 1 of 1</span>
-                                <button class="pagination-btn" id="nextPage" onclick="changePage(1)">Next</button>
+
+                            <!-- Enhanced Pagination Section - Matching doctors.html exactly -->
+                            <div class="pagination-section" id="appointmentPaginationSection" style="display: none;">
+                                <div class="pagination-info" id="appointmentPaginationInfo"></div>
+                                <div class="pagination-controls" id="appointmentPaginationControls"></div>
                             </div>
                         </div>
                     </div>
                 </div>
                 <!-- Patient Reviews -->
-                <div class="col-lg-6">
-                    <div class="card">
-                        <div class="card-header d-flex justify-content-between align-items-center">
-                            <h5 class="card-title mb-0">Patient Reviews</h5>
-                            <a href="#" class="text-primary">View All</a>
-                        </div>
-                        <div class="card-body">
-                            <div class="input-group mb-3">
-                                <span class="input-group-text"><i class="fas fa-search"></i></span>
-                                <input type="text" class="form-control" id="doctorSearch"
-                                       placeholder="Search by doctor name" onkeyup="searchDoctors()">
-                            </div>
-                            <div id="reviewsList"></div>
-                        </div>
-                    </div>
-                </div>
+
             </div>
         </main>
     </div>
@@ -1073,15 +1181,15 @@
 <!-- Modals -->
 <!-- Appointment Modal -->
 <div class="modal fade" id="appointmentModal" tabindex="-1" aria-labelledby="appointmentModalLabel" aria-hidden="true">
-    <div class="modal-dialog modal-xl">
-        <div class="modal-content">
+    <div class="modal-dialog modal-fullscreen-lg-down modal-xl" style="max-width: 95vw;">
+        <div class="modal-content" style="height: 90vh;">
             <div class="modal-header">
                 <h5 class="modal-title" id="appointmentModalLabel">All Appointment Requests</h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
-            <div class="modal-body">
+            <div class="modal-body d-flex flex-column" style="flex: 1; overflow: hidden;">
                 <!-- Filter Controls -->
-                <div class="row mb-3">
+                <div class="row mb-3 flex-shrink-0">
                     <div class="col-md-4">
                         <div class="input-group">
                             <span class="input-group-text"><i class="fas fa-search"></i></span>
@@ -1098,23 +1206,25 @@
 
 
                 <!-- Appointments Table -->
-                <div class="table-responsive modal-table-container" style="max-height: 400px; overflow-y: auto;">
-                    <table class="table table-hover" id="modalAppointmentTable">
+                <div class="table-responsive modal-table-container flex-grow-1" style="overflow-y: auto; min-height: 0;">
+                    <table class="table table-hover table-sm" id="modalAppointmentTable" style="border-spacing: 0 8px; border-collapse: separate;">
                         <thead class="table-light sticky-top">
                         <tr>
                             <th style="width: 50px; text-align: center;">No.</th>
-                            <th>Patient Name</th>
-                            <th>Phone</th>
-                            <th>Doctor</th>
-                            <th>Date</th>
-                            <th>Time</th>
-                            <th>Status</th>
+                            <th style="min-width: 150px;">Patient Name</th>
+                            <th style="min-width: 60px;">Age</th>
+                            <th style="min-width: 80px;">Gender</th>
+                            <th style="min-width: 120px;">Phone</th>
+                            <th style="min-width: 150px;">Doctor</th>
+                            <th style="min-width: 100px;">Date</th>
+                            <th style="min-width: 80px;">Time</th>
+                            <th style="min-width: 100px;">Status</th>
                             <th style="width: 200px;">Actions</th>
                         </tr>
                         </thead>
                         <tbody id="modalAppointmentTableBody">
                             <tr>
-                                <td colspan="8" class="text-center py-4">
+                                <td colspan="10" class="text-center py-4">
                                     <div class="spinner-border text-primary" role="status">
                                         <span class="visually-hidden">Loading...</span>
                                     </div>
@@ -1126,7 +1236,7 @@
                 </div>
 
                 <!-- Pagination -->
-                <div class="d-flex justify-content-between align-items-center mt-3">
+                <div class="d-flex justify-content-between align-items-center mt-3 flex-shrink-0">
                     <div class="text-muted">
                         Showing <span id="showingStart">0</span> to <span id="showingEnd">0</span> of <span id="showingTotal">0</span> appointments
                     </div>
@@ -1135,6 +1245,12 @@
                             <!-- Pagination will be generated dynamically -->
                         </ul>
                     </nav>
+                </div>
+
+                <!-- Pagination Section -->
+                <div class="pagination-section" id="paginationSection" style="display: none;">
+                    <div class="pagination-info" id="paginationInfo"></div>
+                    <div class="pagination-controls" id="paginationControls"></div>
                 </div>
             </div>
         </div>
@@ -1363,15 +1479,140 @@
         });
     }
 
+    // Enhanced pagination function - Matching doctors.html exactly
+    function renderAppointmentPagination(totalAppointments, totalPages) {
+        const paginationSection = document.getElementById('appointmentPaginationSection');
+        const paginationInfo = document.getElementById('appointmentPaginationInfo');
+        const paginationControls = document.getElementById('appointmentPaginationControls');
+
+        // Only show pagination if there's more than 1 page
+        if (totalPages <= 1) {
+            paginationSection.style.display = 'none';
+            return;
+        }
+
+        paginationSection.style.display = 'flex';
+
+        // Update pagination info - Display "Showing 1-5 of 27 appointments"
+        const start = (currentPage - 1) * itemsPerPage + 1;
+        const end = Math.min(currentPage * itemsPerPage, totalAppointments);
+        paginationInfo.textContent = `Showing ${start} - ${end} of ${totalAppointments} appointments`;
+
+        // Clear previous controls
+        paginationControls.innerHTML = '';
+
+        // Previous button - "◀" button
+        const prevButton = document.createElement('button');
+        prevButton.className = 'pagination-btn pagination-prev';
+        prevButton.innerHTML = '<i class="fas fa-chevron-left"></i>';
+        prevButton.disabled = currentPage === 1;
+        prevButton.onclick = () => {
+            if (currentPage > 1) {
+                currentPage--;
+                renderAppointmentTable(appointmentData, currentPage);
+            }
+        };
+        paginationControls.appendChild(prevButton);
+
+        // Calculate which page numbers to show - Logic for displaying page numbers
+        let startPage = Math.max(1, currentPage - 2);
+        let endPage = Math.min(totalPages, currentPage + 2);
+
+        // Adjust if we're near the beginning or end
+        if (currentPage <= 3) {
+            endPage = Math.min(5, totalPages); // Display max 5 pages at the beginning
+        }
+        if (currentPage >= totalPages - 2) {
+            startPage = Math.max(1, totalPages - 4); // Display 5 pages at the end
+        }
+
+        // Add first page if not included - Add first page + "..."
+        if (startPage > 1) {
+            const firstButton = document.createElement('button');
+            firstButton.className = 'pagination-btn';
+            firstButton.textContent = '1';
+            firstButton.onclick = () => {
+                currentPage = 1;
+                renderAppointmentTable(appointmentData, currentPage);
+            };
+            paginationControls.appendChild(firstButton);
+
+            if (startPage > 2) {
+                const dots = document.createElement('span');
+                dots.textContent = '...';
+                dots.style.padding = '0.5rem';
+                dots.style.color = 'var(--text-muted)';
+                paginationControls.appendChild(dots);
+            }
+        }
+
+        // Create page number buttons - Create page number buttons
+        for (let i = startPage; i <= endPage; i++) {
+            const button = document.createElement('button');
+            button.className = `pagination-btn ${i === currentPage ? 'active' : ''}`;
+            button.textContent = i;
+            button.disabled = i === currentPage;
+            button.onclick = () => {
+                currentPage = i;
+                renderAppointmentTable(appointmentData, currentPage);
+            };
+            paginationControls.appendChild(button);
+        }
+
+        // Add last page if not included - Add "..." + last page
+        if (endPage < totalPages) {
+            if (endPage < totalPages - 1) {
+                const dots = document.createElement('span');
+                dots.textContent = '...';
+                dots.style.padding = '0.5rem';
+                dots.style.color = 'var(--text-muted)';
+                paginationControls.appendChild(dots);
+            }
+
+            const lastButton = document.createElement('button');
+            lastButton.className = 'pagination-btn';
+            lastButton.textContent = totalPages;
+            lastButton.onclick = () => {
+                currentPage = totalPages;
+                renderAppointmentTable(appointmentData, currentPage);
+            };
+            paginationControls.appendChild(lastButton);
+        }
+
+        // Next button - "▶" button
+        const nextButton = document.createElement('button');
+        nextButton.className = 'pagination-btn pagination-next';
+        nextButton.innerHTML = '<i class="fas fa-chevron-right"></i>';
+        nextButton.disabled = currentPage === totalPages;
+        nextButton.onclick = () => {
+            if (currentPage < totalPages) {
+                currentPage++;
+                renderAppointmentTable(appointmentData, currentPage);
+            }
+        };
+        paginationControls.appendChild(nextButton);
+    }
+
     function renderAppointmentTable(data, page = 1) {
         const tableBody = document.getElementById('appointmentTableBody');
         tableBody.innerHTML = '';
 
+        // Calculate pagination
+        const totalAppointments = data.length;
+        const totalPages = Math.ceil(totalAppointments / itemsPerPage);
+
+        // Ensure currentPage is within valid range
+        if (currentPage > totalPages && totalPages > 0) {
+            currentPage = totalPages;
+        }
+        if (currentPage < 1) {
+            currentPage = 1;
+        }
+
         if (data.length === 0) {
-            tableBody.innerHTML = '<tr><td colspan="6" class="text-center">No pending appointments found for today</td></tr>';
-            document.getElementById('pageInfo').textContent = 'Page 1 of 1';
-            document.getElementById('prevPage').disabled = true;
-            document.getElementById('nextPage').disabled = true;
+            tableBody.innerHTML = '<tr><td colspan="8" class="text-center">No pending appointments found for today</td></tr>';
+            // Hide pagination when no data
+            document.getElementById('appointmentPaginationSection').style.display = 'none';
             return;
         }
 
@@ -1405,6 +1646,8 @@
             tr.innerHTML = `
                 <td style="width: 60px; text-align: center;">${start + index + 1}</td>
                 <td>${row.name || 'N/A'}</td>
+                <td>${row.age || 'N/A'}</td>
+                <td>${row.gender || 'N/A'}</td>
                 <td>${displayDate}</td>
                 <td>${displayTime}</td>
                 <td><span class="badge bg-warning">${row.status || 'Pending'}</span></td>
@@ -1422,10 +1665,8 @@
             tableBody.appendChild(tr);
         });
 
-        const totalPages = Math.ceil(data.length / itemsPerPage);
-        document.getElementById('pageInfo').textContent = `Page ${page} of ${totalPages}`;
-        document.getElementById('prevPage').disabled = page === 1;
-        document.getElementById('nextPage').disabled = page === totalPages;
+        // Render enhanced pagination controls
+        renderAppointmentPagination(totalAppointments, totalPages);
     }
 
     function changePage(direction) {
@@ -1433,7 +1674,238 @@
         renderAppointmentTable(appointmentData, currentPage);
     }
 
-    // Enhanced function to load only pending appointments for today (NO AUTO-REFRESH)
+    // === REAL-TIME APPOINTMENT REFRESH SYSTEM ===
+    let appointmentRefreshInterval = null;
+    let lastAppointmentDataHash = null;
+    let isRefreshingAppointments = false;
+    let appointmentRefreshEnabled = true;
+
+    /**
+     * Initialize real-time appointment refresh system
+     */
+    function initializeAppointmentRefresh() {
+        console.log('🚀 Initializing real-time appointment refresh system...');
+
+        // Load initial data
+        loadTodaysAppointments();
+
+        // Start auto-refresh every 15 seconds
+        startAppointmentAutoRefresh();
+
+        // Add visual indicator
+        addRefreshIndicator();
+
+        console.log('✅ Real-time appointment refresh system initialized');
+    }
+
+    /**
+     * Start automatic refresh for appointments
+     */
+    function startAppointmentAutoRefresh() {
+        // Clear existing interval
+        if (appointmentRefreshInterval) {
+            clearInterval(appointmentRefreshInterval);
+        }
+
+        // Set up new interval - refresh every 15 seconds
+        appointmentRefreshInterval = setInterval(() => {
+            if (appointmentRefreshEnabled && !isRefreshingAppointments) {
+                refreshAppointmentsInBackground();
+            }
+        }, 15000); // 15 seconds
+
+        console.log('🔄 Auto-refresh started: checking for appointment updates every 15 seconds');
+    }
+
+    /**
+     * Stop automatic refresh
+     */
+    function stopAppointmentAutoRefresh() {
+        if (appointmentRefreshInterval) {
+            clearInterval(appointmentRefreshInterval);
+            appointmentRefreshInterval = null;
+            console.log('🛑 Auto-refresh stopped');
+        }
+    }
+
+    /**
+     * Refresh appointments in background without disrupting user
+     */
+    function refreshAppointmentsInBackground() {
+        if (isRefreshingAppointments) return;
+
+        isRefreshingAppointments = true;
+        updateRefreshIndicator('syncing');
+
+        // Get today's date
+        const now = new Date();
+        const vietnamTime = new Date(now.getTime() + (7 * 60 * 60 * 1000));
+        const today = vietnamTime.toISOString().split('T')[0];
+
+        fetch(`/receptionist/pendingAppointmentRequest/today?date=${today}&timestamp=${Date.now()}`)
+            .then(response => {
+                if (!response.ok) throw new Error(`HTTP ${response.status}`);
+                return response.json();
+            })
+            .then(data => {
+                const appointments = Array.isArray(data) ? data : [];
+                const newDataHash = generateDataHash(appointments);
+
+                // Check if data has changed
+                if (lastAppointmentDataHash !== null && lastAppointmentDataHash !== newDataHash) {
+                    console.log('📊 Appointment data changed - updating display');
+
+                    // Show notification about changes
+                    const oldCount = appointmentData.length;
+                    const newCount = appointments.length;
+
+                    if (newCount > oldCount) {
+                        showNotification(`${newCount - oldCount} new appointment request(s) received`, 'info');
+                        // Optional: Play notification sound
+                        playNotificationSound();
+                    } else if (newCount < oldCount) {
+                        showNotification(`${oldCount - newCount} appointment(s) updated`, 'info');
+                    }
+
+                    // Update data and re-render
+                    appointmentData = appointments;
+                    renderAppointmentTable(appointmentData, currentPage);
+                    updateAppointmentRequestsCount(appointments.length);
+                    updateDashboardTitle(appointments.length);
+                }
+
+                lastAppointmentDataHash = newDataHash;
+                updateRefreshIndicator('success');
+            })
+            .catch(error => {
+                console.error('❌ Background refresh failed:', error);
+                updateRefreshIndicator('error');
+            })
+            .finally(() => {
+                isRefreshingAppointments = false;
+
+                // Reset indicator after 2 seconds
+                setTimeout(() => {
+                    updateRefreshIndicator('idle');
+                }, 2000);
+            });
+    }
+
+    /**
+     * Generate hash for data comparison
+     */
+    function generateDataHash(data) {
+        return btoa(JSON.stringify(data.map(item => ({
+            id: item.id,
+            status: item.status,
+            dateTime: item.dateTime,
+            name: item.name
+        })))).slice(0, 16);
+    }
+
+    /**
+     * Add refresh indicator to UI
+     */
+    function addRefreshIndicator() {
+        const cardHeader = document.querySelector('.card-header h5.card-title');
+        if (cardHeader && !document.getElementById('refreshIndicator')) {
+            const indicator = document.createElement('span');
+            indicator.id = 'refreshIndicator';
+            indicator.className = 'refresh-indicator ms-2';
+            indicator.innerHTML = '<i class="fas fa-circle text-success" title="Auto-refresh active"></i>';
+            cardHeader.appendChild(indicator);
+        }
+    }
+
+    /**
+     * Update refresh indicator status
+     */
+    function updateRefreshIndicator(status) {
+        const indicator = document.getElementById('refreshIndicator');
+        if (!indicator) return;
+
+        switch (status) {
+            case 'syncing':
+                indicator.innerHTML = '<i class="fas fa-sync fa-spin text-primary" title="Syncing..."></i>';
+                break;
+            case 'success':
+                indicator.innerHTML = '<i class="fas fa-check-circle text-success" title="Up to date"></i>';
+                break;
+            case 'error':
+                indicator.innerHTML = '<i class="fas fa-exclamation-circle text-warning" title="Sync error"></i>';
+                break;
+            default:
+                indicator.innerHTML = '<i class="fas fa-circle text-success" title="Auto-refresh active"></i>';
+        }
+    }
+
+    /**
+     * Play notification sound for new appointments
+     */
+    function playNotificationSound() {
+        try {
+            // Create audio context for notification sound
+            const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+            const oscillator = audioContext.createOscillator();
+            const gainNode = audioContext.createGain();
+
+            oscillator.connect(gainNode);
+            gainNode.connect(audioContext.destination);
+
+            oscillator.frequency.setValueAtTime(800, audioContext.currentTime);
+            oscillator.frequency.setValueAtTime(600, audioContext.currentTime + 0.1);
+
+            gainNode.gain.setValueAtTime(0.1, audioContext.currentTime);
+            gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.2);
+
+            oscillator.start(audioContext.currentTime);
+            oscillator.stop(audioContext.currentTime + 0.2);
+        } catch (error) {
+            console.log('Audio notification not available');
+        }
+    }
+
+    /**
+     * Toggle auto-refresh on/off
+     */
+    function toggleAppointmentRefresh() {
+        appointmentRefreshEnabled = !appointmentRefreshEnabled;
+
+        if (appointmentRefreshEnabled) {
+            startAppointmentAutoRefresh();
+            showNotification('Auto-refresh enabled', 'success');
+            updateRefreshIndicator('idle');
+        } else {
+            stopAppointmentAutoRefresh();
+            showNotification('Auto-refresh disabled', 'info');
+            updateRefreshIndicator('paused');
+        }
+
+        console.log(`🔄 Auto-refresh ${appointmentRefreshEnabled ? 'enabled' : 'disabled'}`);
+    }
+
+    /**
+     * Manual refresh with user feedback
+     */
+    function manualRefreshAppointments() {
+        console.log('🔄 Manual refresh triggered');
+        updateRefreshIndicator('syncing');
+
+        // Reset hash to force update
+        lastAppointmentDataHash = null;
+
+        loadTodaysAppointments();
+
+        showNotification('Appointments refreshed', 'success');
+
+        setTimeout(() => {
+            updateRefreshIndicator('success');
+        }, 1000);
+    }
+
+    // === ENHANCED APPOINTMENT LOADING ===
+
+    // Enhanced function to load only pending appointments for today with better UX
     function loadTodaysAppointments() {
         // Get today's date in Vietnamese timezone (UTC+7)
         const now = new Date();
@@ -1507,7 +1979,7 @@
         if (tableBody) {
             tableBody.innerHTML = `
                 <tr>
-                    <td colspan="8" class="text-center py-4">
+                    <td colspan="10" class="text-center py-4">
                         <div class="spinner-border text-primary" role="status">
                             <span class="visually-hidden">Loading...</span>
                         </div>
@@ -1534,7 +2006,7 @@
                 tableBody.innerHTML = '';
 
                 if (appointments.length === 0) {
-                    tableBody.innerHTML = '<tr><td colspan="8" class="text-center">No pending appointments found</td></tr>';
+                    tableBody.innerHTML = '<tr><td colspan="10" class="text-center">No pending appointments found</td></tr>';
                     // Update pagination to show 0 appointments
                     updateModalPaginationInfo(0, 0, 0);
                     return;
@@ -1566,6 +2038,8 @@
                     tr.innerHTML = `
                         <td style="width: 50px; text-align: center;">${index + 1}</td>
                         <td>${row.name || 'N/A'}</td>
+                        <td>${row.age || 'N/A'}</td>
+                        <td>${row.gender || 'N/A'}</td>
                         <td>${row.phone || 'N/A'}</td>
                         <td>${row.doctorName || 'Not Assigned'}</td>
                         <td>${displayDate}</td>
@@ -1601,7 +2075,7 @@
                 if (tableBody) {
                     tableBody.innerHTML = `
                         <tr>
-                            <td colspan="8" class="text-center text-danger">
+                            <td colspan="10" class="text-center text-danger">
                                 <i class="fas fa-exclamation-triangle"></i>
                                 Error loading appointments: ${error.message}
                                 <br>
@@ -1647,7 +2121,7 @@
                 tableBody.innerHTML = '';
 
                 if (filteredData.length === 0) {
-                    tableBody.innerHTML = '<tr><td colspan="8" class="text-center">No appointments found matching your search</td></tr>';
+                    tableBody.innerHTML = '<tr><td colspan="10" class="text-center">No appointments found matching your search</td></tr>';
                     // Update pagination to show 0 results
                     updateModalPaginationInfo(0, 0, 0);
                     return;
@@ -1679,8 +2153,8 @@
                     tr.innerHTML = `
                         <td style="width: 50px; text-align: center;">${index + 1}</td>
                         <td>${row.name || 'N/A'}</td>
-                        <td>${row.phone || 'N/A'}</td>
-                        <td>${row.doctorName || 'Not Assigned'}</td>
+                        <td>${row.age || 'N/A'}</td>
+                        <td>${row.gender || 'N/A'}</td>
                         <td>${displayDate}</td>
                         <td>${displayTime}</td>
                         <td>
@@ -2132,10 +2606,208 @@
         // Load today's appointments once
         loadTodaysAppointments();
 
+        // Initialize real-time appointment refresh system
+        initializeAppointmentRefresh();
+
         console.log('Dashboard initialized');
     });
 
     addEventListeners();
+
+    // 🔥 AUTO CANCEL APPOINTMENTS - TỰ ĐỘNG HỦY LỊCH HẸN QUÁ THỜI GIAN
+    let autoCancelInterval = null;
+    let lastAutoCancelCheck = null;
+
+    /**
+     * Tự động kiểm tra và hủy các appointments có status "Pending" đã quá thời gian
+     * Logic theo yêu cầu:
+     * - Kiểm tra thời gian: So sánh appointment.dateTime với LocalDateTime.now()
+     * - Lọc status: Chỉ xử lý appointments có status "Pending"
+     * - Cập nhật database: Set status = "Cancel" và save
+     * - Logging: Ghi log chi tiết quá trình thực hiện
+     * - Trả về kết quả: Số lượng appointments đã được cancel
+     */
+    function autoCheckAndCancelExpiredAppointments() {
+        const now = new Date();
+
+        // Prevent too frequent checks (minimum 30 seconds between checks)
+        if (lastAutoCancelCheck && (now - lastAutoCancelCheck) < 30000) {
+            console.log('⏱️ Auto cancel check skipped - too soon since last check');
+            return;
+        }
+
+        lastAutoCancelCheck = now;
+
+        console.log('🔍 Starting auto cancel check for expired appointments...');
+        console.log('⏰ Current time:', now.toLocaleString('vi-VN'));
+
+        // Get CSRF token for security
+        const csrfToken = document.querySelector('meta[name="_csrf"]')?.getAttribute('content');
+        if (!csrfToken) {
+            console.error('❌ CSRF token not found - cannot proceed with auto cancel');
+            return;
+        }
+
+        // Call backend API to auto cancel expired appointments
+        fetch('/receptionist/api/appointments/auto-cancel', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRF-TOKEN': csrfToken
+            }
+        })
+        .then(response => {
+            if (!response.ok) {
+                throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+            }
+            return response.json();
+        })
+        .then(result => {
+            if (result.success) {
+                const cancelledCount = result.cancelledCount || 0;
+                console.log(`✅ Auto cancel completed successfully`);
+                console.log(`📊 Cancelled appointments: ${cancelledCount}`);
+                console.log(`🕐 Timestamp: ${result.timestamp}`);
+
+                if (cancelledCount > 0) {
+                    console.log(`🔄 ${cancelledCount} appointments were automatically cancelled`);
+
+                    // Show notification to user if any appointments were cancelled
+                    showNotification(
+                        `${cancelledCount} expired appointment(s) automatically cancelled`,
+                        'info'
+                    );
+
+                    // Refresh the appointment table to reflect changes
+                    refreshAppointmentData();
+
+                    // Log details for audit trail
+                    console.log(`📝 Auto cancel audit log:`);
+                    console.log(`   - Check time: ${now.toISOString()}`);
+                    console.log(`   - Cancelled count: ${cancelledCount}`);
+                    console.log(`   - Status: Success`);
+                } else {
+                    console.log('✨ No expired appointments found - all appointments are current');
+                }
+            } else {
+                console.error('❌ Auto cancel failed:', result.message);
+                console.log(`📝 Auto cancel error log:`);
+                console.log(`   - Check time: ${now.toISOString()}`);
+                console.log(`   - Error: ${result.message}`);
+                console.log(`   - Status: Failed`);
+            }
+        })
+        .catch(error => {
+            console.error('💥 Error during auto cancel check:', error);
+            console.log(`📝 Auto cancel exception log:`);
+            console.log(`   - Check time: ${now.toISOString()}`);
+            console.log(`   - Exception: ${error.message}`);
+            console.log(`   - Status: Exception`);
+        });
+    }
+
+    /**
+     * Refresh appointment data after auto cancel operation
+     */
+    function refreshAppointmentData() {
+        try {
+            console.log('🔄 Refreshing appointment data after auto cancel...');
+
+            // Reload today's appointments
+            loadTodaysAppointments();
+
+            // If modal is open, refresh modal data too
+            const modal = document.getElementById('appointmentModal');
+            if (modal && modal.classList.contains('show')) {
+                loadModalPendingAppointments();
+            }
+
+            console.log('✅ Appointment data refreshed successfully');
+        } catch (error) {
+            console.error('❌ Error refreshing appointment data:', error);
+        }
+    }
+
+    /**
+     * Start auto cancel monitoring
+     * Kiểm tra theo thời gian thực - check mỗi 10 giây để phát hiện appointments hết hạn ngay lập tức
+     */
+    function startAutoCancelMonitoring() {
+        // Clear existing interval if any
+        if (autoCancelInterval) {
+            clearInterval(autoCancelInterval);
+            console.log('🛑 Stopped existing auto cancel monitoring');
+        }
+
+        // Start new monitoring interval - CHECK MỖI 10 GIÂY ĐỂ ĐẢM BẢO THỜI GIAN THỰC
+        const intervalSeconds = 1; // Check every 10 seconds for real-time monitoring
+        const intervalMs = intervalSeconds * 10;
+
+        console.log(`🚀 Starting REAL-TIME auto cancel monitoring...`);
+        console.log(`⏰ Check interval: ${intervalSeconds} second(s) - REAL TIME`);
+        console.log(`🎯 Target: Pending appointments past due time`);
+        console.log(`🔧 Logic: appointment.dateTime < LocalDateTime.now()`);
+        console.log(`💡 Real-time monitoring ensures appointments are cancelled immediately when expired`);
+
+        // Run initial check immediately
+        autoCheckAndCancelExpiredAppointments();
+
+        // Set up recurring real-time checks every 10 seconds
+        autoCancelInterval = setInterval(() => {
+            autoCheckAndCancelExpiredAppointments();
+        }, intervalMs);
+
+        console.log(`✅ Real-time auto cancel monitoring started successfully`);
+        console.log(`📝 Monitor ID: ${autoCancelInterval}`);
+        console.log(`🔄 Next check in ${intervalSeconds} seconds`);
+    }
+
+    /**
+     * Stop auto cancel monitoring
+     */
+    function stopAutoCancelMonitoring() {
+        if (autoCancelInterval) {
+            clearInterval(autoCancelInterval);
+            autoCancelInterval = null;
+            lastAutoCancelCheck = null;
+            console.log('🛑 Auto cancel monitoring stopped');
+        }
+    }
+
+    /**
+     * Manual trigger for auto cancel (for testing/debugging)
+     */
+    function manualTriggerAutoCancel() {
+        console.log('🔧 Manual trigger: Starting auto cancel check...');
+        autoCheckAndCancelExpiredAppointments();
+    }
+
+    // Window event listeners for auto cancel monitoring
+    window.addEventListener('load', function() {
+        // Start auto cancel monitoring when page loads
+        setTimeout(() => {
+            startAutoCancelMonitoring();
+        }, 2000); // Wait 2 seconds after page load
+    });
+
+    window.addEventListener('beforeunload', function() {
+        // Stop monitoring when page is about to unload
+        stopAutoCancelMonitoring();
+    });
+
+    // Page visibility API - pause/resume monitoring when tab is hidden/visible
+    document.addEventListener('visibilitychange', function() {
+        if (document.hidden) {
+            console.log('👁️ Page hidden - continuing auto cancel monitoring in background');
+            // Keep monitoring even when tab is hidden
+        } else {
+            console.log('👁️ Page visible - ensuring auto cancel monitoring is active');
+            // Ensure monitoring is still active when tab becomes visible
+            if (!autoCancelInterval) {
+                startAutoCancelMonitoring();
+            }
+        }
+    });
 </script>
 <script>
     document.addEventListener('DOMContentLoaded', () => {
