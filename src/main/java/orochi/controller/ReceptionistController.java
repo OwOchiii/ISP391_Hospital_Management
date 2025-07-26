@@ -241,6 +241,51 @@ public class ReceptionistController {
         }
     }
 
+    /**
+     * NEW API endpoint to get appointments for the next 7 days grouped by date
+     * This endpoint provides data for the 7-day appointment dashboard view
+     */
+    @GetMapping("/api/appointments/next-7-days")
+    @ResponseBody
+    public ResponseEntity<Map<String, Object>> getNext7DaysAppointments() {
+        try {
+            logger.info("=== API CALL: Getting appointments for next 7 days ===");
+            Map<String, Object> appointmentsData = receptionistService.getNext7DaysAppointmentTableData();
+            logger.info("Successfully retrieved appointments data with {} total appointments",
+                       appointmentsData.get("totalAppointments"));
+            return ResponseEntity.ok(appointmentsData);
+        } catch (Exception e) {
+            logger.error("Error fetching next 7 days appointments: {}", e.getMessage(), e);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
+        }
+    }
+
+    /**
+     * API endpoint to get appointments for a specific date
+     * Useful for the date filter functionality
+     */
+    @GetMapping("/api/appointments/by-date")
+    @ResponseBody
+    public ResponseEntity<List<Map<String, Object>>> getAppointmentsByDate(@RequestParam String date) {
+        try {
+            logger.info("=== API CALL: Getting appointments for date: {} ===", date);
+
+            // Get all 7 days data and filter for specific date
+            Map<String, Object> allData = receptionistService.getNext7DaysAppointmentTableData();
+            @SuppressWarnings("unchecked")
+            Map<String, List<Map<String, Object>>> appointmentsByDate =
+                (Map<String, List<Map<String, Object>>>) allData.get("appointmentsByDate");
+
+            List<Map<String, Object>> dateAppointments = appointmentsByDate.getOrDefault(date, new ArrayList<>());
+
+            logger.info("Found {} appointments for date: {}", dateAppointments.size(), date);
+            return ResponseEntity.ok(dateAppointments);
+        } catch (Exception e) {
+            logger.error("Error fetching appointments for date {}: {}", date, e.getMessage(), e);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
+        }
+    }
+
 
     @GetMapping("/doctors")
     public String doctors(Authentication authentication) {
@@ -775,6 +820,19 @@ public class ReceptionistController {
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                     .body("Error retrieving today's appointment table data: " + e.getMessage());
+        }
+    }
+
+    // New endpoint for next 7 days appointments
+    @GetMapping("/appointmentRequest/next7days")
+    public ResponseEntity<?> getNext7DaysAppointmentTableData() {
+        try {
+            // Get appointments for the next 7 days (including today)
+            Map<String, Object> next7DaysAppointmentData = receptionistService.getNext7DaysAppointmentTableData();
+            return ResponseEntity.ok(next7DaysAppointmentData);
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body("Error retrieving next 7 days appointment data: " + e.getMessage());
         }
     }
 

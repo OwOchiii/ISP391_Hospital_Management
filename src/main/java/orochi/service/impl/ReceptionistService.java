@@ -2890,4 +2890,118 @@ public class ReceptionistService {
 
         return country.trim();
     }
+
+    /**
+     * Get appointments for the next 7 days (including today) grouped by date
+     * Returns a map with date groups and appointment counts for each day
+     * OPTIMIZED: Only fetch appointments within the 7-day range instead of all appointments
+     */
+    public Map<String, Object> getNext7DaysAppointmentTableData() {
+        try {
+            LocalDate today = LocalDate.now();
+            LocalDate endDate = today.plusDays(6); // 7 days total (today + 6 more days)
+
+            // Convert to LocalDateTime for database query
+            java.time.LocalDateTime startDateTime = today.atStartOfDay();
+            java.time.LocalDateTime endDateTime = endDate.atTime(23, 59, 59);
+
+            logger.info("=== FETCHING APPOINTMENTS FOR NEXT 7 DAYS ===");
+            logger.info("Date range: {} to {}", startDateTime, endDateTime);
+
+            Map<String, Object> result = new HashMap<>();
+            Map<String, List<Map<String, Object>>> appointmentsByDate = new HashMap<>();
+            Map<String, Integer> countsByDate = new HashMap<>();
+
+            // OPTIMIZED: Only get appointments within the 7-day range
+            List<Appointment> next7DaysAppointments = appointmentRepository.findByDateTimeBetween(startDateTime, endDateTime);
+            logger.info("Found {} appointments in the next 7 days", next7DaysAppointments.size());
+
+            // Process each of the next 7 days
+            for (int i = 0; i < 7; i++) {
+                final int dayIndex = i; // Create final copy for lambda usage
+                LocalDate targetDate = today.plusDays(i);
+                String dateKey = targetDate.toString();
+                String dayName = targetDate.getDayOfWeek().toString();
+
+                // Filter appointments for this specific date from the already filtered list
+                List<Map<String, Object>> dayAppointments = next7DaysAppointments.stream()
+                    .filter(appointment -> {
+                        LocalDate appointmentDate = appointment.getDateTime().toLocalDate();
+                        return appointmentDate.equals(targetDate);
+                    })
+                    .map(appointment -> {
+                        Map<String, Object> appointmentData = new HashMap<>();
+                        appointmentData.put("id", appointment.getAppointmentId());
+                        appointmentData.put("name", appointment.getPatient().getUser().getFullName());
+                        appointmentData.put("phone", appointment.getPatient().getUser().getPhoneNumber());
+                        appointmentData.put("gender", appointment.getPatient().getGender());
+                        appointmentData.put("date", appointment.getDateTime().toLocalDate().toString());
+                        appointmentData.put("time", appointment.getDateTime().toLocalTime().toString());
+                        appointmentData.put("status", appointment.getStatus());
+                        appointmentData.put("email", appointment.getEmail());
+                        appointmentData.put("description", appointment.getDescription());
+                        appointmentData.put("appointmentDateTime", appointment.getDateTime().toString());
+                        appointmentData.put("dateTime", appointment.getDateTime().toString());
+                        appointmentData.put("patientId", appointment.getPatient().getPatientId());
+                        appointmentData.put("dayName", dayName);
+                        appointmentData.put("dayIndex", dayIndex); // Use final copy instead of i
+
+                        // Calculate age
+                        if (appointment.getPatient().getDateOfBirth() != null) {
+                            LocalDate birthDate = appointment.getPatient().getDateOfBirth();
+                            int age = today.getYear() - birthDate.getYear();
+                            if (today.getDayOfYear() < birthDate.getDayOfYear()) {
+                                age--;
+                            }
+                            appointmentData.put("age", age);
+                        } else {
+                            appointmentData.put("age", "N/A");
+                        }
+
+                        // Add doctor name if available
+                        if (appointment.getDoctor() != null && appointment.getDoctor().getUser() != null) {
+                            appointmentData.put("doctorName", appointment.getDoctor().getUser().getFullName());
+                        } else {
+                            appointmentData.put("doctorName", "Not Assigned");
+                        }
+
+                        return appointmentData;
+                    })
+                    .collect(Collectors.toList());
+
+                appointmentsByDate.put(dateKey, dayAppointments);
+                countsByDate.put(dateKey, dayAppointments.size());
+
+                logger.info("Date {} ({}): {} appointments found", dateKey, dayName, dayAppointments.size());
+            }
+
+            // Prepare result structure
+            result.put("appointmentsByDate", appointmentsByDate);
+            result.put("countsByDate", countsByDate);
+            result.put("dateRange", Map.of(
+                "startDate", today.toString(),
+                "endDate", today.plusDays(6).toString(),
+                "totalDays", 7
+            ));
+
+            // Calculate total appointments across all 7 days
+            int totalAppointments = countsByDate.values().stream().mapToInt(Integer::intValue).sum();
+            result.put("totalAppointments", totalAppointments);
+
+            // Add summary information for frontend
+            result.put("summary", Map.of(
+                "totalAppointments", totalAppointments,
+                "daysWithAppointments", countsByDate.values().stream().mapToInt(count -> count > 0 ? 1 : 0).sum(),
+                "averagePerDay", totalAppointments / 7.0,
+                "queryRange", startDateTime + " to " + endDateTime
+            ));
+
+            logger.info("✅ Successfully retrieved appointments for next 7 days. Total: {} appointments", totalAppointments);
+            return result;
+
+        } catch (Exception e) {
+            logger.error("❌ Error retrieving next 7 days appointment data: {}", e.getMessage(), e);
+            throw new RuntimeException("Failed to retrieve next 7 days appointment data", e);
+        }
+    }
 }
