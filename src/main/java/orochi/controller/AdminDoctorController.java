@@ -60,6 +60,7 @@ public class AdminDoctorController {
             @RequestParam(required = false) String statusFilter,
             @RequestParam(value = "page", defaultValue = "0") int page,
             @RequestParam(value = "size", defaultValue = "5") int size,
+            @RequestParam(required = false) Integer editId,
             Model model
     ) {
         // Lấy trang dữ liệu từ service
@@ -74,9 +75,17 @@ public class AdminDoctorController {
         model.addAttribute("totalPages", pageData.getTotalPages());
         model.addAttribute("pageSize", size);
         model.addAttribute("adminId", adminId);
-        model.addAttribute("doctorForm", new DoctorForm());
         model.addAttribute("search", search);
         model.addAttribute("statusFilter", statusFilter);
+
+        // If editId is provided, load the doctor data for editing
+        if (editId != null) {
+            model.addAttribute("doctorForm", doctorService.loadForm(editId));
+            model.addAttribute("isEdit", true);
+        } else {
+            model.addAttribute("doctorForm", new DoctorForm());
+            model.addAttribute("isEdit", false);
+        }
 
         return "admin/doctor/list";
     }
@@ -95,9 +104,8 @@ public class AdminDoctorController {
     public String editForm(@PathVariable int id,
                            @RequestParam int adminId,
                            Model model) {
-        model.addAttribute("doctorForm", doctorService.loadForm(id));
-        model.addAttribute("adminId", adminId);
-        return "admin/doctor/edit";
+        // Redirect to the list page with parameters to open the edit modal
+        return "redirect:/admin/doctors?adminId=" + adminId + "&editId=" + id;
     }
 
     @GetMapping("/add")
