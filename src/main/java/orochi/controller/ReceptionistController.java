@@ -162,11 +162,33 @@ public class ReceptionistController {
 
 
     @GetMapping("/appointments")
-    public String appointments(Authentication authentication) {
+    public String appointments(Authentication authentication, Model model) {
         // Ensure authentication is not null
         if (authentication == null || !authentication.isAuthenticated()) {
             return "redirect:/login";
         }
+
+        // Extract CustomUserDetails from the principal
+        Object principal = authentication.getPrincipal();
+        if (!(principal instanceof CustomUserDetails)) {
+            return "redirect:/error";
+        }
+
+        // Extract userId from CustomUserDetails
+        CustomUserDetails userDetails = (CustomUserDetails) principal;
+        Integer userId = userDetails.getUserId();
+
+        // Fetch the Users entity from the database
+        Users user = userRepository.findById(userId)
+                .orElseThrow(() -> new RuntimeException("User not found with ID: " + userId));
+
+        // Verify the user is a Receptionist
+        if (!user.getRole().getRoleName().equals("RECEPTIONIST")) {
+            return "redirect:/error";
+        }
+
+        // Add user to the model for avatar display
+        model.addAttribute("user", user);
 
         return "Receptionists/appointments";
     }
@@ -288,10 +310,33 @@ public class ReceptionistController {
 
 
     @GetMapping("/doctors")
-    public String doctors(Authentication authentication) {
+    public String doctors(Authentication authentication, Model model) {
+        // Ensure authentication is not null
         if (authentication == null || !authentication.isAuthenticated()) {
             return "redirect:/login";
         }
+
+        // Extract CustomUserDetails from the principal
+        Object principal = authentication.getPrincipal();
+        if (!(principal instanceof CustomUserDetails)) {
+            return "redirect:/error";
+        }
+
+        // Extract userId from CustomUserDetails
+        CustomUserDetails userDetails = (CustomUserDetails) principal;
+        Integer userId = userDetails.getUserId();
+
+        // Fetch the Users entity from the database
+        Users user = userRepository.findById(userId)
+                .orElseThrow(() -> new RuntimeException("User not found with ID: " + userId));
+
+        // Verify the user is a Receptionist
+        if (!user.getRole().getRoleName().equals("RECEPTIONIST")) {
+            return "redirect:/error";
+        }
+
+        // Add user to the model for avatar display
+        model.addAttribute("user", user);
 
         return "Receptionists/doctors";
     }
@@ -370,19 +415,65 @@ public class ReceptionistController {
     }
 
     @GetMapping("/patients")
-    public String patients(Authentication authentication) {
+    public String patients(Authentication authentication, Model model) {
+        // Ensure authentication is not null
         if (authentication == null || !authentication.isAuthenticated()) {
             return "redirect:/login";
         }
+
+        // Extract CustomUserDetails from the principal
+        Object principal = authentication.getPrincipal();
+        if (!(principal instanceof CustomUserDetails)) {
+            return "redirect:/error";
+        }
+
+        // Extract userId from CustomUserDetails
+        CustomUserDetails userDetails = (CustomUserDetails) principal;
+        Integer userId = userDetails.getUserId();
+
+        // Fetch the Users entity from the database
+        Users user = userRepository.findById(userId)
+                .orElseThrow(() -> new RuntimeException("User not found with ID: " + userId));
+
+        // Verify the user is a Receptionist
+        if (!user.getRole().getRoleName().equals("RECEPTIONIST")) {
+            return "redirect:/error";
+        }
+
+        // Add user to the model for avatar display
+        model.addAttribute("user", user);
 
         return "Receptionists/patients";
     }
 
     @GetMapping("/payments")
-    public String payments(Authentication authentication) {
+    public String payments(Authentication authentication, Model model) {
+        // Ensure authentication is not null
         if (authentication == null || !authentication.isAuthenticated()) {
             return "redirect:/login";
         }
+
+        // Extract CustomUserDetails from the principal
+        Object principal = authentication.getPrincipal();
+        if (!(principal instanceof CustomUserDetails)) {
+            return "redirect:/error";
+        }
+
+        // Extract userId from CustomUserDetails
+        CustomUserDetails userDetails = (CustomUserDetails) principal;
+        Integer userId = userDetails.getUserId();
+
+        // Fetch the Users entity from the database
+        Users user = userRepository.findById(userId)
+                .orElseThrow(() -> new RuntimeException("User not found with ID: " + userId));
+
+        // Verify the user is a Receptionist
+        if (!user.getRole().getRoleName().equals("RECEPTIONIST")) {
+            return "redirect:/error";
+        }
+
+        // Add user to the model for avatar display
+        model.addAttribute("user", user);
 
         return "Receptionists/payments";
     }
@@ -637,11 +728,33 @@ public class ReceptionistController {
     }
 
     @GetMapping("/payment_history")
-    public String paymentHistory(Authentication authentication) {
+    public String paymentHistory(Authentication authentication, Model model) {
         // Ensure authentication is not null
         if (authentication == null || !authentication.isAuthenticated()) {
             return "redirect:/login";
         }
+
+        // Extract CustomUserDetails from the principal
+        Object principal = authentication.getPrincipal();
+        if (!(principal instanceof CustomUserDetails)) {
+            return "redirect:/error";
+        }
+
+        // Extract userId from CustomUserDetails
+        CustomUserDetails userDetails = (CustomUserDetails) principal;
+        Integer userId = userDetails.getUserId();
+
+        // Fetch the Users entity from the database
+        Users user = userRepository.findById(userId)
+                .orElseThrow(() -> new RuntimeException("User not found with ID: " + userId));
+
+        // Verify the user is a Receptionist
+        if (!user.getRole().getRoleName().equals("RECEPTIONIST")) {
+            return "redirect:/error";
+        }
+
+        // Add user to the model for avatar display
+        model.addAttribute("user", user);
 
         // Fetch payment history data, filter or paginate payments ...
         return "Receptionists/payment_history";
@@ -1589,6 +1702,57 @@ public class ReceptionistController {
 
             logger.info("Payment processed successfully: {}", result);
 
+            // 🔥 THÊM LOGIC CẬP NHẬT APPOINTMENT STATUS THÀNH "COMPLETED" 🔥
+            boolean appointmentUpdated = false;
+            try {
+                logger.info("🔄 Starting appointment status update for Cash payment...");
+                logger.info("📋 AppointmentID: {}, PatientID: {}", appointmentId, patientId);
+
+                // Get appointment by ID
+                Optional<Appointment> appointmentOpt = appointmentRepository.findById(appointmentId);
+                if (appointmentOpt.isPresent()) {
+                    Appointment appointment = appointmentOpt.get();
+                    logger.info("📅 Found appointment: ID={}, PatientID={}, CurrentStatus={}",
+                              appointment.getAppointmentId(), appointment.getPatientId(), appointment.getStatus());
+
+                    // Verify appointment belongs to the correct patient
+                    if (appointment.getPatientId().equals(patientId)) {
+                        String oldAppointmentStatus = appointment.getStatus();
+
+                        // Only update if not already Completed
+                        if (!"Completed".equals(oldAppointmentStatus)) {
+                            appointment.setStatus("Completed");
+                            Appointment savedAppointment = appointmentRepository.save(appointment);
+                            appointmentUpdated = true;
+
+                            logger.info("✅ CASH PAYMENT - APPOINTMENT STATUS UPDATED SUCCESSFULLY!");
+                            logger.info("   - AppointmentID: {}", savedAppointment.getAppointmentId());
+                            logger.info("   - PatientID: {}", savedAppointment.getPatientId());
+                            logger.info("   - Status changed: '{}' → 'Completed'", oldAppointmentStatus);
+                            logger.info("   - Payment Method: Cash");
+                        } else {
+                            appointmentUpdated = true; // Already completed
+                            logger.info("ℹ️ Appointment {} already has 'Completed' status", appointment.getAppointmentId());
+                        }
+                    } else {
+                        logger.error("❌ PATIENT ID MISMATCH:");
+                        logger.error("   - Appointment PatientID: {}", appointment.getPatientId());
+                        logger.error("   - Expected PatientID: {}", patientId);
+                    }
+                } else {
+                    logger.error("❌ Appointment with ID {} not found in database", appointmentId);
+                }
+            } catch (Exception appointmentError) {
+                logger.error("❌ Error updating appointment status for Cash payment: {}", appointmentError.getMessage(), appointmentError);
+            }
+
+            // Log final appointment update result
+            if (appointmentUpdated) {
+                logger.info("🎉 CASH PAYMENT - APPOINTMENT UPDATE COMPLETED SUCCESSFULLY for appointmentId: {}", appointmentId);
+            } else {
+                logger.warn("⚠️ CASH PAYMENT - APPOINTMENT UPDATE FAILED for appointmentId: {}", appointmentId);
+            }
+
             // Send receipt email to patient after successful payment
             try {
                 // Get patient information
@@ -1626,6 +1790,7 @@ public class ReceptionistController {
                 "transactionId", result.get("transactionId"),
                 "receiptId", result.get("receiptId"),
                 "status", "Paid", // Status is now Paid
+                "appointmentStatus", appointmentUpdated ? "Completed" : "Unknown", // Thêm appointment status
                 "timeOfPayment", java.time.LocalDateTime.now().toString()
             ));
 
@@ -1701,9 +1866,6 @@ public class ReceptionistController {
 
                     // Set avatar URL for web access
                     avatarUrl = "/uploads/receptionist-avatars/" + newFilename;
-                    user.setAvatarUrl(avatarUrl);
-                    logger.info("Avatar saved successfully. URL: {}", avatarUrl);
-
                 } catch (Exception e) {
                     logger.error("Error uploading avatar: ", e);
                     response.put("success", false);
@@ -1780,34 +1942,57 @@ public class ReceptionistController {
             }
 
             try {
-                // Upload file using FileStorageService
-                String imageUrl = fileStorageService.storeFile(avatarFile, "receptionist-avatars");
+                // 🔥 SỬA LỖI: Lưu trực tiếp vào thư mục uploads thay vì dùng FileStorageService
+                // Get the current working directory (project root)
+                String projectRoot = System.getProperty("user.dir");
+                String uploadDir = projectRoot + File.separator + "uploads" + File.separator + "receptionist-avatars" + File.separator;
 
-                // Find or create Receptionist record
-                Receptionist receptionist = receptionistService.findByUserId(userId);
-                if (receptionist == null) {
-                    receptionist = new Receptionist();
-                    receptionist.setUserId(userId);
+                // Create uploads directory if it doesn't exist
+                File uploadDirFile = new File(uploadDir);
+                if (!uploadDirFile.exists()) {
+                    boolean created = uploadDirFile.mkdirs();
+                    logger.info("Created upload directory: {} - Success: {}", uploadDir, created);
                 }
 
-                // Delete old avatar if exists
-                if (receptionist.getImageUrl() != null) {
+                // Generate unique filename
+                String originalFilename = avatarFile.getOriginalFilename();
+                String fileExtension = originalFilename.substring(originalFilename.lastIndexOf("."));
+                String newFilename = "receptionist_" + userId + "_" +
+                                   java.time.LocalDateTime.now().format(java.time.format.DateTimeFormatter.ofPattern("yyyyMMdd_HHmmss")) +
+                                   fileExtension;
+
+                // Save file
+                File destinationFile = new File(uploadDir + newFilename);
+                logger.info("Saving file to: {}", destinationFile.getAbsolutePath());
+                avatarFile.transferTo(destinationFile);
+
+                // 🔥 SỬA LỖI: Set avatar URL đúng format để WebConfig có thể serve
+                String avatarUrl = "/uploads/receptionist-avatars/" + newFilename;
+
+                // 🔥 QUAN TRỌNG: Lưu vào Users.avatarUrl thay vì Receptionist.imageUrl
+                // Delete old avatar file if exists
+                if (user.getAvatarUrl() != null && !user.getAvatarUrl().isEmpty()) {
                     try {
-                        fileStorageService.deleteFile(receptionist.getImageUrl());
+                        String oldFilename = user.getAvatarUrl().substring(user.getAvatarUrl().lastIndexOf("/") + 1);
+                        File oldFile = new File(uploadDir + oldFilename);
+                        if (oldFile.exists()) {
+                            boolean deleted = oldFile.delete();
+                            logger.info("Deleted old avatar file: {} - Success: {}", oldFile.getAbsolutePath(), deleted);
+                        }
                     } catch (Exception e) {
-                        logger.warn("Could not delete old avatar: {}", e.getMessage());
+                        logger.warn("Could not delete old avatar file: {}", e.getMessage());
                     }
                 }
 
-                // Save new avatar URL
-                receptionist.setImageUrl(imageUrl);
-                receptionistService.save(receptionist);
+                // Save avatar URL to Users table
+                user.setAvatarUrl(avatarUrl);
+                userRepository.save(user);
 
                 response.put("success", true);
                 response.put("message", "Upload ảnh thành công!");
-                response.put("imageUrl", imageUrl);
+                response.put("imageUrl", avatarUrl);
 
-                logger.info("Avatar uploaded successfully for user {}: {}", userId, imageUrl);
+                logger.info("Avatar uploaded successfully for user {}: {}", userId, avatarUrl);
                 return ResponseEntity.ok(response);
 
             } catch (Exception e) {
@@ -1855,13 +2040,12 @@ public class ReceptionistController {
                 return ResponseEntity.status(HttpStatus.FORBIDDEN).body(response);
             }
 
-            // Find Receptionist record
-            Receptionist receptionist = receptionistService.findByUserId(userId);
-
+            // 🔥 SỬA LỖI: Đọc avatar từ Users.avatarUrl thay vì Receptionist.imageUrl
             response.put("success", true);
-            response.put("hasAvatar", receptionist != null && user.getAvatarUrl() != null);
-            response.put("imageUrl", receptionist != null ? user.getAvatarUrl() : null);
+            response.put("hasAvatar", user.getAvatarUrl() != null && !user.getAvatarUrl().isEmpty());
+            response.put("imageUrl", user.getAvatarUrl());
 
+            logger.info("Current avatar URL for user {}: {}", userId, user.getAvatarUrl());
             return ResponseEntity.ok(response);
 
         } catch (Exception e) {
@@ -1894,23 +2078,62 @@ public class ReceptionistController {
             // Get staff info for the "Processed By" field
             Map<String, Object> staffInfo = receptionistService.getReceptionistStaffInfo();
 
-            // Calculate payment amounts (similar to PatientController)
-            BigDecimal consultationFee = new BigDecimal("500000"); // 500,000 VND
-            BigDecimal serviceFee = new BigDecimal("50000");       // 50,000 VND
-            BigDecimal discount = new BigDecimal("50000");         // 50,000 VND discount
-            BigDecimal totalAmount = consultationFee.add(serviceFee).subtract(discount);
+            // Calculate payment amounts using actual invoice data instead of hardcoded values
+            List<Map<String, Object>> servicesUsed = (List<Map<String, Object>>) invoiceData.get("servicesUsed");
+
+            // Calculate subtotal from services
+            BigDecimal subTotal = BigDecimal.ZERO;
+            int totalQuantity = 0;
+
+            if (servicesUsed != null && !servicesUsed.isEmpty()) {
+                for (Map<String, Object> service : servicesUsed) {
+                    Object totalObj = service.get("total");
+                    Object quantityObj = service.get("quantity");
+
+                    if (totalObj != null && quantityObj != null) {
+                        try {
+                            BigDecimal serviceTotal = new BigDecimal(totalObj.toString());
+                            int quantity = Integer.parseInt(quantityObj.toString());
+
+                            subTotal = subTotal.add(serviceTotal);
+                            totalQuantity += quantity;
+                        } catch (NumberFormatException e) {
+                            logger.warn("Invalid service total or quantity: {} / {}", totalObj, quantityObj);
+                        }
+                    }
+                }
+            }
+
+            // Calculate discount based on quantity
+            BigDecimal discountPercent = BigDecimal.ZERO;
+            if (totalQuantity >= 5) {
+                discountPercent = new BigDecimal("10"); // 10%
+            } else if (totalQuantity >= 3) {
+                discountPercent = new BigDecimal("5");  // 5%
+            } else if (totalQuantity == 1) {
+                discountPercent = new BigDecimal("3");  // 3%
+            }
+
+            BigDecimal discount = subTotal.multiply(discountPercent).divide(new BigDecimal("100"), 2, BigDecimal.ROUND_HALF_UP);
+            BigDecimal totalAmount = subTotal.subtract(discount);
+
+            // If no services found, use default values
+            if (subTotal.compareTo(BigDecimal.ZERO) == 0) {
+                subTotal = new BigDecimal("500000"); // Default consultation fee
+                discount = new BigDecimal("50000");  // Default discount
+                totalAmount = subTotal.subtract(discount);
+            }
 
             // Add data to the model
             model.addAttribute("invoiceData", invoiceData);
             model.addAttribute("staffInfo", staffInfo);
             model.addAttribute("patientId", patientId);
             model.addAttribute("appointmentId", appointmentId);
-            // Add the missing totalAmount and amount attributes
             model.addAttribute("totalAmount", totalAmount);
             model.addAttribute("amount", totalAmount);
-            model.addAttribute("consultationFee", consultationFee);
-            model.addAttribute("serviceFee", serviceFee);
+            model.addAttribute("subTotal", subTotal);
             model.addAttribute("discount", discount);
+            model.addAttribute("discountPercent", discountPercent);
 
             // Return the online payment template
             return "Receptionists/online-payment";
@@ -2518,15 +2741,15 @@ public class ReceptionistController {
                                                     !patient.getUser().getEmail().isEmpty()) {
 
                                                     String patientEmail = patient.getUser().getEmail();
-                                                    logger.info("✉️ Sending online payment receipt email to patient: {}", patientEmail);
+                                                    logger.info("Sending receipt email to patient: {}", patientEmail);
                                                     emailService.sendReceiptEmail(patientEmail, savedReceipt, patient, savedTransaction);
-                                                    logger.info("✅ Online payment receipt email sent successfully to: {}", patientEmail);
+                                                    logger.info("Receipt email sent successfully to: {}", patientEmail);
                                                 }
                                             }
                                         }
                                     } catch (Exception emailEx) {
-                                        logger.error("❌ Failed to send online payment receipt email: {}", emailEx.getMessage(), emailEx);
-                                        // Continue processing - don't fail the payment processing if email fails
+                                        logger.error("Failed to send receipt email: {}", emailEx.getMessage(), emailEx);
+                                        // Continue with success response even if email fails
                                     }
                                 } else {
                                     // Update existing receipt
@@ -3009,7 +3232,7 @@ public class ReceptionistController {
             // Verify user is receptionist
             if (!user.getRole().getRoleName().equals("RECEPTIONIST")) {
                 response.put("success", false);
-                response.put("message", "Access denied");
+                response.put("message", "Access denied - not a receptionist");
                 return ResponseEntity.status(HttpStatus.FORBIDDEN).body(response);
             }
 
@@ -3092,5 +3315,122 @@ public class ReceptionistController {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                     .body(Map.of("error", "Error fetching invoice data: " + e.getMessage()));
         }
+    }
+
+    /**
+     * API endpoint to get complete receptionist profile data
+     * Fetches data from Users, Receptionist, and Role tables
+     */
+    @GetMapping("/api/profile/complete")
+    @ResponseBody
+    public ResponseEntity<Map<String, Object>> getCompleteProfile(Authentication authentication) {
+        Map<String, Object> response = new HashMap<>();
+
+        try {
+            // Check authentication
+            if (authentication == null || !authentication.isAuthenticated()) {
+                response.put("success", false);
+                response.put("message", "User not authenticated");
+                return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(response);
+            }
+
+            // Get current user
+            CustomUserDetails userDetails = (CustomUserDetails) authentication.getPrincipal();
+            Integer userId = userDetails.getUserId();
+
+            Users user = userRepository.findById(userId)
+                    .orElseThrow(() -> new RuntimeException("User not found"));
+
+            // Verify user is receptionist
+            if (!user.getRole().getRoleName().equals("RECEPTIONIST")) {
+                response.put("success", false);
+                response.put("message", "Access denied - not a receptionist");
+                return ResponseEntity.status(HttpStatus.FORBIDDEN).body(response);
+            }
+
+            // Build complete profile data
+            Map<String, Object> profile = new HashMap<>();
+
+            // Personal Information from Users table
+            profile.put("userId", user.getUserId());
+            profile.put("fullName", user.getFullName());
+            profile.put("email", user.getEmail());
+            profile.put("phoneNumber", user.getPhoneNumber());
+            profile.put("createdAt", user.getCreatedAt());
+            profile.put("status", user.getStatus());
+
+            // Role Information from Role table (through RoleID in Users)
+            Role role = user.getRole();
+            if (role != null) {
+                profile.put("roleName", role.getRoleName());
+                profile.put("roleDescription", role.getDescription());
+                profile.put("permissions", parsePermissions(role.getPermission()));
+            } else {
+                profile.put("roleName", "RECEPTIONIST");
+                profile.put("roleDescription", "Reception staff member");
+                profile.put("permissions", new ArrayList<>());
+            }
+
+            // Information from Receptionist table
+            Receptionist receptionist = receptionistService.findByUserId(userId);
+            Integer receptionistId = null;
+            String imageUrl = user.getAvatarUrl(); // Default to Users.avatarUrl
+
+            if (receptionist != null) {
+                receptionistId = receptionist.getReceptionistId();
+                // Use Receptionist.imageUrl if available, otherwise use Users.avatarUrl
+                if (receptionist.getImageUrl() != null && !receptionist.getImageUrl().isEmpty()) {
+                    imageUrl = receptionist.getImageUrl();
+                }
+            }
+
+            profile.put("receptionistId", receptionistId);
+            profile.put("imageUrl", imageUrl);
+
+            // System information
+            profile.put("lastLogin", "N/A"); // You can implement this if you have login tracking
+
+            response.put("success", true);
+            response.put("profile", profile);
+
+            logger.info("Complete profile data loaded for user: {}", userId);
+            return ResponseEntity.ok(response);
+
+        } catch (Exception e) {
+            logger.error("Error loading complete profile: ", e);
+            response.put("success", false);
+            response.put("message", "Error loading profile: " + e.getMessage());
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
+        }
+    }
+
+    /**
+     * Helper method to parse permissions string into a list
+     */
+    private List<String> parsePermissions(String permissionString) {
+        if (permissionString == null || permissionString.trim().isEmpty()) {
+            return new ArrayList<>();
+        }
+
+        // Split permissions by comma, semicolon, or newline
+        String[] permissions = permissionString.split("[,;\\n]+");
+        List<String> permissionList = new ArrayList<>();
+
+        for (String permission : permissions) {
+            String trimmed = permission.trim();
+            if (!trimmed.isEmpty()) {
+                permissionList.add(trimmed);
+            }
+        }
+
+        // If no valid permissions found, add default receptionist permissions
+        if (permissionList.isEmpty()) {
+            permissionList.add("Manage Appointments");
+            permissionList.add("Register Patients");
+            permissionList.add("Process Payments");
+            permissionList.add("View Reports");
+        }
+
+        return permissionList;
     }
 }

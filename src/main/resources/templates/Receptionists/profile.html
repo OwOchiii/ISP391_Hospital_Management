@@ -1,9 +1,12 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Profile - MediCare Plus</title>
+    <!-- CSRF Token Meta Tags -->
+    <meta name="_csrf" th:content="${_csrf.token}"/>
+    <meta name="_csrf_header" th:content="${_csrf.headerName}"/>
     <!-- Bootstrap CSS -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
     <!-- Font Awesome -->
@@ -30,6 +33,7 @@
             --info-color: #3b82f6;
             --sidebar-width: 280px;
             --header-height: 70px;
+            --border-color: rgba(102, 126, 234, 0.2);
         }
 
         * {
@@ -128,6 +132,10 @@
             font-weight: 500;
             transition: all 0.3s ease;
             position: relative;
+            border: none;
+            background: none;
+            width: 100%;
+            text-align: left;
         }
 
         .nav-link:hover {
@@ -160,23 +168,8 @@
             text-align: center;
         }
 
-        .btn-light {
-            background: rgba(255, 255, 255, 0.15);
-            border: none;
-            color: white;
-            padding: 0.75rem 1.5rem;
-            border-radius: 12px;
-            font-weight: 600;
-            transition: all 0.3s ease;
-            display: flex;
-            align-items: center;
-            gap: 0.5rem;
-        }
-
-        .btn-light:hover {
-            background: rgba(255, 255, 255, 0.25);
-            color: white;
-            transform: translateY(-2px);
+        .logout-btn {
+            cursor: pointer;
         }
 
         /* Main Content */
@@ -216,21 +209,14 @@
         }
 
         .sidebar-toggle:hover {
-            background: var(--light);
+            background: var(--bg-light);
             color: var(--primary);
-        }
-
-        .h3 {
-            font-size: 1.5rem;
-            font-weight: 700;
-            color: var(--text-dark);
-            margin: 0;
         }
 
         .profile-info {
             display: flex;
             align-items: center;
-            gap: 1.5rem;
+            gap: 1rem;
         }
 
         .notification-bell {
@@ -242,377 +228,271 @@
         }
 
         .notification-bell:hover {
-            background: var(--light);
+            background: var(--bg-light);
+            color: var(--primary);
         }
 
-        .badge {
-            font-size: 0.625rem;
-            padding: 0.25em 0.5em;
-            background: var(--error-color);
-        }
-
-        .rounded-circle {
+        .profile-info img {
             width: 40px;
             height: 40px;
-            border-radius: 50%;
-            background: linear-gradient(135deg, #667eea, #a78bfa);
             object-fit: cover;
         }
 
-        /* Notification Modal */
-        .notification-modal {
-            position: fixed;
-            top: 80px;
-            right: 20px;
-            width: 350px;
-            max-height: 450px;
-            overflow-y: auto;
-            background: var(--bg-white);
-            border: 1px solid rgba(102, 126, 234, 0.1);
-            border-radius: 16px;
-            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
-            padding: 1.5rem;
-            z-index: 2000;
-            display: none;
+        /* Profile Content */
+        .profile-content {
+            padding: 2rem;
         }
 
-        .notification-modal h5 {
-            font-size: 1.25rem;
-            font-weight: 600;
-            color: var(--text-dark);
+        .profile-card {
+            background: var(--bg-white);
+            border-radius: 20px;
+            padding: 2rem;
+            box-shadow: 0 8px 30px rgba(0, 0, 0, 0.1);
+            margin-bottom: 2rem;
+        }
+
+        .avatar-section {
+            text-align: center;
+            margin-bottom: 2rem;
+        }
+
+        .avatar-container {
+            position: relative;
+            display: inline-block;
             margin-bottom: 1rem;
         }
 
-        .notification-item {
-            padding: 0.75rem;
-            border-bottom: 1px solid rgba(102, 126, 234, 0.1);
-            transition: background 0.2s ease;
+        .avatar-img {
+            width: 150px;
+            height: 150px;
+            border-radius: 50%;
+            object-fit: cover;
+            border: 5px solid var(--primary);
+            box-shadow: 0 8px 30px rgba(102, 126, 234, 0.3);
         }
 
-        .notification-item:hover {
-            background: var(--light);
-        }
-
-        .notification-item:last-child {
-            border-bottom: none;
-        }
-
-        /* Card Styles */
-        .card {
-            background: var(--bg-white);
-            border-radius: 16px;
-            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
-            border: 1px solid rgba(102, 126, 234, 0.1);
-            padding: 1.5rem;
-        }
-
-        .card-header {
-            background: none;
-            border-bottom: 1px solid rgba(102, 126, 234, 0.1);
-            padding: 0 0 1rem 0;
-            margin-bottom: 1.5rem;
+        .avatar-upload-btn {
+            position: absolute;
+            bottom: 10px;
+            right: 10px;
+            background: var(--primary);
+            color: white;
+            border: none;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
             display: flex;
-            justify-content: space-between;
             align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
         }
 
-        .card-title {
-            font-size: 1.25rem;
-            font-weight: 600;
-            color: var(--text-dark);
-            margin: 0;
+        .avatar-upload-btn:hover {
+            background: var(--secondary);
+            transform: scale(1.1);
         }
 
         .form-group {
             margin-bottom: 1.5rem;
         }
 
-        .form-group label {
-            display: block;
-            font-size: 0.875rem;
-            color: var(--text-muted);
-            margin-bottom: 0.5rem;
+        .form-label {
             font-weight: 500;
-        }
-
-        .form-group p {
-            font-size: 0.875rem;
             color: var(--text-dark);
+            margin-bottom: 0.5rem;
+            display: block;
         }
 
-        .form-group input,
-        .form-group select {
+        .form-control {
             width: 100%;
             padding: 0.75rem 1rem;
-            border: 1px solid rgba(102, 126, 234, 0.2);
-            border-radius: 8px;
-            font-size: 0.875rem;
-            color: var(--text-dark);
+            border: 2px solid #e5e7eb;
+            border-radius: 10px;
+            font-size: 1rem;
             transition: all 0.3s ease;
+            background-color: #f9fafb;
         }
 
-        .form-group input:focus,
-        .form-group select:focus {
-            border-color: var(--primary);
+        .form-control:focus {
             outline: none;
+            border-color: var(--primary);
             box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+            background-color: white;
         }
 
-        .form-group input.is-invalid,
-        .form-group select.is-invalid {
-            border-color: var(--error-color);
-        }
-
-        .error-message {
-            color: var(--error-color);
-            font-size: 0.75rem;
-            margin-top: 0.25rem;
-            display: none;
-        }
-
-        .edit-button,
-        .save-button,
-        .cancel-button {
-            padding: 0.75rem 1.5rem;
+        .btn-primary {
+            background: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%);
             border: none;
-            border-radius: 12px;
-            cursor: pointer;
-            font-size: 0.875rem;
-            font-weight: 600;
+            padding: 0.75rem 2rem;
+            border-radius: 10px;
+            font-weight: 500;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
             transition: all 0.3s ease;
-            margin-right: 0.5rem;
         }
 
-        .edit-button {
-            background: var(--primary);
-            color: white;
-        }
-
-        .edit-button:hover {
-            background: var(--secondary);
+        .btn-primary:hover {
             transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(102, 126, 234, 0.3);
         }
 
-        .save-button {
-            background: var(--success-color);
-            color: white;
+        /* Modal Styles */
+        .modal-content {
+            border-radius: 20px;
+            border: none;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.2);
         }
 
-        .save-button:hover {
-            background: #059669;
-            transform: translateY(-2px);
+        .modal-header {
+            border-bottom: 1px solid #e5e7eb;
+            padding: 1.5rem 2rem;
         }
 
-        .cancel-button {
-            background: var(--text-light);
-            color: white;
-        }
-
-        .cancel-button:hover {
-            background: #475569;
-            transform: translateY(-2px);
-        }
-
-        .hidden {
-            display: none;
-        }
-
-        /* Avatar Styling */
-        .avatar-container {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            margin-bottom: 1.5rem;
-        }
-
-        .avatar {
-            width: 120px;
-            height: 120px;
-            border-radius: 50%;
-            object-fit: cover;
-            border: 3px solid rgba(102, 126, 234, 0.2);
-            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-        }
-
-        .avatar-placeholder {
-            width: 120px;
-            height: 120px;
-            border-radius: 50%;
-            background: linear-gradient(135deg, var(--primary), var(--accent));
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 0.875rem;
-            color: white;
-            border: 3px solid rgba(102, 126, 234, 0.2);
-            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-        }
-
-        .avatar-input {
-            margin-top: 0.75rem;
-            font-size: 0.875rem;
-            color: var(--text-dark);
-        }
-
-        .profile-grid {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 1.5rem;
-        }
-
-        /* Notification Toast */
-        .notification-toast {
-            position: fixed;
-            top: 20px;
-            right: 20px;
-            padding: 1rem 1.5rem;
-            border-radius: 12px;
-            color: white;
-            z-index: 2000;
-            display: none;
-            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
-        }
-
-        .notification-toast.success {
-            background: var(--success-color);
-        }
-
-        .notification-toast.error {
-            background: var(--error-color);
-        }
-
-        /* Image Crop Modal Styles */
-        .crop-modal {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: rgba(0, 0, 0, 0.8);
-            z-index: 3000;
-            display: none;
-            justify-content: center;
-            align-items: center;
-        }
-
-        .crop-container {
-            background: var(--bg-white);
-            border-radius: 16px;
+        .modal-body {
             padding: 2rem;
-            max-width: 600px;
-            max-height: 80vh;
-            overflow-y: auto;
-            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
         }
 
-        .crop-image {
-            max-width: 100%;
+        .modal-footer {
+            border-top: 1px solid #e5e7eb;
+            padding: 1.5rem 2rem;
+        }
+
+        /* Cropper Container */
+        .crop-container {
             max-height: 400px;
+            margin: 1rem 0;
         }
 
-        .crop-buttons {
-            display: flex;
-            gap: 1rem;
-            justify-content: center;
-            margin-top: 1.5rem;
+        .crop-container img {
+            max-width: 100%;
         }
 
-        .crop-btn {
-            padding: 0.75rem 1.5rem;
+        /* Alert Styles */
+        .alert {
+            border-radius: 10px;
+            padding: 1rem 1.5rem;
+            margin-bottom: 1rem;
             border: none;
-            border-radius: 8px;
-            cursor: pointer;
-            font-weight: 600;
-            transition: all 0.3s ease;
         }
 
-        .crop-btn.confirm {
-            background: var(--success-color);
-            color: white;
+        .alert-success {
+            background-color: rgba(16, 185, 129, 0.1);
+            color: var(--success-color);
         }
 
-        .crop-btn.confirm:hover {
-            background: #059669;
+        .alert-danger {
+            background-color: rgba(239, 68, 68, 0.1);
+            color: var(--error-color);
         }
 
-        .crop-btn.cancel {
-            background: var(--text-light);
-            color: white;
+        /* Loading Spinner */
+        .spinner-border-sm {
+            width: 1rem;
+            height: 1rem;
         }
 
-        .crop-btn.cancel:hover {
-            background: #475569;
-        }
-
-        /* Responsive Design */
+        /* Responsive */
         @media (max-width: 768px) {
             .sidebar {
-                transform: translateX(-100%);
+                width: 100%;
+                height: auto;
+                position: relative;
             }
 
             .main-content {
                 margin-left: 0;
             }
 
-            .sidebar.collapsed {
-                transform: translateX(0);
-            }
-
-            .main-content.expanded {
-                margin-left: var(--sidebar-width);
-            }
-
-            .profile-grid {
-                grid-template-columns: 1fr;
-            }
-
-            header {
-                padding: 0 1rem;
-            }
-
-            .card {
+            .profile-content {
                 padding: 1rem;
             }
-        }
 
-        @media (max-width: 576px) {
-            .card {
-                padding: 0.75rem;
-            }
-
-            .form-group input,
-            .form-group select {
-                font-size: 0.75rem;
-            }
-
-            .edit-button,
-            .save-button,
-            .cancel-button {
-                padding: 0.5rem 1rem;
-                font-size: 0.875rem;
-            }
-
-            .avatar,
-            .avatar-placeholder {
-                width: 80px;
-                height: 80px;
+            .avatar-img {
+                width: 120px;
+                height: 120px;
             }
         }
 
-        /* Animation */
-        .main-content {
-            animation: fadeInUp 0.6s ease-out;
+        /* Additional Profile Fields Styles */
+        .profile-section {
+            background: var(--bg-white);
+            border-radius: 20px;
+            padding: 2rem;
+            box-shadow: 0 8px 30px rgba(0, 0, 0, 0.1);
+            margin-bottom: 2rem;
         }
 
-        @keyframes fadeInUp {
-            from {
-                opacity: 0;
-                transform: translateY(30px);
-            }
-            to {
-                opacity: 1;
-                transform: translateY(0);
-            }
+        .section-title {
+            font-size: 1.25rem;
+            font-weight: 600;
+            color: var(--text-dark);
+            margin-bottom: 1.5rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .section-title i {
+            color: var(--primary);
+        }
+
+        .info-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0.75rem 0;
+            border-bottom: 1px solid #f1f5f9;
+        }
+
+        .info-row:last-child {
+            border-bottom: none;
+        }
+
+        .info-label {
+            font-weight: 500;
+            color: var(--text-dark);
+            min-width: 150px;
+        }
+
+        .info-value {
+            color: var(--text-light);
+            flex: 1;
+            text-align: right;
+        }
+
+        .status-badge {
+            padding: 0.25rem 0.75rem;
+            border-radius: 20px;
+            font-size: 0.875rem;
+            font-weight: 500;
+        }
+
+        .status-active {
+            background-color: #10b981;
+            color: white;
+            font-weight: 600;
+        }
+
+        .status-inactive {
+            background-color: rgba(239, 68, 68, 0.1);
+            color: #29d50b;
+        }
+
+        .permission-list {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.5rem;
+        }
+
+        .permission-tag {
+            background-color: rgba(102, 126, 234, 0.1);
+            color: var(--primary);
+            padding: 0.25rem 0.5rem;
+            border-radius: 10px;
+            font-size: 0.75rem;
+            font-weight: 500;
         }
     </style>
 </head>
@@ -635,7 +515,7 @@
                 <div class="nav-section-title">Navigation</div>
                 <ul class="nav flex-column">
                     <li class="nav-item">
-                        <a href="/receptionist/dashboard" class="nav-link active"><i class="fas fa-th-large"></i>
+                        <a href="/receptionist/dashboard" class="nav-link"><i class="fas fa-th-large"></i>
                             Dashboard</a>
                     </li>
                     <div class="nav-section-title">Medical Services</div>
@@ -658,7 +538,7 @@
                     <div class="nav-section-title">Account</div>
                     <ul class="nav flex-column">
                         <li class="nav-item">
-                            <a href="/receptionist/profile" class="nav-link"><i class="fas fa-stethoscope"></i> Profile</a>
+                            <a href="/receptionist/profile" class="nav-link active"><i class="fas fa-user-circle"></i> Profile</a>
                         </li>
                     </ul>
                     <div class="nav-section-title">System</div>
@@ -680,90 +560,153 @@
                     <button class="sidebar-toggle" onclick="toggleSidebar()">
                         <i class="fas fa-list"></i>
                     </button>
-                    <h1 class="h3">Profile</h1>
+                    <h1 class="h3"><i class="fas fa-user-circle"></i> My Profile</h1>
                 </div>
                 <div class="profile-info">
                     <div class="notification-bell" role="button" onclick="toggleNotificationModal()">
                         <i class="fas fa-bell fs-5"></i>
-                        <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger" id="notificationCount">0</span>
+                        <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger"
+                              id="notificationCount">0</span>
                     </div>
-                    <img id="headerAvatar" class="rounded-circle" alt="Profile" onerror="this.style.display='none';"
-                         style="width: 40px; height: 40px; background: linear-gradient(135deg, #667eea, #a78bfa); display: flex; align-items: center; justify-content: center; color: white; font-weight: bold;"
-                         data-fallback="👤">
+                    <img id="headerAvatarImg" th:src="${user.avatarUrl != null and user.avatarUrl != '' ? user.avatarUrl : '/images/default-avatar.png'}"
+                         alt="Profile" class="rounded-circle">
                 </div>
             </header>
 
-            <!-- Notification Modal -->
-            <div id="notificationModal" class="notification-modal">
-                <h5>System Notifications</h5>
-                <div id="notificationList"></div>
-            </div>
+            <!-- Profile Content -->
+            <div class="profile-content">
+                <!-- Success/Error Messages -->
+                <div id="messageContainer"></div>
 
-            <!-- Profile Details -->
-            <div class="card">
-                <div class="card-header">
-                    <h5 class="card-title">Receptionist Profile</h5>
-                    <button class="edit-button">Edit Profile</button>
+                <!-- Profile Card -->
+                <div class="profile-card">
+                    <div class="row">
+                        <div class="col-md-4">
+                            <!-- Avatar Section -->
+                            <div class="avatar-section">
+                                <div class="avatar-container">
+                                    <img id="avatarImg" src="/images/default-avatar.png" alt="Profile Avatar" class="avatar-img">
+                                    <button type="button" class="avatar-upload-btn" onclick="selectAvatar()">
+                                        <i class="fas fa-camera"></i>
+                                    </button>
+                                </div>
+                                <h4 id="profileName" th:text="${user.fullName}">Loading...</h4>
+                                <p class="text-muted">Receptionist</p>
+                            </div>
+                        </div>
+                        <div class="col-md-8">
+                            <!-- Profile Form -->
+                            <form id="profileForm">
+                                <div class="row">
+                                    <div class="col-md-6">
+                                        <div class="form-group">
+                                            <label class="form-label">Full Name</label>
+                                            <input type="text" class="form-control" id="fullName" name="fullName" required>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <div class="form-group">
+                                            <label class="form-label">Email</label>
+                                            <input type="email" class="form-control" id="email" name="email" required>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="row">
+                                    <div class="col-md-6">
+                                        <div class="form-group">
+                                            <label class="form-label">Phone Number</label>
+                                            <input type="tel" class="form-control" id="phoneNumber" name="phoneNumber" required>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <div class="form-group">
+                                            <label class="form-label">Role</label>
+                                            <input type="text" class="form-control" id="roleName" readonly>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="text-end">
+                                    <button type="submit" class="btn btn-primary">
+                                        <span id="updateBtnText">Update Profile</span>
+                                        <span id="updateBtnSpinner" class="spinner-border spinner-border-sm d-none" role="status"></span>
+                                    </button>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
                 </div>
-                <div class="card-body">
-                    <!-- Avatar Section -->
-                    <div class="avatar-container">
-                        <img id="avatar" class="avatar hidden" alt="Profile Avatar">
-                        <input id="avatarInput" type="file" accept=".jpg,.jpeg,.png" class="avatar-input hidden">
-                    </div>
 
-                    <div class="profile-grid">
-                        <div class="form-group">
-                            <label for="fullName">Full Name *</label>
-                            <p id="fullName" th:text="${user?.fullName ?: 'Not provided'}"></p>
-                            <input id="fullNameInput" type="text" class="hidden" required th:value="${user?.fullName ?: ''}">
-                            <p id="fullNameError" class="error-message">Full Name is required.</p>
-                        </div>
-                        <div class="form-group">
-                            <label for="email">Email</label>
-                            <p id="email" th:text="${user?.email ?: 'Not provided'}"></p>
-                            <input id="emailInput" type="email" class="hidden" th:value="${user?.email ?: ''}">
-                            <p id="emailError" class="error-message">Please enter a valid email address.</p>
-                        </div>
-                        <div class="form-group">
-                            <label for="phone">Contact Phone Number *</label>
-                            <p id="phone" th:text="${user?.phoneNumber ?: 'Not provided'}"></p>
-                            <input id="phoneInput" type="tel" pattern="\d{10}" class="hidden" required th:value="${user?.phoneNumber ?: ''}">
-                            <p id="phoneError" class="error-message">Phone Number must be exactly 10 digits.</p>
-                        </div>
-                        <div class="form-group">
-                            <label for="roleId">ID</label>
-                            <p id="roleId" th:text="${user?.roleId ?: 'Not provided'}"></p>
-                            <input id="roleIdInput" type="text" class="hidden" readonly th:value="${user?.roleId ?: ''}">
-                            <p id="roleIdError" class="error-message">ID is required.</p>
-                        </div>
+                <!-- Personal Information Section -->
+                <div class="profile-section">
+                    <h5 class="section-title">
+                        <i class="fas fa-user"></i>
+                        Personal Information
+                    </h5>
+                    <div class="info-row">
+                        <span class="info-label">Full Name:</span>
+                        <span class="info-value" id="displayFullName">Loading...</span>
                     </div>
-                    <div id="profileActions" class="hidden mt-4">
-                        <button class="save-button">Save Changes</button>
-                        <button class="cancel-button">Cancel</button>
+                    <div class="info-row">
+                        <span class="info-label">Email:</span>
+                        <span class="info-value" id="displayEmail">Loading...</span>
+                    </div>
+                    <div class="info-row">
+                        <span class="info-label">Phone Number:</span>
+                        <span class="info-value" id="displayPhoneNumber">Loading...</span>
+                    </div>
+                    <div class="info-row">
+                        <span class="info-label">Account Created:</span>
+                        <span class="info-value" id="displayCreatedAt">Loading...</span>
+                    </div>
+                    <div class="info-row">
+                        <span class="info-label">Account Status:</span>
+                        <span class="info-value">
+                            <span class="status-badge" id="displayStatus">Loading...</span>
+                        </span>
                     </div>
                 </div>
-            </div>
 
-            <!-- Notification Toast -->
-            <div id="statusNotification" class="notification-toast success">
-                Profile updated successfully
-            </div>
-
-            <!-- Image Crop Modal -->
-            <div id="cropModal" class="crop-modal">
-                <div class="crop-container">
-                    <h5 class="text-center mb-3">Adjust Your Profile Picture</h5>
-                    <div class="crop-image-container">
-                        <img id="cropImage" class="crop-image" alt="Crop Image">
+                <!-- Role Information Section -->
+                <div class="profile-section">
+                    <h5 class="section-title">
+                        <i class="fas fa-user-tag"></i>
+                        Role Information
+                    </h5>
+                    <div class="info-row">
+                        <span class="info-label">Role Name:</span>
+                        <span class="info-value" id="displayRoleName">Loading...</span>
                     </div>
-                    <div class="crop-buttons">
-                        <button id="confirmCrop" class="crop-btn confirm">
-                            <i class="fas fa-check me-2"></i>Confirm
-                        </button>
-                        <button id="cancelCrop" class="crop-btn cancel">
-                            <i class="fas fa-times me-2"></i>Cancel
-                        </button>
+                    <div class="info-row">
+                        <span class="info-label">Role Description:</span>
+                        <span class="info-value" id="displayRoleDescription">Loading...</span>
+                    </div>
+                    <div class="info-row">
+                        <span class="info-label">Permissions:</span>
+                        <div class="info-value">
+                            <div class="permission-list" id="displayPermissions">
+                                Loading...
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- System Information Section -->
+                <div class="profile-section">
+                    <h5 class="section-title">
+                        <i class="fas fa-cog"></i>
+                        System Information
+                    </h5>
+                    <div class="info-row">
+                        <span class="info-label">User ID:</span>
+                        <span class="info-value" id="displayUserId">Loading...</span>
+                    </div>
+                    <div class="info-row">
+                        <span class="info-label">Receptionist ID:</span>
+                        <span class="info-value" id="displayReceptionistId">Loading...</span>
+                    </div>
+                    <div class="info-row">
+                        <span class="info-label">Last Login:</span>
+                        <span class="info-value" id="displayLastLogin">Loading...</span>
                     </div>
                 </div>
             </div>
@@ -771,12 +714,366 @@
     </div>
 </div>
 
+<!-- Avatar Upload Modal -->
+<div class="modal fade" id="avatarModal" tabindex="-1" aria-labelledby="avatarModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="avatarModalLabel">
+                    <i class="fas fa-image"></i> Upload Avatar
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <div class="mb-3">
+                    <input type="file" class="form-control" id="avatarFileInput" accept="image/*">
+                    <small class="text-muted">Select image file (JPG, PNG, GIF). Maximum size: 5MB</small>
+                </div>
+                <div class="crop-container d-none">
+                    <img id="cropImage" style="max-width: 100%;">
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-primary" id="confirmAvatarBtn" disabled>
+                    <span id="confirmBtnText">Confirm</span>
+                    <span id="confirmBtnSpinner" class="spinner-border spinner-border-sm d-none" role="status"></span>
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Hidden file input -->
+<input type="file" id="hiddenFileInput" accept="image/*" style="display: none;">
+
 <!-- Bootstrap JS -->
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
 <!-- Cropper.js -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.12/cropper.min.js"></script>
+
 <script>
-    // Sidebar toggle functionality
+    let cropper = null;
+    let selectedFile = null;
+
+    // Load profile data on page load
+    document.addEventListener('DOMContentLoaded', function() {
+        loadProfile();
+        loadCurrentAvatar();
+    });
+
+    // Select avatar function
+    function selectAvatar() {
+        const avatarModal = new bootstrap.Modal(document.getElementById('avatarModal'));
+        avatarModal.show();
+    }
+
+    // File input change handler
+    document.getElementById('avatarFileInput').addEventListener('change', function(e) {
+        const file = e.target.files[0];
+        if (file) {
+            // Validate file type
+            if (!file.type.startsWith('image/')) {
+                showMessage('Please select a valid image file!', 'danger');
+                return;
+            }
+
+            // Validate file size (5MB max)
+            if (file.size > 5 * 1024 * 1024) {
+                showMessage('File size cannot exceed 5MB!', 'danger');
+                return;
+            }
+
+            selectedFile = file;
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                const cropImage = document.getElementById('cropImage');
+                cropImage.src = e.target.result;
+
+                // Show crop container
+                document.querySelector('.crop-container').classList.remove('d-none');
+
+                // Initialize cropper
+                if (cropper) {
+                    cropper.destroy();
+                }
+
+                cropper = new Cropper(cropImage, {
+                    aspectRatio: 1,
+                    viewMode: 1,
+                    minCropBoxWidth: 100,
+                    minCropBoxHeight: 100,
+                    ready: function() {
+                        document.getElementById('confirmAvatarBtn').disabled = false;
+                    }
+                });
+            };
+            reader.readAsDataURL(file);
+        }
+    });
+
+    // Confirm avatar upload
+    document.getElementById('confirmAvatarBtn').addEventListener('click', function() {
+        if (!cropper || !selectedFile) {
+            showMessage('Please select and crop image before confirming!', 'danger');
+            return;
+        }
+
+        // Show loading
+        const confirmBtn = document.getElementById('confirmAvatarBtn');
+        const confirmBtnText = document.getElementById('confirmBtnText');
+        const confirmBtnSpinner = document.getElementById('confirmBtnSpinner');
+
+        confirmBtn.disabled = true;
+        confirmBtnText.textContent = 'Uploading...';
+        confirmBtnSpinner.classList.remove('d-none');
+
+        // Get cropped canvas
+        const canvas = cropper.getCroppedCanvas({
+            width: 300,
+            height: 300
+        });
+
+        // Convert canvas to blob
+        canvas.toBlob(function(blob) {
+            const formData = new FormData();
+            formData.append('avatarFile', blob, selectedFile.name);
+
+            // Upload to server
+            fetch('/receptionist/api/upload-avatar', {
+                method: 'POST',
+                body: formData
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    showMessage('Avatar uploaded successfully!', 'success');
+
+                    // Update avatar display
+                    const avatarImg = document.getElementById('avatarImg');
+                    const headerAvatarImg = document.getElementById('headerAvatarImg');
+                    if (data.imageUrl) {
+                        const newImageUrl = data.imageUrl + '?t=' + new Date().getTime();
+                        avatarImg.src = newImageUrl;
+                        if (headerAvatarImg) {
+                            headerAvatarImg.src = newImageUrl;
+                        }
+                    }
+
+                    // Close modal
+                    const avatarModal = bootstrap.Modal.getInstance(document.getElementById('avatarModal'));
+                    avatarModal.hide();
+
+                    // Reset form
+                    resetAvatarForm();
+                } else {
+                    showMessage('Upload error: ' + (data.message || 'Unknown error'), 'danger');
+                }
+            })
+            .catch(error => {
+                console.error('Upload error:', error);
+                showMessage('Server connection error!', 'danger');
+            })
+            .finally(() => {
+                // Hide loading
+                confirmBtn.disabled = false;
+                confirmBtnText.textContent = 'Confirm';
+                confirmBtnSpinner.classList.add('d-none');
+            });
+        }, 'image/jpeg', 0.9);
+    });
+
+    // Reset avatar form
+    function resetAvatarForm() {
+        document.getElementById('avatarFileInput').value = '';
+        document.querySelector('.crop-container').classList.add('d-none');
+        document.getElementById('confirmAvatarBtn').disabled = true;
+        selectedFile = null;
+
+        if (cropper) {
+            cropper.destroy();
+            cropper = null;
+        }
+    }
+
+    // Load current avatar
+    function loadCurrentAvatar() {
+        fetch('/receptionist/api/avatar')
+            .then(response => response.json())
+            .then(data => {
+                if (data.success && data.imageUrl) {
+                    const newImageUrl = data.imageUrl + '?t=' + new Date().getTime();
+                    document.getElementById('avatarImg').src = newImageUrl;
+                    const headerAvatarImg = document.getElementById('headerAvatarImg');
+                    if (headerAvatarImg) {
+                        headerAvatarImg.src = newImageUrl;
+                    }
+                }
+            })
+            .catch(error => {
+                console.error('Error loading avatar:', error);
+            });
+    }
+
+    // Load profile data
+    function loadProfile() {
+        fetch('/receptionist/api/profile/complete')
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    const profile = data.profile;
+
+                    // Update form fields
+                    document.getElementById('fullName').value = profile.fullName || '';
+                    document.getElementById('email').value = profile.email || '';
+                    document.getElementById('phoneNumber').value = profile.phoneNumber || '';
+                    document.getElementById('roleName').value = profile.roleName || '';
+                    document.getElementById('profileName').textContent = profile.fullName || 'N/A';
+
+                    // Update personal information section
+                    document.getElementById('displayFullName').textContent = profile.fullName || 'N/A';
+                    document.getElementById('displayEmail').textContent = profile.email || 'N/A';
+                    document.getElementById('displayPhoneNumber').textContent = profile.phoneNumber || 'N/A';
+                    document.getElementById('displayCreatedAt').textContent = formatDate(profile.createdAt) || 'N/A';
+
+                    // Update status with badge styling
+                    const statusElement = document.getElementById('displayStatus');
+                    statusElement.textContent = profile.status || 'N/A';
+                    statusElement.className = 'status-badge ' + (profile.status === 'ACTIVE' ? 'status-active' : 'status-inactive');
+
+                    // Update role information section
+                    document.getElementById('displayRoleName').textContent = profile.roleName || 'N/A';
+                    document.getElementById('displayRoleDescription').textContent = profile.roleDescription || 'N/A';
+
+                    // Update permissions
+                    const permissionsContainer = document.getElementById('displayPermissions');
+                    if (profile.permissions && profile.permissions.length > 0) {
+                        permissionsContainer.innerHTML = '';
+                        profile.permissions.forEach(permission => {
+                            const tag = document.createElement('span');
+                            tag.className = 'permission-tag';
+                            tag.textContent = permission;
+                            permissionsContainer.appendChild(tag);
+                        });
+                    } else {
+                        permissionsContainer.innerHTML = '<span class="text-muted">No permissions assigned</span>';
+                    }
+
+                    // Update system information section
+                    document.getElementById('displayUserId').textContent = profile.userId || 'N/A';
+                    document.getElementById('displayReceptionistId').textContent = profile.receptionistId || 'N/A';
+                    document.getElementById('displayLastLogin').textContent = formatDate(profile.lastLogin) || 'Never';
+
+                    // Update avatar if available
+                    if (profile.imageUrl) {
+                        const avatarImg = document.getElementById('avatarImg');
+                        const headerAvatarImg = document.getElementById('headerAvatarImg');
+                        const newImageUrl = profile.imageUrl + '?t=' + new Date().getTime();
+                        avatarImg.src = newImageUrl;
+                        if (headerAvatarImg) {
+                            headerAvatarImg.src = newImageUrl;
+                        }
+                    }
+                } else {
+                    showMessage('Error loading profile: ' + (data.message || 'Unknown error'), 'danger');
+                }
+            })
+            .catch(error => {
+                console.error('Error loading profile:', error);
+                showMessage('Error loading profile information!', 'danger');
+            });
+    }
+
+    // Profile form submit
+    document.getElementById('profileForm').addEventListener('submit', function(e) {
+        e.preventDefault();
+
+        const formData = new FormData();
+        formData.append('fullName', document.getElementById('fullName').value);
+        formData.append('email', document.getElementById('email').value);
+        formData.append('phoneNumber', document.getElementById('phoneNumber').value);
+
+        // Show loading
+        const updateBtn = document.querySelector('#profileForm button[type="submit"]');
+        const updateBtnText = document.getElementById('updateBtnText');
+        const updateBtnSpinner = document.getElementById('updateBtnSpinner');
+
+        updateBtn.disabled = true;
+        updateBtnText.textContent = 'Updating...';
+        updateBtnSpinner.classList.remove('d-none');
+
+        fetch('/receptionist/api/profile/update', {
+            method: 'POST',
+            body: formData
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                showMessage('Profile updated successfully!', 'success');
+                document.getElementById('profileName').textContent = document.getElementById('fullName').value;
+                // Reload profile to reflect changes
+                loadProfile();
+            } else {
+                showMessage('Update error: ' + (data.message || 'Unknown error'), 'danger');
+            }
+        })
+        .catch(error => {
+            console.error('Update error:', error);
+            showMessage('Server connection error!', 'danger');
+        })
+        .finally(() => {
+            // Hide loading
+            updateBtn.disabled = false;
+            updateBtnText.textContent = 'Update Profile';
+            updateBtnSpinner.classList.add('d-none');
+        });
+    });
+
+    // Utility function to format date
+    function formatDate(dateString) {
+        if (!dateString) return null;
+        try {
+            const date = new Date(dateString);
+            return date.toLocaleDateString('en-US', {
+                year: 'numeric',
+                month: 'long',
+                day: 'numeric',
+                hour: '2-digit',
+                minute: '2-digit'
+            });
+        } catch (error) {
+            return dateString;
+        }
+    }
+
+    // Show message function
+    function showMessage(message, type) {
+        const messageContainer = document.getElementById('messageContainer');
+        const alertDiv = document.createElement('div');
+        alertDiv.className = `alert alert-${type} alert-dismissible fade show`;
+        alertDiv.innerHTML = `
+            ${message}
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        `;
+
+        messageContainer.innerHTML = '';
+        messageContainer.appendChild(alertDiv);
+
+        // Auto hide after 5 seconds
+        setTimeout(() => {
+            if (alertDiv.parentNode) {
+                alertDiv.remove();
+            }
+        }, 5000);
+    }
+
+    // Toggle notification modal function
+    function toggleNotificationModal() {
+        // Placeholder for notification functionality
+        showMessage('Notification feature will be implemented soon!', 'info');
+    }
+
+    // Toggle sidebar function
     function toggleSidebar() {
         const sidebar = document.getElementById('patientSidebar');
         const mainContent = document.getElementById('mainContent');
@@ -785,555 +1082,10 @@
         mainContent.classList.toggle('expanded');
     }
 
-    // Auto-hide sidebar on mobile
-    function checkScreenSize() {
-        const sidebar = document.getElementById('patientSidebar');
-        const mainContent = document.getElementById('mainContent');
-
-        if (window.innerWidth <= 768) {
-            sidebar.classList.add('collapsed');
-            mainContent.classList.add('expanded');
-        } else {
-            sidebar.classList.remove('collapsed');
-            mainContent.classList.remove('expanded');
-        }
-    }
-
-    // Notification modal toggle
-    function toggleNotificationModal() {
-        const modal = document.getElementById('notificationModal');
-        modal.style.display = modal.style.display === 'block' ? 'none' : 'block';
-    }
-
-    // Load avatar from server when page loads
-    async function loadAvatar() {
-        try {
-            const response = await fetch('/receptionist/api/avatar');
-            if (response.ok) {
-                const data = await response.json();
-
-                if (data.success && data.hasAvatar && data.imageUrl) {
-                    // Update both avatars with the URL from server
-                    const avatar = document.getElementById('avatar');
-                    const avatarPlaceholder = document.getElementById('avatarPlaceholder');
-                    const headerAvatar = document.getElementById('headerAvatar');
-
-                    avatar.src = data.imageUrl;
-                    headerAvatar.src = data.imageUrl;
-
-                    // Show avatar and hide placeholder
-                    avatar.classList.remove('hidden');
-                    avatarPlaceholder.classList.add('hidden');
-                    headerAvatar.style.display = 'block';
-                }
-            } else {
-                console.error('Failed to load avatar');
-            }
-        } catch (error) {
-            console.error('Error loading avatar:', error);
-        }
-    }
-
-    // Initialize
-    checkScreenSize();
-    window.addEventListener('load', () => {
-        checkScreenSize();
-        loadAvatar(); // Load avatar when page loads
+    // Reset avatar modal when hidden
+    document.getElementById('avatarModal').addEventListener('hidden.bs.modal', function() {
+        resetAvatarForm();
     });
-    window.addEventListener('resize', checkScreenSize);
-
-    // Close notification modal when clicking outside
-    window.onclick = function(event) {
-        const notificationModal = document.getElementById('notificationModal');
-        if (event.target !== notificationModal &&
-            !notificationModal.contains(event.target) &&
-            !event.target.closest('.notification-bell')) {
-            notificationModal.style.display = 'none';
-        }
-    };
-
-    // Validation functions
-    function validateFullName() {
-        const input = document.getElementById('fullNameInput');
-        const error = document.getElementById('fullNameError');
-        const value = input.value.trim();
-
-        // Full name is required and must be at least 2 characters
-        const isValid = value.length >= 2 && /^[a-zA-ZÀ-ỹ\s]+$/.test(value);
-
-        if (isValid) {
-            input.classList.remove('is-invalid');
-            error.style.display = 'none';
-            error.textContent = 'Full Name is required.';
-        } else {
-            input.classList.add('is-invalid');
-            error.style.display = 'block';
-            if (value.length === 0) {
-                error.textContent = 'Full Name is required.';
-            } else if (value.length < 2) {
-                error.textContent = 'Full Name must be at least 2 characters.';
-            } else {
-                error.textContent = 'Full Name can only contain letters and spaces.';
-            }
-        }
-        return isValid;
-    }
-
-    function validateEmail() {
-        const input = document.getElementById('emailInput');
-        const error = document.getElementById('emailError');
-        const value = input.value.trim();
-
-        // Email is optional but if provided must be valid format
-        const isValid = value === '' || /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value);
-
-        if (isValid) {
-            input.classList.remove('is-invalid');
-            error.style.display = 'none';
-        } else {
-            input.classList.add('is-invalid');
-            error.style.display = 'block';
-            error.textContent = 'Please enter a valid email address.';
-        }
-        return isValid;
-    }
-
-    function validatePhone() {
-        const input = document.getElementById('phoneInput');
-        const error = document.getElementById('phoneError');
-        const value = input.value.trim();
-
-        // Phone number is required and must be exactly 10 digits (Vietnamese format)
-        const isValid = /^(0[3|5|7|8|9])+([0-9]{8})$/.test(value);
-
-        if (isValid) {
-            input.classList.remove('is-invalid');
-            error.style.display = 'none';
-        } else {
-            input.classList.add('is-invalid');
-            error.style.display = 'block';
-            if (value.length === 0) {
-                error.textContent = 'Phone Number is required.';
-            } else {
-                error.textContent = 'Please enter a valid Vietnamese phone number (10 digits starting with 03, 05, 07, 08, or 09).';
-            }
-        }
-        return isValid;
-    }
-
-    // Load profile data from database
-    async function loadProfile() {
-        try {
-            const response = await fetch('/getProfile');
-            if (response.ok) {
-                const profile = await response.json();
-                document.getElementById('fullName').textContent = profile.fullName || '';
-                document.getElementById('email').textContent = profile.email || '';
-                document.getElementById('phone').textContent = profile.phone || '';
-                document.getElementById('role').textContent = profile.role || '';
-                document.getElementById('dob').textContent = profile.dob ? new Date(profile.dob).toLocaleDateString('en-GB') : '';
-                document.getElementById('gender').textContent = profile.gender || '';
-                document.getElementById('address').textContent = profile.address || '';
-                document.getElementById('language').textContent = profile.language === 'en' ? 'English' : 'Vietnamese';
-
-                document.getElementById('fullNameInput').value = profile.fullName || '';
-                document.getElementById('emailInput').value = profile.email || '';
-                document.getElementById('phoneInput').value = profile.phone || '';
-                document.getElementById('roleIdInput').value = profile.role || 'Receptionist';
-                document.getElementById('dobInput').value = profile.dob || '';
-                document.getElementById('genderInput').value = profile.gender || '';
-                document.getElementById('addressInput').value = profile.address || '';
-                document.getElementById('languageInput').value = profile.language || 'en';
-
-                const avatar = document.getElementById('avatar');
-                const avatarPlaceholder = document.getElementById('avatarPlaceholder');
-                const headerAvatar = document.getElementById('headerAvatar');
-                if (profile.avatar) {
-                    avatar.src = profile.avatar;
-                    headerAvatar.src = profile.avatar;
-                    avatar.classList.remove('hidden');
-                    avatarPlaceholder.classList.add('hidden');
-                } else {
-                    avatar.classList.add('hidden');
-                    avatarPlaceholder.classList.remove('hidden');
-                }
-            } else {
-                throw new Error('Failed to load profile');
-            }
-        } catch (error) {
-            showNotification('Error loading profile data.', 'error');
-        }
-    }
-
-    // Save profile data to database
-    async function saveProfile(profileData) {
-        try {
-            const formData = new FormData();
-            Object.keys(profileData).forEach(key => {
-                formData.append(key, profileData[key]);
-            });
-            const avatarInput = document.getElementById('avatarInput');
-            if (avatarInput.files[0]) {
-                formData.append('avatarFile', avatarInput.files[0]);
-            }
-
-            const response = await fetch('/saveProfile', {
-                method: 'POST',
-                body: formData
-            });
-            if (response.ok) {
-                showNotification('Profile updated successfully!', 'success');
-                const updatedProfile = await response.json();
-                document.getElementById('headerAvatar').src = updatedProfile.avatar || 'https://via.placeholder.com/40';
-            } else {
-                throw new Error('Failed to save profile');
-            }
-        } catch (error) {
-            showNotification('Error saving profile data.', 'error');
-        }
-    }
-
-    // Show notification toast
-    function showNotification(message, type) {
-        const toast = document.getElementById('statusNotification');
-        toast.textContent = message;
-        toast.className = `notification-toast ${type}`;
-        toast.style.display = 'block';
-        setTimeout(() => {
-            toast.style.display = 'none';
-        }, 3000);
-    }
-
-    let cropper = null;
-    let currentImageFile = null;
-
-    // Event Listeners
-    document.addEventListener('DOMContentLoaded', () => {
-        // Real-time validation
-        document.getElementById('fullNameInput').addEventListener('input', validateFullName);
-        document.getElementById('emailInput').addEventListener('input', validateEmail);
-        document.getElementById('phoneInput').addEventListener('input', validatePhone);
-
-        // Toggle Edit Mode
-        document.querySelector('.edit-button').addEventListener('click', () => {
-            document.querySelectorAll('.form-group p').forEach(p => p.classList.add('hidden'));
-            document.querySelectorAll('.form-group input, .form-group select').forEach(input => input.classList.remove('hidden'));
-            document.getElementById('avatarInput').classList.remove('hidden');
-            document.getElementById('profileActions').classList.remove('hidden');
-            document.querySelector('.edit-button').classList.add('hidden');
-            document.getElementById('fullNameInput').focus();
-        });
-
-        // Handle Avatar Upload with Cropping
-        document.getElementById('avatarInput').addEventListener('change', (event) => {
-            const file = event.target.files[0];
-            if (file) {
-                // Validate file type
-                const validTypes = ['image/jpeg', 'image/jpg', 'image/png'];
-                if (!validTypes.includes(file.type)) {
-                    showNotification('Please select a JPG or PNG image file.', 'error');
-                    event.target.value = ''; // Clear the input
-                    return;
-                }
-
-                // Validate file size (max 5MB)
-                if (file.size > 5 * 1024 * 1024) {
-                    showNotification('Image file size should be less than 5MB.', 'error');
-                    event.target.value = ''; // Clear the input
-                    return;
-                }
-
-                currentImageFile = file;
-
-                const reader = new FileReader();
-                reader.onload = (e) => {
-                    showCropModal(e.target.result);
-                };
-                reader.readAsDataURL(file);
-            }
-        });
-
-        // Crop modal event listeners
-        document.getElementById('confirmCrop').addEventListener('click', confirmCrop);
-        document.getElementById('cancelCrop').addEventListener('click', cancelCrop);
-
-        // Close crop modal when clicking outside
-        document.getElementById('cropModal').addEventListener('click', (e) => {
-            if (e.target.id === 'cropModal') {
-                cancelCrop();
-            }
-        });
-
-        // Save Changes
-        document.querySelector('.save-button').addEventListener('click', async () => {
-            let isValid = true;
-
-            // Validate all required fields
-            if (!validateFullName()) isValid = false;
-            if (!validateEmail()) isValid = false;
-            if (!validatePhone()) isValid = false;
-
-            if (!isValid) {
-                showNotification('Please correct the errors in the form.', 'error');
-                return;
-            }
-
-            try {
-                // Show loading state
-                const saveButton = document.querySelector('.save-button');
-                const originalText = saveButton.textContent;
-                saveButton.textContent = 'Saving...';
-                saveButton.disabled = true;
-
-                // Prepare FormData for multipart/form-data (includes file upload)
-                const formData = new FormData();
-                formData.append('fullName', document.getElementById('fullNameInput').value.trim());
-                formData.append('email', document.getElementById('emailInput').value.trim());
-                formData.append('phoneNumber', document.getElementById('phoneInput').value.trim());
-
-                // Add avatar file if exists
-                const avatarInput = document.getElementById('avatarInput');
-                if (avatarInput.files[0]) {
-                    formData.append('avatarFile', avatarInput.files[0]);
-                }
-
-                // Send update request to server
-                const response = await fetch('/receptionist/api/profile/update', {
-                    method: 'POST',
-                    headers: {
-                        'X-Requested-With': 'XMLHttpRequest'
-                    },
-                    body: formData // Use FormData instead of JSON for file upload
-                });
-
-                if (response.ok) {
-                    const result = await response.json();
-                    showNotification('Profile updated successfully!', 'success');
-
-                    // Update display with new data
-                    document.getElementById('fullName').textContent = formData.get('fullName');
-                    document.getElementById('email').textContent = formData.get('email');
-                    document.getElementById('phone').textContent = formData.get('phoneNumber');
-
-                    // Update avatar URLs if new avatar was uploaded
-                    if (result.avatarUrl) {
-                        const avatar = document.getElementById('avatar');
-                        const headerAvatar = document.getElementById('headerAvatar');
-                        const avatarPlaceholder = document.getElementById('avatarPlaceholder');
-
-                        avatar.src = result.avatarUrl;
-                        headerAvatar.src = result.avatarUrl;
-                        avatar.classList.remove('hidden');
-                        avatarPlaceholder.classList.add('hidden');
-
-                        // Clear the file input since image is now saved
-                        avatarInput.value = '';
-                    }
-
-                    // Exit edit mode
-                    document.querySelectorAll('.form-group p').forEach(p => p.classList.remove('hidden'));
-                    document.querySelectorAll('.form-group input, .form-group select').forEach(input => input.classList.add('hidden'));
-                    document.getElementById('avatarInput').classList.add('hidden');
-                    document.getElementById('profileActions').classList.add('hidden');
-                    document.querySelector('.edit-button').classList.remove('hidden');
-
-                } else {
-                    const error = await response.text();
-                    showNotification(`Error updating profile: ${error}`, 'error');
-                }
-
-                // Restore button state
-                saveButton.textContent = originalText;
-                saveButton.disabled = false;
-
-            } catch (error) {
-                console.error('Error saving profile:', error);
-                showNotification('Error saving profile data. Please try again.', 'error');
-
-                // Restore button state
-                const saveButton = document.querySelector('.save-button');
-                saveButton.textContent = 'Save Changes';
-                saveButton.disabled = false;
-            }
-        });
-
-        // Cancel Edit
-        document.querySelector('.cancel-button').addEventListener('click', () => {
-            // Reset validation styles
-            document.querySelectorAll('.form-group input, .form-group select').forEach(input => {
-                input.classList.remove('is-invalid');
-            });
-
-            // Hide error messages
-            document.querySelectorAll('.error-message').forEach(error => {
-                error.style.display = 'none';
-            });
-
-            // Reset form values to original
-            document.getElementById('fullNameInput').value = document.getElementById('fullName').textContent;
-            document.getElementById('emailInput').value = document.getElementById('email').textContent;
-            document.getElementById('phoneInput').value = document.getElementById('phone').textContent;
-
-            // Exit edit mode
-            document.querySelectorAll('.form-group p').forEach(p => p.classList.remove('hidden'));
-            document.querySelectorAll('.form-group input, .form-group select').forEach(input => input.classList.add('hidden'));
-            document.getElementById('avatarInput').classList.add('hidden');
-            document.getElementById('profileActions').classList.add('hidden');
-            document.querySelector('.edit-button').classList.remove('hidden');
-        });
-    });
-
-    // Enhanced validation functions
-    function validateFullName() {
-        const input = document.getElementById('fullNameInput');
-        const error = document.getElementById('fullNameError');
-        const value = input.value.trim();
-
-        // Full name is required and must be at least 2 characters
-        const isValid = value.length >= 2 && /^[a-zA-ZÀ-ỹ\s]+$/.test(value);
-
-        if (isValid) {
-            input.classList.remove('is-invalid');
-            error.style.display = 'none';
-            error.textContent = 'Full Name is required.';
-        } else {
-            input.classList.add('is-invalid');
-            error.style.display = 'block';
-            if (value.length === 0) {
-                error.textContent = 'Full Name is required.';
-            } else if (value.length < 2) {
-                error.textContent = 'Full Name must be at least 2 characters.';
-            } else {
-                error.textContent = 'Full Name can only contain letters and spaces.';
-            }
-        }
-        return isValid;
-    }
-
-    function validateEmail() {
-        const input = document.getElementById('emailInput');
-        const error = document.getElementById('emailError');
-        const value = input.value.trim();
-
-        // Email is optional but if provided must be valid format
-        const isValid = value === '' || /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value);
-
-        if (isValid) {
-            input.classList.remove('is-invalid');
-            error.style.display = 'none';
-        } else {
-            input.classList.add('is-invalid');
-            error.style.display = 'block';
-            error.textContent = 'Please enter a valid email address.';
-        }
-        return isValid;
-    }
-
-    function validatePhone() {
-        const input = document.getElementById('phoneInput');
-        const error = document.getElementById('phoneError');
-        const value = input.value.trim();
-
-        // Phone number is required and must be exactly 10 digits (Vietnamese format)
-        const isValid = /^(0[3|5|7|8|9])+([0-9]{8})$/.test(value);
-
-        if (isValid) {
-            input.classList.remove('is-invalid');
-            error.style.display = 'none';
-        } else {
-            input.classList.add('is-invalid');
-            error.style.display = 'block';
-            if (value.length === 0) {
-                error.textContent = 'Phone Number is required.';
-            } else {
-                error.textContent = 'Please enter a valid Vietnamese phone number (10 digits starting with 03, 05, 07, 08, or 09).';
-            }
-        }
-        return isValid;
-    }
-
-    // Image cropping functions
-    function showCropModal(imageSrc) {
-        const modal = document.getElementById('cropModal');
-        const cropImage = document.getElementById('cropImage');
-
-        cropImage.src = imageSrc;
-        modal.style.display = 'flex';
-
-        // Initialize cropper
-        if (cropper) {
-            cropper.destroy();
-        }
-
-        cropper = new Cropper(cropImage, {
-            aspectRatio: 1,
-            viewMode: 1,
-            autoCropArea: 0.8,
-            responsive: true,
-            background: false,
-            guides: true,
-            center: true,
-            highlight: false,
-            cropBoxMovable: true,
-            cropBoxResizable: true,
-            toggleDragModeOnDblclick: false,
-        });
-    }
-
-    function confirmCrop() {
-        if (cropper) {
-            const canvas = cropper.getCroppedCanvas({
-                width: 300,
-                height: 300,
-                imageSmoothingEnabled: true,
-                imageSmoothingQuality: 'high',
-            });
-
-            // Convert to blob and update avatar
-            canvas.toBlob((blob) => {
-                const url = URL.createObjectURL(blob);
-                const avatar = document.getElementById('avatar');
-                const avatarPlaceholder = document.getElementById('avatarPlaceholder');
-                const headerAvatar = document.getElementById('headerAvatar');
-
-                // First hide placeholder, then show avatar
-                avatarPlaceholder.style.display = 'none';
-                avatarPlaceholder.classList.add('hidden');
-
-                // Set avatar source and show it
-                avatar.src = url;
-                avatar.style.display = 'block';
-                avatar.classList.remove('hidden');
-
-                // Update header avatar as well
-                headerAvatar.src = url;
-
-                // Store the cropped image for upload
-                const file = new File([blob], 'avatar.jpg', { type: 'image/jpeg' });
-                const dataTransfer = new DataTransfer();
-                dataTransfer.items.add(file);
-                document.getElementById('avatarInput').files = dataTransfer.files;
-
-                closeCropModal();
-            }, 'image/jpeg', 0.9);
-        }
-    }
-
-    function cancelCrop() {
-        closeCropModal();
-        // Clear the file input
-        document.getElementById('avatarInput').value = '';
-    }
-
-    function closeCropModal() {
-        const modal = document.getElementById('cropModal');
-        modal.style.display = 'none';
-
-        if (cropper) {
-            cropper.destroy();
-            cropper = null;
-        }
-    }
 </script>
 </body>
 </html>

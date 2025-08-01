@@ -371,11 +371,15 @@
                 <h3>Payment History</h3>
             </div>
             <div class="profile-info">
-                <div class="notification-bell" onclick="toggleNotificationModal()" aria-label="Notifications">
-                    <i class="fas fa-bell"></i>
-                    <span class="badge rounded-pill">3</span>
+                <div class="notification-bell" role="button" onclick="toggleNotificationModal()">
+                    <i class="fas fa-bell fs-5"></i>
+                    <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger"
+                          id="notificationCount"
+                          th:text="${unreadCount}">0</span>
+
                 </div>
-                <img src="/images/profile.jpg" alt="Profile" class="rounded-circle">
+                <img id="headerAvatarImg" th:src="${user.avatarUrl != null and user.avatarUrl != '' ? user.avatarUrl : '/images/default-avatar.png'}"
+                     alt="Profile" class="rounded-circle">
             </div>
         </header>
         <div class="container-fluid p-4">
@@ -430,6 +434,7 @@
                                 <th>Appointment ID</th>
                                 <th>Amount</th>
                                 <th>DateTime</th>
+                                <th>Method</th>
                                 <th>Status</th>
                                 <th>Action</th>
                             </tr>
@@ -592,7 +597,7 @@
         if (dates.length === 0) {
             tableBody.innerHTML = `
                 <tr>
-                    <td colspan="9" class="text-center text-muted py-4">
+                    <td colspan="10" class="text-center text-muted py-4">
                         <i class="fas fa-info-circle me-2"></i>
                         No payment data to display
                     </td>
@@ -616,7 +621,7 @@
             const dateHeaderRow = document.createElement('tr');
             dateHeaderRow.className = 'table-light';
             dateHeaderRow.innerHTML = `
-                <td colspan="9" class="fw-bold py-3" style="background: linear-gradient(135deg, #e3f2fd, #bbdefb); border-left: 5px solid #2196f3;">
+                <td colspan="10" class="fw-bold py-3" style="background: linear-gradient(135deg, #e3f2fd, #bbdefb); border-left: 5px solid #2196f3;">
                     <div class="d-flex align-items-center">
                         <span class="me-2">📅</span>
                         <span class="me-auto fs-6">${formatDateDisplay(date)}</span>
@@ -639,6 +644,7 @@
                     <td>${payment.appointmentId || 'N/A'}</td>
                     <td class="fw-bold text-success">${formatAmount(payment.amount)}</td>
                     <td>${formatTimeOnly(payment.dateTime)}</td>
+                    <td>${payment.method || 'N/A'}</td>
                     <td>
                         <span class="status-dropdown ${getStatusClass(payment.status)}">
                             ${payment.status || 'N/A'}

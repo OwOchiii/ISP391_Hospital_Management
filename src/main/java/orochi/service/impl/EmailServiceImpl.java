@@ -240,7 +240,7 @@ public class EmailServiceImpl implements EmailService {
             }
 
             // Set the patient portal URL
-            String patientPortalUrl = "http://localhost:8089/" + appointment.getPatientId();
+            String patientPortalUrl = "http://localhost:8090/" + appointment.getPatientId();
             context.setVariable("patientPortalUrl", patientPortalUrl);
 
             // Add current date for the email

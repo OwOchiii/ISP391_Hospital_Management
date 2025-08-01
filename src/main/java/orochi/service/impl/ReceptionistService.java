@@ -2526,8 +2526,7 @@ public class ReceptionistService {
     }
 
     /**
-     * Process payment for cash transactions
-     * Updates transaction status from Pending to Paid and creates/updates receipt
+     * Process payment for a patient appointment - FIXED: Prevents duplicate transactions
      * Chỉ sử dụng VND - không cần chuyển đổi tiền tệ
      */
     @Transactional
@@ -2535,15 +2534,11 @@ public class ReceptionistService {
                                             String receiptIdStr, String method, Double totalAmount,
                                             Double amountReceived, String notes, Integer issuerId) {
         try {
-            logger.info("=== PROCESSING PAYMENT ===");
+            logger.info("=== PROCESSING PAYMENT (FIXED DUPLICATE PREVENTION) ===");
             logger.info("PatientId: {}, AppointmentId: {}, Method: {}, Amount: {} VND",
                        patientId, appointmentId, method, totalAmount);
 
-            // Find the transaction by appointmentId and userId (more reliable than transactionId string)
-            List<Transaction> transactions = transactionRepository.findByAppointmentId(appointmentId);
-            Transaction transaction = null;
-
-            // Get patient to verify userId
+            // 🔥 STEP 1: Get patient and verify userId
             Optional<Patient> patientOptional = patientRepository.findById(patientId);
             if (patientOptional.isEmpty()) {
                 throw new RuntimeException("Patient not found with ID: " + patientId);
@@ -2551,33 +2546,73 @@ public class ReceptionistService {
             Patient patient = patientOptional.get();
             Integer userId = patient.getUser().getUserId();
 
-            // Find transaction matching both appointmentId and userId
-            for (Transaction t : transactions) {
-                if (t.getUserId().equals(userId)) {
+            logger.info("🔍 Looking for existing transaction: AppointmentID={}, UserID={}", appointmentId, userId);
+
+            // 🔥 STEP 2: Find existing transaction with PRECISE matching
+            Transaction transaction = null;
+
+            // Method 1: Try to find by exact AppointmentID and UserID combination
+            List<Transaction> appointmentTransactions = transactionRepository.findByAppointmentId(appointmentId);
+            logger.info("📋 Found {} transactions for appointmentId: {}", appointmentTransactions.size(), appointmentId);
+
+            for (Transaction t : appointmentTransactions) {
+                logger.info("   - TransactionID: {}, UserID: {}, Status: {}",
+                           t.getTransactionId(), t.getUserId(), t.getStatus());
+
+                if (t.getUserId() != null && t.getUserId().equals(userId)) {
                     transaction = t;
+                    logger.info("✅ FOUND MATCHING TRANSACTION: TransactionID={}, UserID={}, Status={}",
+                               t.getTransactionId(), t.getUserId(), t.getStatus());
                     break;
                 }
             }
 
-            // If no transaction found, create a new one instead of throwing an error
+            // 🔥 STEP 3: Only create new transaction if absolutely no existing transaction found
             if (transaction == null) {
-                logger.info("⚠️ No transaction found for appointment: {} and user: {} - Creating new transaction", appointmentId, userId);
+                logger.warn("⚠️ NO EXISTING TRANSACTION FOUND - This should not happen in normal flow");
+                logger.warn("   AppointmentID: {}, UserID: {}", appointmentId, userId);
+                logger.warn("   Creating emergency transaction...");
 
+                // Emergency transaction creation - should rarely happen
                 transaction = new Transaction();
                 transaction.setAppointmentId(appointmentId);
                 transaction.setUserId(userId);
                 transaction.setTimeOfPayment(java.time.LocalDateTime.now());
                 transaction.setStatus("Pending");
-                transaction.setMethod("Cash"); // Default to Cash, will be updated below
+                transaction.setMethod("Cash"); // Default method
 
-                // Save the new transaction first to get an ID
+                // Save emergency transaction
                 transaction = transactionRepository.save(transaction);
-                logger.info("✅ Created new transaction with ID: {}", transaction.getTransactionId());
+                logger.info("🚨 EMERGENCY: Created new transaction with ID: {}", transaction.getTransactionId());
+            } else {
+                logger.info("🔄 UPDATING EXISTING TRANSACTION: {}", transaction.getTransactionId());
             }
 
-            logger.info("Found/created transaction: {} with current status: {}", transaction.getTransactionId(), transaction.getStatus());
+            // 🔥 STEP 4: Prevent duplicate if already paid
+            if ("Paid".equalsIgnoreCase(transaction.getStatus())) {
+                logger.warn("⚠️ TRANSACTION {} ALREADY PAID - Preventing duplicate", transaction.getTransactionId());
 
-            // Update transaction status and details
+                // Return existing transaction info instead of creating duplicate
+                Map<String, Object> response = new HashMap<>();
+                response.put("success", true);
+                response.put("transactionId", transaction.getTransactionId());
+                response.put("status", "Paid");
+                response.put("method", transaction.getMethod());
+                response.put("message", "Transaction already paid - no duplicate created");
+                response.put("totalAmount", totalAmount);
+                response.put("currency", CURRENCY_CODE_VND);
+
+                // Try to find existing receipt
+                Receipt existingReceipt = transaction.getReceipt();
+                if (existingReceipt != null) {
+                    response.put("receiptId", existingReceipt.getReceiptId());
+                }
+
+                return response;
+            }
+
+            // 🔥 STEP 5: Update transaction status and details
+            String oldStatus = transaction.getStatus();
             transaction.setStatus("Paid");
             transaction.setMethod(method);
             transaction.setProcessedByUserId(issuerId);
@@ -2592,12 +2627,15 @@ public class ReceptionistService {
                 transaction.setRefundReason(notes != null ? notes : "Payment completed successfully");
             }
 
-            // Save transaction
+            // Save updated transaction
             Transaction savedTransaction = transactionRepository.save(transaction);
-            logger.info("✅ Transaction {} updated to Paid status", savedTransaction.getTransactionId());
+            logger.info("✅ TRANSACTION {} UPDATED: Status='{}' → 'Paid', Method='{}'",
+                       savedTransaction.getTransactionId(), oldStatus, method);
 
-            // Create or update receipt
+            // 🔥 STEP 6: Create or update receipt
             Receipt receipt = transaction.getReceipt();
+            boolean isNewReceipt = (receipt == null);
+
             if (receipt == null) {
                 receipt = new Receipt();
                 receipt.setTransactionId(savedTransaction.getTransactionId());
@@ -2606,10 +2644,7 @@ public class ReceptionistService {
 
                 // Set required fields that cannot be NULL
                 receipt.setReceiptNumber("REC" + savedTransaction.getTransactionId() + "_" + System.currentTimeMillis());
-
-                // Use "Digital" format to match CHECK constraint
                 receipt.setFormat("Digital"); // Valid values: 'Digital', 'Print', 'Both'
-
                 receipt.setPdfPath(""); // Empty string instead of NULL
 
                 // Calculate tax amount (10% of total amount)
@@ -2618,6 +2653,10 @@ public class ReceptionistService {
 
                 // Set discount amount (default 0.0 for cash payments)
                 receipt.setDiscountAmount(BigDecimal.ZERO);
+
+                logger.info("📄 Creating NEW receipt for transaction: {}", savedTransaction.getTransactionId());
+            } else {
+                logger.info("📄 Updating EXISTING receipt: {}", receipt.getReceiptId());
             }
 
             // Update receipt amount and details
@@ -2626,13 +2665,18 @@ public class ReceptionistService {
 
             // Save receipt
             Receipt savedReceipt = receiptRepository.save(receipt);
-            logger.info("✅ Receipt {} created/updated with amount: {} VND", savedReceipt.getReceiptId(), savedReceipt.getTotalAmount());
+            logger.info("✅ Receipt {} {}: Amount={} VND",
+                       savedReceipt.getReceiptId(),
+                       isNewReceipt ? "CREATED" : "UPDATED",
+                       savedReceipt.getTotalAmount());
 
-            // Update transaction with receipt reference
-            savedTransaction.setReceipt(savedReceipt);
-            transactionRepository.save(savedTransaction);
+            // Update transaction with receipt reference if it's a new receipt
+            if (isNewReceipt) {
+                savedTransaction.setReceipt(savedReceipt);
+                transactionRepository.save(savedTransaction);
+            }
 
-            // Prepare response - chỉ trả về VND
+            // 🔥 STEP 7: Prepare response - chỉ trả về VND
             Map<String, Object> response = new HashMap<>();
             response.put("success", true);
             response.put("transactionId", savedTransaction.getTransactionId());
@@ -2644,8 +2688,9 @@ public class ReceptionistService {
             response.put("totalAmount", totalAmount);
             response.put("amountReceived", amountReceived);
             response.put("currency", CURRENCY_CODE_VND);
+            response.put("message", "Payment processed successfully - no duplicates");
 
-            logger.info("✅ Payment processing completed successfully");
+            logger.info("✅ PAYMENT PROCESSING COMPLETED - DUPLICATE PREVENTION SUCCESSFUL");
             return response;
 
         } catch (Exception e) {

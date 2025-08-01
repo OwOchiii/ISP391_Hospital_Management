@@ -513,9 +513,13 @@
                 <div class="profile-info">
                     <div class="notification-bell" role="button" onclick="toggleNotificationModal()">
                         <i class="fas fa-bell fs-5"></i>
-                        <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger" id="notificationCount">0</span>
+                        <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger"
+                              id="notificationCount"
+                              th:text="${unreadCount}">0</span>
+
                     </div>
-                    <img src="images/profile.jpg" alt="Profile" class="rounded-circle">
+                    <img id="headerAvatarImg" th:src="${user.avatarUrl != null and user.avatarUrl != '' ? user.avatarUrl : '/images/default-avatar.png'}"
+                         alt="Profile" class="rounded-circle">
                 </div>
             </header>
 
